@@ -43,7 +43,7 @@ public class FormElement extends OrganisationAwareEntity {
     @JoinTable(name = "non_applicable_form_element",
             joinColumns = @JoinColumn(name = "form_element_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "organisation_id", referencedColumnName = "id"))
-    private Set<Organisation> nonApplicableOrganisations = null;
+    private Set<NonApplicableFormElement> nonApplicableFormElements = null;
 
     @Embedded
     private Format validFormat;
@@ -89,7 +89,7 @@ public class FormElement extends OrganisationAwareEntity {
     }
 
     public void setMandatory(Boolean mandatory) {
-        isMandatory = mandatory.booleanValue();
+        isMandatory = mandatory;
     }
 
     public FormElementGroup getFormElementGroup() {
@@ -120,22 +120,14 @@ public class FormElement extends OrganisationAwareEntity {
         return "SingleSelect".equals(this.type);
     }
 
-    public void setNonApplicableOrganisations(Set<Organisation> nonApplicableOrganisations) {
-        if (nonApplicableOrganisations == null) {
-            nonApplicableOrganisations = new HashSet<>();
-        }
-        this.nonApplicableOrganisations.clear();
-        this.nonApplicableOrganisations.addAll(nonApplicableOrganisations);
-    }
-
     public void addNonApplicableOrganisations(Organisation organisation) {
-        if (nonApplicableOrganisations == null) {
-            nonApplicableOrganisations = new HashSet<>();
+        if (nonApplicableFormElements == null) {
+            nonApplicableFormElements = new HashSet<>();
         }
-        this.nonApplicableOrganisations.add(organisation);
+        this.nonApplicableFormElements.add(organisation);
     }
 
     public boolean isNonApplicableForOrganisation(Organisation organisation) {
-      return this.nonApplicableOrganisations.contains(organisation);
+      return this.nonApplicableFormElements.contains(organisation);
     }
 }

@@ -76,62 +76,15 @@ select
   c2.uuid as "Answer UUID",
   c2.name as "Answer",
   a.answer_order,
-  a.organisation_id
+  concept.organisation_id concept_organisation_id,
+  a.organisation_id answer_organisation_id,
+  c2.organisation_id answer_concept_organisation_id
 from concept
   inner join concept_answer a on concept.id = a.concept_id
   inner join concept c2 on a.answer_concept_id = c2.id
-where concept.name = 'Refer to oral cancer specialist'
+where concept.name = :concept_name
 order by a.answer_order;
 
--- GET ALL THE FORM ELEMENTS AND CONCEPT (WITHOUT ANSWERS) IN AN ORG - (Required for translations, do not change this one)
-select
-  p.name,
-  f.name  as FormName
-  -- ,fm.entity_id
-  -- ,fm.observations_type_entity_id
-  -- ,fm.organisation_id
-  ,
-  feg.name,
-  fe.name as "Form Element",
-  c2.name as "Concept"
-from operational_program p
-  inner join form_mapping fm on (fm.entity_id = p.program_id)
-  inner join form f on fm.form_id = f.id
-  inner join form_element_group feg on feg.form_id = f.id
-  inner join form_element fe on fe.form_element_group_id = feg.id
-  inner join concept c2 on fe.concept_id = c2.id
-where p.organisation_id = 2 and f.form_type != 'ProgramEncounterCancellation' and fe.id not in (select form_element_id
-                                                                                                from non_applicable_form_element
-                                                                                                where organisation_id = 2)
-order by
-  p.name
-  , f.name
-  , feg.display_order asc
-  , fe.display_order asc;
-
--- Get all the REGISTRATION form elements and concept (without answers) for translation
-select
-  f.name  as FormName
-  -- ,fm.entity_id
-  -- ,fm.observations_type_entity_id
-  -- ,fm.organisation_id
-  ,
-  feg.name,
-  fe.name as "Form Element",
-  c2.name as "Concept"
-from form f
-  inner join form_element_group feg on feg.form_id = f.id
-  inner join form_element fe on fe.form_element_group_id = feg.id
-  inner join concept c2 on fe.concept_id = c2.id
-where f.organisation_id = 9 and f.form_type = 'IndividualProfile'
-order by
-  f.name
-  , feg.display_order asc
-  , fe.display_order asc;
-
--- Organisations
-SELECT *
-from organisation;
 
 -- ADDRESS LEVELS (Required for translations, do not change this one)
 select
