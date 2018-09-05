@@ -9,9 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -32,6 +30,7 @@ public class User {
     @Column
     private Long organisationId;
 
+    // Audit is not getting used for managing users because, the application goes in a loop managing audit information generically and automatically assigning the user to the entities
     @JoinColumn(name = "created_by_id")
     @ManyToOne(targetEntity = User.class)
     private User createdBy;
@@ -48,6 +47,20 @@ public class User {
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "user")
     private Set<UserFacilityMapping> userFacilityMappings = new HashSet<>();
+
+    @Column
+    private boolean isOrgAdmin;
+    @Column
+    private boolean isAdmin;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "catchment_id")
+    private Catchment catchment;
+
+    public static final String USER = "user";
+    public static final String ORGANISATION_ADMIN = "organisation_admin";
+    public static final String ADMIN = "admin";
 
     public String getName() {
         return name;
@@ -89,12 +102,13 @@ public class User {
         this.uuid = uuid;
     }
 
-    public void assignUUID() {
-        this.uuid = UUID.randomUUID().toString();
+    @NotNull
+    public Catchment getCatchment() {
+        return catchment;
     }
 
-    public void assignUUIDIfRequired() {
-        if (this.uuid == null) this.assignUUID();
+    public void setCatchment(@NotNull Catchment catchment) {
+        this.catchment = catchment;
     }
 
     @Override
@@ -141,7 +155,39 @@ public class User {
         return userFacilityMappings;
     }
 
-    public void setUserFacilityMappings(Set<UserFacilityMapping> userFacilityMappings) {
-        this.userFacilityMappings = userFacilityMappings;
+    public void addUserFacilityMapping(UserFacilityMapping userFacilityMapping) {
+        if (this.userFacilityMappings == null)
+            this.userFacilityMappings = new HashSet<>();
+        this.userFacilityMappings.add(userFacilityMapping);
+    }
+
+    public void addUserFacilityMappings(List<UserFacilityMapping> userFacilityMappings) {
+        userFacilityMappings.forEach(this::addUserFacilityMapping);
+    }
+
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @NotNull
+    public DateTime getCreatedDateTime() {
+        return createdDateTime;
+    }
+
+    public User getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    @NotNull
+    public DateTime getLastModifiedDateTime() {
+        return lastModifiedDateTime;
+    }
+
+    public String[] getRoles() {
+        ArrayList<String> roles = new ArrayList<>();
+        roles.add(USER);
+        if (this.isAdmin) roles.add(ADMIN);
+        if (this.isOrgAdmin) roles.add(ORGANISATION_ADMIN);
+        return (String[]) roles.toArray();
     }
 }
