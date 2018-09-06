@@ -9,7 +9,14 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+<<<<<<< HEAD
 import java.util.*;
+=======
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+>>>>>>> 7a5acd67e5910a0637d336a8237d30b140a3c9e8
 
 @Entity
 @Table(name = "users")
@@ -163,6 +170,7 @@ public class User {
 
     public void addUserFacilityMappings(List<UserFacilityMapping> userFacilityMappings) {
         userFacilityMappings.forEach(this::addUserFacilityMapping);
+<<<<<<< HEAD
     }
 
     public User getCreatedBy() {
@@ -189,5 +197,7 @@ public class User {
         if (this.isAdmin) roles.add(ADMIN);
         if (this.isOrgAdmin) roles.add(ORGANISATION_ADMIN);
         return (String[]) roles.toArray();
+=======
+>>>>>>> 7a5acd67e5910a0637d336a8237d30b140a3c9e8
     }
 }

@@ -176,6 +176,7 @@ public class CognitoUserContextServiceImpl implements UserContextService {
             userContext.setOrganisation(becomeOrganisation);
             return;
         }
+
         userContext.setOrganisation(organisationRepository.findOne(userContext.getUser().getOrganisationId()));
     }
 

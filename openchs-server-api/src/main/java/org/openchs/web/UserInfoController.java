@@ -5,12 +5,18 @@ import org.openchs.dao.CatchmentRepository;
 import org.openchs.dao.OrganisationRepository;
 import org.openchs.dao.UserFacilityMappingRepository;
 import org.openchs.dao.UserRepository;
+<<<<<<< HEAD
 import org.openchs.domain.Catchment;
 import org.openchs.domain.Organisation;
 import org.openchs.domain.User;
 import org.openchs.domain.UserFacilityMapping;
 import org.openchs.framework.security.UserContextHolder;
 import org.openchs.service.UserService;
+=======
+import org.openchs.domain.*;
+import org.openchs.framework.security.UserContextHolder;
+import org.openchs.web.request.IndividualRequest;
+>>>>>>> 7a5acd67e5910a0637d336a8237d30b140a3c9e8
 import org.openchs.web.request.UserContract;
 import org.openchs.web.request.UserInfo;
 import org.slf4j.Logger;
@@ -31,16 +37,14 @@ public class UserInfoController {
     private UserRepository userRepository;
     private UserFacilityMappingRepository userFacilityMappingRepository;
     private OrganisationRepository organisationRepository;
-    private UserService userService;
     private final Logger logger;
 
     @Autowired
-    public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, UserFacilityMappingRepository userFacilityMappingRepository, OrganisationRepository organisationRepository, UserService userService) {
+    public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, UserFacilityMappingRepository userFacilityMappingRepository, OrganisationRepository organisationRepository) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.userFacilityMappingRepository = userFacilityMappingRepository;
         this.organisationRepository = organisationRepository;
-        this.userService = userService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
