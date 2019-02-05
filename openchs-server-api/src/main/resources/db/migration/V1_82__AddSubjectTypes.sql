@@ -2,8 +2,6 @@ create table subject_type (
   id              serial primary key,
   uuid            varchar(255),
   name           varchar(255) not null,
-  core_fields     jsonb,
-  search_fields   jsonb,
   organisation_id bigint       not null,
   is_voided       boolean      not null default false,
   audit_id        bigint       not null,
@@ -34,7 +32,7 @@ WITH CHECK ((organisation_id = (select id
 
 create table operational_subject_type (
   id              serial primary key,
-  uuid            varchar(255),
+  uuid            varchar(255) UNIQUE NOT NULL,
   name           varchar(255) not null,
   subject_type_id       INTEGER REFERENCES subject_type (id) NOT NULL,
   organisation_id bigint       not null,
@@ -68,22 +66,7 @@ WITH CHECK ((organisation_id = (select id
 
 
 
-
-
-  INSERT INTO concept (name, data_type, uuid, version, audit_id, organisation_id)
-  VALUES ('First Name', 'Text', '098d688a-63ed-44ac-88d3-95eb36d0cce6', 1, create_audit(), 1);
-  INSERT INTO concept (name, data_type, uuid, version, audit_id, organisation_id)
-  VALUES ('Last Name', 'Text', 'f7198793-aa42-436c-ae9f-733d091a651e', 1, create_audit(), 1);
-  INSERT INTO concept (name, data_type, uuid, version, audit_id, organisation_id)
-  VALUES ('Date of Birth', 'Date', '57489b4b-4da9-4b12-8558-0ae61807bfce', 1, create_audit(), 1);
-  INSERT INTO concept (name, data_type, uuid, version, audit_id, organisation_id)
-  VALUES ('Date of birth verified', 'Coded', 'f03ce02a-6852-4fbf-95b1-238ce7d0b2c7', 1, create_audit(), 1);
-
-
 --insert individual subject type
-insert into subject_type(uuid, name, core_fields, search_fields, organisation_id, audit_id) VALUES ('9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3', 'Individual', '{"coreFields": [
-  {"comment": "First Name", "conceptUuid": "098d688a-63ed-44ac-88d3-95eb36d0cce6"},
-  {"comment": "Last Name", "conceptUuid": "f7198793-aa42-436c-ae9f-733d091a651e"},
-  {"comment": "Gender", "conceptUuid": "483be0b2-b6ba-40e0-8bf7-91cb33c6e284", "type": "SingleSelect"},
-  {"comment": "Date of Birth", "conceptUuid": "57489b4b-4da9-4b12-8558-0ae61807bfce", "type": "DateOfBirthAndAge", "extra": {"verificationConcept": "f03ce02a-6852-4fbf-95b1-238ce7d0b2c7"}}
-]}'::jsonb, '{}'::jsonb, 1, create_audit() );
+insert into subject_type(uuid, name, organisation_id, audit_id) VALUES ('9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3', 'Individual', 1, create_audit());
+ALTER TABLE public.individual ALTER COLUMN date_of_birth DROP NOT NULL;
+ALTER TABLE public.individual ALTER COLUMN gender_id DROP NOT NULL;

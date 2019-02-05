@@ -5,6 +5,9 @@ import org.openchs.web.request.CHSRequest;
 import org.openchs.web.request.PeriodRequest;
 
 public class CommonIndividualRequest extends CHSRequest {
+
+    private String subjectTypeUUID;
+
     private String firstName;
 
     private String lastName;
@@ -109,5 +112,13 @@ public class CommonIndividualRequest extends CHSRequest {
 
     public void setCatchmentUUID(String catchmentUUID) {
         this.catchmentUUID = catchmentUUID;
+    }
+
+    public String getSubjectTypeUUID() {
+        return subjectTypeUUID;
+    }
+
+    public void setSubjectTypeUUID(String subjectTypeUUID) {
+        this.subjectTypeUUID = subjectTypeUUID;
     }
 }
