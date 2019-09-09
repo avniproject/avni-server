@@ -12,6 +12,8 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "operationalProgram", path = "operationalProgram")
 public interface OperationalProgramRepository extends ImplReferenceDataRepository<OperationalProgram> {
@@ -22,4 +24,6 @@ public interface OperationalProgramRepository extends ImplReferenceDataRepositor
     OperationalProgram findByProgramAndOrganisationId(Program program, long organisationId);
 
     OperationalProgram findByProgramIdAndOrganisationId(long programId, long organisationId);
+
+    List<OperationalProgram> findByOrganisationId(Long organisationId);
 }

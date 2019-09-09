@@ -5,6 +5,8 @@ import org.openchs.domain.ConceptAnswer;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "conceptAnswer", path = "conceptAnswer")
 public interface ConceptAnswerRepository extends ReferenceDataRepository<ConceptAnswer>, FindByLastModifiedDateTime<ConceptAnswer> {
@@ -17,4 +19,6 @@ public interface ConceptAnswerRepository extends ReferenceDataRepository<Concept
     default ConceptAnswer findByNameIgnoreCase(String name) {
         throw new UnsupportedOperationException("No field 'name' in ConceptAnswer");
     }
+
+    List<ConceptAnswer> findByOrganisationId(Long organisationId);
 }

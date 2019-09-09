@@ -9,8 +9,12 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "formElement", path = "formElement")
 public interface FormElementRepository extends ReferenceDataRepository<FormElement>, FindByLastModifiedDateTime<FormElement> {
     FormElement findFirstByConcept(Concept concept);
+
+    List<FormElement> findByOrganisationId(Long organisationId);
 }

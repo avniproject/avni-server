@@ -17,4 +17,6 @@ public interface CatchmentRepository extends ReferenceDataRepository<Catchment>,
     List<Catchment> findByIdIn(@Param("ids") Long[] ids);
 
     Page<Catchment> findByIsVoidedFalse(Pageable pageable);
+
+    List<Catchment> findByOrganisationId(Long organisationId);
 }
