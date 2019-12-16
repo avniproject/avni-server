@@ -25,20 +25,20 @@ DB=openchs
 clean_db_server:
 	make _clean_db database=$(DB)
 	make _clean_db database=openchs_test
-	-psql -h localhost -U $(su) -d postgres -c 'drop role openchs';
-	-psql -h localhost -U $(su) -d postgres -c 'drop role demo';
+	-psql -U $(su) -d postgres -c 'drop role openchs';
+	-psql -U $(su) -d postgres -c 'drop role demo';
 
 _clean_db:
-	-psql -h localhost -U $(su) -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$(database)' AND pid <> pg_backend_pid()"
-	-psql -h localhost -U $(su) -d postgres -c 'drop database $(database)';
+	-psql -U $(su) -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$(database)' AND pid <> pg_backend_pid()"
+	-psql -U $(su) -d postgres -c 'drop database $(database)';
 
 _build_db:
-	-sudo -u $(su) psql -c "create user openchs with password 'password' createrole";
-	psql -h localhost -U $(su) -d postgres -c 'create database $(database) with owner openchs';
-	-psql -h localhost -U $(su) -d $(database) -c 'create extension if not exists "uuid-ossp"';
-	-psql -h localhost -U $(su) -d $(database) -c 'create extension if not exists "ltree"';
-	-psql -h localhost -U $(su) -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
-	-psql -h localhost -U $(su) -d postgres  -c 'grant demo to openchs';
+	-psql -U $(su) -d postgres -c "create user openchs with password 'password' createrole";
+	psql -U $(su) -d postgres -c 'create database $(database) with owner openchs';
+	-psql -U $(su) -d $(database) -c 'create extension if not exists "uuid-ossp"';
+	-psql -U $(su) -d $(database) -c 'create extension if not exists "ltree"';
+	-psql -U $(su) -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
+	-psql -U $(su) -d postgres  -c 'grant demo to openchs';
 # </postgres>
 
 # <db>
@@ -51,11 +51,11 @@ build_db: ## Creates new empty database
 orgId:= $(if $(orgId),$(orgId),0)
 
 delete_org_meta_data:
-	psql -h localhost -U $(su) $(DB) -f openchs-server-api/src/main/resources/database/deleteOrgMetadata.sql -v orgId=$(orgId)
+	psql -U $(su) $(DB) -f openchs-server-api/src/main/resources/database/deleteOrgMetadata.sql -v orgId=$(orgId)
 
 delete_org_data:
 	@echo 'Delete for Organisation ID = $(orgId)'
-	psql -h localhost -U $(su) $(DB) -f openchs-server-api/src/main/resources/database/deleteOrgData.sql -v orgId=$(orgId)
+	psql -U $(su) $(DB) -f openchs-server-api/src/main/resources/database/deleteOrgData.sql -v orgId=$(orgId)
 
 rebuild_db: clean_db build_db ## clean + build db
 
@@ -74,7 +74,7 @@ clean_testdb: ## Drops the test database
 	make _clean_db database=openchs_test
 
 _create_demo_organisation:
-	-psql -h localhost -U $(su) -d $(database) -f make-scripts/create_demo_organisation.sql
+	-psql -U $(su) -d $(database) -f make-scripts/create_demo_organisation.sql
 
 build_testdb: ## Creates new empty database of test database
 	make _build_db database=openchs_test
@@ -133,8 +133,8 @@ debug_server_live: build_server
 # <server>
 
 ci-test:
-	-psql -h localhost -Uopenchs openchs_test -c 'create extension if not exists "uuid-ossp"';
-	-psql -h localhost -Uopenchs openchs_test -c 'create extension if not exists "ltree"';
+	-psql -Uopenchs openchs_test -c 'create extension if not exists "uuid-ossp"';
+	-psql -Uopenchs openchs_test -c 'create extension if not exists "ltree"';
 
 	./gradlew clean test --debug --stacktrace
 
