@@ -14,6 +14,7 @@ import org.openchs.web.request.PointRequest;
 import org.openchs.web.request.ProgramEnrolmentRequest;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,9 +25,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.util.Collections;
+import java.util.List;
 
 @RestController
-public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment>, OperatingIndividualScopeAwareController<ProgramEnrolment> {
+public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment>, OperatingIndividualScopeAwareController<ProgramEnrolment>, OperatingIndividualScopeAwareFilterController<ProgramEnrolment> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final ProgramRepository programRepository;
     private final IndividualRepository individualRepository;
@@ -90,8 +93,14 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     public PagedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "programUuid", required = false) List<String> programUuid,
             Pageable pageable) {
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTime(userService.getCurrentUser(), lastModifiedDateTime, now, pageable));
+        if (programUuid == null) {
+            return wrap(getCHSEntitiesForUserByLastModifiedDateTime(userService.getCurrentUser(), lastModifiedDateTime, now, pageable));
+        } else {
+            return programUuid.isEmpty() ? wrap(new PageImpl<>(Collections.emptyList())) :
+                    wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, programUuid, pageable));
+        }
     }
 
     @GetMapping("/web/programEnrolment/{uuid}")
@@ -115,6 +124,11 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @Override
     public OperatingIndividualScopeAwareRepository<ProgramEnrolment> resourceRepository() {
+        return programEnrolmentRepository;
+    }
+
+    @Override
+    public OperatingIndividualScopeAwareRepositoryWithTypeFilter<ProgramEnrolment> repository() {
         return programEnrolmentRepository;
     }
 }

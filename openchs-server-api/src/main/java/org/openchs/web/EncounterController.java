@@ -7,12 +7,13 @@ import org.openchs.domain.Encounter;
 import org.openchs.domain.EncounterType;
 import org.openchs.domain.Individual;
 import org.openchs.geo.Point;
+import org.openchs.service.ObservationService;
 import org.openchs.service.UserService;
 import org.openchs.web.request.EncounterRequest;
-import org.openchs.service.ObservationService;
 import org.openchs.web.request.PointRequest;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
@@ -22,16 +23,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.util.Collections;
+import java.util.List;
 
 @RestController
-public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter>, OperatingIndividualScopeAwareController<Encounter> {
+public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter>, OperatingIndividualScopeAwareController<Encounter>, OperatingIndividualScopeAwareFilterController<Encounter> {
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final IndividualRepository individualRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final EncounterRepository encounterRepository;
     private final ObservationService observationService;
     private final UserService userService;
-
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private Bugsnag bugsnag;
 
     @Autowired
@@ -69,7 +71,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
         Encounter encounter = newOrExistingEntity(encounterRepository, request, new Encounter());
         //Planned visit can not overwrite completed encounter
-        if(encounter.isCompleted() && request.isPlanned())
+        if (encounter.isCompleted() && request.isPlanned())
             return;
 
         encounter.setEncounterDateTime(request.getEncounterDateTime());
@@ -83,10 +85,10 @@ public class EncounterController extends AbstractController<Encounter> implement
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
         encounter.setVoided(request.isVoided());
         PointRequest encounterLocation = request.getEncounterLocation();
-        if(encounterLocation != null)
+        if (encounterLocation != null)
             encounter.setEncounterLocation(new Point(encounterLocation.getX(), encounterLocation.getY()));
         PointRequest cancelLocation = request.getCancelLocation();
-        if(cancelLocation != null)
+        if (cancelLocation != null)
             encounter.setCancelLocation(new Point(cancelLocation.getX(), cancelLocation.getY()));
 
         encounterRepository.save(encounter);
@@ -117,8 +119,14 @@ public class EncounterController extends AbstractController<Encounter> implement
     public PagedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "encounterTypeUuid", required = false) List<String> encounterTypeUuid,
             Pageable pageable) {
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTime(userService.getCurrentUser(), lastModifiedDateTime, now, pageable));
+        if (encounterTypeUuid == null) {
+            return wrap(getCHSEntitiesForUserByLastModifiedDateTime(userService.getCurrentUser(), lastModifiedDateTime, now, pageable));
+        } else {
+            return encounterTypeUuid.isEmpty() ? wrap(new PageImpl<>(Collections.emptyList())) :
+                    wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, encounterTypeUuid, pageable));
+        }
     }
 
     @Override
@@ -132,6 +140,11 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @Override
     public OperatingIndividualScopeAwareRepository<Encounter> resourceRepository() {
+        return encounterRepository;
+    }
+
+    @Override
+    public OperatingIndividualScopeAwareRepositoryWithTypeFilter<Encounter> repository() {
         return encounterRepository;
     }
 }

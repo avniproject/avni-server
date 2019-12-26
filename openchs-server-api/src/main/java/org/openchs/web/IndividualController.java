@@ -11,13 +11,13 @@ import org.openchs.projection.IndividualWebProjection;
 import org.openchs.service.IndividualService;
 import org.openchs.service.ObservationService;
 import org.openchs.service.UserService;
-import org.openchs.web.request.EnrolmentContract;
 import org.openchs.web.request.IndividualContract;
 import org.openchs.web.request.IndividualRequest;
 import org.openchs.web.request.PointRequest;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,14 +29,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import static org.springframework.data.jpa.domain.Specifications.where;
 
 @RestController
-public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual>, OperatingIndividualScopeAwareController<Individual> {
+public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual>, OperatingIndividualScopeAwareController<Individual>, OperatingIndividualScopeAwareFilterController<Individual> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final IndividualRepository individualRepository;
     private final LocationRepository locationRepository;
@@ -76,8 +76,14 @@ public class IndividualController extends AbstractController<Individual> impleme
     public PagedResources<Resource<Individual>> getIndividualsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "subjectTypeUuid", required = false) List<String> subjectTypeUuid,
             Pageable pageable) {
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTime(userService.getCurrentUser(), lastModifiedDateTime, now, pageable));
+        if (subjectTypeUuid == null) {
+            return wrap(getCHSEntitiesForUserByLastModifiedDateTime(userService.getCurrentUser(), lastModifiedDateTime, now, pageable));
+        } else {
+            return subjectTypeUuid.isEmpty() ? wrap(new PageImpl<>(Collections.emptyList())) :
+                    wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, subjectTypeUuid, pageable));
+        }
     }
 
     @GetMapping(value = "/individual/search")
@@ -121,7 +127,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<IndividualContract> getSubjectProfile(@RequestParam("uuid") String uuid) {
-        IndividualContract individualContract =  individualService.getSubjectInfo(uuid);
+        IndividualContract individualContract = individualService.getSubjectInfo(uuid);
         return ResponseEntity.ok(individualContract);
     }
 
@@ -129,8 +135,8 @@ public class IndividualController extends AbstractController<Individual> impleme
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<IndividualContract> getSubjectProgramEnrollment(@PathVariable("subjectUuid") String uuid) {
-        IndividualContract individualEnrolmentContract =  individualService.getSubjectProgramEnrollment(uuid);
-        if(Objects.isNull(individualEnrolmentContract)){
+        IndividualContract individualEnrolmentContract = individualService.getSubjectProgramEnrollment(uuid);
+        if (Objects.isNull(individualEnrolmentContract)) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(individualEnrolmentContract);
@@ -185,5 +191,10 @@ public class IndividualController extends AbstractController<Individual> impleme
         } else {
             return locationRepository.findByTitleIgnoreCase(individualRequest.getAddressLevel());
         }
+    }
+
+    @Override
+    public OperatingIndividualScopeAwareRepositoryWithTypeFilter<Individual> repository() {
+        return individualRepository;
     }
 }
