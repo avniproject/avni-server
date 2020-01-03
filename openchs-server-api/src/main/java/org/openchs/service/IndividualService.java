@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 
@@ -143,23 +144,45 @@ public class IndividualService {
     }
 
     public List<RelationshipContract> constructRelationships(Individual individual) {
-        return individual.getRelationships().stream().map(individualRelationship -> {
-            RelationshipContract relationshipContract = new RelationshipContract();
-            relationshipContract.setUuid(individualRelationship.getUuid());
-            relationshipContract.setIndividualBUuid(individualRelationship.getIndividualB().getUuid());
-            relationshipContract.setIndividualBIsToARelation(individualRelationship.getRelationship().getIndividualBIsToA().getName());
-            relationshipContract.setRelationshipTypeUuid(individualRelationship.getRelationship().getUuid());
-            relationshipContract.setEnterDateTime(individualRelationship.getEnterDateTime());
-            relationshipContract.setExitDateTime(individualRelationship.getExitDateTime());
-            relationshipContract.setFirstName(individualRelationship.getIndividualB().getFirstName());
-            relationshipContract.setLastName(individualRelationship.getIndividualB().getLastName());
-            relationshipContract.setDateOfBirth(individualRelationship.getIndividualB().getDateOfBirth());
-            relationshipContract.setVoided(individualRelationship.isVoided());
-            if (individualRelationship.getExitObservations() != null) {
-                relationshipContract.setExitObservations(constructObservations(individualRelationship.getExitObservations()));
-            }
-            return relationshipContract;
-        }).collect(Collectors.toList());
+
+        if(individual.getRelationshipsWithB().size() > 0){
+            return individual.getRelationshipsWithB().stream().map(individualRelationship -> {
+                RelationshipContract relationshipContract = new RelationshipContract();
+                relationshipContract.setUuid(individualRelationship.getUuid());
+                relationshipContract.setIndividualBUuid(individualRelationship.getIndividualB().getUuid());
+                relationshipContract.setIndividualBIsToARelation(individualRelationship.getRelationship().getIndividualBIsToA().getName());
+                relationshipContract.setRelationshipTypeUuid(individualRelationship.getRelationship().getUuid());
+                relationshipContract.setEnterDateTime(individualRelationship.getEnterDateTime());
+                relationshipContract.setExitDateTime(individualRelationship.getExitDateTime());
+                relationshipContract.setFirstName(individualRelationship.getIndividualB().getFirstName());
+                relationshipContract.setLastName(individualRelationship.getIndividualB().getLastName());
+                relationshipContract.setDateOfBirth(individualRelationship.getIndividualB().getDateOfBirth());
+                relationshipContract.setVoided(individualRelationship.isVoided());
+                if (individualRelationship.getExitObservations() != null) {
+                    relationshipContract.setExitObservations(constructObservations(individualRelationship.getExitObservations()));
+                }
+                return relationshipContract;
+            }).collect(Collectors.toList());
+        }else if(individual.getRelationshipsWithA().size() > 0){
+            return individual.getRelationshipsWithA().stream().map(individualRelationship -> {
+                RelationshipContract relationshipContract = new RelationshipContract();
+                relationshipContract.setUuid(individualRelationship.getUuid());
+                relationshipContract.setIndividualBUuid(individualRelationship.getIndividuala().getUuid());
+                relationshipContract.setIndividualBIsToARelation(individualRelationship.getRelationship().getIndividualAIsToB().getName());
+                relationshipContract.setRelationshipTypeUuid(individualRelationship.getRelationship().getUuid());
+                relationshipContract.setEnterDateTime(individualRelationship.getEnterDateTime());
+                relationshipContract.setExitDateTime(individualRelationship.getExitDateTime());
+                relationshipContract.setFirstName(individualRelationship.getIndividuala().getFirstName());
+                relationshipContract.setLastName(individualRelationship.getIndividuala().getLastName());
+                relationshipContract.setDateOfBirth(individualRelationship.getIndividuala().getDateOfBirth());
+                relationshipContract.setVoided(individualRelationship.isVoided());
+                if (individualRelationship.getExitObservations() != null) {
+                    relationshipContract.setExitObservations(constructObservations(individualRelationship.getExitObservations()));
+                }
+                return relationshipContract;
+            }).collect(Collectors.toList());
+        }
+        return emptyList();
     }
 
     public List<ObservationContract> constructObservations(@NotNull ObservationCollection observationCollection) {
