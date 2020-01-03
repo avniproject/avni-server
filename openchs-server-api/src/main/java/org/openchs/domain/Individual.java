@@ -34,7 +34,10 @@ public class Individual extends OrganisationAwareEntity {
     private boolean dateOfBirthVerified;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "individuala")
-    private Set<IndividualRelationship> relationships = new HashSet<>();
+    private Set<IndividualRelationship> relationshipsWithB = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "individualB")
+    private Set<IndividualRelationship> relationshipsWithA = new HashSet<>();
 
     @NotNull
     private LocalDate registrationDate;
@@ -186,12 +189,21 @@ public class Individual extends OrganisationAwareEntity {
         this.subjectType = subjectType;
     }
 
-    public Set<IndividualRelationship> getRelationships() {
-        return relationships;
+    public Set<IndividualRelationship> getRelationshipsWithA() {
+        return relationshipsWithA;
     }
 
-    public void setRelationships(Set<IndividualRelationship> relationships) {
-        this.relationships = relationships;
+    public void setRelationshipsWithA(Set<IndividualRelationship> relationshipsWithA) {
+        this.relationshipsWithA = relationshipsWithA;
+    }
+
+
+    public Set<IndividualRelationship> getRelationshipsWithB() {
+        return relationshipsWithB;
+    }
+
+    public void setRelationshipsWithB(Set<IndividualRelationship> relationshipsWithB) {
+        this.relationshipsWithB = relationshipsWithB;
     }
 
     @JsonIgnore
