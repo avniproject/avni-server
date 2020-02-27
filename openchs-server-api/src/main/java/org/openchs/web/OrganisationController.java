@@ -1,7 +1,10 @@
 package org.openchs.web;
 
+import org.openchs.dao.OrganisationConfigRepository;
 import org.openchs.dao.OrganisationRepository;
+import org.openchs.domain.JsonObject;
 import org.openchs.domain.Organisation;
+import org.openchs.domain.OrganisationConfig;
 import org.openchs.web.request.OrganisationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,10 +24,12 @@ import java.util.UUID;
 public class OrganisationController implements RestControllerResourceProcessor<Organisation> {
 
     private OrganisationRepository organisationRepository;
+    private final OrganisationConfigRepository organisationConfigRepository;
 
     @Autowired
-    public OrganisationController(OrganisationRepository organisationRepository) {
+    public OrganisationController(OrganisationRepository organisationRepository, OrganisationConfigRepository organisationConfigRepository) {
         this.organisationRepository = organisationRepository;
+        this.organisationConfigRepository = organisationConfigRepository;
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.POST)
@@ -47,6 +53,16 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         org.setMediaDirectory(request.getMediaDirectory());
         org.setVoided(request.isVoided());
         organisationRepository.save(org);
+        OrganisationConfig organisationConfig = new OrganisationConfig();
+        organisationConfig.setUuid(UUID.randomUUID().toString());
+        organisationConfig.setOrganisationId(org.getId());
+        HashMap<String, Object> userSettings = new HashMap<>();
+        //{"languages": ["en"], "searchFilters": [], "myDashboardFilters": []}
+        userSettings.put("languages", new String[]{"en"});
+//        userSettings.put("searchFilters", new String[]{""});
+        organisationConfig.setSettings(new JsonObject(userSettings));
+        organisationConfigRepository.save(organisationConfig);
+
         return new ResponseEntity<>(org, HttpStatus.CREATED);
     }
 
