@@ -1,8 +1,10 @@
 package org.openchs.web;
 
+import org.openchs.application.FormMapping;
 import org.openchs.dao.GroupRoleRepository;
 import org.openchs.dao.OperationalSubjectTypeRepository;
 import org.openchs.dao.SubjectTypeRepository;
+import org.openchs.dao.application.FormMappingRepository;
 import org.openchs.domain.GroupRole;
 import org.openchs.domain.OperationalSubjectType;
 import org.openchs.domain.SubjectType;
@@ -34,13 +36,15 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     private final SubjectTypeService subjectTypeService;
     private final GroupRoleRepository groupRoleRepository;
     private SubjectTypeRepository subjectTypeRepository;
+    private FormMappingRepository formMappingRepository;
 
     @Autowired
-    public SubjectTypeController(SubjectTypeRepository subjectTypeRepository, OperationalSubjectTypeRepository operationalSubjectTypeRepository, SubjectTypeService subjectTypeService, GroupRoleRepository groupRoleRepository) {
+    public SubjectTypeController(SubjectTypeRepository subjectTypeRepository, OperationalSubjectTypeRepository operationalSubjectTypeRepository, SubjectTypeService subjectTypeService, GroupRoleRepository groupRoleRepository,FormMappingRepository formMappingRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.subjectTypeService = subjectTypeService;
         this.groupRoleRepository = groupRoleRepository;
+        this.formMappingRepository = formMappingRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -143,11 +147,21 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     @Transactional
     public ResponseEntity voidSubjectType(@PathVariable("id") Long id) {
         OperationalSubjectType operationalSubjectType = operationalSubjectTypeRepository.findOne(id);
+        List<FormMapping> formMappings = formMappingRepository.findAllByIsVoidedFalse();      
+
         if (operationalSubjectType == null)
             return ResponseEntity.notFound().build();
         SubjectType subjectType = operationalSubjectType.getSubjectType();
         if (subjectType == null)
             return ResponseEntity.notFound().build();
+
+
+        for (int formMapping = 0; formMapping < formMappings.size(); formMapping++) {
+            if(formMappings.get(formMapping).getSubjectTypeUuid() != null && formMappings.get(formMapping).getSubjectTypeUuid().equals(subjectType.getUuid())){
+                formMappings.get(formMapping).setVoided(true);
+            }
+        }
+    
 
         operationalSubjectType.setName(ReactAdminUtil.getVoidedName(operationalSubjectType.getName(), operationalSubjectType.getId()));
         operationalSubjectType.setVoided(true);

@@ -182,12 +182,19 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     @Transactional
     public ResponseEntity voidEncounterType(@PathVariable("id") Long id) {
         OperationalEncounterType operationalEncounterType = operationalEncounterTypeRepository.findOne(id);
+        List<FormMapping> formMappings = formMappingRepository.findAllByIsVoidedFalse();      
         if (operationalEncounterType == null)
             return ResponseEntity.notFound().build();
         EncounterType encounterType = operationalEncounterType.getEncounterType();
         if (encounterType == null)
             return ResponseEntity.notFound().build();
 
+        for (int formMapping = 0; formMapping < formMappings.size(); formMapping++) {
+            if(formMappings.get(formMapping).getEncounterTypeUuid() != null && formMappings.get(formMapping).getEncounterTypeUuid().equals(encounterType.getUuid())){
+                formMappings.get(formMapping).setVoided(true);
+            }
+        }
+        
         operationalEncounterType.setName(ReactAdminUtil.getVoidedName(operationalEncounterType.getName(), operationalEncounterType.getId()));
         operationalEncounterType.setVoided(true);
         encounterType.setName(ReactAdminUtil.getVoidedName(encounterType.getName(), encounterType.getId()));

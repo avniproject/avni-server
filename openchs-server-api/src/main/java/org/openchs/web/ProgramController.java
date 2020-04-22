@@ -171,11 +171,18 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     @Transactional
     public ResponseEntity voidProgram(@PathVariable("id") Long id) {
         OperationalProgram operationalProgram = operationalProgramRepository.findOne(id);
+        List<FormMapping> formMappings = formMappingRepository.findAllByIsVoidedFalse();      
         if (operationalProgram == null)
             return ResponseEntity.notFound().build();
         Program program = operationalProgram.getProgram();
         if (program == null)
             return ResponseEntity.notFound().build();
+
+        for (int formMapping = 0; formMapping < formMappings.size(); formMapping++) {
+            if(formMappings.get(formMapping).getProgramUuid() != null && formMappings.get(formMapping).getProgramUuid().equals(program.getUuid())){
+                formMappings.get(formMapping).setVoided(true);
+            }
+        }
 
         operationalProgram.setName(ReactAdminUtil.getVoidedName(operationalProgram.getName(), operationalProgram.getId()));
         program.setName(ReactAdminUtil.getVoidedName(program.getName(), program.getId()));
