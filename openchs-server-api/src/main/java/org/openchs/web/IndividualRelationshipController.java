@@ -10,7 +10,6 @@ import org.openchs.domain.Individual;
 import org.openchs.domain.individualRelationship.IndividualRelationship;
 import org.openchs.domain.individualRelationship.IndividualRelationshipType;
 import org.openchs.service.UserService;
-import org.openchs.util.ReactAdminUtil;
 import org.openchs.web.request.IndividualRelationshipRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
@@ -19,7 +18,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,7 +56,8 @@ public class IndividualRelationshipController extends AbstractController<Individ
         individualRelationship.setEnterDateTime(request.getEnterDateTime());
         individualRelationship.setExitDateTime(request.getExitDateTime());
         individualRelationship.setVoided(request.isVoided());
-
+        request.setupUuidIfNeeded();
+        individualRelationship.setUuid(request.getUuid());
         individualRelationshipRepository.save(individualRelationship);
     }
 
