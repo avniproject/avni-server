@@ -12,8 +12,8 @@ import org.openchs.framework.security.UserContextHolder;
 import org.openchs.web.request.VideoTelemetricContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +44,7 @@ public class VideoTelemetricController implements RestControllerResourceProcesso
 
     @RequestMapping(value = "/videotelemetric", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<VideoTelemetric>> getEmpty(Pageable pageable) {
+    public PagedModel<EntityModel<VideoTelemetric>> getEmpty(Pageable pageable) {
         return empty(pageable);
     }
 

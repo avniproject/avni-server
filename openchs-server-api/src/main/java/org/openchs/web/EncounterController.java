@@ -25,8 +25,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -164,7 +164,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<Encounter>> getEncountersByCatchmentAndLastModified(
+    public PagedModel<EntityModel<Encounter>> getEncountersByCatchmentAndLastModified(
             @RequestParam("catchmentId") long catchmentId,
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -174,7 +174,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<Encounter>> getEncountersByLastModified(
+    public PagedModel<EntityModel<Encounter>> getEncountersByLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -183,7 +183,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
+    public PagedModel<EntityModel<Encounter>> getEncountersByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
@@ -197,7 +197,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     }
 
     @Override
-    public Resource<Encounter> process(Resource<Encounter> resource) {
+    public EntityModel<Encounter> process(EntityModel<Encounter> resource) {
         Encounter encounter = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));

@@ -2,7 +2,7 @@ package org.openchs.web.request.webapp;
 
 import org.joda.time.DateTime;
 import org.openchs.domain.OperationalSubjectType;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.util.List;
 

@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,7 +35,7 @@ public class LocationMappingController implements OperatingIndividualScopeAwareC
 
     @RequestMapping(value = {"/locationMapping/search/lastModified", "/locationMapping/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user','admin','organisation_admin')")
-    public PagedResources<Resource<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
+    public PagedModel<EntityModel<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -48,7 +48,7 @@ public class LocationMappingController implements OperatingIndividualScopeAwareC
     }
 
     @Override
-    public Resource<ParentLocationMapping> process(Resource<ParentLocationMapping> resource) {
+    public EntityModel<ParentLocationMapping> process(EntityModel<ParentLocationMapping> resource) {
         ParentLocationMapping content = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(content.getLocation().getUuid(), "locationUUID"));

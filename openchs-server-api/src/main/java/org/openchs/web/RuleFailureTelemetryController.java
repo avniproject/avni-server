@@ -10,8 +10,8 @@ import org.openchs.web.request.RuleFailureTelemetryRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,7 +31,7 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
 
     @RequestMapping(value = "ruleFailureTelemetry", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<RuleFailureTelemetry>> getEmpty(Pageable pageable) {
+    public PagedModel<EntityModel<RuleFailureTelemetry>> getEmpty(Pageable pageable) {
         return empty(pageable);
     }
 

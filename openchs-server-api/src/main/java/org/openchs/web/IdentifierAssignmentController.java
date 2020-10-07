@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -56,7 +56,7 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     @RequestMapping(value = "/identifierAssignment", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
     @Transactional
-    public PagedResources<Resource<IdentifierAssignment>> get(
+    public PagedModel<EntityModel<IdentifierAssignment>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             Pageable pageable) {
         User currentUser = userService.getCurrentUser();
@@ -91,7 +91,7 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     }
 
     @Override
-    public Resource<IdentifierAssignment> process(Resource<IdentifierAssignment> resource) {
+    public EntityModel<IdentifierAssignment> process(EntityModel<IdentifierAssignment> resource) {
         IdentifierAssignment identifierAssignment = resource.getContent();
         resource.removeLinks();
         if (identifierAssignment.getProgramEnrolment() != null) {

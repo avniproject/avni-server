@@ -18,11 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,8 +31,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.*;
-
-import static org.springframework.data.jpa.domain.Specifications.where;
 
 @RestController
 public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual>, OperatingIndividualScopeAwareController<Individual>, OperatingIndividualScopeAwareFilterController<Individual> {
@@ -111,7 +110,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = {"/individual", /*-->Both are Deprecated */ "/individual/search/byCatchmentAndLastModified", "/individual/search/lastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<Individual>> getIndividualsByOperatingIndividualScope(
+    public PagedModel<EntityModel<Individual>> getIndividualsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -133,7 +132,7 @@ public class IndividualController extends AbstractController<Individual> impleme
             Pageable pageable) {
         IndividualRepository repo = this.individualRepository;
         return repo.findAll(
-                where(repo.getFilterSpecForName(name))
+                Specification.where(repo.getFilterSpecForName(name))
                 .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
                 .and(repo.getFilterSpecForVoid(false))
                 , pageable)
@@ -197,7 +196,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @Override
-    public Resource<Individual> process(Resource<Individual> resource) {
+    public EntityModel<Individual> process(EntityModel<Individual> resource) {
         Individual individual = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(individual.getAddressLevel().getUuid(), "addressUUID"));

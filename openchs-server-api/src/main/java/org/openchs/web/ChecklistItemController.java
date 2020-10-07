@@ -12,8 +12,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,7 +63,7 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
 
     @RequestMapping(value = "/txNewChecklistItemEntity/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<ChecklistItem>> getByIndividualsOfCatchmentAndLastModified(
+    public PagedModel<EntityModel<ChecklistItem>> getByIndividualsOfCatchmentAndLastModified(
             @RequestParam("catchmentId") long catchmentId,
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -74,7 +74,7 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
 
     @RequestMapping(value = "/txNewChecklistItemEntity", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<ChecklistItem>> getChecklistItemsByOperatingIndividualScope(
+    public PagedModel<EntityModel<ChecklistItem>> getChecklistItemsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
@@ -88,7 +88,7 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
     }
 
     @Override
-    public Resource<ChecklistItem> process(Resource<ChecklistItem> resource) {
+    public EntityModel<ChecklistItem> process(EntityModel<ChecklistItem> resource) {
         ChecklistItem checklistItem = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(checklistItem.getChecklist().getUuid(), "checklistUUID"));

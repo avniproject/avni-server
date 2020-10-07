@@ -1,7 +1,7 @@
 package org.openchs.web.request.webapp;
 
 import org.openchs.domain.OperationalEncounterType;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 import org.joda.time.DateTime;
 
 

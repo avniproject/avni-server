@@ -30,7 +30,6 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        super.configure(http);
         http.cors().and().csrf().disable()
                 .formLogin().disable()
                 .httpBasic().disable()

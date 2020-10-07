@@ -16,8 +16,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.ResourceProcessor;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.RepresentationModelProcessor;
 
 import java.util.stream.Collectors;
 
@@ -38,10 +38,10 @@ public class OpenCHS {
 
 
     @Bean
-    public ResourceProcessor<Resource<IndividualRelationshipType>> IndividualRelationshipTypeProcessor() {
-        return new ResourceProcessor<Resource<IndividualRelationshipType>>() {
+    public RepresentationModelProcessor<EntityModel<IndividualRelationshipType>> IndividualRelationshipTypeProcessor() {
+        return new RepresentationModelProcessor<EntityModel<IndividualRelationshipType>>() {
             @Override
-            public Resource<IndividualRelationshipType> process(Resource<IndividualRelationshipType> resource) {
+            public EntityModel<IndividualRelationshipType> process(EntityModel<IndividualRelationshipType> resource) {
                 IndividualRelationshipType individualRelationshipType = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(individualRelationshipType.getIndividualAIsToB().getUuid(), "individualAIsToBRelationUUID"));
@@ -52,10 +52,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<IndividualRelationGenderMapping>> IndividualRelationGenderMappingProcessor() {
-        return new ResourceProcessor<Resource<IndividualRelationGenderMapping>>() {
+    public RepresentationModelProcessor<EntityModel<IndividualRelationGenderMapping>> IndividualRelationGenderMappingProcessor() {
+        return new RepresentationModelProcessor<EntityModel<IndividualRelationGenderMapping>>() {
             @Override
-            public Resource<IndividualRelationGenderMapping> process(Resource<IndividualRelationGenderMapping> resource) {
+            public EntityModel<IndividualRelationGenderMapping> process(EntityModel<IndividualRelationGenderMapping> resource) {
                 IndividualRelationGenderMapping individualRelationGenderMapping = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(individualRelationGenderMapping.getRelation().getUuid(), "relationUUID"));
@@ -67,10 +67,10 @@ public class OpenCHS {
 
 
     @Bean
-    public ResourceProcessor<Resource<FormElement>> formElementProcessor() {
-        return new ResourceProcessor<Resource<FormElement>>() {
+    public RepresentationModelProcessor<EntityModel<FormElement>> formElementProcessor() {
+        return new RepresentationModelProcessor<EntityModel<FormElement>>() {
             @Override
-            public Resource<FormElement> process(Resource<FormElement> resource) {
+            public EntityModel<FormElement> process(EntityModel<FormElement> resource) {
                 FormElement formElement = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(formElement.getFormElementGroup().getUuid(), "formElementGroupUUID"));
@@ -81,10 +81,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<FormElementGroup>> formElementGroupProcessor() {
-        return new ResourceProcessor<Resource<FormElementGroup>>() {
+    public RepresentationModelProcessor<EntityModel<FormElementGroup>> formElementGroupProcessor() {
+        return new RepresentationModelProcessor<EntityModel<FormElementGroup>>() {
             @Override
-            public Resource<FormElementGroup> process(Resource<FormElementGroup> resource) {
+            public EntityModel<FormElementGroup> process(EntityModel<FormElementGroup> resource) {
                 FormElementGroup formElementGroup = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(formElementGroup.getForm().getUuid(), "formUUID"));
@@ -94,10 +94,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<ProgramOrganisationConfig>> programOrganisationConfig() {
-        return new ResourceProcessor<Resource<ProgramOrganisationConfig>>() {
+    public RepresentationModelProcessor<EntityModel<ProgramOrganisationConfig>> programOrganisationConfig() {
+        return new RepresentationModelProcessor<EntityModel<ProgramOrganisationConfig>>() {
             @Override
-            public Resource<ProgramOrganisationConfig> process(Resource<ProgramOrganisationConfig> resource) {
+            public EntityModel<ProgramOrganisationConfig> process(EntityModel<ProgramOrganisationConfig> resource) {
                 ProgramOrganisationConfig content = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(content.getProgram().getUuid(), "programUUID"));
@@ -109,10 +109,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<ConceptAnswer>> conceptAnswerProcessor() {
-        return new ResourceProcessor<Resource<ConceptAnswer>>() {
+    public RepresentationModelProcessor<EntityModel<ConceptAnswer>> conceptAnswerProcessor() {
+        return new RepresentationModelProcessor<EntityModel<ConceptAnswer>>() {
             @Override
-            public Resource<ConceptAnswer> process(Resource<ConceptAnswer> resource) {
+            public EntityModel<ConceptAnswer> process(EntityModel<ConceptAnswer> resource) {
                 ConceptAnswer conceptAnswer = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(conceptAnswer.getConcept().getUuid(), "conceptUUID"));
@@ -123,10 +123,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<FormMapping>> FormMappingProcessor() {
-        return new ResourceProcessor<Resource<FormMapping>>() {
+    public RepresentationModelProcessor<EntityModel<FormMapping>> FormMappingProcessor() {
+        return new RepresentationModelProcessor<EntityModel<FormMapping>>() {
             @Override
-            public Resource<FormMapping> process(Resource<FormMapping> resource) {
+            public EntityModel<FormMapping> process(EntityModel<FormMapping> resource) {
                 FormMapping formMapping = resource.getContent();
                 resource.removeLinks();
                 Form form = formMapping.getForm();
@@ -156,10 +156,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<Rule>> RuleProcessor() {
-        return new ResourceProcessor<Resource<Rule>>() {
+    public RepresentationModelProcessor<EntityModel<Rule>> RuleProcessor() {
+        return new RepresentationModelProcessor<EntityModel<Rule>>() {
             @Override
-            public Resource<Rule> process(Resource<Rule> resource) {
+            public EntityModel<Rule> process(EntityModel<Rule> resource) {
                 Rule rule = resource.getContent();
                 resource.removeLinks();
                 RuledEntityType entityType = rule.getEntity().getType();
@@ -175,10 +175,10 @@ public class OpenCHS {
     }
 
     @Bean
-    public ResourceProcessor<Resource<ChecklistItemDetail>> ChecklistItemDetailProcessor() {
-        return new ResourceProcessor<Resource<ChecklistItemDetail>>() {
+    public RepresentationModelProcessor<EntityModel<ChecklistItemDetail>> ChecklistItemDetailProcessor() {
+        return new RepresentationModelProcessor<EntityModel<ChecklistItemDetail>>() {
             @Override
-            public Resource<ChecklistItemDetail> process(Resource<ChecklistItemDetail> resource) {
+            public EntityModel<ChecklistItemDetail> process(EntityModel<ChecklistItemDetail> resource) {
                 ChecklistItemDetail content = resource.getContent();
                 resource.removeLinks();
                 resource.add(new Link(content.getChecklistDetail().getUuid(), "checklistDetailUUID"));

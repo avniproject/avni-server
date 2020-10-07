@@ -2,7 +2,7 @@ package org.openchs.web.request;
 
 import org.joda.time.DateTime;
 import org.openchs.domain.JsonObject;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 @Relation(collectionRelation = "userInfo")
 public class UserInfo {

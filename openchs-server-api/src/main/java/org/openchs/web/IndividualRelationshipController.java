@@ -17,8 +17,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -64,7 +64,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
 
     @RequestMapping(value = "/individualRelationship/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<IndividualRelationship>> getByIndividualsOfCatchmentAndLastModified(
+    public PagedModel<EntityModel<IndividualRelationship>> getByIndividualsOfCatchmentAndLastModified(
             @RequestParam("catchmentId") long catchmentId,
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -74,7 +74,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
 
     @RequestMapping(value = "/individualRelationship/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<IndividualRelationship>> getByLastModified(
+    public PagedModel<EntityModel<IndividualRelationship>> getByLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -84,7 +84,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
 
     @RequestMapping(value = "/individualRelationship", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<IndividualRelationship>> getIndividualRelationshipsByOperatingIndividualScope(
+    public PagedModel<EntityModel<IndividualRelationship>> getIndividualRelationshipsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -98,7 +98,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
     }
 
     @Override
-    public Resource<IndividualRelationship> process(Resource<IndividualRelationship> resource) {
+    public EntityModel<IndividualRelationship> process(EntityModel<IndividualRelationship> resource) {
         IndividualRelationship individualRelationship = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(individualRelationship.getRelationship().getUuid(), "relationshipTypeUUID"));

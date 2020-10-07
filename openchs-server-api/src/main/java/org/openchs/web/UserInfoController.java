@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -91,7 +91,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
 
     @RequestMapping(value = "/v2/me", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'admin', 'organisation_admin')")
-    public PagedResources<Resource<UserInfo>> getMyProfile() {
+    public PagedModel<EntityModel<UserInfo>> getMyProfile() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();

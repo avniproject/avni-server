@@ -22,8 +22,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.springframework.data.jpa.domain.Specifications.where;
-
 @Service
 public class EncounterService {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterService.class);
@@ -59,7 +57,7 @@ public class EncounterService {
         Specification<Encounter> completedEncounterSpecification = Specification.where(encounterRepository.withNotNullEncounterDateTime())
                 .or(encounterRepository.withNotNullCancelDateTime());
         encountersContract = encounterRepository.findAll(
-                where(encounterRepository.withIndividualId(individual.getId()))
+                Specification.where(encounterRepository.withIndividualId(individual.getId()))
                         .and(encounterRepository.withEncounterTypeIdUuids(encounterTypeIdList))
                         .and(encounterRepository.withEncounterEarliestVisitDateTime(earliestVisitDateTime))
                         .and(encounterRepository.withEncounterDateTime(encounterDateTime))

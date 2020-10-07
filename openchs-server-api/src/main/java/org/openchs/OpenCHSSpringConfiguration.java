@@ -19,7 +19,6 @@ import java.util.Objects;
 
 @Configuration
 @EnableJpaAuditing
-@EnableWebMvc
 public class OpenCHSSpringConfiguration extends WebMvcAutoConfiguration {
     private final Environment environment;
 

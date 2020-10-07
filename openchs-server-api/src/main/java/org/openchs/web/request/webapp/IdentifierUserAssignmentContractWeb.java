@@ -2,7 +2,7 @@ package org.openchs.web.request.webapp;
 
 import org.openchs.domain.IdentifierSource;
 import org.openchs.domain.IdentifierUserAssignment;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 @Relation(collectionRelation = "identifierUserAssignment")
 public class IdentifierUserAssignmentContractWeb {

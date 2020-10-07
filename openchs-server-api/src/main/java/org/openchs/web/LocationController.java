@@ -18,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -65,14 +65,14 @@ public class LocationController implements OperatingIndividualScopeAwareControll
     @GetMapping(value = "/locations")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
-    public PagedResources<Resource<AddressLevel>> getAll(Pageable pageable) {
+    public PagedModel<EntityModel<AddressLevel>> getAll(Pageable pageable) {
         return wrap(locationRepository.findPageByIsVoidedFalse(pageable));
     }
 
     @GetMapping(value = "locations/search/find")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin', 'user')")
     @ResponseBody
-    public PagedResources<Resource<AddressLevel>> find(
+    public PagedModel<EntityModel<AddressLevel>> find(
             @RequestParam(value = "title") String title,
             Pageable pageable) {
         return wrap(locationRepository.findByIsVoidedFalseAndTitleIgnoreCaseStartingWithOrderByTitleAsc(title, pageable));
@@ -81,7 +81,7 @@ public class LocationController implements OperatingIndividualScopeAwareControll
     @RequestMapping(value = {"/locations/search/lastModified", "/locations/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user','admin','organisation_admin')")
     @ResponseBody
-    public PagedResources<Resource<AddressLevel>> getAddressLevelsByOperatingIndividualScope(
+    public PagedModel<EntityModel<AddressLevel>> getAddressLevelsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {

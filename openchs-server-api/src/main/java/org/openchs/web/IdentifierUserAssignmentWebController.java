@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import javax.transaction.Transactional;
@@ -38,7 +38,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @GetMapping(value = "/web/identifierUserAssignment")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
-    public PagedResources<Resource<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
+    public PagedModel<EntityModel<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
         Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageable);
         Page<IdentifierUserAssignmentContractWeb> response = nonVoided.map(identifierUserAssignment -> IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
         return wrap(response);

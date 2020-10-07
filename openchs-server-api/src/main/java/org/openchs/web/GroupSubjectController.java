@@ -17,8 +17,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,7 +45,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/groupSubject", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<GroupSubject>> getGroupSubjectsByOperatingIndividualScope(
+    public PagedModel<EntityModel<GroupSubject>> getGroupSubjectsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String groupSubjectTypeUuid,
@@ -74,7 +74,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     }
 
     @Override
-    public Resource<GroupSubject> process(Resource<GroupSubject> resource) {
+    public EntityModel<GroupSubject> process(EntityModel<GroupSubject> resource) {
         GroupSubject groupSubject = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));

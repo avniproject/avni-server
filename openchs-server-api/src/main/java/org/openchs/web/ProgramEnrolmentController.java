@@ -19,8 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,8 +29,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
-
-import static org.springframework.data.jpa.domain.Specifications.where;
 
 @RestController
 public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment>, OperatingIndividualScopeAwareController<ProgramEnrolment>, OperatingIndividualScopeAwareFilterController<ProgramEnrolment> {
@@ -103,7 +101,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @GetMapping(value = {"/programEnrolment", /* Deprecated -> */ "/programEnrolment/search/lastModified", "/programEnrolment/search/byIndividualsOfCatchmentAndLastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
-    public PagedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
+    public PagedModel<EntityModel<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programUuid", required = false) String programUuid,
@@ -147,7 +145,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     }
 
     @Override
-    public Resource<ProgramEnrolment> process(Resource<ProgramEnrolment> resource) {
+    public EntityModel<ProgramEnrolment> process(EntityModel<ProgramEnrolment> resource) {
         ProgramEnrolment programEnrolment = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(programEnrolment.getProgram().getUuid(), "programUUID"));

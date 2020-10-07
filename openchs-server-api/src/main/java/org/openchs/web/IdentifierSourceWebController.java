@@ -9,8 +9,8 @@ import org.openchs.web.request.webapp.IdentifierSourceContractWeb;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,7 +34,7 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
 
     @GetMapping(value = "/web/identifierSource/search/findAllById")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
-    public PagedResources<Resource<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
+    public PagedModel<EntityModel<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
         Long[] id = {ids};
         return wrap(identifierSourceRepository.findByIdIn(id, pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
@@ -43,7 +43,7 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
     @GetMapping(value = "/web/identifierSource")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
-    public PagedResources<Resource<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
+    public PagedModel<EntityModel<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
         return wrap(identifierSourceRepository.findPageByIsVoidedFalse(pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
 

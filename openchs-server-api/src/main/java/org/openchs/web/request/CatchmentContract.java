@@ -1,7 +1,7 @@
 package org.openchs.web.request;
 
 import org.openchs.domain.Catchment;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;

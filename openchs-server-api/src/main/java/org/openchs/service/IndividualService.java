@@ -16,9 +16,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.springframework.data.jpa.domain.Specifications.where;
-
-
 @Service
 public class IndividualService {
     private final Logger logger;
