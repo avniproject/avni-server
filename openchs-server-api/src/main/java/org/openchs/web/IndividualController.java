@@ -6,11 +6,14 @@ import org.openchs.domain.*;
 import org.openchs.geo.Point;
 import org.openchs.projection.IndividualWebProjection;
 import org.openchs.service.*;
-import org.openchs.util.BadRequestError;
-import org.openchs.util.O;
 import org.openchs.util.S;
-import org.openchs.web.request.*;
+import org.openchs.web.request.EncounterContract;
+import org.openchs.web.request.IndividualContract;
+import org.openchs.web.request.IndividualRequest;
+import org.openchs.web.request.PointRequest;
 import org.openchs.web.request.rules.RulesContractWrapper.Decisions;
+import org.openchs.web.request.rules.RulesContractWrapper.IndividualContractWrapper;
+import org.openchs.web.request.rules.constructWrappers.IndividualConstructionService;
 import org.openchs.web.response.ResponsePage;
 import org.openchs.web.response.SubjectResponse;
 import org.slf4j.LoggerFactory;
@@ -29,7 +32,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
-import java.io.IOException;
 import java.util.*;
 
 import static org.springframework.data.jpa.domain.Specifications.where;
@@ -50,6 +52,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final EncounterService encounterService;
     private final IndividualSearchService individualSearchService;
     private final IdentifierAssignmentRepository identifierAssignmentRepository;
+    private final IndividualConstructionService individualConstructionService;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -64,7 +67,8 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 ConceptService conceptService,
                                 EncounterService encounterService,
                                 IndividualSearchService individualSearchService,
-                                IdentifierAssignmentRepository identifierAssignmentRepository) {
+                                IdentifierAssignmentRepository identifierAssignmentRepository,
+                                IndividualConstructionService individualConstructionService) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -78,6 +82,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.encounterService = encounterService;
         this.individualSearchService = individualSearchService;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
+        this.individualConstructionService = individualConstructionService;
     }
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
@@ -252,6 +257,17 @@ public class IndividualController extends AbstractController<Individual> impleme
         }
         Individual voidedIndividual = individualService.voidSubject(individual);
         return ResponseEntity.ok(voidedIndividual);
+    }
+
+    @GetMapping("/subject/getAll")
+    @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
+    @ResponseBody
+    public List<IndividualContractWrapper> getAllByLocationAndSubjectType(
+            @RequestParam(value = "locationUUID") String locationUUID,
+            @RequestParam(value = "subjectTypeName") String subjectTypeName) {
+        SubjectType subjectType = subjectTypeRepository.findByName(subjectTypeName);
+        AddressLevel addressLevel = locationRepository.findByUuid(locationUUID);
+        return individualConstructionService.findAllByLocationAndSubjectType(subjectType, addressLevel);
     }
 
     @Override

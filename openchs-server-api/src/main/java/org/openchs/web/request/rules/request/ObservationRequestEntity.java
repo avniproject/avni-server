@@ -4,6 +4,11 @@ public class ObservationRequestEntity {
     private String conceptUUID;
     private Object value;
 
+    public ObservationRequestEntity(String conceptUUID, Object value) {
+        this.conceptUUID = conceptUUID;
+        this.value = value;
+    }
+
     public void setConceptUUID(String conceptUUID){
         this.conceptUUID = conceptUUID;
     }
