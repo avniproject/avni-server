@@ -7,6 +7,7 @@ import org.openchs.domain.*;
 import org.openchs.geo.Point;
 import org.openchs.service.EncounterService;
 import org.openchs.service.ObservationService;
+import org.openchs.service.ScopeBasedSyncService;
 import org.openchs.service.UserService;
 import org.openchs.web.request.EncounterContract;
 import org.openchs.web.request.EncounterRequest;
@@ -28,7 +29,7 @@ import javax.transaction.Transactional;
 import java.util.*;
 
 @RestController
-public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter>, OperatingIndividualScopeAwareController<Encounter> {
+public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final IndividualRepository individualRepository;
     private final EncounterTypeRepository encounterTypeRepository;
@@ -37,6 +38,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final UserService userService;
     private Bugsnag bugsnag;
     private final EncounterService encounterService;
+    private ScopeBasedSyncService<Encounter> scopeBasedSyncService;
 
     @Autowired
     public EncounterController(IndividualRepository individualRepository,
@@ -45,7 +47,7 @@ public class EncounterController extends AbstractController<Encounter> implement
                                ObservationService observationService,
                                UserService userService,
                                Bugsnag bugsnag,
-                               EncounterService encounterService) {
+                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService) {
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
@@ -53,6 +55,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         this.userService = userService;
         this.bugsnag = bugsnag;
         this.encounterService = encounterService;
+        this.scopeBasedSyncService = scopeBasedSyncService;
     }
 
     @GetMapping(value = "/web/encounter/{uuid}")
@@ -157,7 +160,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (encounterTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
         if (encounterType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable));
+        return wrap(scopeBasedSyncService.getSyncResult(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable));
     }
 
     @DeleteMapping("/web/encounter/{uuid}")
@@ -183,8 +186,4 @@ public class EncounterController extends AbstractController<Encounter> implement
         return resource;
     }
 
-    @Override
-    public OperatingIndividualScopeAwareRepository<Encounter> repository() {
-        return encounterRepository;
-    }
 }

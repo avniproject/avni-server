@@ -6,6 +6,7 @@ import org.openchs.domain.Checklist;
 import org.openchs.domain.ChecklistDetail;
 import org.openchs.domain.ChecklistItem;
 import org.openchs.service.ObservationService;
+import org.openchs.service.ScopeBasedSyncService;
 import org.openchs.service.UserService;
 import org.openchs.web.request.application.ChecklistItemRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,22 +23,24 @@ import javax.transaction.Transactional;
 import java.util.Collections;
 
 @RestController
-public class ChecklistItemController extends AbstractController<ChecklistItem> implements RestControllerResourceProcessor<ChecklistItem>, OperatingIndividualScopeAwareController<ChecklistItem> {
+public class ChecklistItemController extends AbstractController<ChecklistItem> implements RestControllerResourceProcessor<ChecklistItem> {
     private final ObservationService observationService;
     private final ChecklistItemDetailRepository checklistItemDetailRepository;
     private final ChecklistRepository checklistRepository;
     private final ChecklistItemRepository checklistItemRepository;
     private final ChecklistDetailRepository checklistDetailRepository;
     private final UserService userService;
+    private ScopeBasedSyncService<ChecklistItem> scopeBasedSyncService;
 
     @Autowired
-    public ChecklistItemController(ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, ObservationService observationService, ChecklistItemDetailRepository checklistItemDetailRepository, ChecklistDetailRepository checklistDetailRepository, UserService userService) {
+    public ChecklistItemController(ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, ObservationService observationService, ChecklistItemDetailRepository checklistItemDetailRepository, ChecklistDetailRepository checklistDetailRepository, UserService userService, ScopeBasedSyncService<ChecklistItem> scopeBasedSyncService) {
         this.checklistRepository = checklistRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.observationService = observationService;
         this.checklistItemDetailRepository = checklistItemDetailRepository;
         this.checklistDetailRepository = checklistDetailRepository;
         this.userService = userService;
+        this.scopeBasedSyncService = scopeBasedSyncService;
     }
 
     @Transactional
@@ -84,7 +87,7 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
         if (checklistDetailUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         ChecklistDetail checklistDetail = checklistDetailRepository.findByUuid(checklistDetailUuid);
         if (checklistDetail == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable));
+        return wrap(scopeBasedSyncService.getSyncResult(checklistItemRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable));
     }
 
     @Override
@@ -98,8 +101,4 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
         return resource;
     }
 
-    @Override
-    public OperatingIndividualScopeAwareRepository<ChecklistItem> repository() {
-        return checklistItemRepository;
-    }
 }

@@ -4,9 +4,9 @@ package org.openchs.web;
 import org.joda.time.DateTime;
 import org.openchs.builder.BuilderException;
 import org.openchs.dao.LocationRepository;
-import org.openchs.dao.OperatingIndividualScopeAwareRepository;
 import org.openchs.domain.AddressLevel;
 import org.openchs.service.LocationService;
+import org.openchs.service.ScopeBasedSyncService;
 import org.openchs.service.UserService;
 import org.openchs.util.ReactAdminUtil;
 import org.openchs.web.request.AddressLevelContractWeb;
@@ -30,18 +30,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RepositoryRestController
-public class LocationController implements OperatingIndividualScopeAwareController<AddressLevel>, RestControllerResourceProcessor<AddressLevel> {
+public class LocationController implements RestControllerResourceProcessor<AddressLevel> {
 
     private LocationRepository locationRepository;
     private Logger logger;
     private UserService userService;
     private LocationService locationService;
+    private ScopeBasedSyncService<AddressLevel> scopeBasedSyncService;
 
     @Autowired
-    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService) {
+    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService) {
         this.locationRepository = locationRepository;
         this.userService = userService;
         this.locationService = locationService;
+        this.scopeBasedSyncService = scopeBasedSyncService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -84,7 +86,7 @@ public class LocationController implements OperatingIndividualScopeAwareControll
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, null, pageable));
+        return wrap(scopeBasedSyncService.getSyncResult(locationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, null, pageable));
     }
 
     @PutMapping(value = "/locations/{id}")
@@ -142,8 +144,4 @@ public class LocationController implements OperatingIndividualScopeAwareControll
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public OperatingIndividualScopeAwareRepository<AddressLevel> repository() {
-        return locationRepository;
-    }
 }

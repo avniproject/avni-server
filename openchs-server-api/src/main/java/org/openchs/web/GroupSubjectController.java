@@ -7,6 +7,7 @@ import org.openchs.domain.GroupSubject;
 import org.openchs.domain.Individual;
 import org.openchs.domain.SubjectType;
 import org.openchs.service.IndividualService;
+import org.openchs.service.ScopeBasedSyncService;
 import org.openchs.service.UserService;
 import org.openchs.util.BadRequestError;
 import org.openchs.web.request.GroupRoleContract;
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-public class GroupSubjectController extends AbstractController<GroupSubject> implements RestControllerResourceProcessor<GroupSubject>, OperatingIndividualScopeAwareController<GroupSubject> {
+public class GroupSubjectController extends AbstractController<GroupSubject> implements RestControllerResourceProcessor<GroupSubject> {
 
     private final GroupSubjectRepository groupSubjectRepository;
     private final UserService userService;
@@ -39,15 +40,17 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     private final SubjectTypeRepository subjectTypeRepository;
     private final IndividualService individualService;
     private final Logger logger;
+    private ScopeBasedSyncService<GroupSubject> scopeBasedSyncService;
 
     @Autowired
-    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService) {
+    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService) {
         this.groupSubjectRepository = groupSubjectRepository;
         this.userService = userService;
         this.individualRepository = individualRepository;
         this.groupRoleRepository = groupRoleRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.individualService = individualService;
+        this.scopeBasedSyncService = scopeBasedSyncService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -62,7 +65,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(groupSubjectTypeUuid);
         if(subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable));
+        return wrap(scopeBasedSyncService.getSyncResult(groupSubjectRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable));
     }
 
     @RequestMapping(value = "/groupSubjects", method = RequestMethod.POST)
@@ -138,8 +141,4 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
         return resource;
     }
 
-    @Override
-    public OperatingIndividualScopeAwareRepository<GroupSubject> repository() {
-        return groupSubjectRepository;
-    }
 }

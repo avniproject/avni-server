@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import static org.springframework.data.jpa.domain.Specifications.where;
 
 @RestController
-public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual>, OperatingIndividualScopeAwareController<Individual> {
+public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final IndividualRepository individualRepository;
     private final LocationRepository locationRepository;
@@ -46,6 +46,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final IndividualSearchService individualSearchService;
     private final IdentifierAssignmentRepository identifierAssignmentRepository;
     private final ProgramEnrolmentConstructionService programEnrolmentConstructionService;
+    private ScopeBasedSyncService<Individual> scopeBasedSyncService;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -59,7 +60,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 EncounterService encounterService,
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
-                                ProgramEnrolmentConstructionService programEnrolmentConstructionService) {
+                                ProgramEnrolmentConstructionService programEnrolmentConstructionService, ScopeBasedSyncService<Individual> scopeBasedSyncService) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -72,6 +73,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.individualSearchService = individualSearchService;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
         this.programEnrolmentConstructionService = programEnrolmentConstructionService;
+        this.scopeBasedSyncService = scopeBasedSyncService;
     }
 
     @RequestMapping(value = "/individuals", method = RequestMethod.POST)
@@ -125,7 +127,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         if (subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable));
+        return wrap(scopeBasedSyncService.getSyncResult(individualRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable));
     }
 
     @GetMapping(value = "/individual/search")
@@ -270,8 +272,4 @@ public class IndividualController extends AbstractController<Individual> impleme
         }
     }
 
-    @Override
-    public OperatingIndividualScopeAwareRepository<Individual> repository() {
-        return individualRepository;
-    }
 }

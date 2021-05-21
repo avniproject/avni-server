@@ -7,6 +7,7 @@ import org.openchs.domain.CommentThread;
 import org.openchs.domain.Individual;
 import org.openchs.domain.SubjectType;
 import org.openchs.service.CommentService;
+import org.openchs.service.ScopeBasedSyncService;
 import org.openchs.service.UserService;
 import org.openchs.web.request.CommentContract;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-public class CommentController extends AbstractController<Comment> implements RestControllerResourceProcessor<Comment>, OperatingIndividualScopeAwareController<Comment> {
+public class CommentController extends AbstractController<Comment> implements RestControllerResourceProcessor<Comment> {
 
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(CommentController.class);
     private final CommentRepository commentRepository;
@@ -36,6 +37,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     private final SubjectTypeRepository subjectTypeRepository;
     private final UserService userService;
     private final CommentThreadRepository commentThreadRepository;
+    private ScopeBasedSyncService<Comment> scopeBasedSyncService;
 
     @Autowired
     public CommentController(CommentRepository commentRepository,
@@ -43,13 +45,14 @@ public class CommentController extends AbstractController<Comment> implements Re
                              CommentService commentService,
                              SubjectTypeRepository subjectTypeRepository,
                              UserService userService,
-                             CommentThreadRepository commentThreadRepository) {
+                             CommentThreadRepository commentThreadRepository, ScopeBasedSyncService<Comment> scopeBasedSyncService) {
         this.commentRepository = commentRepository;
         this.individualRepository = individualRepository;
         this.commentService = commentService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.userService = userService;
         this.commentThreadRepository = commentThreadRepository;
+        this.scopeBasedSyncService = scopeBasedSyncService;
     }
 
     @GetMapping(value = "/web/comment")
@@ -119,7 +122,7 @@ public class CommentController extends AbstractController<Comment> implements Re
         if (subjectType == null) {
             return wrap(new PageImpl<>(Collections.emptyList()));
         }
-        return wrap(getCHSEntitiesForUserByLastModifiedDateTimeAndFilterByType(userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable));
+        return wrap(scopeBasedSyncService.getSyncResult(commentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable));
     }
 
     @Override
@@ -132,11 +135,6 @@ public class CommentController extends AbstractController<Comment> implements Re
             resource.add(new Link(commentThread.getUuid(), "commentThreadUUID"));
         }
         return resource;
-    }
-
-    @Override
-    public OperatingIndividualScopeAwareRepository<Comment> repository() {
-        return commentRepository;
     }
 
 }
