@@ -9,18 +9,14 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import org.joda.time.DateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 
 @Service
 public class FormService implements NonScopeAwareService {
-
-    private static final Logger logger = LoggerFactory.getLogger(FormService.class);
     private final FormRepository formRepository;
     private final OrganisationConfigService organisationConfigService;
     private final ConceptRepository conceptRepository;
@@ -32,34 +28,29 @@ public class FormService implements NonScopeAwareService {
     }
 
     public void saveForm(FormContract formRequest) throws FormBuilderException {
-        try {
-            Form existingForm = formRepository.findByUuid(formRequest.getUuid());
-            FormBuilder formBuilder = new FormBuilder(existingForm);
-            Form form = formBuilder.withName(formRequest.getName())
-                    .withType(formRequest.getFormType())
-                    .withUUID(formRequest.getUuid())
-                    .withFormElementGroups(formRequest.getFormElementGroups())
-                    .withDecisionRule(formRequest.getDecisionRule())
-                    .withVisitScheduleRule(formRequest.getVisitScheduleRule())
-                    .withTaskScheduleRule(formRequest.getTaskScheduleRule())
-                    .withValidationRule(formRequest.getValidationRule())
-                    .withChecklistRule(formRequest.getChecklistsRule())
-                    .withVoided(formRequest.isVoided())
-                    .withValidationDeclarativeRule(formRequest.getValidationDeclarativeRule())
-                    .withDecisionDeclarativeRule(formRequest.getDecisionDeclarativeRule())
-                    .withVisitScheduleDeclarativeRule(formRequest.getVisitScheduleDeclarativeRule())
-                    .withTaskScheduleDeclarativeRule(formRequest.getTaskScheduleDeclarativeRule())
-                    .build();
+        Form existingForm = formRepository.findByUuid(formRequest.getUuid());
+        FormBuilder formBuilder = new FormBuilder(existingForm);
+        Form form = formBuilder.withName(formRequest.getName())
+                .withType(formRequest.getFormType())
+                .withUUID(formRequest.getUuid())
+                .withFormElementGroups(formRequest.getFormElementGroups())
+                .withDecisionRule(formRequest.getDecisionRule())
+                .withVisitScheduleRule(formRequest.getVisitScheduleRule())
+                .withTaskScheduleRule(formRequest.getTaskScheduleRule())
+                .withValidationRule(formRequest.getValidationRule())
+                .withChecklistRule(formRequest.getChecklistsRule())
+                .withVoided(formRequest.isVoided())
+                .withValidationDeclarativeRule(formRequest.getValidationDeclarativeRule())
+                .withDecisionDeclarativeRule(formRequest.getDecisionDeclarativeRule())
+                .withVisitScheduleDeclarativeRule(formRequest.getVisitScheduleDeclarativeRule())
+                .withTaskScheduleDeclarativeRule(formRequest.getTaskScheduleDeclarativeRule())
+                .build();
 
-            mapDecisionConcepts(formRequest, form);
-            //Form audit values might not change for changes in form element groups or form elements.
-            //This updateAudit forces audit updates
-            form.updateAudit();
-            formRepository.save(form);
-        } catch (Throwable t) {
-            logger.info("Caught exception during form save", t);
-            throw t;
-        }
+        mapDecisionConcepts(formRequest, form);
+        //Form audit values might not change for changes in form element groups or form elements.
+        //This updateAudit forces audit updates
+        form.updateAudit();
+        formRepository.save(form);
     }
 
     private void mapDecisionConcepts(FormContract formRequest, Form form) {
