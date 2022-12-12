@@ -28,6 +28,10 @@ public class MessageRule extends OrganisationAwareEntity {
     @Column
     private String messageTemplateId;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    private ReceiverType receiverType;
+
     public String getName() {
         return name;
     }
@@ -74,5 +78,13 @@ public class MessageRule extends OrganisationAwareEntity {
 
     public void setMessageTemplateId(String messageTemplateId) {
         this.messageTemplateId = messageTemplateId;
+    }
+
+    public ReceiverType getReceiverType() {
+        return receiverType;
+    }
+
+    public void setReceiverType(ReceiverType receiverType) {
+        this.receiverType = receiverType;
     }
 }

@@ -2,6 +2,7 @@ package org.avni.messaging.contract;
 
 import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.domain.MessageRule;
+import org.avni.messaging.domain.ReceiverType;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.service.EntityTypeRetrieverService;
 import org.joda.time.DateTime;
@@ -21,7 +22,7 @@ public class MessageRuleContract {
     private Long entityTypeId;
     private String entityTypeUuid;
     private String messageTemplateId;
-
+    private String receiverType;
     private Boolean isVoided;
     private UserContract createdBy;
     private DateTime createdDateTime;
@@ -39,6 +40,7 @@ public class MessageRuleContract {
 
         BeanUtils.copyProperties(messageRule, this);
         setEntityType(messageRule.getEntityType().toString());
+        setReceiverType(messageRule.getReceiverType().toString());
         setCreatedBy(new UserContract(messageRule.getCreatedBy()));
         setLastModifiedBy(new UserContract(messageRule.getLastModifiedBy()));
     }
@@ -57,6 +59,9 @@ public class MessageRuleContract {
         result.setScheduleRule(getScheduleRule());
         if (getEntityType() != null) {
             result.setEntityType(EntityType.valueOf(StringUtils.capitalize(getEntityType())));
+        }
+        if (getReceiverType() != null) {
+            result.setReceiverType(ReceiverType.valueOf(StringUtils.capitalize(getReceiverType())));
         }
         result.setEntityTypeId(getEntityTypeId());
         result.setMessageTemplateId(getMessageTemplateId());
@@ -77,6 +82,7 @@ public class MessageRuleContract {
         messageRule.setEntityType(EntityType.valueOf(messageRuleContract.getEntityType()));
         messageRule.setScheduleRule(messageRuleContract.getScheduleRule());
         messageRule.setMessageRule(messageRuleContract.getMessageRule());
+        messageRule.setReceiverType(ReceiverType.valueOf(messageRuleContract.getReceiverType()));
         messageRule.setMessageTemplateId(messageRuleContract.getMessageTemplateId());
         messageRule.setVoided(messageRuleContract.getVoided());
         return messageRule;
@@ -192,5 +198,13 @@ public class MessageRuleContract {
 
     public void setEntityTypeUuid(String entityTypeUuid) {
         this.entityTypeUuid = entityTypeUuid;
+    }
+
+    public String getReceiverType() {
+        return receiverType;
+    }
+
+    public void setReceiverType(String receiverType) {
+        this.receiverType = receiverType;
     }
 }
