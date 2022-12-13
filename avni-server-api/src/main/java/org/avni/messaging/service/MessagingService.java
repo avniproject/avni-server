@@ -69,11 +69,16 @@ public class MessagingService {
         return messageRuleRepository.findAll();
     }
 
-    public void onEntitySave(Long entityId, Long entityTypeId, EntityType entityType, Long receiverId) {
+    public void onEntitySave(Long entityId, Long entityTypeId, EntityType entityType, Long subjectId, Long userId) {
         List<MessageRule> messageRules = messageRuleRepository.findAllByEntityTypeAndEntityTypeId(entityType, entityTypeId);
-        MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, receiverId);
 
         for (MessageRule messageRule : messageRules) {
+            MessageReceiver messageReceiver;
+            if(messageRule.getReceiverType() == ReceiverType.Subject)
+                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, subjectId);
+            else if(messageRule.getReceiverType() == ReceiverType.User)
+                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId);
+
             DateTime scheduledDateTime = ruleService.executeScheduleRule(messageRule.getEntityType().name(), entityId, messageRule.getScheduleRule());
             messageRequestService.createOrUpdateMessageRequest(messageRule, messageReceiver, entityId, scheduledDateTime);
         }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -73,5 +74,9 @@ public class UserService implements NonScopeAwareService {
     @Transactional
     public User findByUuid(String uuid) {
         return userRepository.findByUuid(uuid);
+    }
+
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
 }

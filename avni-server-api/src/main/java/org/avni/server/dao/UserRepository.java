@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import org.joda.time.DateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
@@ -23,6 +24,7 @@ import java.util.List;
 public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
     User findByUsername(String username);
     User findByUuid(String uuid);
+    Optional<User> findById(Long id);
 
     default User findOne(Long id) {
         return findById(id).orElse(null);

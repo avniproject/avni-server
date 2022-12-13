@@ -43,10 +43,11 @@ public class MessageableAnnotationAspect {
 
         try {
             EntityType entityType = ((MethodSignature) joinPoint.getSignature()).getMethod().getAnnotation(Messageable.class).value();
+
             if (entity.isVoided()) {
                 messagingService.onEntityDelete(entity.getEntityId(), entityType, entity.getIndividual().getId());
             } else {
-                messagingService.onEntitySave(entity.getEntityId(), entity.getEntityTypeId(), entityType, entity.getIndividual().getId());
+                messagingService.onEntitySave(entity.getEntityId(), entity.getEntityTypeId(), entityType, entity.getIndividual().getId(), entity.getCreatedBy().getId());
             }
 
             return entity;

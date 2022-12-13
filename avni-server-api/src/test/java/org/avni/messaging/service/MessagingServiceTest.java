@@ -68,6 +68,7 @@ public class MessagingServiceTest {
 
         Long subjectTypeId = 234L;
         Long individualId = 567L;
+        Long userId = 890L;
         when(messageRuleRepository.findAllByEntityTypeAndEntityTypeId(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
 
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
@@ -85,7 +86,7 @@ public class MessagingServiceTest {
         DateTime scheduledDateTime = formatter.parseDateTime("2013-02-04 10:35:24");
         when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRule)).thenReturn(scheduledDateTime);
 
-        messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId);
+        messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
         verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId));
         verify(ruleService).executeScheduleRule(eq(messageRule.getEntityType().name()), eq(individualId), eq(scheduleRule));
@@ -105,6 +106,8 @@ public class MessagingServiceTest {
 
         Long subjectTypeId = 234L;
         Long individualId = 567L;
+        Long userId = 890L;
+
         when(messageRuleRepository.findAllByEntityTypeAndEntityTypeId(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
 
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
@@ -131,7 +134,7 @@ public class MessagingServiceTest {
         DateTime scheduledDateTimeOfAnotherRule = formatter.parseDateTime("2019-02-04 10:35:24");
         when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRuleAnother)).thenReturn(scheduledDateTimeOfAnotherRule);
 
-        messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId);
+        messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
         verify(messageReceiverService, times(1)).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId));
         verify(ruleService).executeScheduleRule(eq(messageRule.getEntityType().name()), eq(individualId), eq(scheduleRule));

@@ -5,6 +5,7 @@ import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.repository.MessageReceiverRepository;
 import org.avni.server.service.IndividualService;
+import org.avni.server.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +24,9 @@ public class MessageReceiverServiceTest {
     private IndividualService individualService;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private MessageReceiverRepository messageReceiverRepository;
 
     @Captor
@@ -33,7 +37,7 @@ public class MessageReceiverServiceTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        messageReceiverService = new MessageReceiverService(messageReceiverRepository, glificContactRepository, individualService);
+        messageReceiverService = new MessageReceiverService(messageReceiverRepository, glificContactRepository, individualService, userService);
     }
 
     @Test
