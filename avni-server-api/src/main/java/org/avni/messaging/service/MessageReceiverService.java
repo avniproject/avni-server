@@ -13,8 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class MessageReceiverService {
 
@@ -50,7 +48,7 @@ public class MessageReceiverService {
             return messageReceiver;
         }
 
-        String phoneNumber, fullName;
+        String phoneNumber = null, fullName = null;
         if(messageReceiver.getReceiverType() == ReceiverType.Subject){
             Individual individual = individualService.findById(messageReceiver.getReceiverId());
             phoneNumber = individualService.findPhoneNumber(individual);
