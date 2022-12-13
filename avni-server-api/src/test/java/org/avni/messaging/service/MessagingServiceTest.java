@@ -81,6 +81,7 @@ public class MessagingServiceTest {
         Long messageRuleId = 123L;
         when(messageRule.getId()).thenReturn(messageRuleId);
         when(messageRule.getEntityType()).thenReturn(EntityType.Subject);
+        when(messageRule.getReceiverType()).thenReturn(ReceiverType.Subject);
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
         DateTime scheduledDateTime = formatter.parseDateTime("2013-02-04 10:35:24");
