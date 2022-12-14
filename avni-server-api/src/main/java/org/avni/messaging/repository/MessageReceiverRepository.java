@@ -1,6 +1,7 @@
 package org.avni.messaging.repository;
 
 import org.avni.messaging.domain.MessageReceiver;
+import org.avni.messaging.domain.ReceiverType;
 import org.avni.server.dao.CHSRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MessageReceiverRepository  extends CHSRepository<MessageReceiver> {
-    MessageReceiver findByReceiverId(Long receiverId);
+    MessageReceiver findByReceiverIdAndReceiverType(Long receiverId, ReceiverType receiverType);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "update message_receiver mr set " +

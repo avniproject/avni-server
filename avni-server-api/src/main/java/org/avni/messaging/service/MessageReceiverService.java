@@ -32,10 +32,10 @@ public class MessageReceiverService {
         this.userService = userService;
     }
 
-    public MessageReceiver saveReceiverIfRequired(ReceiverType entityType, Long entityId) {
-        MessageReceiver messageReceiver = messageReceiverRepository.findByReceiverId(entityId);
+    public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, Long entityId) {
+        MessageReceiver messageReceiver = messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, receiverType);
         if (messageReceiver == null) {
-            messageReceiver = new MessageReceiver(entityType, entityId, null);
+            messageReceiver = new MessageReceiver(receiverType, entityId, null);
             messageReceiver.assignUUIDIfRequired();
             messageReceiverRepository.save(messageReceiver);
         }
