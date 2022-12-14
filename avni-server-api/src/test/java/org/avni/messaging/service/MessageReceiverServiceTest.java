@@ -43,7 +43,7 @@ public class MessageReceiverServiceTest {
     @Test
     public void shouldSaveMessageReceiverIfNotExist() {
         Long entityId = 123L;
-        when(messageReceiverRepository.findByReceiverId(entityId)).thenReturn(null);
+        when(messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, ReceiverType.Subject)).thenReturn(null);
 
         MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId);
 
@@ -60,7 +60,7 @@ public class MessageReceiverServiceTest {
     public void shouldReturnExistingMessageReceiverIfExist() {
         Long entityId = 123L;
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
-        when(messageReceiverRepository.findByReceiverId(entityId)).thenReturn(messageReceiver);
+        when(messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, ReceiverType.Subject)).thenReturn(messageReceiver);
 
         MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId);
 
