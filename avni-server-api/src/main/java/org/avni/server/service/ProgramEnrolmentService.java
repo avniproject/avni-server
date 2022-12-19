@@ -173,10 +173,8 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         if (programEnrolment.isNew()) {
             programEnrolment.setIndividual(individual);
             saveIdentifierAssignments(programEnrolment, request);
-            programEnrolmentRepository.save(programEnrolment);
-        } else {
-            programEnrolmentRepository.save(programEnrolment);
         }
+        programEnrolment = programEnrolmentRepository.save(programEnrolment);
 
         if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
             programEncounterService.saveVisitSchedules(request.getUuid(), request.getVisitSchedules(), null);
@@ -185,7 +183,6 @@ public class ProgramEnrolmentService implements ScopeAwareService {
             request.getChecklists()
                     .forEach(checklist -> saveChecklist(checklist, request.getUuid()));
         }
-
 
         logger.info(String.format("Saved programEnrolment with uuid %s", request.getUuid()));
         return programEnrolment;
