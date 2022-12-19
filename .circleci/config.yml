@@ -16,9 +16,12 @@ commands:
     - run:
         name: Install dependencies
         command: |
+          sudo add-apt-repository universe
           sudo apt-get -y -qq update
           sudo apt-get -y -qq install python3-pip
           sudo pip3 install awscli --upgrade
+          sudo apt-get install alien
+          
 
     - run:
         name: Copy build to server
@@ -31,11 +34,12 @@ commands:
           ssh -o StrictHostKeyChecking=no ec2-user@<< parameters.hostname >> \<< EOF
           sudo service openchs stop 2>&1 >/dev/null
           sleep 5
-          sudo yum clean all 2>&1 >/dev/null
-          sudo rm -rf /var/cache/yum 2>&1 >/dev/null
-          sudo yum -y updateinfo 2>&1 >/dev/null
-          sudo yum -y remove avni-server openchs-server java-1.7.0-openjdk 2>&1 >/dev/null
-          sudo yum -y install /tmp/avni-server.rpm 2>&1 >/dev/null
+          sudo apt-get clean 2>&1 >/dev/null
+          sudo apt-get autoclean 2>&1 >/dev/null
+          sudo apt-get update 2>&1 >/dev/null
+          sudo dpkg -r avni-server openchs-server java-1.7.0-openjdk 2>&1 >/dev/null
+          sudo alien /tmp/avni-server.rpm 2>&1 >/dev/null
+          sudo dpkg –i /tmp/avni-server.rpm 2>&1 >/dev/null
           sudo service openchs start 2>&1 >/dev/null
           sleep 20
           sudo rm -rf /tmp/avni-server.rpm
