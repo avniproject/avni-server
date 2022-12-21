@@ -27,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -155,16 +154,18 @@ public class TaskService implements NonScopeAwareService {
         if (taskAssignmentRequest.getStatusId() != null) {
             taskStatus = taskStatusRepository.findOne(taskAssignmentRequest.getStatusId());
         }
-        assignTasksEquallyToUsers(users, tasksToUpdate, taskStatus);
+        assignTasksEquallyToUsersAndUpdateStatus(users, tasksToUpdate, taskStatus);
         taskRepository.saveAll(tasksToUpdate);
     }
 
-    private void assignTasksEquallyToUsers(List<User> userList, List<Task> tasksToUpdate, TaskStatus taskStatus) {
+    private void assignTasksEquallyToUsersAndUpdateStatus(List<User> userList, List<Task> tasksToUpdate, TaskStatus taskStatus) {
         Iterator<User> users = new CircularList<>(userList).iterator();
         tasksToUpdate.forEach(task -> {
-            User newUser = users.next();
-            populateTaskUnAssignment(task.getAssignedTo(), newUser, task);
-            task.setAssignedTo(newUser);
+            if(userList.size() > 0) {
+                User newUser = users.next();
+                populateTaskUnAssignment(task.getAssignedTo(), newUser, task);
+                task.setAssignedTo(newUser);
+            }
             if (taskStatus != null) {
                 task.updateTaskStatus(taskStatus);
             }

@@ -7,16 +7,16 @@ import java.util.function.Consumer;
 
 public class CircularList<T> implements Iterable<T>{
     private List<T> source;
-    private int index = 0;
+    private int nextIndex = 0;
 
     public CircularList(List<T> source) {
         this.source = source;
     }
 
     private int moveIndex() {
-        int currentIndex = index;
+        int currentIndex = nextIndex;
         if (source.size() > 0) {
-            index = (index + 1)%source.size();
+            nextIndex = (nextIndex + 1)%source.size();
         }
         return currentIndex;
     }

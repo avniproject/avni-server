@@ -9,6 +9,7 @@ import org.avni.server.dao.task.TaskStatusRepository;
 import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.User;
 import org.avni.server.domain.task.Task;
+import org.avni.server.domain.task.TaskStatus;
 import org.avni.server.web.request.task.TaskAssignmentRequest;
 import org.avni.server.web.request.task.TaskFilterCriteria;
 import org.junit.Test;
@@ -53,6 +54,34 @@ public class TaskServiceTest {
         assertThat(tasks.get(1).getAssignedTo()).isIn(users);
         assertThat(tasks.get(2).getAssignedTo()).isIn(users);
         assertThat(tasks.get(3).getAssignedTo()).isIn(users);
+    }
+
+    @Test
+    public void shouldUpdateTaskStatusEvenWhenUserListIsEmpty() {
+        TaskAssignmentRequest taskAssignmentRequest = new TaskAssignmentRequest();
+        taskAssignmentRequest.setAllSelected(false);
+        taskAssignmentRequest.setTaskIds(Arrays.asList(12L));
+        taskAssignmentRequest.setAssignToUserIds(Arrays.asList());
+        taskAssignmentRequest.setStatusId(7L);
+        TaskFilterCriteria taskFilterCriteria = new TaskFilterCriteria();
+        taskAssignmentRequest.setTaskFilterCriteria(taskFilterCriteria);
+        TaskRepository taskRepository = mock(TaskRepository.class);
+        UserRepository userRepository = mock(UserRepository.class);
+        TaskStatusRepository taskStatusRepository = mock(TaskStatusRepository.class);
+        TaskService taskService = new TaskService(taskRepository, mock(ObservationService.class), mock(TaskTypeRepository.class), taskStatusRepository, mock(IndividualRepository.class), userRepository,
+                mock(ConceptRepository.class), mock(ConceptService.class), mock(TaskUnAssigmentService.class));
+
+        when(userRepository.findByIdIn(any())).thenReturn(new ArrayList<>());
+        List<Task> tasks = new ArrayList<>();
+        tasks.add(new Task());
+        when(taskRepository.findAllByIdIn(any())).thenReturn(tasks);
+        TaskStatus taskStatus = new TaskStatus();
+        taskStatus.setName("test task");
+        when(taskStatusRepository.findOne((Long) any())).thenReturn(taskStatus);
+
+        taskService.assignTask(taskAssignmentRequest);
+
+        assertThat(tasks.get(0).getTaskStatus().getName()).isEqualTo("test task");
     }
 
 }
