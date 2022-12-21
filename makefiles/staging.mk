@@ -16,12 +16,12 @@ start_server_staging: build_server
 	OPENCHS_IAM_USER_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_ACCESS_KEY) \
 	OPENCHS_IAM_USER_SECRET_ACCESS_KEY=$(OPENCHS_STAGING_IAM_USER_SECRET_ACCESS_KEY) \
 	OPENCHS_BUCKET_NAME=staging-user-media \
-  	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:6015/openchs \
+  	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:6015/openchs?currentSchema=public \
     	java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 debug_server_staging: build_server
 	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
-	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:6015/openchs \
+	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:6015/openchs?currentSchema=public \
 	OPENCHS_MODE=staging \
 	OPENCHS_COGNITO_IN_DEV=false \
 	OPENCHS_CLIENT_ID=$(OPENCHS_STAGING_APP_CLIENT_ID) \
