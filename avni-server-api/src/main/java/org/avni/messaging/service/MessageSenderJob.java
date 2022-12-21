@@ -50,8 +50,14 @@ public class MessageSenderJob {
     }
 
     private void sendMessages(OrganisationConfig enabledOrganisation) {
-        GlificSystemConfig glificConfig =  externalSystemConfigRepository.getGlificSystemConfig(enabledOrganisation.getOrganisationId());
-        authService.authenticateByUserName(glificConfig.getAvniSystemUser(), null);
-        messagingService.sendMessages();
+        try {
+            GlificSystemConfig glificConfig = externalSystemConfigRepository.getGlificSystemConfig(enabledOrganisation.getOrganisationId());
+            authService.authenticateByUserName(glificConfig.getAvniSystemUser(), null);
+            messagingService.sendMessages();
+        }
+        catch (Exception e) {
+            logger.error(String.format("Message sending failed for organisation with id: %d. Ensure if right Glific config is setup for the organisation.", enabledOrganisation.getOrganisationId()));
+            logger.error("Exception for the above message sending failed error:", e);
+        }
     }
 }
