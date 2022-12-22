@@ -64,7 +64,7 @@ public class MessageReceiverService {
             throw new PhoneNumberNotAvailableException();
         }
 
-        String externalId = glificContactRepository.getOrCreateGlificContactId(phoneNumber, fullName);
+        String externalId = glificContactRepository.getOrCreateContact(phoneNumber, fullName);
         messageReceiver.setExternalId(externalId);
         return messageReceiverRepository.save(messageReceiver);
     }

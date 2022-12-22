@@ -93,3 +93,15 @@ dependencyManagement {
         mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.600'
     }
 }
+
+test {
+    filter {
+        includeTestsMatching "*Test"
+    }
+}
+
+task externalTest(type: Test) {
+    filter {
+        includeTestsMatching "*ET"
+    }
+}

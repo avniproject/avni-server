@@ -14,7 +14,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class GlificContactRepositoryTest {
-
     @Test
     public void shouldCreateContactIfNotAvailable() {
         GlificRestClient glificRestClient = mock(GlificRestClient.class);
@@ -32,7 +31,7 @@ public class GlificContactRepositoryTest {
                 .thenReturn(getContactsResponse)
                 .thenReturn(optinContactResponse);
 
-        String responseId = repository.getOrCreateGlificContactId("9182738475", "sam ram");
+        String responseId = repository.getOrCreateContact("9182738475", "sam ram");
 
         assertThat(responseId).isEqualTo("1234");
         verify(glificRestClient).callAPI(eq("{\"query\":\"query contacts($filter: ContactFilter, $opts: Opts) { contacts(filter: $filter, opts:$opts) { id name optinTime optoutTime optinMethod optoutMethod phone maskedPhone bspStatus status tags { id label } groups { id label } }}\",\"variables\":{\"filter\":{\"phone\":\"9182738475\"},\"opts\":{\"order\":\"ASC\",\"limit\":10,\"offset\":0}}}"), any());
