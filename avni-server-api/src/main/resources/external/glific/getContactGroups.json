@@ -1,5 +1,8 @@
 {
   "query": "query groups($filter: GroupFilter, $opts: Opts) { groups(filter: $filter, opts:$opts) {   id   label   isRestricted   contactsCount   usersCount } }",
   "variables": {
+    "opts": {
+      "order": "ASC"
+    }
   }
 }

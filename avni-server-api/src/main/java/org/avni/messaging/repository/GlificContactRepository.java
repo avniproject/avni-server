@@ -22,7 +22,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         this.glificRestClient = glificRestClient;
         GET_CONTACT_JSON = getJson("getContact");
         OPTIN_CONTACT_JSON = getJson("optinContact");
-        GET_CONTACT_GROUP_JSON = getJson("getGroups");
+        GET_CONTACT_GROUP_JSON = getJson("getContactGroups");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {

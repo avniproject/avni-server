@@ -1,19 +1,20 @@
 package org.avni.messaging.contract.glific;
 
+import java.io.Serializable;
 import java.util.List;
 
 public class GlificContactGroupsResponse {
-    private Data data;
+    private List<ContactGroup> groups;
 
-    public Data getData() {
-        return data;
+    public List<ContactGroup> getGroups() {
+        return groups;
     }
 
-    public void setData(Data data) {
-        this.data = data;
+    public void setGroups(List<ContactGroup> groups) {
+        this.groups = groups;
     }
 
-    class ContactGroup {
+    public static class ContactGroup implements Serializable  {
         private int contactsCount;
         private String id;
         private boolean isRestricted;
@@ -59,17 +60,15 @@ public class GlificContactGroupsResponse {
         public void setUsersCount(int usersCount) {
             this.usersCount = usersCount;
         }
-    }
 
-    class Data {
-        private List<ContactGroup> groups;
-
-        public List<ContactGroup> getGroups() {
-            return groups;
-        }
-
-        public void setGroups(List<ContactGroup> groups) {
-            this.groups = groups;
+        @Override
+        public String toString() {
+            return "ContactGroup{" +
+                    "contactsCount=" + contactsCount +
+                    ", id='" + id + '\'' +
+                    ", label='" + label + '\'' +
+                    ", usersCount=" + usersCount +
+                    '}';
         }
     }
 }

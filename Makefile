@@ -148,6 +148,9 @@ test_server_with_remote_db:
 	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER)
 	OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):5432/openchs_test GRADLE_OPTS="-Xmx256m" ./gradlew clean test
 
+test_external:
+	./gradlew externalTest
+
 start_server_wo_gradle:
 	java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 

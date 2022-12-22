@@ -33,3 +33,4 @@ write.lock
 #Local files
 dev-commands.txt
 /log/
+/avni-server-api/src/test/resources/externalTestDataSensitive.sql
