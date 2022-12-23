@@ -17,9 +17,9 @@ public class GlificContactGroupsResponse {
     public static class ContactGroup implements Serializable  {
         private int contactsCount;
         private String id;
-        private boolean isRestricted;
         private String label;
         private int usersCount;
+        private String description;
 
         public int getContactsCount() {
             return contactsCount;
@@ -29,20 +29,20 @@ public class GlificContactGroupsResponse {
             this.contactsCount = contactsCount;
         }
 
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
         public String getId() {
             return id;
         }
 
         public void setId(String id) {
             this.id = id;
-        }
-
-        public boolean isRestricted() {
-            return isRestricted;
-        }
-
-        public void setRestricted(boolean restricted) {
-            isRestricted = restricted;
         }
 
         public String getLabel() {
