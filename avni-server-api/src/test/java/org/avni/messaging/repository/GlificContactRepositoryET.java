@@ -4,6 +4,7 @@ import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,7 +16,8 @@ public class GlificContactRepositoryET extends AbstractControllerIntegrationTest
 
     @Test
     public void shouldGetContactGroups() {
-        GlificContactGroupsResponse contactGroups = glificContactRepository.getContactGroups();
+        PageRequest pageable = PageRequest.of(0, 25);
+        GlificContactGroupsResponse contactGroups = glificContactRepository.getContactGroups(pageable);
         assertThat(contactGroups.getGroups().size()).isGreaterThan(0);
     }
 }

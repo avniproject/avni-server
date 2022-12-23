@@ -7,6 +7,7 @@ import org.avni.messaging.contract.glific.GlificResponse;
 import org.avni.messaging.external.GlificRestClient;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
@@ -48,8 +49,10 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public GlificContactGroupsResponse getContactGroups() {
-        return glificRestClient.callAPI(GET_CONTACT_GROUP_JSON, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
+    public GlificContactGroupsResponse getContactGroups(Pageable pageable) {
+        String message = GET_CONTACT_GROUP_JSON.replace("\"${offset}\"", Long.toString(pageable.getOffset()))
+                .replace("\"${limit}\"", Integer.toString(pageable.getPageSize()));
+        return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
         });
     }
 }
