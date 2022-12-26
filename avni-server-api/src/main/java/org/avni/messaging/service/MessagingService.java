@@ -69,6 +69,7 @@ public class MessagingService {
         return messageRuleRepository.findAll();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onEntitySave(Long entityId, Long entityTypeId, EntityType entityType, Long receiverId) {
         List<MessageRule> messageRules = messageRuleRepository.findAllByEntityTypeAndEntityTypeId(entityType, entityTypeId);
         MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, receiverId);
@@ -79,6 +80,7 @@ public class MessagingService {
         }
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onEntityDelete(Long entityId, EntityType entityType, Long receiverId) {
         messageRequestService.voidMessageRequests(entityId);
 
