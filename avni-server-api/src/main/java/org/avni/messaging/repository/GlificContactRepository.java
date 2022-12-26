@@ -2,17 +2,23 @@ package org.avni.messaging.repository;
 
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.external.GlificRestClient;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
+@Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
     private final String OPTIN_CONTACT_JSON;
     private final GlificRestClient glificRestClient;
     private final String GET_CONTACT_JSON;
     private final String GET_CONTACT_GROUP_JSON;
     private final String GET_CONTACT_GROUP_COUNT_JSON;
+    private final String GET_CONTACT_GROUP_CONTACTS_JSON;
+    private final String GET_CONTACT_GROUP_CONTACT_COUNT_JSON;
 
     public GlificContactRepository(GlificRestClient glificRestClient) {
         this.glificRestClient = glificRestClient;
@@ -20,6 +26,8 @@ public class GlificContactRepository extends AbstractGlificRepository {
         OPTIN_CONTACT_JSON = getJson("optinContact");
         GET_CONTACT_GROUP_JSON = getJson("getContactGroups");
         GET_CONTACT_GROUP_COUNT_JSON = getJson("getContactGroupCount");
+        GET_CONTACT_GROUP_CONTACTS_JSON = getJson("getContactGroupContacts");
+        GET_CONTACT_GROUP_CONTACT_COUNT_JSON = getJson("getContactGroupContactCount");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
@@ -45,16 +53,32 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public GlificContactGroupsResponse getContactGroups(Pageable pageable) {
-        String message = GET_CONTACT_GROUP_JSON.replace("\"${offset}\"", Long.toString(pageable.getOffset()))
-                .replace("\"${limit}\"", Integer.toString(pageable.getPageSize()));
-        return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
+    public List<GlificContactGroupsResponse.ContactGroup> getContactGroups(Pageable pageable) {
+        String message = this.populatePaginationDetails(GET_CONTACT_GROUP_JSON, pageable);
+        GlificContactGroupsResponse glificContactGroupsResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
         });
+        return glificContactGroupsResponse.getGroups();
     }
 
     public int getContactGroupCount() {
         GlificContactGroupCountResponse response = glificRestClient.callAPI(GET_CONTACT_GROUP_COUNT_JSON, new ParameterizedTypeReference<GlificResponse<GlificContactGroupCountResponse>>() {
         });
         return response.getCountGroups();
+    }
+
+    public List<GlificContactGroupContactsResponse.GlificContactGroupContacts> getContactGroupContacts(String contactGroupId, Pageable pageable) {
+        String message = this.populatePaginationDetails(GET_CONTACT_GROUP_CONTACTS_JSON, pageable);
+        message = message.replace("${groupId}", contactGroupId);
+        GlificContactGroupContactsResponse response = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupContactsResponse>>() {
+        });
+        return response.getContacts();
+    }
+
+    public int getContactGroupContactsCount(String contactGroupId) {
+        String message = GET_CONTACT_GROUP_CONTACT_COUNT_JSON.replace("${groupId}", contactGroupId);
+        GlificContactGroupContactCountResponse response = glificRestClient.callAPI(message, new
+                ParameterizedTypeReference<GlificResponse<GlificContactGroupContactCountResponse>>() {
+        });
+        return response.getCountContacts();
     }
 }

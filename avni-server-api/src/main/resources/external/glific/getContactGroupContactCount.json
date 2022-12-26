@@ -1,0 +1,8 @@
+{
+  "query": "query countContacts($filter: ContactFilter!) {\n    countContacts(filter: $filter)\n}",
+  "variables": {
+    "filter": {
+      "includeGroups": "${groupId}"
+    }
+  }
+}
