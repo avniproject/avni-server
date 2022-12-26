@@ -15,19 +15,21 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String OPTIN_CONTACT_JSON;
     private final GlificRestClient glificRestClient;
     private final String GET_CONTACT_JSON;
-    private final String GET_CONTACT_GROUP_JSON;
+    private final String GET_CONTACT_GROUPS_JSON;
     private final String GET_CONTACT_GROUP_COUNT_JSON;
     private final String GET_CONTACT_GROUP_CONTACTS_JSON;
     private final String GET_CONTACT_GROUP_CONTACT_COUNT_JSON;
+    private final String GET_CONTACT_GROUP_JSON;
 
     public GlificContactRepository(GlificRestClient glificRestClient) {
         this.glificRestClient = glificRestClient;
         GET_CONTACT_JSON = getJson("getContact");
         OPTIN_CONTACT_JSON = getJson("optinContact");
-        GET_CONTACT_GROUP_JSON = getJson("getContactGroups");
+        GET_CONTACT_GROUPS_JSON = getJson("getContactGroups");
         GET_CONTACT_GROUP_COUNT_JSON = getJson("getContactGroupCount");
         GET_CONTACT_GROUP_CONTACTS_JSON = getJson("getContactGroupContacts");
         GET_CONTACT_GROUP_CONTACT_COUNT_JSON = getJson("getContactGroupContactCount");
+        GET_CONTACT_GROUP_JSON = getJson("getContactGroup");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
@@ -54,7 +56,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public List<GlificContactGroupsResponse.ContactGroup> getContactGroups(Pageable pageable) {
-        String message = this.populatePaginationDetails(GET_CONTACT_GROUP_JSON, pageable);
+        String message = this.populatePaginationDetails(GET_CONTACT_GROUPS_JSON, pageable);
         GlificContactGroupsResponse glificContactGroupsResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
         });
         return glificContactGroupsResponse.getGroups();
@@ -80,5 +82,13 @@ public class GlificContactRepository extends AbstractGlificRepository {
                 ParameterizedTypeReference<GlificResponse<GlificContactGroupContactCountResponse>>() {
         });
         return response.getCountContacts();
+    }
+
+    public GlificGetGroupResponse.GlificGroup getContactGroup(String id) {
+        String message = GET_CONTACT_GROUP_JSON.replace("${id}", id);
+        GlificGetGroupResponse glificGetGroupResponse = glificRestClient.callAPI(message, new
+                ParameterizedTypeReference<GlificResponse<GlificGetGroupResponse>>() {
+                });
+        return glificGetGroupResponse.getGroup().getGroup();
     }
 }

@@ -2,6 +2,7 @@ package org.avni.messaging.repository;
 
 import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
+import org.avni.messaging.contract.glific.GlificGetGroupResponse;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,5 +42,11 @@ public class GlificContactRepositoryET extends AbstractControllerIntegrationTest
     public void shouldGetContactGroupContactsCount() {
         int contactGroupContactCount = glificContactRepository.getContactGroupContactsCount("1460");
         assertThat(contactGroupContactCount).isGreaterThan(0);
+    }
+
+    @Test
+    public void shouldGetGroup() {
+        GlificGetGroupResponse.GlificGroup glificGroup = glificContactRepository.getContactGroup("1460");
+        assertThat(glificGroup.getLabel().length()).isGreaterThan(0);
     }
 }

@@ -1,7 +1,9 @@
 package org.avni.messaging.controller;
 
+import org.avni.messaging.contract.GroupContactsResponse;
 import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
+import org.avni.messaging.contract.glific.GlificGetGroupResponse;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.server.web.contract.WebPagedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +31,11 @@ public class GlificController {
     }
 
     @GetMapping("/web/glificContactGroup/{id}")
-    public WebPagedResponse getContactGroupContacts(@PathVariable("id") String id, Pageable pageable) {
+    public GroupContactsResponse getContactGroupContacts(@PathVariable("id") String id, Pageable pageable) {
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts = glificContactRepository.getContactGroupContacts(id, pageable);
         int count = glificContactRepository.getContactGroupContactsCount(id);
-        return new WebPagedResponse(contactGroupContacts, pageable.getPageNumber(), count);
+        WebPagedResponse webPagedResponse = new WebPagedResponse(contactGroupContacts, pageable.getPageNumber(), count);
+        GlificGetGroupResponse.GlificGroup contactGroup = glificContactRepository.getContactGroup(id);
+        return new GroupContactsResponse(webPagedResponse, contactGroup);
     }
 }
