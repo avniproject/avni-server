@@ -20,4 +20,10 @@ public class GlificContactRepositoryET extends AbstractControllerIntegrationTest
         GlificContactGroupsResponse contactGroups = glificContactRepository.getContactGroups(pageable);
         assertThat(contactGroups.getGroups().size()).isGreaterThan(0);
     }
+
+    @Test
+    public void shouldGetContactGroupCount() {
+        int contactGroupCount = glificContactRepository.getContactGroupCount();
+        assertThat(contactGroupCount).isGreaterThan(0);
+    }
 }

@@ -1,0 +1,7 @@
+{
+  "query": "query countGroups($filter: GroupFilter!) {\n    countGroups(filter: $filter)\n}",
+  "variables": {
+    "filter": {
+    }
+  }
+}

@@ -22,8 +22,13 @@ public class GlificController {
     @GetMapping("/web/glificContactGroup")
     public WebPagedResponse getContactGroups(Pageable pageable) {
         List<GlificContactGroupsResponse.ContactGroup> groups = glificContactRepository.getContactGroups(pageable).getGroups();
-//        glific doesn't provide the total count. this means that in our UI the user will incrementally see the number of pages and cannot jump to an arbitrary forward page
-        int totalCertainCount = (pageable.getPageNumber() * pageable.getPageSize()) + groups.size();
-        return new WebPagedResponse(groups, pageable.getPageNumber(), totalCertainCount + 1);
+        int count = glificContactRepository.getContactGroupCount();
+        return new WebPagedResponse(groups, pageable.getPageNumber(), count);
+    }
+
+    @GetMapping("/web/glificContactGroup/{id}")
+    public WebPagedResponse getContactGroup(Pageable pageable) {
+//        List<GlificContactGroupsResponse.ContactGroup> groups = glificContactRepository.getGroup().getGroups();
+        return null;
     }
 }

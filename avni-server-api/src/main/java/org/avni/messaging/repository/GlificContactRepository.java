@@ -1,16 +1,10 @@
 package org.avni.messaging.repository;
 
-import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
-import org.avni.messaging.contract.glific.GlificGetContactsResponse;
-import org.avni.messaging.contract.glific.GlificOptinContactResponse;
-import org.avni.messaging.contract.glific.GlificResponse;
+import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.external.GlificRestClient;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-
-import java.io.IOException;
 
 @Repository
 public class GlificContactRepository extends AbstractGlificRepository {
@@ -18,12 +12,14 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final GlificRestClient glificRestClient;
     private final String GET_CONTACT_JSON;
     private final String GET_CONTACT_GROUP_JSON;
+    private final String GET_CONTACT_GROUP_COUNT_JSON;
 
     public GlificContactRepository(GlificRestClient glificRestClient) {
         this.glificRestClient = glificRestClient;
         GET_CONTACT_JSON = getJson("getContact");
         OPTIN_CONTACT_JSON = getJson("optinContact");
         GET_CONTACT_GROUP_JSON = getJson("getContactGroups");
+        GET_CONTACT_GROUP_COUNT_JSON = getJson("getContactGroupCount");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
@@ -54,5 +50,11 @@ public class GlificContactRepository extends AbstractGlificRepository {
                 .replace("\"${limit}\"", Integer.toString(pageable.getPageSize()));
         return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
         });
+    }
+
+    public int getContactGroupCount() {
+        GlificContactGroupCountResponse response = glificRestClient.callAPI(GET_CONTACT_GROUP_COUNT_JSON, new ParameterizedTypeReference<GlificResponse<GlificContactGroupCountResponse>>() {
+        });
+        return response.getCountGroups();
     }
 }
