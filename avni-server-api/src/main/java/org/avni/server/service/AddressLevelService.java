@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class AddressLevelService {
@@ -27,32 +29,54 @@ public class AddressLevelService {
 
     private class AddressLevelsForCatchment {
         private Long catchmentId;
-        private List<Long> addressLevelIds;
+        private List<VirtualCatchmentProjection> cachedAddressLevels;
 
         public List<Long> getAddressLevelsByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
-            if (catchment.getId() == catchmentId) return addressLevelIds;
-            this.catchmentId = catchment.getId();
-            this.addressLevelIds = getAddressLevels(catchment, subjectType)
-                    .stream()
+            ensureCacheExists(catchment);
+
+            return filterBySubjectType(subjectType)
                     .map(VirtualCatchmentProjection::getAddresslevel_id)
                     .collect(Collectors.toList());
-            return addressLevelIds;
         }
 
-        private List<VirtualCatchmentProjection> getAddressLevels(Catchment catchment, SubjectType subjectType) {
-            List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<List<SubjectTypeSetting>>() {});
+        private void ensureCacheExists(Catchment catchment) {
+            if (!Objects.equals(catchment.getId(), catchmentId)) {
+                this.cachedAddressLevels = getAddressLevelsForCatchment(catchment);
+                this.catchmentId = catchment.getId();
+            }
+        }
+
+        private List<VirtualCatchmentProjection> getAddressLevelsForCatchment(Catchment catchment) {
+            return locationRepository.getVirtualCatchmentsForCatchmentId(catchment.getId());
+        }
+
+        private Stream<VirtualCatchmentProjection> filterBySubjectType(SubjectType subjectType) {
+            Optional<SubjectTypeSetting> customRegistrationLocationSetting = getCustomRegistrationSetting(subjectType);
+
+            if (customRegistrationLocationSetting.isPresent() && !customRegistrationLocationSetting.get().getLocationTypeUUIDs().isEmpty()) {
+                List<Long> matchingAddressLevelTypeIds = addressLevelTypeRepository.findAllByUuidIn(
+                                customRegistrationLocationSetting.get().getLocationTypeUUIDs())
+                        .stream()
+                        .map(CHSBaseEntity::getId)
+                        .collect(Collectors.toList());
+
+                return this.cachedAddressLevels.stream()
+                        .filter(addressLevel -> matchingAddressLevelTypeIds.contains(addressLevel.getType_id()));
+            }
+
+            return this.cachedAddressLevels.stream();
+        }
+
+        private Optional<SubjectTypeSetting> getCustomRegistrationSetting(SubjectType subjectType) {
+            List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(
+                    organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()),
+                    new TypeReference<List<SubjectTypeSetting>>() {
+                    });
             Optional<SubjectTypeSetting> customLocationTypes = customRegistrationLocations.stream()
                     .filter(crl -> crl.getSubjectTypeUUID()
                             .equals(subjectType.getUuid()))
                     .findFirst();
-            if (customLocationTypes.isPresent() && !customLocationTypes.get().getLocationTypeUUIDs().isEmpty()) {
-                List<Long> locationTypeIds = addressLevelTypeRepository.findAllByUuidIn(customLocationTypes.get().getLocationTypeUUIDs())
-                        .stream()
-                        .map(CHSBaseEntity::getId)
-                        .collect(Collectors.toList());
-                return locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(catchment.getId(), locationTypeIds);
-            }
-            return locationRepository.getVirtualCatchmentsForCatchmentId(catchment.getId());
+            return customLocationTypes;
         }
     }
 
