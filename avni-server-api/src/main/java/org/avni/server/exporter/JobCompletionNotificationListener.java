@@ -30,7 +30,7 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
-    private ExportS3Service exportS3Service;
+    private final ExportS3Service exportS3Service;
     private final AuthService authService;
 
     @Autowired

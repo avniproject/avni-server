@@ -1,6 +1,5 @@
 package org.avni.server.web;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
 import org.avni.server.dao.JobStatus;
@@ -25,10 +24,8 @@ import java.io.InputStream;
 
 @RestController
 public class ExportController {
-
-
-    private ExportJobService exportJobService;
-    private ExportS3Service exportS3Service;
+    private final ExportJobService exportJobService;
+    private final ExportS3Service exportS3Service;
 
     @Autowired
     public ExportController(ExportJobService exportJobService, ExportS3Service exportS3Service) {

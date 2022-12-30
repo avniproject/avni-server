@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @StepScope
 public class LongitudinalExportJobStepListener extends StepExecutionListenerSupport {
     private ItemReaderCleaner itemReaderCleaner;
-    private static Logger logger = LoggerFactory.getLogger(LongitudinalExportJobStepListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(LongitudinalExportJobStepListener.class);
 
     public void setItemReaderCleaner(ItemReaderCleaner itemReaderCleaner) {
         this.itemReaderCleaner = itemReaderCleaner;

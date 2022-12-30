@@ -1,7 +1,5 @@
 package org.avni.server.exporter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.avni.server.dao.ExportJobParametersRepository;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.exporter.v2.ExportV2CSVFieldExtractor;
@@ -12,7 +10,6 @@ import org.avni.server.service.ExportS3Service;
 import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.external.request.export.ReportType;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.batch.core.Job;
@@ -41,19 +38,17 @@ import static java.lang.String.format;
 public class ExportBatchConfiguration {
     private final int CHUNK_SIZE = 100;
     private final EntityManager entityManager;
-    private final ExportJobParametersRepository exportJobParametersRepository;
-    private JobBuilderFactory jobBuilderFactory;
-    private StepBuilderFactory stepBuilderFactory;
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    private IndividualRepository individualRepository;
-    private GroupSubjectRepository groupSubjectRepository;
-    private AuthService authService;
-    private ExportS3Service exportS3Service;
-    private LocationRepository locationRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private EncounterTypeRepository encounterTypeRepository;
-    private ProgramRepository programRepository;
-    private ObjectMapper objectMapper;
+    private final JobBuilderFactory jobBuilderFactory;
+    private final StepBuilderFactory stepBuilderFactory;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
+    private final IndividualRepository individualRepository;
+    private final GroupSubjectRepository groupSubjectRepository;
+    private final AuthService authService;
+    private final ExportS3Service exportS3Service;
+    private final LocationRepository locationRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final ProgramRepository programRepository;
 
     @Autowired
     public ExportBatchConfiguration(JobBuilderFactory jobBuilderFactory,
@@ -67,8 +62,7 @@ public class ExportBatchConfiguration {
                                     SubjectTypeRepository subjectTypeRepository,
                                     EncounterTypeRepository encounterTypeRepository,
                                     ProgramRepository programRepository,
-                                    EntityManager entityManager,
-                                    ExportJobParametersRepository exportJobParametersRepository) {
+                                    EntityManager entityManager) {
         this.jobBuilderFactory = jobBuilderFactory;
         this.stepBuilderFactory = stepBuilderFactory;
         this.programEnrolmentRepository = programEnrolmentRepository;
@@ -81,8 +75,6 @@ public class ExportBatchConfiguration {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programRepository = programRepository;
         this.entityManager = entityManager;
-        this.exportJobParametersRepository = exportJobParametersRepository;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     @Bean

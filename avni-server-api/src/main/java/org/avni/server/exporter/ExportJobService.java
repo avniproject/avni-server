@@ -41,12 +41,12 @@ import java.util.UUID;
 public class ExportJobService {
     private final Logger logger;
 
-    private AvniJobRepository avniJobRepository;
-    private Job exportVisitJob;
-    private Job exportV2Job;
+    private final AvniJobRepository avniJobRepository;
+    private final Job exportVisitJob;
+    private final Job exportV2Job;
 
-    private JobLauncher bgJobLauncher;
-    private ExportJobParametersRepository exportJobParametersRepository;
+    private final JobLauncher bgJobLauncher;
+    private final ExportJobParametersRepository exportJobParametersRepository;
 
     @Autowired
     public ExportJobService(Job exportVisitJob, JobLauncher bgJobLauncher, AvniJobRepository avniJobRepository,
