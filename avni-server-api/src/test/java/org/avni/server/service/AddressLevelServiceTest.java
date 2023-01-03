@@ -44,7 +44,8 @@ public class AddressLevelServiceTest {
         when(addressLevelTypeRepository.findAllByUuidIn(singletonList("second-address-level-type-uuid")))
                 .thenReturn(singletonList(createAddressLevelType(2L)));
 
-        AddressLevelService addressLevelService = new AddressLevelService(locationRepository, addressLevelTypeRepository, organisationConfigService);
+        AddressLevelCache addressLevelCache = new AddressLevelCache(locationRepository);
+        AddressLevelService addressLevelService = new AddressLevelService(locationRepository, addressLevelTypeRepository, organisationConfigService, addressLevelCache);
 
         Catchment catchment = new Catchment();
         catchment.setId(1L);

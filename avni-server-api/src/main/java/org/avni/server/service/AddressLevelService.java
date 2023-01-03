@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,67 +23,51 @@ public class AddressLevelService {
     private final LocationRepository locationRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationConfigService organisationConfigService;
+    private final AddressLevelCache addressLevelCache;
     private ObjectMapper objectMapper;
-    private ThreadLocal<AddressLevelsForCatchment> addressLevelCache = ThreadLocal.withInitial(AddressLevelsForCatchment::new);
 
-    private class AddressLevelsForCatchment {
-        private Long catchmentId;
-        private List<VirtualCatchmentProjection> cachedAddressLevels;
+    public List<Long> getAddressLevelsByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
+        return filterByCatchmentAndSubjectType(catchment, subjectType)
+                .map(VirtualCatchmentProjection::getAddresslevel_id)
+                .collect(Collectors.toList());
+    }
 
-        public List<Long> getAddressLevelsByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
-            ensureCacheExists(catchment);
+    private Stream<VirtualCatchmentProjection> filterByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
+        Optional<SubjectTypeSetting> customRegistrationLocationSetting = getCustomRegistrationSetting(subjectType);
 
-            return filterBySubjectType(subjectType)
-                    .map(VirtualCatchmentProjection::getAddresslevel_id)
+        if (customRegistrationLocationSetting.isPresent() && !customRegistrationLocationSetting.get().getLocationTypeUUIDs().isEmpty()) {
+            List<Long> matchingAddressLevelTypeIds = addressLevelTypeRepository.findAllByUuidIn(
+                            customRegistrationLocationSetting.get().getLocationTypeUUIDs())
+                    .stream()
+                    .map(CHSBaseEntity::getId)
                     .collect(Collectors.toList());
+
+            return addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment, matchingAddressLevelTypeIds).stream();
         }
 
-        private void ensureCacheExists(Catchment catchment) {
-            if (!Objects.equals(catchment.getId(), catchmentId)) {
-                this.cachedAddressLevels = getAddressLevelsForCatchment(catchment);
-                this.catchmentId = catchment.getId();
-            }
-        }
+        return addressLevelCache.getAddressLevelsForCatchment(catchment).stream();
+    }
 
-        private List<VirtualCatchmentProjection> getAddressLevelsForCatchment(Catchment catchment) {
-            return locationRepository.getVirtualCatchmentsForCatchmentId(catchment.getId());
-        }
-
-        private Stream<VirtualCatchmentProjection> filterBySubjectType(SubjectType subjectType) {
-            Optional<SubjectTypeSetting> customRegistrationLocationSetting = getCustomRegistrationSetting(subjectType);
-
-            if (customRegistrationLocationSetting.isPresent() && !customRegistrationLocationSetting.get().getLocationTypeUUIDs().isEmpty()) {
-                List<Long> matchingAddressLevelTypeIds = addressLevelTypeRepository.findAllByUuidIn(
-                                customRegistrationLocationSetting.get().getLocationTypeUUIDs())
-                        .stream()
-                        .map(CHSBaseEntity::getId)
-                        .collect(Collectors.toList());
-
-                return this.cachedAddressLevels.stream()
-                        .filter(addressLevel -> matchingAddressLevelTypeIds.contains(addressLevel.getType_id()));
-            }
-
-            return this.cachedAddressLevels.stream();
-        }
-
-        private Optional<SubjectTypeSetting> getCustomRegistrationSetting(SubjectType subjectType) {
-            List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(
-                    organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()),
-                    new TypeReference<List<SubjectTypeSetting>>() {
-                    });
-            Optional<SubjectTypeSetting> customLocationTypes = customRegistrationLocations.stream()
-                    .filter(crl -> crl.getSubjectTypeUUID()
-                            .equals(subjectType.getUuid()))
-                    .findFirst();
-            return customLocationTypes;
-        }
+    private Optional<SubjectTypeSetting> getCustomRegistrationSetting(SubjectType subjectType) {
+        List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(
+                organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()),
+                new TypeReference<List<SubjectTypeSetting>>() {
+                });
+        Optional<SubjectTypeSetting> customLocationTypes = customRegistrationLocations.stream()
+                .filter(crl -> crl.getSubjectTypeUUID()
+                        .equals(subjectType.getUuid()))
+                .findFirst();
+        return customLocationTypes;
     }
 
     public AddressLevelService(LocationRepository locationRepository,
-                               AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigService organisationConfigService) {
+                               AddressLevelTypeRepository addressLevelTypeRepository,
+                               OrganisationConfigService organisationConfigService,
+                               AddressLevelCache addressLevelCache) {
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationConfigService = organisationConfigService;
+        this.addressLevelCache = addressLevelCache;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -111,7 +94,7 @@ public class AddressLevelService {
     }
 
     public List<Long> getAllRegistrationAddressIdsBySubjectType(Catchment catchment, SubjectType subjectType) {
-        return addressLevelCache.get().getAddressLevelsByCatchmentAndSubjectType(catchment, subjectType);
+        return getAddressLevelsByCatchmentAndSubjectType(catchment, subjectType);
     }
 
     public String getTitleLineage(AddressLevel location) {

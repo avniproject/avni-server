@@ -67,6 +67,7 @@ dependencies {
     compile 'com.amazonaws:aws-java-sdk-s3'
     compile 'com.amazonaws:aws-java-sdk-cognitoidp'
     compile 'commons-validator:commons-validator:1.4.1'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.keycloak:keycloak-spring-boot-starter:18.0.2'
     implementation 'org.keycloak:keycloak-admin-client:18.0.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.6'
