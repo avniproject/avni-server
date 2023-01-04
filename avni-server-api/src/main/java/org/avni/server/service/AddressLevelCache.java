@@ -7,7 +7,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class AddressLevelCache {
@@ -28,7 +27,6 @@ public class AddressLevelCache {
 
     @Cacheable(value = ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS)
     public List<VirtualCatchmentProjection> getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(Catchment catchment, List<Long> matchingAddressLevelTypeIds) {
-        return locationRepository.getVirtualCatchmentsForCatchmentId(catchment.getId()).stream()
-                .filter(addressLevel -> matchingAddressLevelTypeIds.contains(addressLevel.getType_id())).collect(Collectors.toList());
+        return locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds);
     }
 }

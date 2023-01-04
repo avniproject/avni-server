@@ -11,6 +11,7 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.SubjectType;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static java.util.Arrays.asList;
@@ -27,9 +28,12 @@ public class AddressLevelServiceTest {
         AddressLevelTypeRepository addressLevelTypeRepository = mock(AddressLevelTypeRepository.class);
         OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
 
-        when(locationRepository.getVirtualCatchmentsForCatchmentId(1L)).thenReturn(asList(
+        when(locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(1L, Arrays.asList(1L))).thenReturn(asList(
                 new VirtualCatchmentProjectImplementation(1L, 1L, 1L, 1L),
-                new VirtualCatchmentProjectImplementation(2L, 2L, 1L, 1L),
+                new VirtualCatchmentProjectImplementation(2L, 2L, 1L, 1L)
+        ));
+
+        when(locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(1L, Arrays.asList(2L))).thenReturn(asList(
                 new VirtualCatchmentProjectImplementation(3L, 3L, 1L, 2L),
                 new VirtualCatchmentProjectImplementation(4L, 4L, 1L, 2L)
         ));
