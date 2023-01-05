@@ -153,11 +153,11 @@ public class ObservationService {
         }
     }
 
-    public Object getObservationValue(String conceptName, ProgramEncounter programEncounter) {
+    public Object getObservationValue(String conceptName, Individual individual) {
         Concept concept = conceptRepository.findByName(conceptName);
         if (concept == null) return null;
 
-        return getObservationValue(programEncounter, concept);
+        return getObservationValue(concept, individual.getObservations());
     }
 
     private Object getObservationValue(ProgramEncounter programEncounter, Concept concept) {

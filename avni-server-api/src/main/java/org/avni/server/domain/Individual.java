@@ -2,6 +2,9 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.application.KeyType;
+import org.avni.server.application.KeyValues;
+import org.avni.server.application.ValueType;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.geo.Point;
 import org.hibernate.annotations.BatchSize;
@@ -12,6 +15,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

@@ -343,6 +343,15 @@ public class IndividualService implements ScopeAwareService {
         return individualRepository.save(individual);
     }
 
+    public String findPhoneNumber(long subjectId) {
+        Individual individual = this.getIndividual(subjectId);
+        return findPhoneNumber(individual);
+    }
+
+    public Individual getIndividual(long subjectId) {
+        return individualRepository.findEntity(subjectId);
+    }
+
     public String findPhoneNumber(Individual individual) {
         assert individual != null;
 
