@@ -101,8 +101,7 @@ public class MessagingService {
             logger.debug(String.format("Sent message for %d", messageRequest.getId()));
         } catch (PhoneNumberNotAvailableException p) {
             logger.warn("Phone number not available for receiver: " + messageRequest.getMessageReceiver().getReceiverId());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Could not send message for message request id: " + messageRequest.getId(), e);
             bugsnag.notify(e);
         }
