@@ -1,7 +1,5 @@
 package org.avni.messaging.contract.glific;
 
-import org.avni.messaging.contract.glific.GlificError;
-
 import java.util.List;
 
 public class GlificResponse<T> {

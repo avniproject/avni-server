@@ -1,5 +1,6 @@
 package org.avni.messaging.repository;
 
+import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.external.GlificRestClient;
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +21,9 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String GET_CONTACT_GROUP_CONTACTS_JSON;
     private final String GET_CONTACT_GROUP_CONTACT_COUNT_JSON;
     private final String GET_CONTACT_GROUP_JSON;
+    private final String ADD_CONTACT_TO_GROUP_JSON;
+
+    private final static int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
 
     public GlificContactRepository(GlificRestClient glificRestClient) {
         this.glificRestClient = glificRestClient;
@@ -30,6 +34,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         GET_CONTACT_GROUP_CONTACTS_JSON = getJson("getContactGroupContacts");
         GET_CONTACT_GROUP_CONTACT_COUNT_JSON = getJson("getContactGroupContactCount");
         GET_CONTACT_GROUP_JSON = getJson("getContactGroup");
+        ADD_CONTACT_TO_GROUP_JSON = getJson("addContactToGroup");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
@@ -40,7 +45,6 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     private String createContact(String phoneNumber, String fullName) {
-        final int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
         String phoneNoWithCountryCode = "+91" + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
         String message = OPTIN_CONTACT_JSON.replace("${phoneNumber}", phoneNoWithCountryCode)
                 .replace("${fullName}", fullName);
@@ -90,5 +94,15 @@ public class GlificContactRepository extends AbstractGlificRepository {
                 ParameterizedTypeReference<GlificResponse<GlificGetGroupResponse>>() {
                 });
         return glificGetGroupResponse.getGroup().getGroup();
+    }
+
+    public void addContactToGroup(String contactGroupId, String contactId) {
+        String message = ADD_CONTACT_TO_GROUP_JSON.replace("${contactGroupId}", contactGroupId).replace("${contactId}", contactId);
+        glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
+        });
+    }
+
+    public void saveContactGroup(ContactGroupRequest contactGroupRequest) {
+
     }
 }

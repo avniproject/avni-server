@@ -1,0 +1,13 @@
+{
+  "operationName": "updateGroupContacts",
+  "variables": {
+    "input": {
+      "addContactIds": [
+        "${contactId}"
+      ],
+      "groupId": "${contactGroupId}",
+      "deleteContactIds": []
+    }
+  },
+  "query": "mutation updateGroupContacts($input: GroupContactsInput!) {\n  updateGroupContacts(input: $input) {\n    groupContacts {\n      id\n      value\n      __typename\n    }\n    numberDeleted\n    __typename\n  }\n}"
+}
