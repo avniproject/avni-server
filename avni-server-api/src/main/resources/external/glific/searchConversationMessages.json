@@ -1,0 +1,15 @@
+{
+  "operationName": "search",
+  "query": "query search($filter: SearchFilter!, $contactOpts: Opts!, $messageOpts: Opts!) {  search(filter: $filter, contactOpts: $contactOpts, messageOpts: $messageOpts) {    contact {      id      name      phone      fields      maskedPhone      lastMessageAt      status      bspStatus      isOrgRead      __typename    }    group {      id      label      __typename    }    messages {      id      body      insertedAt      messageNumber      receiver {        id        __typename      }      sender {        id        __typename      }      location {        latitude        longitude        __typename      }      tags {        id        label        colorCode        __typename      }      type      media {        url        caption        __typename      }      errors      contextMessage {        body        contextId        messageNumber        errors        media {          caption          sourceUrl          id          url          __typename        }        type        insertedAt        location {          id          latitude          longitude          __typename        }        receiver {          id          __typename        }        sender {          id          name          __typename        }        __typename      }      interactiveContent      sendBy      flowLabel      __typename    }    __typename  }}",
+  "variables": {
+    "contactOpts": {
+      "limit": 25
+    }
+  },
+  "filter": {
+    "searchGroup": true
+  }, 
+  "messageOpts": {
+    "limit": 20
+  }
+}

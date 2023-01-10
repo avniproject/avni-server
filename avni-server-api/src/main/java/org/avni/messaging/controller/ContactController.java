@@ -2,9 +2,8 @@ package org.avni.messaging.controller;
 
 import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.GroupContactsResponse;
-import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
-import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
-import org.avni.messaging.contract.glific.GlificGetGroupResponse;
+import org.avni.messaging.contract.glific.*;
+import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.Individual;
@@ -13,11 +12,12 @@ import org.avni.server.service.IndividualService;
 import org.avni.server.web.contract.WebPagedResponse;
 import org.avni.server.web.request.CHSRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
@@ -71,5 +71,37 @@ public class ContactController {
         User user = userRepository.findById(userRequest.getId()).get();
         String contactId = glificContactRepository.getOrCreateContact(user.getPhoneNumber(), user.getName());
         glificContactRepository.addContactToGroup(contactGroupId, contactId);
+    }
+
+    @GetMapping("/web/contact/subject/{id}")
+    public GlificContactResponse fetchContactSubject(@PathVariable("id") long subjectId) throws GlificContactNotFoundError {
+        Individual individual = individualService.getIndividual(subjectId);
+        if(individual == null ) {
+            throw new EntityNotFoundException();
+        }
+        String phoneNumber = individualService.findPhoneNumber(individual);
+        return glificContactRepository.findContact(phoneNumber);
+    }
+
+    @GetMapping("/web/contact/user/{id}")
+    public GlificContactResponse fetchContactUser(@PathVariable("id") long userId) throws GlificContactNotFoundError {
+        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+        return glificContactRepository.findContact(user.getPhoneNumber());
+    }
+
+    @GetMapping("/web/contact/subject/{id}/msgs")
+    public List<Message> fetchAllMsgsForContactSubject(@PathVariable("id") long subjectId) {
+        Individual individual = individualService.getIndividual(subjectId);
+        if(individual == null ) {
+            throw new EntityNotFoundException();
+        }
+        String phoneNumber = individualService.findPhoneNumber(individual);
+        return glificContactRepository.getAllMsgsForContact(phoneNumber);
+    }
+
+    @GetMapping("/web/contact/user/{id}/msgs")
+    public List<Message> fetchAllMsgsForContactUser(@PathVariable("id") long userId) {
+        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+        return glificContactRepository.getAllMsgsForContact(user.getPhoneNumber());
     }
 }

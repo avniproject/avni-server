@@ -1,0 +1,12 @@
+{
+  "query": "query messages($filter: MessageFilter, $opts: Opts) {  messages(filter: $filter, opts:$opts) {    id    body    type    insertedAt    sendAt    sender {    id    name}    receiver {    id    name}}}",
+  "variables": {
+    "filter": {
+      "receiver": "${receiverName}"
+    },
+    "opts": {
+      "order": "ASC",
+      "offset": 0
+    }
+  }
+}

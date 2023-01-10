@@ -2,6 +2,7 @@ package org.avni.messaging.repository;
 
 import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.glific.*;
+import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.external.GlificRestClient;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
@@ -9,10 +10,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Repository
 @Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
+    public static final String INDIA_ISD_CODE = "+91";
+    public static final String PHONE_NUMBER = "${phoneNumber}";
+    public static final String RECEIVER_NAME = "${receiverName}";
+    public static final String FULL_NAME = "${fullName}";
+    public static final String GROUP_ID = "${groupId}";
+    public static final String ID = "${id}";
+
     private final String OPTIN_CONTACT_JSON;
     private final GlificRestClient glificRestClient;
     private final String GET_CONTACT_JSON;
@@ -21,6 +30,8 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String GET_CONTACT_GROUP_CONTACTS_JSON;
     private final String GET_CONTACT_GROUP_CONTACT_COUNT_JSON;
     private final String GET_CONTACT_GROUP_JSON;
+    private final String GET_ALL_MSGS_JSON;
+    private final String GET_ALL_GROUP_CONVERSATION_MSGS_JSON;
     private final String ADD_CONTACT_TO_GROUP_JSON;
 
     private final static int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
@@ -34,6 +45,8 @@ public class GlificContactRepository extends AbstractGlificRepository {
         GET_CONTACT_GROUP_CONTACTS_JSON = getJson("getContactGroupContacts");
         GET_CONTACT_GROUP_CONTACT_COUNT_JSON = getJson("getContactGroupContactCount");
         GET_CONTACT_GROUP_JSON = getJson("getContactGroup");
+        GET_ALL_MSGS_JSON = getJson("getAllMessages");
+        GET_ALL_GROUP_CONVERSATION_MSGS_JSON = getJson("searchConversationMessages");
         ADD_CONTACT_TO_GROUP_JSON = getJson("addContactToGroup");
     }
 
@@ -45,16 +58,16 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     private String createContact(String phoneNumber, String fullName) {
-        String phoneNoWithCountryCode = "+91" + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        String message = OPTIN_CONTACT_JSON.replace("${phoneNumber}", phoneNoWithCountryCode)
-                .replace("${fullName}", fullName);
+        String phoneNoWithCountryCode = INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
+        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, phoneNoWithCountryCode)
+                .replace(FULL_NAME, fullName);
         GlificOptinContactResponse glificOptinContactResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificOptinContactResponse>>() {
         });
         return glificOptinContactResponse.getOptinContact().getContact().getId();
     }
 
     private GlificGetContactsResponse getContact(String phoneNumber) {
-        String message = GET_CONTACT_JSON.replace("${phoneNumber}", phoneNumber);
+        String message = GET_CONTACT_JSON.replace(PHONE_NUMBER, phoneNumber);
         return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificGetContactsResponse>>() {
         });
     }
@@ -74,14 +87,14 @@ public class GlificContactRepository extends AbstractGlificRepository {
 
     public List<GlificContactGroupContactsResponse.GlificContactGroupContacts> getContactGroupContacts(String contactGroupId, Pageable pageable) {
         String message = this.populatePaginationDetails(GET_CONTACT_GROUP_CONTACTS_JSON, pageable);
-        message = message.replace("${groupId}", contactGroupId);
+        message = message.replace(GROUP_ID, contactGroupId);
         GlificContactGroupContactsResponse response = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupContactsResponse>>() {
         });
         return response.getContacts();
     }
 
     public int getContactGroupContactsCount(String contactGroupId) {
-        String message = GET_CONTACT_GROUP_CONTACT_COUNT_JSON.replace("${groupId}", contactGroupId);
+        String message = GET_CONTACT_GROUP_CONTACT_COUNT_JSON.replace(GROUP_ID, contactGroupId);
         GlificContactGroupContactCountResponse response = glificRestClient.callAPI(message, new
                 ParameterizedTypeReference<GlificResponse<GlificContactGroupContactCountResponse>>() {
         });
@@ -89,11 +102,40 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public GlificGetGroupResponse.GlificGroup getContactGroup(String id) {
-        String message = GET_CONTACT_GROUP_JSON.replace("${id}", id);
+        String message = GET_CONTACT_GROUP_JSON.replace(ID, id);
         GlificGetGroupResponse glificGetGroupResponse = glificRestClient.callAPI(message, new
                 ParameterizedTypeReference<GlificResponse<GlificGetGroupResponse>>() {
                 });
         return glificGetGroupResponse.getGroup().getGroup();
+    }
+
+    /**
+     * Find contact matching specified phoneNumber
+     * @param phoneNumber
+     * @return
+     * Throws 404 Not found error, if contact matching specified phoneNumber is not found
+     */
+    public GlificContactResponse findContact(String phoneNumber) throws GlificContactNotFoundError {
+        GlificGetContactsResponse glificContact = getContact(phoneNumber);
+        if(glificContact.getContacts().isEmpty()) {
+            throw new GlificContactNotFoundError(String.format("Contact with phoneNumber %s not found", phoneNumber));
+        }
+        return glificContact.getContacts().get(0);
+    }
+
+    /**
+     * We have got to filter the response received from Glific to only retain the entries that match the receiverId
+     *
+     * @param phoneNumber
+     * @return
+     */
+    public List<Message> getAllMsgsForContact(String phoneNumber) {
+        GlificContactResponse contact = findContact(phoneNumber);
+        String getAllMessagesRequest = GET_ALL_MSGS_JSON.replace(RECEIVER_NAME, contact.getName());
+        GetAllMessagesData data = glificRestClient.callAPI(getAllMessagesRequest,
+                new ParameterizedTypeReference<GlificResponse<GetAllMessagesData>>() {});
+        return data.getMessages().stream()
+                .filter(msg -> contact.getId().equals(msg.getReceiver().getId())).collect(Collectors.toList());
     }
 
     public void addContactToGroup(String contactGroupId, String contactId) {
