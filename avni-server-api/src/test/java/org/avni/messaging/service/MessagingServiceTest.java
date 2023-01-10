@@ -95,7 +95,7 @@ public class MessagingServiceTest {
 
         messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
-        verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId), null);
+        verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId), eq(null));
         verify(ruleService).executeScheduleRule(eq(messageRule.getEntityType().name()), eq(individualId), eq(scheduleRule));
         verify(messageRequestService).createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, individualId, scheduledDateTime);
     }
@@ -144,7 +144,7 @@ public class MessagingServiceTest {
 
         messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
-        verify(messageReceiverService, times(2)).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId), null);
+        verify(messageReceiverService, times(2)).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId), eq(null));
         verify(ruleService).executeScheduleRule(eq(messageRule.getEntityType().name()), eq(individualId), eq(scheduleRule));
         verify(messageRequestService).createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, individualId, scheduledDateTime);
 
