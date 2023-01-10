@@ -14,7 +14,6 @@ public class MessageReceiver extends OrganisationAwareEntity {
     private ReceiverType receiverType;
 
     @Column
-    @NotNull
     private Long receiverId;
 
     @Column

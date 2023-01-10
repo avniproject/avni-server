@@ -3,6 +3,7 @@ package org.avni.messaging.service;
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.repository.GlificMessageRepository;
+import org.avni.messaging.repository.ManualBroadcastMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.framework.security.UserContextHolder;
@@ -30,17 +31,22 @@ public class MessagingService {
     private GlificMessageRepository glificMessageRepository;
     private final RuleService ruleService;
     private MessageRequestQueueRepository messageRequestQueueRepository;
+    private ManualBroadcastMessageRepository manualBroadcastMessageRepository;
 
     private Bugsnag bugsnag;
 
     @Autowired
     public MessagingService(MessageRuleRepository messageRuleRepository, MessageReceiverService messageReceiverService,
-                            MessageRequestService messageRequestService, GlificMessageRepository glificMessageRepository, MessageRequestQueueRepository messageRequestQueueRepository, RuleService ruleService, Bugsnag bugsnag) {
+                            MessageRequestService messageRequestService, GlificMessageRepository glificMessageRepository,
+                            MessageRequestQueueRepository messageRequestQueueRepository,
+                            ManualBroadcastMessageRepository manualBroadcastMessageRepository,
+                            RuleService ruleService, Bugsnag bugsnag) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
         this.glificMessageRepository = glificMessageRepository;
         this.messageRequestQueueRepository = messageRequestQueueRepository;
+        this.manualBroadcastMessageRepository = manualBroadcastMessageRepository;
         this.ruleService = ruleService;
         this.bugsnag = bugsnag;
     }
@@ -76,12 +82,12 @@ public class MessagingService {
         for (MessageRule messageRule : messageRules) {
             MessageReceiver messageReceiver = null;
             if(messageRule.getReceiverType() == ReceiverType.Subject)
-                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, subjectId);
+                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, subjectId, null);
             else if(messageRule.getReceiverType() == ReceiverType.User)
-                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId);
+                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId, null);
 
             DateTime scheduledDateTime = ruleService.executeScheduleRule(messageRule.getEntityType().name(), entityId, messageRule.getScheduleRule());
-            messageRequestService.createOrUpdateMessageRequest(messageRule, messageReceiver, entityId, scheduledDateTime);
+            messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, entityId, scheduledDateTime);
         }
     }
 
@@ -122,6 +128,18 @@ public class MessagingService {
         logger.info("Sending messages for organisation " + UserContextHolder.getOrganisation().getName());
         Stream<MessageRequest> requests = messageRequestQueueRepository.findDueMessageRequests();
         requests.forEach(this::sendMessage);
+    }
+
+    @Transactional
+    public void scheduleBroadcastMessage(String[] groupIds, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
+        ManualBroadcastMessage manualBroadcastMessage = new ManualBroadcastMessage(messageTemplateId, parameters);
+        manualBroadcastMessage.assignUUIDIfRequired();
+        manualBroadcastMessageRepository.save(manualBroadcastMessage);
+
+        for (String groupId : groupIds) {
+            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Group, null, groupId);
+            messageRequestService.createManualMessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
+        }
     }
 
     private void sendMessageToGlific(MessageRequest messageRequest) {

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MessageReceiverRepository  extends CHSRepository<MessageReceiver> {
-    MessageReceiver findByReceiverIdAndReceiverType(Long receiverId, ReceiverType receiverType);
+    MessageReceiver findByReceiverIdAndReceiverTypeAndExternalId(Long receiverId, ReceiverType receiverType, String externalId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "update message_receiver mr set " +

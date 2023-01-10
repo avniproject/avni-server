@@ -9,17 +9,20 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "message_request_queue")
 public class MessageRequest extends OrganisationAwareEntity {
-    @NotNull
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "message_rule_id")
     private MessageRule messageRule;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manual_broadcast_message_id")
+    private ManualBroadcastMessage manualBroadcastMessage;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "message_receiver_id")
     private MessageReceiver messageReceiver;
 
-    @NotNull
     @Column
     private Long entityId;
 
@@ -69,6 +72,14 @@ public class MessageRequest extends OrganisationAwareEntity {
         this.scheduledDateTime = scheduledDateTime;
         this.deliveryStatus = MessageDeliveryStatus.NotSent;
     }
+
+    public MessageRequest(ManualBroadcastMessage manualBroadcastMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
+        this.manualBroadcastMessage = manualBroadcastMessage;
+        this.messageReceiver = messageReceiver;
+        this.scheduledDateTime = scheduledDateTime;
+        this.deliveryStatus = MessageDeliveryStatus.NotSent;
+    }
+
     public void markComplete() {
         deliveryStatus = MessageDeliveryStatus.Sent;
         deliveredDateTime = DateTime.now();
