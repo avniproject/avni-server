@@ -1,5 +1,5 @@
 {
-  "query": "query group($id: ID!) {\n  group(id: $id) {\n    group {\n      label\n    }\n  }\n}",
+  "query": "query group($id: ID!) {\n  group(id: $id) {\n    group {\n      id\n    label\n    description\n    }\n  }\n}",
   "variables": {
     "id": "${id}"
   }

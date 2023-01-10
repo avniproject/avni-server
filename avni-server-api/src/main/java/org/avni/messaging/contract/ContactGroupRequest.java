@@ -1,15 +1,15 @@
 package org.avni.messaging.contract;
 
 public class ContactGroupRequest {
-    private String name;
+    private String label;
     private String description;
 
-    public String getName() {
-        return name;
+    public String getLabel() {
+        return label;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     public String getDescription() {

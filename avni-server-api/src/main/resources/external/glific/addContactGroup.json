@@ -1,0 +1,10 @@
+{
+  "operationName": "createGroup",
+  "variables": {
+    "input": {
+      "label": "${contactGroupName}",
+      "description": "${contactGroupDescription}"
+    }
+  },
+  "query": "mutation createGroup($input: GroupInput!) {\n  createGroup(input: $input) {\n    group {\n      id\n      label\n    }\n    errors {\n      key\n      message\n    }\n  }\n}"
+}

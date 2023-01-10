@@ -1,0 +1,11 @@
+{
+  "operationName": "updateGroup",
+  "variables": {
+    "id": "${id}",
+    "input": {
+      "label": "${label}",
+      "description": "${description}"
+    }
+  },
+  "query": "mutation updateGroup($id: ID!, $input: GroupInput!) {\n  updateGroup(id: $id, input: $input) {\n    group {\n      id\n      label\n      description\n}\n    errors {\n      key\n      message\n    }\n  }\n}"
+}

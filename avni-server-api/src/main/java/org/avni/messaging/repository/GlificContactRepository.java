@@ -36,6 +36,8 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String GET_ALL_MSGS_JSON;
     private final String GET_ALL_GROUP_CONVERSATION_MSGS_JSON;
     private final String ADD_CONTACT_TO_GROUP_JSON;
+    private final String ADD_CONTACT_GROUP_JSON;
+    private final String UPDATE_CONTACT_GROUP_JSON;
 
     private final static int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
 
@@ -51,6 +53,8 @@ public class GlificContactRepository extends AbstractGlificRepository {
         GET_ALL_MSGS_JSON = getJson("getAllMessages");
         GET_ALL_GROUP_CONVERSATION_MSGS_JSON = getJson("searchConversationMessages");
         ADD_CONTACT_TO_GROUP_JSON = getJson("addContactToGroup");
+        ADD_CONTACT_GROUP_JSON = getJson("addContactGroup");
+        UPDATE_CONTACT_GROUP_JSON = getJson("updateContactGroup");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
@@ -149,7 +153,18 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public void saveContactGroup(ContactGroupRequest contactGroupRequest) {
+    public void createContactGroup(ContactGroupRequest contactGroupRequest) {
+        String message = ADD_CONTACT_GROUP_JSON.replace("${contactGroupName}", contactGroupRequest.getLabel())
+                .replace("${contactGroupDescription}", contactGroupRequest.getDescription());
+        glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
+        });
+    }
 
+    public void updateContactGroup(String id, ContactGroupRequest contactGroupRequest) {
+        String message = UPDATE_CONTACT_GROUP_JSON.replace("${label}", contactGroupRequest.getLabel())
+                .replace("${description}", contactGroupRequest.getDescription())
+                .replace("${id}", id);
+        glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
+        });
     }
 }

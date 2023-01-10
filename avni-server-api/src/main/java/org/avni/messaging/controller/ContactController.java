@@ -56,7 +56,12 @@ public class ContactController {
     @PostMapping(ContactGroupEndpoint)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void addContactGroup(@RequestBody ContactGroupRequest contactGroupRequest) {
-        glificContactRepository.saveContactGroup(contactGroupRequest);
+        glificContactRepository.createContactGroup(contactGroupRequest);
+    }
+
+    @PutMapping(ContactGroupEndpoint + "/{id}")
+    public void addContactGroup(@PathVariable("id") String id, @RequestBody ContactGroupRequest contactGroupRequest) {
+        glificContactRepository.updateContactGroup(id, contactGroupRequest);
     }
 
     @PostMapping(ContactGroupEndpoint + "/{contactGroupId}/subject")
