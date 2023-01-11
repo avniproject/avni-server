@@ -4,6 +4,7 @@ import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.external.GlificRestClient;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @Repository
 @Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
+    public static final String GLIFIC_CONTACT_FOR_PHONE_NUMBER = "glificContactForPhoneNumber";
     public static final String INDIA_ISD_CODE = "+91";
     public static final String PHONE_NUMBER = "${phoneNumber}";
     public static final String RECEIVER_NAME = "${receiverName}";
@@ -116,6 +118,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
      * @return
      * Throws 404 Not found error, if contact matching specified phoneNumber is not found
      */
+    @Cacheable(value = GLIFIC_CONTACT_FOR_PHONE_NUMBER)
     public GlificContactResponse findContact(String phoneNumber) throws GlificContactNotFoundError {
         assert StringUtils.hasText(phoneNumber);
         GlificGetContactsResponse glificContact = getContact(phoneNumber);

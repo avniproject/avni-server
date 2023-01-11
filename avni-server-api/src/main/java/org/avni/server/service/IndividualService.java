@@ -13,6 +13,7 @@ import org.avni.server.util.S;
 import org.avni.server.web.request.*;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -25,6 +26,8 @@ import java.util.stream.Stream;
 
 @Service
 public class IndividualService implements ScopeAwareService {
+    public static final String PHONE_NUMBER_FOR_SUBJECT_ID = "phoneNumberForSubjectId";
+
     private final IndividualRepository individualRepository;
     private final ObservationService observationService;
     private final GroupSubjectRepository groupSubjectRepository;
@@ -367,6 +370,7 @@ public class IndividualService implements ScopeAwareService {
         return phoneNumber.orElse(null);
     }
 
+    @Cacheable(value = PHONE_NUMBER_FOR_SUBJECT_ID)
     public String fetchIndividualPhoneNumber(long subjectId) {
         Individual individual = getIndividual(subjectId);
         if(individual == null ) {

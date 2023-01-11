@@ -26,6 +26,9 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import javax.sql.DataSource;
 import java.util.concurrent.TimeUnit;
 
+import static org.avni.server.service.AddressLevelCache.ADDRESSES_PER_CATCHMENT;
+import static org.avni.server.service.AddressLevelCache.ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS;
+
 @Configuration
 @EnableCaching
 @EnableJpaAuditing
@@ -42,6 +45,9 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
 
     @Value("${avni.cache.ttl.seconds}")
     private int timeToLiveInSeconds;
+
+    @Value("${avni.cache.values.multiplier}")
+    private int cacheValuesMultiplier;
 
     @Value("${avni.custom.query.timeout}")
     private int timeout;
@@ -88,7 +94,7 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     public CacheManager cacheManager() {
         return new ConcurrentMapCacheManager() {
             /**
-             * IMPORTANT:
+             * IMPORTANT: For ADDRESSES Caches
              * 1. We should keep the value for timeToLiveInSeconds to a low value (less than 10 seconds),
              * so that the app recovers from an OOM issue after the entries expire (in the next 10 seconds)
              * 2. We should keep the value for maxEntriesToCache to a low value (less than 5),
@@ -97,8 +103,15 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
              */
             @Override
             protected Cache createConcurrentMapCache(final String name) {
-                return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
-                        TimeUnit.SECONDS).maximumSize(maxEntriesToCache).build().asMap(), DISALLOW_NULL_VALUES);
+                switch (name) {
+                    case ADDRESSES_PER_CATCHMENT:
+                    case ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS:
+                        return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
+                                TimeUnit.SECONDS).maximumSize(maxEntriesToCache).build().asMap(), DISALLOW_NULL_VALUES);
+                    default:
+                        return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds * cacheValuesMultiplier,
+                                TimeUnit.SECONDS).maximumSize(maxEntriesToCache * cacheValuesMultiplier).build().asMap(), DISALLOW_NULL_VALUES);
+                }
             }
         };
     }
