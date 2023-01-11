@@ -1,6 +1,7 @@
 package org.avni.messaging.repository;
 
 import org.avni.messaging.domain.MessageDeliveryStatus;
+import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.MessageRule;
 import org.avni.server.dao.CHSRepository;
@@ -28,4 +29,6 @@ public interface MessageRequestQueueRepository extends CHSRepository<MessageRequ
             "is_voided = :isVoided " +
             "where mr.entity_id = :entityId", nativeQuery = true)
     void updateVoided(boolean isVoided, Long entityId);
+
+    Stream<MessageRequest> findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(MessageDeliveryStatus notSent, MessageReceiver messageReceiver);
 }

@@ -7,8 +7,13 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface MessageReceiverRepository  extends CHSRepository<MessageReceiver> {
+
+    Optional<MessageReceiver> findByExternalId(String externalId);
+
     MessageReceiver findByReceiverIdAndReceiverTypeAndExternalId(Long receiverId, ReceiverType receiverType, String externalId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

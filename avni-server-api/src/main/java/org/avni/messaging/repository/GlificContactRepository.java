@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -116,6 +117,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
      * Throws 404 Not found error, if contact matching specified phoneNumber is not found
      */
     public GlificContactResponse findContact(String phoneNumber) throws GlificContactNotFoundError {
+        assert StringUtils.hasText(phoneNumber);
         GlificGetContactsResponse glificContact = getContact(phoneNumber);
         if(glificContact.getContacts().isEmpty()) {
             throw new GlificContactNotFoundError(String.format("Contact with phoneNumber %s not found", phoneNumber));
