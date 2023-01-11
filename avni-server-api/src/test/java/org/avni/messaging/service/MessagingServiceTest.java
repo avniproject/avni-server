@@ -173,6 +173,6 @@ public class MessagingServiceTest {
 
         messagingService.sendMessages();
 
-        verify(glificMessageRepository).sendMessage(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), parameters);
+        verify(glificMessageRepository).sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), parameters);
     }
 }

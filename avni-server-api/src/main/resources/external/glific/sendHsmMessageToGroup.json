@@ -1,0 +1,11 @@
+{
+  "query": "mutation createAndSendMessageToGroup($input: MessageInput!, $groupId: ID!) {createAndSendMessageToGroup(input: $input, groupId: $groupId) {success contactIds errors {key message}}}",
+  "variables": {
+    "input": {
+      "templateId": "${templateId}",
+      "isHsm": true,
+      "params": "${parameters}"
+    },
+    "groupId": "${groupId}"
+  }
+}

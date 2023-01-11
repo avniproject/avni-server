@@ -144,9 +144,17 @@ public class MessagingService {
 
     private void sendMessageToGlific(MessageRequest messageRequest) {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
-        MessageRule messageRule = messageRequest.getMessageRule();
-        String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
-        messageReceiverService.ensureExternalIdPresent(messageReceiver);
-        glificMessageRepository.sendMessage(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), response);
+        if(messageRequest.getManualBroadcastMessage() != null) {
+            ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
+            glificMessageRepository.sendMessageToGroup(messageReceiver.getExternalId(),
+                    manualBroadcastMessage.getMessageTemplateId(),
+                    manualBroadcastMessage.getParameters());
+        }
+        else {
+            MessageRule messageRule = messageRequest.getMessageRule();
+            String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
+            messageReceiverService.ensureExternalIdPresent(messageReceiver);
+            glificMessageRepository.sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), response);
+        }
     }
 }

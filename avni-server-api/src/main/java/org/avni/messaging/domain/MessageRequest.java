@@ -112,4 +112,12 @@ public class MessageRequest extends OrganisationAwareEntity {
     public boolean isDelivered() {
         return getDeliveredDateTime() != null;
     }
+
+    public ManualBroadcastMessage getManualBroadcastMessage() {
+        return manualBroadcastMessage;
+    }
+
+    public void setManualBroadcastMessage(ManualBroadcastMessage manualBroadcastMessage) {
+        this.manualBroadcastMessage = manualBroadcastMessage;
+    }
 }
