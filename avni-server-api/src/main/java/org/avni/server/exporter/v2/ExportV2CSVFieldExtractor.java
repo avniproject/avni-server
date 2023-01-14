@@ -36,7 +36,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
 
     private static final String selectedAnswerFieldValue = "1";
     private static final String unSelectedAnswerFieldValue = "0";
-    public static final String EMPTY_STRING = "";
+    private static final String EMPTY_STRING = "";
     private final ExportJobParametersRepository exportJobParametersRepository;
     private final ObjectMapper objectMapper;
     private final EncounterRepository encounterRepository;
@@ -98,34 +98,43 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         String timezone = exportJobParameters.getTimezone();
         exportOutput = objectMapper.convertValue(exportJobParameters.getReportFormat(), new TypeReference<ExportOutput>() {
         });
+        initializeDataMaps(timezone);
+    }
+
+    private void initializeDataMaps(String timezone) {
         String subjectTypeUUID = exportOutput.getUuid();
+        SubjectType individualType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         this.registrationMap = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, null, null, FormType.IndividualProfile), exportOutput);
-        this.headers.append(headerCreator.addRegistrationHeaders(subjectTypeRepository.findByUuid(subjectTypeUUID), this.registrationMap, this.addressLevelTypes, exportOutput.getFields()));
+        this.headers.append(headerCreator.addRegistrationHeaders(individualType, this.registrationMap, this.addressLevelTypes, exportOutput.getFields()));
         exportOutput.getEncounters().forEach(e -> populateGeneralEncounterMap(subjectTypeUUID, e, e.getUuid(), this.encounterMap, this.encounterCancelMap, timezone));
         exportOutput.getGroups().forEach(g -> {
             String groupSubjectTypeUUID = g.getUuid();
+            SubjectType groupSubjectType = subjectTypeRepository.findByUuid(groupSubjectTypeUUID);
             LinkedHashMap<String, FormElement> applicableGroupsFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(groupSubjectTypeUUID, null, null, FormType.IndividualProfile), g);
             this.groupsMap.put(g.getUuid(), applicableGroupsFields);
             this.headers.append(",")
-                    .append(headerCreator.addRegistrationHeaders(subjectTypeRepository.findByUuid(groupSubjectTypeUUID), applicableGroupsFields, this.addressLevelTypes, g.getFields()));
+                    .append(headerCreator.addRegistrationHeaders(groupSubjectType, applicableGroupsFields, this.addressLevelTypes, g.getFields()));
             g.getEncounters().forEach(ge -> populateGeneralEncounterMap(groupSubjectTypeUUID, ge, ge.getUuid(), this.groupEncounterMap, this.groupEncounterCancelMap, timezone));
         });
         exportOutput.getPrograms().forEach(p -> {
-            LinkedHashMap<String, FormElement> applicableEnrolmentFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, p.getUuid(), null, FormType.ProgramEnrolment), p);
-            LinkedHashMap<String, FormElement> applicableExitFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, p.getUuid(), null, FormType.ProgramExit), p);
-            this.enrolmentMap.put(p.getUuid(), applicableEnrolmentFields);
-            this.exitEnrolmentMap.put(p.getUuid(), applicableExitFields);
+            String programUUID = p.getUuid();
+            Program program = programRepository.findByUuid(programUUID);
+            LinkedHashMap<String, FormElement> applicableEnrolmentFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, programUUID, null, FormType.ProgramEnrolment), p);
+            LinkedHashMap<String, FormElement> applicableExitFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, programUUID, null, FormType.ProgramExit), p);
+            this.enrolmentMap.put(programUUID, applicableEnrolmentFields);
+            this.exitEnrolmentMap.put(programUUID, applicableExitFields);
             this.headers.append(",")
-                    .append(headerCreator.addEnrolmentHeaders(applicableEnrolmentFields, applicableExitFields, programRepository.findByUuid(p.getUuid()).getName(), p.getFields()));
+                    .append(headerCreator.addEnrolmentHeaders(applicableEnrolmentFields, applicableExitFields, programRepository.findByUuid(programUUID).getName(), p.getFields()));
             p.getEncounters().forEach(pe -> {
-                LinkedHashMap<String, FormElement> applicableProgramEncounterFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, p.getUuid(), pe.getUuid(), FormType.ProgramEncounter), pe);
-                LinkedHashMap<String, FormElement> applicableProgramCancelFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, p.getUuid(), pe.getUuid(), FormType.ProgramEncounterCancellation), pe);
-                this.programEncounterMap.put(pe.getUuid(), applicableProgramEncounterFields);
-                this.programEncounterCancelMap.put(pe.getUuid(), applicableProgramCancelFields);
+                String programEncounterTypeUUID = pe.getUuid();
+                EncounterType encounterType = encounterTypeRepository.findByUuid(programEncounterTypeUUID);
+                LinkedHashMap<String, FormElement> applicableProgramEncounterFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, programUUID, programEncounterTypeUUID, FormType.ProgramEncounter), pe);
+                LinkedHashMap<String, FormElement> applicableProgramCancelFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, programUUID, programEncounterTypeUUID, FormType.ProgramEncounterCancellation), pe);
+                this.programEncounterMap.put(programEncounterTypeUUID, applicableProgramEncounterFields);
+                this.programEncounterCancelMap.put(programEncounterTypeUUID, applicableProgramCancelFields);
                 ExportFilters.DateFilter dateFilter = pe.getFilters().getDate();
-                Long maxProgramEncounterCount = programEncounterRepository.getMaxProgramEncounterCount(pe.getUuid(), getCalendarTime(dateFilter.getFrom(), timezone), getCalendarTime(dateFilter.getTo(), timezone));
+                Long maxProgramEncounterCount = programEncounterRepository.getMaxProgramEncounterCount(programEncounterTypeUUID, getCalendarTime(dateFilter.getFrom(), timezone), getCalendarTime(dateFilter.getTo(), timezone));
                 maxProgramEncounterCount = maxProgramEncounterCount == null ? 1l : maxProgramEncounterCount;
-                EncounterType encounterType = encounterTypeRepository.findByUuid(pe.getUuid());
                 pe.setMaxCount(maxProgramEncounterCount);
                 this.headers.append(",")
                         .append(headerCreator.addEncounterHeaders(maxProgramEncounterCount, applicableProgramEncounterFields, applicableProgramCancelFields, encounterType.getName(), pe.getFields()));
@@ -168,10 +177,6 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
 
     public ExportOutput getExportOutput() {
         return exportOutput;
-    }
-
-    public void setExportOutput(ExportOutput exportOutput) {
-        this.exportOutput = exportOutput;
     }
 
     @Override
@@ -238,7 +243,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         return columnsData.toArray();
     }
 
-    public void addRegistrationColumns(List<Object> columnsData, Individual individual, Map<String, FormElement> registrationMap, List<String> fields) {
+    private void addRegistrationColumns(List<Object> columnsData, Individual individual, Map<String, FormElement> registrationMap, List<String> fields) {
         addStaticRegistrationColumns(columnsData, individual, HeaderCreator.getRegistrationDataMap(), fields);
         addAddressLevels(columnsData, individual.getAddressLevel());
         if (individual.getSubjectType().isGroup()) {
@@ -254,7 +259,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
                 .forEach(key -> columnsData.add(registrationDataMap.get(key).getValueFunction().apply(individual)));
     }
 
-    public void addEnrolmentColumns(List<Object> columnsData, ProgramEnrolment programEnrolment, Map<String, FormElement> enrolmentMap,
+    private void addEnrolmentColumns(List<Object> columnsData, ProgramEnrolment programEnrolment, Map<String, FormElement> enrolmentMap,
                                     Map<String, FormElement> exitEnrolmentMap,
                                     ExportOutput.ExportNestedOutput program) {
         addStaticEnrolmentColumns(program, columnsData, programEnrolment, HeaderCreator.getEnrolmentDataMap());
@@ -262,7 +267,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         columnsData.addAll(getObs(programEnrolment.getObservations(), exitEnrolmentMap));
     }
 
-    public <T extends AbstractEncounter> void addEncounterColumns(Long maxVisitCount, List<Object> columnsData, List<T> encounters,
+    private <T extends AbstractEncounter> void addEncounterColumns(Long maxVisitCount, List<Object> columnsData, List<T> encounters,
                                                                   Map<String, FormElement> map, Map<String, FormElement> cancelMap, ExportEntityType encounterEntityType) {
         AtomicInteger counter = new AtomicInteger(0);
         encounters.forEach(encounter -> {

@@ -14,6 +14,13 @@ public class ExportV2ValidationHelper implements LongitudinalExportRequestFieldN
     private final static Pattern UUID_REGEX_PATTERN =
             Pattern.compile("^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$");
 
+    public static final String INDIVIDUAL = "Individual";
+    public static final String ENCOUNTER = "Encounter";
+    public static final String GROUP_SUBJECT = "Group Subject";
+    public static final String GROUP_SUBJECT_ENCOUNTER = "Group Subject Encounter";
+    public static final String PROGRAM_ENROLMENT = "Program Enrolment";
+    public static final String PROGRAM_ENCOUNTER = "Program Encounter";
+
     private static List<String> validRegistrationFields = Arrays.asList(
             ID,
             UUID,
@@ -91,26 +98,26 @@ public class ExportV2ValidationHelper implements LongitudinalExportRequestFieldN
         if(validateIfDateFilterIsNotSpecified(exportOutput)) {
             errorList.add("Individual Registration Date isn't specified");
         }
-        validateRegistrationHeaders(errorList, "Individual", exportOutput.getFields());
+        validateRegistrationHeaders(errorList, INDIVIDUAL, exportOutput.getFields());
 
         exportOutput.getEncounters().forEach(enc -> {
-            validateEncounterHeaders(errorList, "Encounter", enc.getFields());
+            validateEncounterHeaders(errorList, ENCOUNTER, enc.getFields());
         });
 
         exportOutput.getPrograms().forEach(enr -> {
-            validateEnrolmentHeaders(errorList, "Program Enrolments", enr.getFields());
+            validateEnrolmentHeaders(errorList, PROGRAM_ENROLMENT, enr.getFields());
         });
 
         exportOutput.getPrograms().stream().flatMap(enr -> enr.getEncounters().stream()).forEach(enc -> {
-            validateEncounterHeaders(errorList, "Program Encounter", enc.getFields());
+            validateEncounterHeaders(errorList, PROGRAM_ENCOUNTER, enc.getFields());
         });
 
         exportOutput.getGroups().forEach(grp -> {
-                    validateRegistrationHeaders(errorList, "Group Subject", grp.getFields());
+                    validateRegistrationHeaders(errorList, GROUP_SUBJECT, grp.getFields());
         });
 
         exportOutput.getGroups().stream().flatMap(grp -> grp.getEncounters().stream()).forEach(enc -> {
-            validateEncounterHeaders(errorList, "Group Subject Encounter", enc.getFields());
+            validateEncounterHeaders(errorList, GROUP_SUBJECT_ENCOUNTER, enc.getFields());
         });
 
         return errorList;
