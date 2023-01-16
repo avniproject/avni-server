@@ -46,6 +46,9 @@ public class Program extends OrganisationAwareEntity {
     private boolean manualEligibilityCheckRequired;
 
     @Column
+    private boolean allowMultipleEnrolments;
+
+    @Column
     private String manualEnrolmentEligibilityCheckRule;
 
     @Column(name = "manual_enrolment_eligibility_check_declarative_rule")
@@ -160,5 +163,13 @@ public class Program extends OrganisationAwareEntity {
         String getOperationalProgramName();
 
         String getProgramSubjectLabel();
+    }
+
+    public boolean isAllowMultipleEnrolments() {
+        return allowMultipleEnrolments;
+    }
+
+    public void setAllowMultipleEnrolments(boolean allowMultipleEnrolments) {
+        this.allowMultipleEnrolments = allowMultipleEnrolments;
     }
 }

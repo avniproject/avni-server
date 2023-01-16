@@ -63,6 +63,7 @@ public class ProgramService implements NonScopeAwareService {
         program.setManualEligibilityCheckRequired(programContract.isManualEligibilityCheckRequired());
         program.setManualEnrolmentEligibilityCheckRule(programContract.getManualEnrolmentEligibilityCheckRule());
         program.setManualEnrolmentEligibilityCheckDeclarativeRule(programContract.getManualEnrolmentEligibilityCheckDeclarativeRule());
+        program.setAllowMultipleEnrolments(programContract.isAllowMultipleEnrolments());
         programRepository.save(program);
     }
 

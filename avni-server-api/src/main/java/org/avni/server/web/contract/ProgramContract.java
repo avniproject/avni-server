@@ -14,6 +14,7 @@ public class ProgramContract {
     private boolean manualEligibilityCheckRequired;
     private String manualEnrolmentEligibilityCheckRule;
     private DeclarativeRule manualEnrolmentEligibilityCheckDeclarativeRule;
+    private boolean allowMultipleEnrolments;
 
     public boolean isManualEligibilityCheckRequired() {
         return manualEligibilityCheckRequired;
@@ -101,5 +102,13 @@ public class ProgramContract {
 
     public void setEnrolmentEligibilityCheckDeclarativeRule(DeclarativeRule enrolmentEligibilityCheckDeclarativeRule) {
         this.enrolmentEligibilityCheckDeclarativeRule = enrolmentEligibilityCheckDeclarativeRule;
+    }
+
+    public boolean isAllowMultipleEnrolments() {
+        return allowMultipleEnrolments;
+    }
+
+    public void setAllowMultipleEnrolments(boolean allowMultipleEnrolments) {
+        this.allowMultipleEnrolments = allowMultipleEnrolments;
     }
 }

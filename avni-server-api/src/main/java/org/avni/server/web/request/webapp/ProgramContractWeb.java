@@ -71,6 +71,7 @@ public class ProgramContractWeb extends ProgramContract {
         contract.setManualEligibilityCheckRequired(operationalProgram.isManualEligibilityCheckRequired());
         contract.setManualEnrolmentEligibilityCheckRule(operationalProgram.getManualEnrolmentEligibilityCheckRule());
         contract.setManualEnrolmentEligibilityCheckDeclarativeRule(operationalProgram.getManualEnrolmentEligibilityCheckDeclarativeRule());
+        contract.setAllowMultipleEnrolments(operationalProgram.getProgram().isAllowMultipleEnrolments());
         return contract;
     }
 
