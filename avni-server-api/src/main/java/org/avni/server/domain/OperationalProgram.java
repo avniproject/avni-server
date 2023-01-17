@@ -92,4 +92,8 @@ public class OperationalProgram extends OrganisationAwareEntity {
     public boolean isManualEligibilityCheckRequired() {
         return program.isManualEligibilityCheckRequired();
     }
+
+    public boolean isAllowMultipleEnrolments() {
+        return program.isAllowMultipleEnrolments();
+    }
 }
