@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import org.avni.server.domain.UserContext;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,12 +23,14 @@ import static java.lang.String.format;
 @Service("AWSS3Service")
 @ConditionalOnProperty(value = "aws.s3.enable", havingValue = "true", matchIfMissing = true)
 public class AWSS3Service extends StorageService {
+    private static final Logger logger = LoggerFactory.getLogger(AWSS3Service.class);
+
     @Autowired
     public AWSS3Service(@Value("${avni.bucketName}") String bucketName,
                         @Value("${aws.accessKeyId}") String accessKeyId,
                         @Value("${aws.secretAccessKey}") String secretAccessKey,
                         @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev) {
-        super(bucketName, s3InDev, LoggerFactory.getLogger(AWSS3Service.class), isDev);
+        super(bucketName, s3InDev, logger, isDev);
         s3Client = AmazonS3ClientBuilder.standard()
                 .withRegion(REGION)
                 .withPathStyleAccessEnabled(true)

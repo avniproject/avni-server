@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import org.avni.server.domain.UserContext;
 import org.avni.server.util.MinioUri;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,13 +25,15 @@ import static java.lang.String.format;
 @Service("AWSMinioService")
 @ConditionalOnProperty(value = "minio.s3.enable", havingValue = "true")
 public class AWSMinioService extends StorageService {
+    private static final Logger logger = LoggerFactory.getLogger(AWSMinioService.class);
+
     @Autowired
     public AWSMinioService(@Value("${avni.bucketName}") String bucketName,
                            @Value("${minio.url}") String minioUrl,
                            @Value("${minio.accessKey}") String minioAccessKey,
                            @Value("${minio.secretAccessKey}") String minioSecretAccessKey,
                            @Value("${avni.connectToS3InDev}") boolean s3InDev, Boolean isDev) {
-        super(bucketName, s3InDev, LoggerFactory.getLogger(AWSMinioService.class), isDev);
+        super(bucketName, s3InDev, logger, isDev);
         ClientConfiguration clientConfiguration = new ClientConfiguration();
         clientConfiguration.setSignerOverride("AWSS3V4SignerType");
         s3Client = AmazonS3ClientBuilder.standard()
