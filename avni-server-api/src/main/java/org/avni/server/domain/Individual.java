@@ -272,7 +272,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     @JsonIgnore
     public List<Program> getActivePrograms() {
         return programEnrolments.stream().filter(x -> !x.isVoided()).filter(x -> x.getProgramExitDateTime() == null)
-                .map(x -> x.getProgram()).collect(Collectors.toList());
+                .map(ProgramEnrolment::getProgram).collect(Collectors.toList());
     }
 
     @JsonIgnore

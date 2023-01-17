@@ -1,8 +1,5 @@
 package org.avni.server.identifier;
 
-import org.avni.server.identifier.IdentifierGenerator;
-import org.avni.server.identifier.PrefixedUserPoolBasedIdentifierGenerator;
-import org.avni.server.identifier.UserBasedIdentifierGenerator;
 import org.junit.Test;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.JsonObject;

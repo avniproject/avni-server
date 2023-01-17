@@ -9,6 +9,14 @@ public class EligibilityRuleEntity {
     private boolean isEligible;
     private String typeUUID;
 
+    public EligibilityRuleEntity() {
+    }
+
+    public EligibilityRuleEntity(boolean isEligible, String typeUUID) {
+        this.isEligible = isEligible;
+        this.typeUUID = typeUUID;
+    }
+
     public String getTypeUUID() {
         return typeUUID;
     }

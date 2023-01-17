@@ -28,8 +28,8 @@ import java.util.stream.Stream;
 @Service
 public class ProgramService implements NonScopeAwareService {
     private final Logger logger;
-    private ProgramRepository programRepository;
-    private OperationalProgramRepository operationalProgramRepository;
+    private final ProgramRepository programRepository;
+    private final OperationalProgramRepository operationalProgramRepository;
     private final FormMappingRepository formMappingRepository;
     private final RuleService ruleService;
 
@@ -72,12 +72,13 @@ public class ProgramService implements NonScopeAwareService {
                 .findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(individual.getSubjectType(), FormType.ProgramEnrolment);
 
         List<Program> activePrograms = individual.getActivePrograms();
-        List<Program> inactivePrograms = formMappings.stream()
-                .filter(formMapping -> !activePrograms.stream().anyMatch(program -> Objects.equals(formMapping.getProgramUuid(), program.getUuid())))
-                .map(formMapping -> formMapping.getProgram())
+        List<Program> staticallyEnrollablePrograms = formMappings.stream()
+                .filter(formMapping -> activePrograms.stream().noneMatch(program ->
+                        (Objects.equals(formMapping.getProgramUuid(), program.getUuid())) && (!program.isAllowMultipleEnrolments())))
+                .map(FormMapping::getProgram)
                 .collect(Collectors.toList());
 
-        return getEligibleProgramsFromInactivePrograms(individual, inactivePrograms);
+        return getEligibleProgramsFromInactivePrograms(individual, staticallyEnrollablePrograms);
     }
 
     public void createOperationalProgram(OperationalProgramContract operationalProgramContract, Organisation organisation) {
@@ -122,16 +123,16 @@ public class ProgramService implements NonScopeAwareService {
         return operationalProgramRepository.findAllByIsVoidedFalse().stream().map(OperationalProgram::getProgram);
     }
 
-    private List<Program> getEligibleProgramsFromInactivePrograms(Individual individual, List<Program> inactivePrograms) {
-        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, inactivePrograms);
+    private List<Program> getEligibleProgramsFromInactivePrograms(Individual individual, List<Program> staticallyEnrolablePrograms) {
+        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, staticallyEnrolablePrograms);
 
-        List<EligibilityRuleEntity> eligibilityRuleEntities = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
+        List<EligibilityRuleEntity> allEligiblePrograms = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
                 .filter(EligibilityRuleEntity::isEligible)
                 .collect(Collectors.toList());
 
-        List<Program> eligiblePrograms = inactivePrograms.stream()
-                .filter(inactiveProgram -> eligibilityRuleEntities.stream()
-                        .anyMatch(eligibilityRuleEntity -> eligibilityRuleEntity.getTypeUUID().equals(inactiveProgram.getUuid())))
+        List<Program> eligiblePrograms = staticallyEnrolablePrograms.stream()
+                .filter(staticallyEnrolableProgram -> allEligiblePrograms.stream()
+                        .anyMatch(eligibilityRuleEntity -> eligibilityRuleEntity.getTypeUUID().equals(staticallyEnrolableProgram.getUuid())))
                 .collect(Collectors.toList());
 
         return eligiblePrograms;

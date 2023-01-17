@@ -5,6 +5,13 @@ import java.util.List;
 public class EligibilityRuleResponseEntity extends BaseRuleResponseEntity {
     private List<EligibilityRuleEntity> eligibilityRuleEntities;
 
+    public EligibilityRuleResponseEntity() {
+    }
+
+    public EligibilityRuleResponseEntity(List<EligibilityRuleEntity> eligibilityRuleEntities) {
+        this.eligibilityRuleEntities = eligibilityRuleEntities;
+    }
+
     public List<EligibilityRuleEntity> getEligibilityRuleEntities() {
         return eligibilityRuleEntities;
     }
