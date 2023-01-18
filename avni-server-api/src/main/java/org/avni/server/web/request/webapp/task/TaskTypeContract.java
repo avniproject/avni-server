@@ -5,6 +5,9 @@ import org.avni.server.domain.task.TaskType;
 import org.avni.server.service.ConceptService;
 import org.avni.server.web.request.ReferenceDataContract;
 
+import java.util.List;
+import java.util.Map;
+
 public class TaskTypeContract extends ReferenceDataContract {
     private String taskTypeName;
     private String[] metadataSearchFields;

@@ -24,6 +24,7 @@ import org.avni.server.web.request.application.FormContractWeb;
 import org.avni.server.web.request.webapp.IndividualRelationContract;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
+import org.avni.server.web.request.webapp.task.TaskTypeWebContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

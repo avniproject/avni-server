@@ -20,6 +20,7 @@ import org.avni.server.web.request.task.TaskAssignmentRequest;
 import org.avni.server.web.request.task.TaskFilterCriteria;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
+import org.avni.server.web.request.webapp.task.TaskTypeWebContract;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -111,9 +112,9 @@ public class TaskService implements NonScopeAwareService {
     public JsonObject getTaskMetaData() {
         JsonObject response = new JsonObject();
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        List<TaskTypeContract> taskTypes = taskTypeRepository.findAllByIsVoidedFalse()
+        List<TaskTypeWebContract> taskTypes = taskTypeRepository.findAllByIsVoidedFalse()
                 .stream()
-                .map(taskType -> TaskTypeContract.fromEntity(taskType, conceptService))
+                .map(taskType -> TaskTypeWebContract.fromEntity(taskType, conceptService))
                 .collect(Collectors.toList());
         List<TaskStatusContract> taskStatuses = taskStatusRepository.findAllByIsVoidedFalse()
                 .stream()
