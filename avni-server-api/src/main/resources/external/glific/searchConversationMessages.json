@@ -1,15 +1,20 @@
 {
   "operationName": "search",
-  "query": "query search($filter: SearchFilter!, $contactOpts: Opts!, $messageOpts: Opts!) {  search(filter: $filter, contactOpts: $contactOpts, messageOpts: $messageOpts) {    contact {      id      name      phone      fields      maskedPhone      lastMessageAt      status      bspStatus      isOrgRead      __typename    }    group {      id      label      __typename    }    messages {      id      body      insertedAt      messageNumber      receiver {        id        __typename      }      sender {        id        __typename      }      location {        latitude        longitude        __typename      }      tags {        id        label        colorCode        __typename      }      type      media {        url        caption        __typename      }      errors      contextMessage {        body        contextId        messageNumber        errors        media {          caption          sourceUrl          id          url          __typename        }        type        insertedAt        location {          id          latitude          longitude          __typename        }        receiver {          id          __typename        }        sender {          id          name          __typename        }        __typename      }      interactiveContent      sendBy      flowLabel      __typename    }    __typename  }}",
+  "query": "query search(  $saveSearchInput: SaveSearchInput, $searchFilter: SearchFilter!, $contactOpts: Opts!, $messageOpts: Opts!) { search(filter: $searchFilter, saveSearchInput: $saveSearchInput, contactOpts: $contactOpts, messageOpts: $messageOpts) { messages { id    body    type    insertedAt    sendAt   sender {    id    name}    receiver {    id    name}} contact { name, id}}}",
   "variables": {
+    "searchFilter": {
+      "searchGroup": true,
+      "includeGroups": [
+        "${groupId}"
+      ]
+    },
+    "messageOpts": {
+      "limit": 9999,
+      "order": "DESC"
+    },
     "contactOpts": {
-      "limit": 25
+      "limit": 1,
+      "order": "DESC"
     }
-  },
-  "filter": {
-    "searchGroup": true
-  }, 
-  "messageOpts": {
-    "limit": 20
   }
 }

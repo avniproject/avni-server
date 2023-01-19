@@ -11,8 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 @Lazy //for better startup performance
@@ -21,6 +21,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     public static final String INDIA_ISD_CODE = "+91";
     public static final String PHONE_NUMBER = "${phoneNumber}";
     public static final String RECEIVER_NAME = "${receiverName}";
+    public static final String RECEIVER_ID = "${receiverId}";
     public static final String FULL_NAME = "${fullName}";
     public static final String GROUP_ID = "${groupId}";
     public static final String ID = "${id}";
@@ -140,11 +141,12 @@ public class GlificContactRepository extends AbstractGlificRepository {
      */
     public List<Message> getAllMsgsForContact(String phoneNumber) {
         GlificContactResponse contact = findContact(phoneNumber);
-        String getAllMessagesRequest = GET_ALL_MSGS_JSON.replace(RECEIVER_NAME, contact.getName());
-        GetAllMessagesData data = glificRestClient.callAPI(getAllMessagesRequest,
-                new ParameterizedTypeReference<GlificResponse<GetAllMessagesData>>() {});
-        return data.getMessages().stream()
-                .filter(msg -> contact.getId().equals(msg.getReceiver().getId())).collect(Collectors.toList());
+        String getAllMessagesRequest = GET_ALL_MSGS_JSON.replace(RECEIVER_ID, contact.getId());
+        GlificSearchDataResponse data = glificRestClient.callAPI(getAllMessagesRequest,
+                new ParameterizedTypeReference<GlificResponse<GlificSearchDataResponse>>() {});
+
+        return data.getSearch() != null && !data.getSearch().isEmpty() ?
+                data.getSearch().get(0).getMessages() : Collections.emptyList();
     }
 
     public void addContactToGroup(String contactGroupId, String contactId) {

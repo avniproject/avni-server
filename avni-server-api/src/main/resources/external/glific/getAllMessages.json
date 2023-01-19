@@ -1,12 +1,17 @@
 {
-  "query": "query messages($filter: MessageFilter, $opts: Opts) {  messages(filter: $filter, opts:$opts) {    id    body    type    insertedAt    sendAt    sender {    id    name}    receiver {    id    name}}}",
+  "operationName": "search",
+  "query": "query search(  $saveSearchInput: SaveSearchInput, $searchFilter: SearchFilter!, $contactOpts: Opts!, $messageOpts: Opts!) { search(filter: $searchFilter, saveSearchInput: $saveSearchInput, contactOpts: $contactOpts, messageOpts: $messageOpts) { messages { id    body    type    insertedAt    sendAt   sender {    id    name}    receiver {    id    name}} contact { name, id}}}",
   "variables": {
-    "filter": {
-      "receiver": "${receiverName}"
+    "searchFilter": {
+      "id": "${receiverId}"
     },
-    "opts": {
-      "order": "ASC",
-      "offset": 0
+    "messageOpts": {
+      "limit": 9999,
+      "order": "DESC"
+    },
+    "contactOpts": {
+      "limit": 1,
+      "order": "DESC"
     }
   }
 }
