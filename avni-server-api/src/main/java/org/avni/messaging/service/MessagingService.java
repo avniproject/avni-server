@@ -83,9 +83,9 @@ public class MessagingService {
         for (MessageRule messageRule : messageRules) {
             MessageReceiver messageReceiver = null;
             if(messageRule.getReceiverType() == ReceiverType.Subject)
-                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, subjectId, null);
+                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, subjectId);
             else if(messageRule.getReceiverType() == ReceiverType.User)
-                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId, null);
+                messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId);
 
             DateTime scheduledDateTime = ruleService.executeScheduleRule(messageRule.getEntityType().name(), entityId, messageRule.getScheduleRule());
             messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, entityId, scheduledDateTime);
@@ -136,7 +136,7 @@ public class MessagingService {
         manualBroadcastMessageRepository.save(manualBroadcastMessage);
 
         for (String groupId : groupIds) {
-            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Group, null, groupId);
+            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Group, groupId);
             messageRequestService.createManualMessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
         }
     }

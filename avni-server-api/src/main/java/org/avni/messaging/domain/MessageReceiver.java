@@ -19,9 +19,13 @@ public class MessageReceiver extends OrganisationAwareEntity {
     @Column
     private String externalId;
 
-    public MessageReceiver(ReceiverType receiverType, Long receiverId, String externalId) {
+    public MessageReceiver(ReceiverType receiverType, Long receiverId) {
         this.receiverType = receiverType;
         this.receiverId = receiverId;
+    }
+
+    public MessageReceiver(ReceiverType receiverType, String externalId) {
+        this.receiverType = receiverType;
         this.externalId = externalId;
     }
 

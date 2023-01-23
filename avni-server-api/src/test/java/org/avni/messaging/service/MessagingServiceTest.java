@@ -78,7 +78,7 @@ public class MessagingServiceTest {
         when(messageRuleRepository.findAllByEntityTypeAndEntityTypeId(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
 
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
-        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, individualId, null)).thenReturn(messageReceiver);
+        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, individualId)).thenReturn(messageReceiver);
         Long messageReceiverId = 890L;
         when(messageReceiver.getId()).thenReturn(messageReceiverId);
 
@@ -95,7 +95,7 @@ public class MessagingServiceTest {
 
         messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
-        verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId), eq(null));
+        verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId));
         verify(ruleService).executeScheduleRule(eq(messageRule.getEntityType().name()), eq(individualId), eq(scheduleRule));
         verify(messageRequestService).createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, individualId, scheduledDateTime);
     }
@@ -117,7 +117,7 @@ public class MessagingServiceTest {
         when(messageRuleRepository.findAllByEntityTypeAndEntityTypeId(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
 
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
-        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, individualId, null)).thenReturn(messageReceiver);
+        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, individualId)).thenReturn(messageReceiver);
         Long messageReceiverId = 890L;
         when(messageReceiver.getId()).thenReturn(messageReceiverId);
 
@@ -144,7 +144,7 @@ public class MessagingServiceTest {
 
         messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
-        verify(messageReceiverService, times(2)).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId), eq(null));
+        verify(messageReceiverService, times(2)).saveReceiverIfRequired(eq(ReceiverType.Subject), eq(individualId));
         verify(ruleService).executeScheduleRule(eq(messageRule.getEntityType().name()), eq(individualId), eq(scheduleRule));
         verify(messageRequestService).createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, individualId, scheduledDateTime);
 
@@ -159,7 +159,7 @@ public class MessagingServiceTest {
         messageRule.setMessageRule("I am a message rule");
         messageRule.setMessageTemplateId("messageTemplateId");
         messageRule.setEntityType(EntityType.Subject);
-        MessageReceiver messageReceiver = new MessageReceiver(ReceiverType.Subject, 1L, "1234");
+        MessageReceiver messageReceiver = new MessageReceiver(ReceiverType.Subject, 1L);
         MessageRequest request = new MessageRequest(messageRule, messageReceiver, 3L, DateTime.now());
         String[] parameters = new String[]{"someParam"};
 

@@ -45,9 +45,9 @@ public class MessageReceiverServiceTest {
     @Ignore("breaking because it is checking every field to match as date is not matching. also this test is not very useful")
     public void shouldSaveMessageReceiverIfNotExist() {
         Long entityId = 123L;
-        when(messageReceiverRepository.findByReceiverIdAndReceiverTypeAndExternalId(entityId, ReceiverType.Subject, null)).thenReturn(null);
+        when(messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, ReceiverType.Subject)).thenReturn(null);
 
-        MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId, null);
+        MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId);
 
         verify(messageReceiverRepository).save(messageReceiver.capture());
 
@@ -62,9 +62,9 @@ public class MessageReceiverServiceTest {
     public void shouldReturnExistingMessageReceiverIfExist() {
         Long entityId = 123L;
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
-        when(messageReceiverRepository.findByReceiverIdAndReceiverTypeAndExternalId(entityId, ReceiverType.Subject, null)).thenReturn(messageReceiver);
+        when(messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, ReceiverType.Subject)).thenReturn(messageReceiver);
 
-        MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId, null);
+        MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId);
 
         verify(messageReceiverRepository, never()).save(any());
         assertThat(actualMessageReceiver).isEqualTo(messageReceiver);
