@@ -1,6 +1,7 @@
 package org.avni.server;
 
 import com.google.common.cache.CacheBuilder;
+import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.domain.User;
 import org.avni.server.framework.jpa.CHSAuditorAware;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
@@ -24,6 +25,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.avni.server.service.AddressLevelCache.ADDRESSES_PER_CATCHMENT;
@@ -46,8 +48,8 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     @Value("${avni.cache.ttl.seconds}")
     private int timeToLiveInSeconds;
 
-    @Value("${avni.cache.values.multiplier}")
-    private int cacheValuesMultiplier;
+    @Value("${avni.cache.max.weight}")
+    private int cacheMaxWeight;
 
     @Value("${avni.custom.query.timeout}")
     private int timeout;
@@ -93,25 +95,27 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     @Bean
     public CacheManager cacheManager() {
         return new ConcurrentMapCacheManager() {
-            /**
-             * IMPORTANT: For ADDRESSES Caches
-             * 1. We should keep the value for timeToLiveInSeconds to a low value (less than 10 seconds),
-             * so that the app recovers from an OOM issue after the entries expire (in the next 10 seconds)
-             * 2. We should keep the value for maxEntriesToCache to a low value (less than 5),
-             * so that we avoid getting into OOM issue in the first place. Ex: LAHI catchment have 100mb footprint,
-             * storing 5 of them at max in 2 different caches would eat up about 1gb of heap space
-             */
             @Override
             protected Cache createConcurrentMapCache(final String name) {
                 switch (name) {
                     case ADDRESSES_PER_CATCHMENT:
                     case ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS:
-                        return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
-                                TimeUnit.SECONDS).maximumSize(maxEntriesToCache).build().asMap(), DISALLOW_NULL_VALUES);
+                        return getConcurrentMapCacheWithWeightedCapacityForAddressesConfig(name);
                     default:
-                        return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds * cacheValuesMultiplier,
-                                TimeUnit.SECONDS).maximumSize(maxEntriesToCache * cacheValuesMultiplier).build().asMap(), DISALLOW_NULL_VALUES);
+                        return getConcurrentMapCacheWithMaxEntriesConfig(name);
                 }
+            }
+
+            private ConcurrentMapCache getConcurrentMapCacheWithWeightedCapacityForAddressesConfig(String name) {
+                return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
+                        TimeUnit.SECONDS).maximumWeight(cacheMaxWeight)
+                        .weigher((key, value) -> value == null ? 0 : (((List<VirtualCatchmentProjection>)value).size() / 100)+1)
+                        .build().asMap(), DISALLOW_NULL_VALUES);
+            }
+
+            private ConcurrentMapCache getConcurrentMapCacheWithMaxEntriesConfig(String name) {
+                return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
+                        TimeUnit.SECONDS).maximumSize(maxEntriesToCache).build().asMap(), DISALLOW_NULL_VALUES);
             }
         };
     }
