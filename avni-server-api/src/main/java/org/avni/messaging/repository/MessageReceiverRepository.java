@@ -14,9 +14,9 @@ public interface MessageReceiverRepository  extends CHSRepository<MessageReceive
 
     Optional<MessageReceiver> findByExternalId(String externalId);
 
-    MessageReceiver findByReceiverIdAndReceiverType(Long receiverId, ReceiverType receiverType);
+    Optional<MessageReceiver> findByReceiverIdAndReceiverType(Long receiverId, ReceiverType receiverType);
 
-    MessageReceiver findByReceiverTypeAndExternalId(ReceiverType receiverType, String externalId);
+    Optional<MessageReceiver> findByReceiverTypeAndExternalId(ReceiverType receiverType, String externalId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "update message_receiver mr set " +

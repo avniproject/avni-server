@@ -15,6 +15,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
@@ -376,6 +377,11 @@ public class IndividualService implements ScopeAwareService {
         if(individual == null ) {
             throw new EntityNotFoundException();
         }
-        return findPhoneNumber(individual);
+        String phoneNumber = findPhoneNumber(individual);
+        if(StringUtils.hasText(phoneNumber)) {
+            return phoneNumber;
+        } else {
+            throw new RuntimeException("Phone number not found for individual with id "+subjectId);
+        }
     }
 }

@@ -1,7 +1,6 @@
 package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
-import org.avni.messaging.contract.glific.GlificContactResponse;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
 import org.avni.messaging.repository.GlificMessageRepository;
@@ -141,8 +140,8 @@ public class MessagingService {
         }
     }
 
-    public Stream<MessageRequest> fetchPendingScheduledMessages(GlificContactResponse glificContactResponse, MessageDeliveryStatus messageDeliveryStatus) {
-        return messageReceiverService.findByExternalId(glificContactResponse.getId()).map(messageReceiver ->
+    public Stream<MessageRequest> fetchPendingScheduledMessages(Long receiverId, ReceiverType receiverType, MessageDeliveryStatus messageDeliveryStatus) {
+        return messageReceiverService.findByReceiverIdAndReceiverType(receiverId, receiverType).map(messageReceiver ->
                 messageRequestQueueRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
         ).orElseThrow(MessageReceiverNotFoundError::new);
     }

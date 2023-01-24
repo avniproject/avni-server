@@ -1,8 +1,8 @@
 package org.avni.messaging.api;
 
-import org.avni.messaging.contract.glific.GlificContactResponse;
 import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageRequest;
+import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.dao.UserRepository;
@@ -43,9 +43,7 @@ public class MessageController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") long subjectId) {
-        String phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
-        GlificContactResponse glificContactResponse = glificContactRepository.findContact(phoneNumber);
-        Stream<MessageRequest> messagesNotSent = messagingService.fetchPendingScheduledMessages(glificContactResponse, MessageDeliveryStatus.NotSent);
+        Stream<MessageRequest> messagesNotSent = messagingService.fetchPendingScheduledMessages(subjectId, ReceiverType.Subject, MessageDeliveryStatus.NotSent);
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 
@@ -54,8 +52,7 @@ public class MessageController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") long userId) {
         User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
-        GlificContactResponse glificContactResponse = glificContactRepository.findContact(user.getPhoneNumber());
-        Stream<MessageRequest> messagesNotSent = messagingService.fetchPendingScheduledMessages(glificContactResponse, MessageDeliveryStatus.NotSent);
+        Stream<MessageRequest> messagesNotSent = messagingService.fetchPendingScheduledMessages(user.getId(), ReceiverType.Subject, MessageDeliveryStatus.NotSent);
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 }

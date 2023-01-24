@@ -13,6 +13,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -62,7 +64,7 @@ public class MessageReceiverServiceTest {
     public void shouldReturnExistingMessageReceiverIfExist() {
         Long entityId = 123L;
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
-        when(messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, ReceiverType.Subject)).thenReturn(messageReceiver);
+        when(messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, ReceiverType.Subject)).thenReturn(Optional.of(messageReceiver));
 
         MessageReceiver actualMessageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, entityId);
 

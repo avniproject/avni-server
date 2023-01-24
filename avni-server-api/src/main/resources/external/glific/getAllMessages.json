@@ -6,7 +6,7 @@
       "id": "${receiverId}"
     },
     "messageOpts": {
-      "limit": 9999,
+      "limit": 100,
       "order": "DESC"
     },
     "contactOpts": {

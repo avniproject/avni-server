@@ -35,25 +35,21 @@ public class MessageReceiverService {
     }
 
     public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, Long entityId) {
-        MessageReceiver messageReceiver = messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, receiverType);
-        if (messageReceiver == null) {
-            messageReceiver = new MessageReceiver(receiverType, entityId);
+        Optional<MessageReceiver> messageReceiverOptional = messageReceiverRepository.findByReceiverIdAndReceiverType(entityId, receiverType);
+        return messageReceiverOptional.orElseGet(() -> {
+            MessageReceiver messageReceiver = new MessageReceiver(receiverType, entityId);
             messageReceiver.assignUUIDIfRequired();
-            messageReceiverRepository.save(messageReceiver);
-        }
-
-        return messageReceiver;
+            return messageReceiverRepository.save(messageReceiver);
+        });
     }
 
     public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, String externalId) {
-        MessageReceiver messageReceiver = messageReceiverRepository.findByReceiverTypeAndExternalId(receiverType, externalId);
-        if (messageReceiver == null) {
-            messageReceiver = new MessageReceiver(receiverType, externalId);
+        Optional<MessageReceiver> messageReceiverOptional = messageReceiverRepository.findByReceiverTypeAndExternalId(receiverType, externalId);
+        return messageReceiverOptional.orElseGet(() -> {
+            MessageReceiver messageReceiver = new MessageReceiver(receiverType, externalId);
             messageReceiver.assignUUIDIfRequired();
-            messageReceiverRepository.save(messageReceiver);
-        }
-
-        return messageReceiver;
+            return messageReceiverRepository.save(messageReceiver);
+        });
     }
 
     public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) {
@@ -86,7 +82,7 @@ public class MessageReceiverService {
         messageReceiverRepository.updateVoided(true, receiverId);
     }
 
-    public Optional<MessageReceiver> findByExternalId(String externalId) {
-        return messageReceiverRepository.findByExternalId(externalId);
+    public Optional<MessageReceiver> findByReceiverIdAndReceiverType(Long receiverId, ReceiverType receiverType) {
+        return messageReceiverRepository.findByReceiverIdAndReceiverType(receiverId, receiverType);
     }
 }
