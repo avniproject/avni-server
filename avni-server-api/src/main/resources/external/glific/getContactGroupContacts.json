@@ -1,5 +1,5 @@
 {
-  "query": "query contacts($filter: ContactFilter!, $opts: Opts!) {\n    contacts(filter: $filter, opts: $opts) {\n        id\n        name\n        maskedPhone\n    }\n}",
+  "query": "query contacts($filter: ContactFilter!, $opts: Opts!) {\n    contacts(filter: $filter, opts: $opts) {\n        id\n        name\n        maskedPhone\n phone \n    }\n}",
   "variables": {
     "filter": {
       "includeGroups": "${groupId}"

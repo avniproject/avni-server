@@ -1,8 +1,6 @@
 package org.avni.server.dao;
 
-import java.util.*;
-import java.util.stream.Stream;
-
+import org.avni.server.application.projections.WebSearchResultProjection;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
@@ -10,7 +8,6 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.projection.IndividualWebProjection;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.avni.server.application.projections.WebSearchResultProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,6 +19,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "individual", path = "individual", exported = false)
@@ -91,7 +93,14 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
                         jsonContains(root.join("programEnrolments", JoinType.LEFT).get("observations"), "%" + value + "%", cb));
     }
 
-    default Specification<Individual> getFilterSpecForLocationIds(List<Long> locationIds) {
+    default Optional<Individual> findByConceptWithMatchingPattern(Concept concept, String pattern) {
+        Specification<Individual> specification = (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+            cb.like(jsonExtractPathText(root.get("observations"), concept.getUuid(), cb), pattern);
+
+        return Optional.ofNullable(findAll(specification).get(0));
+    }
+
+        default Specification<Individual> getFilterSpecForLocationIds(List<Long> locationIds) {
         return (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 locationIds == null ? cb.and() : root.get("addressLevel").get("id").in(locationIds);
     }

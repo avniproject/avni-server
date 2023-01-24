@@ -36,9 +36,10 @@ public class IndividualService implements ScopeAwareService {
     private final GroupRoleRepository groupRoleRepository;
     private final SubjectTypeRepository subjectTypeRepository;
     private final AddressLevelService addressLevelService;
+    private final ConceptService conceptService;
 
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, AddressLevelService addressLevelService) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, AddressLevelService addressLevelService, ConceptService conceptService) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -46,6 +47,7 @@ public class IndividualService implements ScopeAwareService {
         this.groupRoleRepository = groupRoleRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.addressLevelService = addressLevelService;
+        this.conceptService = conceptService;
     }
 
     public Individual findByUuid(String uuid) {
@@ -383,5 +385,11 @@ public class IndividualService implements ScopeAwareService {
         } else {
             throw new RuntimeException("Phone number not found for individual with id "+subjectId);
         }
+    }
+
+    public Optional<Individual> findByPhoneNumber(String phoneNumber) {
+        Optional<Concept> phoneNumberConcept = conceptService.findContactNumberConcept();
+        phoneNumber = phoneNumber.substring(phoneNumber.length() - 10);
+        return individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber);
     }
 }

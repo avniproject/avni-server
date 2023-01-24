@@ -3,6 +3,9 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormElement;
+import org.avni.server.application.KeyType;
+import org.avni.server.application.KeyValues;
+import org.avni.server.application.ValueType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.*;
@@ -330,5 +333,15 @@ public class ConceptService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return conceptRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public Optional<Concept> findContactNumberConcept() {
+        List<Concept> textConcepts = conceptRepository.findByIsVoidedFalseAndDataType("Text");
+        return textConcepts.stream().filter(textConcept -> {
+            KeyValues keyValues = textConcept.getKeyValues();
+            ValueType[] valueTypes = {ValueType.yes};
+            return (keyValues != null && (keyValues.containsOneOfTheValues(KeyType.contact_number, valueTypes) ||
+                    keyValues.containsOneOfTheValues(KeyType.primary_contact, valueTypes)));
+        }).findFirst();
     }
 }

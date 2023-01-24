@@ -1,6 +1,5 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.Individual;
 import org.junit.Before;
@@ -22,7 +21,7 @@ public class IndividualServiceTest {
     public void setUp() throws Exception {
         initMocks(this);
         individualService = new IndividualService(individualRepository,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, conceptService);
     }
 
 

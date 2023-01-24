@@ -1,13 +1,11 @@
 package org.avni.messaging.service;
 
 import org.avni.messaging.domain.*;
-import org.avni.messaging.repository.GlificMessageRepository;
-import org.avni.messaging.repository.ManualBroadcastMessageRepository;
-import org.avni.messaging.repository.MessageRequestQueueRepository;
-import org.avni.messaging.repository.MessageRuleRepository;
+import org.avni.messaging.repository.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleService;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -49,6 +47,12 @@ public class MessagingServiceTest {
     @Mock
     private GlificMessageRepository glificMessageRepository;
 
+    @Mock
+    private GlificContactRepository glificContactRepository;
+
+    @Mock
+    private IndividualService individualService;
+
     @Captor
     ArgumentCaptor<MessageReceiver> messageReceiver;
 
@@ -59,8 +63,8 @@ public class MessagingServiceTest {
     public void setup() {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
-                messageRequestService, glificMessageRepository, messageRequestQueueRepository,
-                manualBroadcastMessageRepository, ruleService, null);
+                messageRequestService, glificMessageRepository, glificContactRepository, messageRequestQueueRepository,
+                manualBroadcastMessageRepository, ruleService, individualService, null);
     }
 
     @Test

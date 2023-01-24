@@ -1,25 +1,29 @@
 package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
+
+import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
-import org.avni.messaging.repository.GlificMessageRepository;
-import org.avni.messaging.repository.ManualBroadcastMessageRepository;
-import org.avni.messaging.repository.MessageRequestQueueRepository;
-import org.avni.messaging.repository.MessageRuleRepository;
+import org.avni.messaging.repository.*;
+import org.avni.server.domain.Individual;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleService;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.OptionalInt;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Service
@@ -30,25 +34,28 @@ public class MessagingService {
     private final MessageReceiverService messageReceiverService;
     private final MessageRequestService messageRequestService;
     private GlificMessageRepository glificMessageRepository;
+    private GlificContactRepository glificContactRepository;
     private final RuleService ruleService;
     private MessageRequestQueueRepository messageRequestQueueRepository;
     private ManualBroadcastMessageRepository manualBroadcastMessageRepository;
-
+    private IndividualService individualService;
     private Bugsnag bugsnag;
 
     @Autowired
     public MessagingService(MessageRuleRepository messageRuleRepository, MessageReceiverService messageReceiverService,
                             MessageRequestService messageRequestService, GlificMessageRepository glificMessageRepository,
-                            MessageRequestQueueRepository messageRequestQueueRepository,
+                            GlificContactRepository glificContactRepository, MessageRequestQueueRepository messageRequestQueueRepository,
                             ManualBroadcastMessageRepository manualBroadcastMessageRepository,
-                            RuleService ruleService, Bugsnag bugsnag) {
+                            RuleService ruleService, IndividualService individualService, Bugsnag bugsnag) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
         this.glificMessageRepository = glificMessageRepository;
+        this.glificContactRepository = glificContactRepository;
         this.messageRequestQueueRepository = messageRequestQueueRepository;
         this.manualBroadcastMessageRepository = manualBroadcastMessageRepository;
         this.ruleService = ruleService;
+        this.individualService = individualService;
         this.bugsnag = bugsnag;
     }
 
@@ -147,18 +154,44 @@ public class MessagingService {
     }
 
     private void sendMessageToGlific(MessageRequest messageRequest) {
+        if(messageRequest.getManualBroadcastMessage() != null)
+            sendMessageToGroup(messageRequest);
+        else
+            sendMessageToContact(messageRequest);
+    }
+
+    private void sendMessageToContact(MessageRequest messageRequest) {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
-        if(messageRequest.getManualBroadcastMessage() != null) {
-            ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
+        MessageRule messageRule = messageRequest.getMessageRule();
+        String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
+        messageReceiverService.ensureExternalIdPresent(messageReceiver);
+        glificMessageRepository.sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), response);
+    }
+
+    private void sendMessageToGroup(MessageRequest messageRequest) {
+        MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
+        ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
+        String[] parameters = manualBroadcastMessage.getParameters();
+
+        OptionalInt nonStaticParameterIndex = IntStream.range(0, parameters.length)
+                .filter(i -> "@name".equals(parameters[i]))
+                .findFirst();
+
+        if (nonStaticParameterIndex.isPresent()) {
+            PageRequest pageable = PageRequest.of(0, 500);
+            List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts = glificContactRepository.getContactGroupContacts(messageReceiver.getExternalId(),
+                    pageable);
+            for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
+                Individual individual = individualService.findByPhoneNumber(contactGroupContact.getPhone()).get();
+                parameters[nonStaticParameterIndex.getAsInt()] = individual.getFirstName();
+                glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
+                        contactGroupContact.getId(), parameters);
+            }
+        }
+        else {
             glificMessageRepository.sendMessageToGroup(messageReceiver.getExternalId(),
                     manualBroadcastMessage.getMessageTemplateId(),
                     manualBroadcastMessage.getParameters());
-        }
-        else {
-            MessageRule messageRule = messageRequest.getMessageRule();
-            String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
-            messageReceiverService.ensureExternalIdPresent(messageReceiver);
-            glificMessageRepository.sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), response);
         }
     }
 }
