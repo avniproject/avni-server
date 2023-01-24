@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 @Service
 public class IndividualService implements ScopeAwareService {
     public static final String PHONE_NUMBER_FOR_SUBJECT_ID = "phoneNumberForSubjectId";
+    public static final int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
 
     private final IndividualRepository individualRepository;
     private final ObservationService observationService;
@@ -389,7 +390,7 @@ public class IndividualService implements ScopeAwareService {
 
     public Optional<Individual> findByPhoneNumber(String phoneNumber) {
         Optional<Concept> phoneNumberConcept = conceptService.findContactNumberConcept();
-        phoneNumber = phoneNumber.substring(phoneNumber.length() - 10);
+        phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
         return individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber);
     }
 }

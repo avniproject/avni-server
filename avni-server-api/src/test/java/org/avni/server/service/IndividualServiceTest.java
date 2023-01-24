@@ -17,6 +17,8 @@ public class IndividualServiceTest {
 
     private IndividualService individualService;
 
+    private ConceptService conceptService;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
