@@ -4,6 +4,7 @@ import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.GroupContactsResponse;
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
+import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.Individual;
@@ -13,6 +14,7 @@ import org.avni.server.web.contract.WebPagedResponse;
 import org.avni.server.web.request.CHSRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
@@ -55,8 +57,13 @@ public class ContactController {
 
     @PostMapping(ContactGroupEndpoint)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void addContactGroup(@RequestBody ContactGroupRequest contactGroupRequest) {
-        glificContactRepository.createContactGroup(contactGroupRequest);
+    public ResponseEntity<String> addContactGroup(@RequestBody ContactGroupRequest contactGroupRequest) {
+        try {
+            glificContactRepository.createContactGroup(contactGroupRequest);
+            return ResponseEntity.ok("Contact Group Created");
+        } catch (GlificException glificException) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(glificException.getMessage());
+        }
     }
 
     @PutMapping(ContactGroupEndpoint + "/{id}")

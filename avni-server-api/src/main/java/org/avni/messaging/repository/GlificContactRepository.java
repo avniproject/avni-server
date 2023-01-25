@@ -3,6 +3,7 @@ package org.avni.messaging.repository;
 import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
+import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.external.GlificRestClient;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -155,11 +156,14 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public void createContactGroup(ContactGroupRequest contactGroupRequest) {
+    public void createContactGroup(ContactGroupRequest contactGroupRequest) throws GlificException {
         String message = ADD_CONTACT_GROUP_JSON.replace("${contactGroupName}", contactGroupRequest.getLabel())
                 .replace("${contactGroupDescription}", contactGroupRequest.getDescription());
-        glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
+        GlificCreateContactGroupResponse glificResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificCreateContactGroupResponse>>() {
         });
+        if (glificResponse.hasErrors()) {
+            throw new GlificException(glificResponse.getFirstError());
+        }
     }
 
     public void updateContactGroup(String id, ContactGroupRequest contactGroupRequest) {
