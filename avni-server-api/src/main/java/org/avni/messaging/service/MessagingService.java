@@ -10,6 +10,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleService;
+import org.avni.server.util.A;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.OptionalInt;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Service
@@ -175,31 +174,34 @@ public class MessagingService {
         ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
         String[] parameters = manualBroadcastMessage.getParameters();
 
-        OptionalInt nonStaticParameterIndex = IntStream.range(0, parameters.length)
-                .filter(i -> NON_STATIC_NAME_PARAMETER.equals(parameters[i]))
-                .findFirst();
+        int[] indicesOfNonStaticParameters = A.findIndicesOf(parameters, NON_STATIC_NAME_PARAMETER);
 
-        if (nonStaticParameterIndex.isPresent()) {
-            List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;
-            int pageNumber = 0;
-            do {
-                PageRequest pageable = PageRequest.of(pageNumber, CONTACT_MEMBER_PAGE_SIZE);
-               contactGroupContacts = glificContactRepository.getContactGroupContacts(messageReceiver.getExternalId(),
-                       pageable);
-               for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
-                   Individual individual = individualService.findByPhoneNumber(contactGroupContact.getPhone()).get();
-                   parameters[nonStaticParameterIndex.getAsInt()] = individual.getFirstName();
-                   glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
-                           contactGroupContact.getId(), parameters);
-               }
-
-               pageNumber++;
-           } while(contactGroupContacts.size() == CONTACT_MEMBER_PAGE_SIZE);
-        }
-        else {
+        if (indicesOfNonStaticParameters.length > 0)
+            sendNonStaticMessageToGroup(messageReceiver, manualBroadcastMessage, parameters, indicesOfNonStaticParameters);
+        else
             glificMessageRepository.sendMessageToGroup(messageReceiver.getExternalId(),
                     manualBroadcastMessage.getMessageTemplateId(),
                     manualBroadcastMessage.getParameters());
+    }
+
+    private void sendNonStaticMessageToGroup(MessageReceiver messageReceiver, ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
+        List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;
+        int pageNumber = 0;
+        do {
+            PageRequest pageable = PageRequest.of(pageNumber, CONTACT_MEMBER_PAGE_SIZE);
+            contactGroupContacts = glificContactRepository.getContactGroupContacts(messageReceiver.getExternalId(),
+                   pageable);
+            sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, contactGroupContacts);
+            pageNumber++;
+       } while(contactGroupContacts.size() == CONTACT_MEMBER_PAGE_SIZE);
+    }
+
+    private void sendNonStaticMessageToContacts(ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters, List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts) {
+        for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
+            Individual individual = individualService.findByPhoneNumber(contactGroupContact.getPhone()).get();
+            A.replaceEntriesAtIndicesWith(parameters, indicesOfNonStaticParameters, individual.getFirstName());
+            glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
+                    contactGroupContact.getId(), parameters);
         }
     }
 }
