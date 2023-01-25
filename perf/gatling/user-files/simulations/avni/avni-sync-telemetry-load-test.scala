@@ -20,7 +20,7 @@ val scn = scenario("Post sync telemetry Request")
   .post("/syncTelemetry")
   .header("accept","application/json")
 //    Include relevant env auth-token
-  .header("auth-token", <AUTH-TOKEN>)
+  .header("auth-token", "<AUTH-TOKEN>")
   .header("Content-Type", "application/json").body(RawFileBody("syncTelemetryRequest.json")).asJson)
 
     setUp(scn.inject(rampUsers(60).during(60)).protocols(httpsProtocol)) //60 requests ramped up over 60 seconds. Do not exceed more than 120 requests per minute

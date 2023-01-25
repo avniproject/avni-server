@@ -17,6 +17,6 @@ class avniGetCognitoLoadTest extends Simulation {
 val scn = scenario("Simple Get cognito-details Request")
   .exec(http("Get HTTP")
   .get("/cognito-details"))
-  setUp(scn.inject(rampUsers(50).during(60)).protocols(httpProtocol))
+  setUp(scn.inject(rampUsers(50).during(30)).protocols(httpProtocol))
 
 }
