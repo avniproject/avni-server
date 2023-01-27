@@ -7,6 +7,7 @@ import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleService;
+import org.avni.server.service.UserService;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -52,6 +53,9 @@ public class MessagingServiceTest {
 
     @Mock
     private IndividualService individualService;
+
+    @Mock
+    private UserService userService;
 
     @Captor
     ArgumentCaptor<MessageReceiver> messageReceiver;
