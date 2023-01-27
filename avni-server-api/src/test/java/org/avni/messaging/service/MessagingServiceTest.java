@@ -64,7 +64,7 @@ public class MessagingServiceTest {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
                 messageRequestService, glificMessageRepository, glificContactRepository, messageRequestQueueRepository,
-                manualBroadcastMessageRepository, ruleService, individualService, null);
+                manualBroadcastMessageRepository, ruleService, individualService, userService, null);
     }
 
     @Test

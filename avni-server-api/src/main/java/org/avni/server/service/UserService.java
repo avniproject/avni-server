@@ -9,12 +9,11 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.framework.security.UserContextHolder;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import org.joda.time.DateTime;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -22,6 +21,7 @@ import java.util.UUID;
 
 @Service
 public class UserService implements NonScopeAwareService {
+    public static final int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
     private static Logger logger = LoggerFactory.getLogger(UserService.class);
     private UserRepository userRepository;
     private OrganisationRepository organisationRepository;
@@ -78,5 +78,9 @@ public class UserService implements NonScopeAwareService {
 
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+    public Optional<User> findByPhoneNumber(String phoneNumber) {
+        phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
+        return userRepository.findUserWithMatchingPropertyValue("phoneNumber", phoneNumber);
     }
 }

@@ -7,9 +7,11 @@ import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
 import org.avni.messaging.repository.*;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleService;
+import org.avni.server.service.UserService;
 import org.avni.server.util.A;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -23,6 +25,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Service
@@ -40,6 +44,7 @@ public class MessagingService {
     private MessageRequestQueueRepository messageRequestQueueRepository;
     private ManualBroadcastMessageRepository manualBroadcastMessageRepository;
     private IndividualService individualService;
+    private UserService userService;
     private Bugsnag bugsnag;
 
     @Autowired
@@ -47,7 +52,7 @@ public class MessagingService {
                             MessageRequestService messageRequestService, GlificMessageRepository glificMessageRepository,
                             GlificContactRepository glificContactRepository, MessageRequestQueueRepository messageRequestQueueRepository,
                             ManualBroadcastMessageRepository manualBroadcastMessageRepository,
-                            RuleService ruleService, IndividualService individualService, Bugsnag bugsnag) {
+                            RuleService ruleService, IndividualService individualService, UserService userService, Bugsnag bugsnag) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
@@ -57,6 +62,7 @@ public class MessagingService {
         this.manualBroadcastMessageRepository = manualBroadcastMessageRepository;
         this.ruleService = ruleService;
         this.individualService = individualService;
+        this.userService = userService;
         this.bugsnag = bugsnag;
     }
 
@@ -198,10 +204,22 @@ public class MessagingService {
 
     private void sendNonStaticMessageToContacts(ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters, List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts) {
         for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
-            Individual individual = individualService.findByPhoneNumber(contactGroupContact.getPhone()).get();
-            A.replaceEntriesAtIndicesWith(parameters, indicesOfNonStaticParameters, individual.getFirstName());
+            Optional<String> name = findNameOfTheContact(contactGroupContact);
+            A.replaceEntriesAtIndicesWith(parameters, indicesOfNonStaticParameters, name.get());
             glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
                     contactGroupContact.getId(), parameters);
         }
+    }
+
+    private Optional<String> findNameOfTheContact(GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact) {
+        Optional<String> name = Stream.<Supplier<Optional<String>>>of(
+                        () -> userService.findByPhoneNumber(contactGroupContact.getPhone()).map(User::getName),
+                () -> individualService.findByPhoneNumber(contactGroupContact.getPhone()).map(Individual::getFirstName))
+                .map(Supplier::get)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+
+        return name;
     }
 }

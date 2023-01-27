@@ -5,6 +5,7 @@ import org.avni.server.domain.User;
 import org.avni.server.projection.UserWebProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -15,6 +16,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import org.joda.time.DateTime;
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,4 +67,12 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
     List<User> findByCatchment_IdInAndIsVoidedFalse(List<Long> catchmentIds);
 
     List<User> findByCatchmentAndIsVoidedFalse(Catchment catchment);
+
+    default Optional<User> findUserWithMatchingPropertyValue(String propertyName, String value) {
+        Specification<User> specification = (Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
+                cb.like(root.get(propertyName), "%" + value + "%");
+
+        List<User> users = findAll(specification);
+        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+    }
 }

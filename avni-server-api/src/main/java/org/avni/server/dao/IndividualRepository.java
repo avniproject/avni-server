@@ -1,10 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.application.projections.WebSearchResultProjection;
-import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.projection.IndividualWebProjection;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -97,7 +94,8 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         Specification<Individual> specification = (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
             cb.like(jsonExtractPathText(root.get("observations"), concept.getUuid(), cb), pattern);
 
-        return Optional.ofNullable(findAll(specification).get(0));
+        List<Individual> individuals = findAll(specification);
+        return individuals.isEmpty() ? Optional.empty() : Optional.of(individuals.get(0));
     }
 
         default Specification<Individual> getFilterSpecForLocationIds(List<Long> locationIds) {
