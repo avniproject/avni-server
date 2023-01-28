@@ -91,7 +91,7 @@ public class MessagingService {
     }
 
     public void onEntitySave(Long entityId, Long entityTypeId, EntityType entityType, Long subjectId, Long userId) {
-        List<MessageRule> messageRules = messageRuleRepository.findAllByEntityTypeAndEntityTypeId(entityType, entityTypeId);
+        List<MessageRule> messageRules = messageRuleRepository.findAllByEntityTypeAndEntityTypeIdAndIsVoidedFalse(entityType, entityTypeId);
 
         for (MessageRule messageRule : messageRules) {
             MessageReceiver messageReceiver = null;

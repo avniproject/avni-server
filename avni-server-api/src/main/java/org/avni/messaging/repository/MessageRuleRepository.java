@@ -13,6 +13,6 @@ import java.util.List;
 public interface MessageRuleRepository extends CHSRepository<MessageRule> {
     Page<MessageRule> findAll(Pageable pageable);
     List<MessageRule> findAll();
-    List<MessageRule> findAllByEntityTypeAndEntityTypeId(EntityType entityType, Long entityTypeId);
+    List<MessageRule> findAllByEntityTypeAndEntityTypeIdAndIsVoidedFalse(EntityType entityType, Long entityTypeId);
     Page<MessageRule> findByEntityTypeAndEntityTypeId(EntityType entityType, Long entityTypeId, Pageable pageable);
 }

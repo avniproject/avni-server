@@ -83,7 +83,7 @@ public class MessagingServiceTest {
         Long subjectTypeId = 234L;
         Long individualId = 567L;
         Long userId = 890L;
-        when(messageRuleRepository.findAllByEntityTypeAndEntityTypeId(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
+        when(messageRuleRepository.findAllByEntityTypeAndEntityTypeIdAndIsVoidedFalse(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
 
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
         when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, individualId)).thenReturn(messageReceiver);
@@ -122,7 +122,7 @@ public class MessagingServiceTest {
         Long individualId = 567L;
         Long userId = 890L;
 
-        when(messageRuleRepository.findAllByEntityTypeAndEntityTypeId(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
+        when(messageRuleRepository.findAllByEntityTypeAndEntityTypeIdAndIsVoidedFalse(EntityType.Subject, subjectTypeId)).thenReturn(messageRuleList);
 
         MessageReceiver messageReceiver = mock(MessageReceiver.class);
         when(messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, individualId)).thenReturn(messageReceiver);
