@@ -1,8 +1,8 @@
 package org.avni.messaging.external;
 
 import org.avni.messaging.contract.glific.*;
-import org.avni.messaging.domain.exception.GlificConnectException;
 import org.avni.messaging.domain.GlificSystemConfig;
+import org.avni.messaging.domain.exception.GlificConnectException;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
 import org.avni.server.domain.extenalSystem.SystemName;
@@ -11,16 +11,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -65,7 +62,7 @@ public class GlificRestClient {
         return makeCall(REQUEST_URL, request, responseType);
     }
 
-    private <T> T makeCall(String url, HttpEntity<Object> request, ParameterizedTypeReference<GlificResponse<T>> responseType) throws DataAccessException {
+    private <T> T makeCall(String url, HttpEntity<Object> request, ParameterizedTypeReference<GlificResponse<T>> responseType)  {
         String fullUrl = getSystemConfig().getBaseUrl() + (StringUtils.isEmpty(url) ? "/" : url);
         ResponseEntity<GlificResponse<T>> responseEntity = restTemplate.exchange(fullUrl, HttpMethod.POST, request, responseType);
 

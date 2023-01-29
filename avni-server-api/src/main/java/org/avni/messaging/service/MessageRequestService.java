@@ -43,4 +43,9 @@ public class MessageRequestService {
     public void voidMessageRequests(Long entityId) {
         messageRequestRepository.updateVoided(true, entityId);
     }
+
+    public void markPartiallyComplete(MessageRequest messageRequest) {
+        messageRequest.markPartiallyComplete();
+        messageRequestRepository.save(messageRequest);
+    }
 }

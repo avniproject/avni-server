@@ -17,6 +17,10 @@ public class ManualBroadcastMessage extends OrganisationAwareEntity {
     @Type(type = "parameters")
     private String[] parameters;
 
+    @Column
+    @Type(type = "nextTriggerDetails")
+    private NextTriggerDetails nextTriggerDetails;
+
     public ManualBroadcastMessage(String messageTemplateId, String[] parameters) {
         this.messageTemplateId = messageTemplateId;
         this.parameters = parameters;
@@ -39,5 +43,13 @@ public class ManualBroadcastMessage extends OrganisationAwareEntity {
 
     public void setMessageTemplateId(String messageTemplateId) {
         this.messageTemplateId = messageTemplateId;
+    }
+
+    public NextTriggerDetails getNextTriggerDetails() {
+        return nextTriggerDetails;
+    }
+
+    public void setNextTriggerDetails(NextTriggerDetails nextTriggerDetails) {
+        this.nextTriggerDetails = nextTriggerDetails;
     }
 }

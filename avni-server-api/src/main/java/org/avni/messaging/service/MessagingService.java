@@ -1,9 +1,10 @@
 package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
-
 import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.GlificConnectException;
+import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
 import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
 import org.avni.messaging.repository.*;
 import org.avni.server.domain.Individual;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -127,6 +129,9 @@ public class MessagingService {
             logger.debug(String.format("Sent message for %d", messageRequest.getId()));
         } catch (PhoneNumberNotAvailableException p) {
             logger.warn("Phone number not available for receiver: " + messageRequest.getMessageReceiver().getReceiverId());
+        } catch (GlificGroupMessageFailureException e) {
+            messageRequestService.markPartiallyComplete(messageRequest);
+            logger.error("Message sending to all contacts for message request id: " + messageRequest.getId() + "failed with message" + e.getMessage());
         } catch (Exception e) {
             logger.error("Could not send message for message request id: " + messageRequest.getId(), e);
             bugsnag.notify(e);
@@ -193,21 +198,57 @@ public class MessagingService {
     private void sendNonStaticMessageToGroup(MessageReceiver messageReceiver, ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;
         int pageNumber = 0;
+        try {
+            if (manualBroadcastMessage.getNextTriggerDetails() != null)
+                pageNumber = sendMessageToContactsInThePartiallySentPage(messageReceiver,manualBroadcastMessage, parameters, indicesOfNonStaticParameters);
+
+            do {
+                PageRequest pageable = PageRequest.of(pageNumber, CONTACT_MEMBER_PAGE_SIZE);
+                contactGroupContacts = glificContactRepository.getContactGroupContacts(messageReceiver.getExternalId(),
+                        pageable);
+                sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, contactGroupContacts);
+                pageNumber++;
+            } while (contactGroupContacts.size() == CONTACT_MEMBER_PAGE_SIZE);
+        }
+        catch (GlificGroupMessageFailureException exception) {
+            manualBroadcastMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber, exception.getContactIdFailedAt()));
+            throw exception;
+        }
+    }
+
+    private int sendMessageToContactsInThePartiallySentPage(MessageReceiver messageReceiver, ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
+        int pageNoToResumeFrom = manualBroadcastMessage.getNextTriggerDetails().getPageNo();
+        String contactIdToResumeFrom = manualBroadcastMessage.getNextTriggerDetails().getContactId();
+        List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;
+        List<?> contactGroupIds;
+
         do {
-            PageRequest pageable = PageRequest.of(pageNumber, CONTACT_MEMBER_PAGE_SIZE);
+            PageRequest pageable = PageRequest.of(pageNoToResumeFrom, CONTACT_MEMBER_PAGE_SIZE);
             contactGroupContacts = glificContactRepository.getContactGroupContacts(messageReceiver.getExternalId(),
-                   pageable);
-            sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, contactGroupContacts);
-            pageNumber++;
-       } while(contactGroupContacts.size() == CONTACT_MEMBER_PAGE_SIZE);
+                    pageable);
+            contactGroupIds = contactGroupContacts.stream().map(contactGroupContact -> contactGroupContact.getId()).collect(Collectors.toList());
+            pageNoToResumeFrom++;
+        } while (!contactGroupIds.contains(contactIdToResumeFrom));
+
+        int indexOfContactToResumeFrom = contactGroupIds.indexOf(contactIdToResumeFrom);
+        List<GlificContactGroupContactsResponse.GlificContactGroupContacts> pendingContactsInThePage = contactGroupContacts.subList(indexOfContactToResumeFrom, contactGroupContacts.size());
+
+        sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, pendingContactsInThePage);
+        return pageNoToResumeFrom;
     }
 
     private void sendNonStaticMessageToContacts(ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters, List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts) {
         for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
-            Optional<String> name = findNameOfTheContact(contactGroupContact);
-            A.replaceEntriesAtIndicesWith(parameters, indicesOfNonStaticParameters, name.get());
-            glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
-                    contactGroupContact.getId(), parameters);
+            try {
+                Optional<String> name = findNameOfTheContact(contactGroupContact);
+                String[] replacedParameters = parameters.clone();
+                A.replaceEntriesAtIndicesWith(replacedParameters, indicesOfNonStaticParameters, name.get());
+                glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
+                        contactGroupContact.getId(), replacedParameters);
+            }
+            catch (Exception exception) {
+                throw new GlificGroupMessageFailureException(contactGroupContact.getId(), exception.getMessage());
+            }
         }
     }
 

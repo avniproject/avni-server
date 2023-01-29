@@ -120,4 +120,8 @@ public class MessageRequest extends OrganisationAwareEntity {
     public void setManualBroadcastMessage(ManualBroadcastMessage manualBroadcastMessage) {
         this.manualBroadcastMessage = manualBroadcastMessage;
     }
+
+    public void markPartiallyComplete() {
+        deliveryStatus = MessageDeliveryStatus.PartiallySent;
+    }
 }

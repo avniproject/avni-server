@@ -16,12 +16,12 @@ import java.util.stream.Stream;
 @Repository
 public interface MessageRequestQueueRepository extends CHSRepository<MessageRequest> {
 
-    Stream<MessageRequest> findAllByDeliveryStatusAndIsVoidedFalseAndScheduledDateTimeIsLessThanEqual(MessageDeliveryStatus messageDeliveryStatus, DateTime now);
+    Stream<MessageRequest> findAllByDeliveryStatusNotAndIsVoidedFalseAndScheduledDateTimeIsLessThanEqual(MessageDeliveryStatus messageDeliveryStatus, DateTime now);
 
     Optional<MessageRequest> findByEntityIdAndMessageRule(Long entityId, MessageRule messageRule);
 
     default Stream<MessageRequest> findDueMessageRequests() {
-        return findAllByDeliveryStatusAndIsVoidedFalseAndScheduledDateTimeIsLessThanEqual(MessageDeliveryStatus.NotSent, DateTime.now());
+        return findAllByDeliveryStatusNotAndIsVoidedFalseAndScheduledDateTimeIsLessThanEqual(MessageDeliveryStatus.Sent, DateTime.now());
     }
 
     @Modifying(clearAutomatically = true, flushAutomatically=true)
