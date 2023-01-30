@@ -9,6 +9,10 @@ public class GlificGroupMessageFailureException extends RuntimeException {
         this.message = message;
     }
 
+    public GlificGroupMessageFailureException(String message) {
+        this.message = message;
+    }
+
     public String getContactIdFailedAt() {
         return contactIdFailedAt;
     }

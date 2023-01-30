@@ -206,6 +206,10 @@ public class MessagingService {
             manualBroadcastMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber, exception.getContactIdFailedAt()));
             throw exception;
         }
+        catch (Exception exception) {
+            manualBroadcastMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber));
+            throw new GlificGroupMessageFailureException(exception.getMessage());
+        }
     }
 
     private int sendMessageToContactsInThePartiallySentPage(MessageReceiver messageReceiver, ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
@@ -220,10 +224,14 @@ public class MessagingService {
                     pageable);
             contactGroupIds = contactGroupContacts.stream().map(contactGroupContact -> contactGroupContact.getId()).collect(Collectors.toList());
             pageNoToResumeFrom++;
-        } while (!contactGroupIds.contains(contactIdToResumeFrom));
+        } while (!contactGroupIds.contains(contactIdToResumeFrom) && (contactIdToResumeFrom != null));
 
-        int indexOfContactToResumeFrom = contactGroupIds.indexOf(contactIdToResumeFrom);
-        List<GlificContactGroupContactsResponse.GlificContactGroupContacts> pendingContactsInThePage = contactGroupContacts.subList(indexOfContactToResumeFrom, contactGroupContacts.size());
+        List<GlificContactGroupContactsResponse.GlificContactGroupContacts> pendingContactsInThePage;
+        if(contactIdToResumeFrom == null)  pendingContactsInThePage = contactGroupContacts;
+        else {
+            int indexOfContactToResumeFrom = contactGroupIds.indexOf(contactIdToResumeFrom);
+            pendingContactsInThePage = contactGroupContacts.subList(indexOfContactToResumeFrom, contactGroupContacts.size());
+        }
 
         sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, pendingContactsInThePage);
         return pageNoToResumeFrom;
