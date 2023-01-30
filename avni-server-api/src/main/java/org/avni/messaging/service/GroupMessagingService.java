@@ -120,6 +120,10 @@ public class GroupMessagingService {
         for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
             try {
                 Optional<String> name = findNameOfTheContact(contactGroupContact);
+                if(!name.isPresent()) {
+                    logAndNotifyError(contactGroupContact);
+                    continue;
+                }
                 String[] replacedParameters = parameters.clone();
                 A.replaceEntriesAtIndicesWith(replacedParameters, indicesOfNonStaticParameters, name.get());
                 glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
@@ -129,6 +133,13 @@ public class GroupMessagingService {
                 throw new GlificGroupMessageFailureException(contactGroupContact.getId(), exception.getMessage());
             }
         }
+    }
+
+    private void logAndNotifyError(GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact) {
+        String errorMessage = String.format("Contact for %s not found on Avni side. " +
+                "Hence non-static message for the contact couldn't be sent", contactGroupContact.getId());
+        logger.info(errorMessage);
+        bugsnag.notify(new Exception(errorMessage));
     }
 
     private Optional<String> findNameOfTheContact(GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact) {

@@ -115,7 +115,9 @@ public class MessagingService {
             logger.warn("Phone number not available for receiver: " + messageRequest.getMessageReceiver().getReceiverId());
         } catch (GlificGroupMessageFailureException e) {
             messageRequestService.markPartiallyComplete(messageRequest);
-            logger.error("Message sending to all contacts for message request id: " + messageRequest.getId() + "failed with message" + e.getMessage());
+            logger.error("Message sending to all contacts for message request id: " + messageRequest.getId() +
+                    "failed with message " + e.getMessage() + ".Will retry again after sometime.");
+            bugsnag.notify(e);
         } catch (Exception e) {
             logger.error("Could not send message for message request id: " + messageRequest.getId(), e);
             bugsnag.notify(e);
