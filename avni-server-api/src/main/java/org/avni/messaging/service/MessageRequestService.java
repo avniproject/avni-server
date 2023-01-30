@@ -1,21 +1,23 @@
 package org.avni.messaging.service;
 
-import org.avni.messaging.domain.ManualBroadcastMessage;
-import org.avni.messaging.domain.MessageReceiver;
-import org.avni.messaging.domain.MessageRequest;
-import org.avni.messaging.domain.MessageRule;
+import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Stream;
+
 @Service
 public class MessageRequestService {
     private final MessageRequestQueueRepository messageRequestRepository;
+    private final MessageReceiverService messageReceiverService;
 
     @Autowired
-    public MessageRequestService(MessageRequestQueueRepository messageRequestRepository) {
+    public MessageRequestService(MessageRequestQueueRepository messageRequestRepository, MessageReceiverService messageReceiverService) {
         this.messageRequestRepository = messageRequestRepository;
+        this.messageReceiverService = messageReceiverService;
     }
 
     public MessageRequest createOrUpdateAutomatedMessageRequest(MessageRule messageRule, MessageReceiver messageReceiver, Long entityId, DateTime scheduledDateTime) {
@@ -47,5 +49,11 @@ public class MessageRequestService {
     public void markPartiallyComplete(MessageRequest messageRequest) {
         messageRequest.markPartiallyComplete();
         messageRequestRepository.save(messageRequest);
+    }
+
+    public Stream<MessageRequest> fetchPendingScheduledMessages(Long receiverId, ReceiverType receiverType, MessageDeliveryStatus messageDeliveryStatus) {
+        return messageReceiverService.findByReceiverIdAndReceiverType(receiverId, receiverType).map(messageReceiver ->
+                messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
+        ).orElseThrow(MessageReceiverNotFoundError::new);
     }
 }

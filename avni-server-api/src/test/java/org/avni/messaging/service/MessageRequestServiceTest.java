@@ -25,11 +25,12 @@ public class MessageRequestServiceTest {
     ArgumentCaptor<MessageRequest> messageRequest;
 
     private MessageRequestService messageRequestService;
+    private MessageReceiverService messageReceiverService;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        messageRequestService = new MessageRequestService(messageRequestRepository);
+        messageRequestService = new MessageRequestService(messageRequestRepository, messageReceiverService);
     }
 
     @Test

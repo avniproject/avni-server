@@ -3,9 +3,7 @@ package org.avni.messaging.service;
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.domain.*;
-import org.avni.messaging.domain.exception.GlificConnectException;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
-import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
 import org.avni.messaging.repository.*;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
@@ -157,12 +155,6 @@ public class MessagingService {
             MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Group, groupId);
             messageRequestService.createManualMessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
         }
-    }
-
-    public Stream<MessageRequest> fetchPendingScheduledMessages(Long receiverId, ReceiverType receiverType, MessageDeliveryStatus messageDeliveryStatus) {
-        return messageReceiverService.findByReceiverIdAndReceiverType(receiverId, receiverType).map(messageReceiver ->
-                messageRequestQueueRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
-        ).orElseThrow(MessageReceiverNotFoundError::new);
     }
 
     private void sendMessageToGlific(MessageRequest messageRequest) {
