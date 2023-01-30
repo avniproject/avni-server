@@ -13,6 +13,10 @@ public class NextTriggerDetails implements Serializable {
         this.contactId = contactId;
     }
 
+    public NextTriggerDetails(int pageNo) {
+        this.pageNo = pageNo;
+    }
+
     public int getPageNo() {
         return pageNo;
     }
