@@ -37,9 +37,11 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String GET_CONTACT_GROUP_JSON;
     private final String GET_ALL_MSGS_JSON;
     private final String GET_ALL_GROUP_CONVERSATION_MSGS_JSON;
-    private final String ADD_CONTACT_TO_GROUP_JSON;
+    private final String ADD_CONTACTS_IN_GROUP_JSON;
+    private final String REMOVE_CONTACTS_IN_GROUP_JSON;
     private final String ADD_CONTACT_GROUP_JSON;
     private final String UPDATE_CONTACT_GROUP_JSON;
+    private final String DELETE_CONTACT_GROUP_JSON;
 
     private final static int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
 
@@ -54,9 +56,11 @@ public class GlificContactRepository extends AbstractGlificRepository {
         GET_CONTACT_GROUP_JSON = getJson("getContactGroup");
         GET_ALL_MSGS_JSON = getJson("getAllMessages");
         GET_ALL_GROUP_CONVERSATION_MSGS_JSON = getJson("searchConversationMessages");
-        ADD_CONTACT_TO_GROUP_JSON = getJson("addContactToGroup");
+        ADD_CONTACTS_IN_GROUP_JSON = getJson("updateContactsInGroup");
+        REMOVE_CONTACTS_IN_GROUP_JSON = getJson("removeContactsInGroup");
         ADD_CONTACT_GROUP_JSON = getJson("addContactGroup");
         UPDATE_CONTACT_GROUP_JSON = getJson("updateContactGroup");
+        DELETE_CONTACT_GROUP_JSON = getJson("deleteContactGroup");
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
@@ -151,7 +155,16 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public void addContactToGroup(String contactGroupId, String contactId) {
-        String message = ADD_CONTACT_TO_GROUP_JSON.replace("${contactGroupId}", contactGroupId).replace("${contactId}", contactId);
+        String message = ADD_CONTACTS_IN_GROUP_JSON.replace("${contactGroupId}", contactGroupId).replace("${contactId}", contactId);
+        glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
+        });
+    }
+
+    public void removeContactsFromGroup(String contactGroupId, List<String> contactIds) {
+        String toRemoveContacts = String.join(",", contactIds);
+        String message = REMOVE_CONTACTS_IN_GROUP_JSON
+                .replace("${contactGroupId}", contactGroupId)
+                .replace("${deleteContactIds}", toRemoveContacts);
         glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
         });
     }
@@ -170,6 +183,12 @@ public class GlificContactRepository extends AbstractGlificRepository {
         String message = UPDATE_CONTACT_GROUP_JSON.replace("${label}", contactGroupRequest.getLabel())
                 .replace("${description}", contactGroupRequest.getDescription())
                 .replace("${id}", id);
+        glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
+        });
+    }
+
+    public void deleteContactGroup(String id) {
+        String message = DELETE_CONTACT_GROUP_JSON.replace("${id}", id);
         glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
         });
     }

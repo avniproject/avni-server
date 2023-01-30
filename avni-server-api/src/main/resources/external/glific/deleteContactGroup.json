@@ -1,0 +1,7 @@
+{
+  "operationName": "deleteGroup",
+  "variables": {
+    "id": "${id}"
+  },
+  "query": "mutation deleteGroup($id: ID!) {\n  deleteGroup(id: $id) {}"
+}

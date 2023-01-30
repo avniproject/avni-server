@@ -91,6 +91,12 @@ public class ContactController {
         glificContactRepository.addContactToGroup(contactGroupId, contactId);
     }
 
+    @DeleteMapping(ContactGroupEndpoint + "/{contactGroupId}/contact")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public void removeContacts(@PathVariable("contactGroupId") String contactGroupId, @RequestBody List<String> contacts) {
+        glificContactRepository.removeContactsFromGroup(contactGroupId, contacts);
+    }
+
     @GetMapping("/web/contact/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public GlificContactResponse fetchContactSubject(@PathVariable("id") long subjectId) throws GlificContactNotFoundError {
