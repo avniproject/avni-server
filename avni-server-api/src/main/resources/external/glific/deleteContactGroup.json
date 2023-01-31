@@ -3,5 +3,5 @@
   "variables": {
     "id": "${id}"
   },
-  "query": "mutation deleteGroup($id: ID!) {\n  deleteGroup(id: $id) {}"
+  "query": "mutation deleteGroup($id: ID!) {\n  deleteGroup(id: $id) {\n    errors {\n      key\n      message\n    }\n  }\n}"
 }
