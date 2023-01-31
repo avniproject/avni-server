@@ -67,6 +67,7 @@ public class ContactGroupController {
     }
 
     @PutMapping(ContactGroupEndpoint + "/{id}")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public void addContactGroup(@PathVariable("id") String id, @RequestBody ContactGroupRequest contactGroupRequest) {
         glificContactRepository.updateContactGroup(id, contactGroupRequest);
     }
@@ -98,6 +99,7 @@ public class ContactGroupController {
     }
 
     @DeleteMapping(ContactGroupEndpoint)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public void deleteContactGroups(@RequestBody List<String> contactGroups) {
         contactGroups.forEach(glificContactRepository::deleteContactGroup);
     }
