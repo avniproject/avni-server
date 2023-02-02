@@ -347,14 +347,14 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         BeanUtils.copyProperties(concept, conceptContract);
         if (ConceptDataType.Coded.toString().equals(concept.getDataType())) {
             conceptContract.setAnswers(new ArrayList<>());
-        }
-        for (ConceptAnswer answer : concept.getConceptAnswers()) {
-            ConceptContract answerConceptContract = new ConceptContract();
-            answerConceptContract.setUuid(answer.getAnswerConcept().getUuid());
-            answerConceptContract.setName(answer.getAnswerConcept().getName());
-            answerConceptContract.setOrder(answer.getOrder());
-            answerConceptContract.setVoided(answer.isVoided());
-            conceptContract.getAnswers().add(answerConceptContract);
+            for (ConceptAnswer answer : concept.getConceptAnswers()) {
+                ConceptContract answerConceptContract = new ConceptContract();
+                answerConceptContract.setUuid(answer.getAnswerConcept().getUuid());
+                answerConceptContract.setName(answer.getAnswerConcept().getName());
+                answerConceptContract.setOrder(answer.getOrder());
+                answerConceptContract.setVoided(answer.isVoided());
+                conceptContract.getAnswers().add(answerConceptContract);
+            }
         }
 
         return conceptContract;
