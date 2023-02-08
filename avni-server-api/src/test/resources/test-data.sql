@@ -31,8 +31,8 @@ DELETE from message_receiver;
 DELETE from message_rule;
 DELETE FROM users;
 DELETE FROM subject_type;
-DELETE FROM group_privilege;
 DELETE FROM groups;
+DELETE FROM group_privilege;
 DELETE FROM organisation;
 DELETE FROM audit;
 
