@@ -5,12 +5,14 @@ import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Program;
 
-@JsonPropertyOrder({"name", "uuid"})
+@JsonPropertyOrder({"name", "uuid", "isImmutable"})
 public class EntityTypeContract extends ReferenceDataContract {
 
     private String entityEligibilityCheckRule;
     private Boolean active;
     private DeclarativeRule entityEligibilityCheckDeclarativeRule;
+    private Boolean isImmutable;
+
 
     public static EntityTypeContract fromEncounterType(EncounterType encounterType) {
         EntityTypeContract contract = new EntityTypeContract();
@@ -20,6 +22,7 @@ public class EntityTypeContract extends ReferenceDataContract {
         contract.setVoided(encounterType.isVoided());
         contract.setActive(encounterType.getActive());
         contract.setEntityEligibilityCheckDeclarativeRule(encounterType.getEncounterEligibilityCheckDeclarativeRule());
+        contract.setImmutable(encounterType.isImmutable());
         return contract;
     }
 
@@ -57,4 +60,12 @@ public class EntityTypeContract extends ReferenceDataContract {
     public void setEntityEligibilityCheckDeclarativeRule(DeclarativeRule entityEligibilityCheckDeclarativeRule) {
         this.entityEligibilityCheckDeclarativeRule = entityEligibilityCheckDeclarativeRule;
     }
+    public void setImmutable(Boolean immutable) {
+        isImmutable = immutable;
+    }
+
+    public Boolean getImmutable() {
+        return isImmutable;
+    }
+
 }
