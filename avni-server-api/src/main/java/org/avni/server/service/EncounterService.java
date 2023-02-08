@@ -89,6 +89,7 @@ public class EncounterService implements ScopeAwareService {
             entityTypeContract.setName(encounter.getEncounterType().getName());
             entityTypeContract.setUuid(encounter.getEncounterType().getUuid());
             entityTypeContract.setEntityEligibilityCheckRule(encounter.getEncounterType().getEncounterEligibilityCheckRule());
+            entityTypeContract.setImmutable(encounter.getEncounterType().isImmutable());
             encountersContract.setUuid(encounter.getUuid());
             encountersContract.setName(encounter.getName());
             encountersContract.setEncounterType(entityTypeContract);
