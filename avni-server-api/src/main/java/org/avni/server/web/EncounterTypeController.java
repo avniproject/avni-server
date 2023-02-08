@@ -86,6 +86,18 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
         return new ResponseEntity<>(encounterTypeContractWeb, HttpStatus.OK);
     }
 
+    @GetMapping(value = "/web/encounterTypeDetails/{uuid}")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @ResponseBody
+    public ResponseEntity getOne(@PathVariable("uuid") String uuid) {
+        EncounterType encounterType = encounterTypeRepository.findByUuid(uuid);
+        if (encounterType.isVoided())
+            return ResponseEntity.notFound().build();
+        EntityTypeContract entityTypeContract = EntityTypeContract.fromEncounterType(encounterType);
+        return new ResponseEntity<>(entityTypeContract, HttpStatus.OK);
+    }
+
+
     @PostMapping(value = "/web/encounterType")
     @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     @Transactional
