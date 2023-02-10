@@ -1,9 +1,31 @@
 package org.avni.server.domain;
 
 public enum EntityType {
-    Subject,
-    Enrolment,
+    LocationType,
     Encounter,
+    ChecklistItem,
+    IdentifierSource,
+    UserGroup,
+    Subject,
+    User,
+    Enrolment,
+    Concept,
+    RuleFailure,
+    Extension,
     Checklist,
-    ChecklistItem
+    Catchment,
+    Program,
+    Task,
+    Bundle,
+    IdentifierUserAssignment,
+    OrganisationConfig,
+    ChecklistConfig,
+    Location,
+    Form,
+    OfflineView,
+    Documentation,
+    EncounterType,
+    ApplicationMenu,
+    Relationship
+
 }
