@@ -4,10 +4,13 @@ import org.joda.time.DateTime;
 import org.avni.server.domain.JsonObject;
 import org.springframework.hateoas.core.Relation;
 
+import java.util.List;
+
 @Relation(collectionRelation = "userInfo")
 public class UserInfo {
 
-    public UserInfo() { }
+    public UserInfo() {
+    }
 
     private String username;
     private String organisationName;
@@ -20,8 +23,9 @@ public class UserInfo {
     private String name;
     private String catchmentName;
     private JsonObject syncSettings;
+    private List<GroupPrivilegeContract> privileges;
 
-    public UserInfo(String username, String orgName, Long orgId, String usernameSuffix, String[] roles, JsonObject settings, String name, String catchmentName, JsonObject syncSettings) {
+    public UserInfo(String username, String orgName, Long orgId, String usernameSuffix, String[] roles, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<GroupPrivilegeContract> privileges) {
         this.username = username;
         this.organisationName = orgName;
         this.organisationId = orgId;
@@ -32,7 +36,9 @@ public class UserInfo {
         this.name = name;
         this.catchmentName = catchmentName;
         this.syncSettings = syncSettings;
+        this.privileges = privileges;
     }
+
 
     public String getUsername() {
         return username;
@@ -50,13 +56,21 @@ public class UserInfo {
         this.organisationName = organisationName;
     }
 
-    public Long getOrganisationId() { return organisationId; }
+    public Long getOrganisationId() {
+        return organisationId;
+    }
 
-    public void setOrganisationId(Long organisationId) { this.organisationId = organisationId; }
+    public void setOrganisationId(Long organisationId) {
+        this.organisationId = organisationId;
+    }
 
-    public String[] getRoles() { return roles; }
+    public String[] getRoles() {
+        return roles;
+    }
 
-    public void setRoles(String[] roles) { this.roles = roles; }
+    public void setRoles(String[] roles) {
+        this.roles = roles;
+    }
 
     public JsonObject getSettings() {
         return settings;
@@ -105,4 +119,14 @@ public class UserInfo {
     public void setSyncSettings(JsonObject syncSettings) {
         this.syncSettings = syncSettings;
     }
+
+    public List<GroupPrivilegeContract> getPrivileges() {
+        return privileges;
+    }
+
+    public void setPrivileges(List<GroupPrivilegeContract> privileges) {
+        this.privileges = privileges;
+    }
+
+
 }

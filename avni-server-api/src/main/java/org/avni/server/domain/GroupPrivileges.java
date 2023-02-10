@@ -60,4 +60,7 @@ public class GroupPrivileges {
                 null, checklist.getChecklistDetail()
         );
     }
+    public List<GroupPrivilege> getPrivileges() {
+        return privileges;
+    }
 }

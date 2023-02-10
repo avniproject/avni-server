@@ -5,9 +5,11 @@ import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.GroupPrivilegeService;
 import org.avni.server.service.IdpService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.UserService;
+import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.UserBulkUploadContract;
 import org.avni.server.web.request.UserInfo;
 import org.joda.time.DateTime;
@@ -24,10 +26,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.w3c.dom.stylesheets.LinkStyle;
 
 import javax.transaction.Transactional;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 public class UserInfoController implements RestControllerResourceProcessor<UserInfo> {
@@ -38,15 +44,17 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     private final UserService userService;
     private final IdpService idpService;
     private final OrganisationConfigService organisationConfigService;
+    private final GroupPrivilegeService groupPrivilegeService;
 
     @Autowired
-    public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService, IdpService idpService, OrganisationConfigService organisationConfigService) {
+    public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService, IdpService idpService, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.userService = userService;
         this.idpService = idpService;
         this.organisationConfigService = organisationConfigService;
+        this.groupPrivilegeService = groupPrivilegeService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -64,25 +72,13 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         if (user.isAdmin() && organisation == null) {
             organisation = new Organisation();
         }
-        String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
-        String usernameSuffix = organisation.getUsernameSuffix() != null
-                ? organisation.getUsernameSuffix() : organisation.getDbUser();
-        UserInfo userInfo = new UserInfo(
-                user.getUsername(),
-                organisation.getName(),
-                organisation.getId(),
-                usernameSuffix,
-                user.getRoles(),
-                user.getSettings(),
-                user.getName(),
-                catchmentName,
-                user.getSyncSettings());
-        return new ResponseEntity<>(userInfo, HttpStatus.OK);
+        return new ResponseEntity<>(getUserInfoObject(organisation, user), HttpStatus.OK);
     }
 
+
     /**
-     * @deprecated as of release 2.9, replaced by {@link #getMyProfile()}
      * @return
+     * @deprecated as of release 2.9, replaced by {@link #getMyProfile()}
      */
     @Deprecated
     @RequestMapping(value = "/me", method = RequestMethod.GET)
@@ -97,9 +93,19 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();
+
+        return wrap(new PageImpl<>(Arrays.asList(getUserInfoObject(organisation, user))));
+    }
+
+    public UserInfo getUserInfoObject(Organisation organisation, User user) {
         String usernameSuffix = organisation.getUsernameSuffix() != null
                 ? organisation.getUsernameSuffix() : organisation.getDbUser();
         String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
+        List<GroupPrivilegeContract> groupPrivilegeContractList = groupPrivileges.stream()
+                .map(GroupPrivilegeContract::fromEntity)
+                .distinct()
+                .collect(Collectors.toList());
         UserInfo userInfo = new UserInfo(user.getUsername(),
                 organisation.getName(),
                 organisation.getId(),
@@ -108,8 +114,9 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
                 user.getSettings(),
                 user.getName(),
                 catchmentName,
-                user.getSyncSettings());
-        return wrap(new PageImpl<>(Arrays.asList(userInfo)));
+                user.getSyncSettings(),
+                groupPrivilegeContractList);
+        return userInfo;
     }
 
     @RequestMapping(value = "/me", method = RequestMethod.POST)
