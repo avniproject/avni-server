@@ -502,3 +502,13 @@ select * from
               left outer join batch_step_execution bse on bje.job_execution_id = bse.job_execution_id
      group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time
      order by bje.create_time desc) jobs;
+
+
+-- Find out bundle uploads for an org
+
+select * from batch_job_execution bje
+inner join batch_job_instance bji on bje.job_instance_id = bji.job_instance_id
+  inner join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+   and bjep.key_name = 'organisationUUID'
+  and string_val = (select uuid from organisation where name = '')
+where bji.job_name = 'importZipJob';
