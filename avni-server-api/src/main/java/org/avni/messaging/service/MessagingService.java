@@ -112,6 +112,7 @@ public class MessagingService {
             messageRequest = messageRequestService.markComplete(messageRequest);
             logger.debug(String.format("Sent message for %d", messageRequest.getId()));
         } catch (PhoneNumberNotAvailableException p) {
+            messageRequest = messageRequestService.markFailed(messageRequest, MessageDeliveryStatus.NotSentNoPhoneNumberInAvni);
             logger.warn("Phone number not available for receiver: " + messageRequest.getMessageReceiver().getReceiverId());
         } catch (GlificGroupMessageFailureException e) {
             messageRequestService.markPartiallyComplete(messageRequest);
@@ -145,14 +146,14 @@ public class MessagingService {
         }
     }
 
-    private void sendMessageToGlific(MessageRequest messageRequest) {
+    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
         if(messageRequest.getManualBroadcastMessage() != null)
             groupMessagingService.sendMessageToGroup(messageRequest);
         else
             sendMessageToContact(messageRequest);
     }
 
-    private void sendMessageToContact(MessageRequest messageRequest) {
+    private void sendMessageToContact(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
         String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());

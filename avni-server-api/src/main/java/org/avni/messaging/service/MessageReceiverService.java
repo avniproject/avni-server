@@ -52,7 +52,7 @@ public class MessageReceiverService {
         });
     }
 
-    public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) {
+    public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) throws PhoneNumberNotAvailableException {
         if (messageReceiver.getExternalId() != null) {
             return messageReceiver;
         }

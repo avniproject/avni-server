@@ -64,6 +64,7 @@ public class GlificRestClient {
 
     private <T> T makeCall(String url, HttpEntity<Object> request, ParameterizedTypeReference<GlificResponse<T>> responseType)  {
         String fullUrl = getSystemConfig().getBaseUrl() + (StringUtils.isEmpty(url) ? "/" : url);
+        logger.debug("Calling glific - {}", fullUrl);
         ResponseEntity<GlificResponse<T>> responseEntity = restTemplate.exchange(fullUrl, HttpMethod.POST, request, responseType);
 
         GlificResponse<T> response = responseEntity.getBody();
