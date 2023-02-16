@@ -2,6 +2,7 @@ package org.avni.server.identifier;
 
 import org.avni.server.domain.IdentifierAssignment;
 import org.avni.server.domain.IdentifierSource;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,7 +35,11 @@ public class UserBasedIdentifierGenerator implements IdentifierGenerator {
 
     private String getIdPrefix(User user) {
         assert user.getSettings() != null;
-        String idPrefix = (String) user.getSettings().get("idPrefix");
+        JsonObject userSettings = user.getSettings();
+        if (userSettings == null) {
+            throw new IllegalArgumentException("Missing idPrefix setting for user " + user.getUsername());
+        }
+        String idPrefix = (String) userSettings.get("idPrefix");
         if (idPrefix == null) {
             throw new IllegalArgumentException("Missing idPrefix setting for user " + user.getUsername());
         }
