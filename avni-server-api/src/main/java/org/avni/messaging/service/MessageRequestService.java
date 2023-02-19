@@ -56,4 +56,9 @@ public class MessageRequestService {
                 messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
         ).orElseThrow(MessageReceiverNotFoundError::new);
     }
+
+    public MessageRequest markFailed(MessageRequest messageRequest, MessageDeliveryStatus messageDeliveryStatus) {
+        messageRequest.markFailed(messageDeliveryStatus);
+        return messageRequestRepository.save(messageRequest);
+    }
 }

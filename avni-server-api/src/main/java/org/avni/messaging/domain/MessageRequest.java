@@ -124,4 +124,8 @@ public class MessageRequest extends OrganisationAwareEntity {
     public void markPartiallyComplete() {
         deliveryStatus = MessageDeliveryStatus.PartiallySent;
     }
+
+    public void markFailed(MessageDeliveryStatus messageDeliveryStatus) {
+        deliveryStatus = messageDeliveryStatus;
+    }
 }
