@@ -23,11 +23,11 @@ public class EntityApprovalStatusWriter {
         this.entityApprovalStatusService = entityApprovalStatusService;
     }
 
-    public void saveStatus(FormMapping formMapping, Long entityId, EntityApprovalStatus.EntityType entityType) {
+    public void saveStatus(FormMapping formMapping, Long entityId, EntityApprovalStatus.EntityType entityType, String entityTypeUuid) {
         boolean isAutoApprove = Boolean.parseBoolean(autoApprove);
         if (formMapping.isEnableApproval()) {
             ApprovalStatus.Status status = isAutoApprove ? ApprovalStatus.Status.Approved : ApprovalStatus.Status.Pending;
-            entityApprovalStatusService.createStatus(entityType, entityId, status);
+            entityApprovalStatusService.createStatus(entityType, entityId, status, entityTypeUuid);
         }
     }
 

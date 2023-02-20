@@ -87,7 +87,13 @@ public class SyncParameters {
         return catchment;
     }
 
+    public SyncEntityName getSyncEntityName() {
+        return syncEntityName;
+    }
+
     public enum SyncEntityName {
+        Subject,
+        ProgramEnrolment,
         Individual,
         Enrolment,
         Encounter,

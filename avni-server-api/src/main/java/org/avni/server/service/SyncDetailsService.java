@@ -68,30 +68,36 @@ public class SyncDetailsService {
                 addToSyncableItems(syncableItems, "Comment", subjectType.getUuid());
                 addToSyncableItems(syncableItems, "CommentThread", subjectType.getUuid());
             }
+            addToSyncableItems(syncableItems, "SubjectEntityApprovalStatus", subjectType.getUuid());
+
         });
         generalEncounters.forEach(formMapping -> {
             if (!groupPrivileges.hasPrivilege("View visit", formMapping.getSubjectType(), null, formMapping.getEncounterType(), null)) {
                 return;
             }
             addToSyncableItems(syncableItems, "Encounter", formMapping.getEncounterTypeUuid());
+            addToSyncableItems(syncableItems, "EncounterEntityApprovalStatus", formMapping.getEncounterTypeUuid());
         });
         programEncounters.forEach(formMapping -> {
             if (!groupPrivileges.hasPrivilege("View visit", formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
                 return;
             }
             addToSyncableItems(syncableItems, "ProgramEncounter", formMapping.getEncounterTypeUuid());
+            addToSyncableItems(syncableItems, "ProgramEncounterEntityApprovalStatus", formMapping.getEncounterTypeUuid());
         });
         programEnrolments.forEach(formMapping -> {
             if (!groupPrivileges.hasPrivilege("View enrolment details", formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
                 return;
             }
             addToSyncableItems(syncableItems, "ProgramEnrolment", formMapping.getProgramUuid());
+            addToSyncableItems(syncableItems, "ProgramEnrolmentEntityApprovalStatus", formMapping.getProgramUuid());
         });
 
         checklistDetails.forEach(checklistDetail -> {
             if (subjectTypes.stream().anyMatch(subjectType -> groupPrivileges.hasPrivilege("View checklist", subjectType, null, null,checklistDetail))) {
                 addToSyncableItems(syncableItems, "Checklist", checklistDetail.getUuid());
                 addToSyncableItems(syncableItems, "ChecklistItem", checklistDetail.getUuid());
+                addToSyncableItems(syncableItems, "ChecklistItemEntityApprovalStatus", checklistDetail.getUuid());
             }
         });
         addToSyncableItems(syncableItems, Arrays.asList("IdentifierAssignment", "ChecklistDetail", "Rule", "RuleDependency",

@@ -97,6 +97,7 @@ public class SyncController {
     private final SubjectProgramEligibilityService subjectProgramEligibilityService;
     private final MenuItemService menuItemService;
     private final UserSubjectAssignmentService userSubjectAssignmentService;
+    private final ScopedEntityApprovalStatusService scopedEntityApprovalStatusService;
 
     @Autowired
     public SyncController(Environment environment, IndividualService individualService, EncounterService encounterService,
@@ -128,7 +129,8 @@ public class SyncController {
                           SubjectMigrationService subjectMigrationService, SyncDetailsService syncDetailService,
                           DocumentationService documentationService, DocumentationItemService documentationItemService,
                           TaskService taskService, TaskTypeService taskTypeService, TaskStatusService taskStatusService,
-                          TaskUnAssigmentService taskUnAssigmentService, SubjectProgramEligibilityService subjectProgramEligibilityService, MenuItemService menuItemService, UserSubjectAssignmentService userSubjectAssignmentService) {
+                          TaskUnAssigmentService taskUnAssigmentService, SubjectProgramEligibilityService subjectProgramEligibilityService, MenuItemService menuItemService, UserSubjectAssignmentService userSubjectAssignmentService,
+                          ScopedEntityApprovalStatusService scopedEntityApprovalStatusService) {
         this.environment = environment;
         this.individualService = individualService;
         this.encounterService = encounterService;
@@ -195,6 +197,7 @@ public class SyncController {
         this.subjectProgramEligibilityService = subjectProgramEligibilityService;
         this.menuItemService = menuItemService;
         this.userSubjectAssignmentService = userSubjectAssignmentService;
+        this.scopedEntityApprovalStatusService = scopedEntityApprovalStatusService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -219,6 +222,11 @@ public class SyncController {
         scopeAwareServiceMap.put("LocationMapping", locationMappingService);
         scopeAwareServiceMap.put("SubjectMigration", subjectMigrationService);
         scopeAwareServiceMap.put("SubjectProgramEligibility", subjectProgramEligibilityService);
+        scopeAwareServiceMap.put("SubjectEntityApprovalStatus", scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put("EncounterEntityApprovalStatus", scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put("ProgramEncounterEntityApprovalStatus", scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put("ProgramEnrolmentEntityApprovalStatus", scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put("ChecklistItemEntityApprovalStatus", scopedEntityApprovalStatusService);
     }
 
     private void populateEntityNameToTableMap() {

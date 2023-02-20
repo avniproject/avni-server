@@ -100,7 +100,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
             programEnrolmentRepository.save(programEnrolment);
             visitCreator.saveScheduledVisits(formMapping.getType(), null, programEnrolment.getUuid(), ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
         }
-        entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.ProgramEncounter);
+        entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.ProgramEncounter, savedEncounter.getEncounterType().getUuid());
     }
 
     private ProgramEncounter getOrCreateProgramEncounter(Row row) {

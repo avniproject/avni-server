@@ -131,7 +131,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                 savedIndividual = individualService.save(individual);
                 visitCreator.saveScheduledVisits(formMapping.getType(), savedIndividual.getUuid(), null, ruleResponse.getVisitSchedules(), null);
             }
-            entityApprovalStatusWriter.saveStatus(formMapping, savedIndividual.getId(), EntityApprovalStatus.EntityType.Subject);
+            entityApprovalStatusWriter.saveStatus(formMapping, savedIndividual.getId(), EntityApprovalStatus.EntityType.Subject, savedIndividual.getSubjectType().getUuid());
         } catch (Exception e) {
             logger.warn("Error in writing row", e);
             throw e;

@@ -19,6 +19,9 @@ public class EntityApprovalStatus extends OrganisationAwareEntity {
     @Enumerated(EnumType.STRING)
     private EntityType entityType;
 
+    @Column
+    private String entityTypeUuid;
+
     @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "approval_status_id")
@@ -90,4 +93,11 @@ public class EntityApprovalStatus extends OrganisationAwareEntity {
         this.statusDateTime = statusDateTime;
     }
 
+    public String getEntityTypeUuid() {
+        return entityTypeUuid;
+    }
+
+    public void setEntityTypeUuid(String entityTypeUuid) {
+        this.entityTypeUuid = entityTypeUuid;
+    }
 }

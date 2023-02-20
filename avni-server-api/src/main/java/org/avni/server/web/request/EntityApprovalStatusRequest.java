@@ -8,6 +8,8 @@ public class EntityApprovalStatusRequest {
 
     private String entityType;
 
+    private String entityTypeUUID;
+
     private String approvalStatusUuid;
 
     private String approvalStatusComment;
@@ -82,5 +84,13 @@ public class EntityApprovalStatusRequest {
 
     public void setEntityUuid(String entityUuid) {
         this.entityUuid = entityUuid;
+    }
+
+    public String getEntityTypeUUID() {
+        return entityTypeUUID;
+    }
+
+    public void setEntityTypeUUID(String entityTypeUUID) {
+        this.entityTypeUUID = entityTypeUUID;
     }
 }
