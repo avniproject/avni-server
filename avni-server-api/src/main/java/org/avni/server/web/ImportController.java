@@ -81,7 +81,7 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
     public void getSampleImportFile(@RequestParam String uploadType, HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
@@ -95,7 +95,7 @@ public class ImportController {
     }
 
     @PostMapping("/import/new")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
     public ResponseEntity<?> doit(@RequestParam MultipartFile file,
                                   @RequestParam String type,
                                   @RequestParam boolean autoApprove,
@@ -126,7 +126,7 @@ public class ImportController {
     }
 
     @GetMapping("/import/status")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
     public Page<JobStatus> getUploadStats(Pageable pageable) {
         return jobService.getAll(pageable);
     }
