@@ -76,7 +76,7 @@ public class ImportService {
             uploadTypes.put(String.format("Encounter---%s---%s", encounterType, subjectTypeName), new FormMappingInfo(String.format("%s", formName), formMapping.isEnableApproval()));
         });
 
-        Stream<SubjectType.SubjectTypeProjection> groupSubjectTypes = subjectTypeRepository.findAllOperational().stream().filter(subjectType -> subjectType.isGroup());
+        Stream<SubjectType.SubjectTypeProjection> groupSubjectTypes = subjectTypeRepository.findAllOperational().stream().filter(SubjectType.SubjectTypeProjection::isGroup);
         groupSubjectTypes.forEach(groupSubjectType -> {
             String groupSubjectTypeName = groupSubjectType.getName();
             uploadTypes.put(String.format("GroupMembers---%s", groupSubjectTypeName), new FormMappingInfo(String.format("%s members", groupSubjectTypeName), false));

@@ -21,7 +21,9 @@ public class ProgramContractWeb extends ProgramContract {
     private DateTime lastModifiedDateTime;
     private String subjectTypeUuid;
     private String programEnrolmentFormUuid;
+    private boolean enrolmentApprovalEnabled;
     private String programExitFormUuid;
+    private boolean exitApprovalEnabled;
     private Long programId;
 
     public String getProgramSubjectLabel() {
@@ -145,5 +147,21 @@ public class ProgramContractWeb extends ProgramContract {
 
     public Long getProgramId() {
         return programId;
+    }
+
+    public boolean isEnrolmentApprovalEnabled() {
+        return enrolmentApprovalEnabled;
+    }
+
+    public void setEnrolmentApprovalEnabled(boolean enrolmentApprovalEnabled) {
+        this.enrolmentApprovalEnabled = enrolmentApprovalEnabled;
+    }
+
+    public boolean isExitApprovalEnabled() {
+        return exitApprovalEnabled;
+    }
+
+    public void setExitApprovalEnabled(boolean exitApprovalEnabled) {
+        this.exitApprovalEnabled = exitApprovalEnabled;
     }
 }

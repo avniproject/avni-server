@@ -52,10 +52,10 @@ public class FormMappingService implements NonScopeAwareService {
 
     public void saveFormMapping(FormMappingParameterObject parametersForNewMapping,
                                 FormMappingParameterObject mappingsToVoid,
-                                Form form) {
+                                Form form, boolean enableApproval) {
         voidExistingFormMappings(mappingsToVoid, form);
 
-        saveMatchingFormMappings(parametersForNewMapping, form);
+        saveMatchingFormMappings(parametersForNewMapping, form, enableApproval);
     }
 
     public void voidExistingFormMappings(FormMappingParameterObject mappingsToVoid, Form form) {
@@ -68,10 +68,10 @@ public class FormMappingService implements NonScopeAwareService {
         );
 
         formMappingsToVoid.forEach(formMapping -> formMapping.setVoided(true));
-        formMappingsToVoid.forEach(formMapping -> formMappingRepository.save(formMapping));
+        formMappingsToVoid.forEach(formMappingRepository::save);
     }
 
-    private void saveMatchingFormMappings(FormMappingParameterObject parametersForNewMapping, Form form) {
+    private void saveMatchingFormMappings(FormMappingParameterObject parametersForNewMapping, Form form, boolean enableApproval) {
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(
                 parametersForNewMapping.subjectTypeUuid,
                 parametersForNewMapping.programUuid,
@@ -81,7 +81,7 @@ public class FormMappingService implements NonScopeAwareService {
             formMapping = new FormMapping();
             formMapping.assignUUID();
             formMapping.setVoided(false);
-            formMapping.setEnableApproval(organisationConfigService.isApprovalWorkflowEnabled());
+            formMapping.setEnableApproval(enableApproval);
         }
 
         setSubjectTypeIfRequired(formMapping, parametersForNewMapping.subjectTypeUuid);
@@ -129,7 +129,7 @@ public class FormMappingService implements NonScopeAwareService {
         }
 
         formMapping.setVoided(formMappingRequest.isVoided());
-        setEnableApproval(formMappingRequest, formMapping);
+        formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
         formMappingRepository.save(formMapping);
     }
 
@@ -167,14 +167,8 @@ public class FormMappingService implements NonScopeAwareService {
         }
 
         formMapping.setVoided(formMappingRequest.getIsVoided());
-        setEnableApproval(formMappingRequest, formMapping);
+        formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
         formMappingRepository.save(formMapping);
-    }
-
-    private void setEnableApproval(FormMappingContract formMappingRequest, FormMapping formMapping) {
-        boolean enableApproval = formMappingRequest.getEnableApproval() != null ?
-                formMappingRequest.getEnableApproval() : organisationConfigService.isApprovalWorkflowEnabled();
-        formMapping.setEnableApproval(enableApproval);
     }
 
     private void setEncounterTypeIfRequired(FormMapping formMapping, FormType formType, String encounterTypeUuid) {

@@ -164,23 +164,8 @@ public class OrganisationConfigService implements NonScopeAwareService {
     public JsonObject updateOrganisationConfigSettings(JsonObject newSettings, JsonObject currentSettings) {
         newSettings.keySet().forEach(key -> {
             currentSettings.put(key, newSettings.get(key));
-            if (key.equals(OrganisationConfigSettingKey.enableApprovalWorkflow.toString())) {
-                boolean enableApprovalWorkflow = (boolean) newSettings.get(key);
-                updateEnableApprovalForAllForms(enableApprovalWorkflow);
-            }
         });
         return currentSettings;
-    }
-
-    private void updateEnableApprovalForAllForms(boolean enableApprovalWorkflow) {
-        List<FormMapping> updatedFormMappings = formMappingRepository.findAll()
-                .stream()
-                .peek(m -> {
-                    m.setEnableApproval(enableApprovalWorkflow);
-                    m.updateAudit();
-                })
-                .collect(Collectors.toList());
-        formMappingRepository.saveAll(updatedFormMappings);
     }
 
     @Transactional
@@ -241,10 +226,6 @@ public class OrganisationConfigService implements NonScopeAwareService {
                 .stream()
                 .filter(organisationConfig -> organisationConfig.isFeatureEnabled(feature))
                 .collect(Collectors.toList());
-    }
-
-    public Boolean isApprovalWorkflowEnabled() {
-        return isFeatureEnabled("enableApprovalWorkflow");
     }
 
     public boolean isCommentEnabled() {

@@ -29,7 +29,7 @@ public class OrganisationConfigServiceTest {
     public void shouldRetrieveOptionalObjectFromOrganisationSettings() {
         OrganisationConfigRepository organisationRepository = mock(OrganisationConfigRepository.class);
         OrganisationConfig organisationConfig = new OrganisationConfig();
-        JsonObject settings = new JsonObject().with(OrganisationConfigSettingKey.enableApprovalWorkflow.name(), true);
+        JsonObject settings = new JsonObject().with(OrganisationConfigSettingKey.customRegistrationLocations.name(), true);
         organisationConfig.setSettings(settings);
         when(organisationRepository.findByOrganisationId(25l)).thenReturn(organisationConfig);
         OrganisationConfigService organisationConfigService = new OrganisationConfigService(organisationRepository, null, null, null, null);
@@ -37,11 +37,11 @@ public class OrganisationConfigServiceTest {
         Organisation organisation = new Organisation();
         organisation.setId(25l);
         Optional<Object> enableComments = organisationConfigService.getOrganisationSettingsValue(organisation, OrganisationConfigSettingKey.enableComments);
-        Optional<Object> enableApprovalWorkflow = organisationConfigService.getOrganisationSettingsValue(organisation, OrganisationConfigSettingKey.enableApprovalWorkflow);
+        Optional<Object> optionalKeyValue = organisationConfigService.getOrganisationSettingsValue(organisation, OrganisationConfigSettingKey.customRegistrationLocations);
 
         assertThat(enableComments.isPresent(), is(false));
-        assertThat(enableApprovalWorkflow.isPresent(), is(true));
-        assertThat(enableApprovalWorkflow.get(), is(true));
+        assertThat(optionalKeyValue.isPresent(), is(true));
+        assertThat(optionalKeyValue.get(), is(true));
     }
 
     @Test

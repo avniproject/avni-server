@@ -30,6 +30,7 @@ public class SubjectTypeContractWeb {
     private String uuid;
     private List<GroupRoleContract> groupRoles;
     private String registrationFormUuid;
+    private boolean enableRegistrationApproval;
     private String type;
     private String subjectSummaryRule;
     private String programEligibilityCheckRule;
@@ -369,5 +370,13 @@ public class SubjectTypeContractWeb {
 
     public void setSubjectTypeId(Long subjectTypeId) {
         this.subjectTypeId = subjectTypeId;
+    }
+
+    public boolean isEnableRegistrationApproval() {
+        return enableRegistrationApproval;
+    }
+
+    public void setEnableRegistrationApproval(boolean enableRegistrationApproval) {
+        this.enableRegistrationApproval = enableRegistrationApproval;
     }
 }

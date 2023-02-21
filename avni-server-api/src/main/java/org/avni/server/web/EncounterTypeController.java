@@ -170,13 +170,13 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
         formMappingSevice.saveFormMapping(
                 new FormMappingParameterObject(request.getSubjectTypeUuid(), request.getProgramUuid(), encounterType.getUuid()),
                 new FormMappingParameterObject(null, null, encounterType.getUuid()),
-                encounterForm);
+                encounterForm, request.isPerformEncounterApprovalEnabled());
 
         Form cancellationForm = formService.getOrCreateForm(request.getProgramEncounterCancelFormUuid(), String.format("%s Encounter Cancellation", encounterType.getName()), cancellationFormType);
         formMappingSevice.saveFormMapping(
                 new FormMappingParameterObject(request.getSubjectTypeUuid(), request.getProgramUuid(), encounterType.getUuid()),
                 new FormMappingParameterObject(null, null, encounterType.getUuid()),
-                cancellationForm);
+                cancellationForm, request.isCancelEncounterApprovalEnabled());
     }
 
     @DeleteMapping(value = "/web/encounterType/{id}")

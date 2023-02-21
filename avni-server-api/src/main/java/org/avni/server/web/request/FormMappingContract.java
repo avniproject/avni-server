@@ -16,7 +16,7 @@ public class FormMappingContract extends ReferenceDataContract {
     private FormType formType;
     private Boolean isVoided;
     private String formName;
-    private Boolean enableApproval;
+    private boolean enableApproval;
     private String taskTypeUUID;
 
     public String getFormUUID() {
@@ -69,11 +69,11 @@ public class FormMappingContract extends ReferenceDataContract {
 
     public Boolean getIsVoided() { return isVoided; }
 
-    public Boolean getEnableApproval() {
+    public boolean getEnableApproval() {
         return enableApproval;
     }
 
-    public void setEnableApproval(Boolean enableApproval) {
+    public void setEnableApproval(boolean enableApproval) {
         this.enableApproval = enableApproval;
     }
 

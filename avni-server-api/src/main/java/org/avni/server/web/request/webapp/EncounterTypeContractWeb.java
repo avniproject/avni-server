@@ -25,7 +25,9 @@ public class EncounterTypeContractWeb {
     private String uuid;
     private String subjectTypeUuid;
     private String programEncounterFormUuid;
+    private boolean performEncounterApprovalEnabled;
     private String programEncounterCancelFormUuid;
+    private boolean cancelEncounterApprovalEnabled;
     private String programUuid;
     private DeclarativeRule encounterEligibilityCheckDeclarativeRule;
     private boolean isImmutable;
@@ -202,5 +204,21 @@ public class EncounterTypeContractWeb {
 
     public Long getEncounterTypeId() {
         return encounterTypeId;
+    }
+
+    public boolean isPerformEncounterApprovalEnabled() {
+        return performEncounterApprovalEnabled;
+    }
+
+    public void setPerformEncounterApprovalEnabled(boolean performEncounterApprovalEnabled) {
+        this.performEncounterApprovalEnabled = performEncounterApprovalEnabled;
+    }
+
+    public boolean isCancelEncounterApprovalEnabled() {
+        return cancelEncounterApprovalEnabled;
+    }
+
+    public void setCancelEncounterApprovalEnabled(boolean cancelEncounterApprovalEnabled) {
+        this.cancelEncounterApprovalEnabled = cancelEncounterApprovalEnabled;
     }
 }

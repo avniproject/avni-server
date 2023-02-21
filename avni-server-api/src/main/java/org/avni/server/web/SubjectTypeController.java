@@ -133,7 +133,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                 new FormMappingParameterObject(subjectType.getUuid(), null, null),
                 formService.getOrCreateForm(request.getRegistrationFormUuid(),
                         String.format("%s Registration", subjectType.getName()),
-                        FormType.IndividualProfile));
+                        FormType.IndividualProfile), request.isEnableRegistrationApproval());
 
         organisationConfigService.saveCustomRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType);
@@ -212,7 +212,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                 new FormMappingParameterObject(subjectType.getUuid(), null, null),
                 new FormMappingParameterObject(subjectType.getUuid(), null, null),
                 formService.getOrCreateForm(request.getRegistrationFormUuid(),
-                        String.format("%s Registration", subjectType.getName()), FormType.IndividualProfile));
+                        String.format("%s Registration", subjectType.getName()), FormType.IndividualProfile), request.isEnableRegistrationApproval());
 
         organisationConfigService.saveCustomRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
     }
