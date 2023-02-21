@@ -12,7 +12,8 @@ import java.util.List;
 public class SyncParameters {
     private final DateTime lastModifiedDateTime;
     private final DateTime now;
-    private final Long typeId;
+    private Long typeId;
+    private String entityTypeUuid;
     private final Pageable pageable;
     private List<Long> addressLevels;
     private SubjectType subjectType;
@@ -22,6 +23,7 @@ public class SyncParameters {
 
     public SyncParameters(DateTime lastModifiedDateTime,
                           DateTime now, Long typeId,
+                          String entityTypeUuid,
                           Pageable pageable,
                           List<Long> addressLevels,
                           SubjectType subjectType,
@@ -31,6 +33,7 @@ public class SyncParameters {
         this.lastModifiedDateTime = lastModifiedDateTime;
         this.now = now;
         this.typeId = typeId;
+        this.entityTypeUuid = entityTypeUuid;
         this.pageable = pageable;
         this.addressLevels = addressLevels;
         this.subjectType = subjectType;
@@ -38,6 +41,7 @@ public class SyncParameters {
         this.syncEntityName = syncEntityName;
         this.catchment = catchment;
     }
+
 
     public DateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
@@ -89,6 +93,14 @@ public class SyncParameters {
 
     public SyncEntityName getSyncEntityName() {
         return syncEntityName;
+    }
+
+    public String getEntityTypeUuid() {
+        return entityTypeUuid;
+    }
+
+    public void setEntityTypeUuid(String entityTypeUuid) {
+        this.entityTypeUuid = entityTypeUuid;
     }
 
     public enum SyncEntityName {

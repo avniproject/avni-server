@@ -76,7 +76,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
                             CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
         }
         return getScopeBasedSyncResults(lastModifiedDateTime, now,
-                fetchSubjectTypeForEntityNameAndUuid(entityName, entityTypeUuid), pageable, entityName);
+                fetchSubjectTypeForEntityNameAndUuid(entityName, entityTypeUuid), pageable, entityName, entityTypeUuid);
     }
 
     @Override
@@ -124,11 +124,11 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
 
     private PagedResources<Resource<EntityApprovalStatus>> getScopeBasedSyncResults(DateTime lastModifiedDateTime,
                 DateTime now, String subjectTypeUuid, Pageable pageable,
-                SyncParameters.SyncEntityName entityName) {
+                SyncParameters.SyncEntityName entityName, String entityTypeUuid) {
         if (subjectTypeUuid == null || subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(entityApprovalStatusRepository,
-                userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, entityName));
+                userService.getCurrentUser(), lastModifiedDateTime, now, entityTypeUuid, pageable, subjectType, entityName));
     }
 }

@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"approvalStatus"})
-public class EntityApprovalStatus extends OrganisationAwareEntity {
+public class EntityApprovalStatus extends SyncAttributeEntity {
 
     @Column
     private Long entityId;
@@ -36,6 +36,9 @@ public class EntityApprovalStatus extends OrganisationAwareEntity {
     @Column
     @NotNull
     private DateTime statusDateTime;
+
+    @Column(name = "address_id")
+    private Long addressId;
 
     public enum EntityType {
         Subject,
@@ -99,5 +102,13 @@ public class EntityApprovalStatus extends OrganisationAwareEntity {
 
     public void setEntityTypeUuid(String entityTypeUuid) {
         this.entityTypeUuid = entityTypeUuid;
+    }
+
+    public Long getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(Long addressId) {
+        this.addressId = addressId;
     }
 }
