@@ -1,5 +1,6 @@
 package org.avni.server.web.request.webapp;
 
+import org.avni.server.application.FormMapping;
 import org.avni.server.application.Format;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
@@ -52,7 +53,7 @@ public class SubjectTypeContractWeb {
     private String nameHelpText;
     private Long subjectTypeId;
 
-    public static SubjectTypeContractWeb fromOperationalSubjectType(OperationalSubjectType operationalSubjectType) {
+    public static SubjectTypeContractWeb fromOperationalSubjectType(OperationalSubjectType operationalSubjectType, FormMapping formMapping) {
         SubjectTypeContractWeb contract = new SubjectTypeContractWeb();
         SubjectType subjectType = operationalSubjectType.getSubjectType();
         contract.setId(operationalSubjectType.getId());
@@ -88,6 +89,7 @@ public class SubjectTypeContractWeb {
         contract.setSyncRegistrationConcept2Usable(subjectType.isSyncRegistrationConcept2Usable());
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setSubjectTypeId(subjectType.getId());
+        contract.setEnableRegistrationApproval(formMapping.isEnableApproval());
 
         return contract;
     }

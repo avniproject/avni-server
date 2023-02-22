@@ -2,6 +2,7 @@ package org.avni.server.web;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.Subject;
@@ -81,7 +82,10 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     public PagedResources<Resource<SubjectTypeContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalSubjectTypeRepository
                 .findPageByIsVoidedFalse(pageable)
-                .map(SubjectTypeContractWeb::fromOperationalSubjectType));
+                .map((OperationalSubjectType operationalSubjectType) -> {
+                    FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
+                    return SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
+                }));
     }
 
     @GetMapping(value = "/web/subjectType/{id}")
@@ -91,7 +95,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         OperationalSubjectType operationalSubjectType = operationalSubjectTypeRepository.findOne(id);
         if (operationalSubjectType.isVoided())
             return ResponseEntity.notFound().build();
-        SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType);
+        FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
+        SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<List<SubjectTypeSetting>>() {});
         Optional<List<String>> locationUUIDs = customRegistrationLocations
                 .stream()
@@ -136,7 +141,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                         FormType.IndividualProfile), request.isEnableRegistrationApproval());
 
         organisationConfigService.saveCustomRegistrationLocations(request.getLocationTypeUUIDs(), subjectType);
-        SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType);
+        FormMapping formMapping = formMappingService.find(subjectType);
+        SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
         return ResponseEntity.ok(subjectTypeContractWeb);
     }
@@ -195,7 +201,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         resetSyncService.recordSyncAttributeChange(operationalSubjectType.getSubjectType(), request);
         updateSubjectType(request, operationalSubjectType);
         subjectTypeService.updateSyncAttributesIfRequired(subjectType);
-        SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType);
+        FormMapping formMapping = formMappingService.find(subjectType);
+        SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
         return ResponseEntity.ok(subjectTypeContractWeb);
     }

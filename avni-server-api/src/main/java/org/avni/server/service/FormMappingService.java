@@ -233,4 +233,8 @@ public class FormMappingService implements NonScopeAwareService {
                 .findFirst()
                 .orElse(null);
     }
+
+    public FormMapping find(SubjectType subjectType) {
+        return formMappingRepository.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndIsVoidedFalse(subjectType);
+    }
 }
