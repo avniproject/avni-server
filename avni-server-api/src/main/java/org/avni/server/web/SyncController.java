@@ -282,7 +282,7 @@ public class SyncController {
         nonScopeAwareServiceMap.put("UserSubjectAssignment", userSubjectAssignmentService);
     }
 
-    @PostMapping(value = "/syncDetailsWithScopeAwareEAS")
+    @PostMapping(value = "/v2/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
