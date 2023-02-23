@@ -22,10 +22,15 @@ public class ScopeBasedSyncService<T extends CHSEntity> {
 
     public Page<T> getSyncResultsBySubjectTypeRegistrationLocation(OperatingIndividualScopeAwareRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Long typeId, Pageable pageable, SubjectType subjectType, SyncParameters.SyncEntityName syncEntityName) {
         List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, typeId, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, typeId, null, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+    }
+
+    public Page<T> getSyncResultsBySubjectTypeRegistrationLocation(OperatingIndividualScopeAwareRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, String entityTypeUuid, Pageable pageable, SubjectType subjectType, SyncParameters.SyncEntityName syncEntityName) {
+        List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
+        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, null, entityTypeUuid, pageable, addressLevels, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 
     public Page<T> getSyncResultsByCatchment(OperatingIndividualScopeAwareRepository<T> repository, User user, DateTime lastModifiedDateTime, DateTime now, Pageable pageable, SyncParameters.SyncEntityName syncEntityName) {
-        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository.getSyncResults(new SyncParameters(lastModifiedDateTime, now, null, null, pageable, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 }

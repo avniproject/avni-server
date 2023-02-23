@@ -98,7 +98,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
             individualRepository.save(subject);
             visitCreator.saveScheduledVisits(formMapping.getType(), subject.getUuid(), null, ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
         }
-        entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.Encounter);
+        entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.Encounter, savedEncounter.getEncounterType().getUuid());
     }
 
     private Individual getSubject(Row row) throws Exception {

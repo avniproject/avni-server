@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
+import org.jadira.usertype.spi.utils.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.avni.server.domain.ApprovalStatus;
 import org.avni.server.domain.CHSEntity;
@@ -39,6 +40,9 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
             entityApprovalStatus = new EntityApprovalStatus();
         }
         EntityApprovalStatus.EntityType entityType = EntityApprovalStatus.EntityType.valueOf(request.getEntityType());
+        if(StringUtils.isNotEmpty(request.getEntityTypeUuid())) {
+            entityApprovalStatus.setEntityTypeUuid(request.getEntityTypeUuid());
+        }
         entityApprovalStatus.setUuid(request.getUuid());
         entityApprovalStatus.setApprovalStatus(approvalStatusRepository.findByUuid(request.getApprovalStatusUuid()));
         entityApprovalStatus.setApprovalStatusComment(request.getApprovalStatusComment());
@@ -70,7 +74,7 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         return entity.getUuid();
     }
 
-    public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status) {
+    public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid) {
         ApprovalStatus approvalStatus = approvalStatusRepository.findByStatus(status);
         EntityApprovalStatus entityApprovalStatuses = entityApprovalStatusRepository.findFirstByEntityIdAndEntityTypeAndIsVoidedFalseOrderByStatusDateTimeDesc(entityId, entityType);
         if (entityApprovalStatuses != null && entityApprovalStatuses.getApprovalStatus().getStatus().equals(status)) {
@@ -79,6 +83,9 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         EntityApprovalStatus entityApprovalStatus = new EntityApprovalStatus();
         entityApprovalStatus.assignUUID();
         entityApprovalStatus.setEntityType(entityType);
+        if(StringUtils.isNotEmpty(entityTypeUuid)) {
+            entityApprovalStatus.setEntityTypeUuid(entityTypeUuid);
+        }
         entityApprovalStatus.setEntityId(entityId);
         entityApprovalStatus.setApprovalStatus(approvalStatus);
         entityApprovalStatus.setStatusDateTime(new DateTime());

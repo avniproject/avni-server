@@ -114,7 +114,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
             savedEnrolment = programEnrolmentService.save(programEnrolment);
             visitCreator.saveScheduledVisits(formMapping.getType(), null, savedEnrolment.getUuid(), ruleResponse.getVisitSchedules(), null);
         }
-        entityApprovalStatusWriter.saveStatus(formMapping, savedEnrolment.getId(), EntityApprovalStatus.EntityType.ProgramEnrolment);
+        entityApprovalStatusWriter.saveStatus(formMapping, savedEnrolment.getId(), EntityApprovalStatus.EntityType.ProgramEnrolment, savedEnrolment.getProgram().getUuid());
     }
 
     private ProgramEnrolment getOrCreateProgramEnrolment(Row row) {
