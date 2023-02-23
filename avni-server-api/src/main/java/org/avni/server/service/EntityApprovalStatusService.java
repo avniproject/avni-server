@@ -40,8 +40,8 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
             entityApprovalStatus = new EntityApprovalStatus();
         }
         EntityApprovalStatus.EntityType entityType = EntityApprovalStatus.EntityType.valueOf(request.getEntityType());
-        if(StringUtils.isNotEmpty(request.getEntityTypeUUID())) {
-            entityApprovalStatus.setEntityTypeUuid(request.getEntityTypeUUID());
+        if(StringUtils.isNotEmpty(request.getEntityTypeUuid())) {
+            entityApprovalStatus.setEntityTypeUuid(request.getEntityTypeUuid());
         }
         entityApprovalStatus.setUuid(request.getUuid());
         entityApprovalStatus.setApprovalStatus(approvalStatusRepository.findByUuid(request.getApprovalStatusUuid()));
