@@ -122,23 +122,28 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     }
 
     @Transactional
-    public UserSubjectAssignment save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) {
-        UserSubjectAssignment userSubjectAssignment = new UserSubjectAssignment();
+    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) {
+        UserSubjectAssignment userSubjectAssignment;
+        List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
-        Individual subject = individualRepository.findOne(userSubjectAssignmentRequest.getSubjectId());
+        List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
 
-        Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserAndSubject(user, subject);
-        if(userSubjectAssignmentOptional.isPresent()) {
-            userSubjectAssignment = userSubjectAssignmentOptional.get();
-        } else {
-            userSubjectAssignment.assignUUID();
-            userSubjectAssignment.setUser(user);
-            userSubjectAssignment.setSubject(subject);
-            userSubjectAssignment.setOrganisationId(organisation.getId());
+        for(Individual subject : subjectList) {
+            Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserAndSubject(user, subject);
+            if (userSubjectAssignmentOptional.isPresent()) {
+                userSubjectAssignment = userSubjectAssignmentOptional.get();
+            } else {
+                userSubjectAssignment = new UserSubjectAssignment();
+                userSubjectAssignment.assignUUID();
+                userSubjectAssignment.setUser(user);
+                userSubjectAssignment.setSubject(subject);
+                userSubjectAssignment.setOrganisationId(organisation.getId());
+            }
+            userSubjectAssignment.setVoided(userSubjectAssignmentRequest.isVoided());
+            updateAuditForUserSubjectAssignment(userSubjectAssignment);
+            userSubjectAssignmentList.add(userSubjectAssignment);
         }
-        userSubjectAssignment.setVoided(userSubjectAssignmentRequest.isVoided());
-        updateAuditForUserSubjectAssignment(userSubjectAssignment);
-        return userSubjectAssignmentRepository.save(userSubjectAssignment);
+        return userSubjectAssignmentRepository.saveAll(userSubjectAssignmentList);
     }
 
     private void updateAuditForUserSubjectAssignment(UserSubjectAssignment userSubjectAssignment) {

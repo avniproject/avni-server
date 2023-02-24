@@ -1,22 +1,25 @@
 package org.avni.server.web.request;
 
+import java.util.List;
+
 public class UserSubjectAssignmentContract extends CHSRequest {
     private Long userId;
-    private Long subjectId;
+    private List<Long> subjectIds;
 
     public void setUserId(Long id) {
         this.userId = id;
-    }
-
-    public void setSubjectId(Long id) {
-        this.subjectId = id;
     }
 
     public Long getUserId() {
         return userId;
     }
 
-    public Long getSubjectId() {
-        return subjectId;
+    public List<Long> getSubjectIds() {
+        return subjectIds;
     }
+
+    public void setSubjectIds(List<Long> subjectIds) {
+        this.subjectIds = subjectIds;
+    }
+
 }
