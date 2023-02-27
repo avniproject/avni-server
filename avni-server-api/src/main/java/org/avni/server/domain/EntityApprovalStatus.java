@@ -11,6 +11,10 @@ import javax.validation.constraints.NotNull;
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"approvalStatus"})
 public class EntityApprovalStatus extends SyncAttributeEntity {
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "individual_id")
+    private Individual individual;
 
     @Column
     private Long entityId;
@@ -39,6 +43,14 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
 
     @Column(name = "address_id")
     private Long addressId;
+
+    public Individual getIndividual() {
+        return individual;
+    }
+
+    public void setIndividual(Individual individual) {
+        this.individual = individual;
+    }
 
     public enum EntityType {
         Subject,

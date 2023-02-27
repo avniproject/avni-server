@@ -12,9 +12,11 @@ public class ScopedEntityApprovalStatusService implements ScopeAwareService<Enti
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(ScopedEntityApprovalStatusService.class);
 
     private EntityApprovalStatusRepository entityApprovalStatusRepository;
+    private OrganisationConfigService organisationConfigService;
 
-    public ScopedEntityApprovalStatusService(EntityApprovalStatusRepository entityApprovalStatusRepository) {
+    public ScopedEntityApprovalStatusService(EntityApprovalStatusRepository entityApprovalStatusRepository, OrganisationConfigService organisationConfigService) {
         this.entityApprovalStatusRepository = entityApprovalStatusRepository;
+        this.organisationConfigService = organisationConfigService;
     }
 
     /**
@@ -26,7 +28,9 @@ public class ScopedEntityApprovalStatusService implements ScopeAwareService<Enti
      */
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String encounterTypeUuid) {
-        return true;
+        if(organisationConfigService.isApprovalWorkflowEnabled())
+            return true;
+        return false;
     }
 
     @Override

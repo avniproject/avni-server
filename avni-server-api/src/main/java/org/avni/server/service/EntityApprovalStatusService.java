@@ -1,11 +1,9 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
+import org.avni.server.domain.*;
 import org.jadira.usertype.spi.utils.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.avni.server.domain.ApprovalStatus;
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.web.request.EntityApprovalStatusRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.EntityApprovalStatusWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,8 +57,34 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
             throw new IllegalArgumentException(String.format("Incorrect entityUuid '%s' provided for updating EntityApprovalStatus", request.getEntityUuid()));
         }
         entityApprovalStatus.setEntityId(entity.getId());
+
+        Individual individual = getIndividual(entityType, request.getEntityUuid());
+        entityApprovalStatus.setIndividual(individual);
+        entityApprovalStatus.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
+        if (individual.getAddressLevel() != null) {
+            entityApprovalStatus.setAddressId(individual.getAddressLevel().getId());
+        }
+
         return entityApprovalStatusRepository.save(entityApprovalStatus);
     }
+
+    public Individual getIndividual(EntityApprovalStatus.EntityType entityType, String entityUUID) {
+        CHSEntity chsEntity = this.typeMap.get(entityType).findByUuid(entityUUID);
+        switch (entityType) {
+            case Subject:
+               return (Individual) chsEntity;
+            case ProgramEnrolment:
+                return ((org.avni.server.domain.ProgramEnrolment) chsEntity).getIndividual();
+            case ProgramEncounter:
+                return ((org.avni.server.domain.ProgramEncounter) chsEntity).getIndividual();
+            case Encounter:
+                return ((org.avni.server.domain.Encounter) chsEntity).getIndividual();
+            case ChecklistItem:
+                return ((org.avni.server.domain.ChecklistItem) chsEntity).getChecklist().getProgramEnrolment().getIndividual();
+            default: return null;
+        }
+    }
+
 
     public String getEntityUuid(EntityApprovalStatus eaStatus) {
         EntityApprovalStatus.EntityType entityType = eaStatus.getEntityType();
