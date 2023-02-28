@@ -3,6 +3,7 @@ package org.avni.server.web.request;
 import org.avni.server.domain.SyncableItem;
 import org.joda.time.DateTime;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 public class EntitySyncStatusContract {
@@ -55,5 +56,10 @@ public class EntitySyncStatusContract {
 
     public boolean matchesEntity(SyncableItem syncableItem) {
         return syncableItem.getName().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
+    }
+
+    public boolean isApprovalStatusType() {
+        String[] approvalStatuses = {"SubjectEntityApprovalStatus", "EncounterEntityApprovalStatus", "ProgramEncounterEntityApprovalStatus", "ProgramEnrolmentEntityApprovalStatus", "ChecklistItemEntityApprovalStatus"};
+        return Arrays.stream(approvalStatuses).anyMatch(this.entityName::equals);
     }
 }

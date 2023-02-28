@@ -28,9 +28,7 @@ public class ScopedEntityApprovalStatusService implements ScopeAwareService<Enti
      */
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String encounterTypeUuid) {
-        if(organisationConfigService.isApprovalWorkflowEnabled())
-            return true;
-        return false;
+         return true;
     }
 
     @Override

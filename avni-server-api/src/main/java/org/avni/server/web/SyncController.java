@@ -325,10 +325,17 @@ public class SyncController {
                 entitySyncStatusContracts.add(EntitySyncStatusContract.create(syncableItem.getName(), syncableItem.getEntityTypeUuid()));
             }
         });
+        removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);
+
         List<EntitySyncStatusContract> changedEntities = entitySyncStatusContracts.stream()
                 .filter(this::filterChangedEntities)
                 .collect(Collectors.toList());
         return changedEntities;
+    }
+
+    private void removeDisabledEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems) {
+        entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.isApprovalStatusType() &&
+                allSyncableItems.stream().noneMatch(entitySyncStatusContract::matchesEntity));
     }
 
     private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract) {
