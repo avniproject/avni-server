@@ -1,0 +1,17 @@
+{
+  "languages": [
+    "en"
+  ],
+  "extensions": [
+    {
+      "label": "ASHWINI",
+      "fileName": "ASHWINI-logo-on-splash-screen.html",
+      "extensionScope": {
+        "name": "Field App Home Screen",
+        "uuid": "",
+        "scopeType": "Field App Home Screen"
+      }
+    }
+  ],
+  "customRegistrationLocations": []
+}

@@ -34,7 +34,7 @@ public class ImplementationController implements RestControllerResourceProcessor
 
     @RequestMapping(value = "/implementation/export/{includeLocations}", method = RequestMethod.GET)
     @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
-    public ResponseEntity<ByteArrayResource> export(@PathVariable boolean includeLocations) throws IOException {
+    public ResponseEntity<ByteArrayResource> export(@PathVariable boolean includeLocations) throws Exception {
 
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         Long orgId = organisation.getId();
@@ -56,7 +56,7 @@ public class ImplementationController implements RestControllerResourceProcessor
             organisationService.addConceptsJson(orgId, zos);
             organisationService.addFormsJson(orgId, zos);
             organisationService.addFormMappingsJson(orgId, zos);
-            organisationService.addOrganisationConfigJson(orgId, zos);
+            organisationService.addOrganisationConfig(orgId, zos);
             //Id source is mapped to a catchment so if includeLocations is false we don't add those sources to json
             organisationService.addIdentifierSourceJson(zos, includeLocations);
             organisationService.addRelationJson(zos);

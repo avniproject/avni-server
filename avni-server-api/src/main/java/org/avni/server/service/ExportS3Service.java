@@ -34,7 +34,7 @@ public class ExportS3Service {
     }
 
     public InputStream downloadFile(String fileName) {
-        return s3Service.downloadFile("exports", fileName);
+        return s3Service.downloadOrganisationFile("exports", fileName);
     }
 
 }

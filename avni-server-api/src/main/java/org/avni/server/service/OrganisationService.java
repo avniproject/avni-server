@@ -38,8 +38,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -255,11 +257,16 @@ public class OrganisationService {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-
-    public void addOrganisationConfigJson(Long orgId, ZipOutputStream zos) throws IOException {
+    public void addOrganisationConfig(Long orgId, ZipOutputStream zos) throws IOException {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(orgId);
         if (organisationConfig != null) {
             addFileToZip(zos, "organisationConfig.json", OrganisationConfigRequest.fromOrganisationConfig(organisationConfig));
+            addDirectoryToZip(zos, "organisationConfigExtensions");
+            OrganisationConfig.Settings settingsObject = organisationConfig.getSettingsObject();
+            for (OrganisationConfig.Extension extension : settingsObject.getExtensions()) {
+                File file = s3Service.downloadOrganisationFile(extension.getFilePath());
+                addFileToZip(zos, extension.getFilePath(), file);
+            }
         }
     }
 
@@ -530,6 +537,14 @@ public class OrganisationService {
     }
     public void addMessageRules(ZipOutputStream zos) throws IOException {
         addFileToZip(zos, "messageRule.json", messagingService.findAll().stream().map(messageRule -> new MessageRuleContract(messageRule, entityTypeRetrieverService)).collect(Collectors.toList()));
+    }
+
+    private void addFileToZip(ZipOutputStream zos, String fileName, File file) throws IOException {
+        ZipEntry entry = new ZipEntry(fileName);
+        zos.putNextEntry(entry);
+        byte[] bytes = Files.readAllBytes(file.toPath());
+        zos.write(bytes);
+        zos.closeEntry();
     }
 
     private void addFileToZip(ZipOutputStream zos, String fileName, Object fileContent) throws IOException {

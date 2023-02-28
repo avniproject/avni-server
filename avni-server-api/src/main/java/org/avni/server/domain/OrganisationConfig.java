@@ -2,14 +2,19 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.OrganisationConfigSettingKey;
+import org.avni.server.domain.framework.BaseJsonObject;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "organisation_config")
@@ -28,8 +33,13 @@ public class OrganisationConfig extends OrganisationAwareEntity {
     @Type(type = "jsonObject")
     private JsonObject exportSettings;
 
+    @Deprecated
     public JsonObject getSettings() {
         return settings;
+    }
+
+    public Settings getSettingsObject() {
+        return new Settings(settings);
     }
 
     public void setSettings(JsonObject settings) {
@@ -61,5 +71,36 @@ public class OrganisationConfig extends OrganisationAwareEntity {
     }
     public Boolean isFeatureEnabled(String feature) {
         return (Boolean) getSettings().getOrDefault(feature, false);
+    }
+
+    public class Settings {
+        private final JsonObject settings;
+
+        public Settings(JsonObject settings) {
+            this.settings = settings;
+        }
+
+        public List<Extension> getExtensions() {
+            List<Object> extensions = (List<Object>) settings.get("extensions");
+            return extensions.stream().map(map -> new Extension((Map<String, Object>) map)).collect(Collectors.toList());
+        }
+    }
+
+    public class Extension extends BaseJsonObject {
+        public Extension(Map<String, Object> map) {
+            super(map);
+        }
+
+        public String getLabel() {
+            return getStringValue("label");
+        }
+
+        public String getFileName() {
+            return getStringValue("fileName");
+        }
+
+        public String getFilePath() {
+            return String.format("%s/%s", "extensions", this.getFileName());
+        }
     }
 }

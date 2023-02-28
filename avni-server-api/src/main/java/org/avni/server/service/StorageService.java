@@ -217,23 +217,36 @@ public abstract class StorageService implements S3Service {
         return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
     }
 
+    public File downloadOrganisationFile(String filePath) throws IOException {
+        InputStream inputStream = this.downloadOrganisationFile("", filePath);
+        File file = new File(format("%s/%s", System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString()));
+        FileUtils.copyInputStreamToFile(inputStream, file);
+        return file;
+    }
+
     @Override
-    public InputStream downloadFile(String directory, String fileName) {
+    public InputStream downloadOrganisationFile(String rootDirectory, String filePath) {
         if (isDev && !s3InDev) {
-            String localFilePath = format("%s/%s/%s", System.getProperty("java.io.tmpdir"), directory, fileName);
+            String localFilePath = format("%s%s%s/%s",
+                    System.getProperty("java.io.tmpdir"),
+                    StringUtils.isEmpty(rootDirectory) ? "" : rootDirectory,
+                    StringUtils.isEmpty(rootDirectory) ? "" : "/",
+                    filePath);
             try {
                 return new FileInputStream(localFilePath);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
-                logger.error(format("[dev] File not found. Assume empty. '%s'", fileName));
+                logger.error(format("[dev] File not found. Assume empty. '%s'", filePath));
                 return new ByteArrayInputStream(new byte[]{});
             }
         }
-        String s3Key = format("%s/%s/%s",
-                directory,
+
+        String s3Key = format("%s%s%s/%s",
+                StringUtils.isEmpty(rootDirectory) ? "" : rootDirectory,
+                StringUtils.isEmpty(rootDirectory) ? "" : "/",
                 getOrgDirectoryName(),
-                fileName
-        );
+                filePath);
+
         return s3Client.getObject(bucketName, s3Key).getObjectContent();
     }
 
@@ -401,16 +414,16 @@ public abstract class StorageService implements S3Service {
     }
 
     @Override
-    public String extractFileExtension(String mediaURL, String fileName) throws Exception {
+    public String extractFileExtension(String mediaURL, String fileName) {
         String extension = FilenameUtils.getExtension(fileName);
         if (extension.isEmpty()) {
-            throw new Exception(format("No file extension found in the file name. Make sure media download URL '%s' is correct.", mediaURL));
+            throw new RuntimeException(format("No file extension found in the file name. Make sure media download URL '%s' is correct.", mediaURL));
         }
         return extension;
     }
 
     @Override
-    public File downloadMediaToFile(String mediaURL) throws Exception {
+    public File downloadMediaToFile(String mediaURL) {
         try {
             URLConnection connection = new URL(mediaURL).openConnection();
             connection.setConnectTimeout(5000);
@@ -431,7 +444,7 @@ public abstract class StorageService implements S3Service {
         } catch (IOException e) {
             String message = format("Error while downloading media '%s' ", mediaURL);
             logger.error(message, e);
-            throw new Exception(message);
+            throw new RuntimeException(message);
         }
     }
 }

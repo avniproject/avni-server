@@ -52,7 +52,9 @@ public interface S3Service {
 
     URL getURLForExtensions(String fileName, Organisation organisation);
 
-    InputStream downloadFile(String directory, String fileName);
+    InputStream downloadOrganisationFile(String directory, String fileName);
+
+    File downloadOrganisationFile(String filePath) throws IOException;
 
     String uploadFileToS3(File file) throws IOException;
 
@@ -92,5 +94,5 @@ public interface S3Service {
 
     String extractFileExtension(String mediaURL, String fileName) throws Exception;
 
-    File downloadMediaToFile(String mediaURL) throws Exception;
+    File downloadMediaToFile(String mediaURL);
 }

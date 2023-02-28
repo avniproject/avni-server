@@ -42,6 +42,6 @@ public class BulkUploadS3Service {
     }
 
     public InputStream downloadErrorFile(String jobUuid) {
-        return s3Service.downloadFile("bulkuploads/error", format("%s.csv", jobUuid));
+        return s3Service.downloadOrganisationFile("bulkuploads/error", format("%s.csv", jobUuid));
     }
 }
