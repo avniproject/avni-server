@@ -102,8 +102,6 @@ public class SyncDetailsService {
             if (subjectTypes.stream().anyMatch(subjectType -> groupPrivileges.hasPrivilege("View checklist", subjectType, null, null,checklistDetail))) {
                 addToSyncableItems(syncableItems, "Checklist", checklistDetail.getUuid());
                 addToSyncableItems(syncableItems, "ChecklistItem", checklistDetail.getUuid());
-                if(scopeAwareEAS)
-                    addToSyncableItems(syncableItems, "ChecklistItemEntityApprovalStatus", checklistDetail.getUuid());
             }
         });
         addToSyncableItems(syncableItems, Arrays.asList("IdentifierAssignment", "ChecklistDetail", "Rule", "RuleDependency",

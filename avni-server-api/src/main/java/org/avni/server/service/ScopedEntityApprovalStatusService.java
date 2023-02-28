@@ -12,11 +12,9 @@ public class ScopedEntityApprovalStatusService implements ScopeAwareService<Enti
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(ScopedEntityApprovalStatusService.class);
 
     private EntityApprovalStatusRepository entityApprovalStatusRepository;
-    private OrganisationConfigService organisationConfigService;
 
     public ScopedEntityApprovalStatusService(EntityApprovalStatusRepository entityApprovalStatusRepository, OrganisationConfigService organisationConfigService) {
         this.entityApprovalStatusRepository = entityApprovalStatusRepository;
-        this.organisationConfigService = organisationConfigService;
     }
 
     /**
