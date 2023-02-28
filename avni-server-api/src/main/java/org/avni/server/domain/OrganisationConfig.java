@@ -2,7 +2,6 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
 import org.hibernate.annotations.BatchSize;
@@ -81,12 +80,14 @@ public class OrganisationConfig extends OrganisationAwareEntity {
         }
 
         public List<Extension> getExtensions() {
-            List<Object> extensions = (List<Object>) settings.get("extensions");
+            List<Object> extensions = (List<Object>) settings.get(Extension.EXTENSION_DIR);
             return extensions.stream().map(map -> new Extension((Map<String, Object>) map)).collect(Collectors.toList());
         }
     }
 
-    public class Extension extends BaseJsonObject {
+    public static class Extension extends BaseJsonObject {
+        public static final String EXTENSION_DIR = "extensions";
+
         public Extension(Map<String, Object> map) {
             super(map);
         }
@@ -100,7 +101,11 @@ public class OrganisationConfig extends OrganisationAwareEntity {
         }
 
         public String getFilePath() {
-            return String.format("%s/%s", "extensions", this.getFileName());
+            return getExtensionFilePath(this.getFileName());
+        }
+
+        public static String getExtensionFilePath(String fileName) {
+            return String.format("%s/%s", EXTENSION_DIR, fileName);
         }
     }
 }

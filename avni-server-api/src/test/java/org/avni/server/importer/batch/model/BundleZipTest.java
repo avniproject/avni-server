@@ -30,4 +30,16 @@ public class BundleZipTest {
         assertEquals(1, forms.size());
         assertEquals(8, forms.get(0).length());
     }
+
+    @Test
+    public void getExtensionNames() {
+        HashMap<String, byte[]> bundleEntries = new HashMap<>();
+        bundleEntries.put("someParentFolder/extensions/foo.html", new byte[1]);
+        bundleEntries.put("extensions/bar.html", new byte[1]);
+        BundleZip bundleZip = new BundleZip(bundleEntries);
+        List<String> extensionNames = bundleZip.getExtensionNames();
+        assertEquals(2, extensionNames.size());
+        assertTrue(extensionNames.stream().anyMatch(s -> s.equals("extensions/foo.html")));
+        assertTrue(extensionNames.stream().anyMatch(s -> s.equals("extensions/bar.html")));
+    }
 }

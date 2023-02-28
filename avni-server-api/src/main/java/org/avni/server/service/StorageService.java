@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.avni.server.domain.Extension;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.AvniFiles;
@@ -42,7 +43,6 @@ public abstract class StorageService implements S3Service {
     protected final Pattern mediaDirPattern = Pattern.compile("^/?(?<mediaDir>[^/]+)/.+$");
     protected final Logger logger;
     protected final Boolean isDev;
-    protected final String EXTENSION_DIR = "extensions";
     protected final String PROFILE_PIC_DIR = "profile-pics";
 
     protected StorageService(String bucketName, boolean s3InDev, Logger logger, Boolean isDev) {
@@ -148,7 +148,7 @@ public abstract class StorageService implements S3Service {
             return new ArrayList<>();
         }
         DateTime latestDate = modifiedSince.orElse(new DateTime(0));
-        String filePrefix = getOrgDirectoryName() + "/" + EXTENSION_DIR + "/";
+        String filePrefix = getOrgDirectoryName() + "/" + OrganisationConfig.Extension.EXTENSION_DIR + "/";
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest()
                 .withBucketName(bucketName)
                 .withPrefix(filePrefix);
@@ -175,7 +175,7 @@ public abstract class StorageService implements S3Service {
     }
 
     @Override
-    public void uploadExtensionFile(File tempDirectory, String targetFilePath) throws IOException, InterruptedException {
+    public void uploadExtensionFiles(File tempDirectory, String targetFilePath) throws IOException, InterruptedException {
         if (isDev && !s3InDev) {
             return;
         }
@@ -314,7 +314,7 @@ public abstract class StorageService implements S3Service {
         if (deleteMetadata) {
             this.deleteDirectory(mediaDirectory);
         } else {
-            List<String> metadataDirs = Arrays.asList("icons/", "extensions/");
+            List<String> metadataDirs = Arrays.asList("icons/", String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR));
             String[] allKeys = getAllKeysWithPrefix(mediaDirectory);
             String[] txKeys = Arrays.stream(allKeys)
                     .filter(key -> metadataDirs.stream().noneMatch(key::contains))
@@ -372,11 +372,22 @@ public abstract class StorageService implements S3Service {
     public String uploadByteArray(String fileName, String extension, String objectPath, byte[] content) throws IOException {
         String mediaDirectory = getOrgDirectoryName();
         String objectKey = format("%s/%s/%s.%s", mediaDirectory, objectPath, fileName, extension);
+        return uploadByteArray(fileName, extension, content, objectKey);
+    }
+
+    public String uploadByteArray(String fileName, String extension, byte[] content, String objectKey) throws IOException {
         File tempFile = File.createTempFile(fileName, extension);
         FileOutputStream fos = new FileOutputStream(tempFile);
         fos.write(content);
         putObject(objectKey, tempFile);
         return s3Client.getUrl(bucketName, objectKey).toString();
+    }
+
+    @Override
+    public String uploadInOrganisation(String filePath, byte[] content) throws IOException {
+        String mediaDirectory = getOrgDirectoryName();
+        String objectKey = format("%s/%s", mediaDirectory, filePath);
+        return uploadByteArray(filePath, "", content, objectKey);
     }
 
     @Override

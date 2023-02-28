@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.Extension;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.S3Service;
@@ -42,7 +43,6 @@ import static java.lang.String.format;
 
 @RestController
 public class ExtensionController implements RestControllerResourceProcessor<Extension> {
-    private final String EXTENSION_DIR = "extensions";
     private final Logger logger;
     private final S3Service s3Service;
     private final OrganisationConfigService organisationConfigService;
@@ -62,11 +62,11 @@ public class ExtensionController implements RestControllerResourceProcessor<Exte
     @Transactional
     public ResponseEntity<?> uploadExtensions(@RequestPart(value = "file") MultipartFile file,
                                               @RequestPart(value = "extensionSettings") @Valid List<ExtensionRequest> extensionSettings) {
-        organisationConfigService.updateSettings(EXTENSION_DIR, extensionSettings);
+        organisationConfigService.updateSettings(OrganisationConfig.Extension.EXTENSION_DIR, extensionSettings);
         try {
             Path tempPath = Files.createTempDirectory(UUID.randomUUID().toString()).toFile().toPath();
             AvniFiles.extractFileToPath(file, tempPath);
-            s3Service.uploadExtensionFile(tempPath.toFile(), EXTENSION_DIR);
+            s3Service.uploadExtensionFiles(tempPath.toFile(), OrganisationConfig.Extension.EXTENSION_DIR);
             return ResponseEntity.ok().build();
         } catch (IOException e) {
             logger.error(format("Error while uploading the files %s", e.getMessage()));
@@ -98,7 +98,7 @@ public class ExtensionController implements RestControllerResourceProcessor<Exte
         String filePath = null != arguments && !arguments.isEmpty() ? basePath + "/" + arguments : basePath;
         logger.info(format("Getting the content of extension file %s", filePath));
         try {
-            InputStream contentStream = s3Service.getExtensionContent(format("%s/%s", EXTENSION_DIR, filePath), organisation);
+            InputStream contentStream = s3Service.getExtensionContent(format("%s/%s", OrganisationConfig.Extension.EXTENSION_DIR, filePath), organisation);
             return ResponseEntity.ok().body(new InputStreamResource(contentStream));
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage());
@@ -122,7 +122,7 @@ public class ExtensionController implements RestControllerResourceProcessor<Exte
         String filePath = null != arguments && !arguments.isEmpty() ? basePath + "/" + arguments : basePath;
         logger.info(format("Generating url for extension file %s", filePath));
         try {
-            URL url = s3Service.getURLForExtensions(format("%s/%s", EXTENSION_DIR, filePath), organisation);
+            URL url = s3Service.getURLForExtensions(format("%s/%s", OrganisationConfig.Extension.EXTENSION_DIR, filePath), organisation);
             logger.debug(format("S3 signed URL: %s", url.toString()));
             return ResponseEntity.status(HttpStatus.FOUND).location(url.toURI()).build();
         } catch (AccessDeniedException e) {

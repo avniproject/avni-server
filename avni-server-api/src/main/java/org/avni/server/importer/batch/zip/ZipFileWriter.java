@@ -9,6 +9,7 @@ import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
@@ -55,37 +56,37 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
     private final FormMappingService formMappingService;
     private final OrganisationConfigService organisationConfigService;
 
-    private ObjectMapper objectMapper;
-    private ConceptService conceptService;
-    private FormService formService;
-    private LocationService locationService;
-    private CatchmentService catchmentService;
-    private SubjectTypeService subjectTypeService;
-    private ProgramService programService;
-    private IndividualRelationService individualRelationService;
-    private IndividualRelationshipTypeService individualRelationshipTypeService;
-    private ChecklistDetailService checklistDetailService;
-    private IdentifierSourceService identifierSourceService;
-    private GroupsService groupsService;
-    private GroupRoleService groupRoleService;
-    private SubjectTypeRepository subjectTypeRepository;
-    private GroupPrivilegeService groupPrivilegeService;
-    private VideoService videoService;
-    private CardService cardService;
-    private DashboardService dashboardService;
-    private S3Service s3Service;
-    private DocumentationService documentationService;
-    private TaskTypeService taskTypeService;
-    private TaskStatusService taskStatusService;
-    private MenuItemService menuItemService;
-    private EntityTypeRetrieverService entityTypeRetrieverService;
-    private MessagingService messagingService;
+    private final ObjectMapper objectMapper;
+    private final ConceptService conceptService;
+    private final FormService formService;
+    private final LocationService locationService;
+    private final CatchmentService catchmentService;
+    private final SubjectTypeService subjectTypeService;
+    private final ProgramService programService;
+    private final IndividualRelationService individualRelationService;
+    private final IndividualRelationshipTypeService individualRelationshipTypeService;
+    private final ChecklistDetailService checklistDetailService;
+    private final IdentifierSourceService identifierSourceService;
+    private final GroupsService groupsService;
+    private final GroupRoleService groupRoleService;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final GroupPrivilegeService groupPrivilegeService;
+    private final VideoService videoService;
+    private final CardService cardService;
+    private final DashboardService dashboardService;
+    private final S3Service s3Service;
+    private final DocumentationService documentationService;
+    private final TaskTypeService taskTypeService;
+    private final TaskStatusService taskStatusService;
+    private final MenuItemService menuItemService;
+    private final EntityTypeRetrieverService entityTypeRetrieverService;
+    private final MessagingService messagingService;
     @Value("#{jobParameters['userId']}")
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
-    private List<String> fileSequence = new ArrayList<String>() {{
+    private final List<String> fileSequence = new ArrayList<String>() {{
         add("organisationConfig.json");
         add("addressLevelTypes.json");
         add("locations.json");
@@ -194,6 +195,10 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
                     deployFile(filename, new String(fileData, StandardCharsets.UTF_8), bundleFiles);
                 }
             }
+        }
+        List<String> extensions = bundleZip.getExtensionNames();
+        for (String fileName : extensions) {
+            deployFile(fileName, bundleZip.getFile(fileName));
         }
     }
 
@@ -380,6 +385,11 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
                     messagingService.saveRule(messageRule);
                 }
         }
+    }
+
+    public void deployFile(String filePath, byte[] contents) throws IOException {
+        if (filePath.contains(OrganisationConfig.Extension.EXTENSION_DIR))
+            s3Service.uploadInOrganisation(filePath, contents);
     }
 
     private <T> T convertString(String data, Class<T> convertTo) throws IOException {

@@ -1,5 +1,7 @@
 package org.avni.server.importer.batch.model;
 
+import org.avni.server.domain.OrganisationConfig;
+
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -19,5 +21,10 @@ public class BundleZip extends HashMap<String, byte[]> {
     public List<String> getForms() {
         return this.entrySet().stream().filter(x -> x.getKey().contains("forms/"))
                 .map(x -> new String(x.getValue(), StandardCharsets.UTF_8)).collect(Collectors.toList());
+    }
+
+    public List<String> getExtensionNames() {
+        return this.keySet().stream().filter(bytes -> bytes.contains(String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR)))
+                .map(key -> key.substring(key.indexOf(OrganisationConfig.Extension.EXTENSION_DIR))).collect(Collectors.toList());
     }
 }

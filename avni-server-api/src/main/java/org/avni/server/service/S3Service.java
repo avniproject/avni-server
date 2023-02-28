@@ -44,7 +44,7 @@ public interface S3Service {
 
     List<Extension> listExtensionFiles(Optional<DateTime> modifiedSince);
 
-    void uploadExtensionFile(File tempDirectory, String targetFilePath) throws IOException, InterruptedException;
+    void uploadExtensionFiles(File tempDirectory, String targetFilePath) throws IOException, InterruptedException;
 
     InputStream getObjectContent(String s3Key);
 
@@ -81,6 +81,8 @@ public interface S3Service {
     String putObject(String objectKey, File tempFile);
 
     String uploadByteArray(String fileName, String extension, String objectPath, byte[] content) throws IOException;
+
+    String uploadInOrganisation(String filePath, byte[] content) throws IOException;
 
     String getObjectURL(String parentFolder, File file);
 

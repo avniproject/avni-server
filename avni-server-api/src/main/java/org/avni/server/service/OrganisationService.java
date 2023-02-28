@@ -261,7 +261,7 @@ public class OrganisationService {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(orgId);
         if (organisationConfig != null) {
             addFileToZip(zos, "organisationConfig.json", OrganisationConfigRequest.fromOrganisationConfig(organisationConfig));
-            addDirectoryToZip(zos, "organisationConfigExtensions");
+            addDirectoryToZip(zos, "extensions");
             OrganisationConfig.Settings settingsObject = organisationConfig.getSettingsObject();
             for (OrganisationConfig.Extension extension : settingsObject.getExtensions()) {
                 File file = s3Service.downloadOrganisationFile(extension.getFilePath());

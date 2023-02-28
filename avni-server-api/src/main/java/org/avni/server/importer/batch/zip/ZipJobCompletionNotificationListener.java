@@ -6,7 +6,9 @@ import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.service.ObjectInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,16 @@ public class ZipJobCompletionNotificationListener extends JobExecutionListenerSu
     @Override
     public void afterJob(JobExecution jobExecution) {
         logger.info("BulkUpload with uuid {} {}", jobExecution.getJobParameters().getString("uuid"), jobExecution.getStatus());
+        ExitStatus exitStatus = jobExecution.getExitStatus();
+        if (exitStatus.equals(ExitStatus.FAILED)) {
+            jobExecution.getStepExecutions().forEach(stepExecution -> {
+                ExitStatus stepExitStatus = stepExecution.getExitStatus();
+                if (stepExitStatus.getExitCode().equals("FAILED")) {
+                    logger.warn("BulkUpload with uuid {} {}", jobExecution.getJobParameters().getString("uuid"), stepExitStatus.getExitDescription());
+                }
+            });
+        }
+//        ((StepExecution) jobExecution.getStepExecutions().toArray()[0]).getExitStatus().getExitDescription()
         File errorFile = bulkUploadS3Service.getLocalErrorFile(uuid);
         if (errorFile.exists() && errorFile.length() != 0) {
             try {
