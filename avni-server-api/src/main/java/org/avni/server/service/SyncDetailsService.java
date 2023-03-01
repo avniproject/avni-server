@@ -35,7 +35,6 @@ public class SyncDetailsService {
 
     @Transactional
     public Set<SyncableItem> getAllSyncableItems(boolean scopeAwareEAS) {
-        boolean approvalWorkflowEnabled = organisationConfigService.isApprovalWorkflowEnabled();
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll()
                 .stream()
                 .map(operationalSubjectType -> operationalSubjectType.getSubjectType())
@@ -69,7 +68,7 @@ public class SyncDetailsService {
             }
 
             Optional<FormMapping> subjectTypeFormMapping = allRegistrationFormMappings.stream().filter((formMapping -> Objects.equals(formMapping.getSubjectType().getId(), subjectType.getId()))).findFirst();
-            if(scopeAwareEAS && approvalWorkflowEnabled && subjectTypeFormMapping.isPresent() && subjectTypeFormMapping.get().isEnableApproval())
+            if(scopeAwareEAS && subjectTypeFormMapping.isPresent() && subjectTypeFormMapping.get().isEnableApproval())
                 addToSyncableItems(syncableItems, "SubjectEntityApprovalStatus", subjectType.getUuid());
 
         });
@@ -78,7 +77,7 @@ public class SyncDetailsService {
                 return;
             }
             addToSyncableItems(syncableItems, "Encounter", formMapping.getEncounterTypeUuid());
-            if(scopeAwareEAS && approvalWorkflowEnabled && formMapping.isEnableApproval())
+            if(scopeAwareEAS && formMapping.isEnableApproval())
                 addToSyncableItems(syncableItems, "EncounterEntityApprovalStatus", formMapping.getEncounterTypeUuid());
         });
         programEncounters.forEach(formMapping -> {
@@ -86,7 +85,7 @@ public class SyncDetailsService {
                 return;
             }
             addToSyncableItems(syncableItems, "ProgramEncounter", formMapping.getEncounterTypeUuid());
-            if(scopeAwareEAS && approvalWorkflowEnabled && formMapping.isEnableApproval())
+            if(scopeAwareEAS && formMapping.isEnableApproval())
                 addToSyncableItems(syncableItems, "ProgramEncounterEntityApprovalStatus", formMapping.getEncounterTypeUuid());
         });
         programEnrolments.forEach(formMapping -> {
@@ -94,7 +93,7 @@ public class SyncDetailsService {
                 return;
             }
             addToSyncableItems(syncableItems, "ProgramEnrolment", formMapping.getProgramUuid());
-            if(scopeAwareEAS && approvalWorkflowEnabled && formMapping.isEnableApproval())
+            if(scopeAwareEAS && formMapping.isEnableApproval())
                 addToSyncableItems(syncableItems, "ProgramEnrolmentEntityApprovalStatus", formMapping.getProgramUuid());
         });
 

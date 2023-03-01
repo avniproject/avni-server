@@ -232,10 +232,6 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return isFeatureEnabled("enableComments");
     }
 
-    public boolean isApprovalWorkflowEnabled() {
-        return isFeatureEnabled("enableApprovalWorkflow");
-    }
-
     public boolean isMessagingEnabled() {
         return isFeatureEnabled(OrganisationConfigSettingKey.enableMessaging.name());
     }
