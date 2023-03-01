@@ -7,6 +7,7 @@ public class FormMappingRequest {
     private String encounterTypeUuid;
     private String taskTypeUuid;
     private boolean isVoided;
+    private boolean enableApproval;
 
     public String getUuid() {
         return uuid;
@@ -51,5 +52,13 @@ public class FormMappingRequest {
 
     public void setTaskTypeUuid(String taskTypeUuid) {
         this.taskTypeUuid = taskTypeUuid;
+    }
+
+    public boolean isEnableApproval() {
+        return enableApproval;
+    }
+
+    public void setEnableApproval(boolean enableApproval) {
+        this.enableApproval = enableApproval;
     }
 }

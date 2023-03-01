@@ -24,8 +24,7 @@ public class CreateUpdateFormRequest {
         this.name = name;
     }
 
-    public List<FormMappingRequest> getFormMappings()
-    {
+    public List<FormMappingRequest> getFormMappings() {
       return formMappings;
     }
 

@@ -209,6 +209,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formMappingContract.setFormUUID(formUUID);
             formMappingContract.setUuid(formMappingRequest.getUuid());
             formMappingContract.setTaskTypeUUID(formMappingRequest.getTaskTypeUuid());
+            formMappingContract.setEnableApproval(formMappingRequest.isEnableApproval());
             formMappingService.createOrUpdateFormMapping(formMappingContract);
         });
         return ResponseEntity.ok(null);
