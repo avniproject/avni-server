@@ -152,6 +152,14 @@ jobs:
     - deploy:
         hostname: "ssh.prerelease.openchs.org"
 
+  PERF_deploy:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/
+    steps:
+      - deploy:
+          hostname: "ssh.perf.openchs.org"
+
 workflows:
   version: 2
   test_and_build_and_deploy:
@@ -191,6 +199,13 @@ workflows:
     - PRERELEASE_deploy:
         requires:
         - PRERELEASE_approve
+    - PERF_approve:
+        type: approval
+        requires:
+          - build
+    - PERF_deploy:
+        requires:
+          - PERF_approve
 notify:
   webhooks:
   - url: https://webhooks.gitter.im/e/0fdffde721194986f2a0
