@@ -22,7 +22,7 @@ public class BugSnagConfiguration {
         logger.info(String.format("bugsnagReleaseStage: %s", bugsnagReleaseStage));
         Bugsnag bugsnag = new Bugsnag(bugsnagAPIKey, false);
         bugsnag.setReleaseStage(bugsnagReleaseStage);
-        bugsnag.setNotifyReleaseStages("prod", "staging", "prerelease", "uat");
+        bugsnag.setNotifyReleaseStages("prod", "staging", "prerelease", "uat", "perf");
         return bugsnag;
     }
 
