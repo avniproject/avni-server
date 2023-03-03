@@ -34,10 +34,10 @@ public class SyncAttributeEntity extends OrganisationAwareEntity {
 
     public void addConceptSyncAttributeValues(SubjectType subjectType, ObservationCollection observations) {
         if (subjectType.getSyncRegistrationConcept1() != null) {
-            this.setSyncConcept1Value(observations.getStringValue(subjectType.getSyncRegistrationConcept1()));
+            this.setSyncConcept1Value(observations.getObjectAsSingleStringValue(subjectType.getSyncRegistrationConcept1()));
         }
         if (subjectType.getSyncRegistrationConcept2() != null) {
-            this.setSyncConcept2Value(observations.getStringValue(subjectType.getSyncRegistrationConcept2()));
+            this.setSyncConcept2Value(observations.getObjectAsSingleStringValue(subjectType.getSyncRegistrationConcept2()));
         }
     }
 }

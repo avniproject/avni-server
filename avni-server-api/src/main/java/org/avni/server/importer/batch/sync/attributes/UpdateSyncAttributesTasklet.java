@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 @JobScope
 public class UpdateSyncAttributesTasklet implements Tasklet {
 
+    private EntityApprovalStatusRepository entityApprovalStatusRepository;
     private SubjectTypeRepository subjectTypeRepository;
     private IndividualRepository individualRepository;
     private EncounterRepository encounterRepository;
@@ -26,12 +27,14 @@ public class UpdateSyncAttributesTasklet implements Tasklet {
     private Long subjectTypeId;
 
     @Autowired
-    public UpdateSyncAttributesTasklet(SubjectTypeRepository subjectTypeRepository,
+    public UpdateSyncAttributesTasklet(EntityApprovalStatusRepository entityApprovalStatusRepository,
+                                       SubjectTypeRepository subjectTypeRepository,
                                        IndividualRepository individualRepository,
                                        EncounterRepository encounterRepository,
                                        ProgramEnrolmentRepository programEnrolmentRepository,
                                        ProgramEncounterRepository programEncounterRepository,
                                        GroupSubjectRepository groupSubjectRepository) {
+        this.entityApprovalStatusRepository = entityApprovalStatusRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.individualRepository = individualRepository;
         this.encounterRepository = encounterRepository;
@@ -50,6 +53,7 @@ public class UpdateSyncAttributesTasklet implements Tasklet {
         programEnrolmentRepository.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncRegistrationConcept1, syncRegistrationConcept2);
         programEncounterRepository.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncRegistrationConcept1, syncRegistrationConcept2);
         groupSubjectRepository.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncRegistrationConcept1, syncRegistrationConcept2);
+        entityApprovalStatusRepository.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncRegistrationConcept1, syncRegistrationConcept2);
         return RepeatStatus.FINISHED;
     }
 }

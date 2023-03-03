@@ -16,6 +16,7 @@ import java.util.Objects;
 public class SubjectMigrationService implements ScopeAwareService {
 
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private EntityApprovalStatusRepository entityApprovalStatusRepository;
     private SubjectMigrationRepository subjectMigrationRepository;
     private SubjectTypeRepository subjectTypeRepository;
     private IndividualRepository individualRepository;
@@ -26,13 +27,15 @@ public class SubjectMigrationService implements ScopeAwareService {
     private AddressLevelService addressLevelService;
 
     @Autowired
-    public SubjectMigrationService(SubjectMigrationRepository subjectMigrationRepository,
+    public SubjectMigrationService(EntityApprovalStatusRepository entityApprovalStatusRepository,
+                                   SubjectMigrationRepository subjectMigrationRepository,
                                    SubjectTypeRepository subjectTypeRepository,
                                    IndividualRepository individualRepository,
                                    EncounterRepository encounterRepository,
                                    ProgramEnrolmentRepository programEnrolmentRepository,
                                    ProgramEncounterRepository programEncounterRepository,
                                    GroupSubjectRepository groupSubjectRepository, AddressLevelService addressLevelService) {
+        this.entityApprovalStatusRepository = entityApprovalStatusRepository;
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.individualRepository = individualRepository;
@@ -65,9 +68,13 @@ public class SubjectMigrationService implements ScopeAwareService {
         String syncConcept1 = subjectType.getSyncRegistrationConcept1();
         String syncConcept2 = subjectType.getSyncRegistrationConcept2();
         ObservationCollection oldObservations = individual.getObservations();
+        String oldObsSingleStringValueSyncConcept1 = oldObservations.getObjectAsSingleStringValue(syncConcept1);
+        String newObsSingleStringValueSyncConcept1 = newObservations.getObjectAsSingleStringValue(syncConcept1);
+        String oldObsSingleStringValueSyncConcept2 = oldObservations.getObjectAsSingleStringValue(syncConcept2);
+        String newObsSingleStringValueSyncConcept2 = newObservations.getObjectAsSingleStringValue(syncConcept2);
         if (!Objects.equals(individual.getAddressLevel().getId(), newAddressLevel.getId()) ||
-                !Objects.equals(oldObservations.getStringValue(syncConcept1), newObservations.getStringValue(syncConcept1)) ||
-                !Objects.equals(oldObservations.getStringValue(syncConcept2), newObservations.getStringValue(syncConcept2))) {
+                !Objects.equals(oldObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept1) ||
+                !Objects.equals(oldObsSingleStringValueSyncConcept2, newObsSingleStringValueSyncConcept2)) {
             logger.info(String.format("Migrating subject with UUID %s from %s to %s", individualUuid, addressLevelService.getTitleLineage(individual.getAddressLevel()), addressLevelService.getTitleLineage(newAddressLevel)));
             SubjectMigration subjectMigration = new SubjectMigration();
             subjectMigration.assignUUID();
@@ -75,19 +82,20 @@ public class SubjectMigrationService implements ScopeAwareService {
             subjectMigration.setSubjectType(individual.getSubjectType());
             subjectMigration.setOldAddressLevel(individual.getAddressLevel());
             subjectMigration.setNewAddressLevel(newAddressLevel);
-            if (!Objects.equals(oldObservations.getStringValue(syncConcept1), newObservations.getStringValue(syncConcept1))) {
-                subjectMigration.setOldSyncConcept1Value(oldObservations.getStringValue(syncConcept1));
-                subjectMigration.setNewSyncConcept1Value(newObservations.getStringValue(syncConcept1));
+            if (!Objects.equals(oldObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept1)) {
+                subjectMigration.setOldSyncConcept1Value(oldObsSingleStringValueSyncConcept1);
+                subjectMigration.setNewSyncConcept1Value(newObsSingleStringValueSyncConcept1);
             }
-            if (!Objects.equals(oldObservations.getStringValue(syncConcept2), newObservations.getStringValue(syncConcept2))) {
-                subjectMigration.setOldSyncConcept2Value(oldObservations.getStringValue(syncConcept2));
-                subjectMigration.setNewSyncConcept2Value(newObservations.getStringValue(syncConcept2));
+            if (!Objects.equals(oldObsSingleStringValueSyncConcept2, newObsSingleStringValueSyncConcept2)) {
+                subjectMigration.setOldSyncConcept2Value(oldObsSingleStringValueSyncConcept2);
+                subjectMigration.setNewSyncConcept2Value(newObsSingleStringValueSyncConcept2);
             }
             subjectMigrationRepository.save(subjectMigration);
-            encounterRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObservations.getStringValue(syncConcept1), newObservations.getStringValue(syncConcept2));
-            programEnrolmentRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObservations.getStringValue(syncConcept1), newObservations.getStringValue(syncConcept2));
-            programEncounterRepository.updateSyncAttributes(individual.getId(), newAddressLevel.getId(), newObservations.getStringValue(syncConcept1), newObservations.getStringValue(syncConcept2));
-            groupSubjectRepository.updateSyncAttributesForGroupSubject(individual.getId(), newAddressLevel.getId(), newObservations.getStringValue(syncConcept1), newObservations.getStringValue(syncConcept2));
+            encounterRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
+            programEnrolmentRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
+            programEncounterRepository.updateSyncAttributes(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
+            groupSubjectRepository.updateSyncAttributesForGroupSubject(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
+            entityApprovalStatusRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
             groupSubjectRepository.updateSyncAttributesForMemberSubject(individual.getId(), newAddressLevel.getId());
         }
     }

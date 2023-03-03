@@ -1,13 +1,14 @@
 package org.avni.server.web;
 
-import org.avni.messaging.domain.EntityType;
-import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.geo.Point;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.service.*;
-import org.avni.server.web.request.*;
+import org.avni.server.web.request.EncounterContract;
+import org.avni.server.web.request.IndividualRequest;
+import org.avni.server.web.request.PointRequest;
+import org.avni.server.web.request.SubjectSearchContract;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
 import org.avni.server.web.request.rules.RulesContractWrapper.IndividualContract;
 import org.avni.server.web.request.rules.constructWrappers.IndividualConstructionService;
@@ -93,11 +94,11 @@ public class IndividualController extends AbstractController<Individual> impleme
     public AvniEntityResponse save(@RequestBody IndividualRequest individualRequest) {
         logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
         ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());
+        addObservationsFromDecisions(observations, individualRequest.getDecisions());
         this.markSubjectMigrationIfRequired(individualRequest, observations);
 
         Individual individual = createIndividualWithoutObservations(individualRequest);
         individual.setObservations(observations);
-        addObservationsFromDecisions(individual, individualRequest.getDecisions());
         individualService.save(individual);
         saveVisitSchedules(individualRequest);
         saveIdentifierAssignments(individual, individualRequest);
@@ -109,11 +110,10 @@ public class IndividualController extends AbstractController<Individual> impleme
         subjectMigrationService.markSubjectMigrationIfRequired(individualRequest.getUuid(), getAddressLevel(individualRequest), newObservations);
     }
 
-    private void addObservationsFromDecisions(Individual individual, Decisions decisions) {
-        if (decisions != null) {
-            ObservationCollection observationsFromDecisions = observationService
-                    .createObservationsFromDecisions(decisions.getRegistrationDecisions());
-            individual.getObservations().putAll(observationsFromDecisions);
+    private void addObservationsFromDecisions(ObservationCollection observations, Decisions decisions) {
+        if (decisions != null && !decisions.getRegistrationDecisions().isEmpty()) {
+            observations.putAll(observationService
+                    .createObservationsFromDecisions(decisions.getRegistrationDecisions()));
         }
     }
 

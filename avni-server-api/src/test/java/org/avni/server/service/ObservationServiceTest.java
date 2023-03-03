@@ -1,10 +1,5 @@
 package org.avni.server.service;
 
-import org.avni.server.service.ObservationService;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
@@ -12,6 +7,10 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.web.request.ObservationRequest;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -78,5 +77,20 @@ public class ObservationServiceTest {
         ObservationCollection observationCollection = observationService.createObservations(requests);
 
         Assert.assertEquals(1, observationCollection.size());
+    }
+
+    @Test
+    public void testGetAsSingleStringValue() {
+        ObservationCollection observationCollection = new ObservationCollection();
+        Assert.assertEquals("8ebbf088-f292-483e-9084-7de919ce67b7",
+                observationCollection.getAsSingleStringValue("[8ebbf088-f292-483e-9084-7de919ce67b7]"));
+        Assert.assertEquals("[8ebbf088-f292-483e-9084-7de919ce67b7,a77bd700-1409-4d52-93bc-9fe32c0e169b]",
+                observationCollection.getAsSingleStringValue("[8ebbf088-f292-483e-9084-7de919ce67b7,a77bd700-1409-4d52-93bc-9fe32c0e169b]"));
+        Assert.assertEquals("yes",
+                observationCollection.getAsSingleStringValue("yes"));
+        Assert.assertEquals("yes,no",
+                observationCollection.getAsSingleStringValue("yes,no"));
+        Assert.assertEquals("[yes,no]",
+                observationCollection.getAsSingleStringValue("[yes,no]"));
     }
 }
