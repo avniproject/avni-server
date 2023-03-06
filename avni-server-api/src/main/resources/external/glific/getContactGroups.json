@@ -5,6 +5,9 @@
       "order": "ASC",
       "limit": "${limit}",
       "offset": "${offset}"
+    },
+    "filter": {
+      "label": "${label}"
     }
   }
 }

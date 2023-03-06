@@ -26,6 +26,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     public static final String FULL_NAME = "${fullName}";
     public static final String GROUP_ID = "${groupId}";
     public static final String ID = "${id}";
+    public static final String LABEL = "${label}";
 
     private final String OPTIN_CONTACT_JSON;
     private final GlificRestClient glificRestClient;
@@ -85,8 +86,9 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public List<GlificContactGroupsResponse.ContactGroup> getContactGroups(Pageable pageable) {
-        String message = this.populatePaginationDetails(GET_CONTACT_GROUPS_JSON, pageable);
+    public List<GlificContactGroupsResponse.ContactGroup> getContactGroups(String labelFilter, Pageable pageable) {
+        String templateWithFilter = GET_CONTACT_GROUPS_JSON.replace(LABEL, labelFilter);
+        String message = this.populatePaginationDetails(templateWithFilter, pageable);
         GlificContactGroupsResponse glificContactGroupsResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
         });
         return glificContactGroupsResponse.getGroups();
@@ -180,7 +182,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public void updateContactGroup(String id, ContactGroupRequest contactGroupRequest) {
-        String message = UPDATE_CONTACT_GROUP_JSON.replace("${label}", contactGroupRequest.getLabel())
+        String message = UPDATE_CONTACT_GROUP_JSON.replace(LABEL, contactGroupRequest.getLabel())
                 .replace("${description}", contactGroupRequest.getDescription())
                 .replace("${id}", id);
         glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {

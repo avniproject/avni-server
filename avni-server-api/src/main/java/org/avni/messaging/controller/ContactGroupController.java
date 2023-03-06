@@ -2,8 +2,9 @@ package org.avni.messaging.controller;
 
 import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.GroupContactsResponse;
-import org.avni.messaging.contract.glific.*;
-import org.avni.messaging.domain.exception.GlificContactNotFoundError;
+import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
+import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
+import org.avni.messaging.contract.glific.GlificGetGroupResponse;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.server.dao.UserRepository;
@@ -20,7 +21,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
@@ -39,8 +39,8 @@ public class ContactGroupController {
 
     @GetMapping(ContactGroupEndpoint)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public WebPagedResponse getContactGroups(Pageable pageable) {
-        List<GlificContactGroupsResponse.ContactGroup> groups = glificContactRepository.getContactGroups(pageable);
+    public WebPagedResponse getContactGroups( @RequestParam(value = "label", required = false, defaultValue = "") String labelFilter, Pageable pageable) {
+        List<GlificContactGroupsResponse.ContactGroup> groups = glificContactRepository.getContactGroups(labelFilter, pageable);
         int count = glificContactRepository.getContactGroupCount();
         return new WebPagedResponse(groups, pageable.getPageNumber(), count);
     }

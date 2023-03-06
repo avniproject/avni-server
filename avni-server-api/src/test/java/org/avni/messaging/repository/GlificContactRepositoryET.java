@@ -21,7 +21,7 @@ public class GlificContactRepositoryET extends AbstractControllerIntegrationTest
     @Test
     public void shouldGetContactGroups() {
         PageRequest pageable = PageRequest.of(0, 5);
-        List<GlificContactGroupsResponse.ContactGroup> contactGroups = glificContactRepository.getContactGroups(pageable);
+        List<GlificContactGroupsResponse.ContactGroup> contactGroups = glificContactRepository.getContactGroups("", pageable);
         assertThat(contactGroups.size()).isGreaterThan(0);
     }
 
