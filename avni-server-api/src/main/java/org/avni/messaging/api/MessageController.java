@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 @RestController
 public class MessageController {
-
+    private static final String MessageEndpoint = "/web/message";
     private final MessageRequestService messageRequestService;
     private final UserRepository userRepository;
 
@@ -32,7 +32,7 @@ public class MessageController {
         this.userRepository = userRepository;
     }
 
-    @RequestMapping(value = "/web/message/subject/{id}/msgsNotYetSent", method = RequestMethod.GET)
+    @RequestMapping(value = MessageEndpoint + "/subject/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") long subjectId) {
@@ -40,7 +40,15 @@ public class MessageController {
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 
-    @RequestMapping(value = "/web/message/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
+    @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactGroup(@PathVariable("id") String groupId) {
+        Stream<MessageRequest> messagesNotSent = messageRequestService.getUnSentGroupMessages(groupId);
+        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+    }
+
+    @RequestMapping(value = MessageEndpoint + "/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") long userId) {

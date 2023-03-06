@@ -52,7 +52,7 @@ public class MessageRequestService {
     }
 
     public Stream<MessageRequest> fetchPendingScheduledMessages(Long receiverId, ReceiverType receiverType, MessageDeliveryStatus messageDeliveryStatus) {
-        return messageReceiverService.findByReceiverIdAndReceiverType(receiverId, receiverType).map(messageReceiver ->
+        return messageReceiverService.findMessageReceiver(receiverId, receiverType).map(messageReceiver ->
                 messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
         ).orElseThrow(MessageReceiverNotFoundError::new);
     }
@@ -60,5 +60,11 @@ public class MessageRequestService {
     public MessageRequest markFailed(MessageRequest messageRequest, MessageDeliveryStatus messageDeliveryStatus) {
         messageRequest.markFailed(messageDeliveryStatus);
         return messageRequestRepository.save(messageRequest);
+    }
+
+    public Stream<MessageRequest> getUnSentGroupMessages(String groupId) {
+        return messageReceiverService.findExternalMessageReceiver(groupId).map(messageReceiver ->
+                messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(MessageDeliveryStatus.NotSent, messageReceiver)
+        ).orElseThrow(MessageReceiverNotFoundError::new);
     }
 }

@@ -82,7 +82,11 @@ public class MessageReceiverService {
         messageReceiverRepository.updateVoided(true, receiverId);
     }
 
-    public Optional<MessageReceiver> findByReceiverIdAndReceiverType(Long receiverId, ReceiverType receiverType) {
+    public Optional<MessageReceiver> findMessageReceiver(Long receiverId, ReceiverType receiverType) {
         return messageReceiverRepository.findByReceiverIdAndReceiverType(receiverId, receiverType);
+    }
+
+    public Optional<MessageReceiver> findExternalMessageReceiver(String externalId) {
+        return messageReceiverRepository.findByExternalId(externalId);
     }
 }
