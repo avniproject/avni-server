@@ -158,7 +158,7 @@ jobs:
     working_directory: ~/
     steps:
       - deploy:
-          hostname: "ssh.perf.openchs.org"
+          hostname: "ssh.perf.avniproject.org"
 
 workflows:
   version: 2
