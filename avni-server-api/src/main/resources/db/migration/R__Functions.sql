@@ -116,3 +116,20 @@ BEGIN
 END
 $$;
 
+
+create or replace function append_manual_update_history(current_value text, text_to_be_added text)
+    returns text
+    language plpgsql
+    SECURITY INVOKER
+    immutable
+as
+$$
+BEGIN
+    if current_value is null or trim(current_value) = '' then
+        RETURN concat(to_char(current_timestamp, 'DD/MM/YYYY hh:mm:ss'), ' - ', text_to_be_added);
+    else
+        RETURN concat(to_char(current_timestamp, 'DD/MM/YYYY hh:mm:ss'), ' - ', text_to_be_added, ' || ',
+                      current_value);
+    end if;
+END
+$$;
