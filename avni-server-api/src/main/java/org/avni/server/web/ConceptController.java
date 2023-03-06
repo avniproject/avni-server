@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.bugsnag.Bugsnag;
 
 @RestController
 public class ConceptController implements RestControllerResourceProcessor<Concept> {
@@ -45,15 +44,12 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     ObjectMapper objectMapper;
     private ConceptAnswerRepository conceptAnswerRepository;
 
-    private final Bugsnag bugsnag;
-
     @Autowired
-    public ConceptController(ConceptRepository conceptRepository, ConceptService conceptService, ProjectionFactory projectionFactory, ConceptAnswerRepository conceptAnswerRepository, Bugsnag bugsnag) {
+    public ConceptController(ConceptRepository conceptRepository, ConceptService conceptService, ProjectionFactory projectionFactory, ConceptAnswerRepository conceptAnswerRepository) {
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
         this.projectionFactory = projectionFactory;
         this.conceptAnswerRepository = conceptAnswerRepository;
-        this.bugsnag = bugsnag;
         logger = LoggerFactory.getLogger(this.getClass());
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
@@ -86,7 +82,6 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     @ResponseBody
     public PagedResources<Resource<Concept>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
-        bugsnag.notify(new NullPointerException("testing perf env"));
         Sort sortWithId = pageable.getSort().and(new Sort("id"));
         PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
         if (name == null) {
