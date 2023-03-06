@@ -37,6 +37,7 @@ public class OrganisationConfig extends OrganisationAwareEntity {
         return settings;
     }
 
+    @JsonIgnore
     public Settings getSettingsObject() {
         return new Settings(settings);
     }
