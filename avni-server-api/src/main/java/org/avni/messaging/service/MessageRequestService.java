@@ -62,9 +62,9 @@ public class MessageRequestService {
         return messageRequestRepository.save(messageRequest);
     }
 
-    public Stream<MessageRequest> getUnSentGroupMessages(String groupId) {
+    public Stream<MessageRequest> getGroupMessages(String groupId, MessageDeliveryStatus messageDeliveryStatus) {
         return messageReceiverService.findExternalMessageReceiver(groupId).map(messageReceiver ->
-                messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(MessageDeliveryStatus.NotSent, messageReceiver)
+                messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
         ).orElseThrow(MessageReceiverNotFoundError::new);
     }
 }

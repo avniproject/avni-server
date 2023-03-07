@@ -40,20 +40,28 @@ public class MessageController {
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 
-    @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactGroup(@PathVariable("id") String groupId) {
-        Stream<MessageRequest> messagesNotSent = messageRequestService.getUnSentGroupMessages(groupId);
-        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
-    }
-
     @RequestMapping(value = MessageEndpoint + "/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") long userId) {
         User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
         Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(user.getId(), ReceiverType.Subject, MessageDeliveryStatus.NotSent);
+        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+    }
+
+    @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactGroup(@PathVariable("id") String groupId) {
+        Stream<MessageRequest> messagesNotSent = messageRequestService.getGroupMessages(groupId, MessageDeliveryStatus.NotSent);
+        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+    }
+
+    @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsSent", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<MessageRequest>> fetchAllMsgsSentForContactGroup(@PathVariable("id") String groupId) {
+        Stream<MessageRequest> messagesNotSent = messageRequestService.getGroupMessages(groupId, MessageDeliveryStatus.Sent);
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 }
