@@ -2,9 +2,10 @@ package org.avni.server.service;
 
 import com.amazonaws.HttpMethod;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-import org.avni.server.domain.Extension;
+import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
+import org.avni.server.util.S3File;
 import org.joda.time.DateTime;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,7 +43,7 @@ public interface S3Service {
 
     URL uploadImageFile(File tempSourceFile, String targetFilePath);
 
-    List<Extension> listExtensionFiles(Optional<DateTime> modifiedSince);
+    List<S3ExtensionFile> listExtensionFiles(Optional<DateTime> modifiedSince);
 
     void uploadExtensionFiles(File tempDirectory, String targetFilePath) throws IOException, InterruptedException;
 
@@ -52,9 +53,9 @@ public interface S3Service {
 
     URL getURLForExtensions(String fileName, Organisation organisation);
 
-    InputStream downloadOrganisationFile(String directory, String fileName);
+    InputStream getFileStream(S3File s3File);
 
-    File downloadOrganisationFile(String filePath) throws IOException;
+    File downloadFile(S3File s3File) throws IOException;
 
     String uploadFileToS3(File file) throws IOException;
 

@@ -1,5 +1,9 @@
 package org.avni.server.service;
 
+import org.avni.server.domain.UserContext;
+import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.S3File;
+import org.avni.server.util.S3FileType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,8 +19,8 @@ import static java.lang.String.format;
 public class ExportS3Service {
 
     public static final String FILE_NAME_EXTENSION = ".csv";
-    private S3Service s3Service;
-    private static Logger logger = LoggerFactory.getLogger(ExportS3Service.class);
+    private final S3Service s3Service;
+    private static final Logger logger = LoggerFactory.getLogger(ExportS3Service.class);
 
     public ExportS3Service(@Qualifier("BatchS3Service") S3Service s3Service) {
         this.s3Service = s3Service;
@@ -34,7 +38,7 @@ public class ExportS3Service {
     }
 
     public InputStream downloadFile(String fileName) {
-        return s3Service.downloadOrganisationFile("exports", fileName);
+        S3File s3File = S3File.organisationFile(UserContextHolder.getOrganisation(), fileName, S3FileType.Export);
+        return s3Service.getFileStream(s3File);
     }
-
 }

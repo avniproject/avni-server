@@ -9,13 +9,15 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.avni.server.domain.Extension;
+import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.S;
+import org.avni.server.util.S3File;
+import org.avni.server.util.S3FileType;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.springframework.security.access.AccessDeniedException;
@@ -143,7 +145,7 @@ public abstract class StorageService implements S3Service {
     }
 
     @Override
-    public List<Extension> listExtensionFiles(Optional<DateTime> modifiedSince) {
+    public List<S3ExtensionFile> listExtensionFiles(Optional<DateTime> modifiedSince) {
         if (isDev && !s3InDev) {
             return new ArrayList<>();
         }
@@ -153,11 +155,11 @@ public abstract class StorageService implements S3Service {
                 .withBucketName(bucketName)
                 .withPrefix(filePrefix);
 
-        List<Extension> keys = new ArrayList<>();
+        List<S3ExtensionFile> keys = new ArrayList<>();
 
         ObjectListing objects = s3Client.listObjects(listObjectsRequest);
 
-        for (; ; ) {
+        while (true) {
             List<S3ObjectSummary> summaries = objects.getObjectSummaries();
             if (summaries.size() < 1) {
                 break;
@@ -165,7 +167,7 @@ public abstract class StorageService implements S3Service {
 
             summaries.forEach(s -> {
                 if (latestDate.isBefore(s.getLastModified().getTime())) {
-                    keys.add(new Extension(s.getKey().replace(filePrefix, ""), new DateTime(s.getLastModified())));
+                    keys.add(new S3ExtensionFile(S3File.organisationFileFromFullPath(UserContextHolder.getOrganisation(), s.getKey(), S3FileType.Extensions), new DateTime(s.getLastModified())));
                 }
             });
             objects = s3Client.listNextBatchOfObjects(objects);
@@ -217,37 +219,27 @@ public abstract class StorageService implements S3Service {
         return s3Client.generatePresignedUrl(generatePresignedUrlRequest);
     }
 
-    public File downloadOrganisationFile(String filePath) throws IOException {
-        InputStream inputStream = this.downloadOrganisationFile("", filePath);
+    public File downloadFile(S3File s3File) throws IOException {
+        InputStream inputStream = this.getFileStream(s3File);
         File file = new File(format("%s/%s", System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString()));
         FileUtils.copyInputStreamToFile(inputStream, file);
         return file;
     }
 
     @Override
-    public InputStream downloadOrganisationFile(String rootDirectory, String filePath) {
+    public InputStream getFileStream(S3File s3File) {
         if (isDev && !s3InDev) {
-            String localFilePath = format("%s%s%s/%s",
-                    System.getProperty("java.io.tmpdir"),
-                    StringUtils.isEmpty(rootDirectory) ? "" : rootDirectory,
-                    StringUtils.isEmpty(rootDirectory) ? "" : "/",
-                    filePath);
+            String localFilePath = format("%s/%s", System.getProperty("java.io.tmpdir"), s3File.getPath());
             try {
                 return new FileInputStream(localFilePath);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
-                logger.error(format("[dev] File not found. Assume empty. '%s'", filePath));
+                logger.error(format("[dev] File not found. Assume empty. '%s'", s3File.getPath()));
                 return new ByteArrayInputStream(new byte[]{});
             }
         }
 
-        String s3Key = format("%s%s%s/%s",
-                StringUtils.isEmpty(rootDirectory) ? "" : rootDirectory,
-                StringUtils.isEmpty(rootDirectory) ? "" : "/",
-                getOrgDirectoryName(),
-                filePath);
-
-        return s3Client.getObject(bucketName, s3Key).getObjectContent();
+        return s3Client.getObject(bucketName, s3File.getPath()).getObjectContent();
     }
 
     @Override

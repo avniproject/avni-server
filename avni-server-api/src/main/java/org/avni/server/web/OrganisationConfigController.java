@@ -1,6 +1,5 @@
 package org.avni.server.web;
 
-
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.transaction.Transactional;
-
 
 @RepositoryRestController
 public class OrganisationConfigController implements RestControllerResourceProcessor<OrganisationConfig> {

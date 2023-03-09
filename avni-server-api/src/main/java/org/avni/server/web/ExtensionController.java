@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.ImplementationRepository;
-import org.avni.server.domain.Extension;
+import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.framework.security.UserContextHolder;
@@ -42,7 +42,7 @@ import java.util.UUID;
 import static java.lang.String.format;
 
 @RestController
-public class ExtensionController implements RestControllerResourceProcessor<Extension> {
+public class ExtensionController implements RestControllerResourceProcessor<S3ExtensionFile> {
     private final Logger logger;
     private final S3Service s3Service;
     private final OrganisationConfigService organisationConfigService;
@@ -79,7 +79,7 @@ public class ExtensionController implements RestControllerResourceProcessor<Exte
 
     @GetMapping(value = "/extensions")
     @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
-    public PagedResources<Resource<Extension>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
+    public PagedResources<Resource<S3ExtensionFile>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
         return wrap(new PageImpl<>(s3Service.listExtensionFiles(lastModifiedDateTime)));
     }
 

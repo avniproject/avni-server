@@ -1,5 +1,8 @@
 package org.avni.server.service;
 
+import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.S3File;
+import org.avni.server.util.S3FileType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -13,8 +16,7 @@ import static java.lang.String.format;
 
 @Service
 public class BulkUploadS3Service {
-
-    private S3Service s3Service;
+    private final S3Service s3Service;
 
     @Autowired
     public BulkUploadS3Service(@Qualifier("BatchS3Service") S3Service s3Service) {
@@ -42,6 +44,7 @@ public class BulkUploadS3Service {
     }
 
     public InputStream downloadErrorFile(String jobUuid) {
-        return s3Service.downloadOrganisationFile("bulkuploads/error", format("%s.csv", jobUuid));
+        S3File s3File = S3File.organisationFile(UserContextHolder.getOrganisation(), format("%s.csv", jobUuid), S3FileType.BulkUploadsError);
+        return s3Service.getFileStream(s3File);
     }
 }

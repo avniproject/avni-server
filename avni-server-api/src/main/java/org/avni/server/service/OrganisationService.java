@@ -21,6 +21,7 @@ import org.avni.server.domain.*;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
+import org.avni.server.util.S3File;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
@@ -42,10 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -262,10 +260,11 @@ public class OrganisationService {
         if (organisationConfig != null) {
             addFileToZip(zos, "organisationConfig.json", OrganisationConfigRequest.fromOrganisationConfig(organisationConfig));
             addDirectoryToZip(zos, "extensions");
-            OrganisationConfig.Settings settingsObject = organisationConfig.getSettingsObject();
-            for (OrganisationConfig.Extension extension : settingsObject.getExtensions()) {
-                File file = s3Service.downloadOrganisationFile(extension.getFilePath());
-                addFileToZip(zos, extension.getFilePath(), file);
+            List<S3ExtensionFile> s3ExtensionFiles = s3Service.listExtensionFiles(Optional.empty());
+            for (S3ExtensionFile s3ExtensionFile : s3ExtensionFiles) {
+                S3File s3File = s3ExtensionFile.getS3File();
+                File file = s3Service.downloadFile(s3File);
+                addFileToZip(zos, s3File.getExtensionFilePathRelativeToOrganisation(), file);
             }
         }
     }
