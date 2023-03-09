@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.messaging.domain.EntityType;
+import org.avni.messaging.service.PhoneNumberNotAvailableException;
 import org.avni.server.application.*;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
@@ -375,7 +376,7 @@ public class IndividualService implements ScopeAwareService {
     }
 
     @Cacheable(value = PHONE_NUMBER_FOR_SUBJECT_ID)
-    public String fetchIndividualPhoneNumber(long subjectId) {
+    public String fetchIndividualPhoneNumber(long subjectId) throws PhoneNumberNotAvailableException {
         Individual individual = getIndividual(subjectId);
         if(individual == null ) {
             throw new EntityNotFoundException();
@@ -384,7 +385,7 @@ public class IndividualService implements ScopeAwareService {
         if(StringUtils.hasText(phoneNumber)) {
             return phoneNumber;
         } else {
-            throw new RuntimeException("Phone number not found for individual with id "+subjectId);
+            throw new PhoneNumberNotAvailableException();
         }
     }
 

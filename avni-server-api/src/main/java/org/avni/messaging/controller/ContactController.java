@@ -4,10 +4,13 @@ import org.avni.messaging.contract.glific.GlificContactResponse;
 import org.avni.messaging.contract.glific.Message;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.repository.GlificContactRepository;
+import org.avni.messaging.service.PhoneNumberNotAvailableException;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
 import org.avni.server.service.IndividualService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +35,7 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GlificContactResponse fetchContactSubject(@PathVariable("id") long subjectId) throws GlificContactNotFoundError {
+    public GlificContactResponse fetchContactSubject(@PathVariable("id") long subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableException {
         String phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
         return glificContactRepository.findContact(phoneNumber);
     }
@@ -46,9 +49,14 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/subject/{id}/msgs")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public List<Message> fetchAllMsgsForContactSubject(@PathVariable("id") long subjectId) {
-        String phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
-        return glificContactRepository.getAllMsgsForContact(phoneNumber);
+    public ResponseEntity<List<Message>> fetchAllMsgsForContactSubject(@PathVariable("id") long subjectId) {
+        String phoneNumber;
+        try {
+            phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
+        } catch (PhoneNumberNotAvailableException e) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+        return ResponseEntity.ok(glificContactRepository.getAllMsgsForContact(phoneNumber));
     }
 
     @GetMapping(ContactEndpoint + "/user/{id}/msgs")
