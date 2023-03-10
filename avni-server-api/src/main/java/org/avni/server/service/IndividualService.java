@@ -12,6 +12,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.S;
 import org.avni.server.web.request.*;
+import org.avni.server.web.request.api.RequestUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -376,17 +377,27 @@ public class IndividualService implements ScopeAwareService {
     }
 
     @Cacheable(value = PHONE_NUMBER_FOR_SUBJECT_ID)
-    public String fetchIndividualPhoneNumber(long subjectId) throws PhoneNumberNotAvailableException {
+    public String fetchIndividualPhoneNumber(String subjectId) throws PhoneNumberNotAvailableException {
         Individual individual = getIndividual(subjectId);
-        if(individual == null ) {
-            throw new EntityNotFoundException();
-        }
         String phoneNumber = findPhoneNumber(individual);
         if(StringUtils.hasText(phoneNumber)) {
             return phoneNumber;
         } else {
             throw new PhoneNumberNotAvailableException();
         }
+    }
+
+    public Individual getIndividual(String subjectId) {
+        Individual individual = null;
+        if(RequestUtils.isValidUUID(subjectId)) {
+            individual = individualRepository.findByUuid(subjectId);
+        } else {
+            individual = individualRepository.findOne(Long.parseLong(subjectId));
+        }
+        if(individual == null) {
+            throw new EntityNotFoundException("Subject not found with id / uuid: "+ subjectId);
+        }
+        return individual;
     }
 
     public Optional<Individual> findByPhoneNumber(String phoneNumber) {

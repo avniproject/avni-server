@@ -3,6 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
 import org.avni.server.projection.UserWebProjection;
+import org.avni.server.web.request.api.RequestUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import org.joda.time.DateTime;
 
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -74,5 +76,18 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
 
         List<User> users = findAll(specification);
         return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
+    }
+
+    default User getUser(String userId) {
+        User user = null;
+        if(RequestUtils.isValidUUID(userId)) {
+            user = findByUuid(userId);
+        } else {
+            user = findOne(Long.parseLong(userId));
+        }
+        if(user == null) {
+            throw new EntityNotFoundException("User not found with id / uuid: "+ userId);
+        }
+        return user;
     }
 }

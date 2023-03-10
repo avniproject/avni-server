@@ -6,6 +6,7 @@ import org.avni.messaging.domain.ReceiverType;
 import org.avni.messaging.service.MessageRequestService;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
+import org.avni.server.service.IndividualService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,27 +25,32 @@ public class MessageController {
     private static final String MessageEndpoint = "/web/message";
     private final MessageRequestService messageRequestService;
     private final UserRepository userRepository;
+    private final IndividualService individualService;
 
     @Autowired
-    public MessageController(MessageRequestService messageRequestService, UserRepository userRepository) {
+    public MessageController(MessageRequestService messageRequestService, UserRepository userRepository,
+                             IndividualService individualService) {
         this.messageRequestService = messageRequestService;
         this.userRepository = userRepository;
+        this.individualService = individualService;
     }
 
     @RequestMapping(value = MessageEndpoint + "/subject/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") long subjectId) {
-        Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(subjectId, ReceiverType.Subject, MessageDeliveryStatus.NotSent);
+    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") String subjectId) {
+        Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(
+                individualService.getIndividual(subjectId).getId(), ReceiverType.Subject, MessageDeliveryStatus.NotSent);
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 
     @RequestMapping(value = MessageEndpoint + "/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") long userId) {
-        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
-        Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(user.getId(), ReceiverType.Subject, MessageDeliveryStatus.NotSent);
+    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") String userId) {
+        User user = userRepository.getUser(userId);
+        Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(user.getId(),
+                ReceiverType.Subject, MessageDeliveryStatus.NotSent);
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 

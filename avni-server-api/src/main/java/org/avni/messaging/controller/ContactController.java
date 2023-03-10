@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @RestController
@@ -35,22 +34,22 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GlificContactResponse fetchContactSubject(@PathVariable("id") long subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableException {
+    public GlificContactResponse fetchContactSubject(@PathVariable("id") String subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableException {
         String phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
         return glificContactRepository.findContact(phoneNumber);
     }
 
     @GetMapping(ContactEndpoint + "/user/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GlificContactResponse fetchContactUser(@PathVariable("id") long userId) throws GlificContactNotFoundError {
-        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+    public GlificContactResponse fetchContactUser(@PathVariable("id") String userId) throws GlificContactNotFoundError {
+        User user = userRepository.getUser(userId);
         return glificContactRepository.findContact(user.getPhoneNumber());
     }
 
     @GetMapping(ContactEndpoint + "/subject/{id}/msgs")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity<List<Message>> fetchAllMsgsForContactSubject(@PathVariable("id") long subjectId) {
-        String phoneNumber;
+    public ResponseEntity<List<Message>> fetchAllMsgsForContactSubject(@PathVariable("id") String subjectId) {
+        String phoneNumber = null;
         try {
             phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
         } catch (PhoneNumberNotAvailableException e) {
@@ -61,8 +60,8 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/user/{id}/msgs")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public List<Message> fetchAllMsgsForContactUser(@PathVariable("id") long userId) {
-        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+    public List<Message> fetchAllMsgsForContactUser(@PathVariable("id") String userId) {
+        User user = userRepository.getUser(userId);
         return glificContactRepository.getAllMsgsForContact(user.getPhoneNumber());
     }
 }

@@ -5,6 +5,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.util.BadRequestError;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,5 +73,13 @@ public class RequestUtils {
             }
         }
         return obsValue;
+    }
+
+    public static boolean isValidUUID(String text){
+        try {
+            return StringUtils.hasText(text) && UUID.fromString(text.trim()) != null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
