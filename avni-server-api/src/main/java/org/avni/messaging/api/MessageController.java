@@ -1,5 +1,6 @@
 package org.avni.messaging.api;
 
+import org.avni.messaging.contract.web.MessageRequestResponse;
 import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.ReceiverType;
@@ -35,9 +36,9 @@ public class MessageController {
     @RequestMapping(value = MessageEndpoint + "/subject/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") long subjectId) {
+    public ResponseEntity<List<MessageRequestResponse>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") long subjectId) {
         Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(subjectId, ReceiverType.Subject, MessageDeliveryStatus.NotSent);
-        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+        return ResponseEntity.ok(messagesNotSent.map(MessageRequestResponse::fromMessageRequest).collect(Collectors.toList()));
     }
 
     @RequestMapping(value = MessageEndpoint + "/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
