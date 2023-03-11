@@ -7,6 +7,7 @@ import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.messaging.repository.ManualBroadcastMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
+import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
 import org.joda.time.DateTime;
@@ -76,14 +77,14 @@ public class MessagingService {
         return messageRuleRepository.findAll();
     }
 
-    public void onEntitySave(Long entityId, Long entityTypeId, EntityType entityType, Long subjectId, Long userId) {
+    public void onEntitySave(Long entityId, Long entityTypeId, EntityType entityType, Long subjectId, Long userId) throws RuleExecutionException {
         List<MessageRule> messageRules = messageRuleRepository.findAllByEntityTypeAndEntityTypeIdAndIsVoidedFalse(entityType, entityTypeId);
 
         for (MessageRule messageRule : messageRules) {
             MessageReceiver messageReceiver = null;
-            if(messageRule.getReceiverType() == ReceiverType.Subject)
+            if (messageRule.getReceiverType() == ReceiverType.Subject)
                 messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Subject, subjectId);
-            else if(messageRule.getReceiverType() == ReceiverType.User)
+            else if (messageRule.getReceiverType() == ReceiverType.User)
                 messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId);
 
             DateTime scheduledDateTime = ruleService.executeScheduleRule(messageRule.getEntityType().name(), entityId, messageRule.getScheduleRule());
@@ -146,14 +147,14 @@ public class MessagingService {
         }
     }
 
-    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
-        if(messageRequest.getManualBroadcastMessage() != null)
+    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
+        if (messageRequest.getManualBroadcastMessage() != null)
             groupMessagingService.sendMessageToGroup(messageRequest);
         else
             sendMessageToContact(messageRequest);
     }
 
-    private void sendMessageToContact(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
+    private void sendMessageToContact(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
         String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());

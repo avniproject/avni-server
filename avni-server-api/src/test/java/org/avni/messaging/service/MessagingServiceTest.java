@@ -6,6 +6,7 @@ import org.avni.messaging.repository.ManualBroadcastMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
@@ -67,7 +68,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSaveMessageRequestIfMessageRuleConfiguredOnSaveOfSubjectEntityType() {
+    public void shouldSaveMessageRequestIfMessageRuleConfiguredOnSaveOfSubjectEntityType() throws RuleExecutionException {
         MessageRule messageRule = mock(MessageRule.class);
         ArrayList<MessageRule> messageRuleList = new ArrayList<MessageRule>() {
             {
@@ -104,7 +105,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSaveMessageRequestsForAllMessageRulesConfigured() {
+    public void shouldSaveMessageRequestsForAllMessageRulesConfigured() throws RuleExecutionException {
         MessageRule messageRule = mock(MessageRule.class);
         MessageRule messageRuleAnother = mock(MessageRule.class);
         ArrayList<MessageRule> messageRuleList = new ArrayList<MessageRule>() {
@@ -156,7 +157,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSendMessagesForAllNotSentMessages() {
+    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException {
         MessageRule messageRule = new MessageRule();
         messageRule.setId(10L);
         messageRule.setMessageRule("I am a message rule");

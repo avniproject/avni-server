@@ -16,6 +16,13 @@ public class RuleResponseEntity extends BaseRuleResponseEntity {
     private List<KeyValueResponse> summaries = new ArrayList<>();
     private List<ObservationContract> summaryObservations = new ArrayList<>();
 
+    public static RuleResponseEntity forRuleError(RuleError ruleError) {
+        RuleResponseEntity ruleResponseEntity = new RuleResponseEntity();
+        ruleResponseEntity.setError(ruleError);
+        ruleResponseEntity.setStatus("failure");
+        return ruleResponseEntity;
+    }
+
     public List<ObservationContract> getSummaryObservations() {
         return summaryObservations;
     }

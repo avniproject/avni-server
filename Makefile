@@ -24,6 +24,7 @@ dbPort=5432
 
 include makefiles/staging.mk
 include makefiles/util.mk
+include makefiles/externalDB.mk
 
 # <postgres>
 clean_db_server: _clean_db_server _clean_test_server _drop_roles

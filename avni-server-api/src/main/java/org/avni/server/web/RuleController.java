@@ -86,7 +86,12 @@ public class RuleController {
     @RequestMapping(value = "/web/rules", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     ResponseEntity<?> executeServerSideRules(@RequestBody RequestEntityWrapper requestEntityWrapper) {
-        RuleResponseEntity ruleResponseEntity = ruleService.executeServerSideRules(requestEntityWrapper);
+        RuleResponseEntity ruleResponseEntity = null;
+        try {
+            ruleResponseEntity = ruleService.executeServerSideRules(requestEntityWrapper);
+        } catch (RuleExecutionException ignored) {
+
+        }
         if (ruleResponseEntity.getStatus().equalsIgnoreCase("success")) {
             return ResponseEntity.ok().body(ruleResponseEntity);
         } else if (HttpStatus.NOT_FOUND.toString().equals(ruleResponseEntity.getStatus())) {
@@ -100,67 +105,83 @@ public class RuleController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     ResponseEntity<?> programSummaryRule(@RequestParam String programEnrolmentUUID) {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(programEnrolmentUUID);
-        RuleResponseEntity ruleResponseEntity = ruleService.executeProgramSummaryRule(programEnrolment);
-        if (ruleResponseEntity.getStatus().equalsIgnoreCase("success")) {
-            return ResponseEntity.ok().body(ruleResponseEntity);
-        } else if (HttpStatus.NOT_FOUND.toString().equals(ruleResponseEntity.getStatus())) {
-            return new ResponseEntity<>(ruleResponseEntity, HttpStatus.NOT_FOUND);
-        } else {
-            return ResponseEntity.badRequest().body(ruleResponseEntity);
+        try {
+            RuleResponseEntity ruleResponseEntity = ruleService.executeProgramSummaryRule(programEnrolment);
+            if (ruleResponseEntity.getStatus().equalsIgnoreCase("success")) {
+                return ResponseEntity.ok().body(ruleResponseEntity);
+            } else if (HttpStatus.NOT_FOUND.toString().equals(ruleResponseEntity.getStatus())) {
+                return new ResponseEntity<>(ruleResponseEntity, HttpStatus.NOT_FOUND);
+            } else {
+                return ResponseEntity.badRequest().body(ruleResponseEntity);
+            }
+        } catch (RuleExecutionException e) {
+            return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
         }
     }
 
     @RequestMapping(value = "/web/subjectSummaryRule", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     ResponseEntity<?> subjectSummaryRule(@RequestParam String subjectUUID) {
-        Individual individual = individualRepository.findByUuid(subjectUUID);
-        RuleResponseEntity ruleResponseEntity = ruleService.executeSubjectSummaryRule(individual);
-        if (ruleResponseEntity.getStatus().equalsIgnoreCase("success")) {
-            return ResponseEntity.ok().body(ruleResponseEntity);
-        } else if (HttpStatus.NOT_FOUND.toString().equals(ruleResponseEntity.getStatus())) {
-            return new ResponseEntity<>(ruleResponseEntity, HttpStatus.NOT_FOUND);
-        } else {
-            return ResponseEntity.badRequest().body(ruleResponseEntity);
+        try {
+            Individual individual = individualRepository.findByUuid(subjectUUID);
+            RuleResponseEntity ruleResponseEntity = ruleService.executeSubjectSummaryRule(individual);
+            if (ruleResponseEntity.getStatus().equalsIgnoreCase("success")) {
+                return ResponseEntity.ok().body(ruleResponseEntity);
+            } else if (HttpStatus.NOT_FOUND.toString().equals(ruleResponseEntity.getStatus())) {
+                return new ResponseEntity<>(ruleResponseEntity, HttpStatus.NOT_FOUND);
+            } else {
+                return ResponseEntity.badRequest().body(ruleResponseEntity);
+            }
+        } catch (RuleExecutionException e) {
+            return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
         }
     }
 
     @RequestMapping(value = "/web/eligibleGeneralEncounters", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     ResponseEntity<?> getEligibleGeneralEncounters(@RequestParam String subjectUUID) {
-        Individual individual = individualRepository.findByUuid(subjectUUID);
-        List<FormMapping> formMappings = formMappingRepository.getAllGeneralEncounterFormMappings();
-        List<EncounterType> encounterTypes = formMappings.stream()
-                .filter(fm -> fm.getSubjectTypeUuid().equals(individual.getSubjectType().getUuid()))
-                .map(FormMapping::getEncounterType).collect(Collectors.toList());
-        Stream<Encounter> scheduledEncountersStream = individual
-                .getEncounters()
-                .stream()
-                .filter(enc -> !enc.isVoided() && enc.getEncounterDateTime() == null && enc.getCancelDateTime() == null);
-        Set<EncounterContract> scheduledEncounters = individualService.constructEncounters(scheduledEncountersStream);
-        JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
-        logger.info(String.format("Executing encounter Eligibility rule for the subject uuid %s", subjectUUID));
-        EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(individual, encounterTypes);
-        addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes);
-        return ResponseEntity.ok().body(response);
+        try {
+            Individual individual = individualRepository.findByUuid(subjectUUID);
+            List<FormMapping> formMappings = formMappingRepository.getAllGeneralEncounterFormMappings();
+            List<EncounterType> encounterTypes = formMappings.stream()
+                    .filter(fm -> fm.getSubjectTypeUuid().equals(individual.getSubjectType().getUuid()))
+                    .map(FormMapping::getEncounterType).collect(Collectors.toList());
+            Stream<Encounter> scheduledEncountersStream = individual
+                    .getEncounters()
+                    .stream()
+                    .filter(enc -> !enc.isVoided() && enc.getEncounterDateTime() == null && enc.getCancelDateTime() == null);
+            Set<EncounterContract> scheduledEncounters = individualService.constructEncounters(scheduledEncountersStream);
+            JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
+            logger.info(String.format("Executing encounter Eligibility rule for the subject uuid %s", subjectUUID));
+            EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(individual, encounterTypes);
+            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes);
+            return ResponseEntity.ok().body(response);
+        } catch (RuleExecutionException e) {
+            return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
+        }
     }
 
     @RequestMapping(value = "/web/eligibleProgramEncounters", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     ResponseEntity<?> getEligibleProgramEncounters(@RequestParam String enrolmentUUID) {
-        ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(enrolmentUUID);
-        List<FormMapping> formMappings = formMappingRepository.getAllProgramEncounterFormMappings();
-        List<EncounterType> encounterTypes = formMappings.stream()
-                .filter(fm -> fm.getProgramUuid().equals(programEnrolment.getProgram().getUuid()))
-                .map(FormMapping::getEncounterType).collect(Collectors.toList());
-        Stream<ProgramEncounter> scheduledEncountersStream = programEnrolment
-                .getEncounters(true)
-                .filter(enc -> !enc.isVoided() && enc.getEncounterDateTime() == null && enc.getCancelDateTime() == null);
-        Set<ProgramEncountersContract> scheduledEncounters = individualService.constructProgramEncounters(scheduledEncountersStream);
-        JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
-        logger.info(String.format("Executing encounter Eligibility rule for the enrolment uuid %s", enrolmentUUID));
-        EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(programEnrolment.getIndividual(), encounterTypes);
-        addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes);
-        return ResponseEntity.ok().body(response);
+        try {
+            ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(enrolmentUUID);
+            List<FormMapping> formMappings = formMappingRepository.getAllProgramEncounterFormMappings();
+            List<EncounterType> encounterTypes = formMappings.stream()
+                    .filter(fm -> fm.getProgramUuid().equals(programEnrolment.getProgram().getUuid()))
+                    .map(FormMapping::getEncounterType).collect(Collectors.toList());
+            Stream<ProgramEncounter> scheduledEncountersStream = programEnrolment
+                    .getEncounters(true)
+                    .filter(enc -> !enc.isVoided() && enc.getEncounterDateTime() == null && enc.getCancelDateTime() == null);
+            Set<ProgramEncountersContract> scheduledEncounters = individualService.constructProgramEncounters(scheduledEncountersStream);
+            JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
+            logger.info(String.format("Executing encounter Eligibility rule for the enrolment uuid %s", enrolmentUUID));
+            EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(programEnrolment.getIndividual(), encounterTypes);
+            addEligibleEncounterUUIDsToResponse(response, ruleResponse, encounterTypes);
+            return ResponseEntity.ok().body(response);
+        } catch (RuleExecutionException e) {
+            return ResponseEntity.badRequest().body(RuleResponseEntity.forRuleError(e.getRuleError()));
+        }
     }
 
     private void addEligibleEncounterUUIDsToResponse(JsonObject response, EligibilityRuleResponseEntity ruleResponse, List<EncounterType> encounterTypes) {
