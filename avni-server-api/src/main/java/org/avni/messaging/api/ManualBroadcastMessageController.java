@@ -21,7 +21,8 @@ public class ManualBroadcastMessageController {
     @RequestMapping(value = "/web/scheduleManualBroadcastMessage", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity.BodyBuilder save(@RequestBody ManualBroadcastMessageContract manualBroadcastMessageContract) {
-        messagingService.scheduleBroadcastMessage(manualBroadcastMessageContract.getGroupIds(),
+        messagingService.scheduleBroadcastMessage(manualBroadcastMessageContract.getReceiverIds(),
+                manualBroadcastMessageContract.getReceiverType(),
                 manualBroadcastMessageContract.getMessageTemplateId(),
                 manualBroadcastMessageContract.getParameters(),
                 manualBroadcastMessageContract.getScheduledDateTime());

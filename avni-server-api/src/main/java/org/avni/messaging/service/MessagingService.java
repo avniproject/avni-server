@@ -136,29 +136,42 @@ public class MessagingService {
     }
 
     @Transactional
-    public void scheduleBroadcastMessage(String[] groupIds, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
+    public void scheduleBroadcastMessage(String[] receiverIds, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
         ManualBroadcastMessage manualBroadcastMessage = new ManualBroadcastMessage(messageTemplateId, parameters);
         manualBroadcastMessage.assignUUIDIfRequired();
         manualBroadcastMessageRepository.save(manualBroadcastMessage);
 
-        for (String groupId : groupIds) {
-            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.Group, groupId);
+        for (String receiverId : receiverIds) {
+            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(receiverType, receiverId);
             messageRequestService.createManualMessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
         }
     }
 
     private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
-        if (messageRequest.getManualBroadcastMessage() != null)
-            groupMessagingService.sendMessageToGroup(messageRequest);
+        if(messageRequest.getManualBroadcastMessage() != null)
+            sendManuallyInitiatedMessage(messageRequest);
         else
-            sendMessageToContact(messageRequest);
+            sendAutomatedMessageToContact(messageRequest);
     }
 
-    private void sendMessageToContact(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
+    private void sendManuallyInitiatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
+        MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
+        ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
+        if(messageReceiver.getReceiverType() == ReceiverType.Group)
+            groupMessagingService.sendMessageToGroup(messageRequest);
+        else
+            ensureExternalIdPresenceAndSendMessage(messageReceiver, manualBroadcastMessage.getMessageTemplateId(), manualBroadcastMessage.getParameters());
+    }
+
+    private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableException {
+        messageReceiverService.ensureExternalIdPresent(messageReceiver);
+        glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
+    }
+
+    private void sendAutomatedMessageToContact(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
         String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
-        messageReceiverService.ensureExternalIdPresent(messageReceiver);
-        glificMessageRepository.sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), response);
+        ensureExternalIdPresenceAndSendMessage(messageReceiver, messageRule.getMessageTemplateId(), response);
     }
 }

@@ -43,10 +43,11 @@ public class MessageReceiverService {
         });
     }
 
-    public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, String externalId) {
-        Optional<MessageReceiver> messageReceiverOptional = messageReceiverRepository.findByReceiverTypeAndExternalId(receiverType, externalId);
+    public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, String receiverId) {
+        if(receiverType != ReceiverType.Group) return saveReceiverIfRequired(receiverType, new Long(receiverId));
+        Optional<MessageReceiver> messageReceiverOptional = messageReceiverRepository.findByReceiverTypeAndExternalId(receiverType, receiverId);
         return messageReceiverOptional.orElseGet(() -> {
-            MessageReceiver messageReceiver = new MessageReceiver(receiverType, externalId);
+            MessageReceiver messageReceiver = new MessageReceiver(receiverType, receiverId);
             messageReceiver.assignUUIDIfRequired();
             return messageReceiverRepository.save(messageReceiver);
         });

@@ -1,19 +1,21 @@
 package org.avni.messaging.contract;
 
+import org.avni.messaging.domain.ReceiverType;
 import org.joda.time.DateTime;
 
 public class ManualBroadcastMessageContract {
-    private String[] groupIds;
+    private String[] receiverIds;
+    private ReceiverType receiverType;
     private String messageTemplateId;
     private String[] parameters;
     private DateTime scheduledDateTime;
 
-    public String[] getGroupIds() {
-        return groupIds;
+    public String[] getReceiverIds() {
+        return receiverIds;
     }
 
-    public void setGroupIds(String[] groupIds) {
-        this.groupIds = groupIds;
+    public void setReceiverIds(String[] receiverIds) {
+        this.receiverIds = receiverIds;
     }
 
     public String getMessageTemplateId() {
@@ -38,5 +40,13 @@ public class ManualBroadcastMessageContract {
 
     public void setScheduledDateTime(DateTime scheduledDateTime) {
         this.scheduledDateTime = scheduledDateTime;
+    }
+
+    public ReceiverType getReceiverType() {
+        return receiverType;
+    }
+
+    public void setReceiverType(ReceiverType receiverType) {
+        this.receiverType = receiverType;
     }
 }
