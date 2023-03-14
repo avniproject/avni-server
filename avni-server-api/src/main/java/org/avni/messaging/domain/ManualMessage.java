@@ -8,8 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "manual_broadcast_message")
-public class ManualBroadcastMessage extends OrganisationAwareEntity {
+@Table(name = "manual_message")
+public class ManualMessage extends OrganisationAwareEntity {
     @Column
     private String messageTemplateId;
 
@@ -21,12 +21,12 @@ public class ManualBroadcastMessage extends OrganisationAwareEntity {
     @Type(type = "nextTriggerDetails")
     private NextTriggerDetails nextTriggerDetails;
 
-    public ManualBroadcastMessage(String messageTemplateId, String[] parameters) {
+    public ManualMessage(String messageTemplateId, String[] parameters) {
         this.messageTemplateId = messageTemplateId;
         this.parameters = parameters;
     }
 
-    public ManualBroadcastMessage() {
+    public ManualMessage() {
     }
 
     public String[] getParameters() {

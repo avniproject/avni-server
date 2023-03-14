@@ -31,8 +31,8 @@ public class MessageRequestService {
         return messageRequestRepository.save(messageRequest);
     }
 
-    public MessageRequest createManualMessageRequest(ManualBroadcastMessage manualBroadcastMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
-        MessageRequest messageRequest = new MessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
+    public MessageRequest createManualMessageRequest(ManualMessage manualMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
+        MessageRequest messageRequest = new MessageRequest(manualMessage, messageReceiver, scheduledDateTime);
         messageRequest.assignUUIDIfRequired();
         return messageRequestRepository.save(messageRequest);
     }

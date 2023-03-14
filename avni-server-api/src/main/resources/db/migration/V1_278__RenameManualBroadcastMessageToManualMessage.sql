@@ -1,0 +1,3 @@
+alter table manual_broadcast_message rename to manual_message;
+alter table manual_broadcast_message_id_seq rename to manual_message_id_seq;
+alter table message_request_queue rename column manual_broadcast_message_id to manual_message_id;

@@ -2,7 +2,7 @@ package org.avni.messaging.service;
 
 import org.avni.messaging.domain.*;
 import org.avni.messaging.repository.GlificMessageRepository;
-import org.avni.messaging.repository.ManualBroadcastMessageRepository;
+import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.Organisation;
@@ -42,7 +42,7 @@ public class MessagingServiceTest {
     private MessageRequestQueueRepository messageRequestQueueRepository;
 
     @Mock
-    private ManualBroadcastMessageRepository manualBroadcastMessageRepository;
+    private ManualMessageRepository manualMessageRepository;
 
     @Mock
     private RuleService ruleService;
@@ -64,7 +64,7 @@ public class MessagingServiceTest {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
                 messageRequestService, glificMessageRepository, messageRequestQueueRepository,
-                manualBroadcastMessageRepository, ruleService, groupMessagingService, null);
+                manualMessageRepository, ruleService, groupMessagingService, null);
     }
 
     @Test

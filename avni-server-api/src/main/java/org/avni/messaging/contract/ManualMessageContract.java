@@ -3,7 +3,7 @@ package org.avni.messaging.contract;
 import org.avni.messaging.domain.ReceiverType;
 import org.joda.time.DateTime;
 
-public class ManualBroadcastMessageContract {
+public class ManualMessageContract {
     private String[] receiverIds;
     private ReceiverType receiverType;
     private String messageTemplateId;

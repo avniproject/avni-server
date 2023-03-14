@@ -4,7 +4,7 @@ import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
 import org.avni.messaging.repository.GlificMessageRepository;
-import org.avni.messaging.repository.ManualBroadcastMessageRepository;
+import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.RuleExecutionException;
@@ -32,7 +32,7 @@ public class MessagingService {
     private GlificMessageRepository glificMessageRepository;
     private final RuleService ruleService;
     private MessageRequestQueueRepository messageRequestQueueRepository;
-    private ManualBroadcastMessageRepository manualBroadcastMessageRepository;
+    private ManualMessageRepository manualMessageRepository;
     private GroupMessagingService groupMessagingService;
     private Bugsnag bugsnag;
 
@@ -40,14 +40,14 @@ public class MessagingService {
     public MessagingService(MessageRuleRepository messageRuleRepository, MessageReceiverService messageReceiverService,
                             MessageRequestService messageRequestService, GlificMessageRepository glificMessageRepository,
                             MessageRequestQueueRepository messageRequestQueueRepository,
-                            ManualBroadcastMessageRepository manualBroadcastMessageRepository,
+                            ManualMessageRepository manualMessageRepository,
                             RuleService ruleService, GroupMessagingService groupMessagingService, Bugsnag bugsnag) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
         this.glificMessageRepository = glificMessageRepository;
         this.messageRequestQueueRepository = messageRequestQueueRepository;
-        this.manualBroadcastMessageRepository = manualBroadcastMessageRepository;
+        this.manualMessageRepository = manualMessageRepository;
         this.ruleService = ruleService;
         this.groupMessagingService = groupMessagingService;
         this.bugsnag = bugsnag;
@@ -137,30 +137,30 @@ public class MessagingService {
 
     @Transactional
     public void scheduleBroadcastMessage(String[] receiverIds, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
-        ManualBroadcastMessage manualBroadcastMessage = new ManualBroadcastMessage(messageTemplateId, parameters);
-        manualBroadcastMessage.assignUUIDIfRequired();
-        manualBroadcastMessageRepository.save(manualBroadcastMessage);
+        ManualMessage manualMessage = new ManualMessage(messageTemplateId, parameters);
+        manualMessage.assignUUIDIfRequired();
+        manualMessageRepository.save(manualMessage);
 
         for (String receiverId : receiverIds) {
             MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(receiverType, receiverId);
-            messageRequestService.createManualMessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
+            messageRequestService.createManualMessageRequest(manualMessage, messageReceiver, scheduledDateTime);
         }
     }
 
     private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
-        if(messageRequest.getManualBroadcastMessage() != null)
-            sendManuallyInitiatedMessage(messageRequest);
+        if(messageRequest.getManualMessage() != null)
+            sendManualMessage(messageRequest);
         else
             sendAutomatedMessageToContact(messageRequest);
     }
 
-    private void sendManuallyInitiatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
+    private void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
-        ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
+        ManualMessage manualMessage = messageRequest.getManualMessage();
         if(messageReceiver.getReceiverType() == ReceiverType.Group)
             groupMessagingService.sendMessageToGroup(messageRequest);
         else
-            ensureExternalIdPresenceAndSendMessage(messageReceiver, manualBroadcastMessage.getMessageTemplateId(), manualBroadcastMessage.getParameters());
+            ensureExternalIdPresenceAndSendMessage(messageReceiver, manualMessage.getMessageTemplateId(), manualMessage.getParameters());
     }
 
     private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableException {

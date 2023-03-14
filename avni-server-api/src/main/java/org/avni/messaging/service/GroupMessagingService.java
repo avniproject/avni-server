@@ -2,7 +2,7 @@ package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
-import org.avni.messaging.domain.ManualBroadcastMessage;
+import org.avni.messaging.domain.ManualMessage;
 import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.NextTriggerDetails;
@@ -51,47 +51,47 @@ public class GroupMessagingService {
 
     public void sendMessageToGroup(MessageRequest messageRequest) {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
-        ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
-        String[] parameters = manualBroadcastMessage.getParameters();
+        ManualMessage manualMessage = messageRequest.getManualMessage();
+        String[] parameters = manualMessage.getParameters();
 
         int[] indicesOfNonStaticParameters = A.findIndicesOf(parameters, NON_STATIC_NAME_PARAMETER);
 
         if (indicesOfNonStaticParameters.length > 0)
-            sendNonStaticMessageToGroup(messageReceiver, manualBroadcastMessage, parameters, indicesOfNonStaticParameters);
+            sendNonStaticMessageToGroup(messageReceiver, manualMessage, parameters, indicesOfNonStaticParameters);
         else
             glificMessageRepository.sendMessageToGroup(messageReceiver.getExternalId(),
-                    manualBroadcastMessage.getMessageTemplateId(),
-                    manualBroadcastMessage.getParameters());
+                    manualMessage.getMessageTemplateId(),
+                    manualMessage.getParameters());
     }
 
-    private void sendNonStaticMessageToGroup(MessageReceiver messageReceiver, ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
+    private void sendNonStaticMessageToGroup(MessageReceiver messageReceiver, ManualMessage manualMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;
         int pageNumber = 0;
         try {
-            if (manualBroadcastMessage.getNextTriggerDetails() != null)
-                pageNumber = sendMessageToContactsInThePartiallySentPage(messageReceiver,manualBroadcastMessage, parameters, indicesOfNonStaticParameters);
+            if (manualMessage.getNextTriggerDetails() != null)
+                pageNumber = sendMessageToContactsInThePartiallySentPage(messageReceiver,manualMessage, parameters, indicesOfNonStaticParameters);
 
             do {
                 PageRequest pageable = PageRequest.of(pageNumber, CONTACT_MEMBER_PAGE_SIZE);
                 contactGroupContacts = glificContactRepository.getContactGroupContacts(messageReceiver.getExternalId(),
                         pageable);
-                sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, contactGroupContacts);
+                sendNonStaticMessageToContacts(manualMessage, parameters, indicesOfNonStaticParameters, contactGroupContacts);
                 pageNumber++;
             } while (contactGroupContacts.size() == CONTACT_MEMBER_PAGE_SIZE);
         }
         catch (GlificGroupMessageFailureException exception) {
-            manualBroadcastMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber, exception.getContactIdFailedAt()));
+            manualMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber, exception.getContactIdFailedAt()));
             throw exception;
         }
         catch (Exception exception) {
-            manualBroadcastMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber));
+            manualMessage.setNextTriggerDetails(new NextTriggerDetails(pageNumber));
             throw new GlificGroupMessageFailureException(exception.getMessage());
         }
     }
 
-    private int sendMessageToContactsInThePartiallySentPage(MessageReceiver messageReceiver, ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
-        int pageNoToResumeFrom = manualBroadcastMessage.getNextTriggerDetails().getPageNo();
-        String contactIdToResumeFrom = manualBroadcastMessage.getNextTriggerDetails().getContactId();
+    private int sendMessageToContactsInThePartiallySentPage(MessageReceiver messageReceiver, ManualMessage manualMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
+        int pageNoToResumeFrom = manualMessage.getNextTriggerDetails().getPageNo();
+        String contactIdToResumeFrom = manualMessage.getNextTriggerDetails().getContactId();
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;
         List<?> contactGroupIds;
 
@@ -104,7 +104,7 @@ public class GroupMessagingService {
         } while (!contactGroupIds.contains(contactIdToResumeFrom) && (contactIdToResumeFrom != null));
 
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> pendingContactsInThePage = findPendingContactsWith(contactIdToResumeFrom, contactGroupContacts, contactGroupIds);
-        sendNonStaticMessageToContacts(manualBroadcastMessage, parameters, indicesOfNonStaticParameters, pendingContactsInThePage);
+        sendNonStaticMessageToContacts(manualMessage, parameters, indicesOfNonStaticParameters, pendingContactsInThePage);
         return pageNoToResumeFrom;
     }
 
@@ -116,7 +116,7 @@ public class GroupMessagingService {
         return pendingContactsInThePage;
     }
 
-    private void sendNonStaticMessageToContacts(ManualBroadcastMessage manualBroadcastMessage, String[] parameters, int[] indicesOfNonStaticParameters, List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts) {
+    private void sendNonStaticMessageToContacts(ManualMessage manualMessage, String[] parameters, int[] indicesOfNonStaticParameters, List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts) {
         for (GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact : contactGroupContacts) {
             try {
                 Optional<String> name = findNameOfTheContact(contactGroupContact);
@@ -126,7 +126,7 @@ public class GroupMessagingService {
                 }
                 String[] replacedParameters = parameters.clone();
                 A.replaceEntriesAtIndicesWith(replacedParameters, indicesOfNonStaticParameters, name.get());
-                glificMessageRepository.sendMessageToContact(manualBroadcastMessage.getMessageTemplateId(),
+                glificMessageRepository.sendMessageToContact(manualMessage.getMessageTemplateId(),
                         contactGroupContact.getId(), replacedParameters);
             }
             catch (Exception exception) {

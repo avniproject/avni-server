@@ -15,8 +15,8 @@ public class MessageRequest extends OrganisationAwareEntity {
     private MessageRule messageRule;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manual_broadcast_message_id")
-    private ManualBroadcastMessage manualBroadcastMessage;
+    @JoinColumn(name = "manual_message_id")
+    private ManualMessage manualMessage;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -73,8 +73,8 @@ public class MessageRequest extends OrganisationAwareEntity {
         this.deliveryStatus = MessageDeliveryStatus.NotSent;
     }
 
-    public MessageRequest(ManualBroadcastMessage manualBroadcastMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
-        this.manualBroadcastMessage = manualBroadcastMessage;
+    public MessageRequest(ManualMessage manualMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
+        this.manualMessage = manualMessage;
         this.messageReceiver = messageReceiver;
         this.scheduledDateTime = scheduledDateTime;
         this.deliveryStatus = MessageDeliveryStatus.NotSent;
@@ -113,12 +113,12 @@ public class MessageRequest extends OrganisationAwareEntity {
         return getDeliveredDateTime() != null;
     }
 
-    public ManualBroadcastMessage getManualBroadcastMessage() {
-        return manualBroadcastMessage;
+    public ManualMessage getManualMessage() {
+        return manualMessage;
     }
 
-    public void setManualBroadcastMessage(ManualBroadcastMessage manualBroadcastMessage) {
-        this.manualBroadcastMessage = manualBroadcastMessage;
+    public void setManualMessage(ManualMessage manualMessage) {
+        this.manualMessage = manualMessage;
     }
 
     public void markPartiallyComplete() {
