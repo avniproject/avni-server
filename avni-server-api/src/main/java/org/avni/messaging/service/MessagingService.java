@@ -136,15 +136,13 @@ public class MessagingService {
     }
 
     @Transactional
-    public void scheduleBroadcastMessage(String[] receiverIds, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
+    public void scheduleBroadcastMessage(String receiverId, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
         ManualMessage manualMessage = new ManualMessage(messageTemplateId, parameters);
         manualMessage.assignUUIDIfRequired();
         manualMessageRepository.save(manualMessage);
 
-        for (String receiverId : receiverIds) {
-            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(receiverType, receiverId);
-            messageRequestService.createManualMessageRequest(manualMessage, messageReceiver, scheduledDateTime);
-        }
+        MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(receiverType, receiverId);
+        messageRequestService.createManualMessageRequest(manualMessage, messageReceiver, scheduledDateTime);
     }
 
     private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {

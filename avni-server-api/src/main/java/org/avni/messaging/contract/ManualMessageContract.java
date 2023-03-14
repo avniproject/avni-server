@@ -4,18 +4,18 @@ import org.avni.messaging.domain.ReceiverType;
 import org.joda.time.DateTime;
 
 public class ManualMessageContract {
-    private String[] receiverIds;
+    private String receiverId;
     private ReceiverType receiverType;
     private String messageTemplateId;
     private String[] parameters;
     private DateTime scheduledDateTime;
 
-    public String[] getReceiverIds() {
-        return receiverIds;
+    public String getReceiverId() {
+        return receiverId;
     }
 
-    public void setReceiverIds(String[] receiverIds) {
-        this.receiverIds = receiverIds;
+    public void setReceiverId(String receiverId) {
+        this.receiverId = receiverId;
     }
 
     public String getMessageTemplateId() {
