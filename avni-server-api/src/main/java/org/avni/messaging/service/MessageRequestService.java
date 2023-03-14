@@ -63,8 +63,9 @@ public class MessageRequestService {
     }
 
     public Stream<MessageRequest> getGroupMessages(String groupId, MessageDeliveryStatus messageDeliveryStatus) {
-        return messageReceiverService.findExternalMessageReceiver(groupId).map(messageReceiver ->
-                messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
+        return messageReceiverService.findExternalMessageReceiver(groupId).map(messageReceiver -> {
+                    return messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver);
+                }
         ).orElseThrow(MessageReceiverNotFoundError::new);
     }
 }

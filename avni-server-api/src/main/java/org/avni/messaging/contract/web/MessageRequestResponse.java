@@ -16,18 +16,21 @@ public class MessageRequestResponse {
 
     public static MessageRequestResponse fromMessageRequest(MessageRequest messageRequest) {
         MessageRequestResponse response = new MessageRequestResponse();
-        MessageRule messageRule = messageRequest.getMessageRule();
-        MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
 
+        response.deliveryStatus = messageRequest.getDeliveryStatus();
+        response.scheduledDateTime = messageRequest.getScheduledDateTime();
+
+        MessageRule messageRule = messageRequest.getMessageRule();
         response.entityTypeId = messageRule.getEntityTypeId();
+        response.messageTemplateName = messageRule.getName();
         response.entityType = messageRule.getEntityType();
+        response.messageTemplateId = messageRule.getMessageTemplateId();
+
+        MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         response.receiverId = messageReceiver.getReceiverId();
         response.receiverType = messageReceiver.getReceiverType();
         response.externalId = messageReceiver.getExternalId();
-        response.deliveryStatus = messageRequest.getDeliveryStatus();
-        response.scheduledDateTime = messageRequest.getScheduledDateTime();
-        response.messageTemplateName = messageRule.getName();
-        response.messageTemplateId = messageRule.getMessageTemplateId();
+
         return response;
     }
 
