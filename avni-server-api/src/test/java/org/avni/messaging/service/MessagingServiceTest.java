@@ -160,7 +160,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException {
+    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException, PhoneNumberNotAvailableException {
         MessageRule messageRule = new MessageRule();
         messageRule.setId(10L);
         messageRule.setMessageRule("I am a message rule");
@@ -168,18 +168,15 @@ public class MessagingServiceTest {
         messageRule.setEntityType(EntityType.Subject);
         MessageReceiver messageReceiver = new MessageReceiver(ReceiverType.Subject, 1L);
         MessageRequest request = new MessageRequest(messageRule, messageReceiver, 3L, DateTime.now());
-        String[] parameters = new String[]{"someParam"};
-
         UserContext context = new UserContext();
         context.setOrganisation(new Organisation());
         UserContextHolder.create(context);
 
         when(messageRequestQueueRepository.findDueMessageRequests()).thenReturn(Stream.<MessageRequest>builder().add(request).build());
-        when(ruleService.executeMessageRule(request.getMessageReceiver().getReceiverType().name(), request.getEntityId(), messageRule.getMessageRule())).thenReturn(parameters);
         when(messageRequestService.markComplete(request)).thenReturn(request);
 
         messagingService.sendMessages();
 
-        verify(glificMessageRepository).sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), parameters);
+        verify(individualMessagingService).sendAutomatedMessage(request);
     }
 }
