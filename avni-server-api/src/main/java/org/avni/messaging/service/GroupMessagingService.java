@@ -49,7 +49,7 @@ public class GroupMessagingService {
         this.bugsnag = bugsnag;
     }
 
-    public void sendMessageToGroup(MessageRequest messageRequest) {
+    public void sendManualMessage(MessageRequest messageRequest) {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         ManualMessage manualMessage = messageRequest.getManualMessage();
         String[] parameters = manualMessage.getParameters();

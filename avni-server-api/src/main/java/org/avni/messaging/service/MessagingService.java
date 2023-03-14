@@ -3,7 +3,6 @@ package org.avni.messaging.service;
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
-import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
@@ -26,31 +25,34 @@ import java.util.stream.Stream;
 @Service
 public class MessagingService {
     private static final Logger logger = LoggerFactory.getLogger(MessagingService.class);
+
     private final MessageRuleRepository messageRuleRepository;
     private final MessageReceiverService messageReceiverService;
     private final MessageRequestService messageRequestService;
-    private GlificMessageRepository glificMessageRepository;
     private final RuleService ruleService;
     private MessageRequestQueueRepository messageRequestQueueRepository;
     private ManualMessageRepository manualMessageRepository;
     private GroupMessagingService groupMessagingService;
     private Bugsnag bugsnag;
 
+    private IndividualMessagingService individualMessagingService;
+
     @Autowired
     public MessagingService(MessageRuleRepository messageRuleRepository, MessageReceiverService messageReceiverService,
-                            MessageRequestService messageRequestService, GlificMessageRepository glificMessageRepository,
+                            MessageRequestService messageRequestService,
                             MessageRequestQueueRepository messageRequestQueueRepository,
                             ManualMessageRepository manualMessageRepository,
-                            RuleService ruleService, GroupMessagingService groupMessagingService, Bugsnag bugsnag) {
+                            RuleService ruleService, GroupMessagingService groupMessagingService,
+                            IndividualMessagingService individualMessagingService, Bugsnag bugsnag) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
-        this.glificMessageRepository = glificMessageRepository;
         this.messageRequestQueueRepository = messageRequestQueueRepository;
         this.manualMessageRepository = manualMessageRepository;
         this.ruleService = ruleService;
         this.groupMessagingService = groupMessagingService;
         this.bugsnag = bugsnag;
+        this.individualMessagingService = individualMessagingService;
     }
 
     public MessageRule find(Long id) {
@@ -136,7 +138,7 @@ public class MessagingService {
     }
 
     @Transactional
-    public void scheduleBroadcastMessage(String receiverId, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
+    public void scheduleManualMessage(String receiverId, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
         ManualMessage manualMessage = new ManualMessage(messageTemplateId, parameters);
         manualMessage.assignUUIDIfRequired();
         manualMessageRepository.save(manualMessage);
@@ -149,27 +151,14 @@ public class MessagingService {
         if(messageRequest.getManualMessage() != null)
             sendManualMessage(messageRequest);
         else
-            sendAutomatedMessageToContact(messageRequest);
+            individualMessagingService.sendAutomatedMessage(messageRequest);
     }
 
     private void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
-        ManualMessage manualMessage = messageRequest.getManualMessage();
         if(messageReceiver.getReceiverType() == ReceiverType.Group)
-            groupMessagingService.sendMessageToGroup(messageRequest);
+            groupMessagingService.sendManualMessage(messageRequest);
         else
-            ensureExternalIdPresenceAndSendMessage(messageReceiver, manualMessage.getMessageTemplateId(), manualMessage.getParameters());
-    }
-
-    private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableException {
-        messageReceiverService.ensureExternalIdPresent(messageReceiver);
-        glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
-    }
-
-    private void sendAutomatedMessageToContact(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
-        MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
-        MessageRule messageRule = messageRequest.getMessageRule();
-        String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
-        ensureExternalIdPresenceAndSendMessage(messageReceiver, messageRule.getMessageTemplateId(), response);
-    }
+            individualMessagingService.sendManualMessage(messageRequest);
+        }
 }

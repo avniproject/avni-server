@@ -53,6 +53,9 @@ public class MessagingServiceTest {
     @Mock
     private GroupMessagingService groupMessagingService;
 
+    @Mock
+    private IndividualMessagingService individualMessagingService;
+
     @Captor
     ArgumentCaptor<MessageReceiver> messageReceiver;
 
@@ -63,8 +66,8 @@ public class MessagingServiceTest {
     public void setup() {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
-                messageRequestService, glificMessageRepository, messageRequestQueueRepository,
-                manualMessageRepository, ruleService, groupMessagingService, null);
+                messageRequestService, messageRequestQueueRepository,
+                manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null);
     }
 
     @Test
