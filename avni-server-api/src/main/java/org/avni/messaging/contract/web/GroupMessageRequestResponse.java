@@ -17,7 +17,7 @@ public class GroupMessageRequestResponse {
         response.deliveredDateTime = messageRequest.getDeliveredDateTime();
 
         MessageRule messageRule = messageRequest.getMessageRule();
-        ManualBroadcastMessage manualBroadcastMessage = messageRequest.getManualBroadcastMessage();
+        ManualMessage manualBroadcastMessage = messageRequest.getManualMessage();
         if (messageRule != null) {
             response.messageTemplateId = messageRule.getMessageTemplateId();
         } else if (manualBroadcastMessage != null) {
