@@ -2,10 +2,11 @@ package org.avni.messaging.service;
 
 import org.avni.messaging.domain.*;
 import org.avni.messaging.repository.GlificMessageRepository;
-import org.avni.messaging.repository.ManualBroadcastMessageRepository;
+import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
@@ -41,7 +42,7 @@ public class MessagingServiceTest {
     private MessageRequestQueueRepository messageRequestQueueRepository;
 
     @Mock
-    private ManualBroadcastMessageRepository manualBroadcastMessageRepository;
+    private ManualMessageRepository manualMessageRepository;
 
     @Mock
     private RuleService ruleService;
@@ -51,6 +52,9 @@ public class MessagingServiceTest {
 
     @Mock
     private GroupMessagingService groupMessagingService;
+
+    @Mock
+    private IndividualMessagingService individualMessagingService;
 
     @Captor
     ArgumentCaptor<MessageReceiver> messageReceiver;
@@ -62,12 +66,12 @@ public class MessagingServiceTest {
     public void setup() {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
-                messageRequestService, glificMessageRepository, messageRequestQueueRepository,
-                manualBroadcastMessageRepository, ruleService, groupMessagingService, null);
+                messageRequestService, messageRequestQueueRepository,
+                manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null);
     }
 
     @Test
-    public void shouldSaveMessageRequestIfMessageRuleConfiguredOnSaveOfSubjectEntityType() {
+    public void shouldSaveMessageRequestIfMessageRuleConfiguredOnSaveOfSubjectEntityType() throws RuleExecutionException {
         MessageRule messageRule = mock(MessageRule.class);
         ArrayList<MessageRule> messageRuleList = new ArrayList<MessageRule>() {
             {
@@ -104,7 +108,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSaveMessageRequestsForAllMessageRulesConfigured() {
+    public void shouldSaveMessageRequestsForAllMessageRulesConfigured() throws RuleExecutionException {
         MessageRule messageRule = mock(MessageRule.class);
         MessageRule messageRuleAnother = mock(MessageRule.class);
         ArrayList<MessageRule> messageRuleList = new ArrayList<MessageRule>() {
@@ -156,7 +160,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSendMessagesForAllNotSentMessages() {
+    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException, PhoneNumberNotAvailableException {
         MessageRule messageRule = new MessageRule();
         messageRule.setId(10L);
         messageRule.setMessageRule("I am a message rule");
@@ -164,18 +168,15 @@ public class MessagingServiceTest {
         messageRule.setEntityType(EntityType.Subject);
         MessageReceiver messageReceiver = new MessageReceiver(ReceiverType.Subject, 1L);
         MessageRequest request = new MessageRequest(messageRule, messageReceiver, 3L, DateTime.now());
-        String[] parameters = new String[]{"someParam"};
-
         UserContext context = new UserContext();
         context.setOrganisation(new Organisation());
         UserContextHolder.create(context);
 
         when(messageRequestQueueRepository.findDueMessageRequests()).thenReturn(Stream.<MessageRequest>builder().add(request).build());
-        when(ruleService.executeMessageRule(request.getMessageReceiver().getReceiverType().name(), request.getEntityId(), messageRule.getMessageRule())).thenReturn(parameters);
         when(messageRequestService.markComplete(request)).thenReturn(request);
 
         messagingService.sendMessages();
 
-        verify(glificMessageRepository).sendMessageToContact(messageRule.getMessageTemplateId(), messageReceiver.getExternalId(), parameters);
+        verify(individualMessagingService).sendAutomatedMessage(request);
     }
 }

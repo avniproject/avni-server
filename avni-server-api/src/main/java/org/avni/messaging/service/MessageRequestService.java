@@ -1,7 +1,6 @@
 package org.avni.messaging.service;
 
 import org.avni.messaging.domain.*;
-import org.avni.messaging.domain.exception.MessageReceiverNotFoundError;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +30,8 @@ public class MessageRequestService {
         return messageRequestRepository.save(messageRequest);
     }
 
-    public MessageRequest createManualMessageRequest(ManualBroadcastMessage manualBroadcastMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
-        MessageRequest messageRequest = new MessageRequest(manualBroadcastMessage, messageReceiver, scheduledDateTime);
+    public MessageRequest createManualMessageRequest(ManualMessage manualMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
+        MessageRequest messageRequest = new MessageRequest(manualMessage, messageReceiver, scheduledDateTime);
         messageRequest.assignUUIDIfRequired();
         return messageRequestRepository.save(messageRequest);
     }
@@ -54,7 +53,7 @@ public class MessageRequestService {
     public Stream<MessageRequest> fetchPendingScheduledMessages(Long receiverId, ReceiverType receiverType, MessageDeliveryStatus messageDeliveryStatus) {
         return messageReceiverService.findMessageReceiver(receiverId, receiverType).map(messageReceiver ->
                 messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
-        ).orElseThrow(MessageReceiverNotFoundError::new);
+        ).orElse(Stream.empty());
     }
 
     public MessageRequest markFailed(MessageRequest messageRequest, MessageDeliveryStatus messageDeliveryStatus) {
@@ -63,8 +62,7 @@ public class MessageRequestService {
     }
 
     public Stream<MessageRequest> getGroupMessages(String groupId, MessageDeliveryStatus messageDeliveryStatus) {
-        return messageReceiverService.findExternalMessageReceiver(groupId).map(messageReceiver ->
-                messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
-        ).orElseThrow(MessageReceiverNotFoundError::new);
+        return messageReceiverService.findExternalMessageReceiver(groupId).map(messageReceiver -> messageRequestRepository.findAllByDeliveryStatusAndMessageReceiverAndIsVoidedFalse(messageDeliveryStatus, messageReceiver)
+        ).orElse(Stream.empty());
     }
 }

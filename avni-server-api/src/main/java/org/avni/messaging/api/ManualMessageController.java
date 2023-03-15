@@ -1,6 +1,6 @@
 package org.avni.messaging.api;
 
-import org.avni.messaging.contract.ManualBroadcastMessageContract;
+import org.avni.messaging.contract.ManualMessageContract;
 import org.avni.messaging.service.MessagingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,20 +11,21 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class ManualBroadcastMessageController {
+public class ManualMessageController {
     private final MessagingService messagingService;
     @Autowired
-    public ManualBroadcastMessageController(MessagingService messagingService) {
+    public ManualMessageController(MessagingService messagingService) {
         this.messagingService = messagingService;
     }
 
-    @RequestMapping(value = "/web/scheduleManualBroadcastMessage", method = RequestMethod.POST)
+    @RequestMapping(value = "/web/scheduleManualMessage", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity.BodyBuilder save(@RequestBody ManualBroadcastMessageContract manualBroadcastMessageContract) {
-        messagingService.scheduleBroadcastMessage(manualBroadcastMessageContract.getGroupIds(),
-                manualBroadcastMessageContract.getMessageTemplateId(),
-                manualBroadcastMessageContract.getParameters(),
-                manualBroadcastMessageContract.getScheduledDateTime());
+    public ResponseEntity.BodyBuilder save(@RequestBody ManualMessageContract manualMessageContract) {
+        messagingService.scheduleManualMessage(manualMessageContract.getReceiverId(),
+                manualMessageContract.getReceiverType(),
+                manualMessageContract.getMessageTemplateId(),
+                manualMessageContract.getParameters(),
+                manualMessageContract.getScheduledDateTime());
         return ResponseEntity.ok();
     }
 }

@@ -5,6 +5,7 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;
@@ -23,20 +24,20 @@ import static org.mockito.Mockito.when;
 
 public class ProgramServiceTest {
     @Test
-    public void multipleEnrolmentsProgramsAreStaticallyAlwaysEligible() {
+    public void multipleEnrolmentsProgramsAreStaticallyAlwaysEligible() throws RuleExecutionException {
         Program program = new ProgramBuilder().withUuid("1").allowMultipleEnrolments(true).build();
         List<Program> eligiblePrograms = getEligiblePrograms(program);
         assertEquals(1, eligiblePrograms.size());
     }
 
     @Test
-    public void nonMultipleEnrolmentsProgramsAreStaticallyNotEligible() {
+    public void nonMultipleEnrolmentsProgramsAreStaticallyNotEligible() throws RuleExecutionException {
         Program program = new ProgramBuilder().withUuid("1").allowMultipleEnrolments(false).build();
         List<Program> eligiblePrograms = getEligiblePrograms(program);
         assertEquals(0, eligiblePrograms.size());
     }
 
-    public List<Program> getEligiblePrograms(Program program) {
+    public List<Program> getEligiblePrograms(Program program) throws RuleExecutionException {
         ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().program(program).build();
         Individual subject = new SubjectBuilder().addEnrolment(enrolment).build();
 

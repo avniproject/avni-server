@@ -1,5 +1,7 @@
 package org.avni.messaging.api;
 
+import org.avni.messaging.contract.web.GroupMessageRequestResponse;
+import org.avni.messaging.contract.web.MessageRequestResponse;
 import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.ReceiverType;
@@ -38,10 +40,10 @@ public class MessageController {
     @RequestMapping(value = MessageEndpoint + "/subject/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") String subjectId) {
+    public ResponseEntity<List<MessageRequestResponse>> fetchAllMsgsNotYetSentForContactSubject(@PathVariable("id") String subjectId) {
         Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(
                 individualService.getIndividual(subjectId).getId(), ReceiverType.Subject, MessageDeliveryStatus.NotSent);
-        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+        return ResponseEntity.ok(messagesNotSent.map(MessageRequestResponse::fromMessageRequest).collect(Collectors.toList()));
     }
 
     @RequestMapping(value = MessageEndpoint + "/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
@@ -57,16 +59,16 @@ public class MessageController {
     @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactGroup(@PathVariable("id") String groupId) {
+    public ResponseEntity<List<GroupMessageRequestResponse>> fetchAllMsgsNotYetSentForContactGroup(@PathVariable("id") String groupId) {
         Stream<MessageRequest> messagesNotSent = messageRequestService.getGroupMessages(groupId, MessageDeliveryStatus.NotSent);
-        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+        return ResponseEntity.ok(messagesNotSent.map(GroupMessageRequestResponse::fromMessageRequest).collect(Collectors.toList()));
     }
 
     @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsSentForContactGroup(@PathVariable("id") String groupId) {
+    public ResponseEntity<List<GroupMessageRequestResponse>> fetchAllMsgsSentForContactGroup(@PathVariable("id") String groupId) {
         Stream<MessageRequest> messagesNotSent = messageRequestService.getGroupMessages(groupId, MessageDeliveryStatus.Sent);
-        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+        return ResponseEntity.ok(messagesNotSent.map(GroupMessageRequestResponse::fromMessageRequest).collect(Collectors.toList()));
     }
 }

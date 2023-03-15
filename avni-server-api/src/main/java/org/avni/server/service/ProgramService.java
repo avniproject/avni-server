@@ -5,10 +5,7 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.OperationalProgramRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.OperationalProgram;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.Program;
+import org.avni.server.domain.*;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.OperationalProgramContract;
 import org.avni.server.web.request.ProgramRequest;
@@ -20,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -124,7 +123,12 @@ public class ProgramService implements NonScopeAwareService {
     }
 
     private List<Program> getEligibleProgramsFromInactivePrograms(Individual individual, List<Program> staticallyEnrolablePrograms) {
-        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, staticallyEnrolablePrograms);
+        EligibilityRuleResponseEntity eligibilityRuleResponseEntity = null;
+        try {
+            eligibilityRuleResponseEntity = ruleService.executeProgramEligibilityCheckRule(individual, staticallyEnrolablePrograms);
+        } catch (RuleExecutionException e) {
+            return new ArrayList<>();
+        }
 
         List<EligibilityRuleEntity> allEligiblePrograms = eligibilityRuleResponseEntity.getEligibilityRuleEntities().stream()
                 .filter(EligibilityRuleEntity::isEligible)
