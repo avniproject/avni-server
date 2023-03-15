@@ -13,6 +13,7 @@ public class MessageRequestResponse {
     private DateTime scheduledDateTime;
     private String messageTemplateName;
     private String messageTemplateId;
+    private String messageRule;
 
     public static MessageRequestResponse fromMessageRequest(MessageRequest messageRequest) {
         MessageRequestResponse response = new MessageRequestResponse();
@@ -25,6 +26,7 @@ public class MessageRequestResponse {
         response.messageTemplateName = messageRule.getName();
         response.entityType = messageRule.getEntityType();
         response.messageTemplateId = messageRule.getMessageTemplateId();
+        response.messageRule = messageRule.getMessageRule();
 
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         response.receiverId = messageReceiver.getReceiverId();
@@ -68,5 +70,9 @@ public class MessageRequestResponse {
 
     public String getMessageTemplateId() {
         return messageTemplateId;
+    }
+
+    public String getMessageRule() {
+        return messageRule;
     }
 }
