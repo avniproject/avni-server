@@ -49,11 +49,11 @@ public class MessageController {
     @RequestMapping(value = MessageEndpoint + "/user/{id}/msgsNotYetSent", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") String userId) {
+    public ResponseEntity<List<MessageRequestResponse>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") String userId) {
         User user = userRepository.getUser(userId);
         Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(user.getId(),
                 ReceiverType.User, MessageDeliveryStatus.NotSent);
-        return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
+        return ResponseEntity.ok(messagesNotSent.map(MessageRequestResponse::fromMessageRequest).collect(Collectors.toList()));
     }
 
     @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)
