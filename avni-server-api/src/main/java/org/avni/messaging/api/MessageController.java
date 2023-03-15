@@ -52,7 +52,7 @@ public class MessageController {
     public ResponseEntity<List<MessageRequest>> fetchAllMsgsNotYetSentForContactUser(@PathVariable("id") String userId) {
         User user = userRepository.getUser(userId);
         Stream<MessageRequest> messagesNotSent = messageRequestService.fetchPendingScheduledMessages(user.getId(),
-                ReceiverType.Subject, MessageDeliveryStatus.NotSent);
+                ReceiverType.User, MessageDeliveryStatus.NotSent);
         return ResponseEntity.ok(messagesNotSent.collect(Collectors.toList()));
     }
 
