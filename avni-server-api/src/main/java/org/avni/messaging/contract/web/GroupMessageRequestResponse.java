@@ -9,6 +9,8 @@ public class GroupMessageRequestResponse {
     private DateTime scheduledDateTime;
     private DateTime deliveredDateTime;
     private String messageTemplateId;
+    private String createdBy;
+    private String lastModifiedBy;
 
     public static GroupMessageRequestResponse fromMessageRequest(MessageRequest messageRequest) {
         GroupMessageRequestResponse response = new GroupMessageRequestResponse();
@@ -26,6 +28,8 @@ public class GroupMessageRequestResponse {
 
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         response.externalId = messageReceiver.getExternalId();
+        response.createdBy = messageRequest.getCreatedByName();
+        response.lastModifiedBy = messageRequest.getLastModifiedByName();
 
         return response;
     }
@@ -48,5 +52,13 @@ public class GroupMessageRequestResponse {
 
     public String getMessageTemplateId() {
         return messageTemplateId;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
     }
 }

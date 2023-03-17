@@ -14,6 +14,8 @@ public class MessageRequestResponse {
     private String messageTemplateName;
     private String messageTemplateId;
     private String messageRule;
+    private String createdBy;
+    private String lastModifiedBy;
 
     public static MessageRequestResponse fromMessageRequest(MessageRequest messageRequest) {
         MessageRequestResponse response = new MessageRequestResponse();
@@ -32,6 +34,8 @@ public class MessageRequestResponse {
         response.receiverId = messageReceiver.getReceiverId();
         response.receiverType = messageReceiver.getReceiverType();
         response.externalId = messageReceiver.getExternalId();
+        response.createdBy = messageRequest.getCreatedByName();
+        response.lastModifiedBy = messageRequest.getLastModifiedByName();
 
         return response;
     }
@@ -74,5 +78,13 @@ public class MessageRequestResponse {
 
     public String getMessageRule() {
         return messageRule;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
     }
 }
