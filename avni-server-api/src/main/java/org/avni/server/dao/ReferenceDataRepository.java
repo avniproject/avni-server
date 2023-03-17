@@ -12,7 +12,7 @@ import java.util.List;
 
 @NoRepositoryBean
 @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
-public interface ReferenceDataRepository<T extends CHSEntity> extends CHSRepository<T>, JpaRepository<T, Long> {
+public interface ReferenceDataRepository<T extends CHSEntity> extends CHSRepository<T>, CustomJpaRepository<T, Long> {
     T findByName(String name);
     T findByNameIgnoreCase(String name);
 
