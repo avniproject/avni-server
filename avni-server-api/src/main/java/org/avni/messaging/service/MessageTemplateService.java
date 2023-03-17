@@ -2,6 +2,7 @@ package org.avni.messaging.service;
 
 import org.avni.messaging.contract.glific.GlificMessageTemplate;
 import org.avni.messaging.repository.GlificMessageTemplateRepository;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class MessageTemplateService {
 
     public List<GlificMessageTemplate> findAll() {
         return organisationConfigService.isMessagingEnabled()?
-                messageTemplateRepository.findAll():
+                messageTemplateRepository.findAllForOrganisationId(UserContextHolder.getUserContext().getOrganisationId()):
                 Collections.emptyList();
     }
 }
