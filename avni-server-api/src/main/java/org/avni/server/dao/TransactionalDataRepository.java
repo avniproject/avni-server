@@ -20,7 +20,7 @@ import java.util.List;
 
 @NoRepositoryBean
 @PreAuthorize(value = "hasAnyAuthority('user')")
-public interface TransactionalDataRepository<T extends CHSEntity> extends CHSRepository<T>, JpaRepository<T, Long>, JpaSpecificationExecutor<T> {
+public interface TransactionalDataRepository<T extends CHSEntity> extends CHSRepository<T>, CustomJpaRepository<T, Long>, JpaSpecificationExecutor<T> {
     default T findOne(Long id) {
         return findById(id).orElse(null);
     }
