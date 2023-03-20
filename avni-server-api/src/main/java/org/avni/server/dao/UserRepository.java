@@ -29,6 +29,14 @@ import java.util.Optional;
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
 @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
 public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
+
+    @Query(value = "SELECT u FROM User u where u.isVoided = false  " +
+            "and (:name is null or u.name like %:name%) " +
+            "and (:email is null or u.email like %:email%) " +
+            "and (:phoneNumber is null or u.phoneNumber like %:phoneNumber%)")
+    Page<User> findUsersByNameOrEmailOrPhoneNumber(String name, String email, String phoneNumber, Pageable pageable);
+
+
     User findByUsername(String username);
     User findByUuid(String uuid);
     Optional<User> findById(Long id);
