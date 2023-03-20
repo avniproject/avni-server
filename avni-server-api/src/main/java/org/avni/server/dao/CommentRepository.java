@@ -1,16 +1,15 @@
 package org.avni.server.dao;
 
-import java.util.ArrayList;
-
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.Individual;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -21,8 +20,8 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
     List<Comment> findByIsVoidedFalseAndCommentThreadIdOrderByLastModifiedDateTimeAscIdAsc(Long threadId);
 
     @Override
-    default Page<Comment> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
+    default Slice<Comment> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncAuditSpecification(syncParameters)
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());
     }

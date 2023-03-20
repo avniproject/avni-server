@@ -1,12 +1,12 @@
 package org.avni.server.dao;
 
-import java.util.stream.Stream;
+import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.joda.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "groupSubject", path = "groupSubject", exported = false)
@@ -110,8 +111,8 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     }
 
     @Override
-    default Page<GroupSubject> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
+    default Slice<GroupSubject> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncAuditSpecification(syncParameters)
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());
     }

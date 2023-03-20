@@ -1,7 +1,9 @@
 package org.avni.server.web;
 
+import org.avni.server.web.response.slice.SlicedResources;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 
@@ -20,6 +22,13 @@ public interface RestControllerResourceProcessor<T> {
         List<Resource<T>> resources = new ArrayList<>();
         for (T it : page) resources.add(this.process(new Resource<>(it)));
         return new PagedResources<>(resources, pageMetadata);
+    }
+
+    default SlicedResources<Resource<T>> wrap(Slice<T> slice) {
+        SlicedResources.SliceMetadata sliceMetadata = new SlicedResources.SliceMetadata(slice.getSize(), slice.getNumber(), slice.hasNext());
+        List<Resource<T>> resources = new ArrayList<>();
+        for (T it : slice) resources.add(this.process(new Resource<>(it)));
+        return new SlicedResources<>(resources, sliceMetadata);
     }
 
     default List<Resource<T>> wrap(List<T> list) {

@@ -10,10 +10,11 @@ import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.web.request.ChecklistRequest;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
@@ -74,16 +75,16 @@ public class ChecklistController extends AbstractController<Checklist> implement
 
     @RequestMapping(value = "/txNewChecklistEntity", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScope(
+    public SlicedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
             Pageable pageable) {
-        if (checklistDetailUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (checklistDetailUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         ChecklistDetail checklistDetail = checklistDetailRepository.findByUuid(checklistDetailUuid);
-        if (checklistDetail == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (checklistDetail == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         Checklist checklist = checklistRepository.findFirstByChecklistDetail(checklistDetail);
-        if(checklist == null || checklist.getProgramEnrolment() == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        if(checklist == null || checklist.getProgramEnrolment() == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(checklistRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable, checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncParameters.SyncEntityName.Checklist));
     }
 

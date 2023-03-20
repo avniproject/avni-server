@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.domain.CHSEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -12,7 +13,7 @@ import javax.persistence.TypedQuery;
 import java.io.Serializable;
 import java.util.List;
 
-public class CustomJpaRepositoryImpl<T, ID extends Serializable> extends SimpleJpaRepository<T, ID> implements CustomJpaRepository<T, ID> {
+public class CustomJpaRepositoryImpl<T extends CHSEntity, ID extends Serializable> extends SimpleJpaRepository<T, ID> implements CustomJpaRepository<T, ID> {
 
     public CustomJpaRepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);

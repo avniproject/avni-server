@@ -1,15 +1,14 @@
 package org.avni.server.dao;
 
-import java.util.ArrayList;
-
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectMigration;
 import org.avni.server.domain.SubjectType;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -50,7 +49,7 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
     }
 
     @Override
-    default Page<SubjectMigration> getSyncResults(SyncParameters syncParameters) {
+    default Slice<SubjectMigration> getSyncResults(SyncParameters syncParameters) {
         return findAll(syncAuditSpecification(syncParameters)
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());

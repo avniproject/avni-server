@@ -7,6 +7,7 @@ import org.avni.server.domain.ProgramEnrolment;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -36,8 +37,8 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
     }
 
     @Override
-    default Page<ProgramEncounter> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
+    default Slice<ProgramEncounter> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncAuditSpecification(syncParameters)
                         .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());

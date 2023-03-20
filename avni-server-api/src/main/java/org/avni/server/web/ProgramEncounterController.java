@@ -14,11 +14,12 @@ import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.web.request.ProgramEncounterRequest;
 import org.avni.server.web.request.ProgramEncountersContract;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
@@ -92,14 +93,14 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
+    public SlicedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programEncounterTypeUuid", required = false) String encounterTypeUuid,
             Pageable pageable) throws Exception {
-        if (encounterTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
-        if (encounterType == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (encounterType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
 
         FormMapping formMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
         if (formMapping == null)

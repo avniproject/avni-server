@@ -1,7 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.EntityApprovalStatus;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,8 +33,8 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     }
 
     @Override
-    default Page<EntityApprovalStatus> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncEntityChangedAuditSpecification(syncParameters)
+    default Slice<EntityApprovalStatus> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getEntityTypeUuid(), syncParameters.getSyncEntityName()))
                 .and(syncStrategySpecification(syncParameters)), syncParameters.getPageable());
     }

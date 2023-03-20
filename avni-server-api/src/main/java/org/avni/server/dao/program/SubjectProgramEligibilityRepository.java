@@ -8,7 +8,7 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.program.SubjectProgramEligibility;
 import org.avni.server.framework.security.UserContextHolder;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -55,7 +55,7 @@ public interface SubjectProgramEligibilityRepository extends TransactionalDataRe
     }
 
     @Override
-    default Page<SubjectProgramEligibility> getSyncResults(SyncParameters syncParameters) {
+    default Slice<SubjectProgramEligibility> getSyncResults(SyncParameters syncParameters) {
         return findAll(syncAuditSpecification(syncParameters)
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());

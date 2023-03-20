@@ -6,12 +6,16 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEnrolment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "txNewChecklistEntity", path = "txNewChecklistEntity", exported = false)
@@ -29,8 +33,8 @@ public interface ChecklistRepository extends TransactionalDataRepository<Checkli
     Checklist findFirstByChecklistDetail(ChecklistDetail checklistDetail);
 
     @Override
-    default Page<Checklist> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
+    default Slice<Checklist> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncAuditSpecification(syncParameters)
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());
     }

@@ -4,6 +4,7 @@ import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementGroup;
 import org.avni.server.application.FormMapping;
+import org.avni.server.dao.CustomJpaRepositoryImpl;
 import org.avni.server.domain.*;
 import org.avni.server.domain.individualRelationship.IndividualRelationGenderMapping;
 import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
@@ -22,8 +23,10 @@ import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 
 import java.util.stream.Collectors;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
+@EnableJpaRepositories(repositoryBaseClass = CustomJpaRepositoryImpl.class)
 public class Avni {
     private final JobService jobService;
 
