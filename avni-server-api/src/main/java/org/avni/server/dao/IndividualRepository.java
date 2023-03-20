@@ -1,12 +1,16 @@
 package org.avni.server.dao;
 
 import org.avni.server.application.projections.WebSearchResultProjection;
-import org.avni.server.domain.*;
+import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.Concept;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.projection.IndividualWebProjection;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,8 +37,8 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     }
 
     @Override
-    default Page<Individual> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
+    default Slice<Individual> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncAuditSpecification(syncParameters)
                         .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());

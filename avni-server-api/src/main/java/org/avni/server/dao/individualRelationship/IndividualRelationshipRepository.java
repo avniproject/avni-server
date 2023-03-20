@@ -1,7 +1,5 @@
 package org.avni.server.dao.individualRelationship;
 
-import java.util.*;
-
 import org.avni.server.dao.FindByLastModifiedDateTime;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SyncParameters;
@@ -13,12 +11,17 @@ import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import static org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil.joinUserSubjectAssignment;
 
@@ -69,7 +72,7 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
     }
 
     @Override
-    default Page<IndividualRelationship> getSyncResults(SyncParameters syncParameters) {
+    default Slice<IndividualRelationship> getSyncResults(SyncParameters syncParameters) {
         return findAll(syncAuditSpecification(syncParameters)
                         .and(syncStrategySpecification(syncParameters)),
                 syncParameters.getPageable());

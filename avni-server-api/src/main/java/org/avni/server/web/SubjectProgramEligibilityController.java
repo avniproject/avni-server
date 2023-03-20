@@ -15,15 +15,15 @@ import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.web.request.program.SubjectProgramEligibilityContract;
 import org.avni.server.web.response.AvniEntityResponse;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -63,15 +63,15 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
 
     @RequestMapping(value = "/subjectProgramEligibility", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<SubjectProgramEligibility>> getSubjectProgramEligibilityByOperatingIndividualScope(
+    public SlicedResources<Resource<SubjectProgramEligibility>> getSubjectProgramEligibilityByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
             Pageable pageable) {
         if (subjectTypeUuid == null || subjectTypeUuid.isEmpty())
-            return wrap(new PageImpl<>(Collections.emptyList()));
+            return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
-        if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(subjectProgramEligibilityRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.SubjectProgramEligibility));
     }
 

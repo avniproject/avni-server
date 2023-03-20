@@ -6,27 +6,27 @@ import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.domain.Program;
+import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.projection.ProgramEnrolmentProjection;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ProgramEnrolmentService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
-import org.avni.server.web.response.AvniEntityResponse;
-import org.joda.time.DateTime;
-import org.avni.server.domain.Program;
-import org.avni.server.domain.ProgramEnrolment;
-import org.avni.server.projection.ProgramEnrolmentProjection;
 import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.ProgramEncountersContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
+import org.avni.server.web.response.AvniEntityResponse;
+import org.avni.server.web.response.slice.SlicedResources;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -67,15 +67,15 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @GetMapping(value = {"/programEnrolment", /* Deprecated -> */ "/programEnrolment/search/lastModified", "/programEnrolment/search/byIndividualsOfCatchmentAndLastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
+    public SlicedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programUuid", required = false) String programUuid,
             Pageable pageable) throws Exception {
-        if (programUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (programUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         else {
             Program program = programRepository.findByUuid(programUuid);
-            if (program == null) return wrap(new PageImpl<>(Collections.emptyList()));
+            if (program == null) return wrap(new SliceImpl<>(Collections.emptyList()));
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));

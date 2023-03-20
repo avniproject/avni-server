@@ -12,11 +12,13 @@ import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.web.response.CommentThreadResponse;
 import org.avni.server.web.request.CommentThreadContract;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
@@ -57,14 +59,14 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @GetMapping(value = {"/commentThread"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScope(
+    public SlicedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,
             Pageable pageable) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) {
-            return wrap(new PageImpl<>(Collections.emptyList()));
+            return wrap(new SliceImpl<>(Collections.emptyList()));
         }
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.CommentThread));
     }

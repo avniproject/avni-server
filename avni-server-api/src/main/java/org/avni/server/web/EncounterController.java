@@ -14,11 +14,12 @@ import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EncounterRequest;
 import org.avni.server.web.request.PointRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
@@ -155,14 +156,14 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
+    public SlicedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
             Pageable pageable) throws Exception {
-        if (encounterTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
-        if (encounterType == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        if (encounterType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         FormMapping formMapping = formMappingService.find(encounterType, FormType.Encounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for encounter %s", encounterType.getName()));

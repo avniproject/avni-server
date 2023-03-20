@@ -7,6 +7,7 @@ import org.avni.server.domain.Individual;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,8 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
-import java.util.Date;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +32,8 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
             long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     @Override
-    default Page<Encounter> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
+    default Slice<Encounter> getSyncResults(SyncParameters syncParameters) {
+        return findAllAsSlice(syncAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                 .and(syncStrategySpecification(syncParameters)),
         syncParameters.getPageable());
