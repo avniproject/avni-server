@@ -23,6 +23,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
         OperatingIndividualScopeAwareRepository<EntityApprovalStatus> {
     EntityApprovalStatus findFirstByEntityIdAndEntityTypeAndIsVoidedFalseOrderByStatusDateTimeDesc(Long entityId, EntityApprovalStatus.EntityType entityType);
 
+    @Override
     default Specification<EntityApprovalStatus> syncTypeIdSpecification(String uuid, SyncParameters.SyncEntityName syncEntityName) {
         return (Root<EntityApprovalStatus> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -30,13 +31,6 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
             predicates.add(cb.equal(root.get("entityType"), EntityApprovalStatus.EntityType.valueOf(syncEntityName.name())));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
-    }
-
-    @Override
-    default Slice<EntityApprovalStatus> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncEntityChangedAuditSpecification(syncParameters)
-                .and(syncTypeIdSpecification(syncParameters.getEntityTypeUuid(), syncParameters.getSyncEntityName()))
-                .and(syncStrategySpecification(syncParameters)), syncParameters.getPageable());
     }
 
     @Override

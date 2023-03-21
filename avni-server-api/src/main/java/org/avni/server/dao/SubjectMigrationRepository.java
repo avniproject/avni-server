@@ -47,12 +47,4 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
                 .and(syncStrategySpecification(syncParameters))
         ) > 0;
     }
-
-    @Override
-    default Slice<SubjectMigration> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
 }

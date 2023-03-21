@@ -13,6 +13,7 @@ import org.avni.server.web.request.ChecklistRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -73,9 +74,9 @@ public class ChecklistController extends AbstractController<Checklist> implement
     }
 
 
-    @RequestMapping(value = "/txNewChecklistEntity", method = RequestMethod.GET)
+    @RequestMapping(value = "/txNewChecklistEntity/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScope(
+    public SlicedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
@@ -85,6 +86,21 @@ public class ChecklistController extends AbstractController<Checklist> implement
         if (checklistDetail == null) return wrap(new SliceImpl<>(Collections.emptyList()));
         Checklist checklist = checklistRepository.findFirstByChecklistDetail(checklistDetail);
         if(checklist == null || checklist.getProgramEnrolment() == null) return wrap(new SliceImpl<>(Collections.emptyList()));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(checklistRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable, checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncParameters.SyncEntityName.Checklist));
+    }
+
+    @RequestMapping(value = "/txNewChecklistEntity", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public PagedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScope(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
+            Pageable pageable) {
+        if (checklistDetailUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        ChecklistDetail checklistDetail = checklistDetailRepository.findByUuid(checklistDetailUuid);
+        if (checklistDetail == null) return wrap(new PageImpl<>(Collections.emptyList()));
+        Checklist checklist = checklistRepository.findFirstByChecklistDetail(checklistDetail);
+        if(checklist == null || checklist.getProgramEnrolment() == null) return wrap(new PageImpl<>(Collections.emptyList()));
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(checklistRepository, userService.getCurrentUser(), lastModifiedDateTime, now, checklistDetail.getId(), pageable, checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncParameters.SyncEntityName.Checklist));
     }
 

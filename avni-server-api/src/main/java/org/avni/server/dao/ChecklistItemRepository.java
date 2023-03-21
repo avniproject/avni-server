@@ -28,13 +28,6 @@ public interface ChecklistItemRepository extends TransactionalDataRepository<Che
 
     Set<ChecklistItem> findByChecklistProgramEnrolmentIndividual(Individual individual);
 
-    @Override
-    default Slice<ChecklistItem> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
     default Specification<ChecklistItem> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<ChecklistItem> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();

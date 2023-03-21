@@ -18,12 +18,14 @@ import org.avni.server.web.request.ProgramEncountersContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
 import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
+import org.springframework.hateoas.PagedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
@@ -65,9 +67,9 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         return new AvniEntityResponse(programEnrolmentRepository.findByUuid(request.getUuid()));
     }
 
-    @GetMapping(value = {"/programEnrolment", /* Deprecated -> */ "/programEnrolment/search/lastModified", "/programEnrolment/search/byIndividualsOfCatchmentAndLastModified"})
+    @GetMapping(value = {"/programEnrolment/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
+    public SlicedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programUuid", required = false) String programUuid,
@@ -76,6 +78,24 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         else {
             Program program = programRepository.findByUuid(programUuid);
             if (program == null) return wrap(new SliceImpl<>(Collections.emptyList()));
+            FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
+            if (formMapping == null)
+                throw new Exception(String.format("No form mapping found for program %s", program.getName()));
+            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.Enrolment));
+        }
+    }
+
+    @GetMapping(value = {"/programEnrolment", /* Deprecated -> */ "/programEnrolment/search/lastModified", "/programEnrolment/search/byIndividualsOfCatchmentAndLastModified"})
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public PagedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "programUuid", required = false) String programUuid,
+            Pageable pageable) throws Exception {
+        if (programUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        else {
+            Program program = programRepository.findByUuid(programUuid);
+            if (program == null) return wrap(new PageImpl<>(Collections.emptyList()));
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));

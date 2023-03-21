@@ -55,13 +55,6 @@ public interface SubjectProgramEligibilityRepository extends TransactionalDataRe
     }
 
     @Override
-    default Slice<SubjectProgramEligibility> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
-    @Override
     default boolean isEntityChangedForCatchment(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))

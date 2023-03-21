@@ -19,13 +19,6 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
 
     List<Comment> findByIsVoidedFalseAndCommentThreadIdOrderByLastModifiedDateTimeAscIdAsc(Long threadId);
 
-    @Override
-    default Slice<Comment> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
     default Specification<Comment> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<Comment> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();

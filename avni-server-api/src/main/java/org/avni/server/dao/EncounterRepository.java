@@ -32,13 +32,6 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
             long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     @Override
-    default Slice<Encounter> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                .and(syncTypeIdSpecification(syncParameters.getTypeId()))
-                .and(syncStrategySpecification(syncParameters)),
-        syncParameters.getPageable());
-    }
-
     default Specification<Encounter> syncTypeIdSpecification(Long typeId) {
         return (Root<Encounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 cb.equal(root.get("encounterType").get("id"), typeId);

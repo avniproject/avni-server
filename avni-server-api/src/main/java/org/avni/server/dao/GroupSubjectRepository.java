@@ -111,13 +111,6 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     }
 
     @Override
-    default Slice<GroupSubject> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
-    @Override
     default boolean isEntityChangedForCatchment(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))

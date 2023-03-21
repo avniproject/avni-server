@@ -92,17 +92,10 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);
 
+    @Override
     default Specification<ProgramEnrolment> syncTypeIdSpecification(Long typeId) {
         return (Root<ProgramEnrolment> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 cb.equal(root.get("program").get("id"), typeId);
-    }
-
-    @Override
-    default Slice<ProgramEnrolment> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
-                        .and(syncTypeIdSpecification(syncParameters.getTypeId()))
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
     }
 
     @Override
