@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.avni.server.dao.IdentifierAssignmentRepository;
 import org.avni.server.dao.IdentifierSourceRepository;
@@ -64,6 +65,18 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
         identifierAssignmentService.generateIdentifiersIfNecessary(currentUser);
 
         return wrap(identifierAssignmentRepository.findByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullOrderByAssignmentOrderAsc(currentUser, CHSEntity.toDate(lastModifiedDateTime), pageable));
+    }
+
+    @RequestMapping(value = "/identifierAssignment/v2", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
+    public SlicedResources<Resource<IdentifierAssignment>> getAsSlice(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            Pageable pageable) {
+        User currentUser = userService.getCurrentUser();
+        identifierAssignmentService.generateIdentifiersIfNecessary(currentUser);
+
+        return wrap(identifierAssignmentRepository.findSliceByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullOrderByAssignmentOrderAsc(currentUser, CHSEntity.toDate(lastModifiedDateTime), pageable));
     }
 
     @RequestMapping(value = "/identifierAssignments", method = RequestMethod.POST)

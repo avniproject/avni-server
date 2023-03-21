@@ -3,6 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.domain.News;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,8 @@ public interface NewsRepository extends TransactionalDataRepository<News>, FindB
     List<News> findByPublishedDateNotNullAndIsVoidedFalse();
 
     Page<News> findByPublishedDateNotNullAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(Date lastModifiedDateTime, Date now, Pageable pageable);
+
+    Slice<News> findSliceByPublishedDateNotNullAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(Date lastModifiedDateTime, Date now, Pageable pageable);
 
     boolean existsByPublishedDateNotNullAndLastModifiedDateTimeGreaterThan(Date lastModifiedDateTime);
 }

@@ -10,6 +10,7 @@ import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.AbstractController;
 import org.avni.server.web.RestControllerResourceProcessor;
 import org.avni.server.web.request.TaskRequest;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,17 @@ public class TaskController extends AbstractController<Task> implements RestCont
             Pageable pageable) {
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(taskRepository.findByAssignedToAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
+    }
+
+    @RequestMapping(value = "/task/v2", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
+    public SlicedResources<Resource<Task>> getTasksAsSlice(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            Pageable pageable) {
+        User user = UserContextHolder.getUserContext().getUser();
+        return wrap(taskRepository.findSliceByAssignedToAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
 
     @RequestMapping(value = "/tasks", method = RequestMethod.POST)
