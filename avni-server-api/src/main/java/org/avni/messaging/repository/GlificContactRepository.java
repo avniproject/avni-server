@@ -19,7 +19,7 @@ import java.util.List;
 @Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
     public static final String GLIFIC_CONTACT_FOR_PHONE_NUMBER = "glificContactForPhoneNumber";
-    public static final String INDIA_ISD_CODE = "+91";
+    public static final String INDIA_ISD_CODE = "91";
     public static final String PHONE_NUMBER = "${phoneNumber}";
     public static final String RECEIVER_NAME = "${receiverName}";
     public static final String RECEIVER_ID = "${receiverId}";
