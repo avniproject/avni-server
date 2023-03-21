@@ -31,17 +31,10 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
     Page<ProgramEncounter> findByProgramEnrolmentIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
+    @Override
     default Specification<ProgramEncounter> syncTypeIdSpecification(Long typeId) {
         return (Root<ProgramEncounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 cb.equal(root.get("encounterType").get("id"), typeId);
-    }
-
-    @Override
-    default Slice<ProgramEncounter> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncTypeIdSpecification(syncParameters.getTypeId()))
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
     }
 
     @Override

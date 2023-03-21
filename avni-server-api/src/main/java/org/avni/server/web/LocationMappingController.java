@@ -5,7 +5,7 @@ import org.avni.server.dao.SyncParameters;
 import org.avni.server.domain.ParentLocationMapping;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
-import org.avni.server.web.response.slice.SlicedResources;
+import org.springframework.hateoas.PagedResources;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class LocationMappingController implements RestControllerResourceProcesso
 
     @RequestMapping(value = {"/locationMapping/search/lastModified", "/locationMapping/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user','admin')")
-    public SlicedResources<Resource<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
+    public PagedResources<Resource<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {

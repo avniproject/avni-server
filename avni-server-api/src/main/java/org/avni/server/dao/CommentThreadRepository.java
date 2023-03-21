@@ -18,13 +18,6 @@ import java.util.List;
 @PreAuthorize("hasAnyAuthority('user','admin')")
 public interface CommentThreadRepository extends TransactionalDataRepository<CommentThread>, FindByLastModifiedDateTime<CommentThread>, OperatingIndividualScopeAwareRepository<CommentThread> {
 
-    @Override
-    default Slice<CommentThread> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
     default Specification<CommentThread> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<CommentThread> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();

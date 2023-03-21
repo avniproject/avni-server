@@ -18,6 +18,7 @@ import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -91,9 +92,9 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         return wrap(programEncounterRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable));
     }
 
-    @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
+    @RequestMapping(value = "/programEncounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
+    public SlicedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programEncounterTypeUuid", required = false) String encounterTypeUuid,
@@ -101,6 +102,23 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
         if (encounterType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
+
+        FormMapping formMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
+        if (formMapping == null)
+            throw new Exception(String.format("No form mapping found for program encounter %s", encounterType.getName()));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.ProgramEncounter));
+    }
+
+    @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public PagedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "programEncounterTypeUuid", required = false) String encounterTypeUuid,
+            Pageable pageable) throws Exception {
+        if (encounterTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
+        if (encounterType == null) return wrap(new PageImpl<>(Collections.emptyList()));
 
         FormMapping formMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
         if (formMapping == null)

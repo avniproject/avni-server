@@ -32,13 +32,6 @@ public interface ChecklistRepository extends TransactionalDataRepository<Checkli
 
     Checklist findFirstByChecklistDetail(ChecklistDetail checklistDetail);
 
-    @Override
-    default Slice<Checklist> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
     default Specification<Checklist> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<Checklist> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();

@@ -18,6 +18,7 @@ import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -154,9 +155,9 @@ public class EncounterController extends AbstractController<Encounter> implement
         return wrap(encounterRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
 
-    @RequestMapping(value = "/encounter", method = RequestMethod.GET)
+    @RequestMapping(value = "/encounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
+    public SlicedResources<Resource<Encounter>> getEncountersByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
@@ -164,6 +165,22 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
         if (encounterType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
+        FormMapping formMapping = formMappingService.find(encounterType, FormType.Encounter);
+        if (formMapping == null)
+            throw new Exception(String.format("No form mapping found for encounter %s", encounterType.getName()));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.Encounter));
+    }
+
+    @RequestMapping(value = "/encounter", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public PagedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
+            Pageable pageable) throws Exception {
+        if (encounterTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
+        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
+        if (encounterType == null) return wrap(new PageImpl<>(Collections.emptyList()));
         FormMapping formMapping = formMappingService.find(encounterType, FormType.Encounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for encounter %s", encounterType.getName()));

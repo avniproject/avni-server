@@ -72,13 +72,6 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
     }
 
     @Override
-    default Slice<IndividualRelationship> getSyncResults(SyncParameters syncParameters) {
-        return findAll(syncAuditSpecification(syncParameters)
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
-    }
-
-    @Override
     default boolean isEntityChangedForCatchment(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))

@@ -31,17 +31,10 @@ import java.util.stream.Stream;
 @PreAuthorize("hasAnyAuthority('user','admin')")
 public interface IndividualRepository extends TransactionalDataRepository<Individual>, OperatingIndividualScopeAwareRepository<Individual> {
 
+    @Override
     default Specification<Individual> syncTypeIdSpecification(Long typeId) {
         return (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
                 cb.equal(root.get("subjectType").get("id"), typeId);
-    }
-
-    @Override
-    default Slice<Individual> getSyncResults(SyncParameters syncParameters) {
-        return findAllAsSlice(syncAuditSpecification(syncParameters)
-                        .and(syncTypeIdSpecification(syncParameters.getTypeId()))
-                        .and(syncStrategySpecification(syncParameters)),
-                syncParameters.getPageable());
     }
 
     @Override

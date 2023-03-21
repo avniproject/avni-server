@@ -3,7 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.ParentLocationMapping;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
@@ -24,7 +24,7 @@ public interface LocationMappingRepository extends ReferenceDataRepository<Paren
             "where c.id = :catchmentId\n" +
             "  and llm.last_modified_date_time between :lastModifiedDateTime and :now\n" +
             "order by llm.last_modified_date_time asc, llm.id asc", nativeQuery = true)
-    Slice<ParentLocationMapping> getSyncResults(
+    Page<ParentLocationMapping> getSyncResults(
             long catchmentId,
             Date lastModifiedDateTime,
             Date now,
@@ -42,7 +42,7 @@ public interface LocationMappingRepository extends ReferenceDataRepository<Paren
     Long getChangedRowCount(long catchmentId, Date lastModifiedDateTime);
 
     @Override
-    default Slice<ParentLocationMapping> getSyncResults(SyncParameters syncParameters) {
+    default Page<ParentLocationMapping> getSyncResults(SyncParameters syncParameters) {
         return getSyncResults(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate(), syncParameters.getNow().toDate(), syncParameters.getPageable());
     }
 

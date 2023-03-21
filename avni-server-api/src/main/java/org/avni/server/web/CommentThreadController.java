@@ -57,9 +57,9 @@ public class CommentThreadController extends AbstractController<CommentThread> i
         this.scopeBasedSyncService = scopeBasedSyncService;
     }
 
-    @GetMapping(value = {"/commentThread"})
+    @GetMapping(value = {"/commentThread/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScope(
+    public SlicedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,
@@ -67,6 +67,20 @@ public class CommentThreadController extends AbstractController<CommentThread> i
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) {
             return wrap(new SliceImpl<>(Collections.emptyList()));
+        }
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.CommentThread));
+    }
+
+    @GetMapping(value = {"/commentThread"})
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public PagedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScope(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,
+            Pageable pageable) {
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+        if (subjectType == null) {
+            return wrap(new PageImpl<>(Collections.emptyList()));
         }
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.CommentThread));
     }

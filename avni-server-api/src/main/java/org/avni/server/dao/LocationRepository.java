@@ -7,7 +7,6 @@ import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -41,7 +40,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "where c.id = :catchmentId\n" +
             "  and al1.last_modified_date_time between :lastModifiedDateTime and :now\n" +
             "order by al1.last_modified_date_time asc, al1.id asc", nativeQuery = true)
-    Slice<AddressLevel> getSyncResults(long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
+    Page<AddressLevel> getSyncResults(long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     @Query(value = "select count(*)\n" +
             "from catchment c\n" +
@@ -102,7 +101,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     boolean existsByLastModifiedDateTimeAfterAndTypeIn(Date lastModifiedDateTime, Collection<@NotNull AddressLevelType> type);
 
     @Override
-    default Slice<AddressLevel> getSyncResults(SyncParameters syncParameters) {
+    default Page<AddressLevel> getSyncResults(SyncParameters syncParameters) {
         return getSyncResults(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate(), syncParameters.getNow().toDate(), syncParameters.getPageable());
     }
 
