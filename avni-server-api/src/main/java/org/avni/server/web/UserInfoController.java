@@ -5,10 +5,7 @@ import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.GroupPrivilegeService;
-import org.avni.server.service.IdpService;
-import org.avni.server.service.OrganisationConfigService;
-import org.avni.server.service.UserService;
+import org.avni.server.service.*;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.UserBulkUploadContract;
 import org.avni.server.web.request.UserInfo;
@@ -26,14 +23,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.w3c.dom.stylesheets.LinkStyle;
 
 import javax.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 public class UserInfoController implements RestControllerResourceProcessor<UserInfo> {
@@ -42,17 +37,18 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     private final UserRepository userRepository;
     private final OrganisationRepository organisationRepository;
     private final UserService userService;
-    private final IdpService idpService;
+    private final IdpServiceFactory idpServiceFactory;
     private final OrganisationConfigService organisationConfigService;
     private final GroupPrivilegeService groupPrivilegeService;
 
     @Autowired
-    public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService, IdpService idpService, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService) {
+    public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService,
+                              IdpServiceFactory idpServiceFactory, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.userService = userService;
-        this.idpService = idpService;
+        this.idpServiceFactory = idpServiceFactory;
         this.organisationConfigService = organisationConfigService;
         this.groupPrivilegeService = groupPrivilegeService;
         logger = LoggerFactory.getLogger(this.getClass());
@@ -159,7 +155,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             if (newUser) userService.addToDefaultUserGroup(user);
             logger.info(String.format("Saved User with UUID %s", userContract.getUuid()));
             OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(UserContextHolder.getOrganisation());
-            idpService.createUserIfNotExists(savedUser, organisationConfig);
+            idpServiceFactory.getIdpService(organisationRepository.findOne(organisationId)).createUserIfNotExists(savedUser, organisationConfig);
         });
     }
 

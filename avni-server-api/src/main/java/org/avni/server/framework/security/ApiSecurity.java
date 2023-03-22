@@ -1,5 +1,6 @@
 package org.avni.server.framework.security;
 
+import org.avni.server.config.IdpType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -17,15 +18,16 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class ApiSecurity extends WebSecurityConfigurerAdapter {
     private final AuthService authService;
-    private final Boolean isDev;
 
     @Value("${avni.defaultUserName}")
     private String defaultUserName;
 
+    @Value("${avni.idp.type}")
+    private IdpType idpType;
+
     @Autowired
-    public ApiSecurity(AuthService authService, Boolean isDev) {
+    public ApiSecurity(AuthService authService) {
         this.authService = authService;
-        this.isDev = isDev;
     }
 
     @Override
@@ -36,7 +38,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()
                 .and()
-                .addFilter(new AuthenticationFilter(authenticationManager(), authService, isDev, defaultUserName))
+                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }

@@ -1,21 +1,21 @@
 package org.avni.server.service;
 
+import com.auth0.jwk.SigningKeyNotFoundException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
-import org.avni.server.service.CognitoAuthServiceImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import org.avni.server.config.IdpType;
 import org.avni.server.dao.AccountAdminRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
-import org.avni.server.domain.AccountAdmin;
 import org.avni.server.framework.security.AuthService;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +34,8 @@ public class AuthServiceTest {
     @Mock
     private UserRepository userRepository;
     @Mock
+    private KeycloakAuthService keycloakAuthService;
+    @Mock
     private CognitoAuthServiceImpl cognitoAuthService;
     @Mock
     private AccountAdminRepository accountAdminRepository;
@@ -45,7 +47,8 @@ public class AuthServiceTest {
     public void setup() {
         initMocks(this);
 //        cognitoAuthService = new CognitoUserContextServiceImpl(organisationRepository, userRepository, "poolId", "clientId");
-        authService = new AuthService(cognitoAuthService, userRepository, organisationRepository, accountAdminRepository);
+        authService = new AuthService(userRepository, organisationRepository, accountAdminRepository,
+                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null));
         String uuid = "9ecc2805-6528-47ee-8267-9368b266ad39";
         user = new User();
         user.setUuid(uuid);
@@ -55,7 +58,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyUserContextIfUserCannotBeFoundInToken() {
+    public void shouldReturnEmptyUserContextIfUserCannotBeFoundInToken() throws SigningKeyNotFoundException {
         when(cognitoAuthService.getUserFromToken("some token")).thenReturn(null);
         UserContext userContext = authService.authenticateByToken("some token", null);
         assertThat(userContext.getUser(), is(equalTo(null)));
@@ -64,7 +67,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldAddOrganisationToContext() throws UnsupportedEncodingException {
+    public void shouldAddOrganisationToContext() throws SigningKeyNotFoundException {
         Organisation organisation = new Organisation();
         when(organisationRepository.findOne(1L)).thenReturn(organisation);
         when(userRepository.findByUuid(user.getUuid())).thenReturn(user);
@@ -80,7 +83,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldAddRolesToContext() throws UnsupportedEncodingException {
+    public void shouldAddRolesToContext() throws SigningKeyNotFoundException {
         Organisation organisation = new Organisation();
         List<AccountAdmin> adminUser = new ArrayList<>();
         adminUser.add(accountAdmin);
@@ -122,7 +125,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldSetcontextBasedOnUserId() {
+    public void shouldSetcontextBasedOnUserId() throws SigningKeyNotFoundException {
         Organisation organisation = new Organisation();
         when(organisationRepository.findOne(1L)).thenReturn(organisation);
         when(userRepository.findById(100L)).thenReturn(Optional.of(user));

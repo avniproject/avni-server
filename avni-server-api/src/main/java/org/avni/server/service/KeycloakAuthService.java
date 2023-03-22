@@ -3,19 +3,23 @@ package org.avni.server.service;
 import com.auth0.jwt.interfaces.Verification;
 import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.framework.context.SpringProfiles;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.stereotype.Service;
 
+@Service
+@ConditionalOnExpression("'${avni.idp.type}'=='keycloak' or '${avni.idp.type}'=='both'")
 public class KeycloakAuthService extends BaseIAMService {
     private final Logger logger = LoggerFactory.getLogger(KeycloakAuthService.class);
     private final AdapterConfig adapterConfig;
     private final AvniKeycloakConfig avniKeycloakConfig;
 
-    public KeycloakAuthService(UserRepository userRepository, AdapterConfig adapterConfig, SpringProfiles springProfiles,
-                               AvniKeycloakConfig avniKeycloakConfig) {
-        super(userRepository, springProfiles, null);
+    @Autowired
+    public KeycloakAuthService(UserRepository userRepository, AdapterConfig adapterConfig, AvniKeycloakConfig avniKeycloakConfig) {
+        super(userRepository);
         this.adapterConfig = adapterConfig;
         this.avniKeycloakConfig = avniKeycloakConfig;
     }
@@ -26,7 +30,6 @@ public class KeycloakAuthService extends BaseIAMService {
         logger.debug(String.format("Keycloak server: %s", adapterConfig.getAuthServerUrl()));
         logger.debug(String.format("Realm name: %s", adapterConfig.getRealm()));
         logger.debug(String.format("Audience name: %s", adapterConfig.getResource()));
-        logger.debug(String.format("Spring profile: %s", springProfiles.getProfiles()));
     }
 
     protected String getJwkProviderUrl() {
@@ -36,6 +39,7 @@ public class KeycloakAuthService extends BaseIAMService {
     protected String getIssuer() {
         return String.format(avniKeycloakConfig.getRealmsUrlFormat(), adapterConfig.getAuthServerUrl(), adapterConfig.getRealm());
     }
+
     @Override
     protected String getUserUuidField() {
         return avniKeycloakConfig.getCustomUserUUID();

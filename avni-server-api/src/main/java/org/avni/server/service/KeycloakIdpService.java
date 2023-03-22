@@ -14,7 +14,7 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -23,43 +23,33 @@ import javax.ws.rs.core.Response;
 import java.util.*;
 
 @Service("KeycloakIdpService")
-@ConditionalOnProperty(value = "avni.connectToKeycloak", havingValue = "true")
+@ConditionalOnExpression("'${avni.idp.type}'=='keycloak' or '${avni.idp.type}'=='both'")
 public class KeycloakIdpService extends IdpServiceImpl {
     public static final String KEYCLOAK_ADMIN_API_CLIENT_ID = "admin-api";
 
     private static final Logger logger = LoggerFactory.getLogger(KeycloakIdpService.class);
 
-    @Autowired
-    private AdapterConfig adapterConfig;
+    private final AdapterConfig adapterConfig;
 
     private RealmResource realmResource;
 
     @Autowired
-    public KeycloakIdpService(SpringProfiles springProfiles) {
+    public KeycloakIdpService(SpringProfiles springProfiles, AdapterConfig adapterConfig) {
         super(springProfiles);
-    }
-
-    private boolean skipCallingKeycloak() {
-        return springProfiles.isDev() && !this.idpInDev();
-    }
-
-    private boolean doCallKeycloak() {
-        return !springProfiles.isDev() || this.idpInDev();
+        this.adapterConfig = adapterConfig;
     }
 
     @PostConstruct
     public void init() {
-        if (doCallKeycloak()) {
-            //Is the appending "/auth" required, we cannot set getAuthServerUrl() property with the auth, as its used in KeycloakAuthService without to get certs
-            Keycloak keycloak = KeycloakBuilder.builder().serverUrl(adapterConfig.getAuthServerUrl())
-                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS).realm(adapterConfig.getRealm())
-                    .clientId(KEYCLOAK_ADMIN_API_CLIENT_ID)
-                    .clientSecret((String) adapterConfig.getCredentials().get("secret"))
-                    .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
-            keycloak.tokenManager().getAccessToken();
-            realmResource = keycloak.realm(adapterConfig.getRealm());
-            logger.info("Initialized keycloak client");
-        }
+        //Is the appending "/auth" required, we cannot set getAuthServerUrl() property with the auth, as its used in KeycloakAuthService without to get certs
+        Keycloak keycloak = KeycloakBuilder.builder().serverUrl(adapterConfig.getAuthServerUrl())
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS).realm(adapterConfig.getRealm())
+                .clientId(KEYCLOAK_ADMIN_API_CLIENT_ID)
+                .clientSecret((String) adapterConfig.getCredentials().get("secret"))
+                .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
+        keycloak.tokenManager().getAccessToken();
+        realmResource = keycloak.realm(adapterConfig.getRealm());
+        logger.info("Initialized keycloak client");
     }
 
     @Override
@@ -70,15 +60,11 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
-        if (skipCallingKeycloak()) {
-            logger.info("Skipping keycloak create user in dev mode...");
-            return null;
-        }
         logger.info(String.format("Initiating create keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
 
         UserRepresentation newUser = getUserRepresentation(user);
         Response response = realmResource.users().create(newUser);
-        if(response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL ||
+        if (response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL ||
                 response.getStatusInfo().getFamily() == Response.Status.Family.INFORMATIONAL) {
             resetPassword(user, password); //Just set password using same resetPassword method
         }
@@ -88,10 +74,6 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public void updateUser(User user) {
-        if (skipCallingKeycloak()) {
-            logger.info("Skipping keycloak update user in dev mode...");
-            return;
-        }
         logger.info(String.format("Initiating update keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         UserRepresentation userRep = getUser(user);
         updateUserRepresentation(user, userRep);
@@ -106,14 +88,10 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public void deleteUser(User user) {
-        if (skipCallingKeycloak()) {
-            logger.info("Skipping keycloak delete user in dev mode...");
-            return;
-        }
         logger.info(String.format("Initiating keycloak delete user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         UserRepresentation userRep = getUser(user);
         Response response = realmResource.users().delete(userRep.getId());
-        if(response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL ||
+        if (response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL ||
                 response.getStatusInfo().getFamily() == Response.Status.Family.INFORMATIONAL) {
             logger.info(String.format("delete keycloak-user request | username '%s'", user.getUsername()));
         }
@@ -127,10 +105,6 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public boolean resetPassword(User user, String password) {
-        if (skipCallingKeycloak()) {
-            logger.info("Skipping keycloak reset password in dev mode...");
-            return false;
-        }
         logger.info(String.format("Initiating reset password keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         realmResource.users().get(getUser(user).getId()).resetPassword(getCredentialRepresentation(password));
         logger.info(String.format("password reset for keycloak-user | username '%s'", user.getUsername()));
@@ -138,12 +112,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
     }
 
     @Override
-    public boolean idpInDev() {
-        return springProfiles.isDev();
-    }
-
-    @Override
-    public Boolean existsInIDP(User user) {
+    public boolean exists(User user) {
         return !realmResource.users().search(user.getUsername(), true).isEmpty();
     }
 
@@ -175,10 +144,6 @@ public class KeycloakIdpService extends IdpServiceImpl {
     }
 
     private void enableOrDisableUser(User user, boolean enable) {
-        if (skipCallingKeycloak()) {
-            logger.info("Skipping keycloak reset password in dev mode...");
-            return;
-        }
         logger.info(String.format("Initiating enable/disable keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         UserRepresentation userRep = getUser(user);
         userRep.setEnabled(enable);
@@ -191,7 +156,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
     }
 
     private UserRepresentation getUser(User user) {
-       return realmResource.users().search(user.getUsername(), true).stream()
+        return realmResource.users().search(user.getUsername(), true).stream()
                 .findFirst()
                 .orElseThrow(EntityNotFoundException::new);
     }

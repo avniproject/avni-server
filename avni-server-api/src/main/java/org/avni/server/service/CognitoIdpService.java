@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,7 @@ import java.util.Optional;
 import static org.avni.server.application.OrganisationConfigSettingKey.donotRequirePasswordChangeOnFirstLogin;
 
 @Service("CognitoIdpService")
-@ConditionalOnProperty(value = "aws.cognito.enable", havingValue = "true", matchIfMissing = true)
+@ConditionalOnExpression("'${avni.idp.type}'=='cognito' or '${avni.idp.type}'=='both'")
 public class CognitoIdpService extends IdpServiceImpl {
     private static final Logger logger = LoggerFactory.getLogger(CognitoIdpService.class);
 
@@ -40,9 +41,6 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     private AWSCognitoIdentityProvider cognitoClient;
 
-    @Value("${avni.connectToCognitoInDev}")
-    private boolean cognitoInDevProperty;
-
     @Autowired
     public CognitoIdpService(SpringProfiles springProfiles) {
         super(springProfiles);
@@ -50,35 +48,21 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     @PostConstruct
     public void init() {
-        if (!springProfiles.isDev() || this.idpInDev()) {
-            cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
-                    .withCredentials(getCredentialsProvider())
-                    .withRegion(REGION)
-                    .build();
-            logger.info("Initialized CognitoIDP client");
-        }
-    }
-
-    private boolean skipCallingCognito() {
-        return springProfiles.isDev() && !this.idpInDev();
+        cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
+                .withCredentials(getCredentialsProvider())
+                .withRegion(REGION)
+                .build();
+        logger.info("Initialized CognitoIDP client");
     }
 
     @Override
     public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito CREATE in dev mode...");
-            return null;
-        }
         AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, getDefaultPassword(user));
         return createCognitoUser(createUserRequest, user, organisationConfig);
     }
 
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito CREATE in dev mode...");
-            return null;
-        }
         boolean isTmpPassword = S.isEmpty(password);
         AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, isTmpPassword ? getDefaultPassword(user) : password);
         UserCreateStatus userCreateStatus = createCognitoUser(createUserRequest, user, organisationConfig);
@@ -91,10 +75,6 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     @Override
     public void updateUser(User user) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito UPDATE in dev mode...");
-            return;
-        }
         AdminUpdateUserAttributesRequest updateUserRequest = prepareUpdateUserRequest(user);
         logger.info(String.format("Initiating UPDATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         cognitoClient.adminUpdateUserAttributes(updateUserRequest);
@@ -103,10 +83,6 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     @Override
     public void disableUser(User user) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito DISABLE in dev mode...");
-            return;
-        }
         logger.info(String.format("Initiating DISABLE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         cognitoClient.adminDisableUser(new AdminDisableUserRequest().withUserPoolId(userPoolId).withUsername(user.getUsername()));
         logger.info(String.format("Disabled cognito-user | username '%s'", user.getUsername()));
@@ -114,10 +90,6 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     @Override
     public void deleteUser(User user) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito DELETE in dev mode...");
-            return;
-        }
         logger.info(String.format("Initiating DELETE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         cognitoClient.adminDeleteUser(new AdminDeleteUserRequest().withUserPoolId(userPoolId).withUsername(user.getUsername()));
         logger.info(String.format("Deleted cognito-user | username '%s'", user.getUsername()));
@@ -125,10 +97,6 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     @Override
     public void enableUser(User user) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito ENABLE in dev mode...");
-            return;
-        }
         logger.info(String.format("Initiating ENABLE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         cognitoClient.adminEnableUser(new AdminEnableUserRequest().withUserPoolId(userPoolId).withUsername(user.getUsername()));
         logger.info(String.format("Enabled cognito-user | username '%s'", user.getUsername()));
@@ -136,10 +104,6 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     @Override
     public boolean resetPassword(User user, String password) {
-        if (skipCallingCognito()) {
-            logger.info("Skipping Cognito reset password in dev mode...");
-            return false;
-        }
         logger.info(String.format("Initiating reset password cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         AdminSetUserPasswordRequest adminSetUserPasswordRequest = new AdminSetUserPasswordRequest()
                 .withUserPoolId(userPoolId)
@@ -152,12 +116,7 @@ public class CognitoIdpService extends IdpServiceImpl {
     }
 
     @Override
-    public boolean idpInDev() {
-        return springProfiles.isDev() && cognitoInDevProperty;
-    }
-
-    @Override
-    public Boolean existsInIDP(User user) {
+    public boolean exists(User user) {
         try {
             cognitoClient.adminGetUser(new AdminGetUserRequest().withUserPoolId(userPoolId).withUsername(user.getUsername()));
             return true;

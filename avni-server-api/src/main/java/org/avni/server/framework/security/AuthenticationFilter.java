@@ -1,11 +1,11 @@
 package org.avni.server.framework.security;
 
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
+import org.avni.server.config.IdpType;
 import org.avni.server.domain.UserContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.util.StringUtils;
@@ -20,16 +20,16 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     public static final String USER_NAME_HEADER = "USER-NAME";
     public static final String AUTH_TOKEN_HEADER = "AUTH-TOKEN";
     public static final String ORGANISATION_UUID = "ORGANISATION-UUID";
-    private static Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
-    private AuthService authService;
-    private Boolean isDev;
-    private String defaultUserName;
+    private final AuthService authService;
+    private final String defaultUserName;
+    private final IdpType idpType;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, Boolean isDev, String defaultUserName) {
+    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName) {
         super(authenticationManager);
         this.authService = authService;
-        this.isDev = isDev;
+        this.idpType = idpType;
         this.defaultUserName = defaultUserName;
     }
 
@@ -43,7 +43,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
             String queryString = request.getQueryString();
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
             String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
-            UserContext userContext = isDev
+            UserContext userContext = idpType.equals(IdpType.none)
                     ? authService.authenticateByUserName(StringUtils.isEmpty(username) ? defaultUserName : username, organisationUUID)
                     : authService.authenticateByToken(derivedAuthToken, organisationUUID);
             authTokenManager.setAuthCookie(request, response, derivedAuthToken);

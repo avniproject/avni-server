@@ -39,7 +39,7 @@ public class UserController {
     private final UserRepository userRepository;
     private final OrganisationRepository organisationRepository;
     private final UserService userService;
-    private final IdpService idpService;
+    private final IdpServiceFactory idpServiceFactory;
     private final AccountAdminService accountAdminService;
     private final AccountRepository accountRepository;
     private final AccountAdminRepository accountAdminRepository;
@@ -55,7 +55,7 @@ public class UserController {
                           UserRepository userRepository,
                           OrganisationRepository organisationRepository,
                           UserService userService,
-                          IdpService idpService,
+                          IdpServiceFactory idpServiceFactory,
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
@@ -64,7 +64,7 @@ public class UserController {
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.userService = userService;
-        this.idpService = idpService;
+        this.idpServiceFactory = idpServiceFactory;
         this.accountAdminService = accountAdminService;
         this.accountRepository = accountRepository;
         this.accountAdminRepository = accountAdminRepository;
@@ -101,7 +101,7 @@ public class UserController {
 
             Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
             OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
-            idpService.createUserWithPassword(user, userContract.getPassword(), organisationConfig);
+            idpServiceFactory.getIdpService(organisation).createUserWithPassword(user, userContract.getPassword(), organisationConfig);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             userService.addToDefaultUserGroup(user);
@@ -141,7 +141,7 @@ public class UserController {
             resetSyncService.recordSyncAttributeValueChangeForUser(user, userContract, UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
             user = setUserAttributes(user, userContract);
 
-            idpService.updateUser(user);
+            idpServiceFactory.getIdpService(user).updateUser(user);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
@@ -197,7 +197,7 @@ public class UserController {
     public ResponseEntity deleteUser(@PathVariable("id") Long id) {
         try {
             User user = userRepository.findOne(id);
-            idpService.deleteUser(user);
+            idpServiceFactory.getIdpService(user).deleteUser(user);
             user.setVoided(true);
             user.setDisabledInCognito(true);
             userRepository.save(user);
@@ -217,13 +217,13 @@ public class UserController {
         try {
             User user = userRepository.findOne(id);
             if (disable) {
-                idpService.disableUser(user);
+                idpServiceFactory.getIdpService(user).disableUser(user);
                 user.setDisabledInCognito(true);
                 userRepository.save(user);
                 logger.info(String.format("Disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
             } else {
                 if (user.isDisabledInCognito()) {
-                    idpService.enableUser(user);
+                    idpServiceFactory.getIdpService(user).enableUser(user);
                     user.setDisabledInCognito(false);
                     userRepository.save(user);
                     logger.info(String.format("Enabled previously disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
@@ -244,7 +244,7 @@ public class UserController {
     public ResponseEntity resetPassword(@PathVariable("id") Long id, @RequestParam() String password) {
         try {
             User user = userRepository.findOne(id);
-            idpService.resetPassword(user, password);
+            idpServiceFactory.getIdpService(user).resetPassword(user, password);
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             logger.error(ex.getMessage());

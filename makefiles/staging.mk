@@ -8,8 +8,7 @@ tunnel_staging_server_for_debug:
 start_server_staging: build_server
 	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
 
-	OPENCHS_MODE=staging \
-	OPENCHS_COGNITO_IN_DEV=false \
+	AVNI_IDP_TYPE=cognito \
 	OPENCHS_CLIENT_ID=$(OPENCHS_STAGING_APP_CLIENT_ID) \
 	OPENCHS_USER_POOL=$(OPENCHS_STAGING_USER_POOL_ID) \
 	OPENCHS_IAM_USER=$(OPENCHS_STAGING_IAM_USER) \
@@ -22,8 +21,7 @@ start_server_staging: build_server
 debug_server_staging: build_server
 	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
 	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:6015/openchs?currentSchema=public \
-	OPENCHS_MODE=staging \
-	OPENCHS_COGNITO_IN_DEV=false \
+	AVNI_IDP_TYPE=cognito \
 	OPENCHS_CLIENT_ID=$(OPENCHS_STAGING_APP_CLIENT_ID) \
 	OPENCHS_USER_POOL=$(OPENCHS_STAGING_USER_POOL_ID) \
 	OPENCHS_IAM_USER=$(OPENCHS_STAGING_IAM_USER) \

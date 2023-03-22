@@ -12,7 +12,6 @@ import com.auth0.jwt.interfaces.Verification;
 import com.google.common.base.Strings;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
-import org.avni.server.framework.context.SpringProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -24,13 +23,9 @@ import java.security.interfaces.RSAPublicKey;
 public abstract class BaseIAMService implements IAMAuthService {
     private final Logger logger = LoggerFactory.getLogger(BaseIAMService.class);
     private final UserRepository userRepository;
-    protected final SpringProfiles springProfiles;
-    private final BaseIAMService alternateIAMService;
 
-    protected BaseIAMService(UserRepository userRepository, SpringProfiles springProfiles, BaseIAMService alternateIAMService) {
+    protected BaseIAMService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.springProfiles = springProfiles;
-        this.alternateIAMService = alternateIAMService;
     }
 
     private String getValueInToken(DecodedJWT jwt, String name) {
@@ -40,7 +35,7 @@ public abstract class BaseIAMService implements IAMAuthService {
     }
 
     @Override
-    public User getUserFromToken(String token) {
+    public User getUserFromToken(String token) throws SigningKeyNotFoundException {
         logConfiguration();
         if (StringUtils.isEmpty(token)) return null;
 
@@ -54,25 +49,23 @@ public abstract class BaseIAMService implements IAMAuthService {
                 : userRepository.findByUuid(userUUID);
     }
 
-    protected abstract String getUserUuidField();
-
-    protected abstract String getUsernameField();
-
-    private DecodedJWT verifyAndDecodeToken(String token) {
+    protected DecodedJWT verifyAndDecodeToken(String token) throws SigningKeyNotFoundException {
+        Jwk jwk;
         try {
             DecodedJWT unverifiedJwt = JWT.decode(token);
+            JwkProvider provider = new GuavaCachedJwkProvider(new UrlJwkProvider(new URL(getJwkProviderUrl())));
+            jwk = provider.get(unverifiedJwt.getKeyId());
+        } catch (MalformedURLException e) {
+            logger.error("Check the settings for public key " + getIssuer(), e);
+            throw new RuntimeException(e);
+        } catch (SigningKeyNotFoundException signingKeyNotFoundException) {
+            throw signingKeyNotFoundException;
+        } catch (JwkException e) {
+            logger.error("Could not get public key for key specified in jwt token " + token, e);
+            throw new RuntimeException(e);
+        }
 
-            Jwk jwk;
-            try {
-                JwkProvider provider = new GuavaCachedJwkProvider(new UrlJwkProvider(new URL(getJwkProviderUrl())));
-                jwk = provider.get(unverifiedJwt.getKeyId());
-            } catch (SigningKeyNotFoundException e) {
-                if (springProfiles.isStaging() && alternateIAMService != null) {
-                    logger.info("Signing key not found with Cognito. Trying with Keycloak as it is staging profile.", e);
-                    return alternateIAMService.verifyAndDecodeToken(token);
-                } else
-                    throw e;
-            }
+        try {
             RSAPublicKey publicKey = (RSAPublicKey) jwk.getPublicKey();
             Algorithm algorithm = Algorithm.RSA256(publicKey, null);
             Verification verification = JWT.require(algorithm)
@@ -84,7 +77,7 @@ public abstract class BaseIAMService implements IAMAuthService {
             logger.debug(String.format("Verifying token for issuer: %s, token_use: id and audience: %s", this.getIssuer(), getAudience()));
             return verifier.verify(token);
 
-        } catch (MalformedURLException | InvalidPublicKeyException e) {
+        } catch (InvalidPublicKeyException e) {
             logger.error("Check the settings for public key " + getIssuer(), e);
             throw new RuntimeException(e);
         } catch (JWTDecodeException e) {
@@ -93,11 +86,12 @@ public abstract class BaseIAMService implements IAMAuthService {
         } catch (JWTVerificationException e) {
             logger.error("Could not verify token " + token, e);
             throw new RuntimeException(e);
-        } catch (JwkException e) {
-            logger.error("Could not get public key for key specified in jwt token " + token, e);
-            throw new RuntimeException(e);
         }
     }
+
+    protected abstract String getUserUuidField();
+
+    protected abstract String getUsernameField();
 
     protected abstract void addClaim(Verification verification);
 

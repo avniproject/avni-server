@@ -18,11 +18,7 @@ public interface IdpService {
 
     UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig);
 
-    boolean idpInDev();
-
-    Boolean existsInIDP(User user);
-
-    Boolean exists(User user);
+    boolean exists(User user);
 
     UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig);
 }

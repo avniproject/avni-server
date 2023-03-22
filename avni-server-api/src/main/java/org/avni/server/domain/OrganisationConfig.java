@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
 import org.hibernate.annotations.BatchSize;
@@ -83,6 +84,15 @@ public class OrganisationConfig extends OrganisationAwareEntity {
         public List<Extension> getExtensions() {
             List<Object> extensions = (List<Object>) settings.get(Extension.EXTENSION_DIR);
             return extensions.stream().map(map -> new Extension((Map<String, Object>) map)).collect(Collectors.toList());
+        }
+
+        public boolean useKeycloakAsIdp() {
+            Object value = settings.get(OrganisationConfigSettingKey.useKeycloakAsIDP.toString());
+            if (value == null)
+                return false;
+            if (value instanceof Boolean)
+                return Boolean.parseBoolean(value.toString());
+            return false;
         }
     }
 

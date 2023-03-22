@@ -1,26 +1,27 @@
 package org.avni.server.service;
 
+import org.avni.server.config.IdpType;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 public abstract class IdpServiceImpl implements IdpService {
     private static final Logger logger = LoggerFactory.getLogger(IdpServiceImpl.class);
     protected final SpringProfiles springProfiles;
+
+    @Value("${avni.idp.type}")
+    private IdpType idpType;
 
     public IdpServiceImpl(SpringProfiles springProfiles) {
         this.springProfiles = springProfiles;
     }
 
     @Override
-    public Boolean exists(User user) {
-        if (springProfiles.isDev() && !idpInDev()) {
-            logger.info("Skipping Cognito EXISTS in dev mode...");
-            return true;
-        }
-        return existsInIDP(user);
+    public boolean exists(User user) {
+        return true;
     }
 
     @Override

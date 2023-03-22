@@ -1,5 +1,6 @@
 package org.avni.server.framework.security;
 
+import com.auth0.jwk.SigningKeyNotFoundException;
 import org.avni.server.dao.AccountAdminRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
@@ -7,7 +8,12 @@ import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.service.BaseIAMService;
 import org.avni.server.service.IAMAuthService;
+import org.avni.server.service.IdpService;
+import org.avni.server.service.IdpServiceFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,14 +33,15 @@ public class AuthService {
     public final static SimpleGrantedAuthority ADMIN_AUTHORITY = new SimpleGrantedAuthority(User.ADMIN);
     public final static SimpleGrantedAuthority ORGANISATION_ADMIN_AUTHORITY = new SimpleGrantedAuthority(User.ORGANISATION_ADMIN);
     public final static List<SimpleGrantedAuthority> ALL_AUTHORITIES = Arrays.asList(USER_AUTHORITY, ADMIN_AUTHORITY, ORGANISATION_ADMIN_AUTHORITY);
-    private IAMAuthService iamAuthService;
-    private UserRepository userRepository;
-    private OrganisationRepository organisationRepository;
-    private AccountAdminRepository accountAdminRepository;
+    private final UserRepository userRepository;
+    private final OrganisationRepository organisationRepository;
+    private final AccountAdminRepository accountAdminRepository;
+    private final IdpServiceFactory idpServiceFactory;
+    private final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     @Autowired
-    public AuthService(IAMAuthService iamAuthService, UserRepository userRepository, OrganisationRepository organisationRepository, AccountAdminRepository accountAdminRepository) {
-        this.iamAuthService = iamAuthService;
+    public AuthService(UserRepository userRepository, OrganisationRepository organisationRepository, AccountAdminRepository accountAdminRepository, IdpServiceFactory idpServiceFactory) {
+        this.idpServiceFactory = idpServiceFactory;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.accountAdminRepository = accountAdminRepository;
@@ -47,7 +54,14 @@ public class AuthService {
 
     public UserContext authenticateByToken(String authToken, String organisationUUID) {
         becomeSuperUser();
-        UserContext userContext = changeUser(iamAuthService.getUserFromToken(authToken), organisationUUID);
+        IAMAuthService iamAuthService = idpServiceFactory.getAuthService();
+        UserContext userContext;
+        try {
+            userContext = changeUser(iamAuthService.getUserFromToken(authToken), organisationUUID);
+        } catch (SigningKeyNotFoundException signingKeyNotFoundException) {
+            logger.error("This should not have happened as this exception must be handled, it is only due to Java language mechanism that this throws has to exist", signingKeyNotFoundException);
+            throw new RuntimeException(signingKeyNotFoundException);
+        }
         userContext.setAuthToken(authToken);
         return userContext;
     }
