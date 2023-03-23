@@ -65,15 +65,15 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) {
-        GlificGetContactsResponse glificContacts = getContact(phoneNumber);
+        String phoneNoWithCountryCode = INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
+        GlificGetContactsResponse glificContacts = getContact(phoneNoWithCountryCode);
         return glificContacts.getContacts().isEmpty() ?
-                createContact(phoneNumber, fullName) :
+                createContact(phoneNoWithCountryCode, fullName) :
                 glificContacts.getContacts().get(0).getId();
     }
 
     private String createContact(String phoneNumber, String fullName) {
-        String phoneNoWithCountryCode = INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, phoneNoWithCountryCode)
+        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, phoneNumber)
                 .replace(FULL_NAME, fullName);
         GlificOptinContactResponse glificOptinContactResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificOptinContactResponse>>() {
         });
