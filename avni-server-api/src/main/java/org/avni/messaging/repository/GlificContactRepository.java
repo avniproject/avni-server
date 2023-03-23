@@ -15,6 +15,8 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
+
 @Repository
 @Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
@@ -43,8 +45,6 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String ADD_CONTACT_GROUP_JSON;
     private final String UPDATE_CONTACT_GROUP_JSON;
     private final String DELETE_CONTACT_GROUP_JSON;
-
-    private final static int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
 
     public GlificContactRepository(GlificRestClient glificRestClient) {
         this.glificRestClient = glificRestClient;

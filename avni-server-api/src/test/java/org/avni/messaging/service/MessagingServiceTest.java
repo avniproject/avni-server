@@ -160,7 +160,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException, PhoneNumberNotAvailableException {
+    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException, PhoneNumberNotAvailableOrIncorrectException {
         MessageRule messageRule = new MessageRule();
         messageRule.setId(10L);
         messageRule.setMessageRule("I am a message rule");

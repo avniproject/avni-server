@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.messaging.domain.EntityType;
-import org.avni.messaging.service.PhoneNumberNotAvailableException;
+import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.application.*;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
@@ -19,6 +19,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
+
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +32,6 @@ import java.util.stream.Stream;
 @Service
 public class IndividualService implements ScopeAwareService {
     public static final String PHONE_NUMBER_FOR_SUBJECT_ID = "phoneNumberForSubjectId";
-    public static final int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
-
     private final IndividualRepository individualRepository;
     private final ObservationService observationService;
     private final GroupSubjectRepository groupSubjectRepository;
@@ -377,13 +377,13 @@ public class IndividualService implements ScopeAwareService {
     }
 
     @Cacheable(value = PHONE_NUMBER_FOR_SUBJECT_ID)
-    public String fetchIndividualPhoneNumber(String subjectId) throws PhoneNumberNotAvailableException {
+    public String fetchIndividualPhoneNumber(String subjectId) throws PhoneNumberNotAvailableOrIncorrectException {
         Individual individual = getIndividual(subjectId);
         String phoneNumber = findPhoneNumber(individual);
         if(StringUtils.hasText(phoneNumber)) {
             return phoneNumber;
         } else {
-            throw new PhoneNumberNotAvailableException();
+            throw new PhoneNumberNotAvailableOrIncorrectException();
         }
     }
 

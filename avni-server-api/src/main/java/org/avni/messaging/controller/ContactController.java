@@ -4,7 +4,7 @@ import org.avni.messaging.contract.glific.GlificContactResponse;
 import org.avni.messaging.contract.glific.Message;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.repository.GlificContactRepository;
-import org.avni.messaging.service.PhoneNumberNotAvailableException;
+import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
 import org.avni.server.service.IndividualService;
@@ -34,7 +34,7 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GlificContactResponse fetchContactSubject(@PathVariable("id") String subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableException {
+    public GlificContactResponse fetchContactSubject(@PathVariable("id") String subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableOrIncorrectException {
         String phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
         return glificContactRepository.findContact(phoneNumber);
     }
@@ -52,7 +52,7 @@ public class ContactController {
         String phoneNumber = null;
         try {
             phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
-        } catch (PhoneNumberNotAvailableException e) {
+        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
         return ResponseEntity.ok(glificContactRepository.getAllMsgsForContact(phoneNumber));

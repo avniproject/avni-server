@@ -37,19 +37,19 @@ public class IndividualMessagingService {
         this.ruleService = ruleService;
     }
 
-    private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableException {
+    private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableOrIncorrectException {
         messageReceiverService.ensureExternalIdPresent(messageReceiver);
         glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
     }
 
-    public void sendAutomatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
+    public void sendAutomatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
         String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
         ensureExternalIdPresenceAndSendMessage(messageReceiver, messageRule.getMessageTemplateId(), response);
     }
 
-    public void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
+    public void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException {
         ManualMessage manualMessage = messageRequest.getManualMessage();
         String[] parameters = manualMessage.getParameters();
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
