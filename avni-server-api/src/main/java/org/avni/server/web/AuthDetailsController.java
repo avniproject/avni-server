@@ -64,6 +64,10 @@ public class AuthDetailsController {
             return cognito;
         }
 
+        public IdpType getIdpType() {
+            return idpType;
+        }
+
         public class Keycloak {
             private final String authServerUrl;
             private final String clientId;
