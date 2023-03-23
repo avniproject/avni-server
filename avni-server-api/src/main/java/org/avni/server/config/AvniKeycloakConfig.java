@@ -13,7 +13,7 @@ public class AvniKeycloakConfig {
     private String userEmailVerified;
 
     @Value("${avni.keycloak.user.preferred.username}")
-    private String prefferedUserName;
+    private String preferredUserName;
 
     @Value("${avni.keycloak.user.uuid}")
     private String customUserUUID;
@@ -32,8 +32,8 @@ public class AvniKeycloakConfig {
         return userEmailVerified;
     }
 
-    public String getPrefferedUserName() {
-        return prefferedUserName;
+    public String getPreferredUserName() {
+        return preferredUserName;
     }
 
     public String getCustomUserUUID() {

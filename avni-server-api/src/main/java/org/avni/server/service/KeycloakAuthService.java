@@ -47,7 +47,7 @@ public class KeycloakAuthService extends BaseIAMService {
 
     @Override
     protected String getUsernameField() {
-        return avniKeycloakConfig.getPrefferedUserName();
+        return avniKeycloakConfig.getPreferredUserName();
     }
 
     @Override
