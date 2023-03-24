@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -33,7 +34,7 @@ public class AuthDetailsController {
     }
 
     @RequestMapping(value = "/idp-details", method = RequestMethod.GET)
-    public CompositeIDPDetails getCompositeIDPDetails() {
+    public CompositeIDPDetails getIDPDetails() {
         String keycloakGrantType = OAuth2Constants.PASSWORD;
         String keycloakScope = "openid";
         String keycloakClientId = avniKeycloakConfig.getVerifyTokenAudience();
@@ -41,7 +42,7 @@ public class AuthDetailsController {
         String cognitoConfigPoolId = cognitoConfig.getPoolId();
         String cognitoConfigClientId = cognitoConfig.getClientId();
         return new AuthDetailsController.CompositeIDPDetails(keycloakAuthServerUrl, keycloakClientId,
-                keycloakGrantType, keycloakScope, cognitoConfigPoolId, cognitoConfigClientId, idpType);
+                keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId, cognitoConfigClientId, idpType);
     }
 
     public static class CompositeIDPDetails {
@@ -49,10 +50,10 @@ public class AuthDetailsController {
         private final Keycloak keycloak;
         private final Cognito cognito;
 
-        public CompositeIDPDetails(String authServerUrl, String keycloakClientId, String grantType, String scope,
+        public CompositeIDPDetails(String authServerUrl, String keycloakClientId, String grantType, String scope, String keycloakRealm,
                                    String poolId, String clientId, IdpType idpType) {
             this.idpType = idpType;
-            this.keycloak = new Keycloak(authServerUrl, keycloakClientId, grantType, scope);
+            this.keycloak = new Keycloak(authServerUrl, keycloakClientId, grantType, scope, keycloakRealm);
             this.cognito = new Cognito(poolId, clientId);
         }
 
@@ -73,12 +74,14 @@ public class AuthDetailsController {
             private final String clientId;
             private final String grantType;
             private final String scope;
+            private final String realm;
 
-            public Keycloak(String authServerUrl, String clientId, String grantType, String scope) {
+            public Keycloak(String authServerUrl, String clientId, String grantType, String scope, String realm) {
                 this.authServerUrl = authServerUrl;
                 this.clientId = clientId;
                 this.grantType = grantType;
                 this.scope = scope;
+                this.realm = realm;
             }
 
             public String getAuthServerUrl() {
@@ -95,6 +98,10 @@ public class AuthDetailsController {
 
             public String getScope() {
                 return scope;
+            }
+
+            public String getRealm() {
+                return realm;
             }
         }
 

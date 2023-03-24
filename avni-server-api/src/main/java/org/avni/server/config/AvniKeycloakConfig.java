@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AvniKeycloakConfig {
-
     @Value("${avni.keycloak.verify.token.audience}")
     private String verifyTokenAudience;
 
@@ -23,6 +22,9 @@ public class AvniKeycloakConfig {
 
     @Value("${avni.keycloak.realms}")
     private String realmsUrlFormat;
+
+    @Value("${keycloak.realm}")
+    private String realm;
 
     public String getVerifyTokenAudience() {
         return verifyTokenAudience;
@@ -46,5 +48,9 @@ public class AvniKeycloakConfig {
 
     public String getRealmsUrlFormat() {
         return realmsUrlFormat;
+    }
+
+    public String getRealm() {
+        return realm;
     }
 }
