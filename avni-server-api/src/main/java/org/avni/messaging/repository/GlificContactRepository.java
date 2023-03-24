@@ -163,10 +163,9 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public void removeContactsFromGroup(String contactGroupId, List<String> contactIds) {
-        String toRemoveContacts = String.join(",", contactIds);
         String message = REMOVE_CONTACTS_IN_GROUP_JSON
                 .replace("${contactGroupId}", contactGroupId)
-                .replace("${deleteContactIds}", toRemoveContacts);
+                .replace( "[\"${deleteContactIds}\"]", contactIds.toString());
         glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
         });
     }
