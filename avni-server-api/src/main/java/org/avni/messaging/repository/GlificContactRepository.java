@@ -5,6 +5,7 @@ import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.external.GlificRestClient;
+import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
@@ -64,7 +65,11 @@ public class GlificContactRepository extends AbstractGlificRepository {
         DELETE_CONTACT_GROUP_JSON = getJson("deleteContactGroup");
     }
 
-    public String getOrCreateContact(String phoneNumber, String fullName) {
+    public String getOrCreateContact(String phoneNumber, String fullName) throws PhoneNumberNotAvailableOrIncorrectException {
+        if (phoneNumber == null || phoneNumber.length() < NO_OF_DIGITS_IN_INDIAN_MOBILE_NO) {
+            throw new PhoneNumberNotAvailableOrIncorrectException();
+        }
+
         GlificGetContactsResponse glificContacts = getContact(phoneNumber);
         return glificContacts.getContacts().isEmpty() ?
                 createContact(phoneNumber, fullName) :

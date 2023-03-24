@@ -5,6 +5,7 @@ import org.avni.messaging.contract.glific.GlificOptinContactResponse;
 import org.avni.messaging.contract.glific.GlificGetContactsResponse;
 import org.avni.messaging.contract.glific.GlificOptinContactWithErrorsResponse;
 import org.avni.messaging.external.GlificRestClient;
+import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.*;
 
 public class GlificContactRepositoryTest {
     @Test
-    public void shouldCreateContactIfNotAvailable() {
+    public void shouldCreateContactIfNotAvailable() throws PhoneNumberNotAvailableOrIncorrectException {
         GlificRestClient glificRestClient = mock(GlificRestClient.class);
         GlificContactRepository repository = new GlificContactRepository(glificRestClient);
         GlificGetContactsResponse getContactsResponse = new GlificGetContactsResponse();

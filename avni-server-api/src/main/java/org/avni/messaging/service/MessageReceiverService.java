@@ -72,10 +72,6 @@ public class MessageReceiverService {
             fullName = user.getName();
         }
 
-        if (phoneNumber == null || phoneNumber.length() < NO_OF_DIGITS_IN_INDIAN_MOBILE_NO) {
-            throw new PhoneNumberNotAvailableOrIncorrectException();
-        }
-
         String externalId = glificContactRepository.getOrCreateContact(phoneNumber, fullName);
         messageReceiver.setExternalId(externalId);
         return messageReceiverRepository.save(messageReceiver);
