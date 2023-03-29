@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
+import org.avni.server.util.S;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
@@ -62,11 +63,12 @@ public class KeycloakIdpService extends IdpServiceImpl {
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
         logger.info(String.format("Initiating create keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
 
+        boolean isTmpPassword = S.isEmpty(password);
         UserRepresentation newUser = getUserRepresentation(user);
         Response response = realmResource.users().create(newUser);
         if (response.getStatusInfo().getFamily() == Response.Status.Family.SUCCESSFUL ||
                 response.getStatusInfo().getFamily() == Response.Status.Family.INFORMATIONAL) {
-            resetPassword(user, password); //Just set password using same resetPassword method
+            resetPassword(user, isTmpPassword ? getDefaultPassword(user) : password); //Just set password using same resetPassword method
         }
         logger.info(String.format("created keycloak-user | username '%s'", user.getUsername()));
         return null;
