@@ -9,8 +9,9 @@ import javax.servlet.http.HttpServletResponse;
 
 @RestController
 public class LogoutController {
+    public static final String LOGOUT_URL = "/web/logout";
 
-    @RequestMapping(value = "/web/logout", method = RequestMethod.GET)
+    @RequestMapping(value = LOGOUT_URL, method = RequestMethod.GET)
     public String logout(HttpServletRequest request, HttpServletResponse response) {
         return "Success";
     }

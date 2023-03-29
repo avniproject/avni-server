@@ -24,7 +24,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     public static final String ORGANISATION_UUID = "ORGANISATION-UUID";
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
 
-    private static final List<String> UnprotectedResources = Arrays.asList("/cognito-details", "/idp-details");
+    private static final List<String> UnprotectedResources = Arrays.asList("/cognito-details", "/idp-details", "/favicon.ico");
 
     private final AuthService authService;
     private final String defaultUserName;

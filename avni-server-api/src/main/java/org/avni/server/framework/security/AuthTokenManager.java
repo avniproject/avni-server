@@ -2,6 +2,7 @@ package org.avni.server.framework.security;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.avni.server.web.LogoutController;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.Cookie;
@@ -35,7 +36,7 @@ public class AuthTokenManager {
     }
 
     public void setAuthCookie(HttpServletRequest request, HttpServletResponse response, String authToken) {
-        if (request.getRequestURI().equals("/web/logout")) {
+        if (request.getRequestURI().equals(LogoutController.LOGOUT_URL)) {
             response.addCookie(makeCookie("", 0));
             return;
         }
