@@ -59,7 +59,6 @@ public class AuthService {
         try {
             userContext = changeUser(iamAuthService.getUserFromToken(authToken), organisationUUID);
         } catch (SigningKeyNotFoundException signingKeyNotFoundException) {
-            logger.error("This should not have happened as this exception must be handled, it is only due to Java language mechanism that this throws has to exist", signingKeyNotFoundException);
             throw new RuntimeException(signingKeyNotFoundException);
         }
         userContext.setAuthToken(authToken);

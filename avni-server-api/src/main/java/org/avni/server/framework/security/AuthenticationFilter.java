@@ -15,12 +15,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class AuthenticationFilter extends BasicAuthenticationFilter {
     public static final String USER_NAME_HEADER = "USER-NAME";
     public static final String AUTH_TOKEN_HEADER = "AUTH-TOKEN";
     public static final String ORGANISATION_UUID = "ORGANISATION-UUID";
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+
+    private static final List<String> UnprotectedResources = Arrays.asList("/cognito-details", "/idp-details");
 
     private final AuthService authService;
     private final String defaultUserName;
@@ -42,10 +46,10 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
             String requestURI = request.getRequestURI();
             String queryString = request.getQueryString();
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
-            String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
+            String derivedAuthToken = UnprotectedResources.contains(requestURI) ? null : authTokenManager.getDerivedAuthToken(request, queryString);
             UserContext userContext = idpType.equals(IdpType.none)
-                    ? authService.authenticateByUserName(StringUtils.isEmpty(username) ? defaultUserName : username, organisationUUID)
-                    : authService.authenticateByToken(derivedAuthToken, organisationUUID);
+                        ? authService.authenticateByUserName(StringUtils.isEmpty(username) ? defaultUserName : username, organisationUUID)
+                        : authService.authenticateByToken(derivedAuthToken, organisationUUID);
             authTokenManager.setAuthCookie(request, response, derivedAuthToken);
             long start = System.currentTimeMillis();
             chain.doFilter(request, response);
