@@ -8,6 +8,9 @@ public class AvniKeycloakConfig {
     @Value("${avni.keycloak.verify.token.audience}")
     private String verifyTokenAudience;
 
+    @Value("${avni.keycloak.client}")
+    private String client;
+
     @Value("${avni.keycloak.user.email.verified}")
     private String userEmailVerified;
 
@@ -52,5 +55,9 @@ public class AvniKeycloakConfig {
 
     public String getRealm() {
         return realm;
+    }
+
+    public String getClient() {
+        return client;
     }
 }

@@ -37,7 +37,7 @@ public class AuthDetailsController {
     public CompositeIDPDetails getIDPDetails() {
         String keycloakGrantType = OAuth2Constants.PASSWORD;
         String keycloakScope = "openid";
-        String keycloakClientId = avniKeycloakConfig.getVerifyTokenAudience();
+        String keycloakClientId = avniKeycloakConfig.getClient();
         String keycloakAuthServerUrl = adapterConfig.getAuthServerUrl();
         String cognitoConfigPoolId = cognitoConfig.getPoolId();
         String cognitoConfigClientId = cognitoConfig.getClientId();
