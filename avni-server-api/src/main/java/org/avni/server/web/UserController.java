@@ -8,6 +8,7 @@ import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
+import org.avni.server.web.request.ChangePasswordRequest;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.avni.server.web.validation.ValidationException;
@@ -245,6 +246,20 @@ public class UserController {
         try {
             User user = userRepository.findOne(id);
             idpServiceFactory.getIdpService(user).resetPassword(user, password);
+            return new ResponseEntity<>(user, HttpStatus.CREATED);
+        } catch (AWSCognitoIdentityProviderException ex) {
+            logger.error(ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
+        }
+    }
+
+    @RequestMapping(value = {"/user/changePassword"}, method = RequestMethod.PUT)
+    @Transactional
+    @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
+    public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
+        try {
+            User user = userRepository.findOne(UserContextHolder.getUser().getId());
+            idpServiceFactory.getIdpService(user).resetPassword(user, changePasswordRequest.getNewPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             logger.error(ex.getMessage());
