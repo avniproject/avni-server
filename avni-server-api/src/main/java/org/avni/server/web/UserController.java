@@ -8,6 +8,7 @@ import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
+import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.avni.server.web.validation.ValidationException;
@@ -87,7 +88,7 @@ public class UserController {
     @RequestMapping(value = {"/user", "/user/accountOrgAdmin"}, method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
-    public ResponseEntity createUser(@RequestBody UserContract userContract) throws Exception {
+    public ResponseEntity createUser(@RequestBody UserContract userContract) {
         try {
             if (usernameExists(userContract.getUsername()))
                 throw new ValidationException(String.format("Username %s already exists", userContract.getUsername()));
@@ -238,13 +239,13 @@ public class UserController {
         }
     }
 
-    @RequestMapping(value = {"/user/{id}/resetPassword"}, method = RequestMethod.PUT)
+    @RequestMapping(value = {"/user/resetPassword"}, method = RequestMethod.PUT)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
-    public ResponseEntity resetPassword(@PathVariable("id") Long id, @RequestParam() String password) {
+    public ResponseEntity resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         try {
-            User user = userRepository.findOne(id);
-            idpService.resetPassword(user, password);
+            User user = userRepository.findOne(resetPasswordRequest.getUserId());
+            idpService.resetPassword(user, resetPasswordRequest.getPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             logger.error(ex.getMessage());
