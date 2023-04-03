@@ -161,8 +161,9 @@ public class SubjectApiController {
         }
         subject.setRegistrationDate(request.getRegistrationDate());
         ObservationCollection observations = RequestUtils.createObservations(request.getObservations(), conceptRepository);
-        subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), addressLevel.get(), observations);
-        subject.setAddressLevel(addressLevel.get());
+        AddressLevel newAddressLevel = addressLevel.isPresent() ? addressLevel.get() : null;
+        subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), newAddressLevel, observations);
+        subject.setAddressLevel(newAddressLevel);
         if (subjectType.isPerson()) {
             subject.setDateOfBirth(request.getDateOfBirth());
             subject.setGender(genderRepository.findByName(request.getGender()));
