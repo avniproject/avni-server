@@ -145,7 +145,7 @@ public class SubjectApiController {
             throw new IllegalArgumentException(String.format("Subject type not found with name '%s'", request.getSubjectType()));
         }
         Optional<AddressLevel> addressLevel = locationRepository.findByTitleLineageIgnoreCase(request.getAddress());
-        if (!addressLevel.isPresent()) {
+        if (!addressLevel.isPresent() && !subjectType.isAllowEmptyLocation()) {
             throw new IllegalArgumentException(String.format("Address '%s' not found", request.getAddress()));
         }
         if (StringUtils.hasLength(request.getExternalId())) {

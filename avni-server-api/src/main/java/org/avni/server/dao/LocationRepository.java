@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.Collection;
@@ -164,6 +165,9 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     Long getAddressIdByLineage(String locationTitleLineage);
 
     default Optional<AddressLevel> findByTitleLineageIgnoreCase(String locationTitleLineage) {
+        if(!StringUtils.hasText(locationTitleLineage)) {
+            return Optional.empty();
+        }
         Long addressId = getAddressIdByLineage(locationTitleLineage);
         return addressId != null ? findById(addressId) : Optional.empty();
     }
