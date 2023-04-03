@@ -39,7 +39,6 @@ public class KeycloakAuthService extends BaseIAMService {
     protected String getIssuer() {
         return String.format(avniKeycloakConfig.getRealmsUrlFormat(), adapterConfig.getAuthServerUrl(), adapterConfig.getRealm());
     }
-
     @Override
     protected String getUserUuidField() {
         return avniKeycloakConfig.getCustomUserUUID();

@@ -4,7 +4,6 @@ import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
-import org.avni.server.framework.context.DeploymentSpecificConfiguration;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.CatchmentService;

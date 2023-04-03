@@ -8,12 +8,8 @@ import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
-import org.avni.server.service.BaseIAMService;
 import org.avni.server.service.IAMAuthService;
-import org.avni.server.service.IdpService;
 import org.avni.server.service.IdpServiceFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -37,7 +33,6 @@ public class AuthService {
     private final OrganisationRepository organisationRepository;
     private final AccountAdminRepository accountAdminRepository;
     private final IdpServiceFactory idpServiceFactory;
-    private final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     @Autowired
     public AuthService(UserRepository userRepository, OrganisationRepository organisationRepository, AccountAdminRepository accountAdminRepository, IdpServiceFactory idpServiceFactory) {
