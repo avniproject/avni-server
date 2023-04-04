@@ -41,6 +41,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
     User findByUuid(String uuid);
     Optional<User> findById(Long id);
 
+    @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin', 'admin')")
     default User findOne(Long id) {
         return findById(id).orElse(null);
     }
