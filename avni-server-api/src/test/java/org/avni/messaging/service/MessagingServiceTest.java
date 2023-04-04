@@ -10,6 +10,7 @@ import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
+import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -98,7 +99,9 @@ public class MessagingServiceTest {
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
         DateTime scheduledDateTime = formatter.parseDateTime("2013-02-04 10:35:24");
-        when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRule)).thenReturn(scheduledDateTime);
+        ScheduleRuleResponseEntity scheduleRuleResponseEntity = new ScheduleRuleResponseEntity();
+        scheduleRuleResponseEntity.setScheduledDateTime(scheduledDateTime);
+        when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRule)).thenReturn(scheduleRuleResponseEntity);
 
         messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 
@@ -137,7 +140,9 @@ public class MessagingServiceTest {
 
         DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
         DateTime scheduledDateTime = formatter.parseDateTime("2013-02-04 10:35:24");
-        when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRule)).thenReturn(scheduledDateTime);
+        ScheduleRuleResponseEntity scheduleRuleResponseEntity = new ScheduleRuleResponseEntity();
+        scheduleRuleResponseEntity.setScheduledDateTime(scheduledDateTime);
+        when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRule)).thenReturn(scheduleRuleResponseEntity);
 
         String scheduleRuleAnother = "scheduleRule2";
         when(messageRuleAnother.getScheduleRule()).thenReturn(scheduleRuleAnother);
@@ -147,7 +152,9 @@ public class MessagingServiceTest {
         when(messageRuleAnother.getReceiverType()).thenReturn(ReceiverType.Subject);
 
         DateTime scheduledDateTimeOfAnotherRule = formatter.parseDateTime("2019-02-04 10:35:24");
-        when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRuleAnother)).thenReturn(scheduledDateTimeOfAnotherRule);
+        ScheduleRuleResponseEntity anotherScheduledRuleResponseEntity = new ScheduleRuleResponseEntity();
+        anotherScheduledRuleResponseEntity.setScheduledDateTime(scheduledDateTimeOfAnotherRule);
+        when(ruleService.executeScheduleRule(messageRule.getEntityType().name(), individualId, scheduleRuleAnother)).thenReturn(anotherScheduledRuleResponseEntity);
 
         messagingService.onEntitySave(individualId, subjectTypeId, EntityType.Subject, individualId, userId);
 

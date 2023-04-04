@@ -1,11 +1,10 @@
 package org.avni.server.web.request.rules.response;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 public class ScheduleRuleResponseEntity extends BaseRuleResponseEntity {
     private DateTime scheduledDateTime;
+    private Boolean shouldSend;
 
     public DateTime getScheduledDateTime() {
         return scheduledDateTime;
@@ -13,5 +12,13 @@ public class ScheduleRuleResponseEntity extends BaseRuleResponseEntity {
 
     public void setScheduledDateTime(DateTime scheduledDateTime) {
         this.scheduledDateTime = scheduledDateTime;
+    }
+
+    public Boolean getShouldSend() {
+        return shouldSend;
+    }
+
+    public void setShouldSend(Boolean shouldSend) {
+        this.shouldSend = shouldSend;
     }
 }

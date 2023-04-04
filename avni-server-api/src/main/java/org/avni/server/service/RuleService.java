@@ -213,12 +213,11 @@ public class RuleService implements NonScopeAwareService {
         return createHttpHeaderAndSendRequest("/api/encounterEligibility", ruleRequest, null, EligibilityRuleResponseEntity.class);
     }
 
-    public DateTime executeScheduleRule(String entityType, Long entityId, String scheduleRule) throws RuleExecutionException {
+    public ScheduleRuleResponseEntity executeScheduleRule(String entityType, Long entityId, String scheduleRule) throws RuleExecutionException {
         CHSEntity entity = entityRetrieverService.getEntity(entityType, entityId);
         RuleServerEntityContract contract = ruleServiceEntityContractBuilder.toContract(entityType, entity);
         MessageRequestEntity ruleRequest = new MessageRequestEntity(contract, scheduleRule, entityType);
-        ScheduleRuleResponseEntity scheduleRuleResponseEntity = createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, null, ScheduleRuleResponseEntity.class);
-        return scheduleRuleResponseEntity.getScheduledDateTime();
+        return createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, null, ScheduleRuleResponseEntity.class);
     }
 
     public String[] executeMessageRule(String entityType, Long entityId, String messageRule) throws RuleExecutionException {

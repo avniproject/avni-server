@@ -9,6 +9,7 @@ import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
+import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,8 +90,11 @@ public class MessagingService {
             else if (messageRule.getReceiverType() == ReceiverType.User)
                 messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId);
 
-            DateTime scheduledDateTime = ruleService.executeScheduleRule(messageRule.getEntityType().name(), entityId, messageRule.getScheduleRule());
-            messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, entityId, scheduledDateTime);
+            ScheduleRuleResponseEntity scheduleRuleResponse = ruleService.executeScheduleRule(messageRule.getEntityType().name(), entityId, messageRule.getScheduleRule());
+            Boolean shouldSend = scheduleRuleResponse.getShouldSend();
+            if (shouldSend == null || shouldSend) {
+                messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, entityId, scheduleRuleResponse.getScheduledDateTime());
+            }
         }
     }
 
