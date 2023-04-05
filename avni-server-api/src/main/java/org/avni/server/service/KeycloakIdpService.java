@@ -4,7 +4,7 @@ import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
 import org.avni.server.util.S;
-import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
+import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -21,7 +21,10 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityNotFoundException;
 import javax.ws.rs.core.Response;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service("KeycloakIdpService")
 @ConditionalOnExpression("'${avni.idp.type}'=='keycloak' or '${avni.idp.type}'=='both'")
@@ -47,7 +50,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS).realm(adapterConfig.getRealm())
                 .clientId(KEYCLOAK_ADMIN_API_CLIENT_ID)
                 .clientSecret((String) adapterConfig.getCredentials().get("secret"))
-                .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(10).build()).build();
+                .resteasyClient(new ResteasyClientBuilderImpl().connectionPoolSize(10).build()).build();
         keycloak.tokenManager().getAccessToken();
         realmResource = keycloak.realm(adapterConfig.getRealm());
         logger.info("Initialized keycloak client");
