@@ -1,18 +1,10 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.CardRepository;
-import org.avni.server.dao.DashboardRepository;
-import org.avni.server.dao.DashboardSectionCardMappingRepository;
-import org.avni.server.dao.DashboardSectionRepository;
-import org.avni.server.domain.CHSBaseEntity;
-import org.avni.server.domain.Dashboard;
-import org.avni.server.domain.DashboardSection;
-import org.avni.server.domain.DashboardSectionCardMapping;
+import org.avni.server.dao.*;
+import org.avni.server.domain.*;
+import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.web.request.CardContract;
-import org.avni.server.web.request.DashboardContract;
-import org.avni.server.web.request.DashboardSectionCardMappingContract;
-import org.avni.server.web.request.DashboardSectionContract;
+import org.avni.server.web.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,15 +22,17 @@ public class DashboardService implements NonScopeAwareService {
     private final CardRepository cardRepository;
     private final DashboardSectionRepository dashboardSectionRepository;
     private final DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository;
+    private final DashboardFilterRepository dashboardFilterRepository;
 
     @Autowired
     public DashboardService(DashboardRepository dashboardRepository,
                             CardRepository cardRepository,
-                            DashboardSectionRepository dashboardSectionRepository, DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository) {
+                            DashboardSectionRepository dashboardSectionRepository, DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository, DashboardFilterRepository dashboardFilterRepository) {
         this.dashboardRepository = dashboardRepository;
         this.cardRepository = cardRepository;
         this.dashboardSectionRepository = dashboardSectionRepository;
         this.dashboardSectionCardMappingRepository = dashboardSectionCardMappingRepository;
+        this.dashboardFilterRepository = dashboardFilterRepository;
     }
 
     public Dashboard saveDashboard(DashboardContract dashboardContract) {
@@ -57,7 +51,7 @@ public class DashboardService implements NonScopeAwareService {
         dashboard.setName(dashboardContract.getName());
         dashboard.setDescription(dashboardContract.getDescription());
         dashboard.setVoided(dashboardContract.isVoided());
-        Dashboard savedDashboard = dashboardRepository.save(dashboard);;
+        Dashboard savedDashboard = dashboardRepository.save(dashboard);
         uploadDashboardSections(dashboardContract, savedDashboard);
     }
 
@@ -113,6 +107,7 @@ public class DashboardService implements NonScopeAwareService {
         dashboard.setVoided(dashboardContract.isVoided());
         dashboardRepository.save(dashboard);
         setDashboardSections(dashboardContract, dashboard);
+        setDashboardFilters(dashboardContract, dashboard);
         return dashboardRepository.save(dashboard);
     }
 
@@ -155,6 +150,25 @@ public class DashboardService implements NonScopeAwareService {
             dashboardSections.add(section);
         }
         dashboard.setDashboardSections(dashboardSections);
+    }
+
+    private void setDashboardFilters(DashboardContract dashboardContract, Dashboard dashboard) {
+        Set<DashboardFilter> dashboardFilters = new HashSet<>();
+        List<DashboardFilterContract> filterContracts = dashboardContract.getFilters();
+        for (DashboardFilterContract filterContract : filterContracts) {
+            Long filterId = filterContract.getId();
+            DashboardFilter dashboardFilter;
+            if (filterId != null) {
+                dashboardFilter = dashboardFilterRepository.findOne(filterContract.getId());
+            } else {
+                dashboardFilter = new DashboardFilter();
+                dashboardFilter.assignUUID();
+            }
+            dashboardFilter.setDashboard(dashboard);
+            dashboardFilter.setFilter(filterContract.getFilter());
+            dashboardFilterRepository.save(dashboardFilter);
+        }
+        dashboard.setDashboardFilters(dashboardFilters);
     }
 
     private void voidOldMappings(Set<DashboardSectionCardMapping> newMappings, Set<DashboardSectionCardMapping> savedMappings) {

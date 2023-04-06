@@ -11,6 +11,7 @@ public class DashboardContract extends CHSRequest {
     private String name;
     private String description;
     private List<DashboardSectionContract> sections = new ArrayList<>();
+    private List<DashboardFilterContract> filters = new ArrayList<>();
 
     public static DashboardContract fromEntity(Dashboard dashboard) {
         DashboardContract dashboardContract = new DashboardContract();
@@ -20,6 +21,7 @@ public class DashboardContract extends CHSRequest {
         dashboardContract.setName(dashboard.getName());
         dashboardContract.setDescription(dashboard.getDescription());
         setSections(dashboardContract, dashboard);
+        setFilters(dashboardContract, dashboard);
         return dashboardContract;
     }
 
@@ -32,6 +34,14 @@ public class DashboardContract extends CHSRequest {
         dashboardContract.setSections(list);
     }
 
+    private static void setFilters(DashboardContract dashboardContract, Dashboard dashboard) {
+        List<DashboardFilterContract> list = dashboard.getDashboardFilters()
+            .stream()
+            .filter(it -> !it.isVoided())
+            .map(DashboardFilterContract::fromEntity)
+            .collect(Collectors.toList());
+        dashboardContract.setFilters(list);
+    }
     public String getName() {
         return name;
     }
@@ -54,5 +64,13 @@ public class DashboardContract extends CHSRequest {
 
     public void setSections(List<DashboardSectionContract> sections) {
         this.sections = sections;
+    }
+
+    public List<DashboardFilterContract> getFilters() {
+        return filters;
+    }
+
+    public void setFilters(List<DashboardFilterContract> filters) {
+        this.filters = filters;
     }
 }

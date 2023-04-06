@@ -22,6 +22,8 @@ public class DashboardFilter extends OrganisationAwareEntity {
     @Type(type = "observations")
     private ObservationCollection filter;
 
+    private String name;
+
     public Dashboard getDashboard() {
         return dashboard;
     }
@@ -36,5 +38,13 @@ public class DashboardFilter extends OrganisationAwareEntity {
 
     public void setFilter(ObservationCollection filter) {
         this.filter = filter;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
