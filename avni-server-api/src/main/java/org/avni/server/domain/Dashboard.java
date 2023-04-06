@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
@@ -21,6 +22,9 @@ public class Dashboard extends OrganisationAwareEntity {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "dashboard")
     private Set<DashboardSection> dashboardSections = new HashSet<>();
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "dashboard")
+    private Set<DashboardFilter> dashboardFilters;
 
     public String getName() {
         return name;
