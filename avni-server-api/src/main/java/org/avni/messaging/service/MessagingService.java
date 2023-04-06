@@ -118,9 +118,9 @@ public class MessagingService {
             sendMessageToGlific(messageRequest);
             messageRequest = messageRequestService.markComplete(messageRequest);
             logger.debug(String.format("Sent message for %d", messageRequest.getId()));
-        } catch (PhoneNumberNotAvailableException p) {
+        } catch (PhoneNumberNotAvailableOrIncorrectException p) {
             messageRequest = messageRequestService.markFailed(messageRequest, MessageDeliveryStatus.NotSentNoPhoneNumberInAvni);
-            logger.warn("Phone number not available for receiver: " + messageRequest.getMessageReceiver().getReceiverId());
+            logger.warn("Phone number not available or incorrect for receiver: " + messageRequest.getMessageReceiver().getReceiverId());
         } catch (GlificGroupMessageFailureException e) {
             messageRequestService.markPartiallyComplete(messageRequest);
             logger.error("Message sending to all contacts for message request id: " + messageRequest.getId() +
@@ -151,14 +151,14 @@ public class MessagingService {
         messageRequestService.createManualMessageRequest(manualMessage, messageReceiver, scheduledDateTime);
     }
 
-    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableException, RuleExecutionException {
+    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException {
         if(messageRequest.getManualMessage() != null)
             sendManualMessage(messageRequest);
         else
             individualMessagingService.sendAutomatedMessage(messageRequest);
     }
 
-    private void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableException {
+    private void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         if(messageReceiver.getReceiverType() == ReceiverType.Group)
             groupMessagingService.sendManualMessage(messageRequest);

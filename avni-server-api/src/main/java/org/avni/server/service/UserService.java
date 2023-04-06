@@ -8,6 +8,9 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.UserGroup;
+
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
+
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -21,7 +24,6 @@ import java.util.UUID;
 
 @Service
 public class UserService implements NonScopeAwareService {
-    public static final int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
     private static Logger logger = LoggerFactory.getLogger(UserService.class);
     private UserRepository userRepository;
     private OrganisationRepository organisationRepository;

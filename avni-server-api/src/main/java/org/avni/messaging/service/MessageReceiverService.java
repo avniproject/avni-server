@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
+
 @Service
 public class MessageReceiverService {
 
@@ -53,7 +55,7 @@ public class MessageReceiverService {
         });
     }
 
-    public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) throws PhoneNumberNotAvailableException {
+    public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) throws PhoneNumberNotAvailableOrIncorrectException {
         if (messageReceiver.getExternalId() != null) {
             return messageReceiver;
         }
@@ -68,10 +70,6 @@ public class MessageReceiverService {
             User user = userService.findById(messageReceiver.getReceiverId()).get();
             phoneNumber = user.getPhoneNumber();
             fullName = user.getName();
-        }
-
-        if (phoneNumber == null) {
-            throw new PhoneNumberNotAvailableException();
         }
 
         String externalId = glificContactRepository.getOrCreateContact(phoneNumber, fullName);

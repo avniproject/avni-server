@@ -5,6 +5,7 @@ import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.external.GlificRestClient;
+import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
@@ -15,11 +16,13 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
+
 @Repository
 @Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
     public static final String GLIFIC_CONTACT_FOR_PHONE_NUMBER = "glificContactForPhoneNumber";
-    public static final String INDIA_ISD_CODE = "+91";
+    public static final String INDIA_ISD_CODE = "91";
     public static final String PHONE_NUMBER = "${phoneNumber}";
     public static final String RECEIVER_NAME = "${receiverName}";
     public static final String RECEIVER_ID = "${receiverId}";
@@ -44,8 +47,6 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String UPDATE_CONTACT_GROUP_JSON;
     private final String DELETE_CONTACT_GROUP_JSON;
 
-    private final static int NO_OF_DIGITS_IN_INDIAN_MOBILE_NO = 10;
-
     public GlificContactRepository(GlificRestClient glificRestClient) {
         this.glificRestClient = glificRestClient;
         GET_CONTACT_JSON = getJson("getContact");
@@ -64,16 +65,23 @@ public class GlificContactRepository extends AbstractGlificRepository {
         DELETE_CONTACT_GROUP_JSON = getJson("deleteContactGroup");
     }
 
-    public String getOrCreateContact(String phoneNumber, String fullName) {
+    public String getOrCreateContact(String phoneNumber, String fullName) throws PhoneNumberNotAvailableOrIncorrectException {
+        if (phoneNumber == null || phoneNumber.length() < NO_OF_DIGITS_IN_INDIAN_MOBILE_NO) {
+            throw new PhoneNumberNotAvailableOrIncorrectException();
+        }
+
         GlificGetContactsResponse glificContacts = getContact(phoneNumber);
         return glificContacts.getContacts().isEmpty() ?
                 createContact(phoneNumber, fullName) :
                 glificContacts.getContacts().get(0).getId();
     }
 
+    private String formatPhoneNumberToGlificFormat(String phoneNumber) {
+        return INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
+    }
+
     private String createContact(String phoneNumber, String fullName) {
-        String phoneNoWithCountryCode = INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, phoneNoWithCountryCode)
+        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, formatPhoneNumberToGlificFormat(phoneNumber))
                 .replace(FULL_NAME, fullName);
         GlificOptinContactResponse glificOptinContactResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificOptinContactResponse>>() {
         });
@@ -81,7 +89,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     private GlificGetContactsResponse getContact(String phoneNumber) {
-        String message = GET_CONTACT_JSON.replace(PHONE_NUMBER, phoneNumber);
+        String message = GET_CONTACT_JSON.replace(PHONE_NUMBER, formatPhoneNumberToGlificFormat(phoneNumber));
         return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificGetContactsResponse>>() {
         });
     }

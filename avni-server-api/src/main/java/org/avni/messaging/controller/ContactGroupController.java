@@ -7,6 +7,7 @@ import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
 import org.avni.messaging.contract.glific.GlificGetGroupResponse;
 import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.repository.GlificContactRepository;
+import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
@@ -74,19 +75,25 @@ public class ContactGroupController {
 
     @PostMapping(ContactGroupEndpoint + "/{contactGroupId}/subject")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity<String> addSubject(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest subject) {
+    public ResponseEntity<String> addSubject(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest subject) throws PhoneNumberNotAvailableOrIncorrectException {
         String phoneNumber = individualService.findPhoneNumber(subject.getId());
         if (StringUtils.isEmpty(phoneNumber))
            return ResponseEntity.badRequest().body("This subject doesn't have a phone number");
         Individual individual = individualService.getIndividual(subject.getId());
-        String contactId = glificContactRepository.getOrCreateContact(phoneNumber, individual.getFullName());
-        glificContactRepository.addContactToGroup(contactGroupId, contactId);
+
+        try {
+            String contactId = glificContactRepository.getOrCreateContact(phoneNumber, individual.getFullName());
+            glificContactRepository.addContactToGroup(contactGroupId, contactId);
+        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }
+
         return ResponseEntity.ok("Subject added");
     }
 
     @PostMapping(ContactGroupEndpoint + "/{contactGroupId}/user")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void addUser(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest userRequest) {
+    public void addUser(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest userRequest) throws PhoneNumberNotAvailableOrIncorrectException {
         User user = userRepository.findById(userRequest.getId()).get();
         String contactId = glificContactRepository.getOrCreateContact(user.getPhoneNumber(), user.getName());
         glificContactRepository.addContactToGroup(contactGroupId, contactId);
