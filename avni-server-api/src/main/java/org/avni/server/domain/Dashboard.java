@@ -56,7 +56,6 @@ public class Dashboard extends OrganisationAwareEntity {
     }
 
     public void setDashboardFilters(Set<DashboardFilter> dashboardFilters) {
-        this.dashboardFilters.clear();
-        this.dashboardFilters.addAll(dashboardFilters);
+        this.dashboardFilters = dashboardFilters;
     }
 }
