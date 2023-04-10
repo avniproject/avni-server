@@ -1,6 +1,5 @@
 package org.avni.server.service;
 
-import com.amazonaws.services.s3.AmazonS3URI;
 import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.io.IOUtils;
@@ -488,10 +487,8 @@ public class OrganisationService {
             addDirectoryToZip(zos, "subjectTypeIcons");
         }
         for (SubjectType subjectType : subjectTypes) {
-            AmazonS3URI amazonS3URI = new AmazonS3URI(subjectType.getIconFileS3Key());
-            String objectKey = amazonS3URI.getKey();
-            InputStream objectContent = s3Service.getObjectContent(objectKey);
-            String extension = S.getLastStringAfter(objectKey, ".");
+            InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
+            String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
             addIconToZip(zos, String.format("subjectTypeIcons/%s.%s", subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }

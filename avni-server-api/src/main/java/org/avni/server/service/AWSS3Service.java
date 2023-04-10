@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.regex.Matcher;
 
@@ -36,6 +37,13 @@ public class AWSS3Service extends StorageService {
                 .withPathStyleAccessEnabled(true)
                 .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey)))
                 .build();
+    }
+
+    @Override
+    public InputStream getObjectContentFromUrl(String s3url) {
+        AmazonS3URI amazonS3URI = new AmazonS3URI(s3url);
+        String objectKey = amazonS3URI.getKey();
+        return getObjectContent(objectKey);
     }
 
     @Override

@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.net.URL;
 import java.util.regex.Matcher;
 
@@ -44,6 +45,13 @@ public class AWSMinioService extends StorageService {
                 .withCredentials(
                         new AWSStaticCredentialsProvider(new BasicAWSCredentials(minioAccessKey, minioSecretAccessKey)))
                 .build();
+    }
+
+    @Override
+    public InputStream getObjectContentFromUrl(String s3url) {
+        MinioUri minioUri = new MinioUri(s3url);
+        String objectKey = minioUri.getKey();
+        return getObjectContent(objectKey);
     }
 
     @Override
