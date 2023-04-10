@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.net.URL;
 
 public class StorageServiceET {
@@ -22,6 +23,11 @@ public class StorageServiceET {
 
         @Override
         public URL generateMediaDownloadUrl(String url) {
+            return null;
+        }
+
+        @Override
+        public InputStream getObjectContentFromUrl(String s3Url) {
             return null;
         }
     }
