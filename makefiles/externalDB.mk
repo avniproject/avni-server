@@ -18,7 +18,7 @@ endif
 
 create_local_staging_db_user:
 ifndef user
-	@echo "Provde the variable"
+	@echo "Provde the variable user"
 	exit 1
 else
 	-psql -U $(su) -d avni_staging -c "select create_db_user('$(user)', 'password')"
