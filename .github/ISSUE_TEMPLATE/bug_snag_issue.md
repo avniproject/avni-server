@@ -1,7 +1,7 @@
 ---
 name: Bugsnag Error
 about: Report an error reported on BugSnag
-title: 'BugSnag Error (Avni Client)'
+title: 'BugSnag Error'
 labels: 'bugsnag'
 assignees: ''
 
