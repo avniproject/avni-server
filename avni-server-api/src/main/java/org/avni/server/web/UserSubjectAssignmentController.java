@@ -6,6 +6,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.UserSubjectAssignmentService;
 import org.avni.server.web.request.UserSubjectAssignmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +44,18 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(userSubjectAssignmentRepository.findByUserAndIsVoidedTrueAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
+
+    @RequestMapping(value = "/userSubjectAssignment/v2", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
+    public SlicedResources<Resource<UserSubjectAssignment>> getTasksAsSlice(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            Pageable pageable) {
+        User user = UserContextHolder.getUserContext().getUser();
+        return wrap(userSubjectAssignmentRepository.findSliceByUserAndIsVoidedTrueAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
+    }
+
 
     @RequestMapping(value = "/web/subjectAssignmentMetadata", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")

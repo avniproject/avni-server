@@ -5,6 +5,7 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.UserSubjectAssignment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +24,13 @@ public interface UserSubjectAssignmentRepository extends ReferenceDataRepository
     boolean existsByUserAndIsVoidedTrueAndLastModifiedDateTimeGreaterThan(User user, Date lastModifiedDateTime);
 
     Page<UserSubjectAssignment> findByUserAndIsVoidedTrueAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+            User user,
+            Date lastModifiedDate,
+            Date now,
+            Pageable pageable
+    );
+
+    Slice<UserSubjectAssignment> findSliceByUserAndIsVoidedTrueAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             User user,
             Date lastModifiedDate,
             Date now,

@@ -7,6 +7,7 @@ import org.avni.server.domain.task.TaskUnAssignment;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.AbstractController;
 import org.avni.server.web.RestControllerResourceProcessor;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,17 @@ public class TaskUnAssignmentController extends AbstractController<TaskUnAssignm
             Pageable pageable) {
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(taskUnAssignmentRepository.findByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
+    }
+
+    @RequestMapping(value = "/taskUnAssignments/v2", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
+    public SlicedResources<Resource<TaskUnAssignment>> getTasksAsSlice(
+            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            Pageable pageable) {
+        User user = UserContextHolder.getUserContext().getUser();
+        return wrap(taskUnAssignmentRepository.findSliceByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
 
     @Override

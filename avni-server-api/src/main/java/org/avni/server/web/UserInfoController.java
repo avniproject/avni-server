@@ -9,11 +9,13 @@ import org.avni.server.service.*;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.UserBulkUploadContract;
 import org.avni.server.web.request.UserInfo;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
@@ -91,6 +93,16 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         Organisation organisation = userContext.getOrganisation();
 
         return wrap(new PageImpl<>(Arrays.asList(getUserInfoObject(organisation, user))));
+    }
+
+    @RequestMapping(value = "/me/v3", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    public SlicedResources<Resource<UserInfo>> getMyProfileAsSlice() {
+        UserContext userContext = UserContextHolder.getUserContext();
+        User user = userContext.getUser();
+        Organisation organisation = userContext.getOrganisation();
+
+        return wrap(new SliceImpl<>(Arrays.asList(getUserInfoObject(organisation, user))));
     }
 
     public UserInfo getUserInfoObject(Organisation organisation, User user) {
