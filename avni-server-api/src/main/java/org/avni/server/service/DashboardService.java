@@ -167,6 +167,7 @@ public class DashboardService implements NonScopeAwareService {
             dashboardFilter.setDashboard(dashboard);
             dashboardFilter.setFilter(filterContract.getFilter());
             dashboardFilterRepository.save(dashboardFilter);
+            dashboardFilters.add(dashboardFilter);
         }
         dashboard.setDashboardFilters(dashboardFilters);
     }

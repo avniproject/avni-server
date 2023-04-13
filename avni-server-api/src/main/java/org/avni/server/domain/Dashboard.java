@@ -24,7 +24,7 @@ public class Dashboard extends OrganisationAwareEntity {
     private Set<DashboardSection> dashboardSections = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "dashboard")
-    private Set<DashboardFilter> dashboardFilters;
+    private Set<DashboardFilter> dashboardFilters = new HashSet<>();
 
     public String getName() {
         return name;
@@ -56,6 +56,7 @@ public class Dashboard extends OrganisationAwareEntity {
     }
 
     public void setDashboardFilters(Set<DashboardFilter> dashboardFilters) {
-        this.dashboardFilters = dashboardFilters;
+        this.dashboardFilters.clear();
+        this.dashboardFilters.addAll(dashboardFilters);
     }
 }
