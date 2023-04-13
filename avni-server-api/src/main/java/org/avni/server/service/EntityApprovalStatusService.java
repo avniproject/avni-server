@@ -2,12 +2,12 @@ package org.avni.server.service;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
-import org.jadira.usertype.spi.utils.lang.StringUtils;
-import org.joda.time.DateTime;
 import org.avni.server.web.request.EntityApprovalStatusRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.EntityApprovalStatusWrapper;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +16,6 @@ import static org.avni.server.domain.EntityApprovalStatus.EntityType.*;
 
 @Service
 public class EntityApprovalStatusService implements NonScopeAwareService {
-
     private EntityApprovalStatusRepository entityApprovalStatusRepository;
     private ApprovalStatusRepository approvalStatusRepository;
     private Map<EntityApprovalStatus.EntityType, TransactionalDataRepository> typeMap = new HashMap<>();
@@ -38,8 +37,11 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
             entityApprovalStatus = new EntityApprovalStatus();
         }
         EntityApprovalStatus.EntityType entityType = EntityApprovalStatus.EntityType.valueOf(request.getEntityType());
-        if(StringUtils.isNotEmpty(request.getEntityTypeUuid())) {
+        CHSEntity entity = getChsEntity(entityType, request.getEntityUuid());
+        if(StringUtils.hasText(request.getEntityTypeUuid())) {
             entityApprovalStatus.setEntityTypeUuid(request.getEntityTypeUuid());
+        } else if(!StringUtils.hasText(entityApprovalStatus.getEntityTypeUuid())) {
+            entityApprovalStatus.setEntityTypeUuid(getEntityTypeUUID(entityType, entity));
         }
         entityApprovalStatus.setUuid(request.getUuid());
         entityApprovalStatus.setApprovalStatus(approvalStatusRepository.findByUuid(request.getApprovalStatusUuid()));
@@ -49,13 +51,6 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         entityApprovalStatus.setAutoApproved(request.getAutoApproved());
         entityApprovalStatus.setStatusDateTime(request.getStatusDateTime());
         entityApprovalStatus.updateAudit();
-        if (typeMap.get(entityType) == null) {
-            throw new IllegalArgumentException(String.format("Incorrect entityType '%s' provided for updating EntityApprovalStatus", entityType));
-        }
-        CHSEntity entity = typeMap.get(entityType).findByUuid(request.getEntityUuid());
-        if (entity == null) {
-            throw new IllegalArgumentException(String.format("Incorrect entityUuid '%s' provided for updating EntityApprovalStatus", request.getEntityUuid()));
-        }
         entityApprovalStatus.setEntityId(entity.getId());
 
         Individual individual = getIndividual(entityType, request.getEntityUuid());
@@ -87,15 +82,46 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
 
 
     public String getEntityUuid(EntityApprovalStatus eaStatus) {
-        EntityApprovalStatus.EntityType entityType = eaStatus.getEntityType();
-        if (typeMap.get(entityType) == null) {
+        CHSEntity entity = getChsEntity(eaStatus.getEntityType(), eaStatus.getEntityId());
+        return entity.getUuid();
+    }
+
+    private CHSEntity getChsEntity(EntityApprovalStatus.EntityType entityType, Long entityId) {
+        TransactionalDataRepository transactionalDataRepository = getTransactionalDataRepository(entityType);
+        CHSEntity entity = transactionalDataRepository.findOne(entityId);
+        if (entity == null) {
+            throw new IllegalArgumentException(String.format("Incorrect entityId '%s' found in database while fetching EntityApprovalStatus", entityId));
+        }
+        return entity;
+    }
+
+    private CHSEntity getChsEntity(EntityApprovalStatus.EntityType entityType, String entityUUID) {
+        TransactionalDataRepository transactionalDataRepository = getTransactionalDataRepository(entityType);
+        CHSEntity entity = transactionalDataRepository.findByUuid(entityUUID);
+        if (entity == null) {
+            throw new IllegalArgumentException(String.format("Incorrect entityUUID '%s' found in database while fetching EntityApprovalStatus", entityUUID));
+        }
+        return entity;
+    }
+
+    private TransactionalDataRepository getTransactionalDataRepository(EntityApprovalStatus.EntityType entityType) {
+        TransactionalDataRepository transactionalDataRepository = typeMap.get(entityType);
+        if (transactionalDataRepository == null) {
             throw new IllegalArgumentException(String.format("Incorrect entityType '%s' found in database while fetching EntityApprovalStatus", entityType));
         }
-        CHSEntity entity = typeMap.get(entityType).findOne(eaStatus.getEntityId());
-        if (entity == null) {
-            throw new IllegalArgumentException(String.format("Incorrect entityId '%s' found in database while fetching EntityApprovalStatus", eaStatus.getEntityId()));
+        return transactionalDataRepository;
+    }
+
+
+    private String getEntityTypeUUID(EntityApprovalStatus.EntityType entityType, CHSEntity entity) {
+        switch (entityType) {
+            case Subject: return ((Individual)entity).getSubjectType().getUuid();
+            case ProgramEnrolment: return ((org.avni.server.domain.ProgramEnrolment)entity).getProgram().getUuid();
+            case ChecklistItem: return ((Checklist)entity).getProgramEnrolment().getProgram().getUuid();
+            case Encounter: return ((Encounter)entity).getEncounterType().getUuid();
+            case ProgramEncounter: return ((ProgramEncounter)entity).getEncounterType().getUuid();
+            default: throw new IllegalArgumentException(String.format("Incorrect entityType '%s' not found", entityType));
         }
-        return entity.getUuid();
     }
 
     public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid) {
@@ -107,8 +133,11 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         EntityApprovalStatus entityApprovalStatus = new EntityApprovalStatus();
         entityApprovalStatus.assignUUID();
         entityApprovalStatus.setEntityType(entityType);
-        if(StringUtils.isNotEmpty(entityTypeUuid)) {
+        CHSEntity entity = getChsEntity(entityType, entityId);
+        if(StringUtils.hasText(entityTypeUuid)) {
             entityApprovalStatus.setEntityTypeUuid(entityTypeUuid);
+        } else if(!StringUtils.hasText(entityApprovalStatus.getEntityTypeUuid())) {
+            entityApprovalStatus.setEntityTypeUuid(getEntityTypeUUID(entityType, entity));
         }
         entityApprovalStatus.setEntityId(entityId);
         entityApprovalStatus.setApprovalStatus(approvalStatus);
