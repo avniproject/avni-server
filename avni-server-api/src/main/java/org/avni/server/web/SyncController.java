@@ -334,7 +334,7 @@ public class SyncController {
     }
 
     private void removeDisabledEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems) {
-        entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.isApprovalStatusType() &&
+        entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.shouldBeIgnoredDuringSync() &&
                 allSyncableItems.stream().noneMatch(entitySyncStatusContract::matchesEntity));
     }
 

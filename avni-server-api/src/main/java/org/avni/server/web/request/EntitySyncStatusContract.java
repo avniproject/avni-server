@@ -62,4 +62,13 @@ public class EntitySyncStatusContract {
         String[] approvalStatuses = {"SubjectEntityApprovalStatus", "EncounterEntityApprovalStatus", "ProgramEncounterEntityApprovalStatus", "ProgramEnrolmentEntityApprovalStatus", "ChecklistItemEntityApprovalStatus"};
         return Arrays.stream(approvalStatuses).anyMatch(this.entityName::equals);
     }
+
+    public boolean isEncounterOrEnrolmentType() {
+        String[] types = {"Encounter", "ProgramEncounter", "ProgramEnrolment"};
+        return Arrays.stream(types).anyMatch(this.entityName::equals);
+    }
+
+    public boolean shouldBeIgnoredDuringSync() {
+        return isApprovalStatusType() || isEncounterOrEnrolmentType();
+    }
 }
