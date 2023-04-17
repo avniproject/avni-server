@@ -24,7 +24,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         if(syncParameters.getTypeId() != null)
             specification = specification.and(syncTypeIdSpecification(syncParameters.getTypeId()));
         if(syncParameters.getSyncEntityName() != null && syncParameters.getEntityTypeUuid() != null)
-            specification = syncTypeIdSpecification(syncParameters.getEntityTypeUuid(), syncParameters.getSyncEntityName());
+            specification = specification.and(syncTypeIdSpecification(syncParameters.getEntityTypeUuid(), syncParameters.getSyncEntityName()));
 
         return specification;
     }

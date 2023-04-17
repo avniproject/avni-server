@@ -372,4 +372,12 @@ public class SubjectType extends OrganisationAwareEntity {
 
         List<GroupRole.GroupRoleProjection> getGroupRoles();
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "name='" + name + '\'' +
+                "uuid='" + this.getUuid() + '\'' +
+                '}';
+    }
 }

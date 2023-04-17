@@ -71,4 +71,14 @@ public class EntitySyncStatusContract {
     public boolean shouldBeIgnoredDuringSync() {
         return isApprovalStatusType() || isEncounterOrEnrolmentType();
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "uuid='" + uuid + '\'' +
+                ", entityName='" + entityName + '\'' +
+                ", loadedSince=" + loadedSince +
+                ", entityTypeUuid='" + entityTypeUuid + '\'' +
+                '}';
+    }
 }

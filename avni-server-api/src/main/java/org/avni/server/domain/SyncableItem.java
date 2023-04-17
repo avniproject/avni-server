@@ -16,4 +16,12 @@ public class SyncableItem {
     public String getEntityTypeUuid() {
         return entityTypeUuid;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "name='" + name + '\'' +
+                ", entityTypeUuid='" + entityTypeUuid + '\'' +
+                '}';
+    }
 }
