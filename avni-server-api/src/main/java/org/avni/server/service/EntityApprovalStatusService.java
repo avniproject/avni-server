@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.avni.server.domain.EntityApprovalStatus.EntityType.*;
 
@@ -126,8 +128,8 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
 
     public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid) {
         ApprovalStatus approvalStatus = approvalStatusRepository.findByStatus(status);
-        EntityApprovalStatus entityApprovalStatuses = entityApprovalStatusRepository.findFirstByEntityIdAndEntityTypeAndIsVoidedFalseOrderByStatusDateTimeDesc(entityId, entityType);
-        if (entityApprovalStatuses != null && entityApprovalStatuses.getApprovalStatus().getStatus().equals(status)) {
+        List<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findByEntityIdAndEntityTypeAndIsVoidedFalse(entityId, entityType);
+        if (entityApprovalStatuses != null && entityApprovalStatuses.stream().anyMatch(x -> x.getApprovalStatus().getStatus().equals(status))) {
             return;
         }
         EntityApprovalStatus entityApprovalStatus = new EntityApprovalStatus();
@@ -146,9 +148,9 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         entityApprovalStatusRepository.save(entityApprovalStatus);
     }
 
-    public EntityApprovalStatusWrapper getLatestEntityApprovalStatus(Long entityId, EntityApprovalStatus.EntityType entityType, String entityUUID) {
-        EntityApprovalStatus entityApprovalStatus = entityApprovalStatusRepository.findFirstByEntityIdAndEntityTypeAndIsVoidedFalseOrderByStatusDateTimeDesc(entityId, entityType);
-        return entityApprovalStatus == null ? null : EntityApprovalStatusWrapper.fromEntity(entityApprovalStatus, entityUUID);
+    public List<EntityApprovalStatusWrapper> getEntityApprovalStatuses(Long entityId, EntityApprovalStatus.EntityType entityType, String entityUUID) {
+        List<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findByEntityIdAndEntityTypeAndIsVoidedFalse(entityId, entityType);
+        return entityApprovalStatuses.stream().map(entityApprovalStatus -> EntityApprovalStatusWrapper.fromEntity(entityApprovalStatus, entityUUID)).collect(Collectors.toList());
     }
 
     @Override

@@ -21,8 +21,8 @@ public class ProgramEncounterContract implements RuleServerEntityContract {
     private List<ObservationModelContract> cancelObservations = new ArrayList<>();
     private EntityTypeContract encounterType;
     private DateTime encounterDateTime;
-    private EntityApprovalStatusWrapper latestEntityApprovalStatus;
     private boolean voided;
+    private List<EntityApprovalStatusWrapper> entityApprovalStatuses;
 
     public boolean isVoided() {
         return voided;
@@ -32,13 +32,14 @@ public class ProgramEncounterContract implements RuleServerEntityContract {
         this.voided = voided;
     }
 
-    public EntityApprovalStatusWrapper getLatestEntityApprovalStatus() {
-        return latestEntityApprovalStatus;
+    public List<EntityApprovalStatusWrapper> getEntityApprovalStatuses() {
+        return entityApprovalStatuses;
     }
 
-    public void setLatestEntityApprovalStatus(EntityApprovalStatusWrapper latestEntityApprovalStatus) {
-        this.latestEntityApprovalStatus = latestEntityApprovalStatus;
+    public void setEntityApprovalStatuses(List<EntityApprovalStatusWrapper> entityApprovalStatuses) {
+        this.entityApprovalStatuses = entityApprovalStatuses;
     }
+
     public DateTime getEncounterDateTime() {
         return encounterDateTime;
     }

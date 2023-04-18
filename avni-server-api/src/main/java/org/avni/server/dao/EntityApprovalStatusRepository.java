@@ -21,7 +21,7 @@ import java.util.List;
 @PreAuthorize("hasAnyAuthority('user', 'admin')")
 public interface EntityApprovalStatusRepository extends TransactionalDataRepository<EntityApprovalStatus>, FindByLastModifiedDateTime<EntityApprovalStatus>,
         OperatingIndividualScopeAwareRepository<EntityApprovalStatus> {
-    EntityApprovalStatus findFirstByEntityIdAndEntityTypeAndIsVoidedFalseOrderByStatusDateTimeDesc(Long entityId, EntityApprovalStatus.EntityType entityType);
+    List<EntityApprovalStatus> findByEntityIdAndEntityTypeAndIsVoidedFalse(Long entityId, EntityApprovalStatus.EntityType entityType);
 
     @Override
     default Specification<EntityApprovalStatus> syncTypeIdSpecification(String uuid, SyncParameters.SyncEntityName syncEntityName) {

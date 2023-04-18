@@ -49,8 +49,8 @@ public class IndividualConstructionService {
     public IndividualContract getSubjectInfo(Individual individual) {
         IndividualContract individualContractWrapper = constructBasicSubject(individual);
         if (individualContractWrapper == null) return null;
-        EntityApprovalStatusWrapper latestEntityApprovalStatus = entityApprovalStatusService.getLatestEntityApprovalStatus(individual.getId(), EntityApprovalStatus.EntityType.Subject, individual.getUuid());
-        individualContractWrapper.setLatestEntityApprovalStatus(latestEntityApprovalStatus);
+        List<EntityApprovalStatusWrapper> entityApprovalStatuses = entityApprovalStatusService.getEntityApprovalStatuses(individual.getId(), EntityApprovalStatus.EntityType.Subject, individual.getUuid());
+        individualContractWrapper.setEntityApprovalStatuses(entityApprovalStatuses);
         List<GroupSubjectContract> groups = groupSubjectRepository
                 .findAllByMemberSubject(individual)
                 .stream()

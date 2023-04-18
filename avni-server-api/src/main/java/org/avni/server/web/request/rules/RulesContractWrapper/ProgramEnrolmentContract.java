@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ProgramEnrolmentContract implements RuleServerEntityContract {
     private IndividualContract subject;
@@ -27,14 +28,14 @@ public class ProgramEnrolmentContract implements RuleServerEntityContract {
     private List<ObservationModelContract> exitObservations = new ArrayList<>();
     private String operationalProgramName;
     private List<ChecklistDetailRequest> checklistDetails = new ArrayList<>();
-    private EntityApprovalStatusWrapper latestEntityApprovalStatus;
+    private List<EntityApprovalStatusWrapper> entityApprovalStatuses;
 
-    public EntityApprovalStatusWrapper getLatestEntityApprovalStatus() {
-        return latestEntityApprovalStatus;
+    public List<EntityApprovalStatusWrapper> getEntityApprovalStatuses() {
+        return entityApprovalStatuses;
     }
 
-    public void setLatestEntityApprovalStatus(EntityApprovalStatusWrapper latestEntityApprovalStatus) {
-        this.latestEntityApprovalStatus = latestEntityApprovalStatus;
+    public void setEntityApprovalStatuses(List<EntityApprovalStatusWrapper> entityApprovalStatuses) {
+        this.entityApprovalStatuses = entityApprovalStatuses;
     }
 
     public List<ChecklistDetailRequest> getChecklistDetails() {
@@ -143,8 +144,8 @@ public class ProgramEnrolmentContract implements RuleServerEntityContract {
         contract.setOperationalProgramName(enrolment.getProgram().getOperationalProgramName());
         contract.setObservations(observationService.constructObservationModelContracts(enrolment.getObservations()));
         contract.setExitObservations(observationService.constructObservationModelContracts(enrolment.getProgramExitObservations()));
-        EntityApprovalStatusWrapper latestEntityApprovalStatus = entityApprovalStatusService.getLatestEntityApprovalStatus(enrolment.getId(), EntityApprovalStatus.EntityType.ProgramEnrolment, enrolment.getUuid());
-        contract.setLatestEntityApprovalStatus(latestEntityApprovalStatus);
+        List<EntityApprovalStatusWrapper> entityApprovalStatuses = entityApprovalStatusService.getEntityApprovalStatuses(enrolment.getId(), EntityApprovalStatus.EntityType.ProgramEnrolment, enrolment.getUuid());
+        contract.setEntityApprovalStatuses(entityApprovalStatuses);
         return contract;
     }
 }

@@ -25,14 +25,14 @@ public class EncounterContract implements RuleServerEntityContract{
     private List<ObservationModelContract> cancelObservations;
     private Boolean voided;
     private List<VisitSchedule> visitSchedules;
-    private EntityApprovalStatusWrapper latestEntityApprovalStatus;
+    private List<EntityApprovalStatusWrapper> entityApprovalStatuses;
 
-    public EntityApprovalStatusWrapper getLatestEntityApprovalStatus() {
-        return latestEntityApprovalStatus;
+    public List<EntityApprovalStatusWrapper> getEntityApprovalStatuses() {
+        return entityApprovalStatuses;
     }
 
-    public void setLatestEntityApprovalStatus(EntityApprovalStatusWrapper latestEntityApprovalStatus) {
-        this.latestEntityApprovalStatus = latestEntityApprovalStatus;
+    public void setEntityApprovalStatuses(List<EntityApprovalStatusWrapper> entityApprovalStatuses) {
+        this.entityApprovalStatuses = entityApprovalStatuses;
     }
 
     public Boolean getVoided() {
@@ -142,8 +142,7 @@ public class EncounterContract implements RuleServerEntityContract{
         contract.setCancelDateTime(encounter.getCancelDateTime());
         contract.setObservations(observationService.constructObservationModelContracts(encounter.getObservations()));
         contract.setEncounterType(EntityTypeContract.fromEncounterType(encounter.getEncounterType()));
-        EntityApprovalStatusWrapper latestEntityApprovalStatus = entityApprovalStatusService.getLatestEntityApprovalStatus(encounter.getId(), EntityApprovalStatus.EntityType.Encounter, encounter.getUuid());
-        contract.setLatestEntityApprovalStatus(latestEntityApprovalStatus);
+        contract.setEntityApprovalStatuses(entityApprovalStatusService.getEntityApprovalStatuses(encounter.getId(), EntityApprovalStatus.EntityType.Encounter, encounter.getUuid()));
         return contract;
     }
 

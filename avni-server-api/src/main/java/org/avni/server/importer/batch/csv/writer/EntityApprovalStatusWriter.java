@@ -30,6 +30,4 @@ public class EntityApprovalStatusWriter {
             entityApprovalStatusService.createStatus(entityType, entityId, status, entityTypeUuid);
         }
     }
-
-
 }

@@ -2,6 +2,7 @@ package org.avni.server.web.request.rules.RulesContractWrapper;
 
 import org.avni.server.domain.ApprovalStatus;
 import org.avni.server.domain.EntityApprovalStatus;
+import org.joda.time.DateTime;
 
 public class EntityApprovalStatusWrapper {
     private String uuid;
@@ -11,6 +12,7 @@ public class EntityApprovalStatusWrapper {
     private boolean voided;
     private String entityUUID;
     private ApprovalStatus approvalStatus;
+    private DateTime statusDateTime;
 
     public static EntityApprovalStatusWrapper fromEntity(EntityApprovalStatus entityApprovalStatus, String entityUUID) {
         EntityApprovalStatusWrapper wrapper = new EntityApprovalStatusWrapper();
@@ -21,7 +23,12 @@ public class EntityApprovalStatusWrapper {
         wrapper.setVoided(entityApprovalStatus.isVoided());
         wrapper.setEntityUUID(entityUUID);
         wrapper.setApprovalStatus(entityApprovalStatus.getApprovalStatus());
+        wrapper.statusDateTime = entityApprovalStatus.getStatusDateTime();
         return wrapper;
+    }
+
+    public DateTime getStatusDateTime() {
+        return statusDateTime;
     }
 
     public String getUuid() {

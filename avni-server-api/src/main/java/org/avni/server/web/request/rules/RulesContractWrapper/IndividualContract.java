@@ -43,9 +43,9 @@ public class IndividualContract implements RuleServerEntityContract {
 
     private List<VisitSchedule> visitSchedules;
 
-    private EntityApprovalStatusWrapper latestEntityApprovalStatus;
-
     private List<GroupSubjectContract> groups;
+
+    private List<EntityApprovalStatusWrapper> entityApprovalStatuses;
 
     public List<GroupSubjectContract> getGroups() {
         return groups;
@@ -55,12 +55,12 @@ public class IndividualContract implements RuleServerEntityContract {
         this.groups = groups;
     }
 
-    public EntityApprovalStatusWrapper getLatestEntityApprovalStatus() {
-        return latestEntityApprovalStatus;
+    public List<EntityApprovalStatusWrapper> getEntityApprovalStatuses() {
+        return entityApprovalStatuses;
     }
 
-    public void setLatestEntityApprovalStatus(EntityApprovalStatusWrapper latestEntityApprovalStatus) {
-        this.latestEntityApprovalStatus = latestEntityApprovalStatus;
+    public void setEntityApprovalStatuses(List<EntityApprovalStatusWrapper> entityApprovalStatuses) {
+        this.entityApprovalStatuses = entityApprovalStatuses;
     }
 
     public List<ProgramEnrolmentContract> getEnrolments() {
