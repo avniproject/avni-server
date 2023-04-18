@@ -17,8 +17,6 @@ where id in
        where rnk > 1);
 
 ALTER TABLE entity_approval_status
-    ADD UNIQUE (approval_status_id, organisation_id);
-ALTER TABLE entity_approval_status
     ADD UNIQUE (uuid, organisation_id);
 
 -- external_system_config	{uuid,organisation_id}
@@ -86,42 +84,11 @@ ALTER TABLE group_privilege
 
 -- groups	{uuid,organisation_id}
 
-delete
-from groups
-where id in
-      (select id
-       from (select id,
-                    rank() over (order by id desc) rnk
-             from groups
-             where uuid in (
-                 -- Duplicate uuids query
-                 select uuid
-                 from (select uuid, count(*)
-                       from groups
-                       group by uuid
-                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
-       where rnk > 1);
-
 ALTER TABLE groups
     ADD UNIQUE (uuid, organisation_id);
 
 -- individual_relation	{uuid,organisation_id}
 
-delete
-from individual_relation
-where id in
-      (select id
-       from (select id,
-                    rank() over (order by id desc) rnk
-             from individual_relation
-             where uuid in (
-                 -- Duplicate uuids query
-                 select uuid
-                 from (select uuid, count(*)
-                       from individual_relation
-                       group by uuid
-                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
-       where rnk > 1);
 
 ALTER TABLE individual_relation
     ADD UNIQUE (uuid, organisation_id);
@@ -149,21 +116,6 @@ ALTER TABLE individual_relation_gender_mapping
 
 -- individual_relationship_type	{uuid,organisation_id}
 
-delete
-from individual_relationship_type
-where id in
-      (select id
-       from (select id,
-                    rank() over (order by id desc) rnk
-             from individual_relationship_type
-             where uuid in (
-                 -- Duplicate uuids query
-                 select uuid
-                 from (select uuid, count(*)
-                       from individual_relationship_type
-                       group by uuid
-                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
-       where rnk > 1);
 
 ALTER TABLE individual_relationship_type
     ADD UNIQUE (uuid, organisation_id);
@@ -254,63 +206,16 @@ ALTER TABLE news
 
 -- subject_type	{uuid,organisation_id}
 
-delete
-from subject_type
-where id in
-      (select id
-       from (select id,
-                    rank() over (order by id desc) rnk
-             from subject_type
-             where uuid in (
-                 -- Duplicate uuids query
-                 select uuid
-                 from (select uuid, count(*)
-                       from subject_type
-                       group by uuid
-                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
-       where rnk > 1);
 
 ALTER TABLE subject_type
     ADD UNIQUE (uuid, organisation_id);
 
 -- task_status	{uuid,organisation_id}
 
-delete
-from task_status
-where id in
-      (select id
-       from (select id,
-                    rank() over (order by id desc) rnk
-             from task_status
-             where uuid in (
-                 -- Duplicate uuids query
-                 select uuid
-                 from (select uuid, count(*)
-                       from task_status
-                       group by uuid
-                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
-       where rnk > 1);
-
 ALTER TABLE task_status
     ADD UNIQUE (uuid, organisation_id);
 
 -- task_type	{uuid,organisation_id}
-
-delete
-from task_type
-where id in
-      (select id
-       from (select id,
-                    rank() over (order by id desc) rnk
-             from task_type
-             where uuid in (
-                 -- Duplicate uuids query
-                 select uuid
-                 from (select uuid, count(*)
-                       from task_type
-                       group by uuid
-                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
-       where rnk > 1);
 
 ALTER TABLE task_type
     ADD UNIQUE (uuid, organisation_id);
@@ -335,5 +240,3 @@ where id in
 
 ALTER TABLE user_group
     ADD UNIQUE (uuid);
-ALTER TABLE user_group
-    ADD UNIQUE (user_id, group_id);
