@@ -217,14 +217,22 @@ public class RuleService implements NonScopeAwareService {
         CHSEntity entity = entityRetrieverService.getEntity(entityType, entityId);
         RuleServerEntityContract contract = ruleServiceEntityContractBuilder.toContract(entityType, entity);
         MessageRequestEntity ruleRequest = new MessageRequestEntity(contract, scheduleRule, entityType);
-        return createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, null, ScheduleRuleResponseEntity.class);
+        BaseRuleRequest baseRuleRequest = new BaseRuleRequest();
+        baseRuleRequest.setRuleType(entityType);
+        baseRuleRequest.setFormUuid(entity.getUuid());
+        RuleFailureLog ruleFailureLog = ruleValidationService.generateRuleFailureLog(baseRuleRequest, "Web", "Rules : messageSchedule", String.valueOf(entity.getUuid()));
+        return createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, ruleFailureLog, ScheduleRuleResponseEntity.class);
     }
 
     public String[] executeMessageRule(String entityType, Long entityId, String messageRule) throws RuleExecutionException {
         CHSEntity entity = entityRetrieverService.getEntity(entityType, entityId);
         RuleServerEntityContract contract = ruleServiceEntityContractBuilder.toContract(entityType, entity);
         MessageRequestEntity ruleRequest = new MessageRequestEntity(contract, messageRule, entityType);
-        MessageRuleResponseEntity messageRuleResponseEntity = createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, null, MessageRuleResponseEntity.class);
+        BaseRuleRequest baseRuleRequest = new BaseRuleRequest();
+        baseRuleRequest.setRuleType(entityType);
+        baseRuleRequest.setFormUuid(entity.getUuid());
+        RuleFailureLog ruleFailureLog = ruleValidationService.generateRuleFailureLog(baseRuleRequest, "Web", "Rules : messageExecute", String.valueOf(entityId));
+        MessageRuleResponseEntity messageRuleResponseEntity = createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, ruleFailureLog, MessageRuleResponseEntity.class);
         return messageRuleResponseEntity.getParameters();
     }
 

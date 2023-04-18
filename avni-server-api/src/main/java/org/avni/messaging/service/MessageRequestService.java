@@ -3,6 +3,8 @@ package org.avni.messaging.service;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,7 @@ import java.util.stream.Stream;
 public class MessageRequestService {
     private final MessageRequestQueueRepository messageRequestRepository;
     private final MessageReceiverService messageReceiverService;
+    private static final Logger logger = LoggerFactory.getLogger(MessagingService.class);
 
     @Autowired
     public MessageRequestService(MessageRequestQueueRepository messageRequestRepository, MessageReceiverService messageReceiverService) {
@@ -23,6 +26,10 @@ public class MessageRequestService {
         MessageRequest messageRequest = messageRequestRepository.findByEntityIdAndMessageRule(entityId, messageRule)
                 .orElse(new MessageRequest(messageRule, messageReceiver, entityId, scheduledDateTime));
         if (messageRequest.isDelivered()) {
+            return messageRequest;
+        }
+        if(scheduledDateTime == null){
+            logger.error("Missing Schedule dateTime in message rule template " + messageRule.getName());
             return messageRequest;
         }
         messageRequest.setScheduledDateTime(scheduledDateTime);
