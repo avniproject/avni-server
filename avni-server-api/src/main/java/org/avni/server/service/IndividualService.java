@@ -9,6 +9,7 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
+import org.avni.server.domain.observation.PhoneNumber;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -416,8 +417,13 @@ public class IndividualService implements ScopeAwareService {
     }
 
     public Optional<Individual> findByPhoneNumber(String phoneNumber) {
-        Optional<Concept> phoneNumberConcept = conceptService.findContactNumberConcept();
+        Optional<Concept> phoneNumberConcept = conceptRepository.findAllByDataType("PhoneNumber").stream().findFirst();
+        if (!phoneNumberConcept.isPresent()) {
+            phoneNumberConcept = conceptService.findContactNumberConcept();
+        }
         phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        return individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber);
+        return phoneNumberConcept.isPresent()
+            ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
+            : Optional.empty();
     }
 }

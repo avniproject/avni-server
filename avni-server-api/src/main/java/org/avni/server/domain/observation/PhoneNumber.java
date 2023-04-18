@@ -1,4 +1,4 @@
-package org.avni.server.domain;
+package org.avni.server.domain.observation;
 
 public class PhoneNumber {
     String phoneNumber;
