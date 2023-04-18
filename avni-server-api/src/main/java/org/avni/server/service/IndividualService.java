@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.application.*;
@@ -8,8 +9,10 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
+import org.avni.server.domain.observation.PhoneNumber;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.api.RequestUtils;
@@ -23,6 +26,7 @@ import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,6 +44,7 @@ public class IndividualService implements ScopeAwareService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final AddressLevelService addressLevelService;
     private final ConceptService conceptService;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, AddressLevelService addressLevelService, ConceptService conceptService) {
@@ -51,6 +56,7 @@ public class IndividualService implements ScopeAwareService {
         this.subjectTypeRepository = subjectTypeRepository;
         this.addressLevelService = addressLevelService;
         this.conceptService = conceptService;
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public Individual findByUuid(String uuid) {
@@ -58,7 +64,7 @@ public class IndividualService implements ScopeAwareService {
     }
 
     public Individual findById(Long id) {
-      return individualRepository.findEntity(id);
+        return individualRepository.findEntity(id);
     }
 
     public IndividualContract getSubjectEncounters(String individualUuid) {
@@ -108,7 +114,7 @@ public class IndividualService implements ScopeAwareService {
         individualContract.setMiddleName(individual.getMiddleName());
         individualContract.setLastName(individual.getLastName());
         if (null != individual.getProfilePicture()
-                && individual.getSubjectType().isAllowProfilePicture())
+            && individual.getSubjectType().isAllowProfilePicture())
             individualContract.setProfilePicture(individual.getProfilePicture());
         if (null != individual.getDateOfBirth())
             individualContract.setDateOfBirth(individual.getDateOfBirth());
@@ -180,7 +186,7 @@ public class IndividualService implements ScopeAwareService {
         return programEncounters.map(programEncounter -> {
             ProgramEncountersContract programEncountersContract = new ProgramEncountersContract();
             EntityTypeContract entityTypeContract =
-                    EntityTypeContract.fromEncounterType(programEncounter.getEncounterType());
+                EntityTypeContract.fromEncounterType(programEncounter.getEncounterType());
             programEncountersContract.setUuid(programEncounter.getUuid());
             programEncountersContract.setId(programEncounter.getId());
             programEncountersContract.setName(programEncounter.getName());
@@ -307,9 +313,9 @@ public class IndividualService implements ScopeAwareService {
 
     private void assertNoUnVoidedEnrolments(Individual individual) {
         long nonVoidedProgramEnrolments = individual.getProgramEnrolments()
-                .stream()
-                .filter(pe -> !pe.isVoided())
-                .count();
+            .stream()
+            .filter(pe -> !pe.isVoided())
+            .count();
         if (nonVoidedProgramEnrolments != 0) {
             throw new BadRequestError(String.format("There are non deleted program enrolments for the %s %s", individual.getSubjectType().getOperationalSubjectTypeName(), individual.getFirstName()));
         }
@@ -340,8 +346,8 @@ public class IndividualService implements ScopeAwareService {
         if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
             String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
             return Stream.of(providedAnswers)
-                    .map(answer -> individualRepository.findByLegacyIdOrUuidAndSubjectType(answer, subjectType).getUuid())
-                    .collect(Collectors.toList());
+                .map(answer -> individualRepository.findByLegacyIdOrUuidAndSubjectType(answer, subjectType).getUuid())
+                .collect(Collectors.toList());
         } else {
             return individualRepository.findByLegacyIdOrUuidAndSubjectType(answerValue, subjectType).getUuid();
         }
@@ -365,22 +371,32 @@ public class IndividualService implements ScopeAwareService {
     public String findPhoneNumber(Individual individual) {
         assert individual != null;
 
-        Optional<String> phoneNumber = individual.getObservations().entrySet().stream().filter(entrySet -> {
-            Concept concept = conceptRepository.findByUuid(entrySet.getKey());
-            KeyValues keyValues = concept.getKeyValues();
-            ValueType[] valueTypes = {ValueType.yes};
-            return (keyValues != null && (keyValues.containsOneOfTheValues(KeyType.contact_number, valueTypes) ||
-                    keyValues.containsOneOfTheValues(KeyType.primary_contact, valueTypes)));
-        }).map(stringObjectEntry -> (String)stringObjectEntry.getValue()).findFirst();
-
-        return phoneNumber.orElse(null);
+        Optional<Concept> phoneNumberConcept = conceptRepository.findAllByDataType("PhoneNumber").stream().findFirst();
+        if (phoneNumberConcept.isPresent()) {
+            Optional<String> phoneNumber = individual.getObservations().entrySet().stream().filter(entrySet ->
+                    Objects.equals(entrySet.getKey(), phoneNumberConcept.get().getUuid()))
+                .map(phoneNumberEntry -> objectMapper.convertValue(phoneNumberEntry.getValue(), PhoneNumber.class).getPhoneNumber()).findFirst();
+            if (phoneNumber.isPresent()) {
+                return phoneNumber.get();
+            }
+        }
+        Optional<Concept> phoneNumberTextConcept = conceptService.findContactNumberConcept();
+        if (phoneNumberTextConcept.isPresent()) {
+            Optional<String> phoneNumber = individual.getObservations().entrySet().stream().filter(entrySet ->
+                    Objects.equals(entrySet.getKey(), phoneNumberTextConcept.get().getUuid()))
+                .map(stringObjectEntry -> (String) (stringObjectEntry.getValue())).findFirst();
+            if (phoneNumber.isPresent()) {
+                return phoneNumber.get();
+            }
+        }
+        return null;
     }
 
     @Cacheable(value = PHONE_NUMBER_FOR_SUBJECT_ID)
     public String fetchIndividualPhoneNumber(String subjectId) throws PhoneNumberNotAvailableOrIncorrectException {
         Individual individual = getIndividual(subjectId);
         String phoneNumber = findPhoneNumber(individual);
-        if(StringUtils.hasText(phoneNumber)) {
+        if (StringUtils.hasText(phoneNumber)) {
             return phoneNumber;
         } else {
             throw new PhoneNumberNotAvailableOrIncorrectException();
@@ -389,20 +405,25 @@ public class IndividualService implements ScopeAwareService {
 
     public Individual getIndividual(String subjectId) {
         Individual individual = null;
-        if(RequestUtils.isValidUUID(subjectId)) {
+        if (RequestUtils.isValidUUID(subjectId)) {
             individual = individualRepository.findByUuid(subjectId);
         } else {
             individual = individualRepository.findOne(Long.parseLong(subjectId));
         }
-        if(individual == null) {
-            throw new EntityNotFoundException("Subject not found with id / uuid: "+ subjectId);
+        if (individual == null) {
+            throw new EntityNotFoundException("Subject not found with id / uuid: " + subjectId);
         }
         return individual;
     }
 
     public Optional<Individual> findByPhoneNumber(String phoneNumber) {
-        Optional<Concept> phoneNumberConcept = conceptService.findContactNumberConcept();
+        Optional<Concept> phoneNumberConcept = conceptRepository.findAllByDataType("PhoneNumber").stream().findFirst();
+        if (!phoneNumberConcept.isPresent()) {
+            phoneNumberConcept = conceptService.findContactNumberConcept();
+        }
         phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        return individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber);
+        return phoneNumberConcept.isPresent()
+            ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
+            : Optional.empty();
     }
 }
