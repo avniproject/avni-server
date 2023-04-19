@@ -4,7 +4,7 @@ from comment
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from comment
              where uuid in (
                  -- Duplicate uuids query
@@ -25,7 +25,7 @@ from comment_thread
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from comment_thread
              where uuid in (
                  -- Duplicate uuids query
@@ -46,7 +46,7 @@ from individual_relationship
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from individual_relationship
              where uuid in (
                  -- Duplicate uuids query
@@ -67,7 +67,7 @@ from rule_failure_log
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from rule_failure_log
              where uuid in (
                  -- Duplicate uuids query
@@ -88,7 +88,7 @@ from rule_failure_telemetry
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from rule_failure_telemetry
              where uuid in (
                  -- Duplicate uuids query
@@ -109,7 +109,7 @@ from subject_program_eligibility
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from subject_program_eligibility
              where uuid in (
                  -- Duplicate uuids query
@@ -130,7 +130,7 @@ from task
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from task
              where uuid in (
                  -- Duplicate uuids query
@@ -153,7 +153,7 @@ from task_unassignment
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid order by id desc) rnk
              from task_unassignment
              where uuid in (
                  -- Duplicate uuids query
