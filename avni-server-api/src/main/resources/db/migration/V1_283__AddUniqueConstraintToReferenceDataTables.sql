@@ -165,6 +165,42 @@ where relation_id in
        where rnk > 1);
 
 delete
+from individual_relationship
+where relationship_type_id in
+      (select id from individual_relationship_type irt
+      where individual_a_is_to_b_relation_id in
+          (select id
+           from (select id, uuid, organisation_id,
+                        rank() over (partition by uuid,organisation_id order by id desc) rnk
+                 from individual_relation
+                 where uuid in (
+                     -- Duplicate uuids query
+                     select uuid
+                     from (select uuid, count(*)
+                           from individual_relation
+                           group by uuid, organisation_id
+                           having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+           where rnk > 1));
+
+delete
+from individual_relationship
+where relationship_type_id in
+      (select id from individual_relationship_type irt
+      where individual_b_is_to_a_relation_id in
+         (select id
+          from (select id, uuid, organisation_id,
+                       rank() over (partition by uuid,organisation_id order by id desc) rnk
+                from individual_relation
+                where uuid in (
+                    -- Duplicate uuids query
+                    select uuid
+                    from (select uuid, count(*)
+                          from individual_relation
+                          group by uuid, organisation_id
+                          having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+          where rnk > 1));
+
+delete
 from individual_relationship_type
 where individual_a_is_to_b_relation_id in
       (select id
