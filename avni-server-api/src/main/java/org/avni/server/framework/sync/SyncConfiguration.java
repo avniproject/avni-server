@@ -86,7 +86,8 @@ public class SyncConfiguration extends WebMvcConfigurerAdapter {
             "standardReportCardType",
             "approvalStatus",
             "dashboardSectionCardMapping",
-            "dashboardSection"
+            "dashboardSection",
+            "dashboardFilter"
     ).map(path-> "/" + path + "/**").toArray(String[]::new);
 
     @Autowired

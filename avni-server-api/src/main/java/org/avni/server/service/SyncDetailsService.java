@@ -109,7 +109,7 @@ public class SyncDetailsService {
                 "SubjectType", "ChecklistItemDetail", "FormElementGroup", "FormElement", "ConceptAnswer",
                 "IdentifierSource", "OrganisationConfig", "PlatformTranslation", "Translation", "Groups",
                 "MyGroups", "GroupPrivileges", "Extension", "GroupRole", "LocationHierarchy", "ReportCard",
-                "Dashboard", "DashboardSection", "DashboardSectionCardMapping", "ApprovalStatus", "GroupDashboard",
+                "Dashboard", "DashboardSection", "DashboardFilter", "DashboardSectionCardMapping", "ApprovalStatus", "GroupDashboard",
                 "EntityApprovalStatus", "News", "UserInfo", "Privilege", "StandardReportCardType", "Documentation", "DocumentationItem",
                 "Task", "TaskType", "TaskStatus", "TaskUnAssignment", "UserSubjectAssignment", "LocationMapping"
         ));
