@@ -333,8 +333,38 @@ public class SyncController {
         return changedEntities;
     }
 
+    /**
+     * The purpose of this method is to iterate on {@code entitySyncStatusContracts}(1st param) and removing from it entries corresponding
+     * to entities with
+     * <ul>
+     *     <li>
+     *         entityName equal to [Sub-types of EntityApprovalStatus] OR [GeneralEncounter, ProgramEncounter and ProgramEnrolments]
+     *     </li>
+     *     <b>and</b>
+     *     <li>
+     *         that are not present in {@code allSyncableItems}(2nd param)
+     *     </li>
+     * </ul>
+     * <br/>
+     * <br/>
+     * This is done in-order to avoid client from attempting to sync the following due to below listed reasons
+     *  <ol>
+     *      <li>
+     *          [Sub-types of EntityApprovalStatus] : The data is synced as part of EntityApprovalStatus sync itself,
+     *                                                as we do not separately store them as different subTypes in backend-server-database
+     *      </li>
+     *      <li>
+     *          [GeneralEncounter, ProgramEncounter and ProgramEnrolments] : Few entries of these types would be missing in {@code allSyncableItems}(2nd param)
+     *                                             as their FormMappings could have been voided at a later stage and aren't eligible for sync anymore
+     *      </li>
+     *  </ol>
+     *  <p>
+     * @param entitySyncStatusContracts List of EntitySyncStatusContracts obtained after merging,
+     *                                 the avni-client specified entitySyncStatusContracts with {@code allSyncableItems}(2nd param)
+     * @param allSyncableItems List of EntitySyncStatusContract generated on server based on the status of latest FormMapping configurations and entity-relationships
+     */
     private void removeDisabledEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems) {
-        entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.shouldBeIgnoredDuringSync() &&
+        entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.mightHaveToBeIgnoredDuringSync() &&
                 allSyncableItems.stream().noneMatch(entitySyncStatusContract::matchesEntity));
     }
 

@@ -68,7 +68,7 @@ public class EntitySyncStatusContract {
         return Arrays.stream(types).anyMatch(this.entityName::equals);
     }
 
-    public boolean shouldBeIgnoredDuringSync() {
+    public boolean mightHaveToBeIgnoredDuringSync() {
         return isApprovalStatusType() || isEncounterOrEnrolmentType();
     }
 
