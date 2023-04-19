@@ -122,6 +122,17 @@ public class ProgramEncounterConstructionService {
                 .collect(Collectors.toSet());
     }
 
+
+    public ProgramEncounterContract constructProgramEncounterContractWrapper(ProgramEncounter encounter, Boolean isEnrolmentRequired) {
+        ProgramEncounterContract programEncounterContract = constructProgramEncounterContractWrapper(encounter);
+        if (encounter.getProgramEnrolment().getUuid() != null && isEnrolmentRequired) {
+            ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(encounter.getProgramEnrolment().getUuid());
+            ProgramEnrolmentContract enrolmentContract = constructEnrolments(programEnrolment, encounter.getUuid());
+            programEncounterContract.setProgramEnrolment(enrolmentContract);
+        }
+        return programEncounterContract;
+    }
+
     public ProgramEncounterContract constructProgramEncounterContractWrapper(ProgramEncounter encounter) {
         ProgramEncounterContract programEncounterContract = new ProgramEncounterContract();
         EntityTypeContract entityTypeContract = new EntityTypeContract();
