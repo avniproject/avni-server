@@ -282,6 +282,13 @@ public class SyncController {
         nonScopeAwareServiceMap.put("UserSubjectAssignment", userSubjectAssignmentService);
     }
 
+    /**
+     *
+     * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
+     *                                 which get populated based on all type of entities synced previously
+     * @param isStockApp
+     * @return
+     */
     @PostMapping(value = "/v2/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
@@ -300,6 +307,13 @@ public class SyncController {
         );
     }
 
+    /**
+     *
+     * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
+     *                                  which get populated based on all type of entities synced previously
+     * @param isStockApp
+     * @return
+     */
     @PostMapping(value = "/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetails(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
