@@ -5,14 +5,14 @@ from entity_approval_status
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from entity_approval_status
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from entity_approval_status
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -26,14 +26,14 @@ from external_system_config
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from external_system_config
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from external_system_config
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -47,14 +47,14 @@ from group_dashboard
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from group_dashboard
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from group_dashboard
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -68,14 +68,14 @@ from group_privilege
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from group_privilege
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from group_privilege
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -84,13 +84,23 @@ ALTER TABLE group_privilege
 
 -- groups	{uuid,organisation_id}
 
+delete
+from groups
+where id in
+      (select id
+       from (select id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from groups
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from groups
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
+
 ALTER TABLE groups
-    ADD UNIQUE (uuid, organisation_id);
-
--- individual_relation	{uuid,organisation_id}
-
-
-ALTER TABLE individual_relation
     ADD UNIQUE (uuid, organisation_id);
 
 -- individual_relation_gender_mapping	{uuid,organisation_id}
@@ -100,24 +110,109 @@ from individual_relation_gender_mapping
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from individual_relation_gender_mapping
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from individual_relation_gender_mapping
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
 ALTER TABLE individual_relation_gender_mapping
     ADD UNIQUE (uuid, organisation_id);
 
+
 -- individual_relationship_type	{uuid,organisation_id}
 
+delete
+from individual_relationship_type
+where id in
+      (select id
+       from (select id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from individual_relationship_type
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from individual_relationship_type
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
 
 ALTER TABLE individual_relationship_type
+    ADD UNIQUE (uuid, organisation_id);
+
+-- individual_relation	{uuid,organisation_id}
+
+delete
+from individual_relation_gender_mapping
+where relation_id in
+      (select id
+       from (select id, uuid, organisation_id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from individual_relation
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from individual_relation
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
+
+delete
+from individual_relationship_type
+where individual_a_is_to_b_relation_id in
+      (select id
+       from (select id, uuid, organisation_id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from individual_relation
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from individual_relation
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
+
+delete
+from individual_relationship_type
+where individual_b_is_to_a_relation_id in
+      (select id
+       from (select id, uuid, organisation_id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from individual_relation
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from individual_relation
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
+
+delete
+from individual_relation
+where id in
+      (select id
+       from (select id, uuid, organisation_id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from individual_relation
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from individual_relation
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
+
+ALTER TABLE individual_relation
     ADD UNIQUE (uuid, organisation_id);
 
 -- location_location_mapping	{uuid,organisation_id}
@@ -127,14 +222,14 @@ from location_location_mapping
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from location_location_mapping
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from location_location_mapping
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -148,14 +243,14 @@ from menu_item
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from menu_item
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from menu_item
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -169,14 +264,14 @@ from msg91_config
 where id in
       (select id
        from (select id,
-                    rank() over (order by id desc) rnk
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
              from msg91_config
              where uuid in (
                  -- Duplicate uuids query
                  select uuid
                  from (select uuid, count(*)
                        from msg91_config
-                       group by uuid
+                       group by uuid, organisation_id
                        having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
        where rnk > 1);
 
@@ -206,16 +301,63 @@ ALTER TABLE news
 
 -- subject_type	{uuid,organisation_id}
 
+delete
+from subject_type
+where id in
+      (select id
+       from (select id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from subject_type
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from subject_type
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
 
 ALTER TABLE subject_type
     ADD UNIQUE (uuid, organisation_id);
 
 -- task_status	{uuid,organisation_id}
 
+delete
+from task_status
+where id in
+      (select id
+       from (select id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from task_status
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from task_status
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
+
 ALTER TABLE task_status
     ADD UNIQUE (uuid, organisation_id);
 
 -- task_type	{uuid,organisation_id}
+
+delete
+from task_type
+where id in
+      (select id
+       from (select id,
+                    rank() over (partition by uuid,organisation_id order by id desc) rnk
+             from task_type
+             where uuid in (
+                 -- Duplicate uuids query
+                 select uuid
+                 from (select uuid, count(*)
+                       from task_type
+                       group by uuid, organisation_id
+                       having count(*) > 1) duplicate_uuids)) id_of_duplicate_uuids
+       where rnk > 1);
 
 ALTER TABLE task_type
     ADD UNIQUE (uuid, organisation_id);
