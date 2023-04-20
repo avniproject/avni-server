@@ -512,3 +512,37 @@ inner join batch_job_instance bji on bje.job_instance_id = bji.job_instance_id
    and bjep.key_name = 'organisationUUID'
   and string_val = (select uuid from organisation where name = '')
 where bji.job_name = 'importZipJob';
+
+-- To create db trigger on users table to set sync settings for a particular organisation
+CREATE OR REPLACE FUNCTION insert_sync_settings_for_rwb2023_users()
+    RETURNS TRIGGER
+    LANGUAGE PLPGSQL
+AS
+$$
+BEGIN
+    NEW.sync_settings := ('{
+  "subjectTypeSyncSettings": [
+    {
+      "syncConcept1": "30b35ec3-634a-4534-b156-574ae6d9243d",
+      "syncConcept2": null,
+      "subjectTypeUUID": "a961a36a-4728-4389-9934-a052067ee6a5",
+      "syncConcept1Values": [
+        "e7da9c15-5368-4a1a-8b59-3fbf7fe38ebb"
+      ],
+      "syncConcept2Values": []
+    }
+]}')::jsonb;
+
+RETURN NEW;
+END;
+$$
+
+DROP TRIGGER IF EXISTS insert_sync_settings on users;
+
+create trigger insert_sync_settings
+    before INSERT
+    on users
+    for each row
+    when (NEW.organisation_id=298)
+    execute function insert_sync_settings_for_rwb2023_users();
+
