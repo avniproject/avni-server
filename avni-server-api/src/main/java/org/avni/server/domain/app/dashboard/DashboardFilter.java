@@ -1,5 +1,7 @@
 package org.avni.server.domain.app.dashboard;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
@@ -24,6 +26,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
 
     private String name;
 
+    @JsonIgnore
     public Dashboard getDashboard() {
         return dashboard;
     }

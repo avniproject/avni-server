@@ -6,6 +6,7 @@ import org.avni.server.application.FormElementGroup;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.CustomJpaRepositoryImpl;
 import org.avni.server.domain.*;
+import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.domain.individualRelationship.IndividualRelationGenderMapping;
 import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
 import org.avni.server.domain.task.TaskStatus;
@@ -39,6 +40,19 @@ public class Avni {
         SpringApplication app = new SpringApplication(Avni.class);
         app.setWebApplicationType(WebApplicationType.SERVLET);
         app.run(args);
+    }
+
+    @Bean
+    public ResourceProcessor<Resource<DashboardFilter>> DashboardFilterProcessor() {
+        return new ResourceProcessor<Resource<DashboardFilter>>() {
+            @Override
+            public Resource<DashboardFilter> process(Resource<DashboardFilter> resource) {
+                DashboardFilter content = resource.getContent();
+                resource.removeLinks();
+                resource.add(new Link(content.getDashboard().getUuid(), "dashboardUUID"));
+                return resource;
+            }
+        };
     }
 
     @Bean
