@@ -123,13 +123,12 @@ public class ProgramEncounterConstructionService {
     }
 
 
-    public ProgramEncounterContract constructProgramEncounterContractWrapper(ProgramEncounter encounter, Boolean isEnrolmentRequired) {
+    public ProgramEncounterContract programEnrolmentWrapperForMessageSchedule(ProgramEncounter encounter) {
         ProgramEncounterContract programEncounterContract = constructProgramEncounterContractWrapper(encounter);
-        if (encounter.getProgramEnrolment().getUuid() != null && isEnrolmentRequired) {
-            ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(encounter.getProgramEnrolment().getUuid());
-            ProgramEnrolmentContract enrolmentContract = constructEnrolments(programEnrolment, encounter.getUuid());
-            programEncounterContract.setProgramEnrolment(enrolmentContract);
-        }
+        ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(encounter.getProgramEnrolment().getUuid());
+        ProgramEnrolmentContract enrolmentContract = constructEnrolments(programEnrolment, encounter.getUuid());
+        programEncounterContract.setProgramEnrolment(enrolmentContract);
+
         return programEncounterContract;
     }
 

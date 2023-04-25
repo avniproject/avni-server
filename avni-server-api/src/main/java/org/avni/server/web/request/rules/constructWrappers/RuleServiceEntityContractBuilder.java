@@ -38,7 +38,7 @@ public class RuleServiceEntityContractBuilder {
     }
 
     public ProgramEncounterContract toContract(ProgramEncounter programEncounter) {
-        return programEncounterConstructionService.constructProgramEncounterContractWrapper(programEncounter, true);
+        return programEncounterConstructionService.programEnrolmentWrapperForMessageSchedule(programEncounter);
     }
 
     public EncounterContract toContract(Encounter encounter) {
