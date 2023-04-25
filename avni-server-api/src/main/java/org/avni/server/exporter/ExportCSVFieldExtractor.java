@@ -371,7 +371,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
             Object val;
             if (formElement.getGroup() != null) {
                 Concept parentConcept = formElement.getGroup().getConcept();
-                Map<String, Object> nestedObservations = observations == null ? Collections.EMPTY_MAP : (Map<String, Object>) observations.getOrDefault(parentConcept.getUuid(), new HashMap<String, Object>());
+                Map<String, Object> nestedObservations = observations == null || obsMap.get(parentConcept.getUuid()).isRepeatable() ? Collections.EMPTY_MAP : (Map<String, Object>) observations.getOrDefault(parentConcept.getUuid(), new HashMap<String, Object>());
                 val = nestedObservations.getOrDefault(conceptUUID, null);
             } else {
                 val = observations == null ? null : observations.getOrDefault(conceptUUID, null);
