@@ -55,18 +55,45 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         entityApprovalStatus.updateAudit();
         entityApprovalStatus.setEntityId(entity.getId());
 
-        Individual individual = getIndividual(entityType, request.getEntityUuid());
+        CHSEntity chsEntity = this.typeMap.get(entityType).findByUuid(request.getEntityUuid());
+        updateIndividualAndSyncAttributes(chsEntity, entityApprovalStatus, entityType);
+        return entityApprovalStatusRepository.save(entityApprovalStatus);
+    }
+
+    public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid) {
+        ApprovalStatus approvalStatus = approvalStatusRepository.findByStatus(status);
+        List<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findByEntityIdAndEntityTypeAndIsVoidedFalse(entityId, entityType);
+        if (entityApprovalStatuses != null && entityApprovalStatuses.stream().anyMatch(x -> x.getApprovalStatus().getStatus().equals(status))) {
+            return;
+        }
+        EntityApprovalStatus entityApprovalStatus = new EntityApprovalStatus();
+        entityApprovalStatus.assignUUID();
+        entityApprovalStatus.setEntityType(entityType);
+        CHSEntity entity = getChsEntity(entityType, entityId);
+        if(StringUtils.hasText(entityTypeUuid)) {
+            entityApprovalStatus.setEntityTypeUuid(entityTypeUuid);
+        } else if(!StringUtils.hasText(entityApprovalStatus.getEntityTypeUuid())) {
+            entityApprovalStatus.setEntityTypeUuid(getEntityTypeUUID(entityType, entity));
+        }
+        entityApprovalStatus.setEntityId(entityId);
+        entityApprovalStatus.setApprovalStatus(approvalStatus);
+        entityApprovalStatus.setStatusDateTime(new DateTime());
+        entityApprovalStatus.setAutoApproved(false);
+        CHSEntity chsEntity = this.typeMap.get(entityType).findEntity(entityId);
+        updateIndividualAndSyncAttributes(chsEntity, entityApprovalStatus, entityType);
+        entityApprovalStatusRepository.save(entityApprovalStatus);
+    }
+
+    private void updateIndividualAndSyncAttributes(CHSEntity entity, EntityApprovalStatus entityApprovalStatus, EntityApprovalStatus.EntityType entityType) {
+        Individual individual = getIndividual(entityType, entity);
         entityApprovalStatus.setIndividual(individual);
         entityApprovalStatus.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
         if (individual.getAddressLevel() != null) {
             entityApprovalStatus.setAddressId(individual.getAddressLevel().getId());
         }
-
-        return entityApprovalStatusRepository.save(entityApprovalStatus);
     }
 
-    public Individual getIndividual(EntityApprovalStatus.EntityType entityType, String entityUUID) {
-        CHSEntity chsEntity = this.typeMap.get(entityType).findByUuid(entityUUID);
+    private Individual getIndividual(EntityApprovalStatus.EntityType entityType, CHSEntity chsEntity) {
         switch (entityType) {
             case Subject:
                return (Individual) chsEntity;
@@ -78,10 +105,10 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
                 return ((org.avni.server.domain.Encounter) chsEntity).getIndividual();
             case ChecklistItem:
                 return ((org.avni.server.domain.ChecklistItem) chsEntity).getChecklist().getProgramEnrolment().getIndividual();
-            default: return null;
+            default:
+                throw new RuntimeException(String.format("Entity Approval Status is not supported for this entity type: %s", entityType));
         }
     }
-
 
     public String getEntityUuid(EntityApprovalStatus eaStatus) {
         CHSEntity entity = getChsEntity(eaStatus.getEntityType(), eaStatus.getEntityId());
@@ -124,28 +151,6 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
             case ProgramEncounter: return ((ProgramEncounter)entity).getEncounterType().getUuid();
             default: throw new IllegalArgumentException(String.format("Incorrect entityType '%s' not found", entityType));
         }
-    }
-
-    public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid) {
-        ApprovalStatus approvalStatus = approvalStatusRepository.findByStatus(status);
-        List<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findByEntityIdAndEntityTypeAndIsVoidedFalse(entityId, entityType);
-        if (entityApprovalStatuses != null && entityApprovalStatuses.stream().anyMatch(x -> x.getApprovalStatus().getStatus().equals(status))) {
-            return;
-        }
-        EntityApprovalStatus entityApprovalStatus = new EntityApprovalStatus();
-        entityApprovalStatus.assignUUID();
-        entityApprovalStatus.setEntityType(entityType);
-        CHSEntity entity = getChsEntity(entityType, entityId);
-        if(StringUtils.hasText(entityTypeUuid)) {
-            entityApprovalStatus.setEntityTypeUuid(entityTypeUuid);
-        } else if(!StringUtils.hasText(entityApprovalStatus.getEntityTypeUuid())) {
-            entityApprovalStatus.setEntityTypeUuid(getEntityTypeUUID(entityType, entity));
-        }
-        entityApprovalStatus.setEntityId(entityId);
-        entityApprovalStatus.setApprovalStatus(approvalStatus);
-        entityApprovalStatus.setStatusDateTime(new DateTime());
-        entityApprovalStatus.setAutoApproved(false);
-        entityApprovalStatusRepository.save(entityApprovalStatus);
     }
 
     public List<EntityApprovalStatusWrapper> getEntityApprovalStatuses(Long entityId, EntityApprovalStatus.EntityType entityType, String entityUUID) {
