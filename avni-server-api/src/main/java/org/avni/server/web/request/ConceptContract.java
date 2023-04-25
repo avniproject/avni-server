@@ -53,6 +53,14 @@ public class ConceptContract extends ReferenceDataContract {
         return conceptContract;
     }
 
+    public static ConceptContract createForSearchResult(Concept concept) {
+        ConceptContract conceptContract = new ConceptContract();
+        conceptContract.setUuid(concept.getUuid());
+        conceptContract.setName(concept.getName());
+        conceptContract.setDataType(concept.getDataType());
+        return conceptContract;
+    }
+
     public KeyValues getKeyValues() {
         return keyValues;
     }

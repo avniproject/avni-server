@@ -1,6 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptDataType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "concept", path = "concept")
@@ -37,4 +39,11 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     List<Map<String, String>> getConceptUuidToNameMapList(String observations);
 
     Page<Concept> findAllByUuidIn(String [] uuids, Pageable pageable);
+
+    List<Concept> findByIsVoidedFalseAndNameIgnoreCaseContainsAndDataTypeIn(String name, List<String> includedDataTypes);
+
+    default List<Concept> findDashboardFilterConcepts(String namePart) {
+        List<String> supportedDataTypes = ConceptDataType.dashboardFilterSupportedTypes.stream().map(Enum::name).collect(Collectors.toList());
+        return findByIsVoidedFalseAndNameIgnoreCaseContainsAndDataTypeIn(namePart, supportedDataTypes);
+    }
 }

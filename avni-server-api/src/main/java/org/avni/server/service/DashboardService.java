@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
+import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +24,18 @@ public class DashboardService implements NonScopeAwareService {
     private final DashboardSectionRepository dashboardSectionRepository;
     private final DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository;
     private final DashboardFilterRepository dashboardFilterRepository;
+    private final DashboardMapper dashboardMapper;
 
     @Autowired
     public DashboardService(DashboardRepository dashboardRepository,
                             CardRepository cardRepository,
-                            DashboardSectionRepository dashboardSectionRepository, DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository, DashboardFilterRepository dashboardFilterRepository) {
+                            DashboardSectionRepository dashboardSectionRepository, DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository, DashboardFilterRepository dashboardFilterRepository, DashboardMapper dashboardMapper) {
         this.dashboardRepository = dashboardRepository;
         this.cardRepository = cardRepository;
         this.dashboardSectionRepository = dashboardSectionRepository;
         this.dashboardSectionCardMappingRepository = dashboardSectionCardMappingRepository;
         this.dashboardFilterRepository = dashboardFilterRepository;
+        this.dashboardMapper = dashboardMapper;
     }
 
     public Dashboard saveDashboard(DashboardContract dashboardContract) {
@@ -98,7 +101,7 @@ public class DashboardService implements NonScopeAwareService {
 
     public List<DashboardContract> getAll() {
         List<Dashboard> dashboards = dashboardRepository.findAll();
-        return dashboards.stream().map(DashboardContract::fromEntity).collect(Collectors.toList());
+        return dashboards.stream().map(dashboardMapper::fromEntity).collect(Collectors.toList());
     }
 
     private Dashboard buildDashboard(DashboardContract dashboardContract, Dashboard dashboard) {
@@ -165,7 +168,7 @@ public class DashboardService implements NonScopeAwareService {
                 dashboardFilter.assignUUID();
             }
             dashboardFilter.setDashboard(dashboard);
-            dashboardFilter.setFilter(filterContract.getFilter());
+            dashboardFilter.setFilterConfig(filterContract.getConfig().toJsonObject());
             dashboardFilterRepository.save(dashboardFilter);
             dashboardFilters.add(dashboardFilter);
         }

@@ -26,9 +26,10 @@ public enum ConceptDataType {
     QuestionGroup,
     Encounter;
 
-    private static List<ConceptDataType> stringTypes = Arrays.asList(Text, Coded, Notes, Image, Video, Id);
-    private static List<ConceptDataType> dateTypes = Arrays.asList(Date, DateTime, Duration, Time);
-    private static List<ConceptDataType> primitiveTypes = Arrays.asList(Text, DateTime, Date, Time, Numeric, Notes);
+    private static final List<ConceptDataType> stringTypes = Arrays.asList(Text, Coded, Notes, Image, Video, Id);
+    private static final List<ConceptDataType> dateTypes = Arrays.asList(Date, DateTime, Duration, Time);
+    private static final List<ConceptDataType> primitiveTypes = Arrays.asList(Text, DateTime, Date, Time, Numeric, Notes);
+    public static final List<ConceptDataType> dashboardFilterSupportedTypes = Arrays.asList(Numeric, Text, Notes, Coded, Date, DateTime, Time, Id, QuestionGroup, Encounter);
 
     public static boolean stringType(String string) {
         return stringTypes.contains(ConceptDataType.valueOf(string));

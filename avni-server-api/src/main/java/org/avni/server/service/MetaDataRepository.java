@@ -43,4 +43,8 @@ public class MetaDataRepository {
 
         return subjectTypes;
     }
+
+    public SubjectType getSubjectType(String uuid) {
+        return subjectTypeRepository.findByUuid(uuid);
+    }
 }

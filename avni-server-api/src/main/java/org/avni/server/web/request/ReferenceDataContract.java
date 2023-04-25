@@ -1,6 +1,7 @@
 package org.avni.server.web.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.avni.server.domain.CHSEntity;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class ReferenceDataContract extends CHSRequest {
@@ -16,6 +17,10 @@ public class ReferenceDataContract extends CHSRequest {
 
     public ReferenceDataContract(String uuid) {
         super(uuid);
+    }
+
+    public ReferenceDataContract(CHSEntity chsEntity) {
+        super(chsEntity);
     }
 
     public String getName() {

@@ -160,4 +160,10 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
         return this.conceptRepository.findAllByUuidIn(ids, pageable).map(ConceptSyncAttributeContract::fromConcept);
     }
 
+    @RequestMapping(value = "/web/concept/dashboardFilter/search", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public List<ConceptContract> dashboardFilterSearch(@RequestParam String namePart) {
+        List<Concept> dashboardFilterConcepts = conceptRepository.findDashboardFilterConcepts(namePart);
+        return dashboardFilterConcepts.stream().map(ConceptContract::createForSearchResult).collect(Collectors.toList());
+    }
 }
