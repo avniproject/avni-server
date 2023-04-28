@@ -16,8 +16,10 @@ import java.util.Set;
 public class Dashboard extends OrganisationAwareEntity {
 
     @NotNull
+    @Column
     private String name;
 
+    @Column
     private String description;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "dashboard")

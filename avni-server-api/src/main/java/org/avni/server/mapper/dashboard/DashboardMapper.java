@@ -1,10 +1,8 @@
 package org.avni.server.mapper.dashboard;
 
-import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Dashboard;
-import org.avni.server.service.MetaDataRepository;
-import org.avni.server.web.request.DashboardContract;
-import org.avni.server.web.request.DashboardFilterContract;
+import org.avni.server.web.request.DashboardResponse;
+import org.avni.server.web.request.DashboardFilterResponse;
 import org.avni.server.web.request.DashboardSectionContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,19 +19,19 @@ public class DashboardMapper {
         this.dashboardFilterMapper = dashboardFilterMapper;
     }
 
-    public DashboardContract fromEntity(Dashboard dashboard) {
-        DashboardContract dashboardContract = new DashboardContract();
-        dashboardContract.setId(dashboard.getId());
-        dashboardContract.setUuid(dashboard.getUuid());
-        dashboardContract.setVoided(dashboard.isVoided());
-        dashboardContract.setName(dashboard.getName());
-        dashboardContract.setDescription(dashboard.getDescription());
-        setSections(dashboardContract, dashboard);
-        setFilters(dashboardContract, dashboard);
-        return dashboardContract;
+    public DashboardResponse fromEntity(Dashboard dashboard) {
+        DashboardResponse dashboardResponse = new DashboardResponse();
+        dashboardResponse.setId(dashboard.getId());
+        dashboardResponse.setUuid(dashboard.getUuid());
+        dashboardResponse.setVoided(dashboard.isVoided());
+        dashboardResponse.setName(dashboard.getName());
+        dashboardResponse.setDescription(dashboard.getDescription());
+        setSections(dashboardResponse, dashboard);
+        setFilters(dashboardResponse, dashboard);
+        return dashboardResponse;
     }
 
-    private void setSections(DashboardContract dashboardContract, Dashboard dashboard) {
+    private void setSections(DashboardResponse dashboardContract, Dashboard dashboard) {
         List<DashboardSectionContract> list = dashboard.getDashboardSections()
                 .stream()
                 .filter(it -> !it.isVoided())
@@ -42,8 +40,8 @@ public class DashboardMapper {
         dashboardContract.setSections(list);
     }
 
-    private void setFilters(DashboardContract dashboardContract, Dashboard dashboard) {
-        List<DashboardFilterContract> list = dashboard.getDashboardFilters()
+    private void setFilters(DashboardResponse dashboardContract, Dashboard dashboard) {
+        List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
                 .stream()
                 .filter(it -> !it.isVoided())
                 .map(dashboardFilterMapper::fromEntity)

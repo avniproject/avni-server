@@ -51,7 +51,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
 
     public class DashboardFilterConfig {
         public static final String TypeFieldName = "type";
-        public static final String SubjectTypeFieldName = "subjectType";
+        public static final String SubjectTypeFieldName = "subjectTypeUUID";
         public static final String ScopeFieldName = "scope";
         public static final String WidgetFieldName = "widget";
 
@@ -61,11 +61,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
             this.jsonObject = jsonObject;
         }
 
-        public FilterType getConfigType() {
-            return FilterType.valueOf((String) this.jsonObject.get(TypeFieldName));
-        }
-
-        public String getConfigSubjectTypeUuid() {
+        public String getSubjectTypeUuid() {
             return (String) this.jsonObject.get(SubjectTypeFieldName);
         }
 
@@ -73,43 +69,47 @@ public class DashboardFilter extends OrganisationAwareEntity {
             return (String) this.jsonObject.get(WidgetFieldName);
         }
 
-        public GroupSubjectTypeScope getGroupSubjectTypeScope() {
-            JsonObject jsonObject = (JsonObject) this.jsonObject.get(ScopeFieldName);
-            return GroupSubjectTypeScope.fromDatabase(jsonObject);
+        public FilterType getType() {
+            return FilterType.valueOf((String) this.jsonObject.get(TypeFieldName));
         }
 
-        public ConceptScope getConceptScope() {
+        public GroupSubjectTypeFilter getGroupSubjectTypeFilter() {
             JsonObject jsonObject = (JsonObject) this.jsonObject.get(ScopeFieldName);
-            return ConceptScope.fromDatabase(jsonObject);
+            return GroupSubjectTypeFilter.fromDatabase(jsonObject);
+        }
+
+        public ObservationBasedFilter getObservationBasedFilter() {
+            JsonObject jsonObject = (JsonObject) this.jsonObject.get(ScopeFieldName);
+            return ObservationBasedFilter.fromDatabase(jsonObject);
         }
     }
 
-    public static class GroupSubjectTypeScope {
+    public static class GroupSubjectTypeFilter {
         private JsonObject jsonObject;
 
-        public static GroupSubjectTypeScope fromDatabase(JsonObject jsonObject) {
-            GroupSubjectTypeScope groupSubjectTypeScope = new GroupSubjectTypeScope();
-            groupSubjectTypeScope.jsonObject = jsonObject;
-            return groupSubjectTypeScope;
+        public static GroupSubjectTypeFilter fromDatabase(JsonObject jsonObject) {
+            GroupSubjectTypeFilter groupSubjectTypeFilter = new GroupSubjectTypeFilter();
+            groupSubjectTypeFilter.jsonObject = jsonObject;
+            return groupSubjectTypeFilter;
         }
 
-        public void setSubjectType(String uuid) {
+        public void setSubjectTypeUUID(String uuid) {
             jsonObject.put(DashboardFilterConfig.SubjectTypeFieldName, uuid);
         }
 
-        public String getSubjectType() {
+        public String getSubjectTypeUUID() {
             return (String) jsonObject.get(DashboardFilterConfig.SubjectTypeFieldName);
         }
     }
 
-    public static class ConceptScope {
-        public static final String ConceptFieldName = "concept";
-        public static final String ProgramsFieldName = "programs";
-        public static final String EncounterTypesFieldName = "encounterTypes";
+    public static class ObservationBasedFilter {
+        public static final String ConceptFieldName = "conceptUUID";
+        public static final String ProgramsFieldName = "programUUIDs";
+        public static final String EncounterTypesFieldName = "encounterTypeUUIDs";
         private JsonObject jsonObject;
 
-        public static ConceptScope fromDatabase(JsonObject jsonObject) {
-            ConceptScope conceptScope = new ConceptScope();
+        public static ObservationBasedFilter fromDatabase(JsonObject jsonObject) {
+            ObservationBasedFilter conceptScope = new ObservationBasedFilter();
             conceptScope.jsonObject = jsonObject;
             return conceptScope;
         }
@@ -140,27 +140,13 @@ public class DashboardFilter extends OrganisationAwareEntity {
     }
 
     public static enum FilterType {
-        RegistrationDate("Registration Date"),
+        RegistrationDate,
         Gender,
-        EnrolmentDate("Enrolment Date"),
-        ProgramEncounterDate("Program Encounter Date"),
-        EncounterDate("Encounter Date"),
-        GroupSubject("Group Subject"),
+        EnrolmentDate,
+        ProgramEncounterDate,
+        EncounterDate,
+        GroupSubject,
         Address,
         Concept;
-
-        private final String title;
-
-        FilterType(String title) {
-            this.title = title;
-        }
-
-        FilterType() {
-            this.title = this.name();
-        }
-
-        public String getTitle() {
-            return title;
-        }
     }
 }

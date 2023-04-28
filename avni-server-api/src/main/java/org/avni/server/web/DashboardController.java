@@ -4,7 +4,8 @@ import org.avni.server.dao.DashboardRepository;
 import org.avni.server.domain.Dashboard;
 import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.service.DashboardService;
-import org.avni.server.web.request.DashboardContract;
+import org.avni.server.web.request.DashboardRequest;
+import org.avni.server.web.request.DashboardResponse;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
@@ -37,7 +38,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     @GetMapping(value = "/web/dashboard")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
-    public List<DashboardContract> getAll() {
+    public List<DashboardResponse> getAll() {
         return dashboardRepository.findAllByIsVoidedFalse()
                 .stream().map(dashboardMapper::fromEntity)
                 .collect(Collectors.toList());
@@ -46,18 +47,17 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     @GetMapping(value = "/web/dashboard/{id}")
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
-    public ResponseEntity<DashboardContract> getById(@PathVariable Long id) {
-        Optional<Dashboard> dashboard = dashboardRepository.findById(id);
-        return dashboard.map(d -> ResponseEntity.ok(dashboardMapper.fromEntity(d)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public DashboardResponse getById(@PathVariable Long id) {
+        Dashboard dashboard = dashboardRepository.findEntity(id);
+        return dashboardMapper.fromEntity(dashboard);
     }
 
     @PostMapping(value = "/web/dashboard")
     @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<DashboardContract> newDashboard(@RequestBody DashboardContract dashboardContract) {
-        Dashboard dashboard = dashboardService.saveDashboard(dashboardContract);
+    public ResponseEntity<DashboardResponse> newDashboard(@RequestBody DashboardRequest dashboardRequest) {
+        Dashboard dashboard = dashboardService.saveDashboard(dashboardRequest);
         return ResponseEntity.ok(dashboardMapper.fromEntity(dashboard));
     }
 
@@ -65,12 +65,12 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<DashboardContract> editDashboard(@PathVariable Long id, @RequestBody DashboardContract dashboardContract) {
+    public ResponseEntity<DashboardResponse> editDashboard(@PathVariable Long id, @RequestBody DashboardRequest dashboardRequest) {
         Optional<Dashboard> dashboard = dashboardRepository.findById(id);
         if (!dashboard.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        Dashboard newDashboard = dashboardService.editDashboard(dashboardContract, id);
+        Dashboard newDashboard = dashboardService.editDashboard(dashboardRequest, id);
         return ResponseEntity.ok(dashboardMapper.fromEntity(newDashboard));
     }
 

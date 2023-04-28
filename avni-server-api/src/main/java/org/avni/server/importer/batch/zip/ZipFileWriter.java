@@ -353,8 +353,8 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
                 }
                 break;
             case "reportDashboard.json":
-                DashboardContract[] dashboardContracts = convertString(fileData, DashboardContract[].class);
-                for (DashboardContract dashboardContract : dashboardContracts) {
+                DashboardResponse[] dashboardContracts = convertString(fileData, DashboardResponse[].class);
+                for (DashboardResponse dashboardContract : dashboardContracts) {
                     dashboardService.uploadDashboard(dashboardContract);
                 }
                 break;

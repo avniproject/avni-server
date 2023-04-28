@@ -7,7 +7,7 @@ import org.springframework.util.StringUtils;
 import java.util.UUID;
 
 // Should be renamed to CHSContract
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CHSRequest {
     private String uuid;
     private Long id;

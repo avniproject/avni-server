@@ -2,3 +2,4 @@
 delete from dashboard_filter where 1 = 1;
 
 alter table dashboard_filter rename column filter to filter_config;
+alter table dashboard_filter alter column name set not null;

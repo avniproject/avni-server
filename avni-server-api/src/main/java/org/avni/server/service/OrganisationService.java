@@ -501,7 +501,7 @@ public class OrganisationService {
     }
 
     public void addReportDashboard(ZipOutputStream zos) throws IOException {
-        List<DashboardContract> dashboardContracts = dashboardService.getAll();
+        List<DashboardResponse> dashboardContracts = dashboardService.getAll();
         if (!dashboardContracts.isEmpty()) {
             addFileToZip(zos, "reportDashboard.json", dashboardContracts);
         }

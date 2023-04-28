@@ -38,14 +38,14 @@ public class DashboardService implements NonScopeAwareService {
         this.dashboardMapper = dashboardMapper;
     }
 
-    public Dashboard saveDashboard(DashboardContract dashboardContract) {
-        assertNoExistingDashboardWithName(dashboardContract.getName());
+    public Dashboard saveDashboard(DashboardRequest dashboardRequest) {
+        assertNoExistingDashboardWithName(dashboardRequest.getName());
         Dashboard dashboard = new Dashboard();
         dashboard.assignUUID();
-        return buildDashboard(dashboardContract, dashboard);
+        return buildDashboard(dashboardRequest, dashboard);
     }
 
-    public void uploadDashboard(DashboardContract dashboardContract) {
+    public void uploadDashboard(DashboardResponse dashboardContract) {
         Dashboard dashboard = dashboardRepository.findByUuid(dashboardContract.getUuid());
         if (dashboard == null) {
             dashboard = new Dashboard();
@@ -58,7 +58,7 @@ public class DashboardService implements NonScopeAwareService {
         uploadDashboardSections(dashboardContract, savedDashboard);
     }
 
-    private void uploadDashboardSections(DashboardContract dashboardContract, Dashboard dashboard) {
+    private void uploadDashboardSections(DashboardResponse dashboardContract, Dashboard dashboard) {
         for (DashboardSectionContract sectionContract : dashboardContract.getSections()) {
             DashboardSection section = dashboardSectionRepository.findByUuid(sectionContract.getUuid());
             if (section == null) {
@@ -88,10 +88,10 @@ public class DashboardService implements NonScopeAwareService {
         }
     }
 
-    public Dashboard editDashboard(DashboardContract newDashboard, Long dashboardId) {
+    public Dashboard editDashboard(DashboardRequest dashboardRequest, Long dashboardId) {
         Dashboard existingDashboard = dashboardRepository.findOne(dashboardId);
-        assertNewNameIsUnique(newDashboard.getName(), existingDashboard.getName());
-        return buildDashboard(newDashboard, existingDashboard);
+        assertNewNameIsUnique(dashboardRequest.getName(), existingDashboard.getName());
+        return buildDashboard(dashboardRequest, existingDashboard);
     }
 
     public void deleteDashboard(Dashboard dashboard) {
@@ -99,24 +99,24 @@ public class DashboardService implements NonScopeAwareService {
         dashboardRepository.save(dashboard);
     }
 
-    public List<DashboardContract> getAll() {
+    public List<DashboardResponse> getAll() {
         List<Dashboard> dashboards = dashboardRepository.findAll();
         return dashboards.stream().map(dashboardMapper::fromEntity).collect(Collectors.toList());
     }
 
-    private Dashboard buildDashboard(DashboardContract dashboardContract, Dashboard dashboard) {
-        dashboard.setName(dashboardContract.getName());
-        dashboard.setDescription(dashboardContract.getDescription());
-        dashboard.setVoided(dashboardContract.isVoided());
+    private Dashboard buildDashboard(DashboardRequest dashboardRequest, Dashboard dashboard) {
+        dashboard.setName(dashboardRequest.getName());
+        dashboard.setDescription(dashboardRequest.getDescription());
+        dashboard.setVoided(dashboardRequest.isVoided());
         dashboardRepository.save(dashboard);
-        setDashboardSections(dashboardContract, dashboard);
-        setDashboardFilters(dashboardContract, dashboard);
+        setDashboardSections(dashboardRequest, dashboard);
+        setDashboardFilters(dashboardRequest, dashboard);
         return dashboardRepository.save(dashboard);
     }
 
-    private void setDashboardSections(DashboardContract dashboardContract, Dashboard dashboard) {
+    private void setDashboardSections(DashboardRequest dashboardRequest, Dashboard dashboard) {
         Set<DashboardSection> dashboardSections = new HashSet<>();
-        List<DashboardSectionContract> sectionContracts = dashboardContract.getSections();
+        List<DashboardSectionContract> sectionContracts = dashboardRequest.getSections();
         for (DashboardSectionContract sectionContract : sectionContracts) {
             Long sectionId = sectionContract.getId();
             DashboardSection section;
@@ -155,20 +155,21 @@ public class DashboardService implements NonScopeAwareService {
         dashboard.setDashboardSections(dashboardSections);
     }
 
-    private void setDashboardFilters(DashboardContract dashboardContract, Dashboard dashboard) {
+    private void setDashboardFilters(DashboardRequest dashboardRequest, Dashboard dashboard) {
         Set<DashboardFilter> dashboardFilters = new HashSet<>();
-        List<DashboardFilterContract> filterContracts = dashboardContract.getFilters();
-        for (DashboardFilterContract filterContract : filterContracts) {
-            Long filterId = filterContract.getId();
+        List<DashboardFilterRequest> filterRequests = dashboardRequest.getFilters();
+        for (DashboardFilterRequest filterRequest : filterRequests) {
+            Long filterId = filterRequest.getId();
             DashboardFilter dashboardFilter;
             if (filterId != null) {
-                dashboardFilter = dashboardFilterRepository.findOne(filterContract.getId());
+                dashboardFilter = dashboardFilterRepository.findOne(filterRequest.getId());
             } else {
                 dashboardFilter = new DashboardFilter();
                 dashboardFilter.assignUUID();
             }
             dashboardFilter.setDashboard(dashboard);
-            dashboardFilter.setFilterConfig(filterContract.getConfig().toJsonObject());
+            dashboardFilter.setName(filterRequest.getName());
+            dashboardFilter.setFilterConfig(filterRequest.getFilterConfig().toJsonObject());
             dashboardFilterRepository.save(dashboardFilter);
             dashboardFilters.add(dashboardFilter);
         }
