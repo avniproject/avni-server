@@ -12,33 +12,34 @@ import javax.validation.constraints.NotNull;
 @BatchSize(size = 100)
 public class GroupPrivilege extends OrganisationAwareEntity {
 
+    //TODO IMPORTANT: Temporary code changes to make this Eager fetch for a spike
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "group_id")
     private Group group;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "privilege_id")
     private Privilege privilege;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "subject_type_id")
     private SubjectType subjectType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "program_id")
     private Program program;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "program_encounter_type_id")
     private EncounterType programEncounterType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "encounter_type_id")
     private EncounterType encounterType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "checklist_detail_id")
     private ChecklistDetail checklistDetail;
 

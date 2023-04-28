@@ -1,13 +1,9 @@
 package org.avni.server.framework.security;
 
 import com.auth0.jwk.SigningKeyNotFoundException;
-import org.avni.server.dao.AccountAdminRepository;
-import org.avni.server.dao.OrganisationRepository;
-import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.AccountAdmin;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.User;
-import org.avni.server.domain.UserContext;
+import org.avni.server.dao.*;
+import org.avni.server.domain.*;
+import org.avni.server.service.GroupPrivilegeService;
 import org.avni.server.service.IAMAuthService;
 import org.avni.server.service.IdpServiceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,13 +31,21 @@ public class AuthService {
     private final OrganisationRepository organisationRepository;
     private final AccountAdminRepository accountAdminRepository;
     private final IdpServiceFactory idpServiceFactory;
+    private final GroupPrivilegeService groupPrivilegeService;
+    private final UserGroupRepository userGroupRepository;
+    private final GroupPrivilegeRepository groupPrivilegeRepository;
 
     @Autowired
-    public AuthService(UserRepository userRepository, OrganisationRepository organisationRepository, AccountAdminRepository accountAdminRepository, IdpServiceFactory idpServiceFactory) {
+    public AuthService(UserRepository userRepository, OrganisationRepository organisationRepository,
+                       AccountAdminRepository accountAdminRepository, IdpServiceFactory idpServiceFactory,
+                       GroupPrivilegeService groupPrivilegeService, UserGroupRepository userGroupRepository, GroupPrivilegeRepository groupPrivilegeRepository) {
         this.idpServiceFactory = idpServiceFactory;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.accountAdminRepository = accountAdminRepository;
+        this.groupPrivilegeService = groupPrivilegeService;
+        this.userGroupRepository = userGroupRepository;
+        this.groupPrivilegeRepository = groupPrivilegeRepository;
     }
 
     public UserContext authenticateByUserName(String username, String organisationUUID) {
@@ -87,13 +93,36 @@ public class AuthService {
         userContext.setUser(user);
         userContext.setOrganisation(organisation);
         userContext.setOrganisationUUID(organisationUUID);
-
         List<SimpleGrantedAuthority> authorities = ALL_AUTHORITIES.stream()
                 .filter(authority -> userContext.getRoles().contains(authority.getAuthority()))
                 .collect(Collectors.toList());
 
+        authorities = fetchConsolidatedAuthorities(userContext, authorities);
+
         if (authorities.isEmpty()) return null;
         return createTempAuth(authorities);
+    }
+
+    @Transactional
+    private List<SimpleGrantedAuthority> fetchConsolidatedAuthorities(UserContext userContext, List<SimpleGrantedAuthority> authorities) {
+        boolean shouldSetAllowToTrue = (userContext.getUser().isOrgAdmin()
+                || !CollectionUtils.isEmpty(
+                        userGroupRepository.findByUserAndGroupHasAllPrivilegesTrueAndIsVoidedFalse(userContext.getUser())));
+        List<GroupPrivilege> allGeneratedPrivileges = groupPrivilegeService.generateAllPrivileges(new Group(), shouldSetAllowToTrue);
+        List<GroupPrivilege> configuredGroupPrivileges = groupPrivilegeRepository.getAllViewAndActionAllowedPrivilegesForUser(userContext.getUser().getId());
+        configuredGroupPrivileges.addAll(allGeneratedPrivileges);
+        List<GroupPrivilege> consolidatedGroupPrivileges = configuredGroupPrivileges.stream().distinct().collect(Collectors.toList());
+        List<SimpleGrantedAuthority> groupPrivilegeContractList = consolidatedGroupPrivileges.stream()
+                .map(gp -> {
+                    String role = gp.getOrganisationId() + "#" +
+                            gp.getPrivilege().getEntityType().toString() + "#" +
+                            gp.getTypeUUID() + "#" +
+                            gp.getPrivilege().getName();
+                    return new SimpleGrantedAuthority(role);
+                })
+                .distinct()
+                .collect(Collectors.toList());
+        return groupPrivilegeContractList;
     }
 
     private UserContext changeUser(User user, String organisationUUID) {
