@@ -30,6 +30,7 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -200,7 +201,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = "/web/subjectProfile")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @PostAuthorize(value = "hasAnyAuthority(T(org.avni.server.framework.security.UserContextHolder).getUserContext().getOrganisationId()+'<#@#>Subject<#@#>'+returnObject.getBody().getSubjectType().getUuid()+'<#@#>View subject')")
     @ResponseBody
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectProfile(@RequestParam("uuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualContract = individualService.getSubjectInfo(uuid);

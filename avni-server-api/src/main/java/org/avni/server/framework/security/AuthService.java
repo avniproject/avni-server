@@ -27,6 +27,7 @@ public class AuthService {
     public final static SimpleGrantedAuthority ADMIN_AUTHORITY = new SimpleGrantedAuthority(User.ADMIN);
     public final static SimpleGrantedAuthority ORGANISATION_ADMIN_AUTHORITY = new SimpleGrantedAuthority(User.ORGANISATION_ADMIN);
     public final static List<SimpleGrantedAuthority> ALL_AUTHORITIES = Arrays.asList(USER_AUTHORITY, ADMIN_AUTHORITY, ORGANISATION_ADMIN_AUTHORITY);
+    public static final String AUTH_SEPARATOR = "<#@#>";
     private final UserRepository userRepository;
     private final OrganisationRepository organisationRepository;
     private final AccountAdminRepository accountAdminRepository;
@@ -103,25 +104,28 @@ public class AuthService {
         return createTempAuth(authorities);
     }
 
-    @Transactional
     private List<SimpleGrantedAuthority> fetchConsolidatedAuthorities(UserContext userContext, List<SimpleGrantedAuthority> authorities) {
         boolean shouldSetAllowToTrue = (userContext.getUser().isOrgAdmin()
                 || !CollectionUtils.isEmpty(
                         userGroupRepository.findByUserAndGroupHasAllPrivilegesTrueAndIsVoidedFalse(userContext.getUser())));
-        List<GroupPrivilege> allGeneratedPrivileges = groupPrivilegeService.generateAllPrivileges(new Group(), shouldSetAllowToTrue);
+        Group group = new Group();
+        group.setOrganisationId(userContext.getOrganisationId());
+        List<GroupPrivilege> allGeneratedPrivileges = groupPrivilegeService.generateAllPrivileges(group, shouldSetAllowToTrue);
         List<GroupPrivilege> configuredGroupPrivileges = groupPrivilegeRepository.getAllViewAndActionAllowedPrivilegesForUser(userContext.getUser().getId());
         configuredGroupPrivileges.addAll(allGeneratedPrivileges);
         List<GroupPrivilege> consolidatedGroupPrivileges = configuredGroupPrivileges.stream().distinct().collect(Collectors.toList());
         List<SimpleGrantedAuthority> groupPrivilegeContractList = consolidatedGroupPrivileges.stream()
                 .map(gp -> {
-                    String role = gp.getOrganisationId() + "#" +
-                            gp.getPrivilege().getEntityType().toString() + "#" +
-                            gp.getTypeUUID() + "#" +
-                            gp.getPrivilege().getName();
-                    return new SimpleGrantedAuthority(role);
+                    String typeUUID = gp.getTypeUUID();
+                    StringBuilder role = new StringBuilder(gp.getOrganisationId() + AUTH_SEPARATOR);
+                    role.append(gp.getPrivilege().getEntityType().toString() + AUTH_SEPARATOR);
+                    if (typeUUID != null) role.append(gp.getTypeUUID() + AUTH_SEPARATOR);
+                    role.append(gp.getPrivilege().getName());
+                    return new SimpleGrantedAuthority(role.toString());
                 })
                 .distinct()
                 .collect(Collectors.toList());
+        groupPrivilegeContractList.addAll(authorities);
         return groupPrivilegeContractList;
     }
 

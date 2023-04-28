@@ -27,7 +27,7 @@ import java.util.Optional;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
-@PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
+@PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin') or hasAnyAuthority(T(org.avni.server.framework.security.UserContextHolder).getUserContext().getOrganisationId()+'<#@#>User<#@#>Edit user configuration')")
 public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByUsername(String username);

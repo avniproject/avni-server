@@ -57,7 +57,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/userInfo", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority(T(org.avni.server.framework.security.UserContextHolder).getUserContext().getOrganisationId()+'<#@#>User<#@#>Edit user configuration')")
     public ResponseEntity<UserInfo> getUserInfo() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -80,13 +80,13 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
      */
     @Deprecated
     @RequestMapping(value = "/me", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority(T(org.avni.server.framework.security.UserContextHolder).getUserContext().getOrganisationId()+'<#@#>User<#@#>Edit user configuration')")
     public ResponseEntity<UserInfo> getMyProfileOld() {
         return getUserInfo();
     }
 
     @RequestMapping(value = "/v2/me", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority(T(org.avni.server.framework.security.UserContextHolder).getUserContext().getOrganisationId()+'<#@#>User<#@#>Edit user configuration')")
     public PagedResources<Resource<UserInfo>> getMyProfile() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -96,7 +96,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/me/v3", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority(T(org.avni.server.framework.security.UserContextHolder).getUserContext().getOrganisationId()+'<#@#>User<#@#>Edit user configuration')")
     public SlicedResources<Resource<UserInfo>> getMyProfileAsSlice() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();

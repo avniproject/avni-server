@@ -11,12 +11,35 @@ import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
+
+    public static List<String> REFERENCE_ENTITY_TYPES = Arrays.asList("IdentifierSource",
+            "Concept",
+            "Extension",
+            "Catchment",
+            "Task",
+            "Bundle",
+            "IdentifierUserAssignment",
+            "OrganisationConfig",
+            "OfflineView",
+            "Documentation",
+            "EncounterType",
+            "ApplicationMenu",
+            "Relationship",
+            "LocationType",
+            "UserGroup",
+            "User",
+            "RuleFailure",
+            "Program",
+            "ChecklistConfig",
+            "Location",
+            "Form");
     private GroupRepository groupRepository;
     private PrivilegeRepository privilegeRepository;
     private SubjectTypeRepository subjectTypeRepository;
@@ -85,6 +108,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                     .filter(privilege -> privilege.getEntityType() == EntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege.getName()))
                     .forEach(subjectPrivilege -> {
                                 GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                groupPrivilege.setOrganisationId(subjectType.getOrganisationId());
                                 groupPrivilege.setGroup(group);
                                 groupPrivilege.setPrivilege(subjectPrivilege);
                                 groupPrivilege.setSubjectType(subjectType);
@@ -104,6 +128,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                             .filter(privilege -> privilege.getEntityType() == EntityType.Enrolment)
                             .forEach(enrolmentPrivilege -> {
                                 GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                groupPrivilege.setOrganisationId(subjectType.getOrganisationId());
                                 groupPrivilege.setGroup(group);
                                 groupPrivilege.setPrivilege(enrolmentPrivilege);
                                 groupPrivilege.setSubjectType(subjectType);
@@ -118,6 +143,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                                 .filter(privilege -> privilege.getEntityType() == EntityType.Encounter)
                                 .forEach(encounterPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                    groupPrivilege.setOrganisationId(subjectType.getOrganisationId());
                                     groupPrivilege.setGroup(group);
                                     groupPrivilege.setPrivilege(encounterPrivilege);
                                     groupPrivilege.setSubjectType(subjectType);
@@ -134,6 +160,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                                     .filter(privilege -> privilege.getEntityType() == EntityType.Checklist)
                                     .forEach(privilege -> {
                                         GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                        groupPrivilege.setOrganisationId(subjectType.getOrganisationId());
                                         groupPrivilege.setGroup(group);
                                         groupPrivilege.setPrivilege(privilege);
                                         groupPrivilege.setSubjectType(subjectType);
@@ -150,6 +177,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                                 .filter(privilege -> privilege.getEntityType() == EntityType.Encounter)
                                 .forEach(encounterPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                    groupPrivilege.setOrganisationId(subjectType.getOrganisationId());
                                     groupPrivilege.setGroup(group);
                                     groupPrivilege.setPrivilege(encounterPrivilege);
                                     groupPrivilege.setSubjectType(subjectType);
@@ -162,6 +190,19 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                 }
             });
         });
+
+        privilegeList.stream()
+                .filter(privilege -> REFERENCE_ENTITY_TYPES.contains(privilege.getEntityType().toString()))
+                .forEach(referenceDataPrivilege -> {
+                            GroupPrivilege groupPrivilege = new GroupPrivilege();
+                            groupPrivilege.setOrganisationId(group.getOrganisationId());
+                            groupPrivilege.setGroup(group);
+                            groupPrivilege.setPrivilege(referenceDataPrivilege);
+                            groupPrivilege.setAllow(setAllowToTrue);
+                            groupPrivilege.assignUUID();
+                            allPrivileges.add(groupPrivilege);
+                        }
+                );
 
         return allPrivileges;
     }
