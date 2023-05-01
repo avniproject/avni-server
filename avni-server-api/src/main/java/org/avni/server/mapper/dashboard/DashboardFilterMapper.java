@@ -34,23 +34,25 @@ public class DashboardFilterMapper {
 
         DashboardFilter.FilterType filterType = df.getFilterConfig().getType();
         if (filterType.equals(DashboardFilter.FilterType.GroupSubject)) {
-            DashboardFilter.GroupSubjectTypeFilter groupSubjectTypeScope = filterConfig.getGroupSubjectTypeFilter();
-            DashboardFilterConfigContract.GroupSubjectTypeFilterContract groupSubjectTypeScopeContract = new DashboardFilterConfigContract.GroupSubjectTypeFilterContract();
-            groupSubjectTypeScopeContract.setSubjectTypeUUID(groupSubjectTypeScope.getSubjectTypeUUID());
-            filterConfigResponse.setGroupSubjectTypeScope(groupSubjectTypeScopeContract);
+            DashboardFilter.GroupSubjectTypeFilter groupSubjectTypeFilter = filterConfig.getGroupSubjectTypeFilter();
+            DashboardFilterConfigContract.GroupSubjectTypeFilterContract groupSubjectTypeFilterContract = new DashboardFilterConfigContract.GroupSubjectTypeFilterContract();
+            groupSubjectTypeFilterContract.setSubjectTypeUUID(groupSubjectTypeFilter.getSubjectTypeUUID());
+            filterConfigResponse.setGroupSubjectTypeFilter(groupSubjectTypeFilterContract);
         } else if (filterType.equals(DashboardFilter.FilterType.Concept)) {
-            DashboardFilter.ObservationBasedFilter conceptScope = filterConfig.getObservationBasedFilter();
-            ObservationBasedFilterResponse conceptScopeContract = new ObservationBasedFilterResponse();
+            DashboardFilter.ObservationBasedFilter observationBasedFilter = filterConfig.getObservationBasedFilter();
+            ObservationBasedFilterResponse observationBasedFilterResponse = new ObservationBasedFilterResponse();
 
-            Concept concept = conceptRepository.findByUuid(conceptScope.getConcept());
+            Concept concept = conceptRepository.findByUuid(observationBasedFilter.getConcept());
             ConceptContract conceptContract = new ConceptContract();
             conceptContract.setUuid(concept.getUuid());
             conceptContract.setName(concept.getName());
             conceptContract.setDataType(concept.getDataType());
-            conceptScopeContract.setConcept(conceptContract);
+            observationBasedFilterResponse.setConcept(conceptContract);
 
-            conceptScopeContract.setProgramUUIDs(conceptScope.getPrograms());
-            conceptScopeContract.setEncounterTypeUUIDs(conceptScope.getEncounterTypes());
+            observationBasedFilterResponse.setScope(observationBasedFilter.getScope());
+            observationBasedFilterResponse.setProgramUUIDs(observationBasedFilter.getPrograms());
+            observationBasedFilterResponse.setEncounterTypeUUIDs(observationBasedFilter.getEncounterTypes());
+            filterConfigResponse.setObservationBasedFilter(observationBasedFilterResponse);
         }
         return dashboardFilterResponse;
     }

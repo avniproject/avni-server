@@ -5,19 +5,29 @@ import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.web.contract.reports.ObservationBasedFilterContract;
 
 public class ObservationBasedFilterRequest extends ObservationBasedFilterContract {
-    private String concept;
+    private String conceptUUID;
+    private String scope;
 
-    public String getConcept() {
-        return concept;
+    public String getConceptUUID() {
+        return conceptUUID;
     }
 
-    public void setConcept(String concept) {
-        this.concept = concept;
+    public void setConceptUUID(String conceptUUID) {
+        this.conceptUUID = conceptUUID;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
     }
 
     public JsonObject getJsonObject() {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.put(DashboardFilter.ObservationBasedFilter.ConceptFieldName, concept);
+        jsonObject.put(DashboardFilter.ObservationBasedFilter.ConceptFieldName, conceptUUID);
+        jsonObject.put(DashboardFilter.ObservationBasedFilter.ScopeFieldName, scope);
         jsonObject.put(DashboardFilter.ObservationBasedFilter.ProgramsFieldName, getProgramUUIDs());
         jsonObject.put(DashboardFilter.ObservationBasedFilter.EncounterTypesFieldName, getEncounterTypeUUIDs());
         return jsonObject;

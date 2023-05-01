@@ -7,7 +7,7 @@ public class DashboardFilterConfigContract {
     private String type;
     private String subjectTypeUUID;
     private String widget;
-    private GroupSubjectTypeFilterContract groupSubjectTypeResponse;
+    private GroupSubjectTypeFilterContract groupSubjectTypeFilter;
 
     public String getSubjectTypeUUID() {
         return subjectTypeUUID;
@@ -25,12 +25,12 @@ public class DashboardFilterConfigContract {
         this.widget = widget;
     }
 
-    public GroupSubjectTypeFilterContract getGroupSubjectTypeScope() {
-        return groupSubjectTypeResponse;
+    public GroupSubjectTypeFilterContract getGroupSubjectTypeFilter() {
+        return groupSubjectTypeFilter;
     }
 
-    public void setGroupSubjectTypeScope(GroupSubjectTypeFilterContract groupSubjectTypeScope) {
-        this.groupSubjectTypeResponse = groupSubjectTypeScope;
+    public void setGroupSubjectTypeFilter(GroupSubjectTypeFilterContract groupSubjectTypeScope) {
+        this.groupSubjectTypeFilter = groupSubjectTypeScope;
     }
 
     public String getType() {

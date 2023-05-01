@@ -6,13 +6,13 @@ import org.avni.server.web.contract.DashboardFilterConfigContract;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashboardFilterConfigResponse extends DashboardFilterConfigContract {
-    private ObservationBasedFilterResponse conceptScope;
+    private ObservationBasedFilterResponse observationBasedFilter;
 
-    public ObservationBasedFilterResponse getConceptScope() {
-        return conceptScope;
+    public ObservationBasedFilterResponse getObservationBasedFilter() {
+        return observationBasedFilter;
     }
 
-    public void setConceptScope(ObservationBasedFilterResponse conceptScope) {
-        this.conceptScope = conceptScope;
+    public void setObservationBasedFilter(ObservationBasedFilterResponse observationBasedFilter) {
+        this.observationBasedFilter = observationBasedFilter;
     }
 }

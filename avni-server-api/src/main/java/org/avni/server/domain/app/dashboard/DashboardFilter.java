@@ -8,6 +8,7 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "dashboard_filter")
@@ -52,8 +53,9 @@ public class DashboardFilter extends OrganisationAwareEntity {
     public class DashboardFilterConfig {
         public static final String TypeFieldName = "type";
         public static final String SubjectTypeFieldName = "subjectTypeUUID";
-        public static final String ScopeFieldName = "scope";
         public static final String WidgetFieldName = "widget";
+        public static final String ObservationBasedFilterName = "observationBasedFilter";
+        public static final String GroupSubjectTypeFilterName = "groupSubjectTypeFilter";
 
         private final JsonObject jsonObject;
 
@@ -74,12 +76,12 @@ public class DashboardFilter extends OrganisationAwareEntity {
         }
 
         public GroupSubjectTypeFilter getGroupSubjectTypeFilter() {
-            JsonObject jsonObject = (JsonObject) this.jsonObject.get(ScopeFieldName);
+            JsonObject jsonObject = new JsonObject((Map<String, Object>) this.jsonObject.get(DashboardFilterConfig.GroupSubjectTypeFilterName));
             return GroupSubjectTypeFilter.fromDatabase(jsonObject);
         }
 
         public ObservationBasedFilter getObservationBasedFilter() {
-            JsonObject jsonObject = (JsonObject) this.jsonObject.get(ScopeFieldName);
+            JsonObject jsonObject = new JsonObject((Map<String, Object>) this.jsonObject.get(ObservationBasedFilterName));
             return ObservationBasedFilter.fromDatabase(jsonObject);
         }
     }
@@ -103,39 +105,32 @@ public class DashboardFilter extends OrganisationAwareEntity {
     }
 
     public static class ObservationBasedFilter {
+        public static final String ScopeFieldName = "scope";
         public static final String ConceptFieldName = "conceptUUID";
         public static final String ProgramsFieldName = "programUUIDs";
         public static final String EncounterTypesFieldName = "encounterTypeUUIDs";
         private JsonObject jsonObject;
 
         public static ObservationBasedFilter fromDatabase(JsonObject jsonObject) {
-            ObservationBasedFilter conceptScope = new ObservationBasedFilter();
-            conceptScope.jsonObject = jsonObject;
-            return conceptScope;
+            ObservationBasedFilter observationBasedFilter = new ObservationBasedFilter();
+            observationBasedFilter.jsonObject = jsonObject;
+            return observationBasedFilter;
+        }
+
+        public String getScope() {
+            return (String) jsonObject.get(ScopeFieldName);
         }
 
         public String getConcept() {
             return (String) jsonObject.get(ConceptFieldName);
         }
 
-        public void setConcept(String uuid) {
-            jsonObject.put(ConceptFieldName, uuid);
-        }
-
         public List<String> getPrograms() {
             return (List<String>) jsonObject.get(ProgramsFieldName);
         }
 
-        public void setPrograms(List<String> uuids) {
-            jsonObject.put(ProgramsFieldName, uuids);
-        }
-
         public List<String> getEncounterTypes() {
             return (List<String>) jsonObject.get(EncounterTypesFieldName);
-        }
-
-        public void setEncounterTypes(List<String> uuids) {
-            jsonObject.put(EncounterTypesFieldName, uuids);
         }
     }
 

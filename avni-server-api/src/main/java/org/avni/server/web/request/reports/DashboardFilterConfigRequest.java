@@ -24,9 +24,9 @@ public class DashboardFilterConfigRequest extends DashboardFilterConfigContract 
                 .with(DashboardFilter.DashboardFilterConfig.SubjectTypeFieldName, this.getSubjectTypeUUID())
                 .with(DashboardFilter.DashboardFilterConfig.WidgetFieldName, this.getWidget());
         if (filterType.equals(DashboardFilter.FilterType.GroupSubject))
-            jsonObject.put(DashboardFilter.DashboardFilterConfig.ScopeFieldName, getGroupSubjectTypeScope().getJsonObject());
+            jsonObject.put(DashboardFilter.DashboardFilterConfig.GroupSubjectTypeFilterName, getGroupSubjectTypeFilter().getJsonObject());
         else if (filterType.equals(DashboardFilter.FilterType.Concept))
-            jsonObject.put(DashboardFilter.DashboardFilterConfig.ScopeFieldName, observationBasedFilter.getJsonObject());
+            jsonObject.put(DashboardFilter.DashboardFilterConfig.ObservationBasedFilterName, observationBasedFilter.getJsonObject());
         return jsonObject;
     }
 }
