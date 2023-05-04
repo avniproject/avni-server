@@ -4,9 +4,7 @@ import com.auth0.jwk.SigningKeyNotFoundException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import org.avni.server.config.IdpType;
-import org.avni.server.dao.AccountAdminRepository;
-import org.avni.server.dao.OrganisationRepository;
-import org.avni.server.dao.UserRepository;
+import org.avni.server.dao.*;
 import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
@@ -39,6 +37,12 @@ public class AuthServiceTest {
     private CognitoAuthServiceImpl cognitoAuthService;
     @Mock
     private AccountAdminRepository accountAdminRepository;
+    @Mock
+    private GroupPrivilegeService groupPrivilegeService;
+    @Mock
+    private UserGroupRepository userGroupRepository;
+    @Mock
+    private GroupPrivilegeRepository groupPrivilegeRepository;
     private User user;
     private AuthService authService;
     private AccountAdmin accountAdmin;
@@ -48,7 +52,8 @@ public class AuthServiceTest {
         initMocks(this);
 //        cognitoAuthService = new CognitoUserContextServiceImpl(organisationRepository, userRepository, "poolId", "clientId");
         authService = new AuthService(userRepository, organisationRepository, accountAdminRepository,
-                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null));
+                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null),
+                groupPrivilegeService, userGroupRepository, groupPrivilegeRepository);
         String uuid = "9ecc2805-6528-47ee-8267-9368b266ad39";
         user = new User();
         user.setUuid(uuid);
