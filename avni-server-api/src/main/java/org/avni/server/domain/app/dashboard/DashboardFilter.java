@@ -1,6 +1,7 @@
 package org.avni.server.domain.app.dashboard;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.domain.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
@@ -42,8 +43,14 @@ public class DashboardFilter extends OrganisationAwareEntity {
         this.name = name;
     }
 
+    @JsonIgnore
     public DashboardFilterConfig getFilterConfig() {
         return new DashboardFilterConfig(filterConfig);
+    }
+
+    @JsonProperty("filterConfig")
+    public JsonObject getFilterConfigJsonString() {
+        return filterConfig;
     }
 
     public void setFilterConfig(JsonObject filterConfig) {
