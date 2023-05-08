@@ -8,7 +8,6 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import org.joda.time.DateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -156,24 +155,17 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     private void setDashboardFilters(DashboardRequest dashboardRequest, Dashboard dashboard) {
-        Set<DashboardFilter> dashboardFilters = new HashSet<>();
         List<DashboardFilterRequest> filterRequests = dashboardRequest.getFilters();
         for (DashboardFilterRequest filterRequest : filterRequests) {
-            Long filterId = filterRequest.getId();
-            DashboardFilter dashboardFilter;
-            if (filterId != null) {
-                dashboardFilter = dashboardFilterRepository.findOne(filterRequest.getId());
-            } else {
+            DashboardFilter dashboardFilter = dashboardFilterRepository.findByUuid(filterRequest.getUuid());
+            if (dashboardFilter == null) {
                 dashboardFilter = new DashboardFilter();
-                dashboardFilter.assignUUID();
             }
-            dashboardFilter.setDashboard(dashboard);
+            dashboardFilter.assignUUIDIfRequired();
             dashboardFilter.setName(filterRequest.getName());
             dashboardFilter.setFilterConfig(filterRequest.getFilterConfig().toJsonObject());
-            dashboardFilterRepository.save(dashboardFilter);
-            dashboardFilters.add(dashboardFilter);
+            dashboard.addUpdateFilter(dashboardFilter);
         }
-        dashboard.setDashboardFilters(dashboardFilters);
     }
 
     private void voidOldMappings(Set<DashboardSectionCardMapping> newMappings, Set<DashboardSectionCardMapping> savedMappings) {
