@@ -557,3 +557,32 @@ create trigger insert_sync_settings
     when (NEW.organisation_id=298)
     execute function insert_sync_settings_for_rwb2023_users();
 
+-- To see(debug) observations with particular value for a particular concept data type in program encounter
+select c.uuid
+from form_element fe
+         left join form_element_group feg on fe.form_element_group_id = feg.id
+         left join concept c on c.id =fe.concept_id
+         left join form f on f.id=feg.form_id
+
+where form_id=2970
+  and c.data_type = 'Numeric'
+;
+
+select observations->'14db9754-cb53-4948-ab69-ea18956bf8da',
+            observations->'9bdb7db1-b1ac-477c-a278-e130c077fc77',
+            observations->'9f6eb23b-9e82-47da-b22b-290a840365df',
+            observations->'51f90d12-e4fb-4cb9-89d4-0c0b45629dbe',
+            observations->'a5998291-545a-4de2-861e-e307354f462c',
+            observations->'7fd17431-fada-43e3-891b-d9b311cce9f0',
+            observations->'eccf536c-efbd-4705-9d13-5eaceab49e51',
+            *
+from program_encounter
+where observations->>'14db9754-cb53-4948-ab69-ea18956bf8da' like '% %'or
+    observations->>'9bdb7db1-b1ac-477c-a278-e130c077fc77' like '% %'or
+    observations->>'9f6eb23b-9e82-47da-b22b-290a840365df' like '% %'or
+    observations->>'51f90d12-e4fb-4cb9-89d4-0c0b45629dbe' like '% %'or
+    observations->>'a5998291-545a-4de2-861e-e307354f462c' like '% %'or
+    observations->>'7fd17431-fada-43e3-891b-d9b311cce9f0' like '% %'or
+    observations->>'eccf536c-efbd-4705-9d13-5eaceab49e51' like '% %'
+
+;
