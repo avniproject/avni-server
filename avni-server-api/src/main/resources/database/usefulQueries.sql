@@ -584,5 +584,32 @@ where observations->>'14db9754-cb53-4948-ab69-ea18956bf8da' like '% %'or
     observations->>'a5998291-545a-4de2-861e-e307354f462c' like '% %'or
     observations->>'7fd17431-fada-43e3-891b-d9b311cce9f0' like '% %'or
     observations->>'eccf536c-efbd-4705-9d13-5eaceab49e51' like '% %'
-
 ;
+
+-- START
+-- Reference Command to fetch specific nested observation field value
+-- {"132868ab-811a-401e-9fd3-7c87f5512436": "a1A72000000QjeDEAS", "267fbb23-4168-4fb1-9bce-6b0d5f378c46": [{"384789ec-1f69-4407-932c-9451d4e05a51": "Gunny Bags", "44cd43e1-d2a7-46e4-92f3-1fcf3508f8aa": "a1972000000OxerAAC", "53b13383-40de-4b5e-ab9f-94d0ec216c89": "a1W720000009MVxEAM", "54f456f5-94ee-4537-bc72-49947404521e": "Utensils", "aaede45f-53ca-40dc-a349-feca810810f5": "ACC-195025-P-Aasan Layer", "bf591bee-f3a5-4481-9b01-ab40ca01c8b4": 1, "f25402e3-8d6c-4436-ba81-ad7b4f97131e": "5d8aeacb-3fdc-4f6c-ab21-1d68465ef354"}], "2978117c-a297-4171-99c6-23c3522ca0f8": "goonj office", "c5bf896e-a2a5-434f-8d7c-dedf7bab7f0d": "2023/NLD/ACC-195025/PNB/022"}
+select legacy_id, uuid, created_date_time, last_modified_date_time,
+       observations#>>'{267fbb23-4168-4fb1-9bce-6b0d5f378c46,0,bf591bee-f3a5-4481-9b01-ab40ca01c8b4}'
+from individual where legacy_id = 'a1A72000000QjeDEAS';
+-- OUTPUT: a1A72000000QjeDEAS,4d7f20c0-4cda-41b6-8b01-d6ff0fc19926,2023-04-25 07:02:09.351 +00:00,2023-05-02 10:13:39.309 +00:00,1
+-- END
+
+-- START
+-- Reference Command to display current and new lineage
+select
+    parent_id as currentParentId,
+    lineage as currentLineage,
+    ltree2text(subpath(lineage,2,1))::Integer as modifiedParentId,
+    subpath(lineage,0,3) || id::text as modifiedLineage
+from address_level al
+where type_id = 1055 and organisation_id = 301 and id = 374909;
+-- Reference Command to move addressLevels one level up to the grandparent
+update address_level
+set
+    parent_id = ltree2text(subpath(lineage,2,1))::Integer,
+    lineage = subpath(lineage,0,3) || id::text,
+    last_modified_by_id = (select id from users where username = 'username@org'),
+    last_modified_date_time = current_timestamp + interval '1 millisecond'
+where type_id = 1055 and organisation_id = 301;
+-- END
