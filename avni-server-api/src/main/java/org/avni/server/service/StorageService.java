@@ -249,10 +249,6 @@ public abstract class StorageService implements S3Service {
 
     @Override
     public String uploadFileToS3(String parentFolder, File file) throws IOException {
-//        if (!file.exists() || isDev) {
-//            logger.info("Skipping media upload to S3");
-//            return null;
-//        }
         String s3Key = getS3KeyForMediaUpload(parentFolder, file.getName());
         s3Client.putObject(new PutObjectRequest(bucketName, s3Key, file));
         Files.delete(file.toPath());
@@ -398,7 +394,7 @@ public abstract class StorageService implements S3Service {
         if (oldValue != null) {
             this.deleteObject(S.getLastStringAfter((String) oldValue, "/"));
         }
-        File file = downloadMediaToFile(mediaURL);
+        File file = downloadExternalFile(mediaURL);
         return this.uploadFileToS3(file);
     }
 
@@ -412,7 +408,7 @@ public abstract class StorageService implements S3Service {
         if (oldValue != null) {
             this.deleteObject(S.getLastStringAfter((String) oldValue, "/"));
         }
-        File file = downloadMediaToFile(mediaUrl);
+        File file = downloadExternalFile(mediaUrl);
         return this.uploadFileToS3(parentFolder, file);
     }
 
@@ -426,7 +422,7 @@ public abstract class StorageService implements S3Service {
     }
 
     @Override
-    public File downloadMediaToFile(String mediaURL) {
+    public File downloadExternalFile(String mediaURL) {
         try {
             URLConnection connection = new URL(mediaURL).openConnection();
             connection.setConnectTimeout(5000);

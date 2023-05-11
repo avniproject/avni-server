@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,13 +37,15 @@ public class SubjectApiController {
     private final SubjectMigrationService subjectMigrationService;
     private final IndividualService individualService;
     private final S3Service s3Service;
+    private final MediaObservationService mediaObservationService;
+
     @Autowired
     public SubjectApiController(ConceptService conceptService, IndividualRepository individualRepository,
                                 ConceptRepository conceptRepository, GroupSubjectRepository groupSubjectRepository,
                                 LocationService locationService, SubjectTypeRepository subjectTypeRepository,
                                 LocationRepository locationRepository, GenderRepository genderRepository,
                                 SubjectMigrationService subjectMigrationService, IndividualService individualService,
-                                S3Service s3Service) {
+                                S3Service s3Service, MediaObservationService mediaObservationService) {
         this.conceptService = conceptService;
         this.individualRepository = individualRepository;
         this.conceptRepository = conceptRepository;
@@ -54,6 +57,7 @@ public class SubjectApiController {
         this.subjectMigrationService = subjectMigrationService;
         this.individualService = individualService;
         this.s3Service = s3Service;
+        this.mediaObservationService = mediaObservationService;
     }
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
@@ -62,7 +66,7 @@ public class SubjectApiController {
                                     @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                     @RequestParam(value = "subjectType", required = false) String subjectType,
                                     @RequestParam(value = "concepts", required = false) String concepts,
-                                    @RequestParam(value= "locationIds", required = false) List<String> locationUUIDs,
+                                    @RequestParam(value = "locationIds", required = false) List<String> locationUUIDs,
                                     Pageable pageable) {
         Page<Individual> subjects;
         boolean subjectTypeRequested = S.isEmpty(subjectType);
@@ -95,10 +99,16 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity post(@RequestBody ApiSubjectRequest request) {
-        Individual subject = createIndividual(request.getExternalId());
+    public ResponseEntity post(@RequestBody ApiSubjectRequest request) throws IOException {
+        Individual subject = getOrCreateSubject(request.getExternalId());
+        return processSubject(request, subject);
+    }
+
+    private ResponseEntity processSubject(@RequestBody ApiSubjectRequest request, Individual subject) throws IOException {
         try {
-            updateSubject(subject, request);
+            updateSubjectDetails(subject, request);
+            mediaObservationService.processMediaObservations(subject.getObservations());
+            individualService.save(subject);
         } catch (ValidationException ve) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
@@ -109,7 +119,7 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request) {
+    public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request) throws IOException {
         String externalId = request.getExternalId();
         Individual subject = individualRepository.findByUuid(id);
         if (subject == null && StringUtils.hasLength(externalId)) {
@@ -118,15 +128,10 @@ public class SubjectApiController {
         if (subject == null) {
             throw new IllegalArgumentException(String.format("Subject not found with id '%s' or External ID '%s'", id, externalId));
         }
-        try {
-            subject = updateSubject(subject, request);
-        } catch (ValidationException ve) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
-        }
-        return new ResponseEntity<>(SubjectResponse.fromSubject(subject, true, conceptRepository, conceptService, s3Service), HttpStatus.OK);
+        return processSubject(request, subject);
     }
 
-    @DeleteMapping (value = "/api/subject/{id}")
+    @DeleteMapping(value = "/api/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<SubjectResponse> delete(@PathVariable("id") String legacyIdOrUuid) {
@@ -139,7 +144,7 @@ public class SubjectApiController {
                 true, conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
     }
 
-    private Individual updateSubject(Individual subject, ApiSubjectRequest request) throws ValidationException {
+    private void updateSubjectDetails(Individual subject, ApiSubjectRequest request) throws ValidationException {
         SubjectType subjectType = subjectTypeRepository.findByName(request.getSubjectType());
         if (subjectType == null) {
             throw new IllegalArgumentException(String.format("Subject type not found with name '%s'", request.getSubjectType()));
@@ -156,12 +161,12 @@ public class SubjectApiController {
         if (subjectType.isAllowMiddleName())
             subject.setMiddleName(request.getMiddleName());
         subject.setLastName(request.getLastName());
-        if(subjectType.isAllowProfilePicture()) {
+        if (subjectType.isAllowProfilePicture()) {
             subject.setProfilePicture(request.getProfilePicture());
         }
         subject.setRegistrationDate(request.getRegistrationDate());
         ObservationCollection observations = RequestUtils.createObservations(request.getObservations(), conceptRepository);
-        AddressLevel newAddressLevel = addressLevel.isPresent() ? addressLevel.get() : null;
+        AddressLevel newAddressLevel = addressLevel.orElse(null);
         subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), newAddressLevel, observations);
         subject.setAddressLevel(newAddressLevel);
         if (subjectType.isPerson()) {
@@ -173,21 +178,20 @@ public class SubjectApiController {
         subject.setVoided(request.isVoided());
 
         subject.validate();
-        return individualService.save(subject);
     }
 
     private List<GroupSubject> findGroupAffiliation(Individual subject, List<GroupSubject> groupSubjects) {
         return groupSubjects.stream().filter(groupSubject -> groupSubject.getMemberSubject().equals(subject)).collect(Collectors.toList());
     }
 
-    private Individual createIndividual(String externalId) {
+    private Individual getOrCreateSubject(String externalId) {
         if (StringUtils.hasLength(externalId)) {
             Individual individual = individualRepository.findByLegacyId(externalId.trim());
-            if(individual != null) {
+            if (individual != null) {
                 return individual;
             }
         }
-        Individual subject =  new Individual();
+        Individual subject = new Individual();
         subject.assignUUID();
         if (StringUtils.hasLength(externalId)) {
             subject.setLegacyId(externalId.trim());

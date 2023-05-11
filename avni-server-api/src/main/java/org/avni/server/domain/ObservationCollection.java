@@ -4,6 +4,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -38,5 +39,18 @@ public class ObservationCollection extends HashMap<String, Object> implements Se
         }
         String[] values = SPLIT_PATTERN.split(arrayValue.replaceAll(REPLACE_REGEX, EMPTY_STRING));
         return values.length != INT_CONSTANT_ONE ? arrayValue : values[INT_CONSTANT_ZERO];
+    }
+
+    public String[] getConceptNames() {
+        return this.keySet().toArray(new String[0]);
+    }
+
+    public Map<Concept, Object> filterByConcepts(List<Concept> mediaConcepts) {
+        Map<Concept, Object> map = new HashMap<>();
+        for (Concept concept : mediaConcepts) {
+            if (this.containsKey(concept.getName()))
+                map.put(concept, this.get(concept.getName()));
+        }
+        return map;
     }
 }

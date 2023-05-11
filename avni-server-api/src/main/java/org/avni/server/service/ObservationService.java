@@ -1,12 +1,10 @@
 package org.avni.server.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
@@ -21,17 +19,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class ObservationService {
-    private ConceptRepository conceptRepository;
-    private IndividualRepository individualRepository;
-    private LocationRepository locationRepository;
-    private ObjectMapper objectMapper;
+    private final ConceptRepository conceptRepository;
+    private final IndividualRepository individualRepository;
+    private final LocationRepository locationRepository;
 
     @Autowired
     public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public ObservationCollection createObservations(List<ObservationRequest> observationRequests) {
@@ -188,13 +184,11 @@ public class ObservationService {
         if (observationValue != null) return observationValue;
 
         Set<ProgramEncounter> programEncounters = enrolment.getProgramEncounters();
-        ProgramEncounter encounterWithObs = programEncounters.stream().filter(programEncounter -> {
-            return programEncounter.getEncounterDateTime() != null;
-        }).sorted((o1, o2) -> {
-            return o2.getEncounterDateTime().compareTo(o1.getEncounterDateTime());
-        }).filter(programEncounter -> {
-            return this.getObservationValue(concept, programEncounter.getObservations()) != null;
-        }).findFirst().orElse(null);
+        ProgramEncounter encounterWithObs = programEncounters.stream()
+                .filter(programEncounter -> programEncounter.getEncounterDateTime() != null)
+                .sorted((o1, o2) -> o2.getEncounterDateTime().compareTo(o1.getEncounterDateTime()))
+                .filter(programEncounter -> this.getObservationValue(concept, programEncounter.getObservations()) != null)
+                .findFirst().orElse(null);
         return getObservationValue(encounterWithObs, concept);
     }
 
@@ -219,10 +213,9 @@ public class ObservationService {
     public List<ObservationModelContract> constructObservationModelContracts(ObservationCollection observationCollection) {
         if(observationCollection == null) return Collections.emptyList();
         List<ObservationContract> observationContracts = this.constructObservations(observationCollection);
-        List<ObservationModelContract> observationModelContracts = observationContracts.stream()
+        return observationContracts.stream()
                 .map(this::constructObservation)
                 .collect(Collectors.toList());
-        return observationModelContracts;
     }
 
     public ObservationModelContract constructObservation(ObservationContract observationContract) {
@@ -245,9 +238,9 @@ public class ObservationService {
         ConceptContract conceptContract = ConceptContract.create(questionConcept);
         if (conceptDataType.equals(ConceptDataType.Subject.toString())) {
             Object answerValue = entry.getValue();
-            List<Individual> subjects = null;
+            List<Individual> subjects;
             if (answerValue instanceof Collection) {
-                subjects = ((ArrayList<String>) answerValue).stream().map((String uuid) -> individualRepository.findByUuid(uuid)).collect(Collectors.toList());
+                subjects = ((ArrayList<String>) answerValue).stream().map(individualRepository::findByUuid).collect(Collectors.toList());
             } else {
                 subjects = Collections.singletonList(individualRepository.findByUuid((String) answerValue));
             }
@@ -262,7 +255,7 @@ public class ObservationService {
             Object answerValue = entry.getValue();
             List<Concept> conceptAnswers;
             if (answerValue instanceof Collection) {
-                conceptAnswers = ((List<String>) answerValue).stream().map(uuid -> conceptRepository.findByUuid(uuid)).collect(Collectors.toList());
+                conceptAnswers = ((List<String>) answerValue).stream().map(conceptRepository::findByUuid).collect(Collectors.toList());
             } else {
                 conceptAnswers = Collections.singletonList(conceptRepository.findByUuid((String) answerValue));
             }
@@ -311,5 +304,11 @@ public class ObservationService {
         }
         individualContract.setVoided(individual.isVoided());
         return individualContract;
+    }
+
+    public Map<Concept, Object> filterObservationsByDataType(List<ConceptDataType> conceptDataTypes, ObservationCollection observations) {
+        String[] conceptNames = observations.getConceptNames();
+        List<Concept> mediaConcepts = conceptRepository.findAllByNameInAndDataTypeIn(conceptNames, conceptDataTypes.stream().map(Enum::name).toArray(String[]::new));
+        return observations.filterByConcepts(mediaConcepts);
     }
 }

@@ -2,7 +2,6 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
 import org.hibernate.annotations.BatchSize;

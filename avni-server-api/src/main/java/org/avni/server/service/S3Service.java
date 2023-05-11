@@ -97,7 +97,7 @@ public interface S3Service {
 
     String extractFileExtension(String mediaURL, String fileName) throws Exception;
 
-    File downloadMediaToFile(String mediaURL);
+    File downloadExternalFile(String mediaURL);
 
     InputStream getObjectContentFromUrl(String s3Url);
 }

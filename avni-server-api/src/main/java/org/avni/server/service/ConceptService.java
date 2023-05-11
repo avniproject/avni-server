@@ -37,12 +37,12 @@ import java.util.stream.Collectors;
 @Service
 public class ConceptService implements NonScopeAwareService {
     private final Logger logger;
-    private ConceptRepository conceptRepository;
-    private ConceptAnswerRepository conceptAnswerRepository;
-    private OrganisationRepository organisationRepository;
-    private FormElementRepository formElementRepository;
-    private AnswerConceptMigrationRepository answerConceptMigrationRepository;
-    private LocationRepository locationRepository;
+    private final ConceptRepository conceptRepository;
+    private final ConceptAnswerRepository conceptAnswerRepository;
+    private final OrganisationRepository organisationRepository;
+    private final FormElementRepository formElementRepository;
+    private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
+    private final LocationRepository locationRepository;
 
     @Autowired
     public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, OrganisationRepository organisationRepository, UserService userService, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {

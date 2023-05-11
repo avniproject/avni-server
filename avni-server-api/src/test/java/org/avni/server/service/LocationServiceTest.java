@@ -4,7 +4,6 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.OrganisationRepository;
-import org.avni.server.service.LocationService;
 import org.avni.server.web.request.webapp.search.LocationSearchRequest;
 import org.junit.Before;
 import org.junit.Test;

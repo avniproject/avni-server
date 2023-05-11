@@ -32,4 +32,9 @@ public class ConceptBuilder {
         concept.setDataType(conceptDataType.toString());
         return this;
     }
+
+    public ConceptBuilder withId(long id) {
+        concept.setId(id);
+        return this;
+    }
 }
