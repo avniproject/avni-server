@@ -9,8 +9,8 @@ public class ObservationCollectionBuilder {
         return observationCollection;
     }
 
-    public ObservationCollectionBuilder addObservation(String conceptName, Object value) {
-        observationCollection.put(conceptName, value);
+    public ObservationCollectionBuilder addObservation(String conceptUUID, Object value) {
+        observationCollection.put(conceptUUID, value);
         return this;
     }
 }

@@ -37,12 +37,12 @@ public class MediaObservationServiceTest {
         Concept concept1 = new ConceptBuilder()
                 .withId(1)
                 .withDataType(ConceptDataType.Audio)
-                .withName("m1")
+                .withUuid("m1")
                 .build();
         Concept concept2 = new ConceptBuilder()
                 .withId(2)
                 .withDataType(ConceptDataType.Audio)
-                .withName("m2")
+                .withUuid("m2")
                 .build();
         Map<Concept, Object> mediaObservationsMap = new HashMap<Concept, Object>() {{
             put(concept1, "url1");

@@ -28,7 +28,7 @@ public class MediaObservationService {
             if (entry.getValue() instanceof String) {
                 String value = (String) entry.getValue();
                 String newValue = copyMediaToAvni(value);
-                allEntityObservations.put(concept.getName(), newValue);
+                allEntityObservations.put(concept.getUuid(), newValue);
             } else {
                 List<String> values = (List<String>) entry.getValue();
                 List<String> newValues = new ArrayList<>();
@@ -36,7 +36,7 @@ public class MediaObservationService {
                     String newValue = copyMediaToAvni(value);
                     newValues.add(newValue);
                 }
-                allEntityObservations.put(concept.getName(), newValues);
+                allEntityObservations.put(concept.getUuid(), newValues);
             }
         }
     }

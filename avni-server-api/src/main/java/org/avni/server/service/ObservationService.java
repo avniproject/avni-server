@@ -307,8 +307,8 @@ public class ObservationService {
     }
 
     public Map<Concept, Object> filterObservationsByDataType(List<ConceptDataType> conceptDataTypes, ObservationCollection observations) {
-        String[] conceptNames = observations.getConceptNames();
-        List<Concept> mediaConcepts = conceptRepository.findAllByNameInAndDataTypeIn(conceptNames, conceptDataTypes.stream().map(Enum::name).toArray(String[]::new));
+        String[] conceptUUIDs = observations.getConceptUUIDs();
+        List<Concept> mediaConcepts = conceptRepository.findAllByUuidInAndDataTypeIn(conceptUUIDs, conceptDataTypes.stream().map(Enum::name).toArray(String[]::new));
         return observations.filterByConcepts(mediaConcepts);
     }
 }
