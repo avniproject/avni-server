@@ -7,6 +7,7 @@ import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.*;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.EncounterService;
+import org.avni.server.service.MediaObservationService;
 import org.avni.server.web.request.api.ApiEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -34,15 +36,17 @@ public class GeneralEncounterApiController {
     private final IndividualRepository individualRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final EncounterService encounterService;
+    private final MediaObservationService mediaObservationService;
 
     @Autowired
-    public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService) {
+    public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService, MediaObservationService mediaObservationService) {
         this.conceptService = conceptService;
         this.encounterRepository = encounterRepository;
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterService = encounterService;
+        this.mediaObservationService = mediaObservationService;
     }
 
     @RequestMapping(value = "/api/encounters", method = RequestMethod.GET)
@@ -81,7 +85,7 @@ public class GeneralEncounterApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity post(@RequestBody ApiEncounterRequest request) {
+    public ResponseEntity post(@RequestBody ApiEncounterRequest request) throws IOException {
         Encounter encounter = createEncounter(request.getExternalId());
         try {
             initializeIndividual(request, encounter);
@@ -110,7 +114,7 @@ public class GeneralEncounterApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity put(@PathVariable String id, @RequestBody ApiEncounterRequest request) {
+    public ResponseEntity put(@PathVariable String id, @RequestBody ApiEncounterRequest request) throws IOException {
         Encounter encounter = encounterRepository.findByLegacyIdOrUuid(id);
         if (encounter == null && StringUtils.hasLength(request.getExternalId())) {
             encounter = encounterRepository.findByLegacyId(request.getExternalId().trim());
@@ -138,7 +142,7 @@ public class GeneralEncounterApiController {
         return new ResponseEntity<>(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService), HttpStatus.OK);
     }
 
-    private Encounter updateEncounter(Encounter encounter, ApiEncounterRequest request) throws ValidationException {
+    private Encounter updateEncounter(Encounter encounter, ApiEncounterRequest request) throws ValidationException, IOException {
         EncounterType encounterType = encounterTypeRepository.findByName(request.getEncounterType());
         if (encounterType == null) {
             throw new IllegalArgumentException(String.format("Encounter type not found with name '%s'", request.getEncounterType()));
@@ -158,6 +162,8 @@ public class GeneralEncounterApiController {
         encounter.setVoided(request.isVoided());
 
         encounter.validate();
+        mediaObservationService.processMediaObservations(encounter.getObservations());
+        mediaObservationService.processMediaObservations(encounter.getCancelObservations());
         return encounterService.save(encounter);
     }
 

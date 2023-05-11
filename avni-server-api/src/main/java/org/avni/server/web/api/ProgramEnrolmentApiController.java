@@ -9,6 +9,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.service.ConceptService;
+import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.ProgramEnrolmentService;
 import org.avni.server.util.S;
 import org.avni.server.web.request.api.RequestUtils;
@@ -27,6 +28,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.ArrayList;
 
 @RestController
@@ -37,22 +39,24 @@ public class ProgramEnrolmentApiController {
     private final IndividualRepository individualRepository;
     private final ProgramRepository programRepository;
     private final ProgramEnrolmentService programEnrolmentService;
+    private final MediaObservationService mediaObservationService;
 
     @Autowired
-    public ProgramEnrolmentApiController(ProgramEnrolmentRepository programEnrolmentRepository, ConceptRepository conceptRepository, ConceptService conceptService, IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentService programEnrolmentService) {
+    public ProgramEnrolmentApiController(ProgramEnrolmentRepository programEnrolmentRepository, ConceptRepository conceptRepository, ConceptService conceptService, IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentService programEnrolmentService, MediaObservationService mediaObservationService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
         this.individualRepository = individualRepository;
         this.programRepository = programRepository;
         this.programEnrolmentService = programEnrolmentService;
+        this.mediaObservationService = mediaObservationService;
     }
 
     @PostMapping(value = "/api/programEnrolment")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity post(@RequestBody ApiProgramEnrolmentRequest request) {
+    public ResponseEntity post(@RequestBody ApiProgramEnrolmentRequest request) throws IOException {
         ProgramEnrolment programEnrolment = createProgramEnrolment(request.getExternalId());
         initializeIndividual(request, programEnrolment);
         updateEnrolment(programEnrolment, request);
@@ -69,7 +73,7 @@ public class ProgramEnrolmentApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity<ProgramEnrolmentResponse> put(@PathVariable String id, @RequestBody ApiProgramEnrolmentRequest request) {
+    public ResponseEntity<ProgramEnrolmentResponse> put(@PathVariable String id, @RequestBody ApiProgramEnrolmentRequest request) throws IOException {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
         if (programEnrolment == null && StringUtils.hasLength(request.getExternalId())) {
             programEnrolment = programEnrolmentRepository.findByLegacyId(request.getExternalId().trim());
@@ -81,7 +85,7 @@ public class ProgramEnrolmentApiController {
         return new ResponseEntity<>(ProgramEnrolmentResponse.fromProgramEnrolment(programEnrolment, conceptRepository, conceptService), HttpStatus.OK);
     }
 
-    private ProgramEnrolment updateEnrolment(ProgramEnrolment enrolment, ApiProgramEnrolmentRequest request) {
+    private ProgramEnrolment updateEnrolment(ProgramEnrolment enrolment, ApiProgramEnrolmentRequest request) throws IOException {
         Program program = programRepository.findByName(request.getProgram());
         if (program == null) {
             throw new IllegalArgumentException(String.format("Program not found with name '%s'", request.getProgram()));
@@ -97,6 +101,8 @@ public class ProgramEnrolmentApiController {
         enrolment.setObservations(RequestUtils.createObservations(request.getObservations(), conceptRepository));
         enrolment.setProgramExitObservations(RequestUtils.createObservations(request.getExitObservations(), conceptRepository));
         enrolment.setVoided(request.isVoided());
+        mediaObservationService.processMediaObservations(enrolment.getObservations());
+        mediaObservationService.processMediaObservations(enrolment.getProgramExitObservations());
         return programEnrolmentService.save(enrolment);
     }
 

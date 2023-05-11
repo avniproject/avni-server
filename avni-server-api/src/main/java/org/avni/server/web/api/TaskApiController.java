@@ -17,6 +17,7 @@ import org.avni.server.domain.task.TaskStatus;
 import org.avni.server.domain.task.TaskType;
 import org.avni.server.domain.task.TaskTypeName;
 import org.avni.server.service.ConceptService;
+import org.avni.server.service.MediaObservationService;
 import org.avni.server.web.request.api.ApiTaskRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.ResponsePage;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -43,9 +45,10 @@ public class TaskApiController {
     private final ConceptRepository conceptRepository;
     private final IndividualRepository individualRepository;
     private final ConceptService conceptService;
+    private final MediaObservationService mediaObservationService;
 
     @Autowired
-    public TaskApiController(TaskRepository taskRepository, TaskTypeRepository taskTypeRepository, UserRepository userRepository, TaskStatusRepository taskStatusRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, ConceptService conceptService) {
+    public TaskApiController(TaskRepository taskRepository, TaskTypeRepository taskTypeRepository, UserRepository userRepository, TaskStatusRepository taskStatusRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, ConceptService conceptService, MediaObservationService mediaObservationService) {
         this.taskRepository = taskRepository;
         this.taskTypeRepository = taskTypeRepository;
         this.userRepository = userRepository;
@@ -53,13 +56,14 @@ public class TaskApiController {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.conceptService = conceptService;
+        this.mediaObservationService = mediaObservationService;
     }
 
     @PostMapping(value = "/api/task")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity post(@RequestBody ApiTaskRequest request) {
+    public ResponseEntity post(@RequestBody ApiTaskRequest request) throws IOException {
         Task task = createTask(request.getExternalId());
         TaskType taskType = taskTypeRepository.findByName(request.getTaskTypeName());
         if (taskType == null) {
@@ -96,6 +100,7 @@ public class TaskApiController {
         task.setLegacyId(request.getExternalId());
         task.assignUUID();
         task.setVoided(request.isVoided());
+        mediaObservationService.processMediaObservations(task.getObservations());
         taskRepository.save(task);
         return new ResponseEntity<>(ApiTaskResponse.fromTask(task, conceptRepository, conceptService), HttpStatus.OK);
     }

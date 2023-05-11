@@ -5,6 +5,7 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.*;
+import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.ProgramEncounterService;
 import org.avni.server.web.request.api.ApiProgramEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
@@ -24,6 +25,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -35,15 +37,17 @@ public class ProgramEncounterApiController {
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final ProgramEncounterService programEncounterService;
+    private final MediaObservationService mediaObservationService;
 
     @Autowired
-    public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService) {
+    public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService, MediaObservationService mediaObservationService) {
         this.programEncounterRepository = programEncounterRepository;
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterService = programEncounterService;
+        this.mediaObservationService = mediaObservationService;
     }
 
     @RequestMapping(value = "/api/programEncounters", method = RequestMethod.GET)
@@ -94,7 +98,7 @@ public class ProgramEncounterApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity post(@RequestBody ApiProgramEncounterRequest request) {
+    public ResponseEntity post(@RequestBody ApiProgramEncounterRequest request) throws IOException {
         ProgramEncounter encounter = createEncounter(request.getExternalId());
         try {
             ProgramEnrolment programEnrolment = getProgramEnrolment(request);
@@ -124,7 +128,7 @@ public class ProgramEncounterApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity put(@PathVariable String id, @RequestBody ApiProgramEncounterRequest request) {
+    public ResponseEntity put(@PathVariable String id, @RequestBody ApiProgramEncounterRequest request) throws IOException {
         ProgramEncounter encounter = programEncounterRepository.findByLegacyIdOrUuid(id);
         if (encounter == null && StringUtils.hasLength(request.getExternalId())) {
             encounter = programEncounterRepository.findByLegacyId(request.getExternalId().trim());
@@ -152,7 +156,7 @@ public class ProgramEncounterApiController {
         return new ResponseEntity<>(EncounterResponse.fromProgramEncounter(programEncounter, conceptRepository, conceptService), HttpStatus.OK);
     }
 
-    private ProgramEncounter updateEncounter(ProgramEncounter encounter, ApiProgramEncounterRequest request) throws ValidationException {
+    private ProgramEncounter updateEncounter(ProgramEncounter encounter, ApiProgramEncounterRequest request) throws ValidationException, IOException {
         EncounterType encounterType = encounterTypeRepository.findByName(request.getEncounterType());
         if (encounterType == null) {
             throw new IllegalArgumentException(String.format("Encounter type not found with name '%s'", request.getEncounterType()));
@@ -172,6 +176,8 @@ public class ProgramEncounterApiController {
         encounter.setVoided(request.isVoided());
 
         encounter.validate();
+        mediaObservationService.processMediaObservations(encounter.getObservations());
+        mediaObservationService.processMediaObservations(encounter.getCancelObservations());
         return programEncounterService.save(encounter);
     }
 
