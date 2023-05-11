@@ -346,6 +346,18 @@ from
 -- Group open db connections by backend name
 SELECT datname, numbackends FROM pg_stat_database;
 
+-- Query to show user, database, client_ip and app_name
+select pid as process_id,
+       usename as username,
+       datname as database_name,
+       client_addr as client_address,
+       application_name,
+       backend_start,
+       state,
+       state_change
+from pg_stat_activity;
+
+
 -- See what processes are blocking what queries (these only find row-level locks, not object-level locks)
 SELECT blocked_locks.pid     AS blocked_pid,
        blocked_activity.usename  AS blocked_user,
