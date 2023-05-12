@@ -42,6 +42,9 @@ public class MediaObservationService {
     }
 
     private String copyMediaToAvni(String value) throws IOException {
+        if (s3Service.isInternalUrl(value)) {
+            return value;
+        }
         File file = s3Service.downloadExternalFile(value);
         return s3Service.uploadFileToS3(file);
     }

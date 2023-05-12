@@ -446,4 +446,9 @@ public abstract class StorageService implements S3Service {
             throw new RuntimeException(message);
         }
     }
+
+    @Override
+    public boolean isInternalUrl(String url) {
+        return url.startsWith(this.s3Client.getUrl(this.bucketName, "").toString());
+    }
 }

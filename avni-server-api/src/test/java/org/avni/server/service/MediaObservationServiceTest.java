@@ -5,6 +5,8 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -24,11 +26,16 @@ public class MediaObservationServiceTest {
     private ObservationService observationService;
     @Mock
     private S3Service s3Service;
+    private MediaObservationService mediaObservationService;
+
+    @Before
+    public void before() {
+        initMocks(this);
+        mediaObservationService = new MediaObservationService(observationService, s3Service);
+    }
 
     @Test
     public void processMediaObservations() throws IOException {
-        initMocks(this);
-        MediaObservationService mediaObservationService = new MediaObservationService(observationService, s3Service);
         ObservationCollection observationCollection = new ObservationCollectionBuilder()
                 .addObservation("m1", "url1")
                 .addObservation("m2", Arrays.asList("url2", "url3"))
@@ -51,10 +58,13 @@ public class MediaObservationServiceTest {
 
         when(observationService.filterObservationsByDataType(any(), any())).thenReturn(mediaObservationsMap);
         when(s3Service.uploadFileToS3(any())).thenReturn("new-value");
+        when(s3Service.isInternalUrl("url1")).thenReturn(false);
+        when(s3Service.isInternalUrl("url2")).thenReturn(false);
+        when(s3Service.isInternalUrl("url3")).thenReturn(true);
         mediaObservationService.processMediaObservations(observationCollection);
         assertEquals("new-value", observationCollection.get("m1"));
         List<String> m2Values = (List<String>) observationCollection.get("m2");
         assertEquals("new-value", m2Values.get(0));
-        assertEquals("new-value", m2Values.get(1));
+        assertEquals("url3", m2Values.get(1));
     }
 }

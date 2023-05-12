@@ -100,4 +100,6 @@ public interface S3Service {
     File downloadExternalFile(String mediaURL);
 
     InputStream getObjectContentFromUrl(String s3Url);
+
+    boolean isInternalUrl(String url);
 }
