@@ -8,7 +8,7 @@ import org.avni.server.domain.ProgramEnrolment;
 import java.util.List;
 import java.util.Map;
 
-public class ItemRow {
+public class LongitudinalExportItemRow {
     private Individual individual;
     private Map<ProgramEnrolment, Map<String, List<ProgramEncounter>>> programEnrolmentToEncountersMap;
     private Map<String, List<Encounter>> encounterTypeToEncountersMap;

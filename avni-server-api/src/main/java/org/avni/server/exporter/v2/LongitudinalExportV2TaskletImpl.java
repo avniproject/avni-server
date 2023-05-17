@@ -32,7 +32,7 @@ public class LongitudinalExportV2TaskletImpl implements LongitudinalExportTaskle
     private final Stream stream;
 
     private int read;
-    private FlatFileItemWriter<ItemRow> writer;
+    private FlatFileItemWriter<LongitudinalExportItemRow> writer;
 
 
     public LongitudinalExportV2TaskletImpl(int cacheClearSize, EntityManager entityManager, ExportV2CSVFieldExtractor exportV2CSVFieldExtractor,
@@ -51,7 +51,7 @@ public class LongitudinalExportV2TaskletImpl implements LongitudinalExportTaskle
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         createFileWriter(jobUuid, chunkContext.getStepContext().getStepExecution().getExecutionContext());
-        List<ItemRow> itemRows = new ArrayList<>();
+        List<LongitudinalExportItemRow> itemRows = new ArrayList<>();
         while (true) {
             if (!iterator.hasNext()) {
                 logger.info("All records processed, writing last set to file");
@@ -60,7 +60,7 @@ public class LongitudinalExportV2TaskletImpl implements LongitudinalExportTaskle
             }
             read++;
             Object individual = iterator.next();
-            ItemRow itemRow = exportV2Processor.process(individual);
+            LongitudinalExportItemRow itemRow = exportV2Processor.process(individual);
             itemRows.add(itemRow);
 
             if (cacheClearSize == read) {
@@ -81,7 +81,7 @@ public class LongitudinalExportV2TaskletImpl implements LongitudinalExportTaskle
         writer = new FlatFileItemWriter<>();
         File outputFile = exportS3Service.getLocalExportFile(uuid);
         writer.setResource(new FileSystemResource(outputFile));
-        DelimitedLineAggregator<ItemRow> delimitedLineAggregator = new DelimitedLineAggregator<>();
+        DelimitedLineAggregator<LongitudinalExportItemRow> delimitedLineAggregator = new DelimitedLineAggregator<>();
         delimitedLineAggregator.setDelimiter(",");
         delimitedLineAggregator.setFieldExtractor(exportV2CSVFieldExtractor);
         writer.setLineAggregator(delimitedLineAggregator);
@@ -90,7 +90,7 @@ public class LongitudinalExportV2TaskletImpl implements LongitudinalExportTaskle
         logger.info(String.format("Writing to file:%s", outputFile.getAbsolutePath()));
     }
 
-    private void writeToFile(List<ItemRow> rows) throws Exception {
+    private void writeToFile(List<LongitudinalExportItemRow> rows) throws Exception {
         if (rows.size() == 0) return;
         writer.write(rows);
     }

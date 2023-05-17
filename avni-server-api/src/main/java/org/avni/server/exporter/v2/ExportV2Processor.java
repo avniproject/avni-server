@@ -1,9 +1,7 @@
 package org.avni.server.exporter.v2;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.ExportJobParametersRepository;
 import org.avni.server.domain.*;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.joda.time.DateTime;
@@ -20,10 +18,9 @@ import java.util.stream.Collectors;
 
 @Component
 @StepScope
-public class ExportV2Processor implements ItemProcessor<Object, ItemRow> {
+public class ExportV2Processor implements ItemProcessor<Object, LongitudinalExportItemRow> {
     private final ExportJobParametersRepository exportJobParametersRepository;
     private final String exportJobParamsUUID;
-    private final ObjectMapper objectMapper;
     private ExportJobParameters exportJobParameters;
     private ExportOutput exportOutput;
 
@@ -31,7 +28,6 @@ public class ExportV2Processor implements ItemProcessor<Object, ItemRow> {
                              @Value("#{jobParameters['exportJobParamsUUID']}") String exportJobParamsUUID) {
         this.exportJobParametersRepository = exportJobParametersRepository;
         this.exportJobParamsUUID = exportJobParamsUUID;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     @PostConstruct
@@ -40,8 +36,8 @@ public class ExportV2Processor implements ItemProcessor<Object, ItemRow> {
     }
 
     @Override
-    public ItemRow process(Object exportItem) throws Exception {
-        ItemRow exportItemRow = new ItemRow();
+    public LongitudinalExportItemRow process(Object exportItem) throws Exception {
+        LongitudinalExportItemRow exportItemRow = new LongitudinalExportItemRow();
         Individual individual = initIndividual((Individual) exportItem, exportItemRow);
         initGeneralEncounters(exportItemRow, individual);
         initProgramsAndTheirEncounters(exportItemRow, individual);
@@ -49,14 +45,14 @@ public class ExportV2Processor implements ItemProcessor<Object, ItemRow> {
         return exportItemRow;
     }
 
-    private Individual initIndividual(Individual exportItem, ItemRow exportItemRow) {
+    private Individual initIndividual(Individual exportItem, LongitudinalExportItemRow exportItemRow) {
         // Individual would have already passed filters applicable for it
         Individual individual = exportItem;
         exportItemRow.setIndividual(individual);
         return individual;
     }
 
-    private void initGroupSubjectsAndTheirEncounters(ItemRow exportItemRow, Individual individual) {
+    private void initGroupSubjectsAndTheirEncounters(LongitudinalExportItemRow exportItemRow, Individual individual) {
         // filter GroupSubject by exportOutput
         Map<String, ExportEntityType> groupsToFiltersMap = Optional.ofNullable(exportOutput.getGroups()).orElse(new ArrayList<>())
                 .stream().collect(Collectors.toMap(ExportEntityType::getUuid, Function.identity()));
@@ -77,7 +73,7 @@ public class ExportV2Processor implements ItemProcessor<Object, ItemRow> {
         exportItemRow.setGroupSubjectToEncountersMap(individualToEncountersMap);
     }
 
-    private void initProgramsAndTheirEncounters(ItemRow exportItemRow, Individual individual) {
+    private void initProgramsAndTheirEncounters(LongitudinalExportItemRow exportItemRow, Individual individual) {
         // filter ProgramEnrolment by exportOutput
         Map<String, ExportEntityType> programsToFiltersMap = Optional.ofNullable(exportOutput.getPrograms()).orElse(new ArrayList<>())
                 .stream().collect(Collectors.toMap(ExportEntityType::getUuid, Function.identity()));
@@ -97,7 +93,7 @@ public class ExportV2Processor implements ItemProcessor<Object, ItemRow> {
         exportItemRow.setProgramEnrolmentToEncountersMap(programToEncountersMap);
     }
 
-    private void initGeneralEncounters(ItemRow exportItemRow, Individual individual) {
+    private void initGeneralEncounters(LongitudinalExportItemRow exportItemRow, Individual individual) {
         // filter Encounter by exportOutput
         Map<String, ExportEntityType> generalEncountersToFiltersMap = Optional.ofNullable(exportOutput.getEncounters()).orElse(new ArrayList<>())
                 .stream().collect(Collectors.toMap(ExportEntityType::getUuid, Function.identity()));

@@ -6,7 +6,6 @@ import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mock;
 

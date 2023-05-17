@@ -2,6 +2,7 @@ package org.avni.server.exporter;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.ExportJobParametersRepository;
 import org.avni.server.dao.JobStatus;
@@ -64,6 +65,12 @@ public class ExportJobService {
         User user = UserContextHolder.getUserContext().getUser();
         String jobFilterCondition = " and subjectTypeUUID <> '' ";
         return avniJobRepository.getJobStatuses(user, jobFilterCondition, pageable);
+    }
+
+    public ExportOutput getExportOutput(String exportJobParamsUUID) {
+        ExportJobParameters exportJobParameters = exportJobParametersRepository.findByUuid(exportJobParamsUUID);
+        return ObjectMapperSingleton.getObjectMapper().convertValue(exportJobParameters.getReportFormat(), new TypeReference<ExportOutput>() {
+        });
     }
 
     public ResponseEntity<?> runExportJob(@RequestBody ExportJobRequest exportJobRequest) {

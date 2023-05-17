@@ -1,15 +1,13 @@
 package org.avni.server.exporter.v2;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementType;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.exporter.ExportJobService;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.external.request.export.ExportOutput;
@@ -32,13 +30,11 @@ import java.util.stream.Collectors;
 
 @Component
 @StepScope
-public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatFileHeaderCallback {
-
+public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExportItemRow>, FlatFileHeaderCallback {
     private static final String selectedAnswerFieldValue = "1";
     private static final String unSelectedAnswerFieldValue = "0";
     private static final String EMPTY_STRING = "";
     private final ExportJobParametersRepository exportJobParametersRepository;
-    private final ObjectMapper objectMapper;
     private final EncounterRepository encounterRepository;
     private final ProgramEncounterRepository programEncounterRepository;
     private final FormMappingService formMappingService;
@@ -48,22 +44,23 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
     private final AddressLevelService addressLevelService;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
+    private final ExportJobService exportJobService;
     private final HeaderCreator headerCreator;
     private ExportOutput exportOutput;
 
-    private StringBuilder headers = new StringBuilder();
+    private final StringBuilder headers = new StringBuilder();
     private List<String> addressLevelTypes = new ArrayList<>();
 
     private Map<String, FormElement> registrationMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> enrolmentMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> exitEnrolmentMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> programEncounterMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> programEncounterCancelMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> encounterMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> encounterCancelMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> groupsMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> groupEncounterMap = new LinkedHashMap<>();
-    private Map<String, Map<String, FormElement>> groupEncounterCancelMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> enrolmentMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> exitEnrolmentMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> programEncounterMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> programEncounterCancelMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> encounterMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> encounterCancelMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> groupsMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> groupEncounterMap = new LinkedHashMap<>();
+    private final Map<String, Map<String, FormElement>> groupEncounterCancelMap = new LinkedHashMap<>();
 
     @Autowired
     public ExportV2CSVFieldExtractor(ExportJobParametersRepository exportJobParametersRepository,
@@ -76,7 +73,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
                                      AddressLevelService addressLevelService,
                                      ProgramRepository programRepository,
                                      EncounterTypeRepository encounterTypeRepository,
-                                     HeaderCreator headerCreator) {
+                                     ExportJobService exportJobService) {
         this.exportJobParametersRepository = exportJobParametersRepository;
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
@@ -87,8 +84,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         this.addressLevelService = addressLevelService;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
-        this.headerCreator = headerCreator;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
+        this.exportJobService = exportJobService;
+        this.headerCreator = new HeaderCreator();
     }
 
     @PostConstruct
@@ -96,16 +93,15 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
         ExportJobParameters exportJobParameters = exportJobParametersRepository.findByUuid(exportJobParamsUUID);
         String timezone = exportJobParameters.getTimezone();
-        exportOutput = objectMapper.convertValue(exportJobParameters.getReportFormat(), new TypeReference<ExportOutput>() {
-        });
+        exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         initializeDataMaps(timezone);
     }
 
     private void initializeDataMaps(String timezone) {
         String subjectTypeUUID = exportOutput.getUuid();
-        SubjectType individualType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         this.registrationMap = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, null, null, FormType.IndividualProfile), exportOutput);
-        this.headers.append(headerCreator.addRegistrationHeaders(individualType, this.registrationMap, this.addressLevelTypes, exportOutput.getFields()));
+        this.headers.append(headerCreator.addRegistrationHeaders(subjectType, this.registrationMap, this.addressLevelTypes, exportOutput.getFields()));
         exportOutput.getEncounters().forEach(e -> populateGeneralEncounterMap(subjectTypeUUID, e, e.getUuid(), this.encounterMap, this.encounterCancelMap, timezone));
         exportOutput.getGroups().forEach(g -> {
             String groupSubjectTypeUUID = g.getUuid();
@@ -118,7 +114,6 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         });
         exportOutput.getPrograms().forEach(p -> {
             String programUUID = p.getUuid();
-            Program program = programRepository.findByUuid(programUUID);
             LinkedHashMap<String, FormElement> applicableEnrolmentFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, programUUID, null, FormType.ProgramEnrolment), p);
             LinkedHashMap<String, FormElement> applicableExitFields = getApplicableFields(formMappingService.getAllFormElementsAndDecisionMap(subjectTypeUUID, programUUID, null, FormType.ProgramExit), p);
             this.enrolmentMap.put(programUUID, applicableEnrolmentFields);
@@ -150,8 +145,9 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         ExportFilters.DateFilter dateFilter = e.getFilters().getDate();
         Long maxEncounterCount = encounterRepository.getMaxEncounterCount(e.getUuid(), getCalendarTime(dateFilter.getFrom(), timezone), getCalendarTime(dateFilter.getTo(), timezone));
         maxEncounterCount = maxEncounterCount == null ? 1l : maxEncounterCount;
-        EncounterType encounterType = encounterTypeRepository.findByUuid(e.getUuid());
         e.setMaxCount(maxEncounterCount);
+
+        EncounterType encounterType = encounterTypeRepository.findByUuid(e.getUuid());
         this.headers.append(",")
                 .append(headerCreator.addEncounterHeaders(maxEncounterCount, applicableEncounterFields, applicableCancelEncounterFields, encounterType.getName(), e.getFields()));
     }
@@ -168,6 +164,10 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
         writer.write(this.headers.toString());
     }
 
+    public String getHeader() {
+        return this.headers.toString();
+    }
+
     private Calendar getCalendarTime(DateTime dateTime, String timeZone) {
         if (dateTime == null) return null;
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
@@ -180,11 +180,11 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<ItemRow>, FlatF
     }
 
     @Override
-    public Object[] extract(ItemRow individual) {
+    public Object[] extract(LongitudinalExportItemRow individual) {
         return createRow(individual);
     }
 
-    private Object[] createRow(ItemRow itemRow) {
+    private Object[] createRow(LongitudinalExportItemRow itemRow) {
         List<Object> columnsData = new ArrayList<>();
         addRegistrationColumns(columnsData, itemRow.getIndividual(), this.registrationMap, exportOutput.getFields());
         exportOutput.getEncounters().forEach(enc -> {

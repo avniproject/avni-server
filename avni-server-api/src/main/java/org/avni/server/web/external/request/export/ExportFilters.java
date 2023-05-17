@@ -39,6 +39,14 @@ public class ExportFilters {
         private DateTime to;
         private DateTime from;
 
+        public DateFilter(DateTime to, DateTime from) {
+            this.to = to;
+            this.from = from;
+        }
+
+        public DateFilter() {
+        }
+
         public DateTime getTo() {
             return to;
         }
@@ -56,10 +64,10 @@ public class ExportFilters {
         }
 
         public boolean apply(DateTime inputDateTime) {
-            if(inputDateTime == null) {
+            if (inputDateTime == null) {
                 return false;
             }
-            if(inputDateTime.isBefore(from) || inputDateTime.isAfter(to)) {
+            if (inputDateTime.isBefore(from) || inputDateTime.isAfter(to)) {
                 return false;
             }
             return true;
