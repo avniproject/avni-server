@@ -9,10 +9,8 @@ import org.avni.server.web.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -155,15 +153,26 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     private void setDashboardFilters(DashboardRequest dashboardRequest, Dashboard dashboard) {
+        Set<DashboardFilter> existingFilters = dashboard.getDashboardFilters();
+        List<String> existingFilterUuids = new ArrayList<>();
+        for (DashboardFilter existingFilter: existingFilters) {
+            if (!existingFilter.isVoided()) existingFilterUuids.add(existingFilter.getUuid());
+        }
         List<DashboardFilterRequest> filterRequests = dashboardRequest.getFilters();
         for (DashboardFilterRequest filterRequest : filterRequests) {
             DashboardFilter dashboardFilter = dashboardFilterRepository.findByUuid(filterRequest.getUuid());
+            existingFilterUuids.remove(filterRequest.getUuid());
             if (dashboardFilter == null) {
                 dashboardFilter = new DashboardFilter();
             }
             dashboardFilter.assignUUIDIfRequired();
             dashboardFilter.setName(filterRequest.getName());
             dashboardFilter.setFilterConfig(filterRequest.getFilterConfig().toJsonObject());
+            dashboard.addUpdateFilter(dashboardFilter);
+        }
+        for (String existingFilterUuid : existingFilterUuids) {
+            DashboardFilter dashboardFilter = dashboardFilterRepository.findByUuid(existingFilterUuid);
+            dashboardFilter.setVoided(true);
             dashboard.addUpdateFilter(dashboardFilter);
         }
     }
