@@ -536,6 +536,23 @@ inner join batch_job_instance bji on bje.job_instance_id = bji.job_instance_id
   and string_val = (select uuid from organisation where name = '')
 where bji.job_name = 'importZipJob';
 
+-- Commands to forcefully terminate a Spring-Batch job
+
+select * from batch_step_execution
+where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+
+update batch_step_execution
+set status='FAILED', exit_code='FAILED',
+    exit_message = 'terminated forcefully',
+    version=version+1, end_time=now() , last_updated = now()
+where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+
+select * from batch_job_execution
+where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+
+update batch_job_execution set status='FAILED', exit_code='FAILED', version=version+1, end_time=now()
+where job_execution_id =12345; -- <Replace 12345 with correct job execution id>
+
 -- To create db trigger on users table to set sync settings for a particular organisation
 CREATE OR REPLACE FUNCTION insert_sync_settings_for_rwb2023_users()
     RETURNS TRIGGER
