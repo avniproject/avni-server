@@ -10,7 +10,9 @@ import org.avni.server.service.DocumentationService;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormElementGroupBuilder> {
     private final ConceptService conceptService;
@@ -105,7 +107,15 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
         for (FormElementContract formElementContract : formElementContracts) {
             makeFormElement(formElementContract, formElementGroupContract);
         }
+        updateDisplayOrderToAvoidConstraintViolationLater();
         return this;
+    }
+
+    private void updateDisplayOrderToAvoidConstraintViolationLater() {
+        AtomicInteger count=new AtomicInteger(0);
+        this.get().getFormElements().stream()
+                .sorted(Comparator.comparing(FormElement::getDisplayOrder))
+                .forEach(fe -> fe.setDisplayOrder((double) count.incrementAndGet()));
     }
 
     private Documentation getDocumentation(JsonObject documentationOption) {
