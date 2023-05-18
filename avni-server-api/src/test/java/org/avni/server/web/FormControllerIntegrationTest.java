@@ -221,7 +221,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         FormElement addedFormElement = formElements.get(1);
         assertEquals("Additional Form Element", addedFormElement.getName());
         assertEquals("836ceda5-3d09-49f6-aa0b-28512bc2028a", addedFormElement.getUuid());
-        assertEquals(1.1, addedFormElement.getDisplayOrder().doubleValue(), 0);
+        assertEquals(2.0, addedFormElement.getDisplayOrder().doubleValue(), 0);
         assertEquals("43124c33-898d-42fa-a53d-b4c6fa36c581", addedFormElement.getConcept().getUuid());
         assertEquals(2, addedFormElement.getOrganisationId().intValue());
     }
@@ -246,7 +246,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         FormElementGroup formElementGroup = formElementGroups.get(1);
         assertEquals("Additional Form Element Group", formElementGroup.getName());
         assertEquals("118a1605-c7df-4942-9666-4c17af585d24", formElementGroup.getUuid());
-        assertEquals(1.1, formElementGroup.getDisplayOrder().doubleValue(), 0);
+        assertEquals(2.0, formElementGroup.getDisplayOrder().doubleValue(), 0);
         assertEquals(2, formElementGroup.getOrganisationId().intValue());
     }
 
