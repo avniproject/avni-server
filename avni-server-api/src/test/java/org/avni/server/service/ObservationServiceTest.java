@@ -1,22 +1,28 @@
 package org.avni.server.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.avni.server.application.*;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
+import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.factory.metadata.ConceptBuilder;
+import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ObservationRequest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -79,21 +85,45 @@ public class ObservationServiceTest {
 
         ObservationCollection observationCollection = observationService.createObservations(requests);
 
-        Assert.assertEquals(1, observationCollection.size());
+        assertEquals(1, observationCollection.size());
     }
 
     @Test
     public void testGetAsSingleStringValue() {
         ObservationCollection observationCollection = new ObservationCollection();
-        Assert.assertEquals("8ebbf088-f292-483e-9084-7de919ce67b7",
+        assertEquals("8ebbf088-f292-483e-9084-7de919ce67b7",
                 observationCollection.getAsSingleStringValue("[8ebbf088-f292-483e-9084-7de919ce67b7]"));
-        Assert.assertEquals("[8ebbf088-f292-483e-9084-7de919ce67b7,a77bd700-1409-4d52-93bc-9fe32c0e169b]",
+        assertEquals("[8ebbf088-f292-483e-9084-7de919ce67b7,a77bd700-1409-4d52-93bc-9fe32c0e169b]",
                 observationCollection.getAsSingleStringValue("[8ebbf088-f292-483e-9084-7de919ce67b7,a77bd700-1409-4d52-93bc-9fe32c0e169b]"));
-        Assert.assertEquals("yes",
+        assertEquals("yes",
                 observationCollection.getAsSingleStringValue("yes"));
-        Assert.assertEquals("yes,no",
+        assertEquals("yes,no",
                 observationCollection.getAsSingleStringValue("yes,no"));
-        Assert.assertEquals("[yes,no]",
+        assertEquals("[yes,no]",
                 observationCollection.getAsSingleStringValue("[yes,no]"));
+    }
+
+    @Test
+    public void getMaxNumberOfObservationSets() {
+        Concept groupConcept1 = new ConceptBuilder().withName("GC1").withUuid("gc1").withId(1).withDataType(ConceptDataType.QuestionGroup).build();
+        Concept groupConcept1Concept1 = new ConceptBuilder().withName("GC1-C1").withId(2).withUuid("gc1-c1").withDataType(ConceptDataType.Text).build();
+        Concept groupConcept2 = new ConceptBuilder().withName("GC2").withId(3).withDataType(ConceptDataType.QuestionGroup).withUuid("gc2").build();
+        Concept groupConcept2Concept1 = new ConceptBuilder().withId(4).withName("GC2-C1").withUuid("gc2-c1").withDataType(ConceptDataType.Text).build();
+
+        FormElement groupFormElement1 = new TestFormElementBuilder().withConcept(groupConcept1).withId(1).withRepeatable(true).build();
+        FormElement formElement1_1 = new TestFormElementBuilder().withGroup(groupFormElement1).withId(2).withConcept(groupConcept1Concept1).build();
+
+        FormElement groupFormElement2 = new TestFormElementBuilder().withId(3).withConcept(groupConcept2).build();
+        FormElement formElement2_1 = new TestFormElementBuilder().withId(4).withGroup(groupFormElement2).withConcept(groupConcept2Concept1).build();
+
+        FormElementGroup formElementGroup = new TestFormElementGroupBuilder().addFormElement(groupFormElement1, formElement1_1, groupFormElement2, formElement2_1).build();
+
+        Form form = new TestFormBuilder().addFormElementGroup(formElementGroup).build();
+
+        when(namedParameterJdbcTemplate.query(any(), any(ObservationService.CountMapper.class))).thenReturn(Collections.singletonList(2));
+
+        Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfObservationSets(Collections.singletonList(form), new ArrayList<>());
+        assertEquals(2, maxNumberOfObservationSets.get(groupFormElement1).intValue());
+        assertEquals(1, maxNumberOfObservationSets.get(groupFormElement2).intValue());
     }
 }

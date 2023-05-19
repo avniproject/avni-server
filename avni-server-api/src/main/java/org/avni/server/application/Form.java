@@ -219,6 +219,9 @@ public class Form extends OrganisationAwareEntity {
     }
 
     public List<FormElement> getAllElements(ConceptDataType conceptDataType) {
-        return this.getAllFormElements().stream().filter(formElement -> formElement.getConcept().getDataType().equals(conceptDataType.name())).collect(Collectors.toList());
+        return formElementGroups.stream()
+                .map(FormElementGroup::getFormElements)
+                .flatMap(Collection::stream)
+                .filter(formElement -> formElement.getConcept().getDataType().equals(conceptDataType.name())).collect(Collectors.toList());
     }
 }

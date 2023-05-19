@@ -3,10 +3,10 @@ package org.avni.server.common.builder;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.application.FormElementContract;
 
-public class TestFormElementBuilder {
+public class TestFormElementContractBuilder {
     private final FormElementContract formElement;
 
-    public TestFormElementBuilder() {
+    public TestFormElementContractBuilder() {
         formElement = new FormElementContract();
         formElement.setMandatory(false);
         formElement.setType("SingleSelect");
@@ -14,22 +14,22 @@ public class TestFormElementBuilder {
         formElement.setValidFormat(null);
     }
 
-    public TestFormElementBuilder withName(String name) {
+    public TestFormElementContractBuilder withName(String name) {
         formElement.setName(name);
         return this;
     }
 
-    public TestFormElementBuilder withUUID(String uuid) {
+    public TestFormElementContractBuilder withUUID(String uuid) {
         formElement.setUuid(uuid);
         return this;
     }
 
-    public TestFormElementBuilder withConcept(ConceptContract conceptContract) {
+    public TestFormElementContractBuilder withConcept(ConceptContract conceptContract) {
         formElement.setConcept(conceptContract);
         return this;
     }
 
-    public TestFormElementBuilder isMandatory() {
+    public TestFormElementContractBuilder isMandatory() {
         formElement.setMandatory(true);
         return this;
     }
