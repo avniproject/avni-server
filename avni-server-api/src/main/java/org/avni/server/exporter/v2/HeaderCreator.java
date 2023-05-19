@@ -3,7 +3,6 @@ package org.avni.server.exporter.v2;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementType;
 import org.avni.server.domain.*;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashMap;
@@ -63,7 +62,6 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(LAST_MODIFIED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_DATE_TIME, AbstractEncounter::getLastModifiedDateTime));
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
-
 
     public StringBuilder addRegistrationHeaders(SubjectType subjectType,
                                                 Map<String, FormElement> registrationMap,
@@ -156,9 +154,12 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
 
     private void appendObsHeaders(StringBuilder sb, String prefix, Map<String, FormElement> map, List<String> fields, boolean areFieldsAlreadySet) {
         map.forEach((uuid, fe) -> {
-            if (ConceptDataType.isGroupQuestion(fe.getConcept().getDataType())) return;
             Concept concept = fe.getConcept();
-            String groupPrefix = fe.getGroup() != null ? fe.getGroup().getConcept().getName() + "_" : "";
+            String groupPrefix = fe.getGroup() == null ? "" : (fe.getGroup().getConcept().getName() + "_");
+            if (ConceptDataType.isGroupQuestion(concept.getDataType())) {
+                return;
+            }
+
             if (concept.getDataType().equals(ConceptDataType.Coded.toString()) && fe.getType().equals(FormElementType.MultiSelect.toString())) {
                 boolean storeAnswers = fields.remove(concept.getUuid());
                 concept.getSortedAnswers().map(ca -> ca.getAnswerConcept().getName()).forEach(can -> {

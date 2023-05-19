@@ -3,30 +3,30 @@ package org.avni.server.common.builder;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
 
-public class TestFormBuilder {
+public class TestFormContractBuilder {
 
     private final FormContract form;
 
-    public TestFormBuilder() {
+    public TestFormContractBuilder() {
         form = new FormContract();
     }
 
-    public TestFormBuilder withName(String name) {
+    public TestFormContractBuilder withName(String name) {
         form.setName(name);
         return this;
     }
 
-    public TestFormBuilder withUUID(String uuid) {
+    public TestFormContractBuilder withUUID(String uuid) {
         form.setUuid(uuid);
         return this;
     }
 
-    public TestFormBuilder ofFormType(String formType) {
+    public TestFormContractBuilder ofFormType(String formType) {
         form.setFormType(formType);
         return this;
     }
 
-    public TestFormBuilder addFormElementGroup(FormElementGroupContract formElementGroup) {
+    public TestFormContractBuilder addFormElementGroup(FormElementGroupContract formElementGroup) {
         form.addFormElementGroup(formElementGroup);
         return this;
     }
@@ -34,5 +34,4 @@ public class TestFormBuilder {
     public FormContract build() {
         return this.form;
     }
-
 }

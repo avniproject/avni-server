@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.common.dbSchema.TableNames;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -13,8 +14,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentExitObservations;
+import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentObservations;
+
 @Entity
-@Table(name = "program_enrolment")
+@Table(name = TableNames.ProgramEnrolment)
 @JsonIgnoreProperties({"programEncounters", "individual"})
 @BatchSize(size = 100)
 public class ProgramEnrolment extends SyncAttributeEntity implements MessageableEntity {
@@ -35,7 +39,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @NotNull
     private DateTime enrolmentDateTime;
 
-    @Column
+    @Column(name = ProgramEnrolmentObservations)
     @Type(type = "observations")
     private ObservationCollection observations;
 
@@ -54,7 +58,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @Column
     private Point exitLocation;
 
-    @Column
+    @Column(name = ProgramEnrolmentExitObservations)
     @Type(type = "observations")
     private ObservationCollection programExitObservations;
 

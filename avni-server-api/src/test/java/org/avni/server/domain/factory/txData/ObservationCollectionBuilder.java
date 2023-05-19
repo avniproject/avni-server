@@ -5,7 +5,7 @@ import org.avni.server.domain.ObservationCollection;
 public class ObservationCollectionBuilder {
     private final ObservationCollection observationCollection = new ObservationCollection();
 
-    public ObservationCollection get() {
+    public ObservationCollection build() {
         return observationCollection;
     }
 

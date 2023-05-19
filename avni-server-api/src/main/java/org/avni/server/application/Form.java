@@ -2,6 +2,7 @@ package org.avni.server.application;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.annotations.Type;
@@ -215,5 +216,9 @@ public class Form extends OrganisationAwareEntity {
 
     public void setTaskScheduleDeclarativeRule(DeclarativeRule taskScheduleDeclarativeRule) {
         this.taskScheduleDeclarativeRule = taskScheduleDeclarativeRule;
+    }
+
+    public List<FormElement> getAllElements(ConceptDataType conceptDataType) {
+        return this.getAllFormElements().stream().filter(formElement -> formElement.getConcept().getDataType().equals(conceptDataType.name())).collect(Collectors.toList());
     }
 }

@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.avni.server.common.dbSchema.ColumnNames;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 import org.avni.server.geo.Point;
@@ -13,30 +14,40 @@ import java.util.Objects;
 public class AbstractEncounter extends SyncAttributeEntity {
     @Column
     private String name;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
     @JoinColumn(name = "encounter_type_id")
     private EncounterType encounterType;
+
     @Column
     private DateTime earliestVisitDateTime;
+
     @Column
     private DateTime maxVisitDateTime;
+
     @Column
     private DateTime encounterDateTime;
-    @Column
+
+    @Column(name = ColumnNames.EncounterObservations)
     @Type(type = "observations")
     private ObservationCollection observations;
+
     @Column
     private DateTime cancelDateTime;
-    @Column
+
+    @Column(name = ColumnNames.EncounterCancelObservations)
     @Type(type = "observations")
     private ObservationCollection cancelObservations;
+
     @Type(type = "org.avni.server.geo.PointType")
     @Column
     private Point encounterLocation;
+
     @Type(type = "org.avni.server.geo.PointType")
     @Column
     private Point cancelLocation;
+
     @Column
     private String legacyId;
 

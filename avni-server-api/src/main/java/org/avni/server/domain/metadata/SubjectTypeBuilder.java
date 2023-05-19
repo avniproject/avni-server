@@ -1,5 +1,6 @@
 package org.avni.server.domain.metadata;
 
+import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.SubjectType;
 
 public class SubjectTypeBuilder {

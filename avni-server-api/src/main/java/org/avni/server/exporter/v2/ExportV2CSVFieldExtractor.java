@@ -193,7 +193,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                 addEncounterColumns(enc.getMaxCount(), columnsData, encounterTypeList,
                         this.encounterMap.get(enc.getUuid()), this.encounterCancelMap.get(enc.getUuid()), enc);
             } else {
-                AddBlanks(columnsData, enc.getTotalNumberOfColumns());
+                addBlanks(columnsData, enc.getTotalNumberOfColumns());
             }
         });
         exportOutput.getGroups().forEach(grp -> {
@@ -210,14 +210,14 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                             addEncounterColumns(ge.getMaxCount(), columnsData, encounterTypeListMap.get(ge.getUuid()),
                                     this.groupEncounterMap.get(ge.getUuid()), this.groupEncounterCancelMap.get(ge.getUuid()), ge);
                         } else {
-                            AddBlanks(columnsData, ge.getTotalNumberOfColumns());
+                            addBlanks(columnsData, ge.getTotalNumberOfColumns());
                         }
                     });
                 });
             } else {
-                AddBlanks(columnsData, grp.getTotalNumberOfColumns());
-                AddBlanks(columnsData, addressLevelTypes.size());//Blanks for GroupSubject addressLevels
-                AddBlanks(columnsData, 1);//Blanks for No of Group members
+                addBlanks(columnsData, grp.getTotalNumberOfColumns());
+                addBlanks(columnsData, addressLevelTypes.size());//Blanks for GroupSubject addressLevels
+                addBlanks(columnsData, 1);//Blanks for No of Group members
             }
         });
         Map<ProgramEnrolment, Map<String, List<ProgramEncounter>>> programEnrolmentToEncountersMap = itemRow.getProgramEnrolmentToEncountersMap();
@@ -232,12 +232,12 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                             addEncounterColumns(pe.getMaxCount(), columnsData, encounterTypeListMap.get(pe.getUuid()), this.programEncounterMap.get(pe.getUuid()),
                                     this.programEncounterCancelMap.get(pe.getUuid()), pe);
                         } else {
-                            AddBlanks(columnsData, pe.getTotalNumberOfColumns());
+                            addBlanks(columnsData, pe.getTotalNumberOfColumns());
                         }
                     });
                 });
             } else {
-                AddBlanks(columnsData, program.getTotalNumberOfColumns());
+                addBlanks(columnsData, program.getTotalNumberOfColumns());
             }
         });
         return columnsData.toArray();
@@ -278,7 +278,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         });
         int visit = counter.get();
         while (visit++ < maxVisitCount) {
-            AddBlanks(columnsData, encounterEntityType.getEffectiveNoOfFields() );
+            addBlanks(columnsData, encounterEntityType.getEffectiveNoOfFields() );
         }
     }
 
@@ -391,7 +391,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         return addressTypeAddressLevelMap;
     }
 
-    private void AddBlanks(List<Object> row, long noOfColumns) {
+    private void addBlanks(List<Object> row, long noOfColumns) {
         for (int i = 0; i < noOfColumns; i++) {
             row.add(EMPTY_STRING);
         }

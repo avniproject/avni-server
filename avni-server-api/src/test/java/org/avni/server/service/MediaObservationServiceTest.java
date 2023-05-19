@@ -39,7 +39,7 @@ public class MediaObservationServiceTest {
                 .addObservation("m1", "url1")
                 .addObservation("m2", Arrays.asList("url2", "url3"))
                 .addObservation("other", "foo")
-                .get();
+                .build();
         Concept concept1 = new ConceptBuilder()
                 .withId(1)
                 .withDataType(ConceptDataType.Audio)

@@ -1,9 +1,6 @@
 package org.avni.server.domain.factory.txn;
 
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.ProgramEnrolment;
-import org.avni.server.domain.SubjectType;
-import org.avni.server.domain.User;
+import org.avni.server.domain.*;
 
 public class SubjectBuilder {
     private final Individual individual = new Individual();
@@ -31,5 +28,10 @@ public class SubjectBuilder {
         individual.setCreatedBy(user);
         individual.setLastModifiedBy(user);
     	return this;
+    }
+
+    public SubjectBuilder withObservations(ObservationCollection observations) {
+        individual.setObservations(observations);
+        return this;
     }
 }

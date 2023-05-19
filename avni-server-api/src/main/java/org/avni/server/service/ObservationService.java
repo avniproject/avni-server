@@ -1,18 +1,27 @@
 package org.avni.server.service;
 
+import org.avni.server.application.Form;
+import org.avni.server.application.FormElement;
+import org.avni.server.common.dbSchema.ColumnNames;
+import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
+import org.avni.server.report.CountForDay;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
 import org.avni.server.web.request.rules.response.KeyValueResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,12 +31,14 @@ public class ObservationService {
     private final ConceptRepository conceptRepository;
     private final IndividualRepository individualRepository;
     private final LocationRepository locationRepository;
+    private NamedParameterJdbcTemplate jdbcTemplate;
 
     @Autowired
-    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository) {
+    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public ObservationCollection createObservations(List<ObservationRequest> observationRequests) {
@@ -310,5 +321,35 @@ public class ObservationService {
         String[] conceptUUIDs = observations.getConceptUUIDs();
         List<Concept> mediaConcepts = conceptRepository.findAllByUuidInAndDataTypeIn(conceptUUIDs, conceptDataTypes.stream().map(Enum::name).toArray(String[]::new));
         return observations.filterByConcepts(mediaConcepts);
+    }
+
+    private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length(%s->>'%s')) from %s where %s->>'%s' is not null";
+
+    class CountMapper implements RowMapper<Integer> {
+        @Override
+        public Integer mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return rs.getInt(rowNum);
+        }
+    }
+
+    public Map<FormElement, Integer> getMaxNumberOfObservationSets(List<Form> forms, List<String> chosenFields) {
+        HashMap<FormElement, Integer> formElementMaxObsSetMap = new HashMap<>();
+        forms.forEach(form -> {
+            String tableName = TableNames.getTableName(form.getFormType());
+            String obsColumn = ColumnNames.getObsColumn(form.getFormType());
+            List<FormElement> questionGroupElements = form.getAllElements(ConceptDataType.QuestionGroup);
+            questionGroupElements.forEach(formElement -> {
+                if (chosenFields.size() == 0 || chosenFields.stream().anyMatch(s -> formElement.getConcept().getName().equals(s))) {
+                    String query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
+                    if (formElement.isRepeatable()) {
+                        List<Integer> counts = jdbcTemplate.query(query, new CountMapper());
+                        formElementMaxObsSetMap.put(formElement, counts.get(0));
+                    } else {
+                        formElementMaxObsSetMap.put(formElement, 1);
+                    }
+                }
+            });
+        });
+        return formElementMaxObsSetMap;
     }
 }

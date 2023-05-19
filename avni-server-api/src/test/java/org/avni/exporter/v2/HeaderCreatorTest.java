@@ -5,26 +5,49 @@ import org.avni.server.application.Subject;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.factory.metadata.ConceptBuilder;
+import org.avni.server.domain.factory.metadata.FormElementBuilder;
 import org.avni.server.exporter.v2.HeaderCreator;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
 
+import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameConstants.*;
 import static org.junit.Assert.assertEquals;
 
 public class HeaderCreatorTest {
-
     @Test
     public void shouldAddOnlyPassedRegistrationHeaders() {
         SubjectType subjectType = getSubjectType("Individual", Subject.Person);
 
         HeaderCreator headerCreator = new HeaderCreator();
         List<String> fieldsToAdd = new ArrayList<>();
-        fieldsToAdd.addAll(Arrays.asList("id", "uuid", "firstName", "createdBy", "createdDateTime", "lastModifiedBy", "lastModifiedDateTime"));
+        fieldsToAdd.addAll(Arrays.asList(ID, UUID, FIRST_NAME, CREATED_BY, CREATED_DATE_TIME, LAST_MODIFIED_BY, LAST_MODIFIED_DATE_TIME));
         List<String> addressLevelTypes = Arrays.asList("Village");
         Map<String, FormElement> registrationMap = getStringFormElementMap();
         StringBuilder registrationHeaders = headerCreator.addRegistrationHeaders(subjectType, registrationMap, addressLevelTypes, fieldsToAdd);
         assertEquals(registrationHeaders.toString(), "Individual_id,Individual_uuid,Individual_first_name,Individual_created_by,Individual_created_date_time,Individual_last_modified_by,Individual_last_modified_date_time,\"Village\",\"Individual_Question 1\"");
+    }
+
+    @Test
+    @Ignore
+    public void shouldAddQuestionGroupHeaders() {
+        SubjectType subjectType = getSubjectType("Individual", Subject.Person);
+        HeaderCreator headerCreator = new HeaderCreator();
+        List<String> addressLevelTypes = Arrays.asList("Village");
+
+        Concept groupConcept = new ConceptBuilder().withName("GC").withUuid("gc").build();
+        Concept memberConcept1 = new ConceptBuilder().withName("MC1").withUuid("mc1").build();
+        Concept memberConcept2 = new ConceptBuilder().withName("MC2").withUuid("mc2").build();
+        FormElement groupFormElement = new FormElementBuilder().withConcept(groupConcept).build();
+        FormElement formElement1 = new FormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept1).build();
+        FormElement formElement2 = new FormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept2).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", formElement1);
+            put("c2", formElement2);
+        }};
+        StringBuilder registrationHeaders = headerCreator.addRegistrationHeaders(subjectType, formElementsMap, addressLevelTypes, new ArrayList<>());
     }
 
     @Test
@@ -40,7 +63,7 @@ public class HeaderCreatorTest {
     public void shouldGenerateMultipleColumnsForEncounter() {
         HeaderCreator headerCreator = new HeaderCreator();
         List<String> fields = new ArrayList<>();
-        fields.addAll(Arrays.asList("id", "createdBy", "createdDateTime", "lastModifiedBy", "lastModifiedDateTime"));
+        fields.addAll(Arrays.asList(ID, CREATED_BY, CREATED_DATE_TIME, LAST_MODIFIED_BY, LAST_MODIFIED_DATE_TIME));
         StringBuilder stringBuilder = headerCreator.addEncounterHeaders(2L, getStringFormElementMap(), getStringFormElementMap(), "ENC", fields);
         assertEquals(stringBuilder.toString(), "ENC_1_id,ENC_1_created_by,ENC_1_created_date_time,ENC_1_last_modified_by,ENC_1_last_modified_date_time,\"ENC_1_Question 1\",\"ENC_1_Question 1\",ENC_2_id,ENC_2_created_by,ENC_2_created_date_time,ENC_2_last_modified_by,ENC_2_last_modified_date_time,\"ENC_2_Question 1\",\"ENC_2_Question 1\"");
     }

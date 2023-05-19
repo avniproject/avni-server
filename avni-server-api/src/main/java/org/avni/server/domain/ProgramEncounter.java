@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.common.dbSchema.TableNames;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 import org.avni.server.application.projections.BaseProjection;
@@ -12,7 +13,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "program_encounter")
+@Table(name = TableNames.ProgramEncounter)
 @JsonIgnoreProperties({"programEnrolment", "individual"})
 @BatchSize(size = 100)
 public class ProgramEncounter extends AbstractEncounter implements MessageableEntity {

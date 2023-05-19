@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,6 +28,8 @@ public class ObservationServiceTest {
     private IndividualRepository individualRepository;
     @Mock
     private LocationRepository locationRepository;
+    @Mock
+    private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private ObservationService observationService;
 
@@ -35,7 +38,7 @@ public class ObservationServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository);
+        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate);
     }
 
     @Test

@@ -19,4 +19,9 @@ public class FormElementBuilder {
     public FormElement build() {
         return formElement;
     }
+
+    public FormElementBuilder withQuestionGroupElement(FormElement formElement) {
+        formElement.setGroup(formElement);
+    	return this;
+    }
 }
