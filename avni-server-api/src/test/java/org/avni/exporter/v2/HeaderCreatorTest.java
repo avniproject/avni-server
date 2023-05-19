@@ -2,11 +2,11 @@ package org.avni.exporter.v2;
 
 import org.avni.server.application.FormElement;
 import org.avni.server.application.Subject;
+import org.avni.server.application.TestFormElementBuilder;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
-import org.avni.server.domain.factory.metadata.FormElementBuilder;
 import org.avni.server.exporter.v2.HeaderCreator;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -35,14 +35,14 @@ public class HeaderCreatorTest {
     public void shouldAddQuestionGroupHeaders() {
         SubjectType subjectType = getSubjectType("Individual", Subject.Person);
         HeaderCreator headerCreator = new HeaderCreator();
-        List<String> addressLevelTypes = Arrays.asList("Village");
+        List<String> addressLevelTypes = Collections.singletonList("Village");
 
         Concept groupConcept = new ConceptBuilder().withName("GC").withUuid("gc").build();
         Concept memberConcept1 = new ConceptBuilder().withName("MC1").withUuid("mc1").build();
         Concept memberConcept2 = new ConceptBuilder().withName("MC2").withUuid("mc2").build();
-        FormElement groupFormElement = new FormElementBuilder().withConcept(groupConcept).build();
-        FormElement formElement1 = new FormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept1).build();
-        FormElement formElement2 = new FormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept2).build();
+        FormElement groupFormElement = new TestFormElementBuilder().withConcept(groupConcept).build();
+        FormElement formElement1 = new TestFormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept1).build();
+        FormElement formElement2 = new TestFormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept2).build();
         LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
             put("c1", formElement1);
             put("c2", formElement2);

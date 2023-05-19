@@ -2,11 +2,11 @@ package org.avni.server.exporter.v2;
 
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormType;
+import org.avni.server.application.TestFormElementBuilder;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.UserBuilder;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
-import org.avni.server.domain.factory.metadata.FormElementBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
@@ -105,7 +105,7 @@ public class ExportV2CSVFieldExtractorTest {
 
         Concept concept1 = new ConceptBuilder().withName("c1").withDataType(ConceptDataType.QuestionGroup).build();
         LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
-            put("c1", new FormElementBuilder().withConcept(concept1).build());
+            put("c1", new TestFormElementBuilder().withConcept(concept1).build());
         }};
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
 

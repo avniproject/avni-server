@@ -9,6 +9,11 @@ public class TestFormElementBuilder {
         formElement.setKeyValues(new KeyValues());
     }
 
+    public TestFormElementBuilder withUuid(String uuid) {
+        formElement.setUuid(uuid);
+        return this;
+    }
+
     public TestFormElementBuilder withId(long id) {
         formElement.setId(id);
     	return this;
@@ -19,9 +24,9 @@ public class TestFormElementBuilder {
     	return this;
     }
 
-    public TestFormElementBuilder withGroup(FormElement groupFormElement) {
-        formElement.setGroup(groupFormElement);
-    	return this;
+    public TestFormElementBuilder withQuestionGroupElement(FormElement formElement) {
+        formElement.setGroup(formElement);
+        return this;
     }
 
     public TestFormElementBuilder withRepeatable(boolean isRepeatable) {

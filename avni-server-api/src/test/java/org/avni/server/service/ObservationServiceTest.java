@@ -111,10 +111,10 @@ public class ObservationServiceTest {
         Concept groupConcept2Concept1 = new ConceptBuilder().withId(4).withName("GC2-C1").withUuid("gc2-c1").withDataType(ConceptDataType.Text).build();
 
         FormElement groupFormElement1 = new TestFormElementBuilder().withConcept(groupConcept1).withId(1).withRepeatable(true).build();
-        FormElement formElement1_1 = new TestFormElementBuilder().withGroup(groupFormElement1).withId(2).withConcept(groupConcept1Concept1).build();
+        FormElement formElement1_1 = new TestFormElementBuilder().withQuestionGroupElement(groupFormElement1).withId(2).withConcept(groupConcept1Concept1).build();
 
         FormElement groupFormElement2 = new TestFormElementBuilder().withId(3).withConcept(groupConcept2).build();
-        FormElement formElement2_1 = new TestFormElementBuilder().withId(4).withGroup(groupFormElement2).withConcept(groupConcept2Concept1).build();
+        FormElement formElement2_1 = new TestFormElementBuilder().withId(4).withQuestionGroupElement(groupFormElement2).withConcept(groupConcept2Concept1).build();
 
         FormElementGroup formElementGroup = new TestFormElementGroupBuilder().addFormElement(groupFormElement1, formElement1_1, groupFormElement2, formElement2_1).build();
 

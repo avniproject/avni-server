@@ -3,9 +3,9 @@ package org.avni.server.builder;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementGroup;
+import org.avni.server.application.TestFormElementBuilder;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
-import org.avni.server.domain.factory.metadata.FormElementBuilder;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.DocumentationService;
 import org.avni.server.web.request.ConceptContract;
@@ -34,7 +34,7 @@ public class FormElementGroupBuilderTest {
 
 
         Concept concept = new ConceptBuilder().withUuid("c-uuid-1").build();
-        FormElement existingFormElement = new FormElementBuilder().withUuid("fe-uuid-1").withConcept(concept).build();
+        FormElement existingFormElement = new TestFormElementBuilder().withUuid("fe-uuid-1").withConcept(concept).build();
         FormElementGroup existingFormElementGroup = new FormElementGroup();
         existingFormElementGroup.addFormElement(existingFormElement);
         FormElementGroupBuilder formElementGroupBuilder = new FormElementGroupBuilder(new Form(), existingFormElementGroup, new FormElementGroup(), conceptService, documentationService);
