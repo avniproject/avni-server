@@ -5,13 +5,12 @@ import org.avni.server.application.FormElementGroup;
 import org.avni.server.application.FormType;
 import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.Organisation;
-import org.avni.server.service.ConceptService;
-import org.avni.server.service.DocumentationService;
 import org.avni.server.web.request.CHSRequest;
 import org.avni.server.web.request.application.FormElementGroupContract;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FormBuilder extends BaseBuilder<Form, FormBuilder> {
@@ -81,19 +80,9 @@ public class FormBuilder extends BaseBuilder<Form, FormBuilder> {
     }
 
     public FormBuilder withFormElementGroups(List<FormElementGroupContract> formElementGroupsContract) throws FormBuilderException {
-        return withFormElementGroups(formElementGroupsContract, null, null);
-    }
-
-    public FormBuilder withFormElementGroups(List<FormElementGroupContract> formElementGroupsContract,
-                                             ConceptService conceptService, DocumentationService documentationService) throws FormBuilderException {
         for (FormElementGroupContract formElementGroupContract : formElementGroupsContract) {
-            FormElementGroupBuilder fegBuilder = Objects.isNull(conceptService) || Objects.isNull(documentationService) ?
-                    new FormElementGroupBuilder(this.get(),
-                            getExistingFormElementGroup(formElementGroupContract.getUuid()), new FormElementGroup()) :
-                    new FormElementGroupBuilder(this.get(),
-                            getExistingFormElementGroup(formElementGroupContract.getUuid()), new FormElementGroup(),
-                            conceptService, documentationService);
-            fegBuilder.withName(formElementGroupContract.getName())
+            new FormElementGroupBuilder(this.get(), getExistingFormElementGroup(formElementGroupContract.getUuid()), new FormElementGroup())
+                        .withName(formElementGroupContract.getName())
                         .withUUID(formElementGroupContract.getUuid())
                         .withTimed(formElementGroupContract.isTimed())
                         .withTextColour(formElementGroupContract.getTextColour())
@@ -108,15 +97,7 @@ public class FormBuilder extends BaseBuilder<Form, FormBuilder> {
                         .makeFormElements(formElementGroupContract)
                         .build();
         }
-        updateDisplayOrderToAvoidConstraintViolationLater();
         return this;
-    }
-
-    private void updateDisplayOrderToAvoidConstraintViolationLater() {
-        AtomicInteger count=new AtomicInteger(0);
-        this.get().getFormElementGroups().stream()
-                .sorted(Comparator.comparing(FormElementGroup::getDisplayOrder))
-                .forEach(feg -> feg.setDisplayOrder((double) count.incrementAndGet()));
     }
 
     public FormBuilder withoutFormElements(Organisation organisation, List<FormElementGroupContract> formElementGroupContracts) throws FormBuilderException {
