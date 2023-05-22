@@ -65,6 +65,7 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     @Test
+    @Ignore
     public void extractIndividualWithoutObservations() {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");

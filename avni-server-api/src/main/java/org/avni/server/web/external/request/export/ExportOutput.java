@@ -1,10 +1,14 @@
 package org.avni.server.web.external.request.export;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.exporter.v2.ExportV2ValidationHelper;
 import org.springframework.http.ResponseEntity;
 
+import java.beans.Transient;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,7 +63,7 @@ public class ExportOutput extends ExportEntityType {
 
         public long getTotalNumberOfColumns() {
             return super.getTotalNumberOfColumns() + Optional.ofNullable(encounters).orElse(new ArrayList<>())
-                    .stream().mapToLong(entry -> entry.getTotalNumberOfColumns()).sum();
+                    .stream().mapToLong(ExportEntityType::getTotalNumberOfColumns).sum();
         }
     }
 }

@@ -25,4 +25,9 @@ public class ExportEntityTypeBuilder {
         exportEntityType.setUuid(uuid);
     	return this;
     }
+
+    public ExportEntityTypeBuilder withUserProvidedFields(List<String> fields) {
+        exportEntityType.addFields(fields);
+    	return this;
+    }
 }

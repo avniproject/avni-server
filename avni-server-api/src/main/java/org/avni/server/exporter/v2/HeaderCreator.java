@@ -1,8 +1,8 @@
 package org.avni.server.exporter.v2;
 
 import org.avni.server.application.FormElement;
-import org.avni.server.application.FormElementType;
 import org.avni.server.domain.*;
+import org.avni.server.web.external.request.export.ExportEntityType;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashMap;
@@ -66,28 +66,26 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
     public StringBuilder addRegistrationHeaders(SubjectType subjectType,
                                                 Map<String, FormElement> registrationMap,
                                                 List<String> addressLevelTypes,
-                                                List<String> fields) {
+                                                ExportEntityType subjectRegistrationExport) {
         StringBuilder registrationHeaders = new StringBuilder();
         String subjectTypeName = subjectType.getName();
-        boolean areFieldsAlreadySet = !fields.isEmpty();
-        registrationHeaders.append(getStaticRegistrationHeaders(fields, subjectTypeName));
+        registrationHeaders.append(getStaticRegistrationHeaders(subjectRegistrationExport, subjectTypeName));
         addAddressLevelHeaderNames(registrationHeaders, addressLevelTypes);
         if (subjectType.isGroup()) {
             registrationHeaders.append(",").append(subjectTypeName).append(".total_members");
         }
-        appendObsHeaders(registrationHeaders, subjectTypeName, registrationMap, fields, areFieldsAlreadySet);
+        appendObsHeaders(registrationHeaders, subjectTypeName, registrationMap, subjectRegistrationExport);
         return registrationHeaders;
     }
 
     public StringBuilder addEnrolmentHeaders(Map<String, FormElement> enrolmentMap,
                                              Map<String, FormElement> exitEnrolmentMap,
                                              String programName,
-                                             List<String> fields) {
+                                             ExportEntityType exportEntityType) {
         StringBuilder enrolmentHeaders = new StringBuilder();
-        boolean areFieldsAlreadySet = !fields.isEmpty();
-        enrolmentHeaders.append(getStaticEnrolmentHeaders(fields, programName));
-        appendObsHeaders(enrolmentHeaders, programName, enrolmentMap, fields, areFieldsAlreadySet);
-        appendObsHeaders(enrolmentHeaders, programName + "_exit", exitEnrolmentMap, fields, areFieldsAlreadySet);
+        enrolmentHeaders.append(getStaticEnrolmentHeaders(exportEntityType, programName));
+        appendObsHeaders(enrolmentHeaders, programName, enrolmentMap, exportEntityType);
+        appendObsHeaders(enrolmentHeaders, programName + "_exit", exitEnrolmentMap, exportEntityType);
         return enrolmentHeaders;
     }
 
@@ -95,7 +93,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                                              Map<String, FormElement> encounterMap,
                                              Map<String, FormElement> encounterCancelMap,
                                              String encounterTypeName,
-                                             List<String> fields) {
+                                             ExportEntityType exportEntityType) {
         StringBuilder encounterHeaders = new StringBuilder();
         int visit = 0;
         while (visit < maxVisitCount) {
@@ -104,41 +102,42 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                 encounterHeaders.append(",");
             }
             String prefix = encounterTypeName + "_" + visit;
-            boolean areFieldsAlreadySet = !fields.isEmpty();
-            encounterHeaders.append(appendStaticEncounterHeaders(fields, prefix));
-            appendObsHeaders(encounterHeaders, prefix, encounterMap, fields, areFieldsAlreadySet);
-            appendObsHeaders(encounterHeaders, prefix, encounterCancelMap, fields, areFieldsAlreadySet);
+            encounterHeaders.append(appendStaticEncounterHeaders(exportEntityType, prefix));
+            appendObsHeaders(encounterHeaders, prefix, encounterMap, exportEntityType);
+            appendObsHeaders(encounterHeaders, prefix, encounterCancelMap, exportEntityType);
         }
         return encounterHeaders;
     }
 
-    private String getStaticRegistrationHeaders(List<String> fields, String prefix) {
-        initMapIfFieldsNotSet(fields, registrationDataMap);
-        return fields.stream()
+    private String getStaticRegistrationHeaders(ExportEntityType exportFields, String prefix) {
+        init(exportFields, registrationDataMap);
+        return exportFields.getOutputFields().stream()
                 .filter(registrationDataMap::containsKey)
                 .map(key -> format("%s_%s", prefix, registrationDataMap.get(key).getName()))
                 .collect(Collectors.joining(","));
     }
 
-    private String getStaticEnrolmentHeaders(List<String> fields, String prefix) {
-        initMapIfFieldsNotSet(fields, enrolmentDataMap);
-        return fields.stream()
+    private String getStaticEnrolmentHeaders(ExportEntityType exportEntityType, String prefix) {
+        init(exportEntityType, enrolmentDataMap);
+        return exportEntityType.getOutputFields().stream()
                 .filter(enrolmentDataMap::containsKey)
                 .map(key -> format("%s_%s", prefix, enrolmentDataMap.get(key).getName()))
                 .collect(Collectors.joining(","));
     }
 
-    private String appendStaticEncounterHeaders(List<String> fields, String prefix) {
-        initMapIfFieldsNotSet(fields, encounterDataMap);
-        return fields.stream()
+    private String appendStaticEncounterHeaders(ExportEntityType exportFields, String prefix) {
+        init(exportFields, encounterDataMap);
+        return exportFields.getOutputFields().stream()
                 .filter(encounterDataMap::containsKey)
                 .map(key -> format("%s_%s", prefix, encounterDataMap.get(key).getName()))
                 .collect(Collectors.joining(","));
     }
 
-    private void initMapIfFieldsNotSet(List<String> fields, Map<String, ?> map) {
-        if (fields != null && fields.isEmpty() && map != null && !map.isEmpty()) {
-            fields.addAll(map.keySet());
+    private void init(ExportEntityType exportEntityType, Map<String, ?> map) {
+        if (exportEntityType.hasUserProvidedFields()) {
+            exportEntityType.addAllUserProvidedFields();
+        } else {
+            exportEntityType.addFields(map.keySet());
         }
     }
 
@@ -152,7 +151,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         return "\"".concat(text).concat("\"");
     }
 
-    private void appendObsHeaders(StringBuilder sb, String prefix, Map<String, FormElement> map, List<String> fields, boolean areFieldsAlreadySet) {
+    private void appendObsHeaders(StringBuilder sb, String prefix, Map<String, FormElement> map, ExportEntityType exportEntityType) {
         map.forEach((uuid, fe) -> {
             Concept concept = fe.getConcept();
             String groupPrefix = fe.getGroup() == null ? "" : (fe.getGroup().getConcept().getName() + "_");
@@ -160,23 +159,25 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                 return;
             }
 
-            if (concept.getDataType().equals(ConceptDataType.Coded.toString()) && fe.getType().equals(FormElementType.MultiSelect.toString())) {
-                boolean storeAnswers = fields.remove(concept.getUuid());
-                concept.getSortedAnswers().map(ca -> ca.getAnswerConcept().getName()).forEach(can -> {
+            if (fe.isCodedMultiSelect()) {
+                if (exportEntityType.hasUserProvided(concept))
+                    exportEntityType.removeField(concept);
+
+                concept.getSortedAnswers().forEach(ca -> {
                     sb.append(",\"")
                             .append(prefix)
                             .append("_")
                             .append(groupPrefix)
                             .append(concept.getName())
-                            .append("_").append(can).append("\"");
-                    if(storeAnswers || !areFieldsAlreadySet) {
-                        fields.add(can);
+                            .append("_").append(ca.getAnswerConcept().getName()).append("\"");
+                    if (!exportEntityType.hasUserProvidedFields()) {
+                        exportEntityType.addField(ca);
                     }
                 });
             } else {
-                if(!areFieldsAlreadySet) {
-                    fields.add(concept.getName());
-                }
+                if (exportEntityType.hasUserProvided(concept))
+                    exportEntityType.addField(concept);
+
                 sb.append(",\"").append(prefix).append("_").append(groupPrefix).append(concept.getName()).append("\"");
             }
         });

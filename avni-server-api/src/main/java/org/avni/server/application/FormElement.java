@@ -1,11 +1,8 @@
 package org.avni.server.application;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.avni.server.domain.DeclarativeRule;
-import org.avni.server.domain.Documentation;
+import org.avni.server.domain.*;
 import org.avni.server.common.ValidationResult;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -237,5 +234,9 @@ public class FormElement extends OrganisationAwareEntity {
 
     public void setDocumentation(Documentation documentation) {
         this.documentation = documentation;
+    }
+
+    public boolean isCodedMultiSelect() {
+        return concept.getDataType().equals(ConceptDataType.Coded.toString()) && getType().equals(FormElementType.MultiSelect.toString());
     }
 }
