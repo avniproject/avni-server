@@ -13,6 +13,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.exporter.ExportJobService;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
+import org.avni.server.service.ObservationService;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ExportOutputBuilder;
 import org.bouncycastle.util.Strings;
@@ -47,6 +48,8 @@ public class ExportV2CSVFieldExtractorTest {
     private EncounterTypeRepository encounterTypeRepository;
     @Mock
     private ExportJobService exportJobService;
+    @Mock
+    private ObservationService observationService;
 
     private ExportV2CSVFieldExtractor exportV2CSVFieldExtractor;
     private ExportJobParameters exportJobParameters;
@@ -57,10 +60,8 @@ public class ExportV2CSVFieldExtractorTest {
         initMocks(this);
 
         exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(exportJobParametersRepository, encounterRepository, programEncounterRepository, formMappingService, "st1", "", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService);
-
         exportOutput = new ExportOutputBuilder().build();
         exportJobParameters = new ExportJobParametersBuilder().withTimezone(TimeZone.getDefault().getDisplayName()).build();
-
         when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
     }
 
@@ -79,11 +80,10 @@ public class ExportV2CSVFieldExtractorTest {
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
 
         exportV2CSVFieldExtractor.init();
-        String header = exportV2CSVFieldExtractor.getHeader();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
-        assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
-        assertEquals(getHeaderFields(header).length, extract.length);
+        assertEquals("s1", getExtractValue("", "ST1_uuid", extract));
+        assertEquals(getHeaderFields("").length, extract.length);
     }
 
     @Test
@@ -111,12 +111,11 @@ public class ExportV2CSVFieldExtractorTest {
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
 
         exportV2CSVFieldExtractor.init();
-        String header = exportV2CSVFieldExtractor.getHeader();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
-        assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
-        assertEquals("2", getExtractValue(header, "ST1_C1_C2_1", extract));
-        assertEquals(getHeaderFields(header).length, extract.length + 1);
+        assertEquals("s1", getExtractValue("", "ST1_uuid", extract));
+        assertEquals("2", getExtractValue("", "ST1_C1_C2_1", extract));
+        assertEquals(getHeaderFields("").length, extract.length + 1);
     }
 
     private Object getExtractValue(String header, String headerFieldName, Object[] extract) {

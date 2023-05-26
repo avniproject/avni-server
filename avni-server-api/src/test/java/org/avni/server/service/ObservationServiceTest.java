@@ -1,22 +1,19 @@
 package org.avni.server.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.avni.server.application.*;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
-import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ObservationRequest;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import java.util.*;
@@ -36,6 +33,8 @@ public class ObservationServiceTest {
     private LocationRepository locationRepository;
     @Mock
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    @Mock
+    private FormRepository formRepository;
 
     private ObservationService observationService;
 
@@ -44,7 +43,7 @@ public class ObservationServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate);
+        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, formRepository);
     }
 
     @Test
@@ -122,7 +121,7 @@ public class ObservationServiceTest {
 
         when(namedParameterJdbcTemplate.query(any(), any(ObservationService.CountMapper.class))).thenReturn(Collections.singletonList(2));
 
-        Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfObservationSets(Collections.singletonList(form), new ArrayList<>());
+        Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfQuestionGroupObservations(Collections.singletonList(form));
         assertEquals(2, maxNumberOfObservationSets.get(groupFormElement1).intValue());
         assertEquals(1, maxNumberOfObservationSets.get(groupFormElement2).intValue());
     }

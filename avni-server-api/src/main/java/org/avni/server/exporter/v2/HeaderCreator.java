@@ -1,19 +1,25 @@
 package org.avni.server.exporter.v2;
 
 import org.avni.server.application.FormElement;
+import org.avni.server.dao.EncounterTypeRepository;
+import org.avni.server.dao.ProgramRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.service.FormMappingService;
 import org.avni.server.web.external.request.export.ExportEntityType;
+import org.avni.server.web.external.request.export.ExportEntityTypeVisitor;
 import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
-public class HeaderCreator implements LongitudinalExportRequestFieldNameConstants, LongitudinalExportDBFieldNameConstants {
-    private static Map<String, HeaderNameAndFunctionMapper<Individual>> registrationDataMap = new LinkedHashMap<String, HeaderNameAndFunctionMapper<Individual>>() {{
+public class HeaderCreator implements LongitudinalExportRequestFieldNameConstants, LongitudinalExportDBFieldNameConstants, ExportEntityTypeVisitor {
+    public static Map<String, HeaderNameAndFunctionMapper<Individual>> registrationDataMap = new LinkedHashMap<String, HeaderNameAndFunctionMapper<Individual>>() {{
         put(ID, new HeaderNameAndFunctionMapper<>(HEADER_NAME_ID, CHSBaseEntity::getId));
         put(UUID, new HeaderNameAndFunctionMapper<>(HEADER_NAME_UUID, CHSBaseEntity::getUuid));
         put(FIRST_NAME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_FIRST_NAME, Individual::getFirstName));
@@ -35,7 +41,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
 
-    private static Map<String, HeaderNameAndFunctionMapper<ProgramEnrolment>> enrolmentDataMap = new LinkedHashMap<String, HeaderNameAndFunctionMapper<ProgramEnrolment>>() {{
+    public static Map<String, HeaderNameAndFunctionMapper<ProgramEnrolment>> enrolmentDataMap = new LinkedHashMap<String, HeaderNameAndFunctionMapper<ProgramEnrolment>>() {{
         put(ID, new HeaderNameAndFunctionMapper<>(HEADER_NAME_ID, CHSBaseEntity::getId));
         put(UUID, new HeaderNameAndFunctionMapper<>(HEADER_NAME_UUID, CHSBaseEntity::getUuid));
         put(ENROLMENT_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_ENROLMENT_DATE_TIME, ProgramEnrolment::getEnrolmentDateTime));
@@ -48,7 +54,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
     }};
 
 
-    private static Map<String, HeaderNameAndFunctionMapper<AbstractEncounter>> encounterDataMap = new LinkedHashMap<String, HeaderNameAndFunctionMapper<AbstractEncounter>>() {{
+    public static Map<String, HeaderNameAndFunctionMapper<AbstractEncounter>> encounterDataMap = new LinkedHashMap<String, HeaderNameAndFunctionMapper<AbstractEncounter>>() {{
         put(ID, new HeaderNameAndFunctionMapper<>(HEADER_NAME_ID, CHSBaseEntity::getId));
         put(UUID, new HeaderNameAndFunctionMapper<>(HEADER_NAME_UUID, CHSBaseEntity::getUuid));
         put(NAME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_NAME, AbstractEncounter::getName));
@@ -62,87 +68,85 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(LAST_MODIFIED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_DATE_TIME, AbstractEncounter::getLastModifiedDateTime));
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final FormMappingService formMappingService;
+    private final List<String> addressLevelTypes;
+    private final Map<FormElement, Integer> maxRepeatableQuestionGroupObservation;
+    private final StringBuilder headerBuilder;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final ExportFieldsManager exportFieldsManager;
+    private final ProgramRepository programRepository;
 
-    public StringBuilder addRegistrationHeaders(SubjectType subjectType,
-                                                Map<String, FormElement> registrationMap,
-                                                List<String> addressLevelTypes,
-                                                ExportEntityType subjectRegistrationExport) {
-        StringBuilder registrationHeaders = new StringBuilder();
-        String subjectTypeName = subjectType.getName();
-        registrationHeaders.append(getStaticRegistrationHeaders(subjectRegistrationExport, subjectTypeName));
-        addAddressLevelHeaderNames(registrationHeaders, addressLevelTypes);
-        if (subjectType.isGroup()) {
-            registrationHeaders.append(",").append(subjectTypeName).append(".total_members");
-        }
-        appendObsHeaders(registrationHeaders, subjectTypeName, registrationMap, subjectRegistrationExport);
-        return registrationHeaders;
+    public static Set<String> getRegistrationCoreFields() {
+        return registrationDataMap.keySet();
     }
 
-    public StringBuilder addEnrolmentHeaders(Map<String, FormElement> enrolmentMap,
-                                             Map<String, FormElement> exitEnrolmentMap,
-                                             String programName,
-                                             ExportEntityType exportEntityType) {
-        StringBuilder enrolmentHeaders = new StringBuilder();
-        enrolmentHeaders.append(getStaticEnrolmentHeaders(exportEntityType, programName));
-        appendObsHeaders(enrolmentHeaders, programName, enrolmentMap, exportEntityType);
-        appendObsHeaders(enrolmentHeaders, programName + "_exit", exitEnrolmentMap, exportEntityType);
-        return enrolmentHeaders;
+    public static Set<String> getEncounterCoreFields() {
+        return encounterDataMap.keySet();
     }
 
-    public StringBuilder addEncounterHeaders(Long maxVisitCount,
-                                             Map<String, FormElement> encounterMap,
-                                             Map<String, FormElement> encounterCancelMap,
-                                             String encounterTypeName,
-                                             ExportEntityType exportEntityType) {
-        StringBuilder encounterHeaders = new StringBuilder();
+    public static Set<String> getProgramEnrolmentCoreFields() {
+        return enrolmentDataMap.keySet();
+    }
+
+    public HeaderCreator(SubjectTypeRepository subjectTypeRepository, FormMappingService formMappingService, List<String> addressLevelTypes, Map<FormElement, Integer> maxRepeatableQuestionGroupObservation, EncounterTypeRepository encounterTypeRepository, ExportFieldsManager exportFieldsManager, ProgramRepository programRepository) {
+        this.subjectTypeRepository = subjectTypeRepository;
+        this.formMappingService = formMappingService;
+        this.addressLevelTypes = addressLevelTypes;
+        this.maxRepeatableQuestionGroupObservation = maxRepeatableQuestionGroupObservation;
+        this.encounterTypeRepository = encounterTypeRepository;
+        this.exportFieldsManager = exportFieldsManager;
+        this.programRepository = programRepository;
+        headerBuilder = new StringBuilder();
+    }
+
+    private void addEncounterHeaders(long maxVisitCount,
+                                             EncounterType encounterType,
+                                             ExportEntityType exportEntityType,
+                                             Map<FormElement, Integer> maxRepeatableQuestionGroupObservation) {
         int visit = 0;
         while (visit < maxVisitCount) {
             visit++;
             if (visit != 1) {
-                encounterHeaders.append(",");
+                headerBuilder.append(",");
             }
-            String prefix = encounterTypeName + "_" + visit;
-            encounterHeaders.append(appendStaticEncounterHeaders(exportEntityType, prefix));
-            appendObsHeaders(encounterHeaders, prefix, encounterMap, exportEntityType);
-            appendObsHeaders(encounterHeaders, prefix, encounterCancelMap, exportEntityType);
+            String prefix = encounterType.getName() + "_" + visit;
+            headerBuilder.append(getStaticEncounterHeaders(exportEntityType, prefix));
+            appendObsHeaders(prefix, exportFieldsManager.getMainFields(exportEntityType), exportEntityType, maxRepeatableQuestionGroupObservation);
+            appendObsHeaders(prefix, exportFieldsManager.getSecondaryFields(exportEntityType), exportEntityType, maxRepeatableQuestionGroupObservation);
         }
-        return encounterHeaders;
     }
 
-    private String getStaticRegistrationHeaders(ExportEntityType exportFields, String prefix) {
-        init(exportFields, registrationDataMap);
-        return exportFields.getOutputFields().stream()
+    @Override
+    public void visitEncounter(ExportEntityType encounter, ExportEntityType subjectTypeExportEntityType) {
+        EncounterType encounterType = encounterTypeRepository.findByUuid(encounter.getUuid());
+        headerBuilder.append(",");
+        this.addEncounterHeaders(exportFieldsManager.getMaxEntityCount(encounter), encounterType, encounter, maxRepeatableQuestionGroupObservation);
+    }
+
+    private String getStaticRegistrationHeaders(ExportEntityType subject, String subjectTypeName) {
+        return exportFieldsManager.getCoreFields(subject).stream()
                 .filter(registrationDataMap::containsKey)
-                .map(key -> format("%s_%s", prefix, registrationDataMap.get(key).getName()))
+                .map(key -> format("%s_%s", subjectTypeName, registrationDataMap.get(key).getName()))
                 .collect(Collectors.joining(","));
     }
 
-    private String getStaticEnrolmentHeaders(ExportEntityType exportEntityType, String prefix) {
-        init(exportEntityType, enrolmentDataMap);
-        return exportEntityType.getOutputFields().stream()
+    private String getStaticEnrolmentHeaders(ExportEntityType exportEntityType, Program program) {
+        return exportFieldsManager.getCoreFields(exportEntityType).stream()
                 .filter(enrolmentDataMap::containsKey)
-                .map(key -> format("%s_%s", prefix, enrolmentDataMap.get(key).getName()))
+                .map(key -> format("%s_%s", program.getName(), enrolmentDataMap.get(key).getName()))
                 .collect(Collectors.joining(","));
     }
 
-    private String appendStaticEncounterHeaders(ExportEntityType exportFields, String prefix) {
-        init(exportFields, encounterDataMap);
-        return exportFields.getOutputFields().stream()
+    private String getStaticEncounterHeaders(ExportEntityType exportEntityType, String prefix) {
+        return exportFieldsManager.getCoreFields(exportEntityType).stream()
                 .filter(encounterDataMap::containsKey)
                 .map(key -> format("%s_%s", prefix, encounterDataMap.get(key).getName()))
                 .collect(Collectors.joining(","));
     }
 
-    private void init(ExportEntityType exportEntityType, Map<String, ?> map) {
-        if (exportEntityType.hasUserProvidedFields()) {
-            exportEntityType.addAllUserProvidedFields();
-        } else {
-            exportEntityType.addFields(map.keySet());
-        }
-    }
-
-    private void addAddressLevelHeaderNames(StringBuilder sb, List<String> addressLevelTypes) {
-        addressLevelTypes.forEach(level -> sb.append(",").append(quotedStringValue(level)));
+    private void addAddressLevelHeaderNames(List<String> addressLevelTypes) {
+        addressLevelTypes.forEach(level -> headerBuilder.append(",").append(quotedStringValue(level)));
     }
 
     protected String quotedStringValue(String text) {
@@ -151,47 +155,76 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         return "\"".concat(text).concat("\"");
     }
 
-    private void appendObsHeaders(StringBuilder sb, String prefix, Map<String, FormElement> map, ExportEntityType exportEntityType) {
+    private void appendObsHeaders(String prefix, Map<String, FormElement> map, ExportEntityType exportEntityType, Map<FormElement, Integer> maxNumberOfQuestionGroupObservations) {
+        //handle all non-repeatable form elements
         map.forEach((uuid, fe) -> {
             Concept concept = fe.getConcept();
-            String groupPrefix = fe.getGroup() == null ? "" : (fe.getGroup().getConcept().getName() + "_");
-            if (ConceptDataType.isGroupQuestion(concept.getDataType())) {
-                return;
+            boolean isGroupQuestion = ConceptDataType.isGroupQuestion(concept.getDataType());
+            boolean repeatable = isGroupQuestion && fe.isRepeatable();
+            boolean isPartOfGroupQuestion = fe.getGroup() != null;
+            boolean isPartOfRepeatableGroupQuestion = isPartOfGroupQuestion && fe.getGroup().isRepeatable();
+            Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(fe);
+            boolean codedMultiSelect = fe.isCodedMultiSelect();
+
+            if (repeatable) return;
+
+            headerBuilder.append(",\"").append(prefix).append("_");
+            // Prefixes
+            // no prefix for self
+            if (isPartOfGroupQuestion && !isPartOfRepeatableGroupQuestion) {
+                headerBuilder.append(fe.getGroup().getConcept().getName()).append("_");
             }
-
-            if (fe.isCodedMultiSelect()) {
-                if (exportEntityType.hasUserProvided(concept))
-                    exportEntityType.removeField(concept);
-
+            if (codedMultiSelect) {
                 concept.getSortedAnswers().forEach(ca -> {
-                    sb.append(",\"")
-                            .append(prefix)
-                            .append("_")
-                            .append(groupPrefix)
+                    headerBuilder
                             .append(concept.getName())
-                            .append("_").append(ca.getAnswerConcept().getName()).append("\"");
-                    if (!exportEntityType.hasUserProvidedFields()) {
-                        exportEntityType.addField(ca);
-                    }
+                            .append("_").append(ca.getAnswerConcept().getName());
                 });
             } else {
-                if (exportEntityType.hasUserProvided(concept))
-                    exportEntityType.addField(concept);
-
-                sb.append(",\"").append(prefix).append("_").append(groupPrefix).append(concept.getName()).append("\"");
+                headerBuilder.append(concept.getName());
             }
+            headerBuilder.append("\"");
         });
     }
 
-    public static Map<String, HeaderNameAndFunctionMapper<Individual>> getRegistrationDataMap() {
-        return registrationDataMap;
+    @Override
+    public void visitSubject(ExportEntityType subject) {
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subject.getUuid());
+
+        headerBuilder.append(getStaticRegistrationHeaders(subject, subjectType.getName()));
+        addAddressLevelHeaderNames(addressLevelTypes);
+        if (subjectType.isGroup()) {
+            headerBuilder.append(",").append(subjectType.getName()).append(".total_members");
+        }
+        appendObsHeaders(subjectType.getName(), exportFieldsManager.getMainFields(subject), subject, maxRepeatableQuestionGroupObservation);
     }
 
-    public static Map<String, HeaderNameAndFunctionMapper<ProgramEnrolment>> getEnrolmentDataMap() {
-        return enrolmentDataMap;
+    @Override
+    public void visitGroup(ExportEntityType groupSubject) {
+        this.visitSubject(groupSubject);
     }
 
-    public static Map<String, HeaderNameAndFunctionMapper<AbstractEncounter>> getEncounterDataMap() {
-        return encounterDataMap;
+    @Override
+    public void visitGroupEncounter(ExportEntityType groupEncounter, ExportEntityType groupSubject) {
+        this.visitEncounter(groupEncounter, groupSubject);
+    }
+
+    @Override
+    public void visitProgram(ExportEntityType programExportEntityType, ExportEntityType subject) {
+        Program program = programRepository.findByUuid(programExportEntityType.getUuid());
+        headerBuilder.append(getStaticEnrolmentHeaders(programExportEntityType, program));
+        appendObsHeaders(program.getName(), exportFieldsManager.getMainFields(programExportEntityType), programExportEntityType, maxRepeatableQuestionGroupObservation);
+        appendObsHeaders(program.getName() + "_exit", exportFieldsManager.getSecondaryFields(programExportEntityType), programExportEntityType, maxRepeatableQuestionGroupObservation);
+    }
+
+    @Override
+    public void visitProgramEncounter(ExportEntityType exportEntityType, ExportEntityType programExportEntityType, ExportEntityType subject) {
+        headerBuilder.append(",");
+        EncounterType encounterType = encounterTypeRepository.findByUuid(programExportEntityType.getUuid());
+        this.addEncounterHeaders(exportFieldsManager.getMaxEntityCount(exportEntityType), encounterType, exportEntityType, maxRepeatableQuestionGroupObservation);
+    }
+
+    public String getHeader() {
+        return headerBuilder.toString();
     }
 }

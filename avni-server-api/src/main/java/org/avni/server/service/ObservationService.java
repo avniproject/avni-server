@@ -7,6 +7,7 @@ import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.report.CountForDay;
 import org.avni.server.util.BadRequestError;
@@ -31,14 +32,16 @@ public class ObservationService {
     private final ConceptRepository conceptRepository;
     private final IndividualRepository individualRepository;
     private final LocationRepository locationRepository;
-    private NamedParameterJdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final FormRepository formRepository;
 
     @Autowired
-    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate) {
+    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.formRepository = formRepository;
     }
 
     public ObservationCollection createObservations(List<ObservationRequest> observationRequests) {
@@ -153,7 +156,7 @@ public class ObservationService {
     }
 
     private Concept getConceptForValue(String conceptValue, WorkFlowTypeEnum workflow) {
-        if(workflow.isSummaryWorkflow()){
+        if (workflow.isSummaryWorkflow()) {
             return conceptRepository.findByUuid(conceptValue);
         } else {
             return conceptRepository.findByName(conceptValue);
@@ -222,7 +225,7 @@ public class ObservationService {
     }
 
     public List<ObservationModelContract> constructObservationModelContracts(ObservationCollection observationCollection) {
-        if(observationCollection == null) return Collections.emptyList();
+        if (observationCollection == null) return Collections.emptyList();
         List<ObservationContract> observationContracts = this.constructObservations(observationCollection);
         return observationContracts.stream()
                 .map(this::constructObservation)
@@ -332,21 +335,23 @@ public class ObservationService {
         }
     }
 
-    public Map<FormElement, Integer> getMaxNumberOfObservationSets(List<Form> forms, List<String> chosenFields) {
+    public Map<FormElement, Integer> getMaxNumberOfQuestionGroupObservations() {
+        return this.getMaxNumberOfQuestionGroupObservations(formRepository.findAllByIsVoidedFalse());
+    }
+
+    public Map<FormElement, Integer> getMaxNumberOfQuestionGroupObservations(List<Form> forms) {
         HashMap<FormElement, Integer> formElementMaxObsSetMap = new HashMap<>();
         forms.forEach(form -> {
             String tableName = TableNames.getTableName(form.getFormType());
             String obsColumn = ColumnNames.getObsColumn(form.getFormType());
             List<FormElement> questionGroupElements = form.getAllElements(ConceptDataType.QuestionGroup);
             questionGroupElements.forEach(formElement -> {
-                if (chosenFields.size() == 0 || chosenFields.stream().anyMatch(s -> formElement.getConcept().getName().equals(s))) {
-                    String query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
-                    if (formElement.isRepeatable()) {
-                        List<Integer> counts = jdbcTemplate.query(query, new CountMapper());
-                        formElementMaxObsSetMap.put(formElement, counts.get(0));
-                    } else {
-                        formElementMaxObsSetMap.put(formElement, 1);
-                    }
+                String query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
+                if (formElement.isRepeatable()) {
+                    List<Integer> counts = jdbcTemplate.query(query, new CountMapper());
+                    formElementMaxObsSetMap.put(formElement, counts.get(0));
+                } else {
+                    formElementMaxObsSetMap.put(formElement, 1);
                 }
             });
         });

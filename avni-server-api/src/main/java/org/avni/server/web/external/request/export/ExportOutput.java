@@ -1,16 +1,10 @@
 package org.avni.server.web.external.request.export;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.exporter.v2.ExportV2ValidationHelper;
 import org.springframework.http.ResponseEntity;
 
-import java.beans.Transient;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExportOutput extends ExportEntityType {
@@ -61,9 +55,25 @@ public class ExportOutput extends ExportEntityType {
             this.encounters = encounters;
         }
 
-        public long getTotalNumberOfColumns() {
-            return super.getTotalNumberOfColumns() + Optional.ofNullable(encounters).orElse(new ArrayList<>())
-                    .stream().mapToLong(ExportEntityType::getTotalNumberOfColumns).sum();
+        @Override
+        public List<ExportEntityType> getAllExportEntityTypes() {
+            ArrayList<ExportEntityType> exportEntityTypes = new ArrayList<>();
+            exportEntityTypes.add(this);
+            exportEntityTypes.addAll(encounters);
+            return exportEntityTypes;
         }
+    }
+
+    public void accept(ExportEntityTypeVisitor visitor) {
+        visitor.visitSubject(this);
+        encounters.forEach(encounter -> visitor.visitEncounter(encounter, this));
+        groups.forEach(group -> {
+            visitor.visitGroup(group);
+            group.encounters.forEach(exportEntityType -> visitor.visitGroupEncounter(exportEntityType, group));
+        });
+        programs.forEach(program -> {
+            visitor.visitProgram(program, this);
+            program.encounters.forEach(exportEntityType -> visitor.visitProgramEncounter(exportEntityType, program, this));
+        });
     }
 }
