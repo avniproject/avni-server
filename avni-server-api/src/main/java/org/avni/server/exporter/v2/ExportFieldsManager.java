@@ -1,6 +1,8 @@
 package org.avni.server.exporter.v2;
 
+import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
+import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.service.FormMappingService;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class ExportFieldsManager implements ExportEntityTypeVisitor {
     private final Map<String, Map<String, FormElement>> mainFormMap = new LinkedHashMap<>();
     private final Map<String, Map<String, FormElement>> secondaryFormMap = new LinkedHashMap<>();
+    private final List<Form> forms = new ArrayList<>();
     private final Map<String, List<String>> coreFields = new LinkedHashMap<>();
     private final Map<String, Long> maxCounts = new HashMap<>();
 
@@ -55,12 +58,24 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
     public void visitSubject(ExportEntityType exportEntityType) {
         this.setCoreFields(HeaderCreator.getRegistrationCoreFields(), exportEntityType);
         LinkedHashMap<String, FormElement> allFormElementsAndDecisionMap = formMappingService.getAllFormElementsAndDecisionMap(exportEntityType.getUuid(), null, null, FormType.IndividualProfile);
+        addSubjectTypeForm(exportEntityType);
         mainFormMap.put(exportEntityType.getUuid(), getObsFields(exportEntityType, allFormElementsAndDecisionMap, HeaderCreator.registrationDataMap.keySet()));
+    }
+
+    private void addSubjectTypeForm(ExportEntityType exportEntityType) {
+        FormMapping formMapping = formMappingService.findForSubject(exportEntityType.getUuid());
+        forms.add(formMapping.getForm());
     }
 
     @Override
     public void visitEncounter(ExportEntityType encounter, ExportEntityType subjectExportEntityType) {
+        addEncounterTypeForm(encounter, FormType.Encounter);
+        addEncounterTypeForm(encounter, FormType.IndividualEncounterCancellation);
         processEncounter(encounter, subjectExportEntityType);
+    }
+
+    private void addEncounterTypeForm(ExportEntityType encounter, FormType formType) {
+        addProgramEncounterForm(encounter, formType);
     }
 
     private void processEncounter(ExportEntityType encounter, ExportEntityType subjectExportEntityType) {
@@ -79,6 +94,8 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     @Override
     public void visitGroup(ExportEntityType exportEntityType) {
+        addSubjectTypeForm(exportEntityType);
+
         this.setCoreFields(HeaderCreator.getRegistrationCoreFields(), exportEntityType);
         LinkedHashMap<String, FormElement> allFormElementsAndDecisionMap = formMappingService.getAllFormElementsAndDecisionMap(exportEntityType.getUuid(), null, null, FormType.IndividualProfile);
         mainFormMap.put(exportEntityType.getUuid(), getObsFields(exportEntityType, allFormElementsAndDecisionMap, HeaderCreator.registrationDataMap.keySet()));
@@ -86,11 +103,16 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     @Override
     public void visitGroupEncounter(ExportEntityType groupEncounter, ExportEntityType group) {
+        addEncounterTypeForm(groupEncounter, FormType.Encounter);
+        addEncounterTypeForm(groupEncounter, FormType.IndividualEncounterCancellation);
         processEncounter(groupEncounter, group);
     }
 
     @Override
     public void visitProgram(ExportEntityType program, ExportEntityType subjectExportEntityType) {
+        addProgramForm(program, FormType.ProgramEnrolment);
+        addProgramForm(program, FormType.ProgramExit);
+
         this.setCoreFields(HeaderCreator.getProgramEnrolmentCoreFields(), program);
         LinkedHashMap<String, FormElement> enrolmentElements = formMappingService.getAllFormElementsAndDecisionMap(subjectExportEntityType.getUuid(), program.getUuid(), null, FormType.ProgramEnrolment);
         mainFormMap.put(program.getUuid(), enrolmentElements);
@@ -99,14 +121,27 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
         secondaryFormMap.put(program.getUuid(), enrolmentExitElements);
     }
 
+    private void addProgramForm(ExportEntityType program, FormType formType) {
+        FormMapping formMapping = formMappingService.findForProgram(program.getUuid(), formType);
+        forms.add(formMapping.getForm());
+    }
+
     @Override
     public void visitProgramEncounter(ExportEntityType encounterType, ExportEntityType program, ExportEntityType subject) {
+        addProgramEncounterForm(encounterType, FormType.ProgramEncounter);
+        addProgramEncounterForm(encounterType, FormType.ProgramExit);
+
         this.setCoreFields(HeaderCreator.getEncounterCoreFields(), encounterType);
         LinkedHashMap<String, FormElement> encounterFormElements = formMappingService.getAllFormElementsAndDecisionMap(subject.getUuid(), program.getUuid(), encounterType.getUuid(), FormType.ProgramEncounter);
         mainFormMap.put(encounterType.getUuid(), this.getObsFields(encounterType, encounterFormElements, HeaderCreator.getEncounterCoreFields()));
 
         LinkedHashMap<String, FormElement> encounterCancelFormElements = formMappingService.getAllFormElementsAndDecisionMap(subject.getUuid(), program.getUuid(), encounterType.getUuid(), FormType.ProgramEncounterCancellation);
         secondaryFormMap.put(encounterType.getUuid(), this.getObsFields(encounterType, encounterCancelFormElements, HeaderCreator.getEncounterCoreFields()));
+    }
+
+    private void addProgramEncounterForm(ExportEntityType exportEntityType, FormType formType) {
+        FormMapping formMapping = formMappingService.findForEncounter(exportEntityType.getUuid(), formType);
+        forms.add(formMapping.getForm());
     }
 
     public long getMaxEntityCount(ExportEntityType exportEntityType) {
@@ -147,5 +182,20 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     public long getTotalNumberOfColumnsPerEntity(ExportEntityType exportEntityType) {
         return (getTotalNumberOfMainColumns(exportEntityType) + getTotalNumberOfSecondaryColumns(exportEntityType));
+    }
+
+    public List<Form> getAllForms() {
+        return forms;
+    }
+
+    public static Map<FormElement, List<FormElement>> groupByQuestionGroup(Collection<FormElement> formElements) {
+        Map<FormElement, List<FormElement>> groupedFormElements = new HashMap<>();
+        formElements.forEach(formElement -> {
+                    FormElement group = formElement.getGroup();
+
+                    if (!groupedFormElements.containsKey(formElement)) groupedFormElements.put(group, new ArrayList<>());
+                    groupedFormElements.get(group).add(formElement);
+                });
+        return groupedFormElements;
     }
 }

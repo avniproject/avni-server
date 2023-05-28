@@ -1,5 +1,7 @@
 package org.avni.server.exporter.v2;
 
+import org.apache.commons.io.output.StringBuilderWriter;
+import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormType;
 import org.avni.server.application.TestFormElementBuilder;
@@ -7,6 +9,7 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.UserBuilder;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
+import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
@@ -22,8 +25,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.io.IOException;
 import java.util.*;
 
+import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameConstants.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -59,15 +64,14 @@ public class ExportV2CSVFieldExtractorTest {
     public void setup() {
         initMocks(this);
 
-        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(exportJobParametersRepository, encounterRepository, programEncounterRepository, formMappingService, "st1", "", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService);
+        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(exportJobParametersRepository, encounterRepository, programEncounterRepository, formMappingService, "st1", "", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService);
         exportOutput = new ExportOutputBuilder().build();
         exportJobParameters = new ExportJobParametersBuilder().withTimezone(TimeZone.getDefault().getDisplayName()).build();
         when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
     }
 
     @Test
-    @Ignore
-    public void extractIndividualWithoutObservations() {
+    public void extractIndividualWithoutObservations() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
         SubjectType subjectType = new SubjectTypeBuilder().withUuid("st1").withName("ST1").build();
@@ -78,17 +82,20 @@ public class ExportV2CSVFieldExtractorTest {
         when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
 
         exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
-        assertEquals("s1", getExtractValue("", "ST1_uuid", extract));
-        assertEquals(getHeaderFields("").length, extract.length);
+        assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
     }
 
     @Test
     @Ignore
-    public void extractIndividualWithQuestionGroup() {
+    public void extractIndividualWithQuestionGroup() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
         SubjectType subjectType = new SubjectTypeBuilder().withUuid("st1").withName("ST1").build();
@@ -108,14 +115,21 @@ public class ExportV2CSVFieldExtractorTest {
         LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
             put("c1", new TestFormElementBuilder().withConcept(concept1).build());
         }};
+        Map<FormElement, Integer> maxQuestionGroupObs = new HashMap<FormElement, Integer>() {{
+            put(formElementsMap.get("c1"), 1);
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+        when(observationService.getMaxNumberOfQuestionGroupObservations(any())).thenReturn(maxQuestionGroupObs);
 
         exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
-        assertEquals("s1", getExtractValue("", "ST1_uuid", extract));
-        assertEquals("2", getExtractValue("", "ST1_C1_C2_1", extract));
-        assertEquals(getHeaderFields("").length, extract.length + 1);
+        assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
+        assertEquals("2", getExtractValue(header, "ST1_C1_C2_1", extract));
     }
 
     private Object getExtractValue(String header, String headerFieldName, Object[] extract) {

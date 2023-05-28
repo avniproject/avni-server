@@ -1,5 +1,6 @@
 package org.avni.server.domain.factory.metadata;
 
+import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.Program;
 
@@ -9,6 +10,11 @@ public class FormMappingBuilder {
     public FormMappingBuilder withProgram(Program program) {
         formMapping.setProgram(program);
         return this;
+    }
+
+    public FormMappingBuilder withForm(Form form) {
+        formMapping.setForm(form);
+    	return this;
     }
 
     public FormMapping build() {

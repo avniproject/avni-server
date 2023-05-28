@@ -24,13 +24,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class FormMappingService implements NonScopeAwareService {
-
     private final ProgramRepository programRepository;
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final FormRepository formRepository;
-    private final OrganisationConfigService organisationConfigService;
     private final TaskTypeRepository taskTypeRepository;
 
     @Autowired
@@ -39,14 +37,12 @@ public class FormMappingService implements NonScopeAwareService {
                               ProgramRepository programRepository,
                               SubjectTypeRepository subjectTypeRepository,
                               FormRepository formRepository,
-                              OrganisationConfigService organisationConfigService,
                               TaskTypeRepository taskTypeRepository) {
         this.formMappingRepository = formMappingRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.programRepository = programRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.formRepository = formRepository;
-        this.organisationConfigService = organisationConfigService;
         this.taskTypeRepository = taskTypeRepository;
     }
 
@@ -236,5 +232,20 @@ public class FormMappingService implements NonScopeAwareService {
 
     public FormMapping find(SubjectType subjectType) {
         return formMappingRepository.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndIsVoidedFalse(subjectType);
+    }
+
+    public FormMapping findForSubject(String subjectTypeUUID) {
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+        return this.find(subjectType);
+    }
+
+    public FormMapping findForEncounter(String encounterUuid, FormType formType) {
+        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterUuid);
+        return this.find(encounterType, FormType.IndividualEncounterCancellation);
+    }
+
+    public FormMapping findForProgram(String programUuid, FormType formType) {
+        Program program = programRepository.findByUuid(programUuid);
+        return this.find(program, formType);
     }
 }

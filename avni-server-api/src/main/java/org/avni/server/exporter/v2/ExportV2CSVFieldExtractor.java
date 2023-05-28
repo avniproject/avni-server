@@ -1,5 +1,6 @@
 package org.avni.server.exporter.v2;
 
+import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementType;
 import org.avni.server.dao.*;
@@ -7,6 +8,7 @@ import org.avni.server.domain.*;
 import org.avni.server.exporter.ExportJobService;
 import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.FormMappingService;
+import org.avni.server.service.ObservationService;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportOutput;
@@ -43,6 +45,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final ExportJobService exportJobService;
+    private ObservationService observationService;
     private HeaderCreator headerCreator;
     private ExportOutput exportOutput;
     private List<String> addressLevelTypes = new ArrayList<>();
@@ -60,7 +63,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                                      AddressLevelService addressLevelService,
                                      ProgramRepository programRepository,
                                      EncounterTypeRepository encounterTypeRepository,
-                                     ExportJobService exportJobService) {
+                                     ExportJobService exportJobService,
+                                     ObservationService observationService) {
         this.exportJobParametersRepository = exportJobParametersRepository;
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
@@ -72,6 +76,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.exportJobService = exportJobService;
+        this.observationService = observationService;
     }
 
     @PostConstruct
@@ -79,12 +84,17 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, timeZone);
-        this.headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, null, encounterTypeRepository, exportFieldsManager, programRepository);
+        List<Form> formsInvolved = exportFieldsManager.getAllForms();
+        Map<FormElement, Integer> maxNumberOfQuestionGroupObservations = observationService.getMaxNumberOfQuestionGroupObservations(formsInvolved);
+        this.headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, maxNumberOfQuestionGroupObservations,
+                encounterTypeRepository, exportFieldsManager, programRepository);
+        exportOutput.accept(exportFieldsManager);
     }
 
     @Override
     public void writeHeader(Writer writer) throws IOException {
-        writer.write(this.headerCreator.toString());
+        exportOutput.accept(headerCreator);
+        writer.write(this.headerCreator.getHeader());
     }
 
     public ExportOutput getExportOutput() {

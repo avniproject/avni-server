@@ -7,7 +7,10 @@ import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.*;
+import org.avni.server.domain.Concept;
+import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.EncounterTypeBuilder;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.exporter.v2.ExportFieldsManager;
 import org.avni.server.exporter.v2.HeaderCreator;
@@ -15,7 +18,6 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.request.ExportEntityTypeBuilder;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -64,7 +66,6 @@ public class HeaderCreatorTest {
     }
 
     @Test
-    @Ignore
     public void shouldAddQuestionGroupHeaders() {
         SubjectType subjectType = getSubjectType("Individual", Subject.Person);
         List<String> addressLevelTypes = Collections.singletonList("Village");
@@ -81,9 +82,45 @@ public class HeaderCreatorTest {
             put("c1", formElement1);
             put("c2", formElement2);
         }};
+
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(exportFieldsManager.getCoreFields(any())).thenReturn(Collections.singletonList(ID));
+        when(exportFieldsManager.getMainFields(any())).thenReturn(formElementsMap);
+
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withFields(Collections.singletonList(ID)).build();
         headerCreator.visitSubject(exportEntityType);
         assertEquals("Individual_id,\"Village\",\"Individual_GC_MC1\",\"Individual_GC_MC2\"", headerCreator.getHeader());
+    }
+
+    @Test
+    public void shouldAddRepeatableQuestionGroupHeaders() {
+        SubjectType subjectType = getSubjectType("Individual", Subject.Person);
+        List<String> addressLevelTypes = Collections.singletonList("Village");
+
+
+        Concept groupConcept = new ConceptBuilder().withName("GC").withDataType(ConceptDataType.QuestionGroup).withUuid("gc").build();
+        Concept memberConcept1 = new ConceptBuilder().withName("MC1").withDataType(ConceptDataType.Text).withUuid("mc1").build();
+        Concept memberConcept2 = new ConceptBuilder().withName("MC2").withDataType(ConceptDataType.Text).withUuid("mc2").build();
+        FormElement groupFormElement = new TestFormElementBuilder().withRepeatable(true).withConcept(groupConcept).build();
+        FormElement formElement1 = new TestFormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept1).build();
+        FormElement formElement2 = new TestFormElementBuilder().withQuestionGroupElement(groupFormElement).withConcept(memberConcept2).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("gc", groupFormElement);
+            put("c1", formElement1);
+            put("c2", formElement2);
+        }};
+
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(exportFieldsManager.getCoreFields(any())).thenReturn(Collections.singletonList(ID));
+        when(exportFieldsManager.getMainFields(any())).thenReturn(formElementsMap);
+
+        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withFields(Collections.singletonList(ID)).build();
+        HashMap<FormElement, Integer> maxRepeatableQuestionGroupObservation = new HashMap<FormElement, Integer>() {{
+            put(groupFormElement, 2);
+        }};
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, maxRepeatableQuestionGroupObservation, encounterTypeRepository, exportFieldsManager, programRepository);
+        headerCreator.visitSubject(exportEntityType);
+        assertEquals("Individual_id,\"Village\",\"Individual_GC_1_MC1\",\"Individual_GC_1_MC2\",\"Individual_GC_2_MC1\",\"Individual_GC_2_MC2\"", headerCreator.getHeader());
     }
 
     @Test

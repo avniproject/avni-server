@@ -10,10 +10,7 @@ import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportEntityTypeVisitor;
 import org.springframework.util.StringUtils;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -101,9 +98,9 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
     }
 
     private void addEncounterHeaders(long maxVisitCount,
-                                             EncounterType encounterType,
-                                             ExportEntityType exportEntityType,
-                                             Map<FormElement, Integer> maxRepeatableQuestionGroupObservation) {
+                                     EncounterType encounterType,
+                                     ExportEntityType exportEntityType,
+                                     Map<FormElement, Integer> maxRepeatableQuestionGroupObservation) {
         int visit = 0;
         while (visit < maxVisitCount) {
             visit++;
@@ -112,8 +109,8 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
             }
             String prefix = encounterType.getName() + "_" + visit;
             headerBuilder.append(getStaticEncounterHeaders(exportEntityType, prefix));
-            appendObsHeaders(prefix, exportFieldsManager.getMainFields(exportEntityType), exportEntityType, maxRepeatableQuestionGroupObservation);
-            appendObsHeaders(prefix, exportFieldsManager.getSecondaryFields(exportEntityType), exportEntityType, maxRepeatableQuestionGroupObservation);
+            appendObsHeaders(prefix, exportFieldsManager.getMainFields(exportEntityType), maxRepeatableQuestionGroupObservation);
+            appendObsHeaders(prefix, exportFieldsManager.getSecondaryFields(exportEntityType), maxRepeatableQuestionGroupObservation);
         }
     }
 
@@ -155,25 +152,20 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         return "\"".concat(text).concat("\"");
     }
 
-    private void appendObsHeaders(String prefix, Map<String, FormElement> map, ExportEntityType exportEntityType, Map<FormElement, Integer> maxNumberOfQuestionGroupObservations) {
-        //handle all non-repeatable form elements
+    private void appendObsHeaders(String prefix, Map<String, FormElement> map, Map<FormElement, Integer> maxNumberOfQuestionGroupObservations) {
+        //handle all non-repeated observations (include question group observation with only max one set)
         map.forEach((uuid, fe) -> {
-            Concept concept = fe.getConcept();
-            boolean isGroupQuestion = ConceptDataType.isGroupQuestion(concept.getDataType());
-            boolean repeatable = isGroupQuestion && fe.isRepeatable();
-            boolean isPartOfGroupQuestion = fe.getGroup() != null;
-            boolean isPartOfRepeatableGroupQuestion = isPartOfGroupQuestion && fe.getGroup().isRepeatable();
             Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(fe);
+            if ((fe.isPartOfRepeatableQuestionGroup() && maxRepeats > 1) || fe.isQuestionGroupElement()) return;
+
             boolean codedMultiSelect = fe.isCodedMultiSelect();
-
-            if (repeatable) return;
-
             headerBuilder.append(",\"").append(prefix).append("_");
             // Prefixes
             // no prefix for self
-            if (isPartOfGroupQuestion && !isPartOfRepeatableGroupQuestion) {
+            if (fe.getGroup() != null) {
                 headerBuilder.append(fe.getGroup().getConcept().getName()).append("_");
             }
+            Concept concept = fe.getConcept();
             if (codedMultiSelect) {
                 concept.getSortedAnswers().forEach(ca -> {
                     headerBuilder
@@ -184,6 +176,34 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                 headerBuilder.append(concept.getName());
             }
             headerBuilder.append("\"");
+        });
+
+        //handle all repeated question group observations
+        List<FormElement> observationsRepeatedMultipleTimes = map.values().stream()
+                .filter(FormElement::isPartOfRepeatableQuestionGroup)
+                .filter(formElement -> maxNumberOfQuestionGroupObservations.get(formElement.getGroup()) > 1).collect(Collectors.toList());
+        Map<FormElement, List<FormElement>> repeatedFormElements = ExportFieldsManager.groupByQuestionGroup(observationsRepeatedMultipleTimes);
+        repeatedFormElements.forEach((group, formElements) -> {
+            Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(group);
+            for (int i = 1; i <= maxRepeats; i++) {
+                for (FormElement formElement : formElements) {
+                    boolean codedMultiSelect = formElement.isCodedMultiSelect();
+
+                    Concept concept = formElement.getConcept();
+                    headerBuilder.append(",\"").append(prefix).append("_");
+                    headerBuilder.append(formElement.getGroup().getConcept().getName()).append("_").append(i).append("_");
+                    if (codedMultiSelect) {
+                        concept.getSortedAnswers().forEach(ca -> {
+                            headerBuilder
+                                    .append(concept.getName())
+                                    .append("_").append(ca.getAnswerConcept().getName());
+                        });
+                    } else {
+                        headerBuilder.append(concept.getName());
+                    }
+                    headerBuilder.append("\"");
+                }
+            }
         });
     }
 
@@ -196,7 +216,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         if (subjectType.isGroup()) {
             headerBuilder.append(",").append(subjectType.getName()).append(".total_members");
         }
-        appendObsHeaders(subjectType.getName(), exportFieldsManager.getMainFields(subject), subject, maxRepeatableQuestionGroupObservation);
+        appendObsHeaders(subjectType.getName(), exportFieldsManager.getMainFields(subject), maxRepeatableQuestionGroupObservation);
     }
 
     @Override
@@ -213,8 +233,8 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
     public void visitProgram(ExportEntityType programExportEntityType, ExportEntityType subject) {
         Program program = programRepository.findByUuid(programExportEntityType.getUuid());
         headerBuilder.append(getStaticEnrolmentHeaders(programExportEntityType, program));
-        appendObsHeaders(program.getName(), exportFieldsManager.getMainFields(programExportEntityType), programExportEntityType, maxRepeatableQuestionGroupObservation);
-        appendObsHeaders(program.getName() + "_exit", exportFieldsManager.getSecondaryFields(programExportEntityType), programExportEntityType, maxRepeatableQuestionGroupObservation);
+        appendObsHeaders(program.getName(), exportFieldsManager.getMainFields(programExportEntityType), maxRepeatableQuestionGroupObservation);
+        appendObsHeaders(program.getName() + "_exit", exportFieldsManager.getSecondaryFields(programExportEntityType), maxRepeatableQuestionGroupObservation);
     }
 
     @Override

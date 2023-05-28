@@ -25,7 +25,7 @@ public class TestFormElementBuilder {
     }
 
     public TestFormElementBuilder withQuestionGroupElement(FormElement formElement) {
-        formElement.setGroup(formElement);
+        this.formElement.setGroup(formElement);
         return this;
     }
 

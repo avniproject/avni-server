@@ -239,4 +239,14 @@ public class FormElement extends OrganisationAwareEntity {
     public boolean isCodedMultiSelect() {
         return concept.getDataType().equals(ConceptDataType.Coded.toString()) && getType().equals(FormElementType.MultiSelect.toString());
     }
+
+    public boolean isPartOfRepeatableQuestionGroup() {
+        boolean isPartOfGroupQuestion = getGroup() != null;
+        return isPartOfGroupQuestion && getGroup().isRepeatable();
+    }
+
+    public boolean isQuestionGroupElement() {
+        Concept concept = getConcept();
+        return ConceptDataType.isGroupQuestion(concept.getDataType());
+    }
 }
