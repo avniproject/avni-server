@@ -34,7 +34,6 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private static final String selectedAnswerFieldValue = "1";
     private static final String unSelectedAnswerFieldValue = "0";
     private static final String EMPTY_STRING = "";
-    private final ExportJobParametersRepository exportJobParametersRepository;
     private final EncounterRepository encounterRepository;
     private final ProgramEncounterRepository programEncounterRepository;
     private final FormMappingService formMappingService;
@@ -53,8 +52,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private Map<FormElement, Integer> maxNumberOfQuestionGroupObservations;
 
     @Autowired
-    public ExportV2CSVFieldExtractor(ExportJobParametersRepository exportJobParametersRepository,
-                                     EncounterRepository encounterRepository,
+    public ExportV2CSVFieldExtractor(EncounterRepository encounterRepository,
                                      ProgramEncounterRepository programEncounterRepository,
                                      FormMappingService formMappingService,
                                      @Value("#{jobParameters['exportJobParamsUUID']}") String exportJobParamsUUID,
@@ -65,7 +63,6 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                                      EncounterTypeRepository encounterTypeRepository,
                                      ExportJobService exportJobService,
                                      ObservationService observationService) {
-        this.exportJobParametersRepository = exportJobParametersRepository;
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.formMappingService = formMappingService;

@@ -21,14 +21,12 @@ import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.request.ExportOutputBuilder;
 import org.bouncycastle.util.Strings;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 
 import java.io.IOException;
 import java.util.*;
 
-import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameConstants.*;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -64,7 +62,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void setup() {
         initMocks(this);
 
-        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(exportJobParametersRepository, encounterRepository, programEncounterRepository, formMappingService, "st1", "", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService);
+        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", "", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService);
         exportOutput = new ExportOutputBuilder().build();
         exportJobParameters = new ExportJobParametersBuilder().withTimezone(TimeZone.getDefault().getDisplayName()).build();
         when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
@@ -176,7 +174,9 @@ public class ExportV2CSVFieldExtractorTest {
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
         assertEquals("\"21\"", getExtractValue(header, "\"ST1_C1_1_C2\"", extract));
+        assertEquals("\"31\"", getExtractValue(header, "\"ST1_C1_1_C3\"", extract));
         assertEquals("\"22\"", getExtractValue(header, "\"ST1_C1_2_C2\"", extract));
+        assertEquals("\"32\"", getExtractValue(header, "\"ST1_C1_2_C3\"", extract));
     }
 
     private Object getExtractValue(String header, String headerFieldName, Object[] extract) {

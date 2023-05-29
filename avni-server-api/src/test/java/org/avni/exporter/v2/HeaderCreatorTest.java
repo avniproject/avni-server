@@ -97,7 +97,6 @@ public class HeaderCreatorTest {
         SubjectType subjectType = getSubjectType("Individual", Subject.Person);
         List<String> addressLevelTypes = Collections.singletonList("Village");
 
-
         Concept groupConcept = new ConceptBuilder().withName("GC").withDataType(ConceptDataType.QuestionGroup).withUuid("gc").build();
         Concept memberConcept1 = new ConceptBuilder().withName("MC1").withDataType(ConceptDataType.Text).withUuid("mc1").build();
         Concept memberConcept2 = new ConceptBuilder().withName("MC2").withDataType(ConceptDataType.Text).withUuid("mc2").build();

@@ -77,10 +77,6 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
         processEncounter(encounter, subjectExportEntityType);
     }
 
-    private void addEncounterTypeForm(ExportEntityType encounter, FormType formType) {
-        addProgramEncounterForm(encounter, formType);
-    }
-
     private void processEncounter(ExportEntityType encounter, ExportEntityType subjectExportEntityType) {
         this.setCoreFields(HeaderCreator.getEncounterCoreFields(), encounter);
         LinkedHashMap<String, FormElement> encounterFormElements = formMappingService.getAllFormElementsAndDecisionMap(subjectExportEntityType.getUuid(), null, encounter.getUuid(), FormType.Encounter);
@@ -130,8 +126,8 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     @Override
     public void visitProgramEncounter(ExportEntityType encounterType, ExportEntityType program, ExportEntityType subject) {
-        addProgramEncounterForm(encounterType, FormType.ProgramEncounter);
-        addProgramEncounterForm(encounterType, FormType.ProgramExit);
+        addEncounterTypeForm(encounterType, FormType.ProgramEncounter);
+        addEncounterTypeForm(encounterType, FormType.ProgramExit);
 
         this.setCoreFields(HeaderCreator.getEncounterCoreFields(), encounterType);
         LinkedHashMap<String, FormElement> encounterFormElements = formMappingService.getAllFormElementsAndDecisionMap(subject.getUuid(), program.getUuid(), encounterType.getUuid(), FormType.ProgramEncounter);
@@ -145,7 +141,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
         maxCounts.put(encounterType.getUuid(), maxEncounterCount);
     }
 
-    private void addProgramEncounterForm(ExportEntityType exportEntityType, FormType formType) {
+    private void addEncounterTypeForm(ExportEntityType exportEntityType, FormType formType) {
         FormMapping formMapping = formMappingService.findForEncounter(exportEntityType.getUuid(), formType);
         forms.add(formMapping.getForm());
     }

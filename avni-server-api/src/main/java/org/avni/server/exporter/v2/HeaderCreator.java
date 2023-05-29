@@ -5,7 +5,6 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
-import org.avni.server.service.FormMappingService;
 import org.avni.server.web.external.request.export.ExportEntityType;
 import org.avni.server.web.external.request.export.ExportEntityTypeVisitor;
 import org.springframework.util.StringUtils;
