@@ -11,6 +11,7 @@ import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.external.request.export.ReportType;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -149,6 +150,7 @@ public class ExportBatchConfiguration {
                            @Value("#{jobParameters['reportType']}") String reportType,
                            @Value("#{jobParameters['addressIds']}") String addressIds,
                            @Value("#{jobParameters['includeVoided']}") String includeVoided,
+                           @Value("#{jobParameters['timeZone']}") String timeZone,
                            LongitudinalExportJobStepListener listener,
                            ExportCSVFieldExtractor exportCSVFieldExtractor,
                            ExportProcessor exportProcessor) {
@@ -159,19 +161,24 @@ public class ExportBatchConfiguration {
         List<Long> selectedAddressIds = getLocations(locationIds);
         List<Long> addressParam = selectedAddressIds.isEmpty() ? null : selectedAddressIds;
         boolean isVoidedIncluded = Boolean.parseBoolean(includeVoided);
+        DateTimeZone dateTimeZone = DateTimeZone.forID(timeZone);
+        LocalDate startDateForZone = new LocalDate(startDate, dateTimeZone);
+        LocalDate endDateForZone = new LocalDate(endDate, dateTimeZone);
+        DateTime startDateTimeWithZone = new DateTime(startDate).withZone(dateTimeZone);
+        DateTime endDateTimeWithZone = new DateTime(endDate).withZone(dateTimeZone);
         Stream stream;
         switch (ReportType.valueOf(reportType)) {
             case Registration:
-                stream = getRegistrationStream(subjectTypeUUID, addressParam, new LocalDate(startDate), new LocalDate(endDate), isVoidedIncluded);
+                stream = getRegistrationStream(subjectTypeUUID, addressParam, startDateForZone, endDateForZone, isVoidedIncluded);
                 break;
             case Enrolment:
-                stream = getEnrolmentStream(programUUID, addressParam, new DateTime(startDate), new DateTime(endDate), isVoidedIncluded);
+                stream = getEnrolmentStream(programUUID, addressParam, startDateTimeWithZone, endDateTimeWithZone, isVoidedIncluded);
                 break;
             case Encounter:
-                stream = getEncounterStream(programUUID, encounterTypeUUID, addressParam, new DateTime(startDate), new DateTime(endDate), isVoidedIncluded);
+                stream = getEncounterStream(programUUID, encounterTypeUUID, addressParam, startDateTimeWithZone, endDateTimeWithZone, isVoidedIncluded);
                 break;
             case GroupSubject:
-                stream = getGroupSubjectStream(subjectTypeUUID, addressParam, new LocalDate(startDate), new LocalDate(endDate), sorts, isVoidedIncluded);
+                stream = getGroupSubjectStream(subjectTypeUUID, addressParam, startDateForZone, endDateForZone, sorts, isVoidedIncluded);
                 break;
             default:
                 throw new RuntimeException(format("Unknown report type: '%s'", reportType));
