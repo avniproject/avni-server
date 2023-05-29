@@ -5,6 +5,7 @@ import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.external.request.export.ExportEntityType;
@@ -23,11 +24,13 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     private final FormMappingService formMappingService;
     private final EncounterRepository encounterRepository;
+    private final ProgramEncounterRepository programEncounterRepository;
     private final String timeZone;
 
-    public ExportFieldsManager(FormMappingService formMappingService, EncounterRepository encounterRepository, String timeZone) {
+    public ExportFieldsManager(FormMappingService formMappingService, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, String timeZone) {
         this.formMappingService = formMappingService;
         this.encounterRepository = encounterRepository;
+        this.programEncounterRepository = programEncounterRepository;
         this.timeZone = timeZone;
     }
 
@@ -88,7 +91,6 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
         ExportFilters.DateFilter dateFilter = encounter.getFilters().getDate();
         Long maxEncounterCount = encounterRepository.getMaxEncounterCount(encounter.getUuid(), DateTimeUtil.getCalendarTime(dateFilter.getFrom(), timeZone), DateTimeUtil.getCalendarTime(dateFilter.getTo(), timeZone));
-        maxEncounterCount = maxEncounterCount == null ? 1 : maxEncounterCount;
         maxCounts.put(encounter.getUuid(), maxEncounterCount);
     }
 
@@ -137,6 +139,10 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
         LinkedHashMap<String, FormElement> encounterCancelFormElements = formMappingService.getAllFormElementsAndDecisionMap(subject.getUuid(), program.getUuid(), encounterType.getUuid(), FormType.ProgramEncounterCancellation);
         secondaryFormMap.put(encounterType.getUuid(), this.getObsFields(encounterType, encounterCancelFormElements, HeaderCreator.getEncounterCoreFields()));
+
+        ExportFilters.DateFilter dateFilter = encounterType.getFilters().getDate();
+        Long maxEncounterCount = programEncounterRepository.getMaxProgramEncounterCount(encounterType.getUuid(), DateTimeUtil.getCalendarTime(dateFilter.getFrom(), timeZone), DateTimeUtil.getCalendarTime(dateFilter.getTo(), timeZone));
+        maxCounts.put(encounterType.getUuid(), maxEncounterCount);
     }
 
     private void addProgramEncounterForm(ExportEntityType exportEntityType, FormType formType) {

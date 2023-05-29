@@ -57,7 +57,7 @@ public class HeaderCreatorTest {
         when(exportFieldsManager.getMainFields(any())).thenReturn(getStringFormElementMap());
 
         List<String> addressLevelTypes = Collections.singletonList("Village");
-        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
 
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
 
@@ -69,7 +69,7 @@ public class HeaderCreatorTest {
     public void shouldAddQuestionGroupHeaders() {
         SubjectType subjectType = getSubjectType("Individual", Subject.Person);
         List<String> addressLevelTypes = Collections.singletonList("Village");
-        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
 
         Concept groupConcept = new ConceptBuilder().withName("GC").withDataType(ConceptDataType.QuestionGroup).withUuid("gc").build();
         Concept memberConcept1 = new ConceptBuilder().withName("MC1").withDataType(ConceptDataType.Text).withUuid("mc1").build();
@@ -118,7 +118,7 @@ public class HeaderCreatorTest {
         HashMap<FormElement, Integer> maxRepeatableQuestionGroupObservation = new HashMap<FormElement, Integer>() {{
             put(groupFormElement, 2);
         }};
-        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, maxRepeatableQuestionGroupObservation, encounterTypeRepository, exportFieldsManager, programRepository);
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, maxRepeatableQuestionGroupObservation, encounterTypeRepository, exportFieldsManager, programRepository);
         headerCreator.visitSubject(exportEntityType);
         assertEquals("Individual_id,\"Village\",\"Individual_GC_1_MC1\",\"Individual_GC_1_MC2\",\"Individual_GC_2_MC1\",\"Individual_GC_2_MC2\"", headerCreator.getHeader());
     }
@@ -126,7 +126,7 @@ public class HeaderCreatorTest {
     @Test
     public void shouldGenerateMultipleColumnsForEncounter() {
         List<String> addressLevelTypes = Collections.singletonList("Village");
-        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
 
         when(exportFieldsManager.getCoreFields(any())).thenReturn(Arrays.asList(ID, CREATED_BY, CREATED_DATE_TIME, LAST_MODIFIED_BY, LAST_MODIFIED_DATE_TIME));
         when(exportFieldsManager.getMaxEntityCount(any())).thenReturn(2l);

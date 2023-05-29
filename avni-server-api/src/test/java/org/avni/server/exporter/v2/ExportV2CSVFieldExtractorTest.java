@@ -94,7 +94,6 @@ public class ExportV2CSVFieldExtractorTest {
     }
 
     @Test
-    @Ignore
     public void extractIndividualWithQuestionGroup() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
@@ -111,16 +110,17 @@ public class ExportV2CSVFieldExtractorTest {
         when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
 
-        Concept concept1 = new ConceptBuilder().withName("c1").withDataType(ConceptDataType.QuestionGroup).build();
+        Concept concept1 = new ConceptBuilder().withUuid("c1").withName("C1").withDataType(ConceptDataType.QuestionGroup).build();
+        Concept concept2 = new ConceptBuilder().withUuid("c2").withName("C2").withDataType(ConceptDataType.Text).build();
+        Concept concept3 = new ConceptBuilder().withUuid("c3").withName("C3").withDataType(ConceptDataType.Text).build();
+        FormElement qgElement = new TestFormElementBuilder().withConcept(concept1).build();
         LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
-            put("c1", new TestFormElementBuilder().withConcept(concept1).build());
-        }};
-        Map<FormElement, Integer> maxQuestionGroupObs = new HashMap<FormElement, Integer>() {{
-            put(formElementsMap.get("c1"), 1);
+            put("c1", qgElement);
+            put("c2", new TestFormElementBuilder().withQuestionGroupElement(qgElement).withConcept(concept2).build());
+            put("c3", new TestFormElementBuilder().withQuestionGroupElement(qgElement).withConcept(concept3).build());
         }};
         when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
-        when(observationService.getMaxNumberOfQuestionGroupObservations(any())).thenReturn(maxQuestionGroupObs);
 
         exportV2CSVFieldExtractor.init();
         StringBuilderWriter writer = new StringBuilderWriter();
@@ -129,7 +129,54 @@ public class ExportV2CSVFieldExtractorTest {
         Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
 
         assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
-        assertEquals("2", getExtractValue(header, "ST1_C1_C2_1", extract));
+        assertEquals("\"2\"", getExtractValue(header, "\"ST1_C1_C2\"", extract));
+    }
+
+    @Test
+    public void extractIndividualWithRepeatableQuestionGroup() throws IOException {
+        User user = new UserBuilder().build();
+        exportOutput.setUuid("st1");
+        SubjectType subjectType = new SubjectTypeBuilder().withUuid("st1").withName("ST1").build();
+        Map<String, String> qgObs1 = new HashMap<String, String>() {{
+            put("c2", "21");
+            put("c3", "31");
+        }};
+        Map<String, String> qgObs2 = new HashMap<String, String>() {{
+            put("c2", "22");
+            put("c3", "32");
+        }};
+        ObservationCollection observationCollection = new ObservationCollectionBuilder().addObservation("c1", Arrays.asList(qgObs1, qgObs2)).build();
+        Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withObservations(observationCollection).withUUID("s1").build();
+        LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
+
+        when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
+        when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+
+        Concept concept1 = new ConceptBuilder().withUuid("c1").withName("C1").withDataType(ConceptDataType.QuestionGroup).build();
+        Concept concept2 = new ConceptBuilder().withUuid("c2").withName("C2").withDataType(ConceptDataType.Text).build();
+        Concept concept3 = new ConceptBuilder().withUuid("c3").withName("C3").withDataType(ConceptDataType.Text).build();
+        FormElement qgElement = new TestFormElementBuilder().withConcept(concept1).withRepeatable(true).build();
+        LinkedHashMap<String, FormElement> formElementsMap = new LinkedHashMap<String, FormElement>() {{
+            put("c1", qgElement);
+            put("c2", new TestFormElementBuilder().withQuestionGroupElement(qgElement).withConcept(concept2).build());
+            put("c3", new TestFormElementBuilder().withQuestionGroupElement(qgElement).withConcept(concept3).build());
+        }};
+        when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
+        when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
+        when(observationService.getMaxNumberOfQuestionGroupObservations(any())).thenReturn(new HashMap<FormElement, Integer>() {{
+            put(qgElement, 2);
+        }});
+
+        exportV2CSVFieldExtractor.init();
+        StringBuilderWriter writer = new StringBuilderWriter();
+        exportV2CSVFieldExtractor.writeHeader(writer);
+        String header = writer.toString();
+        Object[] extract = exportV2CSVFieldExtractor.extract(longitudinalExportItemRow);
+
+        assertEquals("s1", getExtractValue(header, "ST1_uuid", extract));
+        assertEquals("\"21\"", getExtractValue(header, "\"ST1_C1_1_C2\"", extract));
+        assertEquals("\"22\"", getExtractValue(header, "\"ST1_C1_2_C2\"", extract));
     }
 
     private Object getExtractValue(String header, String headerFieldName, Object[] extract) {

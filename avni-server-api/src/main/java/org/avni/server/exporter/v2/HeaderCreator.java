@@ -66,7 +66,6 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
     private final SubjectTypeRepository subjectTypeRepository;
-    private final FormMappingService formMappingService;
     private final List<String> addressLevelTypes;
     private final Map<FormElement, Integer> maxRepeatableQuestionGroupObservation;
     private final StringBuilder headerBuilder;
@@ -86,9 +85,8 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         return enrolmentDataMap.keySet();
     }
 
-    public HeaderCreator(SubjectTypeRepository subjectTypeRepository, FormMappingService formMappingService, List<String> addressLevelTypes, Map<FormElement, Integer> maxRepeatableQuestionGroupObservation, EncounterTypeRepository encounterTypeRepository, ExportFieldsManager exportFieldsManager, ProgramRepository programRepository) {
+    public HeaderCreator(SubjectTypeRepository subjectTypeRepository, List<String> addressLevelTypes, Map<FormElement, Integer> maxRepeatableQuestionGroupObservation, EncounterTypeRepository encounterTypeRepository, ExportFieldsManager exportFieldsManager, ProgramRepository programRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
-        this.formMappingService = formMappingService;
         this.addressLevelTypes = addressLevelTypes;
         this.maxRepeatableQuestionGroupObservation = maxRepeatableQuestionGroupObservation;
         this.encounterTypeRepository = encounterTypeRepository;
@@ -155,8 +153,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
     private void appendObsHeaders(String prefix, Map<String, FormElement> map, Map<FormElement, Integer> maxNumberOfQuestionGroupObservations) {
         //handle all non-repeated observations (include question group observation with only max one set)
         map.forEach((uuid, fe) -> {
-            Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(fe);
-            if ((fe.isPartOfRepeatableQuestionGroup() && maxRepeats > 1) || fe.isQuestionGroupElement()) return;
+            if (fe.isPartOfRepeatableQuestionGroup() || fe.isQuestionGroupElement()) return;
 
             boolean codedMultiSelect = fe.isCodedMultiSelect();
             headerBuilder.append(",\"").append(prefix).append("_");
@@ -166,22 +163,13 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                 headerBuilder.append(fe.getGroup().getConcept().getName()).append("_");
             }
             Concept concept = fe.getConcept();
-            if (codedMultiSelect) {
-                concept.getSortedAnswers().forEach(ca -> {
-                    headerBuilder
-                            .append(concept.getName())
-                            .append("_").append(ca.getAnswerConcept().getName());
-                });
-            } else {
-                headerBuilder.append(concept.getName());
-            }
-            headerBuilder.append("\"");
+            appendConcept(codedMultiSelect, concept);
         });
 
         //handle all repeated question group observations
         List<FormElement> observationsRepeatedMultipleTimes = map.values().stream()
                 .filter(FormElement::isPartOfRepeatableQuestionGroup)
-                .filter(formElement -> maxNumberOfQuestionGroupObservations.get(formElement.getGroup()) > 1).collect(Collectors.toList());
+                .collect(Collectors.toList());
         Map<FormElement, List<FormElement>> repeatedFormElements = ExportFieldsManager.groupByQuestionGroup(observationsRepeatedMultipleTimes);
         repeatedFormElements.forEach((group, formElements) -> {
             Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(group);
@@ -192,19 +180,23 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                     Concept concept = formElement.getConcept();
                     headerBuilder.append(",\"").append(prefix).append("_");
                     headerBuilder.append(formElement.getGroup().getConcept().getName()).append("_").append(i).append("_");
-                    if (codedMultiSelect) {
-                        concept.getSortedAnswers().forEach(ca -> {
-                            headerBuilder
-                                    .append(concept.getName())
-                                    .append("_").append(ca.getAnswerConcept().getName());
-                        });
-                    } else {
-                        headerBuilder.append(concept.getName());
-                    }
-                    headerBuilder.append("\"");
+                    appendConcept(codedMultiSelect, concept);
                 }
             }
         });
+    }
+
+    private void appendConcept(boolean codedMultiSelect, Concept concept) {
+        if (codedMultiSelect) {
+            concept.getSortedAnswers().forEach(ca -> {
+                headerBuilder
+                        .append(concept.getName())
+                        .append("_").append(ca.getAnswerConcept().getName());
+            });
+        } else {
+            headerBuilder.append(concept.getName());
+        }
+        headerBuilder.append("\"");
     }
 
     @Override

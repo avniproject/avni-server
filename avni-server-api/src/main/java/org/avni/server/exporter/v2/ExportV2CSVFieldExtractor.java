@@ -45,12 +45,12 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final ExportJobService exportJobService;
-    private ObservationService observationService;
+    private final ObservationService observationService;
     private HeaderCreator headerCreator;
     private ExportOutput exportOutput;
     private List<String> addressLevelTypes = new ArrayList<>();
     private ExportFieldsManager exportFieldsManager;
-
+    private Map<FormElement, Integer> maxNumberOfQuestionGroupObservations;
 
     @Autowired
     public ExportV2CSVFieldExtractor(ExportJobParametersRepository exportJobParametersRepository,
@@ -83,10 +83,10 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     public void init() {
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
-        exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, timeZone);
+        exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, timeZone);
         List<Form> formsInvolved = exportFieldsManager.getAllForms();
-        Map<FormElement, Integer> maxNumberOfQuestionGroupObservations = observationService.getMaxNumberOfQuestionGroupObservations(formsInvolved);
-        this.headerCreator = new HeaderCreator(subjectTypeRepository, formMappingService, addressLevelTypes, maxNumberOfQuestionGroupObservations,
+        maxNumberOfQuestionGroupObservations = observationService.getMaxNumberOfQuestionGroupObservations(formsInvolved);
+        this.headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, maxNumberOfQuestionGroupObservations,
                 encounterTypeRepository, exportFieldsManager, programRepository);
         exportOutput.accept(exportFieldsManager);
     }
@@ -171,7 +171,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         if (individual.getSubjectType().isGroup()) {
             columnsData.add(getTotalMembers(individual));
         }
-        columnsData.addAll(getObs(individual.getObservations(), registrationMap));
+        columnsData.addAll(addObservations(individual.getObservations(), registrationMap));
     }
 
     private void addStaticRegistrationColumns(List<Object> columnsData, Individual individual,
@@ -185,8 +185,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                                      Map<String, FormElement> exitEnrolmentMap,
                                      ExportOutput.ExportNestedOutput program) {
         addStaticEnrolmentColumns(program, columnsData, programEnrolment, HeaderCreator.enrolmentDataMap);
-        columnsData.addAll(getObs(programEnrolment.getObservations(), enrolmentMap));
-        columnsData.addAll(getObs(programEnrolment.getObservations(), exitEnrolmentMap));
+        columnsData.addAll(addObservations(programEnrolment.getObservations(), enrolmentMap));
+        columnsData.addAll(addObservations(programEnrolment.getObservations(), exitEnrolmentMap));
     }
 
     private <T extends AbstractEncounter> void addEncounterColumns(Long maxVisitCount, List<Object> columnsData, List<T> encounters,
@@ -194,8 +194,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         AtomicInteger counter = new AtomicInteger(0);
         encounters.forEach(encounter -> {
             appendStaticEncounterColumns(encounterEntityType, columnsData, encounter, HeaderCreator.encounterDataMap);
-            columnsData.addAll(getObs(encounter.getObservations(), map));
-            columnsData.addAll(getObs(encounter.getObservations(), cancelMap));
+            columnsData.addAll(addObservations(encounter.getObservations(), map));
+            columnsData.addAll(addObservations(encounter.getObservations(), cancelMap));
             counter.getAndIncrement();
         });
         int visit = counter.get();
@@ -223,10 +223,11 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                 .count();
     }
 
-    private List<Object> getObs(ObservationCollection observations, Map<String, FormElement> obsMap) {
+    private List<Object> addObservations(ObservationCollection observations, Map<String, FormElement> obsMap) {
         List<Object> values = new ArrayList<>(obsMap.size());
         obsMap.forEach((conceptUUID, formElement) -> {
-            if (ConceptDataType.isGroupQuestion(formElement.getConcept().getDataType())) return;
+            if (formElement.isPartOfRepeatableQuestionGroup() || formElement.isQuestionGroupElement()) return;
+
             Object val;
             if (formElement.getGroup() != null) {
                 Concept parentConcept = formElement.getGroup().getConcept();
@@ -235,18 +236,44 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
             } else {
                 val = observations == null ? null : observations.getOrDefault(conceptUUID, null);
             }
-            String dataType = formElement.getConcept().getDataType();
-            if (dataType.equals(ConceptDataType.Coded.toString())) {
-                values.addAll(processCodedObs(formElement.getType(), val, formElement));
-            } else if (dataType.equals(ConceptDataType.DateTime.toString()) || dataType.equals(ConceptDataType.Date.toString())) {
-                values.add(processDateObs(val));
-            } else if (ConceptDataType.isMedia(dataType)) {
-                values.add(processMediaObs(val));
-            } else {
-                values.add(headerCreator.quotedStringValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
+
+            addObservation(values, formElement, val);
+        });
+
+        List<FormElement> observationsRepeatedMultipleTimes = obsMap.values().stream()
+                .filter(FormElement::isPartOfRepeatableQuestionGroup)
+                .collect(Collectors.toList());
+        Map<FormElement, List<FormElement>> repeatedFormElements = ExportFieldsManager.groupByQuestionGroup(observationsRepeatedMultipleTimes);
+        repeatedFormElements.forEach((group, formElements) -> {
+            Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(group);
+            Concept questionGroupConcept = group.getConcept();
+            List<Map<String, Object>> repeatableObservations = observations == null ? new ArrayList<>() : (List<Map<String, Object>>) observations.getOrDefault(questionGroupConcept.getUuid(), new HashMap<String, Object>());
+            for (int i = 0; i < maxRepeats; i++) {
+                if (repeatableObservations.size() > i) {
+                    Map<String, Object> observationsItem = repeatableObservations.get(i);
+                    for (FormElement formElement : formElements) {
+                        Object val = observationsItem.getOrDefault(formElement.getConcept().getUuid(), null);
+                        addObservation(values, formElement, val);
+                    }
+                } else {
+                    formElements.forEach(formElement -> values.add(""));
+                }
             }
         });
         return values;
+    }
+
+    private void addObservation(List<Object> values, FormElement formElement, Object val) {
+        String dataType = formElement.getConcept().getDataType();
+        if (dataType.equals(ConceptDataType.Coded.toString())) {
+            values.addAll(processCodedObs(formElement.getType(), val, formElement));
+        } else if (dataType.equals(ConceptDataType.DateTime.toString()) || dataType.equals(ConceptDataType.Date.toString())) {
+            values.add(processDateObs(val));
+        } else if (ConceptDataType.isMedia(dataType)) {
+            values.add(processMediaObs(val));
+        } else {
+            values.add(headerCreator.quotedStringValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
+        }
     }
 
     private Object processDateObs(Object val) {

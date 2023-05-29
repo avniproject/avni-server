@@ -64,9 +64,10 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
             "limit 1", nativeQuery = true)
     Long getMaxProgramEncounterCount(String programEncounterTypeUUID);
 
-    default Long getMaxProgramEncounterCount(String programEncounterTypeUUID, Calendar startDate, Calendar endDate) {
-        return startDate == null ? getMaxProgramEncounterCount(programEncounterTypeUUID) :
-                getMaxProgramEncounterCountBetween(programEncounterTypeUUID, startDate, endDate);
+    default Long getMaxProgramEncounterCount(String encounterTypeUUID, Calendar startDate, Calendar endDate) {
+        Long aLong = startDate == null ? getMaxProgramEncounterCount(encounterTypeUUID) :
+                getMaxProgramEncounterCountBetween(encounterTypeUUID, startDate, endDate);
+        return aLong == null ? 0 : aLong;
     }
 
     @Query("select pe from ProgramEncounter pe where pe.uuid =:id or pe.legacyId = :id")

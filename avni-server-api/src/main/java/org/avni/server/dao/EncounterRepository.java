@@ -65,8 +65,9 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
     Long getMaxEncounterCount(String encounterTypeUUID);
 
     default Long getMaxEncounterCount(String encounterTypeUUID, Calendar startDate, Calendar endDate) {
-        return startDate == null ? getMaxEncounterCount(encounterTypeUUID) :
+        Long aLong = startDate == null ? getMaxEncounterCount(encounterTypeUUID) :
                 getMaxEncounterCountBetween(encounterTypeUUID, startDate, endDate);
+        return aLong == null ? 0 : aLong;
     }
 
     @Query("select e from Encounter e where e.uuid =:id or e.legacyId = :id")

@@ -115,8 +115,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
                     addEnrolmentHeaders(this.headers);
                 }
                 this.encounterTypeName = encounterTypeRepository.getEncounterTypeName(encounterTypeUUID);
-                Long maxVisitCount = getMaxVisitCount();
-                Long maxVisits = maxVisitCount == null ? 0 : maxVisitCount;
+                Long maxVisits = getMaxVisitCount();
                 addEncounterHeaders(maxVisits, this.headers);
                 break;
             }

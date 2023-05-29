@@ -5,6 +5,7 @@ import org.avni.server.application.FormElement;
 import org.avni.server.application.FormType;
 import org.avni.server.application.TestFormElementBuilder;
 import org.avni.server.dao.EncounterRepository;
+import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
@@ -32,12 +33,14 @@ public class ExportFieldsManagerTest {
     private FormMappingService formMappingService;
     @Mock
     private EncounterRepository encounterRepository;
+    @Mock
+    private ProgramEncounterRepository programEncounterRepository;
     private ExportFieldsManager exportFieldsManager;
 
     @Before
     public void setup() {
         initMocks(this);
-        exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, TimeZone.getDefault().getDisplayName());
+        exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, TimeZone.getDefault().getDisplayName());
     }
 
     @Test
