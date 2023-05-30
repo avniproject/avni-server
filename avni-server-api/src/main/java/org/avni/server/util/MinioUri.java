@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A URI wrapper that can parse out information about an S3 URI.
+ * A URI wrapper that can parse out information about a minio URI.
  */
 public class MinioUri {
 
@@ -63,24 +63,24 @@ public class MinioUri {
         }
         this.uri = uri;
 
-        // s3://*
-        if ("s3".equalsIgnoreCase(uri.getScheme())) {
+        // minio://*
+        if ("minio".equalsIgnoreCase(uri.getScheme())) {
             this.region = null;
             this.versionId = null;
             this.isPathStyle = false;
             this.bucket = uri.getAuthority();
 
             if (bucket == null) {
-                throw new IllegalArgumentException("Invalid S3 URI: no bucket: "
+                throw new IllegalArgumentException("Invalid minio URI: no bucket: "
                         + uri);
             }
 
             String path = uri.getPath();
             if (path.length() <= 1) {
-                // s3://bucket or s3://bucket/
+                // minio://bucket or minio://bucket/
                 this.key = null;
             } else {
-                // s3://bucket/key
+                // minio://bucket/key
                 // Remove the leading '/'.
                 this.key = uri.getPath().substring(1);
             }
@@ -89,14 +89,14 @@ public class MinioUri {
 
         String host = uri.getHost();
         if (host == null) {
-            throw new IllegalArgumentException("Invalid S3 URI: no hostname: "
+            throw new IllegalArgumentException("Invalid minio URI: no hostname: "
                     + uri);
         }
 
         Matcher matcher = ENDPOINT_PATTERN.matcher(host);
         if (!matcher.find()) {
             throw new IllegalArgumentException(
-                    "Invalid S3 URI: hostname does not appear to be a valid S3 "
+                    "Invalid minio URI: hostname does not appear to be a valid minio "
                             + "endpoint: " + uri);
         }
 
@@ -118,19 +118,19 @@ public class MinioUri {
                 int index = path.indexOf('/', 1);
                 if (index == -1) {
 
-                    // https://s3.minio.com/bucket
+                    // https://minio.cloud.com/bucket
                     this.bucket = decode(path.substring(1));
                     this.key = null;
 
                 } else if (index == (path.length() - 1)) {
 
-                    // https://s3.minio.com/bucket/
+                    // https://minio.cloud.com/bucket/
                     this.bucket = decode(path.substring(1, index));
                     this.key = null;
 
                 } else {
 
-                    // https://s3.minio.com/bucket/key
+                    // https://minio.cloud.com/bucket/key
                     this.bucket = decode(path.substring(1, index));
                     this.key = decode(path.substring(index + 1));
 
@@ -156,12 +156,8 @@ public class MinioUri {
 
         this.versionId = parseVersionId(uri.getRawQuery());
 
-        if ("minio".equals(matcher.group(2))) {
-            // No region specified
-            this.region = null;
-        } else {
-            this.region = matcher.group(2);
-        }
+        //Removed logic for inferring region from URL, as we have not yet determine the standard url for MINIO in Avni
+        this.region = null;
     }
 
     /**
@@ -184,7 +180,7 @@ public class MinioUri {
     }
 
     /**
-     * @return the S3 URI being parsed
+     * @return the minio URI being parsed
      */
     public URI getURI() {
         return uri;
