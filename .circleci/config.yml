@@ -178,6 +178,7 @@ workflows:
         requires:
           - build
     - STAGING_deploy:
+        context: non-prod-deploy
         filters:
           branches:
             only:
@@ -190,6 +191,7 @@ workflows:
         requires:
         - build
     - UAT_deploy:
+        context: non-prod-deploy
         requires:
         - UAT_approve
     - PRERELEASE_approve:
@@ -197,6 +199,7 @@ workflows:
         requires:
         - build
     - PRERELEASE_deploy:
+        context: non-prod-deploy
         requires:
         - PRERELEASE_approve
     - PERF_approve:
@@ -204,6 +207,7 @@ workflows:
         requires:
           - build
     - PERF_deploy:
+        context: non-prod-deploy
         requires:
           - PERF_approve
 notify:
