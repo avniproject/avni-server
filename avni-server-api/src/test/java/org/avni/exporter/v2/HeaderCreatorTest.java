@@ -1,6 +1,7 @@
 package org.avni.exporter.v2;
 
 import org.avni.server.application.FormElement;
+import org.avni.server.application.FormElementType;
 import org.avni.server.application.Subject;
 import org.avni.server.application.TestFormElementBuilder;
 import org.avni.server.dao.EncounterRepository;
@@ -54,7 +55,7 @@ public class HeaderCreatorTest {
 
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(exportFieldsManager.getCoreFields(any())).thenReturn(Arrays.asList(ID, UUID, FIRST_NAME, CREATED_BY, CREATED_DATE_TIME, LAST_MODIFIED_BY, LAST_MODIFIED_DATE_TIME));
-        when(exportFieldsManager.getMainFields(any())).thenReturn(getStringFormElementMap());
+        when(exportFieldsManager.getMainFields(any())).thenReturn(getMainFields());
 
         List<String> addressLevelTypes = Collections.singletonList("Village");
         HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
@@ -63,6 +64,31 @@ public class HeaderCreatorTest {
 
         headerCreator.visitSubject(exportEntityType);
         assertEquals("Individual_id,Individual_uuid,Individual_first_name,Individual_created_by,Individual_created_date_time,Individual_last_modified_by,Individual_last_modified_date_time,\"Village\",\"Individual_Question 1\"", headerCreator.getHeader());
+    }
+
+    @Test
+    public void shouldAddMultiSelectColumns() {
+        SubjectType subjectType = getSubjectType("Individual", Subject.Person);
+
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(exportFieldsManager.getCoreFields(any())).thenReturn(Collections.singletonList(ID));
+
+
+        Concept c2 = new ConceptBuilder().withDataType(ConceptDataType.NA).withName("C2").withUuid("c2").build();
+        Concept c3 = new ConceptBuilder().withDataType(ConceptDataType.NA).withName("C3").withUuid("c3").build();
+        Concept c1 = new ConceptBuilder().withDataType(ConceptDataType.Coded).withName("C1").withUuid("c1").withAnswers(c2, c3).build();
+        HashMap<String, FormElement> mainFields = new HashMap<String, FormElement>() {{
+            put(c1.getUuid(), new TestFormElementBuilder().withType(FormElementType.MultiSelect).withConcept(c1).build());
+        }};
+        when(exportFieldsManager.getMainFields(any())).thenReturn(mainFields);
+
+        List<String> addressLevelTypes = Collections.singletonList("Village");
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+
+        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
+
+        headerCreator.visitSubject(exportEntityType);
+        assertEquals("Individual_id,\"Village\",\"Individual_C1_C2\",\"Individual_C1_C3\"", headerCreator.getHeader());
     }
 
     @Test
@@ -129,7 +155,7 @@ public class HeaderCreatorTest {
 
         when(exportFieldsManager.getCoreFields(any())).thenReturn(Arrays.asList(ID, CREATED_BY, CREATED_DATE_TIME, LAST_MODIFIED_BY, LAST_MODIFIED_DATE_TIME));
         when(exportFieldsManager.getMaxEntityCount(any())).thenReturn(2l);
-        when(exportFieldsManager.getMainFields(any())).thenReturn(getStringFormElementMap());
+        when(exportFieldsManager.getMainFields(any())).thenReturn(getMainFields());
         when(encounterTypeRepository.findByUuid(any())).thenReturn(new EncounterTypeBuilder().withName("ENC").build());
 
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
@@ -146,15 +172,10 @@ public class HeaderCreatorTest {
         return subjectType;
     }
 
-    private Map<String, FormElement> getStringFormElementMap() {
-        Map<String, FormElement> map = new HashMap<>();
-        Concept concept = new Concept();
-        FormElement formElement = new FormElement();
-        formElement.setType("SingleSelect");
-        formElement.setConcept(concept);
-        concept.setDataType(ConceptDataType.Text.toString());
-        concept.setName("Question 1");
-        map.put("Question 1 uuid", formElement);
-        return map;
+    private Map<String, FormElement> getMainFields() {
+        Concept concept = new ConceptBuilder().withDataType(ConceptDataType.Text).withName("C1").withUuid("c1").build();
+        return new HashMap<String, FormElement>() {{
+            put(concept.getUuid(), new TestFormElementBuilder().withType(FormElementType.SingleSelect).withConcept(concept).build());
+        }};
     }
 }

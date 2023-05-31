@@ -127,7 +127,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
     @Override
     public void visitProgramEncounter(ExportEntityType encounterType, ExportEntityType program, ExportEntityType subject) {
         addEncounterTypeForm(encounterType, FormType.ProgramEncounter);
-        addEncounterTypeForm(encounterType, FormType.ProgramExit);
+        addEncounterTypeForm(encounterType, FormType.ProgramEncounterCancellation);
 
         this.setCoreFields(HeaderCreator.getEncounterCoreFields(), encounterType);
         LinkedHashMap<String, FormElement> encounterFormElements = formMappingService.getAllFormElementsAndDecisionMap(subject.getUuid(), program.getUuid(), encounterType.getUuid(), FormType.ProgramEncounter);

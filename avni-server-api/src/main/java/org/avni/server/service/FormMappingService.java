@@ -241,7 +241,7 @@ public class FormMappingService implements NonScopeAwareService {
 
     public FormMapping findForEncounter(String encounterUuid, FormType formType) {
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterUuid);
-        return this.find(encounterType, FormType.IndividualEncounterCancellation);
+        return this.find(encounterType, formType);
     }
 
     public FormMapping findForProgram(String programUuid, FormType formType) {

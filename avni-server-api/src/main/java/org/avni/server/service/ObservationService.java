@@ -326,12 +326,12 @@ public class ObservationService {
         return observations.filterByConcepts(mediaConcepts);
     }
 
-    private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length(%s->>'%s')) from %s where %s->>'%s' is not null";
+    private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null";
 
     class CountMapper implements RowMapper<Integer> {
         @Override
         public Integer mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return rs.getInt(rowNum);
+            return rs.getInt(1);
         }
     }
 
@@ -344,8 +344,8 @@ public class ObservationService {
         forms.forEach(form -> {
             String tableName = TableNames.getTableName(form.getFormType());
             String obsColumn = ColumnNames.getObsColumn(form.getFormType());
-            List<FormElement> questionGroupElements = form.getAllElements(ConceptDataType.QuestionGroup);
-            questionGroupElements.forEach(formElement -> {
+            List<FormElement> repeatableQuestionGroupElements = form.getAllElements(ConceptDataType.QuestionGroup).stream().filter(FormElement::isRepeatable).collect(Collectors.toList());
+            repeatableQuestionGroupElements.forEach(formElement -> {
                 String query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
                 if (formElement.isRepeatable()) {
                     List<Integer> counts = jdbcTemplate.query(query, new CountMapper());

@@ -34,12 +34,13 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
     private static final String selectedAnswerFieldValue = "1";
     private static final String unSelectedAnswerFieldValue = "0";
     private static final String EMPTY_STRING = "";
+    private final ExportJobParametersRepository exportJobParametersRepository;
     private final EncounterRepository encounterRepository;
     private final ProgramEncounterRepository programEncounterRepository;
     private final FormMappingService formMappingService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final String exportJobParamsUUID;
-    private final String timeZone;
+    private String timeZone;
     private final AddressLevelService addressLevelService;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
@@ -56,36 +57,38 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
                                      ProgramEncounterRepository programEncounterRepository,
                                      FormMappingService formMappingService,
                                      @Value("#{jobParameters['exportJobParamsUUID']}") String exportJobParamsUUID,
-                                     @Value("#{jobParameters['timeZone']}") String timeZone,
                                      SubjectTypeRepository subjectTypeRepository,
                                      AddressLevelService addressLevelService,
                                      ProgramRepository programRepository,
                                      EncounterTypeRepository encounterTypeRepository,
                                      ExportJobService exportJobService,
-                                     ObservationService observationService) {
+                                     ObservationService observationService,
+                                     ExportJobParametersRepository exportJobParametersRepository) {
         this.encounterRepository = encounterRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.formMappingService = formMappingService;
         this.exportJobParamsUUID = exportJobParamsUUID;
-        this.timeZone = timeZone;
         this.subjectTypeRepository = subjectTypeRepository;
         this.addressLevelService = addressLevelService;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.exportJobService = exportJobService;
         this.observationService = observationService;
+        this.exportJobParametersRepository = exportJobParametersRepository;
     }
 
     @PostConstruct
     public void init() {
         this.addressLevelTypes = addressLevelService.getAllAddressLevelTypeNames();
+        ExportJobParameters exportJobParameters = exportJobParametersRepository.findByUuid(exportJobParamsUUID);
+        this.timeZone = exportJobParameters.getTimezone();
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, timeZone);
+        exportOutput.accept(exportFieldsManager);
         List<Form> formsInvolved = exportFieldsManager.getAllForms();
         maxNumberOfQuestionGroupObservations = observationService.getMaxNumberOfQuestionGroupObservations(formsInvolved);
         this.headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, maxNumberOfQuestionGroupObservations,
                 encounterTypeRepository, exportFieldsManager, programRepository);
-        exportOutput.accept(exportFieldsManager);
     }
 
     @Override
@@ -244,7 +247,11 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         repeatedFormElements.forEach((group, formElements) -> {
             Integer maxRepeats = maxNumberOfQuestionGroupObservations.get(group);
             Concept questionGroupConcept = group.getConcept();
-            List<Map<String, Object>> repeatableObservations = observations == null ? new ArrayList<>() : (List<Map<String, Object>>) observations.getOrDefault(questionGroupConcept.getUuid(), new HashMap<String, Object>());
+            List<Map<String, Object>> repeatableObservations;
+            if (observations == null) repeatableObservations = new ArrayList<>();
+            else {
+                repeatableObservations = (List<Map<String, Object>>) observations.getOrDefault(questionGroupConcept.getUuid(), new ArrayList<>());
+            }
             for (int i = 0; i < maxRepeats; i++) {
                 if (repeatableObservations.size() > i) {
                     Map<String, Object> observationsItem = repeatableObservations.get(i);

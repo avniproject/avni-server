@@ -62,7 +62,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void setup() {
         initMocks(this);
 
-        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", "", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService);
+        exportV2CSVFieldExtractor = new ExportV2CSVFieldExtractor(encounterRepository, programEncounterRepository, formMappingService, "st1", subjectTypeRepository, addressLevelService, programRepository, encounterTypeRepository, exportJobService, observationService, exportJobParametersRepository);
         exportOutput = new ExportOutputBuilder().build();
         exportJobParameters = new ExportJobParametersBuilder().withTimezone(TimeZone.getDefault().getDisplayName()).build();
         when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);

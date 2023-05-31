@@ -34,6 +34,11 @@ public class TestFormElementBuilder {
     	return this;
     }
 
+    public TestFormElementBuilder withType(FormElementType type) {
+        formElement.setType(type.name());
+    	return this;
+    }
+
     public FormElement build() {
         return formElement;
     }

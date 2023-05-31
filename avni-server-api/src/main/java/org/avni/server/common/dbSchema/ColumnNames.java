@@ -13,10 +13,15 @@ public class ColumnNames {
 
     private static final Map<FormType, String> obsColumnMap = new HashMap<FormType, String>() {{
         put(FormType.IndividualProfile, IndividualObservations);
+
         put(FormType.ProgramEnrolment, ProgramEnrolmentObservations);
         put(FormType.ProgramExit, ProgramEnrolmentExitObservations);
+
         put(FormType.ProgramEncounter, EncounterObservations);
         put(FormType.ProgramEncounterCancellation, EncounterCancelObservations);
+
+        put(FormType.Encounter, EncounterObservations);
+        put(FormType.IndividualEncounterCancellation, EncounterCancelObservations);
     }};
 
     public static String getObsColumn(FormType formType) {

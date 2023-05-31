@@ -104,8 +104,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
             if (visit != 1) {
                 headerBuilder.append(",");
             }
-            String prefix = encounterType.getName() + "_" + visit;
-            headerBuilder.append(getStaticEncounterHeaders(exportEntityType, prefix));
+            headerBuilder.append(getStaticEncounterHeaders(exportEntityType, encounterType, visit));
             appendObsHeaders(prefix, exportFieldsManager.getMainFields(exportEntityType), maxRepeatableQuestionGroupObservation);
             appendObsHeaders(prefix, exportFieldsManager.getSecondaryFields(exportEntityType), maxRepeatableQuestionGroupObservation);
         }
@@ -132,10 +131,13 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                 .collect(Collectors.joining(","));
     }
 
-    private String getStaticEncounterHeaders(ExportEntityType exportEntityType, String prefix) {
+    private String getStaticEncounterHeaders(ExportEntityType exportEntityType, EncounterType encounterType, Integer encounterIndex) {
         return exportFieldsManager.getCoreFields(exportEntityType).stream()
                 .filter(encounterDataMap::containsKey)
-                .map(key -> format("%s_%s", prefix, encounterDataMap.get(key).getName()))
+                .map(key -> {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    return format("%s_%s", encounterType.getName(), encounterDataMap.get(key).getName());
+                })
                 .collect(Collectors.joining(","));
     }
 
@@ -149,20 +151,21 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         return "\"".concat(text).concat("\"");
     }
 
-    private void appendObsHeaders(String prefix, Map<String, FormElement> map, Map<FormElement, Integer> maxNumberOfQuestionGroupObservations) {
+    private void appendObsHeaders(String entityTypeName, Map<String, FormElement> map, Map<FormElement, Integer> maxNumberOfQuestionGroupObservations) {
         //handle all non-repeated observations (include question group observation with only max one set)
         map.forEach((uuid, fe) -> {
             if (fe.isPartOfRepeatableQuestionGroup() || fe.isQuestionGroupElement()) return;
 
             boolean codedMultiSelect = fe.isCodedMultiSelect();
-            headerBuilder.append(",\"").append(prefix).append("_");
+            headerBuilder.append(",\"");
             // Prefixes
             // no prefix for self
+            String secondPrefix = "";
             if (fe.getGroup() != null) {
-                headerBuilder.append(fe.getGroup().getConcept().getName()).append("_");
+                secondPrefix = String.format("%s_", fe.getGroup().getConcept().getName());
             }
             Concept concept = fe.getConcept();
-            appendConcept(codedMultiSelect, concept);
+            appendConcept(codedMultiSelect, concept, entityTypeName, secondPrefix);
         });
 
         //handle all repeated question group observations
@@ -177,25 +180,35 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
                     boolean codedMultiSelect = formElement.isCodedMultiSelect();
 
                     Concept concept = formElement.getConcept();
-                    headerBuilder.append(",\"").append(prefix).append("_");
+                    headerBuilder.append(",\"").append(entityTypeName).append("_");
                     headerBuilder.append(formElement.getGroup().getConcept().getName()).append("_").append(i).append("_");
-                    appendConcept(codedMultiSelect, concept);
+                    appendConcept(codedMultiSelect, concept, entityTypeName);
                 }
             }
         });
     }
 
-    private void appendConcept(boolean codedMultiSelect, Concept concept) {
+    private void appendConcept(boolean codedMultiSelect, Concept concept, String entityTypePrefix, Integer encounterCountPrefix, Integer repeatableQGPrefix) {
         if (codedMultiSelect) {
             concept.getSortedAnswers().forEach(ca -> {
-                headerBuilder
-                        .append(concept.getName())
-                        .append("_").append(ca.getAnswerConcept().getName());
+                appendConcept(concept, entityTypePrefix, encounterCountPrefix, repeatableQGPrefix);
+                headerBuilder.append("_").append(ca.getAnswerConcept().getName());
             });
         } else {
-            headerBuilder.append(concept.getName());
+            appendConcept(concept, entityTypePrefix, encounterCountPrefix, repeatableQGPrefix);
         }
         headerBuilder.append("\"");
+    }
+
+    private void appendConcept(Concept concept, String entityTypePrefix, Integer encounterIndex, Integer repeatableQGIndex) {
+        headerBuilder.append(entityTypePrefix).append("_");
+        if (encounterIndex != null) headerBuilder.append(encounterIndex).append("_");
+        if (repeatableQGIndex != null) headerBuilder.append(repeatableQGIndex).append("_");
+        headerBuilder.append(concept.getName());
+    }
+
+    private String getFieldHeader(String fieldName, ) {
+
     }
 
     @Override
@@ -231,7 +244,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
     @Override
     public void visitProgramEncounter(ExportEntityType exportEntityType, ExportEntityType programExportEntityType, ExportEntityType subject) {
         headerBuilder.append(",");
-        EncounterType encounterType = encounterTypeRepository.findByUuid(programExportEntityType.getUuid());
+        EncounterType encounterType = encounterTypeRepository.findByUuid(exportEntityType.getUuid());
         this.addEncounterHeaders(exportFieldsManager.getMaxEntityCount(exportEntityType), encounterType, exportEntityType, maxRepeatableQuestionGroupObservation);
     }
 

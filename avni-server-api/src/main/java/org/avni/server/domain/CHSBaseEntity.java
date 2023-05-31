@@ -1,5 +1,7 @@
 package org.avni.server.domain;
 
+import org.hibernate.proxy.HibernateProxyHelper;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.UUID;
@@ -57,12 +59,12 @@ public class CHSBaseEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || HibernateProxyHelper.getClassWithoutInitializingProxy(this) != HibernateProxyHelper.getClassWithoutInitializingProxy(o)) return false;
 
         CHSBaseEntity that = (CHSBaseEntity) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
-        return uuid != null ? uuid.equals(that.uuid) : that.uuid == null;
+        if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) return false;
+        return getUuid() != null ? getUuid().equals(that.getUuid()) : that.getUuid() == null;
     }
 
     @Override
