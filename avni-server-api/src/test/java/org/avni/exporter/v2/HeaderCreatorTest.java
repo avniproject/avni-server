@@ -8,10 +8,8 @@ import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptDataType;
-import org.avni.server.domain.EncounterTypeBuilder;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
+import org.avni.server.domain.factory.metadata.ConceptAnswerBuilder;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.exporter.v2.ExportFieldsManager;
 import org.avni.server.exporter.v2.HeaderCreator;
@@ -34,11 +32,7 @@ public class HeaderCreatorTest {
     @Mock
     private SubjectTypeRepository subjectTypeRepository;
     @Mock
-    private FormMappingService formMappingService;
-    @Mock
     private EncounterTypeRepository encounterTypeRepository;
-    @Mock
-    private EncounterRepository encounterRepository;
     @Mock
     private ExportFieldsManager exportFieldsManager;
     @Mock
@@ -63,7 +57,7 @@ public class HeaderCreatorTest {
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
 
         headerCreator.visitSubject(exportEntityType);
-        assertEquals("Individual_id,Individual_uuid,Individual_first_name,Individual_created_by,Individual_created_date_time,Individual_last_modified_by,Individual_last_modified_date_time,\"Village\",\"Individual_Question 1\"", headerCreator.getHeader());
+        assertEquals("Individual_id,Individual_uuid,Individual_first_name,Individual_created_by,Individual_created_date_time,Individual_last_modified_by,Individual_last_modified_date_time,\"Individual_Village\",\"Individual_C1\",", headerCreator.getHeader());
     }
 
     @Test
@@ -74,9 +68,11 @@ public class HeaderCreatorTest {
         when(exportFieldsManager.getCoreFields(any())).thenReturn(Collections.singletonList(ID));
 
 
-        Concept c2 = new ConceptBuilder().withDataType(ConceptDataType.NA).withName("C2").withUuid("c2").build();
+        Concept c2 = new ConceptBuilder().withDataType(ConceptDataType.NA).withName("C2").build();
+        ConceptAnswer ca2 = new ConceptAnswerBuilder().withAnswerConcept(c2).withOrder(1).withUUID("ca2").build();
         Concept c3 = new ConceptBuilder().withDataType(ConceptDataType.NA).withName("C3").withUuid("c3").build();
-        Concept c1 = new ConceptBuilder().withDataType(ConceptDataType.Coded).withName("C1").withUuid("c1").withAnswers(c2, c3).build();
+        ConceptAnswer ca3 = new ConceptAnswerBuilder().withAnswerConcept(c3).withOrder(2).withUUID("ca3").build();
+        Concept c1 = new ConceptBuilder().withDataType(ConceptDataType.Coded).withName("C1").withUuid("c1").withAnswers(ca2, ca3).build();
         HashMap<String, FormElement> mainFields = new HashMap<String, FormElement>() {{
             put(c1.getUuid(), new TestFormElementBuilder().withType(FormElementType.MultiSelect).withConcept(c1).build());
         }};
@@ -88,7 +84,7 @@ public class HeaderCreatorTest {
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
 
         headerCreator.visitSubject(exportEntityType);
-        assertEquals("Individual_id,\"Village\",\"Individual_C1_C2\",\"Individual_C1_C3\"", headerCreator.getHeader());
+        assertEquals("Individual_id,\"Individual_Village\",\"Individual_C1_C2\",\"Individual_C1_C3\",", headerCreator.getHeader());
     }
 
     @Test
@@ -115,7 +111,7 @@ public class HeaderCreatorTest {
 
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withFields(Collections.singletonList(ID)).build();
         headerCreator.visitSubject(exportEntityType);
-        assertEquals("Individual_id,\"Village\",\"Individual_GC_MC1\",\"Individual_GC_MC2\"", headerCreator.getHeader());
+        assertEquals("Individual_id,\"Individual_Village\",\"Individual_GC_MC1\",\"Individual_GC_MC2\",", headerCreator.getHeader());
     }
 
     @Test
@@ -145,7 +141,7 @@ public class HeaderCreatorTest {
         }};
         HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, maxRepeatableQuestionGroupObservation, encounterTypeRepository, exportFieldsManager, programRepository);
         headerCreator.visitSubject(exportEntityType);
-        assertEquals("Individual_id,\"Village\",\"Individual_GC_1_MC1\",\"Individual_GC_1_MC2\",\"Individual_GC_2_MC1\",\"Individual_GC_2_MC2\"", headerCreator.getHeader());
+        assertEquals("Individual_id,\"Individual_Village\",\"Individual_GC_1_MC1\",\"Individual_GC_1_MC2\",\"Individual_GC_2_MC1\",\"Individual_GC_2_MC2\",", headerCreator.getHeader());
     }
 
     @Test
@@ -160,7 +156,7 @@ public class HeaderCreatorTest {
 
         ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
         headerCreator.visitEncounter(exportEntityType, new ExportEntityType());
-        assertEquals(",ENC_1_id,ENC_1_created_by,ENC_1_created_date_time,ENC_1_last_modified_by,ENC_1_last_modified_date_time,\"ENC_1_Question 1\",ENC_2_id,ENC_2_created_by,ENC_2_created_date_time,ENC_2_last_modified_by,ENC_2_last_modified_date_time,\"ENC_2_Question 1\"", headerCreator.getHeader());
+        assertEquals("ENC_1_id,ENC_1_created_by,ENC_1_created_date_time,ENC_1_last_modified_by,ENC_1_last_modified_date_time,\"ENC_1_C1\",ENC_2_id,ENC_2_created_by,ENC_2_created_date_time,ENC_2_last_modified_by,ENC_2_last_modified_date_time,\"ENC_2_C1\",", headerCreator.getHeader());
     }
 
     private SubjectType getSubjectType(String name, Subject type) {

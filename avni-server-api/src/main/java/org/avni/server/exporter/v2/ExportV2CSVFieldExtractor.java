@@ -276,7 +276,7 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         } else if (ConceptDataType.isMedia(dataType)) {
             values.add(processMediaObs(val));
         } else {
-            values.add(headerCreator.quotedStringValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
+            values.add(getFieldValue(String.valueOf(Optional.ofNullable(val).orElse(""))));
         }
     }
 
@@ -304,13 +304,17 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
 
     private String processMediaObs(Object val) {
         List<String> imageURIs = getObservationValueList(val).stream().map(t -> (String) t).collect(Collectors.toList());
-        return headerCreator.quotedStringValue(String.join(",", imageURIs));
+        return getFieldValue(String.join(",", imageURIs));
+    }
+
+    private String getFieldValue(String value) {
+        return String.format("\"%s\"", value);
     }
 
     private String getAnsName(Concept concept, Object val) {
         return concept.getSortedAnswers()
                 .filter(ca -> ca.getAnswerConcept().getUuid().equals(val))
-                .map(ca -> headerCreator.quotedStringValue(ca.getAnswerConcept().getName()))
+                .map(ca -> getFieldValue(ca.getAnswerConcept().getName()))
                 .findFirst().orElse("");
     }
 

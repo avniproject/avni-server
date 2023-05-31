@@ -19,16 +19,6 @@ public class ConceptBuilder {
         return this;
     }
 
-    public ConceptBuilder withAnswers(Concept ... answerConcepts) {
-        Arrays.stream(answerConcepts).forEach(ac -> {
-            ConceptAnswer conceptAnswer = new ConceptAnswer();
-            conceptAnswer.setAnswerConcept(ac);
-            conceptAnswer.setUuid(ac.getUuid());
-            concept.addAnswer(conceptAnswer);
-        });
-        return this;
-    }
-
     public ConceptBuilder withName(String conceptName) {
         concept.setName(conceptName);
         return this;

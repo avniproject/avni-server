@@ -16,6 +16,16 @@ public class ConceptAnswerBuilder {
         return this;
     }
 
+    public ConceptAnswerBuilder withOrder(double order) {
+        conceptAnswer.setOrder(order);
+    	return this;
+    }
+
+    public ConceptAnswerBuilder withUUID(String uuid) {
+        conceptAnswer.setUuid(uuid);
+    	return this;
+    }
+
     public ConceptAnswer build() {
         return conceptAnswer;
     }

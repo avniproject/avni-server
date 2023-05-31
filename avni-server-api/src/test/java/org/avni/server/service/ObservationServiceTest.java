@@ -123,6 +123,6 @@ public class ObservationServiceTest {
 
         Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfQuestionGroupObservations(Collections.singletonList(form));
         assertEquals(2, maxNumberOfObservationSets.get(groupFormElement1).intValue());
-        assertEquals(1, maxNumberOfObservationSets.get(groupFormElement2).intValue());
+        assertEquals(null, maxNumberOfObservationSets.get(groupFormElement2));
     }
 }
