@@ -526,6 +526,38 @@ select * from
      group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time
      order by bje.create_time desc) jobs;
 
+-- Commands to show status of Started and Pending Background jobs that were triggered today:
+
+select users.username, jobs.* from
+    (select bje.job_execution_id execution_id,
+            bje.status status,
+            bje.exit_code exit_code,
+            bje.create_time create_time,
+            bje.start_time start_time,
+            bje.end_time end_time,
+            string_agg(case when bjep.key_name = 'uuid' then bjep.string_val else '' end::text, '') uuid,
+            string_agg(case when bjep.key_name = 'fileName' then bjep.string_val else '' end::text, '') fileName,
+            sum(case when bjep.key_name = 'noOfLines' then bjep.long_val else 0 end) noOfLines,
+            string_agg(case when bjep.key_name = 's3Key' then bjep.string_val else '' end::text, '') s3Key,
+            sum(case when bjep.key_name = 'userId' then bjep.long_val else 0 end) userId,
+            string_agg(case when bjep.key_name = 'type' then bjep.string_val::text else '' end::text, '') job_type,
+            max(case when bjep.key_name = 'startDate' then bjep.date_val::timestamp else null::timestamp end::timestamp) startDate,
+            max(case when bjep.key_name = 'endDate' then bjep.date_val::timestamp else null::timestamp end::timestamp) endDate,
+            string_agg(case when bjep.key_name = 'subjectTypeUUID' then bjep.string_val::text else '' end::text, '') subjectTypeUUID,
+            string_agg(case when bjep.key_name = 'programUUID' then bjep.string_val::text else '' end::text, '') programUUID,
+            string_agg(case when bjep.key_name = 'encounterTypeUUID' then bjep.string_val::text else '' end::text, '') encounterTypeUUID,
+            string_agg(case when bjep.key_name = 'reportType' then bjep.string_val::text else '' end::text, '') reportType,
+            max(bse.read_count) read_count,
+            max(bse.write_count) write_count,
+            max(bse.write_skip_count) write_skip_count
+     from batch_job_execution bje
+              left outer join  batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+              left outer join batch_step_execution bse on bje.job_execution_id = bse.job_execution_id
+     group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time
+     order by bje.create_time desc) jobs
+        join users on users.id = jobs.userId
+where status in ('STARTING', 'STARTED')
+  and create_time >= now()::date + interval '1m';
 
 -- Find out bundle uploads for an org
 
