@@ -162,7 +162,7 @@ public class ExportV2CSVFieldExtractorTest {
         }};
         when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(formElementsMap);
-        when(observationService.getMaxNumberOfQuestionGroupObservations(any())).thenReturn(new HashMap<FormElement, Integer>() {{
+        when(observationService.getMaxNumberOfQuestionGroupObservations(any(), any())).thenReturn(new HashMap<FormElement, Integer>() {{
             put(qgElement, 2);
         }});
 

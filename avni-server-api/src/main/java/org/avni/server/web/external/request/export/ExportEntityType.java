@@ -40,16 +40,8 @@ public class ExportEntityType {
         return fields;
     }
 
-    public boolean isEmptyOrContains(String conceptUUID) {
-        return fields.isEmpty() || fields.contains(conceptUUID);
-    }
-
     public void setFields(List<String> fields) {
         this.fields = fields;
-    }
-
-    public boolean hasInputField(Concept concept) {
-        return fields.stream().anyMatch(s -> s.equals(concept.getName()));
     }
 
     public List<ExportEntityType> getAllExportEntityTypes() {

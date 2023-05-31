@@ -9,8 +9,9 @@ import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
-import org.avni.server.report.CountForDay;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.DateTimeUtil;
+import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
@@ -327,28 +328,37 @@ public class ObservationService {
     }
 
     private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null";
+    private static final String maxNumberOfRepeatableItemsWithDateFilterQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null and (encounter_date_time between :fromDate and :toDate)";
 
-    class CountMapper implements RowMapper<Integer> {
+    static class CountMapper implements RowMapper<Integer> {
         @Override
         public Integer mapRow(ResultSet rs, int rowNum) throws SQLException {
             return rs.getInt(1);
         }
     }
 
-    public Map<FormElement, Integer> getMaxNumberOfQuestionGroupObservations() {
-        return this.getMaxNumberOfQuestionGroupObservations(formRepository.findAllByIsVoidedFalse());
-    }
-
-    public Map<FormElement, Integer> getMaxNumberOfQuestionGroupObservations(List<Form> forms) {
+    public Map<FormElement, Integer> getMaxNumberOfQuestionGroupObservations(Map<Form, ExportFilters> formFilters, String timeZone) {
         HashMap<FormElement, Integer> formElementMaxObsSetMap = new HashMap<>();
-        forms.forEach(form -> {
+        formFilters.forEach((form, exportFilter) -> {
+            ExportFilters.DateFilter dateFilter = exportFilter.getDate();
+            Calendar fromDate = DateTimeUtil.getCalendarTime(dateFilter.getFrom(), timeZone);
+            Calendar toDate = DateTimeUtil.getCalendarTime(dateFilter.getTo(), timeZone);
+
             String tableName = TableNames.getTableName(form.getFormType());
             String obsColumn = ColumnNames.getObsColumn(form.getFormType());
             List<FormElement> repeatableQuestionGroupElements = form.getAllElements(ConceptDataType.QuestionGroup).stream().filter(FormElement::isRepeatable).collect(Collectors.toList());
+
             repeatableQuestionGroupElements.forEach(formElement -> {
-                String query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
+                boolean dateFilterApplicable = fromDate != null;
+                String chosenQuery = dateFilterApplicable ? maxNumberOfRepeatableItemsWithDateFilterQuery : maxNumberOfRepeatableItemsQuery;
+                String query = String.format(chosenQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
                 if (formElement.isRepeatable()) {
-                    List<Integer> counts = jdbcTemplate.query(query, new CountMapper());
+                    HashMap<String, Object> paramMap = new HashMap<>();
+                    if (dateFilterApplicable) {
+                        paramMap.put("fromDate", fromDate);
+                        paramMap.put("toDate", toDate);
+                    }
+                    List<Integer> counts = jdbcTemplate.query(query, paramMap, new CountMapper());
                     formElementMaxObsSetMap.put(formElement, counts.get(0));
                 } else {
                     formElementMaxObsSetMap.put(formElement, 1);

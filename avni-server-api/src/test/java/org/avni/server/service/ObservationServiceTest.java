@@ -10,6 +10,7 @@ import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
+import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.request.ObservationRequest;
 import org.junit.Before;
 import org.junit.Test;
@@ -119,9 +120,11 @@ public class ObservationServiceTest {
 
         Form form = new TestFormBuilder().addFormElementGroup(formElementGroup).build();
 
-        when(namedParameterJdbcTemplate.query(any(), any(ObservationService.CountMapper.class))).thenReturn(Collections.singletonList(2));
+        when(namedParameterJdbcTemplate.query(any(String.class), any(HashMap.class), any(ObservationService.CountMapper.class))).thenReturn(Collections.singletonList(2));
 
-        Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfQuestionGroupObservations(Collections.singletonList(form));
+        HashMap<Form, ExportFilters> map = new HashMap<>();
+        map.put(form, new ExportFilters());
+        Map<FormElement, Integer> maxNumberOfObservationSets = observationService.getMaxNumberOfQuestionGroupObservations(map, TimeZone.getDefault().getDisplayName());
         assertEquals(2, maxNumberOfObservationSets.get(groupFormElement1).intValue());
         assertEquals(null, maxNumberOfObservationSets.get(groupFormElement2));
     }

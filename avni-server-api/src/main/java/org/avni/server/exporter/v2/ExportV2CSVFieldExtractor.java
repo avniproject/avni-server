@@ -11,6 +11,7 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.external.request.export.ExportEntityType;
+import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.joda.time.DateTime;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -85,8 +86,8 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
         exportOutput = exportJobService.getExportOutput(exportJobParamsUUID);
         exportFieldsManager = new ExportFieldsManager(formMappingService, encounterRepository, programEncounterRepository, timeZone);
         exportOutput.accept(exportFieldsManager);
-        List<Form> formsInvolved = exportFieldsManager.getAllForms();
-        maxNumberOfQuestionGroupObservations = observationService.getMaxNumberOfQuestionGroupObservations(formsInvolved);
+        Map<Form, ExportFilters> formFilters = exportFieldsManager.getAllFormFilters();
+        maxNumberOfQuestionGroupObservations = observationService.getMaxNumberOfQuestionGroupObservations(formFilters, timeZone);
         this.headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, maxNumberOfQuestionGroupObservations,
                 encounterTypeRepository, exportFieldsManager, programRepository);
     }
@@ -206,13 +207,13 @@ public class ExportV2CSVFieldExtractor implements FieldExtractor<LongitudinalExp
 
     private void addStaticEnrolmentColumns(ExportOutput.ExportNestedOutput program, List<Object> columnsData, ProgramEnrolment programEnrolment,
                                            Map<String, HeaderNameAndFunctionMapper<ProgramEnrolment>> enrolmentDataMap) {
-        program.getFields().stream().filter(enrolmentDataMap::containsKey)
+        exportFieldsManager.getCoreFields(program).stream().filter(enrolmentDataMap::containsKey)
                 .forEach(key -> columnsData.add(enrolmentDataMap.get(key).getValueFunction().apply(programEnrolment)));
     }
 
     private void appendStaticEncounterColumns(ExportEntityType encounterEntityType, List<Object> columnsData, AbstractEncounter encounter,
                                               Map<String, HeaderNameAndFunctionMapper<AbstractEncounter>> encounterDataMap) {
-        encounterEntityType.getFields().stream().filter(encounterDataMap::containsKey)
+        exportFieldsManager.getCoreFields(encounterEntityType).stream().filter(encounterDataMap::containsKey)
                 .forEach(key -> columnsData.add(encounterDataMap.get(key).getValueFunction().apply(encounter)));
     }
 

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class ExportFieldsManager implements ExportEntityTypeVisitor {
     private final Map<String, Map<String, FormElement>> mainFormMap = new LinkedHashMap<>();
     private final Map<String, Map<String, FormElement>> secondaryFormMap = new LinkedHashMap<>();
-    private final List<Form> forms = new ArrayList<>();
+    private final Map<Form, ExportFilters> forms = new HashMap<>();
     private final Map<String, List<String>> coreFields = new LinkedHashMap<>();
     private final Map<String, Long> maxCounts = new HashMap<>();
 
@@ -67,7 +67,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     private void addSubjectTypeForm(ExportEntityType exportEntityType) {
         FormMapping formMapping = formMappingService.findForSubject(exportEntityType.getUuid());
-        forms.add(formMapping.getForm());
+        forms.put(formMapping.getForm(), exportEntityType.getFilters());
     }
 
     @Override
@@ -121,7 +121,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     private void addProgramForm(ExportEntityType program, FormType formType) {
         FormMapping formMapping = formMappingService.findForProgram(program.getUuid(), formType);
-        forms.add(formMapping.getForm());
+        forms.put(formMapping.getForm(), program.getFilters());
     }
 
     @Override
@@ -143,7 +143,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
     private void addEncounterTypeForm(ExportEntityType exportEntityType, FormType formType) {
         FormMapping formMapping = formMappingService.findForEncounter(exportEntityType.getUuid(), formType);
-        forms.add(formMapping.getForm());
+        forms.put(formMapping.getForm(), exportEntityType.getFilters());
     }
 
     public long getMaxEntityCount(ExportEntityType exportEntityType) {
@@ -186,7 +186,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
         return (getTotalNumberOfMainColumns(exportEntityType) + getTotalNumberOfSecondaryColumns(exportEntityType));
     }
 
-    public List<Form> getAllForms() {
+    public Map<Form, ExportFilters> getAllFormFilters() {
         return forms;
     }
 
@@ -195,7 +195,7 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
         formElements.forEach(formElement -> {
                     FormElement group = formElement.getGroup();
 
-                    if (!groupedFormElements.containsKey(formElement)) groupedFormElements.put(group, new ArrayList<>());
+                    if (!groupedFormElements.containsKey(group)) groupedFormElements.put(group, new ArrayList<>());
                     groupedFormElements.get(group).add(formElement);
                 });
         return groupedFormElements;

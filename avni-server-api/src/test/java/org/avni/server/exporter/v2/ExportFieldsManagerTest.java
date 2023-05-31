@@ -102,6 +102,16 @@ public class ExportFieldsManagerTest {
         verifyMainFields(exportEntityType);
     }
 
+    @Test
+    public void groupByQuestionGroup() {
+        FormElement qgFE = new TestFormElementBuilder().withId(4).build();
+        FormElement formElement1 = new TestFormElementBuilder().withQuestionGroupElement(qgFE).withId(1).build();
+        FormElement formElement2 = new TestFormElementBuilder().withQuestionGroupElement(qgFE).withId(2).build();
+        FormElement formElement3 = new TestFormElementBuilder().withQuestionGroupElement(qgFE).withId(3).build();
+        Map<FormElement, List<FormElement>> formElementListMap = ExportFieldsManager.groupByQuestionGroup(Arrays.asList(formElement1, formElement2, formElement3));
+        assertEquals(3, formElementListMap.get(qgFE).size());
+    }
+
     private void verifyMainFields(ExportEntityType exportEntityType) {
         Map<String, FormElement> mainFields = exportFieldsManager.getMainFields(exportEntityType);
         assertEquals(2, mainFields.size());
