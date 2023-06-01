@@ -1,6 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.SubjectType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,7 @@ public interface ReferenceDataRepository<T extends CHSEntity> extends CHSReposit
     T findByNameIgnoreCase(String name);
 
     Page<T> findPageByIsVoidedFalse(Pageable pageable);
+    List<T> findByIsVoidedFalse();
 
     @RestResource(exported = false)
     List<T> findAllByOrganisationId(Long organisationId);
