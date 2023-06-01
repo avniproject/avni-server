@@ -9,6 +9,7 @@ public class TaskSearchResponse {
     private String name;
     private Long id;
     private String createdOn;
+    private String scheduledOn;
     private String completedOn;
     private String status;
     private String assignedTo;
@@ -20,6 +21,7 @@ public class TaskSearchResponse {
         response.setName(task.getName());
         response.setId(task.getId());
         response.setCreatedOn(O.getDateInDbFormat(task.getCreatedDateTime().toDate()));
+        response.setScheduledOn(O.getDateInDbFormat(task.getScheduledOn().toDate()));
         if (task.getCompletedOn() != null) {
             response.setCompletedOn(O.getDateInDbFormat(task.getCompletedOn().toDate()));
         }
@@ -46,6 +48,14 @@ public class TaskSearchResponse {
 
     public void setCompletedOn(String completedOn) {
         this.completedOn = completedOn;
+    }
+
+    public String getScheduledOn() {
+        return scheduledOn;
+    }
+
+    public void setScheduledOn(String scheduledOn) {
+        this.scheduledOn = scheduledOn;
     }
 
     public String getStatus() {

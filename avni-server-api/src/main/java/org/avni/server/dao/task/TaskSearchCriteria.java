@@ -19,6 +19,7 @@ public class TaskSearchCriteria {
     private User assignedTo;
     private DateTime completedOn;
     private DateTime createdOn;
+    private DateTime scheduledOn;
     private Map<Concept, Object> metadata = new HashMap<>();
 
     public TaskType getTaskType() {
@@ -69,8 +70,19 @@ public class TaskSearchCriteria {
         this.createdOn = createdOn;
     }
 
+    public DateTime getScheduledOn() {
+        return scheduledOn;
+    }
+
+    public void setScheduledOn(DateTime scheduledOn) {
+        this.scheduledOn = scheduledOn;
+    }
+
     public String getFormattedCreatedOn() {
         return DATE_TIME_FORMATTER.print(createdOn);
+    }
+    public String getFormattedScheduledOn() {
+        return DATE_TIME_FORMATTER.print(scheduledOn);
     }
 
     public String getFormattedCompletedOn() {

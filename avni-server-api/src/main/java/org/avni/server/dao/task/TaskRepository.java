@@ -48,8 +48,10 @@ public interface TaskRepository extends TransactionalDataRepository<Task>, FindB
                 predicates.add(cb.isNull(root.get("assignedTo")));
             if (searchCriteria.getCreatedOn() != null)
                 predicates.add(cb.between(convertToDate(root.get("createdDateTime"), cb), searchCriteria.getFormattedCreatedOn(), today));
+            if (searchCriteria.getScheduledOn() != null)
+                predicates.add(cb.between(convertToDate(root.get("scheduledOn"), cb), searchCriteria.getFormattedScheduledOn(), today));
             if (searchCriteria.getCompletedOn() != null)
-                predicates.add(cb.between(convertToDate(root.get("completedOn"), cb), searchCriteria.getFormattedCreatedOn(), today));
+                predicates.add(cb.between(convertToDate(root.get("completedOn"), cb), searchCriteria.getFormattedCompletedOn(), today));
 
             searchCriteria.getMetadata().forEach((concept, value) -> {
                 predicates.add(cb.equal(jsonExtractPathText(root.get("metadata"), concept.getUuid(), cb), value));

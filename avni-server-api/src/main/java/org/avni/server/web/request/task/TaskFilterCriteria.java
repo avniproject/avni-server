@@ -12,6 +12,7 @@ public class TaskFilterCriteria {
     private Long assignedTo;
     private DateTime completedOn;
     private DateTime createdOn;
+    private DateTime scheduledOn;
     private List<ObservationRequest> metadata = new ArrayList<>();
 
     public long getTaskType() {
@@ -61,6 +62,15 @@ public class TaskFilterCriteria {
     public void setCreatedOn(DateTime createdOn) {
         this.createdOn = createdOn;
     }
+
+    public DateTime getScheduledOn() {
+        return scheduledOn;
+    }
+
+    public void setScheduledOn(DateTime scheduledOn) {
+        this.scheduledOn = scheduledOn;
+    }
+
 
     public boolean isUnassigned() {
         return assignedTo != null && assignedTo == 0;
