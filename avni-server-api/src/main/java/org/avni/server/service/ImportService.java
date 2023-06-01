@@ -3,10 +3,7 @@ package org.avni.server.service;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
-import org.avni.server.dao.AddressLevelTypeRepository;
-import org.avni.server.dao.EncounterTypeRepository;
-import org.avni.server.dao.ProgramRepository;
-import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.EncounterType;
@@ -19,9 +16,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,14 +34,16 @@ public class ImportService {
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final ConceptService conceptService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, ConceptService conceptService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.conceptService = conceptService;
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
@@ -119,6 +121,10 @@ public class ImportService {
         String[] uploadSpec = uploadType.split("---");
         String response = "";
 
+        if (uploadType.equals("usersAndCatchments")) {
+           return getUsersAndCatchmentsSampleFile();
+        }
+
         if (uploadSpec[0].equals("Subject")) {
             SubjectType subjectType = subjectTypeRepository.findByName(uploadSpec[1]);
             return getSubjectSampleFile(uploadSpec, response, subjectType);
@@ -144,6 +150,47 @@ public class ImportService {
         }
 
         throw new UnsupportedOperationException(String.format("Sample file format for %s not supported", uploadType));
+    }
+
+    private String getUsersAndCatchmentsSampleFile()  {
+        StringBuilder sampleFileBuilder = new StringBuilder();
+
+        try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/usersAndCatchments.csv")) {
+            BufferedReader csvReader = new BufferedReader(new InputStreamReader(csvFileResourceStream));
+            String headerRow = csvReader.readLine();
+            String headersForSubjectTypesWithSyncAttributes = constructSyncAttributeHeadersForSubjectTypes();
+            headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + "," + headersForSubjectTypesWithSyncAttributes;
+            sampleFileBuilder.append(headerRow).append("\n");
+            String line;
+            while ((line = csvReader.readLine()) != null) {
+                sampleFileBuilder.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return sampleFileBuilder.toString();
+    }
+
+    private String constructSyncAttributeHeadersForSubjectTypes() {
+        List<SubjectType> subjectTypes = subjectTypeRepository.findByIsVoidedFalse();
+        Predicate<SubjectType> subjectTypeHasSyncAttributes = subjectType ->
+                Objects.nonNull(subjectType.getSyncRegistrationConcept1()) ||
+                        Objects.nonNull(subjectType.getSyncRegistrationConcept2());
+
+        return subjectTypes.stream().
+                filter(subjectTypeHasSyncAttributes).
+                map(this::constructSyncAttributeHeadersForSubjectType).
+                collect(Collectors.joining(","));
+    }
+
+    private String constructSyncAttributeHeadersForSubjectType(SubjectType subjectTypeWithSyncAttribute) {
+        String[] syncAttributes = new String[]{subjectTypeWithSyncAttribute.getSyncRegistrationConcept1(),
+                subjectTypeWithSyncAttribute.getSyncRegistrationConcept2()};
+
+        return Arrays.stream(syncAttributes).
+                filter(Objects::nonNull).
+                map(sa -> String.format("%s-%s", subjectTypeWithSyncAttribute.getName(),conceptService.get(sa).getName())).
+                collect(Collectors.joining(","));
     }
 
     private String getEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
