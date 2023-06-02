@@ -91,7 +91,9 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
     public boolean isAllowProfilePicture() { return subjectType.isAllowProfilePicture(); }
 
     public boolean isAllowMiddleName() { return subjectType.isAllowMiddleName();}
-
+    public boolean isLastNameOptional() {
+        return subjectType.isLastNameOptional();
+    }
     public Format getValidMiddleNameFormat() { return subjectType.getValidMiddleNameFormat();}
 
     public DateTime getLastModifiedDateTime() {
