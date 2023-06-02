@@ -159,6 +159,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         subjectType.setAllowMiddleName(request.isAllowMiddleName());
         subjectType.setValidFirstNameFormat(request.getValidFirstNameFormat());
         subjectType.setValidMiddleNameFormat(request.getValidMiddleNameFormat());
+        subjectType.setLastNameOptional(request.isLastNameOptional());
         subjectType.setValidLastNameFormat(request.getValidLastNameFormat());
         subjectType.setIconFileS3Key(request.getIconFileS3Key());
         subjectType.setShouldSyncByLocation(request.isShouldSyncByLocation());

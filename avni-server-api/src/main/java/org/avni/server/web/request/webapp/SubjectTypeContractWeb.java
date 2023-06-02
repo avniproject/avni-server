@@ -40,6 +40,7 @@ public class SubjectTypeContractWeb {
     private boolean allowProfilePicture;
     private boolean uniqueName;
     private boolean allowMiddleName;
+    private boolean lastNameOptional;
     private FormatContract validFirstNameFormat;
     private FormatContract validMiddleNameFormat;
     private FormatContract validLastNameFormat;
@@ -79,6 +80,7 @@ public class SubjectTypeContractWeb {
         contract.setValidFirstNameFormat(FormatContract.fromFormat(operationalSubjectType.getValidFirstNameFormat()));
         contract.setAllowMiddleName(operationalSubjectType.getSubjectType().isAllowMiddleName());
         contract.setValidMiddleNameFormat(FormatContract.fromFormat(operationalSubjectType.getSubjectType().getValidMiddleNameFormat()));
+        contract.setLastNameOptional(subjectType.isLastNameOptional());
         contract.setValidLastNameFormat(FormatContract.fromFormat(operationalSubjectType.getValidLastNameFormat()));
         contract.setIconFileS3Key(subjectType.getIconFileS3Key());
         contract.setDirectlyAssignable(subjectType.isDirectlyAssignable());
@@ -356,6 +358,14 @@ public class SubjectTypeContractWeb {
 
     public void setAllowMiddleName(boolean allowMiddleName) {
         this.allowMiddleName = allowMiddleName;
+    }
+
+    public boolean isLastNameOptional() {
+        return lastNameOptional;
+    }
+
+    public void setLastNameOptional(boolean lastNameOptional) {
+        this.lastNameOptional = lastNameOptional;
     }
 
     public Format getValidMiddleNameFormat() {

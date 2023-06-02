@@ -104,6 +104,9 @@ public class SubjectType extends OrganisationAwareEntity {
     @Column(name = "allow_middle_name")
     private boolean allowMiddleName;
 
+    @Column(name = "last_name_optional")
+    private boolean lastNameOptional;
+
     @Column
     private String programEligibilityCheckRule;
 
@@ -222,6 +225,14 @@ public class SubjectType extends OrganisationAwareEntity {
 
     public void setAllowMiddleName(boolean allowMiddleName) {
         this.allowMiddleName = allowMiddleName;
+    }
+
+    public boolean isLastNameOptional() {
+        return lastNameOptional;
+    }
+
+    public void setLastNameOptional(boolean lastNameOptional) {
+        this.lastNameOptional = lastNameOptional;
     }
 
     public void setAllowProfilePicture(boolean allowProfilePicture) {
