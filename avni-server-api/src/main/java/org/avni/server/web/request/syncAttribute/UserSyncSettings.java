@@ -100,4 +100,23 @@ public class UserSyncSettings implements Serializable {
         return syncConcept2Values == null ? Collections.emptyList() : syncConcept2Values;
     }
 
+    public void setSubjectTypeUUID(String subjectTypeUUID) {
+        this.subjectTypeUUID = subjectTypeUUID;
+    }
+
+    public void setSyncConcept1(String syncConcept1) {
+        this.syncConcept1 = syncConcept1;
+    }
+
+    public void setSyncConcept1Values(List<String> syncConcept1Values) {
+        this.syncConcept1Values = syncConcept1Values;
+    }
+
+    public void setSyncConcept2(String syncConcept2) {
+        this.syncConcept2 = syncConcept2;
+    }
+
+    public void setSyncConcept2Values(List<String> syncConcept2Values) {
+        this.syncConcept2Values = syncConcept2Values;
+    }
 }

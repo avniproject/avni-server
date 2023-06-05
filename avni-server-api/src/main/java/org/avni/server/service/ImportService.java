@@ -20,8 +20,6 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,16 +32,16 @@ public class ImportService {
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
-    private final ConceptService conceptService;
+    private final SubjectTypeService subjectTypeService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, ConceptService conceptService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, SubjectTypeService subjectTypeService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
-        this.conceptService = conceptService;
+        this.subjectTypeService = subjectTypeService;
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
@@ -158,8 +156,10 @@ public class ImportService {
         try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/usersAndCatchments.csv")) {
             BufferedReader csvReader = new BufferedReader(new InputStreamReader(csvFileResourceStream));
             String headerRow = csvReader.readLine();
-            String headersForSubjectTypesWithSyncAttributes = constructSyncAttributeHeadersForSubjectTypes();
-            headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + "," + headersForSubjectTypesWithSyncAttributes;
+            List<String> headersForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
+            String syncAttributesHeader = headersForSubjectTypesWithSyncAttributes.stream().collect(Collectors.joining(","));
+
+            headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + "," + syncAttributesHeader;
             sampleFileBuilder.append(headerRow).append("\n");
             String line;
             while ((line = csvReader.readLine()) != null) {
@@ -171,27 +171,6 @@ public class ImportService {
         return sampleFileBuilder.toString();
     }
 
-    private String constructSyncAttributeHeadersForSubjectTypes() {
-        List<SubjectType> subjectTypes = subjectTypeRepository.findByIsVoidedFalse();
-        Predicate<SubjectType> subjectTypeHasSyncAttributes = subjectType ->
-                Objects.nonNull(subjectType.getSyncRegistrationConcept1()) ||
-                        Objects.nonNull(subjectType.getSyncRegistrationConcept2());
-
-        return subjectTypes.stream().
-                filter(subjectTypeHasSyncAttributes).
-                map(this::constructSyncAttributeHeadersForSubjectType).
-                collect(Collectors.joining(","));
-    }
-
-    private String constructSyncAttributeHeadersForSubjectType(SubjectType subjectTypeWithSyncAttribute) {
-        String[] syncAttributes = new String[]{subjectTypeWithSyncAttribute.getSyncRegistrationConcept1(),
-                subjectTypeWithSyncAttribute.getSyncRegistrationConcept2()};
-
-        return Arrays.stream(syncAttributes).
-                filter(Objects::nonNull).
-                map(sa -> String.format("%s-%s", subjectTypeWithSyncAttribute.getName(),conceptService.get(sa).getName())).
-                collect(Collectors.joining(","));
-    }
 
     private String getEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
         response = addToResponse(response, Arrays.asList(new EncounterHeaders(encounterType).getAllHeaders()));

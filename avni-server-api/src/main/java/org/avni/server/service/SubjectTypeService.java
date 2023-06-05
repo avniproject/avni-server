@@ -23,8 +23,11 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -118,6 +121,10 @@ public class SubjectTypeService implements NonScopeAwareService {
         return savedSubjectType;
     }
 
+    public SubjectType getByName(String name) {
+        return subjectTypeRepository.findByName(name);
+    }
+
     private void saveIndividualOperationalSubjectType(SubjectType subjectType) {
         OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
         operationalSubjectType.assignUUID();
@@ -168,5 +175,27 @@ public class SubjectTypeService implements NonScopeAwareService {
                 throw new RuntimeException(String.format("Error while starting the sync attribute job, %s", e.getMessage()));
             }
         }
+    }
+
+    public List<String> constructSyncAttributeHeadersForSubjectTypes() {
+        List<SubjectType> subjectTypes = subjectTypeRepository.findByIsVoidedFalse();
+        Predicate<SubjectType> subjectTypeHasSyncAttributes = subjectType ->
+                Objects.nonNull(subjectType.getSyncRegistrationConcept1()) ||
+                        Objects.nonNull(subjectType.getSyncRegistrationConcept2());
+
+        return subjectTypes.stream().
+                filter(subjectTypeHasSyncAttributes).
+                map(this::constructSyncAttributeHeadersForSubjectType).
+                collect(Collectors.toList());
+    }
+
+    private String constructSyncAttributeHeadersForSubjectType(SubjectType subjectTypeWithSyncAttribute) {
+        String[] syncAttributes = new String[]{subjectTypeWithSyncAttribute.getSyncRegistrationConcept1(),
+                subjectTypeWithSyncAttribute.getSyncRegistrationConcept2()};
+
+        return Arrays.stream(syncAttributes).
+                filter(Objects::nonNull).
+                map(sa -> String.format("%s->%s", subjectTypeWithSyncAttribute.getName(),conceptService.get(sa).getName())).
+                collect(Collectors.joining(","));
     }
 }
