@@ -31,6 +31,8 @@ public class SubjectTypeContract extends ReferenceDataContract {
 
     private boolean allowMiddleName;
 
+    private boolean lastNameOptional;
+
     private boolean allowProfilePicture;
 
     private boolean uniqueName;
@@ -67,6 +69,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
         contract.setUniqueName(subjectType.isUniqueName());
         contract.setValidFirstNameFormat(FormatContract.fromFormat(subjectType.getValidFirstNameFormat()));
         contract.setAllowMiddleName(subjectType.isAllowMiddleName());
+        contract.setLastNameOptional(subjectType.isLastNameOptional());
         contract.setValidMiddleNameFormat(FormatContract.fromFormat(subjectType.getValidMiddleNameFormat()));
         contract.setValidLastNameFormat(FormatContract.fromFormat(subjectType.getValidLastNameFormat()));
         contract.setDirectlyAssignable(subjectType.isDirectlyAssignable());
@@ -230,6 +233,14 @@ public class SubjectTypeContract extends ReferenceDataContract {
 
     public void setAllowMiddleName(boolean allowMiddleName) {
         this.allowMiddleName = allowMiddleName;
+    }
+
+    public boolean isLastNameOptional() {
+        return lastNameOptional;
+    }
+
+    public void setLastNameOptional(boolean lastNameOptional) {
+        this.lastNameOptional = lastNameOptional;
     }
 
     public FormatContract getValidMiddleNameFormat() {

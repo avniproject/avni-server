@@ -377,6 +377,8 @@ public class SubjectType extends OrganisationAwareEntity {
 
         boolean isAllowMiddleName();
 
+        boolean isLastNameOptional();
+
         Format getValidFirstNameFormat();
         Format getValidMiddleNameFormat();
         Format getValidLastNameFormat();
