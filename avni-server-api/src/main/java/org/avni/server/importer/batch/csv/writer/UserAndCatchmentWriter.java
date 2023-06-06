@@ -117,9 +117,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userService.addToDefaultUserGroup(user);
     }
 
-    private Map<String, UserSyncSettings> findSyncSettings(Row row, List<String> syncAttributeHeadersForSubjectTypes) {
+    private Map<String, UserSyncSettings> findSyncSettings(Row row, List<String> syncAttributeHeadersForSubjectTypes) throws Exception {
         Map<String, UserSyncSettings> syncSettingsMap = new HashMap<>();
-        syncAttributeHeadersForSubjectTypes.forEach((saHeader) -> {
+        for (String saHeader : syncAttributeHeadersForSubjectTypes) {
             Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
             if (headerPatternMatcher.matches()) {
                 String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
@@ -134,17 +134,17 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
                 syncSettingsMap.put(subjectType.getUuid(), userSyncSettings);
             }
-        });
+        }
 
         return syncSettingsMap;
     }
 
-    private void updateSyncConceptSettings(List<String> syncSettingsValues, UserSyncSettings userSyncSettings, SubjectType subjectType, String conceptName) {
+    private void updateSyncConceptSettings(List<String> syncSettingsConceptRawValues, UserSyncSettings userSyncSettings, SubjectType subjectType, String conceptName) throws Exception {
         Concept concept = conceptService.getByName(conceptName);
         String conceptUuid = concept.getUuid();
 
         List<String> syncSettingsConceptProcessedValues = concept.isCoded() ?
-                findSyncSettingCodedConceptValues(syncSettingsValues) : syncSettingsValues;
+                findSyncSettingCodedConceptValues(syncSettingsConceptRawValues, concept) : syncSettingsConceptRawValues;
 
         String syncRegistrationConcept1 = subjectType.getSyncRegistrationConcept1();
         if (syncRegistrationConcept1.equals(conceptUuid)) {
@@ -156,12 +156,14 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues) {
+    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues, Concept concept) throws Exception {
         List<String> syncSettingCodedConceptValues = new ArrayList<>();
         for (String syncSettingsValue : syncSettingsValues) {
-            Optional<String> conceptAnswerUuid = Optional.ofNullable(conceptService.getByName(syncSettingsValue))
-                    .map(CHSBaseEntity::getUuid);
-            syncSettingCodedConceptValues.add(conceptAnswerUuid.get());
+            Optional<Concept> conceptAnswer = Optional.ofNullable(conceptService.getByName(syncSettingsValue));
+            conceptAnswer.orElseThrow(() -> new Exception(String.format("'%s' is not a valid value for the concept '%s'. " +
+                                "To input this value, add this as an answer to the coded concept '%s'",
+                        syncSettingsValue, concept.getName(), concept.getName())));
+            syncSettingCodedConceptValues.add(conceptAnswer.get().getUuid());
         }
 
         return syncSettingCodedConceptValues;
