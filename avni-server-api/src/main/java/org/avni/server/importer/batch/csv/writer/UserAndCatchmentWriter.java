@@ -72,7 +72,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String idPrefix = row.get("Beneficiary ID Prefix");
 
         List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
-        Map<SubjectType, UserSyncSettings> syncSettingsMap = findSyncSettings(row, syncAttributeHeadersForSubjectTypes);
+        Map<String, UserSyncSettings> syncSettingsMap = findSyncSettings(row, syncAttributeHeadersForSubjectTypes);
         JsonObject syncSettings = new JsonObject().with(User.SyncSettingKeys.subjectTypeSyncSettings.name(),
                 new ArrayList<>(syncSettingsMap.values()));
 
@@ -117,31 +117,53 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userService.addToDefaultUserGroup(user);
     }
 
-    private Map<SubjectType, UserSyncSettings> findSyncSettings(Row row, List<String> syncAttributeHeadersForSubjectTypes) {
-        Map<SubjectType, UserSyncSettings> syncSettingsMap = new HashMap<>();
+    private Map<String, UserSyncSettings> findSyncSettings(Row row, List<String> syncAttributeHeadersForSubjectTypes) {
+        Map<String, UserSyncSettings> syncSettingsMap = new HashMap<>();
         syncAttributeHeadersForSubjectTypes.forEach((saHeader) -> {
             Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
             if (headerPatternMatcher.matches()) {
                 String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
                 SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
-                UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType, new UserSyncSettings());
-                String syncRegistrationConcept1 = subjectType.getSyncRegistrationConcept1();
-
+                UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType.getUuid(), new UserSyncSettings());
                 String subjectTypeUuid = subjectType.getUuid();
-                String conceptName = headerPatternMatcher.group("conceptName");
-                String conceptUuid = conceptService.getByName(conceptName).getUuid();
                 userSyncSettings.setSubjectTypeUUID(subjectTypeUuid);
-                if (syncRegistrationConcept1.equals(conceptUuid)) {
-                    userSyncSettings.setSyncConcept1(conceptUuid);
-                    userSyncSettings.setSyncConcept1Values(Collections.singletonList(row.get(saHeader)));
-                } else {
-                    userSyncSettings.setSyncConcept2(conceptUuid);
-                    userSyncSettings.setSyncConcept2Values(Collections.singletonList(row.get(saHeader)));
-                }
-                syncSettingsMap.put(subjectType, userSyncSettings);
+
+                String conceptName = headerPatternMatcher.group("conceptName");
+                List<String> syncSettingsConceptRawValues = Arrays.asList(row.get(saHeader).split(","));
+                updateSyncConceptSettings(syncSettingsConceptRawValues, userSyncSettings, subjectType, conceptName);
+
+                syncSettingsMap.put(subjectType.getUuid(), userSyncSettings);
             }
         });
 
         return syncSettingsMap;
+    }
+
+    private void updateSyncConceptSettings(List<String> syncSettingsValues, UserSyncSettings userSyncSettings, SubjectType subjectType, String conceptName) {
+        Concept concept = conceptService.getByName(conceptName);
+        String conceptUuid = concept.getUuid();
+
+        List<String> syncSettingsConceptProcessedValues = concept.isCoded() ?
+                findSyncSettingCodedConceptValues(syncSettingsValues) : syncSettingsValues;
+
+        String syncRegistrationConcept1 = subjectType.getSyncRegistrationConcept1();
+        if (syncRegistrationConcept1.equals(conceptUuid)) {
+            userSyncSettings.setSyncConcept1(conceptUuid);
+            userSyncSettings.setSyncConcept1Values(syncSettingsConceptProcessedValues);
+        } else {
+            userSyncSettings.setSyncConcept2(conceptUuid);
+            userSyncSettings.setSyncConcept2Values(syncSettingsConceptProcessedValues);
+        }
+    }
+
+    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues) {
+        List<String> syncSettingCodedConceptValues = new ArrayList<>();
+        for (String syncSettingsValue : syncSettingsValues) {
+            Optional<String> conceptAnswerUuid = Optional.ofNullable(conceptService.getByName(syncSettingsValue))
+                    .map(CHSBaseEntity::getUuid);
+            syncSettingCodedConceptValues.add(conceptAnswerUuid.get());
+        }
+
+        return syncSettingCodedConceptValues;
     }
 }
