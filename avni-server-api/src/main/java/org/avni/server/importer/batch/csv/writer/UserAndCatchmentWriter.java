@@ -122,15 +122,15 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         for (String saHeader : syncAttributeHeadersForSubjectTypes) {
             Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
             if (headerPatternMatcher.matches()) {
+                String conceptName = headerPatternMatcher.group("conceptName");
+                String conceptValues = row.get(saHeader);
+                if(conceptValues.isEmpty()) continue;
                 String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
                 SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
-                UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType.getUuid(), new UserSyncSettings());
-                String subjectTypeUuid = subjectType.getUuid();
-                userSyncSettings.setSubjectTypeUUID(subjectTypeUuid);
 
-                String conceptName = headerPatternMatcher.group("conceptName");
-                List<String> syncSettingsConceptRawValues = Arrays.asList(row.get(saHeader).split(","));
-                updateSyncConceptSettings(syncSettingsConceptRawValues, userSyncSettings, subjectType, conceptName);
+                UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType.getUuid(), new UserSyncSettings());
+                updateSyncSubjectTypeSettings(subjectType, userSyncSettings);
+                updateSyncConceptSettings(subjectType, conceptName, conceptValues, userSyncSettings);
 
                 syncSettingsMap.put(subjectType.getUuid(), userSyncSettings);
             }
@@ -139,9 +139,15 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         return syncSettingsMap;
     }
 
-    private void updateSyncConceptSettings(List<String> syncSettingsConceptRawValues, UserSyncSettings userSyncSettings, SubjectType subjectType, String conceptName) throws Exception {
+    private void updateSyncSubjectTypeSettings(SubjectType subjectType, UserSyncSettings userSyncSettings) {
+        String subjectTypeUuid = subjectType.getUuid();
+        userSyncSettings.setSubjectTypeUUID(subjectTypeUuid);
+    }
+
+    private void updateSyncConceptSettings(SubjectType subjectType, String conceptName, String conceptValues, UserSyncSettings userSyncSettings) throws Exception {
         Concept concept = conceptService.getByName(conceptName);
         String conceptUuid = concept.getUuid();
+        List<String> syncSettingsConceptRawValues = Arrays.asList(conceptValues.split(","));
 
         List<String> syncSettingsConceptProcessedValues = concept.isCoded() ?
                 findSyncSettingCodedConceptValues(syncSettingsConceptRawValues, concept) : syncSettingsConceptRawValues;
