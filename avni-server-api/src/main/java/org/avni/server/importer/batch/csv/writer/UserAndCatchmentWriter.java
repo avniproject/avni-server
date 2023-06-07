@@ -148,7 +148,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         Concept concept = conceptService.getByName(conceptName);
         String conceptUuid = concept.getUuid();
         List<String> syncSettingsConceptRawValues = Arrays.asList(conceptValues.split(","));
-
         List<String> syncSettingsConceptProcessedValues = concept.isCoded() ?
                 findSyncSettingCodedConceptValues(syncSettingsConceptRawValues, concept) : syncSettingsConceptRawValues;
 

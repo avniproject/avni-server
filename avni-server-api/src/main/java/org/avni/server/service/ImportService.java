@@ -17,9 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -155,22 +153,39 @@ public class ImportService {
 
         try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/usersAndCatchments.csv")) {
             BufferedReader csvReader = new BufferedReader(new InputStreamReader(csvFileResourceStream));
-            String headerRow = csvReader.readLine();
-            List<String> headersForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
-            String syncAttributesHeader = headersForSubjectTypesWithSyncAttributes.stream().collect(Collectors.joining(","));
-
-            headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + "," + syncAttributesHeader;
-            sampleFileBuilder.append(headerRow).append("\n");
-            String line;
-            while ((line = csvReader.readLine()) != null) {
-                sampleFileBuilder.append(line).append("\n");
-            }
+            List<String> headersForSubjectTypesWithSyncAttributes = appendHeaderRow(sampleFileBuilder, csvReader);
+            appendSampleValues(sampleFileBuilder, csvReader, headersForSubjectTypesWithSyncAttributes);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return sampleFileBuilder.toString();
     }
 
+    private void appendSampleValues(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
+        String toBeAppendedValuesForSyncAttributeConcepts = constructSampleSyncAttributeConceptValues(headersForSubjectTypesWithSyncAttributes);
+
+        String line;
+        while ((line = csvReader.readLine()) != null) {
+            line = headersForSubjectTypesWithSyncAttributes.isEmpty() ? line :
+                    String.format("%s,%s", line, toBeAppendedValuesForSyncAttributeConcepts);
+            sampleFileBuilder.append("\n").append(line);
+        }
+    }
+
+    private String constructSampleSyncAttributeConceptValues(List<String> headersForSubjectTypesWithSyncAttributes) {
+        String sampleSyncConceptValues = "\"value1,value2\"";
+        List<String> sampleValuesForSyncAttributeConcepts = Collections.nCopies(headersForSubjectTypesWithSyncAttributes.size(), sampleSyncConceptValues);
+        return String.join(",", sampleValuesForSyncAttributeConcepts);
+    }
+
+    private List<String> appendHeaderRow(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
+        String headerRow = csvReader.readLine();
+        List<String> headersForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
+        String syncAttributesHeader = String.join(",", headersForSubjectTypesWithSyncAttributes);
+        headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + "," + syncAttributesHeader;
+        sampleFileBuilder.append(headerRow);
+        return headersForSubjectTypesWithSyncAttributes;
+    }
 
     private String getEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
         response = addToResponse(response, Arrays.asList(new EncounterHeaders(encounterType).getAllHeaders()));
