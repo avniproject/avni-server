@@ -70,11 +70,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String datePickerMode = row.get("Date picker mode");
         Boolean beneficiaryMode = row.getBool("Enable Beneficiary mode");
         String idPrefix = row.get("Beneficiary ID Prefix");
-
-        List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
-        Map<String, UserSyncSettings> syncSettingsMap = findSyncSettings(row, syncAttributeHeadersForSubjectTypes);
-        JsonObject syncSettings = new JsonObject().with(User.SyncSettingKeys.subjectTypeSyncSettings.name(),
-                new ArrayList<>(syncSettingsMap.values()));
+        JsonObject syncSettings = constructSyncSettings(row);
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress)
                 .orElseThrow(() -> new Exception(format(
@@ -117,26 +113,36 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userService.addToDefaultUserGroup(user);
     }
 
-    private Map<String, UserSyncSettings> findSyncSettings(Row row, List<String> syncAttributeHeadersForSubjectTypes) throws Exception {
+    private JsonObject constructSyncSettings(Row row) throws Exception {
+        List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
         Map<String, UserSyncSettings> syncSettingsMap = new HashMap<>();
         for (String saHeader : syncAttributeHeadersForSubjectTypes) {
-            Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
-            if (headerPatternMatcher.matches()) {
-                String conceptName = headerPatternMatcher.group("conceptName");
-                String conceptValues = row.get(saHeader);
-                if(conceptValues.isEmpty()) continue;
-                String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
-                SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
-
-                UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType.getUuid(), new UserSyncSettings());
-                updateSyncSubjectTypeSettings(subjectType, userSyncSettings);
-                updateSyncConceptSettings(subjectType, conceptName, conceptValues, userSyncSettings);
-
-                syncSettingsMap.put(subjectType.getUuid(), userSyncSettings);
-            }
+            updateSyncSettingsFor(saHeader, row, syncSettingsMap);
         }
 
-        return syncSettingsMap;
+        JsonObject syncSettings = new JsonObject();
+        if(!syncSettingsMap.values().isEmpty())
+            syncSettings = syncSettings.with(User.SyncSettingKeys.subjectTypeSyncSettings.name(),
+                    new ArrayList<>(syncSettingsMap.values()));
+
+        return syncSettings;
+    }
+
+    private void updateSyncSettingsFor(String saHeader, Row row, Map<String, UserSyncSettings> syncSettingsMap) throws Exception {
+        Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
+        if (headerPatternMatcher.matches()) {
+            String conceptName = headerPatternMatcher.group("conceptName");
+            String conceptValues = row.get(saHeader);
+            if(conceptValues.isEmpty()) return;
+            String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
+            SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
+
+            UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType.getUuid(), new UserSyncSettings());
+            updateSyncSubjectTypeSettings(subjectType, userSyncSettings);
+            updateSyncConceptSettings(subjectType, conceptName, conceptValues, userSyncSettings);
+
+            syncSettingsMap.put(subjectType.getUuid(), userSyncSettings);
+        }
     }
 
     private void updateSyncSubjectTypeSettings(SubjectType subjectType, UserSyncSettings userSyncSettings) {
