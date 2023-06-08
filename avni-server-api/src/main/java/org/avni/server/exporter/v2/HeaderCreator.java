@@ -31,6 +31,7 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(CREATED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_CREATED_DATE_TIME, Individual::getCreatedDateTime));
         put(LAST_MODIFIED_BY, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_BY, (Individual individual) -> individual.getLastModifiedBy().getName()));
         put(LAST_MODIFIED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_DATE_TIME, Individual::getLastModifiedDateTime));
+        put(REGISTRATION_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_REGISTRATION_LOCATION, Individual::getRegistrationLocation));
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
 
@@ -43,6 +44,8 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(CREATED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_CREATED_DATE_TIME, ProgramEnrolment::getCreatedDateTime));
         put(LAST_MODIFIED_BY, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_BY, (ProgramEnrolment individual) -> individual.getLastModifiedBy().getName()));
         put(LAST_MODIFIED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_DATE_TIME, ProgramEnrolment::getLastModifiedDateTime));
+        put(ENROLMENT_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_ENROLMENT_LOCATION, ProgramEnrolment::getEnrolmentLocation));
+        put(EXIT_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_EXIT_LOCATION, ProgramEnrolment::getExitLocation));
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
 
@@ -59,6 +62,8 @@ public class HeaderCreator implements LongitudinalExportRequestFieldNameConstant
         put(CREATED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_CREATED_DATE_TIME, AbstractEncounter::getCreatedDateTime));
         put(LAST_MODIFIED_BY, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_BY, (AbstractEncounter individual) -> individual.getLastModifiedBy().getName()));
         put(LAST_MODIFIED_DATE_TIME, new HeaderNameAndFunctionMapper<>(HEADER_NAME_LAST_MODIFIED_DATE_TIME, AbstractEncounter::getLastModifiedDateTime));
+        put(ENCOUNTER_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_ENCOUNTER_LOCATION, AbstractEncounter::getEncounterLocation));
+        put(CANCEL_LOCATION, new HeaderNameAndFunctionMapper<>(HEADER_NAME_CANCEL_LOCATION, AbstractEncounter::getCancelLocation));
         put(VOIDED, new HeaderNameAndFunctionMapper<>(HEADER_NAME_VOIDED, CHSEntity::isVoided));
     }};
     private final SubjectTypeRepository subjectTypeRepository;

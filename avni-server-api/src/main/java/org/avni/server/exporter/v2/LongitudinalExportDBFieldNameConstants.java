@@ -21,4 +21,9 @@ public interface LongitudinalExportDBFieldNameConstants {
     String HEADER_NAME_MAX_VISIT_DATE_TIME = "max_visit_date_time";
     String HEADER_NAME_ENCOUNTER_DATE_TIME = "encounter_date_time";
     String HEADER_NAME_CANCEL_DATE_TIME = "cancel_date_time";
+    String HEADER_NAME_REGISTRATION_LOCATION = "registration_location";
+    String HEADER_NAME_ENROLMENT_LOCATION = "enrolment_location";
+    String HEADER_NAME_EXIT_LOCATION = "exit_location";
+    String HEADER_NAME_ENCOUNTER_LOCATION = "encounter_location";
+    String HEADER_NAME_CANCEL_LOCATION = "cancel_location";
 }
