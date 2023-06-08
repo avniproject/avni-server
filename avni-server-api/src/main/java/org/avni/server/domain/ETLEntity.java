@@ -15,9 +15,6 @@ public class ETLEntity {
     @Column
     private String schemaName;
 
-    @Column(name = "has_analytics_db")
-    private boolean hasAnalyticsDb;
-
     public String getName() {
         return name;
     }
@@ -40,13 +37,5 @@ public class ETLEntity {
 
     public void setSchemaName(String schemaName) {
         this.schemaName = schemaName;
-    }
-
-    public boolean isHasAnalyticsDb() {
-        return hasAnalyticsDb;
-    }
-
-    public void setHasAnalyticsDb(boolean hasAnalyticsDb) {
-        this.hasAnalyticsDb = hasAnalyticsDb;
     }
 }

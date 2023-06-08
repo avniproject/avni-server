@@ -21,12 +21,12 @@ import java.util.stream.Collectors;
 @RestController
 public class OrganisationController implements RestControllerResourceProcessor<Organisation> {
 
-    private OrganisationRepository organisationRepository;
-    private AccountRepository accountRepository;
+    private final OrganisationRepository organisationRepository;
+    private final AccountRepository accountRepository;
     private final GenderRepository genderRepository;
     private final OrganisationConfigRepository organisationConfigRepository;
-    private GroupRepository groupRepository;
-    private ImplementationRepository implementationRepository;
+    private final GroupRepository groupRepository;
+    private final ImplementationRepository implementationRepository;
 
     @Autowired
     public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, GenderRepository genderRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, ImplementationRepository implementationRepository) {
@@ -169,7 +169,6 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         }
         organisation.setMediaDirectory(request.getMediaDirectory());
         organisation.setVoided(request.isVoided());
-        organisation.setHasAnalyticsDb(request.isHasAnalyticsDb());
     }
 
     private void setOrgAccountByIdOrDefault(Organisation organisation, Long accountId) {

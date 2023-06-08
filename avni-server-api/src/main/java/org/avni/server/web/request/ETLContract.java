@@ -6,13 +6,11 @@ public class ETLContract extends CHSRequest {
     private String name;
     private String dbUser;
     private String schemaName;
-    private boolean hasAnalyticsDb;
 
     public static void mapEntity(ETLContract contract, ETLEntity etlEntity) {
         contract.setName(etlEntity.getName());
         contract.setDbUser(etlEntity.getDbUser());
         contract.setSchemaName(etlEntity.getSchemaName());
-        contract.setHasAnalyticsDb(etlEntity.isHasAnalyticsDb());
     }
 
     public String getName() {
@@ -37,13 +35,5 @@ public class ETLContract extends CHSRequest {
 
     public void setSchemaName(String schemaName) {
         this.schemaName = schemaName;
-    }
-
-    public boolean isHasAnalyticsDb() {
-        return hasAnalyticsDb;
-    }
-
-    public void setHasAnalyticsDb(boolean hasAnalyticsDb) {
-        this.hasAnalyticsDb = hasAnalyticsDb;
     }
 }

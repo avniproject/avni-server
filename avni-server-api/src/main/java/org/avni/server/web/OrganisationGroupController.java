@@ -103,7 +103,6 @@ public class OrganisationGroupController implements RestControllerResourceProces
 
     private void saveOrganisationGroup(@RequestBody OrganisationGroupContract request, OrganisationGroup organisationGroup) throws Exception {
         organisationGroup.setName(request.getName());
-        organisationGroup.setHasAnalyticsDb(request.isHasAnalyticsDb());
         organisationGroup.setSchemaName(request.getSchemaName());
         organisationGroup.setAccount(accountRepository.findOne(request.getAccountId()));
         addOrganisationGroupOrganisations(request, organisationGroup, new HashSet<>());
