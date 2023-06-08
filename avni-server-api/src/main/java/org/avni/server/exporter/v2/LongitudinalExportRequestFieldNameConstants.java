@@ -21,4 +21,10 @@ public interface LongitudinalExportRequestFieldNameConstants {
     String MAX_VISIT_DATE_TIME = "maxVisitDateTime";
     String ENCOUNTER_DATE_TIME = "encounterDateTime";
     String CANCEL_DATE_TIME = "cancelDateTime";
+    String REGISTRATION_LOCATION = "registrationLocation";
+    String ENROLMENT_LOCATION = "enrolmentLocation";
+    String EXIT_LOCATION = "exitLocation";
+    String ENCOUNTER_LOCATION = "encounterLocation";
+    String CANCEL_LOCATION = "cancelLocation";
+
 }

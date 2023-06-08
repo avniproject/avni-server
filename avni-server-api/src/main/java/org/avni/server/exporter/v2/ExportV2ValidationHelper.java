@@ -34,6 +34,7 @@ public class ExportV2ValidationHelper implements LongitudinalExportRequestFieldN
             CREATED_DATE_TIME,
             LAST_MODIFIED_BY,
             LAST_MODIFIED_DATE_TIME,
+            REGISTRATION_LOCATION,
             VOIDED);
 
     private static List<String> validEnrolmentFields = Arrays.asList(
@@ -45,6 +46,8 @@ public class ExportV2ValidationHelper implements LongitudinalExportRequestFieldN
             CREATED_DATE_TIME,
             LAST_MODIFIED_BY,
             LAST_MODIFIED_DATE_TIME,
+            ENROLMENT_LOCATION,
+            EXIT_LOCATION,
             VOIDED);
 
 
@@ -60,6 +63,8 @@ public class ExportV2ValidationHelper implements LongitudinalExportRequestFieldN
             CREATED_DATE_TIME,
             LAST_MODIFIED_BY,
             LAST_MODIFIED_DATE_TIME,
+            ENCOUNTER_LOCATION,
+            CANCEL_LOCATION,
             VOIDED);
 
     private void validateFields(List<String> errorList, String entityName, List<String> requestFields, List<String> allowedFields) {

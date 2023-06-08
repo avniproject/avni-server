@@ -149,6 +149,8 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
             headers.append(",").append(prefix).append(".earliest_visit_date_time");
             headers.append(",").append(prefix).append(".max_visit_date_time");
             headers.append(",").append(prefix).append(".encounter_date_time");
+            headers.append(",").append(prefix).append(".encounter_location");
+            headers.append(",").append(prefix).append(".cancel_location");
             appendObsColumns(headers, prefix, programUUID != null ? programEncounterMap : encounterMap);
             headers.append(",").append(prefix).append(".cancel_date_time");
             appendObsColumns(headers, prefix, programUUID != null ? programEncounterCancelMap : encounterCancelMap);
@@ -161,8 +163,10 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         headers.append(",").append("enl.id");
         headers.append(",").append("enl.uuid");
         headers.append(",").append("enl.enrolment_date_time");
+        headers.append(",").append("enl.program_enrolment_location");
         appendObsColumns(headers, "enl", enrolmentMap);
         headers.append(",").append("enl.program_exit_date_time");
+        headers.append(",").append("enl.program_exit_location");
         appendObsColumns(headers, "enl_exit", exitEnrolmentMap);
         addAuditColumns(headers, "enl");
         addVoidedColumnIfRequired(headers, "enl");
@@ -177,6 +181,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         headers.append(",").append("ind.last_name");
         headers.append(",").append("ind.date_of_birth");
         headers.append(",").append("ind.registration_date");
+        headers.append(",").append("ind.registration_location");
         headers.append(",").append("ind.gender");
         addAddressLevelColumns(headers);
         if(subjectType.isGroup()) {
@@ -236,6 +241,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
             row.add(QuotedStringValue(individual.getLastName()));
             row.add(individual.getDateOfBirth());
             row.add(individual.getRegistrationDate());
+            row.add(individual.getRegistrationLocation());
             row.add(gender == null ? "" : gender.getName());
             addAddressLevels(row, addressLevel);
             if (subjectType.isGroup()) {
@@ -302,9 +308,11 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         row.add(programEnrolment.getId());
         row.add(programEnrolment.getUuid());
         row.add(getDateForTimeZone(programEnrolment.getEnrolmentDateTime()));
+        row.add(programEnrolment.getEnrolmentLocation());
         row.addAll(getObs(programEnrolment.getObservations(), enrolmentMap));
         //Program Exit
         row.add(getDateForTimeZone(programEnrolment.getProgramExitDateTime()));
+        row.add(programEnrolment.getExitLocation());
         row.addAll(getObs(programEnrolment.getProgramExitObservations(), exitEnrolmentMap));
         addAuditFields(programEnrolment, row);
         addVoidedFieldIfRequired(programEnrolment, row);
@@ -327,6 +335,8 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
         row.add(getDateForTimeZone(encounter.getEarliestVisitDateTime()));
         row.add(getDateForTimeZone(encounter.getMaxVisitDateTime()));
         row.add(getDateForTimeZone(encounter.getEncounterDateTime()));
+        row.add(encounter.getEncounterLocation());
+        row.add(encounter.getCancelLocation());
         row.addAll(getObs(encounter.getObservations(), map));
         row.add(getDateForTimeZone(encounter.getCancelDateTime()));
         row.addAll(getObs(encounter.getCancelObservations(), cancelMap));

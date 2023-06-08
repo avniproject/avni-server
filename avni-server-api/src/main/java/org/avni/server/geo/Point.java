@@ -45,4 +45,9 @@ public class Point implements Serializable, Cloneable {
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
     }
+
+    @Override
+    public String toString() {
+        return String.format("\"%f,%f\"", x, y);
+    }
 }
