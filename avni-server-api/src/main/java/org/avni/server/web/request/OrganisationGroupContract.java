@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public class OrganisationGroupContract extends ETLContract {
     private Long accountId;
     private List<Long> organisationIds;
+    private String uuid;
 
     public static OrganisationGroupContract fromEntity(OrganisationGroup organisationGroup) {
         OrganisationGroupContract organisationGroupContract = new OrganisationGroupContract();
@@ -16,6 +17,7 @@ public class OrganisationGroupContract extends ETLContract {
         organisationGroupContract.setAccountId(organisationGroup.getAccount().getId());
         organisationGroupContract.setDbUser(organisationGroup.getDbUser());
         organisationGroupContract.setName(organisationGroup.getName());
+        organisationGroupContract.uuid = organisationGroup.getUuid();
         List<Long> orgIds = organisationGroup.getOrganisationGroupOrganisations().stream()
                 .map(OrganisationGroupOrganisation::getOrganisationId).collect(Collectors.toList());
         organisationGroupContract.setOrganisationIds(orgIds);
@@ -39,4 +41,8 @@ public class OrganisationGroupContract extends ETLContract {
         this.accountId = accountId;
     }
 
+    @Override
+    public String getUuid() {
+        return uuid;
+    }
 }

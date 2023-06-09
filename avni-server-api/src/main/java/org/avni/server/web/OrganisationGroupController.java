@@ -1,6 +1,5 @@
 package org.avni.server.web;
 
-
 import org.avni.server.dao.AccountRepository;
 import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.dao.OrganisationGroupRepository;
@@ -28,12 +27,11 @@ import java.util.Set;
 
 @RestController
 public class OrganisationGroupController implements RestControllerResourceProcessor<OrganisationGroup> {
-
     private final Logger logger;
-    private OrganisationGroupRepository organisationGroupRepository;
-    private OrganisationRepository organisationRepository;
-    private AccountRepository accountRepository;
-    private ImplementationRepository implementationRepository;
+    private final OrganisationGroupRepository organisationGroupRepository;
+    private final OrganisationRepository organisationRepository;
+    private final AccountRepository accountRepository;
+    private final ImplementationRepository implementationRepository;
 
     public OrganisationGroupController(OrganisationGroupRepository organisationGroupRepository,
                                        OrganisationRepository organisationRepository,
@@ -56,6 +54,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
         implementationRepository.createDBUser(request.getDbUser(), tempPassword);
         OrganisationGroup organisationGroup = new OrganisationGroup();
         organisationGroup.setDbUser(request.getDbUser());
+        organisationGroup.assignUUIDIfRequired();
         saveOrganisationGroup(request, organisationGroup);
         return new ResponseEntity<>(organisationGroup, HttpStatus.CREATED);
     }
