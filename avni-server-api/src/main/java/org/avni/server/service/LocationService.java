@@ -232,6 +232,7 @@ public class LocationService implements ScopeAwareService {
             addressLevelType.setUuid(UUID.randomUUID().toString());
         addressLevelType.setName(contract.getName());
         addressLevelType.setLevel(contract.getLevel());
+        addressLevelType.setVoided(contract.isVoided());
         AddressLevelType parent = null;
         if (contract.getParent() != null && StringUtils.hasText(contract.getParent().getName())) {
             parent = addressLevelTypeRepository.findByName(contract.getParent().getName());
