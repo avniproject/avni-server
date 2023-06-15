@@ -22,7 +22,8 @@ import java.util.stream.Stream;
 @Table(name = TableNames.Subject)
 @JsonIgnoreProperties({"programEnrolments", "encounters", "relationshipsFromSelfToOthers", "relationshipsFromOthersToSelf", "userSubjectAssignments"})
 @BatchSize(size = 100)
-public class Individual extends SyncAttributeEntity implements MessageableEntity {
+public class
+Individual extends SyncAttributeEntity implements MessageableEntity {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

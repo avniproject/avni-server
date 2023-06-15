@@ -248,4 +248,8 @@ public class FormMappingService implements NonScopeAwareService {
         Program program = programRepository.findByUuid(programUuid);
         return this.find(program, formType);
     }
+
+    public FormMapping findBy(SubjectType subjectType, Program program, EncounterType encounterType, FormType formType) {
+        return formMappingRepository.findBySubjectTypeAndProgramAndEncounterTypeAndIsVoidedFalseAndFormFormType(subjectType, program, encounterType, formType);
+    }
 }

@@ -5,17 +5,12 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.SyncParameters;
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.EncounterType;
-import org.avni.server.domain.ProgramEncounter;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.service.FormMappingService;
-import org.avni.server.service.ProgramEncounterService;
-import org.avni.server.service.ScopeBasedSyncService;
-import org.avni.server.service.UserService;
+import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.web.request.ProgramEncounterRequest;
 import org.avni.server.web.request.ProgramEncounterContract;
+import org.avni.server.web.request.ProgramEncounterRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -44,9 +39,10 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     private final ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService;
     private final FormMappingService formMappingService;
     private final AccessControlService accessControlService;
+    private final EntityApprovalStatusService entityApprovalStatusService;
 
     @Autowired
-    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService) {
+    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService) {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.userService = userService;
@@ -54,6 +50,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
+        this.entityApprovalStatusService = entityApprovalStatusService;
     }
 
     @GetMapping(value = "/web/programEncounter/{uuid}")
@@ -75,6 +72,19 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
             programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
         }
+    }
+
+    @RequestMapping(value = "/web/programEncounters", method = RequestMethod.POST)
+    @Transactional
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public void saveForWeb(@RequestBody ProgramEncounterRequest request) {
+        ProgramEncounter programEncounter = programEncounterService.saveProgramEncounter(request);
+        if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
+            programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
+        }
+
+        FormMapping formMapping = programEncounterService.getFormMapping(programEncounter);
+        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEncounter, programEncounter.getId(), ApprovalStatus.Status.Pending, programEncounter.getEncounterType().getUuid(), formMapping);
     }
 
     @RequestMapping(value = "/programEncounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
@@ -140,7 +150,6 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         if (programEncounter == null) {
             return ResponseEntity.notFound().build();
         }
-        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.VoidVisit, programEncounter);
         programEncounter.setVoided(true);
         programEncounterService.save(programEncounter);
         return ResponseEntity.ok().build();

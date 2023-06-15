@@ -1,5 +1,7 @@
 package org.avni.server.web;
 
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -62,6 +64,8 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final ScopeBasedSyncService<Individual> scopeBasedSyncService;
     private final SubjectMigrationService subjectMigrationService;
     private final AccessControlService accessControlService;
+    private final EntityApprovalStatusService entityApprovalStatusService;
+    private final FormMappingService formMappingService;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -76,7 +80,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
                                 IndividualConstructionService individualConstructionService,
-                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService) {
+                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -92,6 +96,8 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
         this.accessControlService = accessControlService;
+        this.entityApprovalStatusService = entityApprovalStatusService;
+        this.formMappingService = formMappingService;
     }
 
     // used in offline mode hence no access check
@@ -104,12 +110,10 @@ public class IndividualController extends AbstractController<Individual> impleme
         addObservationsFromDecisions(observations, individualRequest.getDecisions());
         this.markSubjectMigrationIfRequired(individualRequest, observations);
 
-        Individual individual = createIndividualWithoutObservations(individualRequest);
-        individual.setObservations(observations);
-        individualService.save(individual);
-        saveVisitSchedules(individualRequest);
-        saveIdentifierAssignments(individual, individualRequest);
+        Individual individual = createIndividual(individualRequest);
+
         logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
+
         return new AvniEntityResponse(individual);
     }
 
@@ -164,7 +168,6 @@ public class IndividualController extends AbstractController<Individual> impleme
         if (subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(individualRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Individual));
     }
 
@@ -307,6 +310,40 @@ public class IndividualController extends AbstractController<Individual> impleme
             resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
         }
         return resource;
+    }
+
+    @RequestMapping(value = "/web/individuals", method = RequestMethod.POST)
+    @Transactional
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
+        logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
+
+        Individual individual = createIndividual(individualRequest);
+
+        FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
+        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
+
+        logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
+
+        return new AvniEntityResponse(individual);
+    }
+
+    private Individual createIndividual(IndividualRequest individualRequest) {
+
+        ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());
+        addObservationsFromDecisions(observations, individualRequest.getDecisions());
+        this.markSubjectMigrationIfRequired(individualRequest, observations);
+
+        Individual individual = createIndividualWithoutObservations(individualRequest);
+        individual.setObservations(observations);
+
+        individualService.save(individual);
+
+
+        saveVisitSchedules(individualRequest);
+        saveIdentifierAssignments(individual, individualRequest);
+
+        return individual;
     }
 
     private Individual createIndividualWithoutObservations(@RequestBody IndividualRequest individualRequest) {

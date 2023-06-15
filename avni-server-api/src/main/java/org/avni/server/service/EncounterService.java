@@ -2,8 +2,11 @@ package org.avni.server.service;
 
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.EntityType;
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
+import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
@@ -15,6 +18,9 @@ import org.avni.server.util.S;
 import org.avni.server.web.api.EncounterSearchRequest;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EntityTypeContract;
+import org.joda.time.DateTime;
+import org.avni.server.dao.individualRelationship.RuleFailureLogRepository;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.rules.RulesContractWrapper.VisitSchedule;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -39,20 +45,25 @@ public class EncounterService implements ScopeAwareService {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterService.class);
     @Autowired
     Bugsnag bugsnag;
-    private final EncounterRepository encounterRepository;
-    private final ObservationService observationService;
-    private final IndividualRepository individualRepository;
-    private final EncounterTypeRepository encounterTypeRepository;
-    private final EncounterSearchRepository encounterSearchRepository;
+    private EncounterRepository encounterRepository;
+    private ObservationService observationService;
+    private IndividualRepository individualRepository;
+    private RuleFailureLogRepository ruleFailureLogRepository;
+    private EncounterTypeRepository encounterTypeRepository;
+    private FormMappingRepository formMappingRepository;
+    private EncounterSearchRepository encounterSearchRepository;
+    private FormMappingService formMappingService;
     private final AccessControlService accessControlService;
 
     @Autowired
-    public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterSearchRepository encounterSearchRepository, AccessControlService accessControlService) {
+    public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterSearchRepository encounterSearchRepository, AccessControlService accessControlService
+            , FormMappingService formMappingService) {
         this.encounterRepository = encounterRepository;
         this.observationService = observationService;
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterSearchRepository = encounterSearchRepository;
+        this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
     }
 
@@ -64,7 +75,7 @@ public class EncounterService implements ScopeAwareService {
     public Page<EncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable) {
         Page<EncounterContract> encountersContract;
         List<String> encounterTypeIdList = new ArrayList<>();
-        if (encounterTypeUuids != null) {
+        if(encounterTypeUuids != null) {
             encounterTypeIdList = Arrays.asList(encounterTypeUuids.split(","));
         }
         Individual individual = individualRepository.findByUuid(uuid);
@@ -191,5 +202,10 @@ public class EncounterService implements ScopeAwareService {
         } else {
             return encounterRepository.findByConceptsAndEncounterTypeAndSubject(encounterSearchRequest.getLastModifiedDateTime(), encounterSearchRequest.getNow(), encounterSearchRequest.getConceptsMap(), encounterSearchRequest.getEncounterType(), encounterSearchRequest.getSubjectUUID(), encounterSearchRequest.getPageable());
         }
+    }
+
+    public FormMapping getFormMapping(Encounter encounter) {
+        FormType formType = encounter.isCancelled() ? FormType.IndividualEncounterCancellation : FormType.Encounter;
+        return formMappingService.findBy(encounter.getIndividual().getSubjectType(), null, encounter.getEncounterType(), formType);
     }
 }
