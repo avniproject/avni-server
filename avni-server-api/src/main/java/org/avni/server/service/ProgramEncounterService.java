@@ -2,6 +2,8 @@ package org.avni.server.service;
 
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.EntityType;
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.common.EntityHelper;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
@@ -36,14 +38,16 @@ public class ProgramEncounterService implements ScopeAwareService {
     private OperationalEncounterTypeRepository operationalEncounterTypeRepository;
     private ObservationService observationService;
     private ProgramEnrolmentRepository programEnrolmentRepository;
+    private FormMappingService formMappingService;
 
     @Autowired
-    public ProgramEncounterService(ProgramEncounterRepository programEncounterRepository, EncounterTypeRepository encounterTypeRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, ObservationService observationService, ProgramEnrolmentRepository programEnrolmentRepository) {
+    public ProgramEncounterService(ProgramEncounterRepository programEncounterRepository, EncounterTypeRepository encounterTypeRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, ObservationService observationService, ProgramEnrolmentRepository programEnrolmentRepository, FormMappingService formMappingService) {
         this.programEncounterRepository = programEncounterRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.operationalEncounterTypeRepository = operationalEncounterTypeRepository;
         this.observationService = observationService;
         this.programEnrolmentRepository = programEnrolmentRepository;
+        this.formMappingService = formMappingService;
     }
 
     public ProgramEncountersContract getProgramEncounterByUuid(String uuid) {
@@ -211,5 +215,15 @@ public class ProgramEncounterService implements ScopeAwareService {
         programEncounter = programEncounterRepository.save(programEncounter);
 
         return programEncounter;
+    }
+
+    public FormMapping getFormMapping(ProgramEncounter programEncounter) {
+        SubjectType subjectType = programEncounter.getIndividual().getSubjectType();
+        Program program = programEncounter.getProgramEnrolment().getProgram();
+        return formMappingService.findBy(subjectType, program, programEncounter.getEncounterType(), getFormType(programEncounter));
+    }
+
+    private static FormType getFormType(ProgramEncounter programEncounter) {
+        return programEncounter.getCancelDateTime() == null ? FormType.ProgramEncounter : FormType.ProgramEncounterCancellation;
     }
 }

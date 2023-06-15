@@ -5,14 +5,12 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SyncParameters;
-import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.domain.ApprovalStatus;
+import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.projection.ProgramEnrolmentProjection;
-import org.avni.server.service.FormMappingService;
-import org.avni.server.service.ProgramEnrolmentService;
-import org.avni.server.service.ScopeBasedSyncService;
-import org.avni.server.service.UserService;
+import org.avni.server.service.*;
 import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.ProgramEncountersContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
@@ -47,9 +45,10 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     private final ProgramRepository programRepository;
     private ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService;
     private FormMappingService formMappingService;
+    private EntityApprovalStatusService entityApprovalStatusService;
 
     @Autowired
-    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingRepository formMappingRepository, FormMappingService formMappingService) {
+    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
         this.projectionFactory = projectionFactory;
@@ -57,6 +56,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         this.programRepository = programRepository;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
+        this.entityApprovalStatusService = entityApprovalStatusService;
     }
 
     @RequestMapping(value = "/programEnrolments", method = RequestMethod.POST)
@@ -64,7 +64,20 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @Transactional
     public AvniEntityResponse save(@RequestBody ProgramEnrolmentRequest request) {
         ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
-        return new AvniEntityResponse(programEnrolmentRepository.findByUuid(request.getUuid()));
+        return new AvniEntityResponse(programEnrolment);
+    }
+
+    @RequestMapping(value = "/web/programEnrolments", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
+    public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) {
+        ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
+
+        //Assuming that EnrollmentDetails will not be edited when exited
+        FormMapping formMapping = programEnrolmentService.getFormMapping(programEnrolment);
+        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEnrolment, programEnrolment.getId(), ApprovalStatus.Status.Pending, programEnrolment.getUuid(), formMapping);
+
+        return new AvniEntityResponse(programEnrolment);
     }
 
     @GetMapping(value = {"/programEnrolment/v2"})

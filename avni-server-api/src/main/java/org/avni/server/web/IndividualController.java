@@ -1,5 +1,7 @@
 package org.avni.server.web;
 
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.geo.Point;
@@ -59,6 +61,8 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final IndividualConstructionService individualConstructionService;
     private final ScopeBasedSyncService<Individual> scopeBasedSyncService;
     private final SubjectMigrationService subjectMigrationService;
+    private final EntityApprovalStatusService entityApprovalStatusService;
+    private final FormMappingService formMappingService;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -73,7 +77,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
                                 IndividualConstructionService individualConstructionService,
-                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService) {
+                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -88,6 +92,8 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.individualConstructionService = individualConstructionService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
+        this.entityApprovalStatusService = entityApprovalStatusService;
+        this.formMappingService = formMappingService;
     }
 
     @RequestMapping(value = "/individuals", method = RequestMethod.POST)
@@ -95,16 +101,11 @@ public class IndividualController extends AbstractController<Individual> impleme
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse save(@RequestBody IndividualRequest individualRequest) {
         logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
-        ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());
-        addObservationsFromDecisions(observations, individualRequest.getDecisions());
-        this.markSubjectMigrationIfRequired(individualRequest, observations);
 
-        Individual individual = createIndividualWithoutObservations(individualRequest);
-        individual.setObservations(observations);
-        individualService.save(individual);
-        saveVisitSchedules(individualRequest);
-        saveIdentifierAssignments(individual, individualRequest);
+        Individual individual = createIndividual(individualRequest);
+
         logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
+
         return new AvniEntityResponse(individual);
     }
 
@@ -171,10 +172,10 @@ public class IndividualController extends AbstractController<Individual> impleme
             Pageable pageable) {
         IndividualRepository repo = this.individualRepository;
         return repo.findAll(
-                where(repo.getFilterSpecForName(name))
-                        .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
-                        .and(repo.getFilterSpecForVoid(false))
-                , pageable)
+                        where(repo.getFilterSpecForName(name))
+                                .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
+                                .and(repo.getFilterSpecForVoid(false))
+                        , pageable)
                 .map(t -> projectionFactory.createProjection(IndividualWebProjection.class, t));
     }
 
@@ -299,6 +300,40 @@ public class IndividualController extends AbstractController<Individual> impleme
         return resource;
     }
 
+    @RequestMapping(value = "/web/individuals", method = RequestMethod.POST)
+    @Transactional
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
+        logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
+
+        Individual individual = createIndividual(individualRequest);
+
+        FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
+        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
+
+        logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
+
+        return new AvniEntityResponse(individual);
+    }
+
+    private Individual createIndividual(IndividualRequest individualRequest) {
+
+        ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());
+        addObservationsFromDecisions(observations, individualRequest.getDecisions());
+        this.markSubjectMigrationIfRequired(individualRequest, observations);
+
+        Individual individual = createIndividualWithoutObservations(individualRequest);
+        individual.setObservations(observations);
+
+        individualService.save(individual);
+
+
+        saveVisitSchedules(individualRequest);
+        saveIdentifierAssignments(individual, individualRequest);
+
+        return individual;
+    }
+
     private Individual createIndividualWithoutObservations(@RequestBody IndividualRequest individualRequest) {
         AddressLevel addressLevel = getAddressLevel(individualRequest);
         Gender gender = individualRequest.getGender() == null ? genderRepository.findByUuid(individualRequest.getGenderUUID()) : genderRepository.findByName(individualRequest.getGender());
@@ -308,7 +343,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         individual.setFirstName(individualRequest.getFirstName());
         individual.setMiddleName(individualRequest.getMiddleName());
         individual.setLastName(individualRequest.getLastName());
-        if(subjectType.isAllowProfilePicture()) {
+        if (subjectType.isAllowProfilePicture()) {
             individual.setProfilePicture(individualRequest.getProfilePicture());
         }
         individual.setDateOfBirth(individualRequest.getDateOfBirth());
