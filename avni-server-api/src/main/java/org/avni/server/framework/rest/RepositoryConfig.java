@@ -1,6 +1,8 @@
 package org.avni.server.framework.rest;
 
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.GroupPrivilege;
+import org.avni.server.domain.accessControl.Privilege;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurerAdapter;

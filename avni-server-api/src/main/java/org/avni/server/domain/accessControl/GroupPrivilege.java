@@ -1,6 +1,8 @@
-package org.avni.server.domain;
+package org.avni.server.domain.accessControl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.Privilege;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;

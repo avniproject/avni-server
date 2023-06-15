@@ -6,9 +6,10 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.ChecklistDetail;
-import org.avni.server.domain.GroupPrivileges;
+import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.SyncableItem;
+import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;

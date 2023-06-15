@@ -1,6 +1,6 @@
 package org.avni.server.web.request;
 
-import org.avni.server.domain.GroupPrivilege;
+import org.avni.server.domain.accessControl.GroupPrivilege;
 
 public class GroupPrivilegeContractWeb extends CHSRequest {
 

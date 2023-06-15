@@ -3,6 +3,8 @@ package org.avni.server.web;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SyncableItem;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.GroupPrivilegeService;
+import org.avni.server.service.accessControl.PrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.joda.time.DateTime;
@@ -344,10 +346,9 @@ public class SyncController {
         });
         removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);
 
-        List<EntitySyncStatusContract> changedEntities = entitySyncStatusContracts.stream()
+        return entitySyncStatusContracts.stream()
                 .filter(this::filterChangedEntities)
                 .collect(Collectors.toList());
-        return changedEntities;
     }
 
     /**

@@ -16,6 +16,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFile;
 import org.avni.server.importer.batch.model.BundleZip;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.*;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;

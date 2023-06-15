@@ -12,7 +12,10 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.UserContext;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupRoleContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
@@ -48,6 +51,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     private final FormService formService;
     private final FormMappingService formMappingService;
     private final OrganisationConfigService organisationConfigService;
+    private final AccessControlService accessControlService;
     private final ObjectMapper objectMapper;
 
     @Autowired
@@ -56,7 +60,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
                                  SubjectTypeService subjectTypeService,
                                  GroupRoleRepository groupRoleRepository,
                                  ResetSyncService resetSyncService, FormService formService, FormMappingService formMappingService,
-                                 OrganisationConfigService organisationConfigService) {
+                                 OrganisationConfigService organisationConfigService,
+                                 AccessControlService accessControlService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.subjectTypeService = subjectTypeService;
@@ -65,6 +70,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         this.formService = formService;
         this.formMappingService = formMappingService;
         this.organisationConfigService = organisationConfigService;
+        this.accessControlService = accessControlService;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
         logger = LoggerFactory.getLogger(this.getClass());
     }

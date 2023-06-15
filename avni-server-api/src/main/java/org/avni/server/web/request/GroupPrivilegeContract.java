@@ -2,7 +2,7 @@ package org.avni.server.web.request;
 
 import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.domain.EncounterType;
-import org.avni.server.domain.GroupPrivilege;
+import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.Program;
 
 import java.util.Objects;

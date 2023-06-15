@@ -1,5 +1,5 @@
 package org.avni.server.dao;
-import org.avni.server.domain.Privilege;
+import org.avni.server.domain.accessControl.Privilege;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

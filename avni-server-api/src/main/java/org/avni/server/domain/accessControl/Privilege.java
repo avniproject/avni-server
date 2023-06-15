@@ -1,8 +1,9 @@
-package org.avni.server.domain;
+package org.avni.server.domain.accessControl;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import org.avni.server.domain.EntityType;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
@@ -96,6 +97,4 @@ public class Privilege {
     public void setEntityType(EntityType entityType) {
         this.entityType = entityType;
     }
-
-
 }

@@ -1,11 +1,14 @@
-package org.avni.server.domain;
+package org.avni.server.domain.accessControl;
+
+import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.GroupPrivilege;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GroupPrivileges {
-    private boolean hasAllPrivileges;
-    private List<GroupPrivilege> privileges;
+    private final boolean hasAllPrivileges;
+    private final List<GroupPrivilege> privileges;
 
     public GroupPrivileges(boolean hasAllPrivileges, List<GroupPrivilege> privileges) {
         this.hasAllPrivileges = hasAllPrivileges;

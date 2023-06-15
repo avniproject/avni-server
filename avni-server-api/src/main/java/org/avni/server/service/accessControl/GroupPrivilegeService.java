@@ -1,11 +1,15 @@
-package org.avni.server.service;
+package org.avni.server.service.accessControl;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.GroupPrivilege;
+import org.avni.server.domain.accessControl.GroupPrivileges;
+import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.NonScopeAwareService;
 import org.avni.server.web.request.GroupPrivilegeContractWeb;
 import org.springframework.stereotype.Service;
 
@@ -17,20 +21,20 @@ import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
-    private GroupRepository groupRepository;
-    private PrivilegeRepository privilegeRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private ProgramRepository programRepository;
-    private EncounterTypeRepository encounterTypeRepository;
-    private ChecklistDetailRepository checklistDetailRepository;
-    private FormMappingRepository formMappingRepository;
-    private GroupPrivilegeRepository groupPrivilegeRepository;
-    private List<String> groupSubjectPrivileges = new ArrayList<String>() {{
+    private final GroupRepository groupRepository;
+    private final PrivilegeRepository privilegeRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final ProgramRepository programRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final ChecklistDetailRepository checklistDetailRepository;
+    private final FormMappingRepository formMappingRepository;
+    private final GroupPrivilegeRepository groupPrivilegeRepository;
+    private final List<String> groupSubjectPrivileges = new ArrayList<String>() {{
         add("Add member");
         add("Edit member");
         add("Remove member");
     }};
-    private UserGroupRepository userGroupRepository;
+    private final UserGroupRepository userGroupRepository;
 
     public GroupPrivilegeService(GroupRepository groupRepository, PrivilegeRepository privilegeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, ChecklistDetailRepository checklistDetailRepository, FormMappingRepository formMappingRepository, GroupPrivilegeRepository groupPrivilegeRepository, UserGroupRepository userGroupRepository) {
         this.groupRepository = groupRepository;

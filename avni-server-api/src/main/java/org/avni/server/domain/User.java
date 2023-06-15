@@ -94,7 +94,6 @@ public class User {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<UserGroup> userGroups;
 
-
     public enum SyncSettingKeys {
         syncAttribute1,
         syncAttribute2,

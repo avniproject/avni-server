@@ -2,10 +2,10 @@ package org.avni.server.web;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.Group;
-import org.avni.server.domain.GroupPrivilege;
-import org.avni.server.domain.Privilege;
+import org.avni.server.domain.accessControl.GroupPrivilege;
+import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.domain.SubjectType;
-import org.avni.server.service.GroupPrivilegeService;
+import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
