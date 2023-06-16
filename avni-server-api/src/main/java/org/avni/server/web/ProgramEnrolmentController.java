@@ -79,7 +79,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
         //Assuming that EnrollmentDetails will not be edited when exited
         FormMapping formMapping = programEnrolmentService.getFormMapping(programEnrolment);
-        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEnrolment, programEnrolment.getId(), ApprovalStatus.Status.Pending, programEnrolment.getUuid(), formMapping);
+        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEnrolment, programEnrolment.getId(), ApprovalStatus.Status.Pending, programEnrolment.getProgram().getUuid(), formMapping);
 
         return new AvniEntityResponse(programEnrolment);
     }

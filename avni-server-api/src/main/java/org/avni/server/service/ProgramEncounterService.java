@@ -224,6 +224,6 @@ public class ProgramEncounterService implements ScopeAwareService {
     }
 
     private static FormType getFormType(ProgramEncounter programEncounter) {
-        return programEncounter.getCancelDateTime() == null ? FormType.ProgramEncounter : FormType.ProgramEncounterCancellation;
+        return programEncounter.isCancelled() ? FormType.ProgramEncounterCancellation : FormType.ProgramEncounter;
     }
 }

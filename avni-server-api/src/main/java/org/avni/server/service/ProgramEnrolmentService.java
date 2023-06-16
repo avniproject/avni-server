@@ -281,4 +281,9 @@ public class ProgramEnrolmentService implements ScopeAwareService {
     public OperatingIndividualScopeAwareRepository repository() {
         return programEnrolmentRepository;
     }
+
+    public FormMapping getFormMapping(ProgramEnrolment programEnrolment) {
+        FormType formType = programEnrolment.isExited() ?  FormType.ProgramExit : FormType.ProgramEnrolment;
+        return formMappingService.findBy(programEnrolment.getIndividual().getSubjectType(),programEnrolment.getProgram(), null , formType);
+    }
 }
