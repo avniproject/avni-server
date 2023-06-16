@@ -3,6 +3,7 @@ package org.avni.server.domain.accessControl;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.avni.server.domain.EntityType;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
@@ -11,26 +12,37 @@ import org.joda.time.DateTime;
 @Table(name = "privilege")
 @BatchSize(size = 100)
 public class Privilege {
-
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     @Id
     private Long id;
+
     @Column
     @NotNull
     private String uuid;
+
     @Column
     @NotNull
     private String name;
+
+    @Column
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private PrivilegeType type;
+
     @Column
     private String description;
+
     @Column
     @Enumerated(EnumType.STRING)
     private EntityType entityType;
+
     @Column
     private boolean isVoided;
+
     @Column
     private DateTime createdDateTime;
+
     @Column
     private DateTime lastModifiedDateTime;
 
@@ -74,10 +86,19 @@ public class Privilege {
         this.id = id;
     }
 
+
+    /**
+     * Use only for sync
+     */
+    @Deprecated
     public String getName() {
         return name;
     }
 
+    /**
+     * Use only for sync
+     */
+    @Deprecated
     public void setName(String name) {
         this.name = name;
     }
@@ -96,5 +117,9 @@ public class Privilege {
 
     public void setEntityType(EntityType entityType) {
         this.entityType = entityType;
+    }
+
+    public PrivilegeType getType() {
+        return type;
     }
 }

@@ -12,7 +12,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
-import org.avni.server.domain.UserContext;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -79,6 +79,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public void save(@RequestBody List<SubjectTypeContract> subjectTypeRequests) {
+        accessControlService.checkPrivilege(UserContextHolder.getUser(), PrivilegeType.EditSubjectType);
         subjectTypeRequests.forEach(subjectTypeService::saveSubjectType);
     }
 

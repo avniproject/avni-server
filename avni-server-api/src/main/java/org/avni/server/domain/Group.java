@@ -1,10 +1,12 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "groups")
@@ -16,6 +18,9 @@ public class Group extends OrganisationAwareEntity {
 
     @Column
     private boolean hasAllPrivileges;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "group")
+    private Set<GroupPrivilege> groupPrivileges = new HashSet<>();
 
     public String getName() {
         return name;
@@ -33,4 +38,8 @@ public class Group extends OrganisationAwareEntity {
         this.hasAllPrivileges = hasAllPrivileges;
     }
 
+    @JsonIgnore
+    public Set<GroupPrivilege> getGroupPrivileges() {
+        return groupPrivileges;
+    }
 }
