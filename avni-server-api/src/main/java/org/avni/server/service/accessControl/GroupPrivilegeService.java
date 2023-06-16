@@ -29,11 +29,6 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     private final ChecklistDetailRepository checklistDetailRepository;
     private final FormMappingRepository formMappingRepository;
     private final GroupPrivilegeRepository groupPrivilegeRepository;
-    private final List<String> groupSubjectPrivileges = new ArrayList<String>() {{
-        add("Add member");
-        add("Edit member");
-        add("Remove member");
-    }};
     private final UserGroupRepository userGroupRepository;
 
     public GroupPrivilegeService(GroupRepository groupRepository, PrivilegeRepository privilegeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, ChecklistDetailRepository checklistDetailRepository, FormMappingRepository formMappingRepository, GroupPrivilegeRepository groupPrivilegeRepository, UserGroupRepository userGroupRepository) {
@@ -48,14 +43,14 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         this.userGroupRepository = userGroupRepository;
     }
 
-    private boolean isGroupSubjectTypePrivilege(SubjectType subjectType, String privilegeName) {
+    private boolean isGroupSubjectTypePrivilege(SubjectType subjectType, Privilege privilege) {
         if (!subjectType.isGroup()) {
-            return !groupSubjectPrivileges.contains(privilegeName);
+            return !privilege.getType().isForGroupSubject();
         }
         return true;
     }
 
-    public List<GroupPrivilege> getAllGroupPrivileges(Long groupId) {
+    public List<GroupPrivilege> getAllPossibleGroupPrivileges(long groupId) {
 
         List<FormMapping> formMappings = formMappingRepository.findAllByIsVoidedFalse();
         List<SubjectType.SubjectTypeProjection> subjectTypes = subjectTypeRepository.findAllOperational();
@@ -68,27 +63,27 @@ public class GroupPrivilegeService implements NonScopeAwareService {
 
         List<ChecklistDetail> checklistDetails = checklistDetailRepository.findAllByOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
 
-        Group currentGroup = groupRepository.findOne(groupId);
+        Group group = groupRepository.findOne(groupId);
         List<Privilege> privilegeList = IterableUtils.toList(privilegeRepository.findAllByIsVoidedFalse());
 
         List<FormMapping> operationalFormMappings = formMappings.stream()
                 .filter(formMapping -> (formMapping.getProgram() == null) || (formMapping.getProgram() != null && operationalProgramIds.contains(formMapping.getProgram().getId())))
                 .collect(Collectors.toList());
 
-        List<GroupPrivilege> allPrivileges = new ArrayList<>();
+        List<GroupPrivilege> allGroupPrivileges = new ArrayList<>();
 
         subjectTypes.forEach(subjectTypeProjection -> {
             SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeProjection.getUuid());
             privilegeList.stream()
-                    .filter(privilege -> privilege.getEntityType() == EntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege.getName()))
+                    .filter(privilege -> privilege.getEntityType() == EntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
                     .forEach(subjectPrivilege -> {
                                 GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                groupPrivilege.setGroup(currentGroup);
+                                groupPrivilege.setGroup(group);
                                 groupPrivilege.setPrivilege(subjectPrivilege);
                                 groupPrivilege.setSubjectType(subjectType);
                                 groupPrivilege.setAllow(false);
                                 groupPrivilege.assignUUID();
-                                allPrivileges.add(groupPrivilege);
+                                allGroupPrivileges.add(groupPrivilege);
                             }
                     );
 
@@ -102,13 +97,13 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                             .filter(privilege -> privilege.getEntityType() == EntityType.Enrolment)
                             .forEach(enrolmentPrivilege -> {
                                 GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                groupPrivilege.setGroup(currentGroup);
+                                groupPrivilege.setGroup(group);
                                 groupPrivilege.setPrivilege(enrolmentPrivilege);
                                 groupPrivilege.setSubjectType(subjectType);
                                 groupPrivilege.setProgram(program);
                                 groupPrivilege.setAllow(false);
                                 groupPrivilege.assignUUID();
-                                allPrivileges.add(groupPrivilege);
+                                allGroupPrivileges.add(groupPrivilege);
                             });
 
                     if (encounterType != null && operationalEncounterTypeIds.contains(encounterType.getId())) {
@@ -116,14 +111,14 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                                 .filter(privilege -> privilege.getEntityType() == EntityType.Encounter)
                                 .forEach(encounterPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                    groupPrivilege.setGroup(currentGroup);
+                                    groupPrivilege.setGroup(group);
                                     groupPrivilege.setPrivilege(encounterPrivilege);
                                     groupPrivilege.setSubjectType(subjectType);
                                     groupPrivilege.setProgram(program);
                                     groupPrivilege.setProgramEncounterType(encounterType);
                                     groupPrivilege.setAllow(false);
                                     groupPrivilege.assignUUID();
-                                    allPrivileges.add(groupPrivilege);
+                                    allGroupPrivileges.add(groupPrivilege);
                                 });
                     }
 
@@ -132,13 +127,13 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                                     .filter(privilege -> privilege.getEntityType() == EntityType.Checklist)
                                     .forEach(privilege -> {
                                         GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                        groupPrivilege.setGroup(currentGroup);
+                                        groupPrivilege.setGroup(group);
                                         groupPrivilege.setPrivilege(privilege);
                                         groupPrivilege.setSubjectType(subjectType);
                                         groupPrivilege.setChecklistDetail(checklistDetail);
                                         groupPrivilege.setAllow(false);
                                         groupPrivilege.assignUUID();
-                                        allPrivileges.add(groupPrivilege);
+                                        allGroupPrivileges.add(groupPrivilege);
                                     })
                     );
                 } else {
@@ -148,20 +143,20 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                                 .filter(privilege -> privilege.getEntityType() == EntityType.Encounter)
                                 .forEach(encounterPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                    groupPrivilege.setGroup(currentGroup);
+                                    groupPrivilege.setGroup(group);
                                     groupPrivilege.setPrivilege(encounterPrivilege);
                                     groupPrivilege.setSubjectType(subjectType);
                                     groupPrivilege.setEncounterType(operationalFormMapping.getEncounterType());
                                     groupPrivilege.setAllow(false);
                                     groupPrivilege.assignUUID();
-                                    allPrivileges.add(groupPrivilege);
+                                    allGroupPrivileges.add(groupPrivilege);
                                 });
                     }
                 }
             });
         });
 
-        return allPrivileges;
+        return allGroupPrivileges;
     }
 
 

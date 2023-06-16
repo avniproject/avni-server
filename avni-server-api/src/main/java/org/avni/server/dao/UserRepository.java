@@ -2,6 +2,7 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.web.request.api.RequestUtils;
 import org.springframework.data.domain.Page;
@@ -27,7 +28,6 @@ import java.util.Optional;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
-@PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
 public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByUsername(String username);
@@ -42,10 +42,12 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
     @PreAuthorize("hasAnyAuthority('admin', 'user')")
     User save(User user);
 
+    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     @RestResource(path = "findByOrganisation", rel = "findByOrganisation")
     Page<User> findByOrganisationIdAndIsVoidedFalse(@Param("organisationId") Long organisationId,
                                                     Pageable pageable);
 
+    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     @RestResource(path = "findAllById", rel = "findAllById")
     List<User> findByIdIn(@Param("ids") Long[] ids);
 
@@ -91,5 +93,24 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
             throw new EntityNotFoundException("User not found with id / uuid: "+ userId);
         }
         return user;
+    }
+
+    @Query(value = "select (count(p.id) > 0) as exists from group_privilege\n" +
+            "    join privilege p on group_privilege.privilege_id = p.id\n" +
+            "    join groups on group_privilege.group_id = groups.id\n" +
+            "    join user_group ug on groups.id = ug.group_id\n" +
+            "    join users on ug.user_id = users.id\n" +
+            "where p.type = :type and users.id = :userId", nativeQuery = true)
+    boolean hasPrivilege(String type, long userId);
+
+    @Query(value = "select bool_or(groups.has_all_privileges) from users\n" +
+            "    left outer join user_group ug on users.id = ug.user_id\n" +
+            "    left outer join groups on ug.group_id = groups.id\n" +
+            "where users.id = :userId", nativeQuery = true)
+    Boolean hasAll(long userId);
+
+    default boolean hasAllPrivileges(long userId) {
+        Boolean aBoolean = this.hasAll(userId);
+        return aBoolean != null && aBoolean;
     }
 }

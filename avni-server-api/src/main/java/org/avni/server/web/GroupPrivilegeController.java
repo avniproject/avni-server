@@ -42,9 +42,9 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
     @RequestMapping(value = "/groups/{id}/privileges", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public List<GroupPrivilegeContract> getById(@PathVariable("id") Long id) {
-        List<GroupPrivilege> allPrivileges = groupPrivilegeService.getAllGroupPrivileges(id);
+        List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllPossibleGroupPrivileges(id);
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByGroup_Id(id);
-        groupPrivileges.addAll(allPrivileges);
+        groupPrivileges.addAll(allPossibleGroupPrivileges);
         return groupPrivileges.stream()
                 .map(GroupPrivilegeContract::fromEntity)
                 .distinct()

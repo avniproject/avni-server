@@ -12,7 +12,6 @@ import java.util.Set;
 @Table(name = "groups")
 @BatchSize(size = 100)
 public class Group extends OrganisationAwareEntity {
-
     @Column
     private String name;
 

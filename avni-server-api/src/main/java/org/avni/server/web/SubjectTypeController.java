@@ -77,14 +77,13 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
 
     @RequestMapping(value = "/subjectTypes", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public void save(@RequestBody List<SubjectTypeContract> subjectTypeRequests) {
-        accessControlService.checkPrivilege(UserContextHolder.getUser(), PrivilegeType.EditSubjectType);
+        accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
         subjectTypeRequests.forEach(subjectTypeService::saveSubjectType);
     }
 
     @GetMapping(value = "/web/subjectType")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<SubjectTypeContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalSubjectTypeRepository
@@ -96,7 +95,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @GetMapping(value = "/web/subjectType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         OperationalSubjectType operationalSubjectType = operationalSubjectTypeRepository.findOne(id);
@@ -115,9 +114,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @PostMapping(value = "/web/subjectType")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     @Transactional
     ResponseEntity saveSubjectTypeForWeb(@RequestBody SubjectTypeContractWeb request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
         SubjectType existingSubjectType =
                 subjectTypeRepository.findByNameIgnoreCase(request.getName());
         OperationalSubjectType existingOperationalSubjectType =
@@ -187,9 +186,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @PutMapping(value = "/web/subjectType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity updateSubjectTypeForWeb(@RequestBody SubjectTypeContractWeb request,
                                                   @PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
         logger.info(String.format("Processing Subject Type update request: %s", request.toString()));
         if (request.getName().trim().equals(""))
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError("Name can not be empty"));
@@ -216,7 +215,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @Transactional
-    public void updateSubjectType(@RequestBody SubjectTypeContractWeb request, OperationalSubjectType operationalSubjectType) {
+    protected void updateSubjectType(@RequestBody SubjectTypeContractWeb request, OperationalSubjectType operationalSubjectType) {
         SubjectType subjectType = operationalSubjectType.getSubjectType();
 
         buildSubjectType(request, subjectType);
@@ -233,9 +232,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @DeleteMapping(value = "/web/subjectType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity voidSubjectType(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
         OperationalSubjectType operationalSubjectType = operationalSubjectTypeRepository.findOne(id);
         if (operationalSubjectType == null)
             return ResponseEntity.notFound().build();
@@ -259,7 +258,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @GetMapping(value = "/subjectType/syncAttributesData")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public UserSyncAttributeAssignmentRequest getAllConceptSyncAttributes() {
        return subjectTypeService.getSyncAttributeData();
     }

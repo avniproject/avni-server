@@ -32,5 +32,4 @@ public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupP
             "  and p.name in ('View checklist','View enrolment details','View subject','View visit') \n" +
             "  and allow = true", nativeQuery = true)
     List<GroupPrivilege> getAllAllowPrivilegesForUser(Long userId);
-
 }
