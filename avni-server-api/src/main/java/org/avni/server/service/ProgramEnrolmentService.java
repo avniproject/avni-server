@@ -1,6 +1,8 @@
 package org.avni.server.service;
 
 import org.avni.messaging.domain.EntityType;
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.common.EntityHelper;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
@@ -45,7 +47,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
     private ChecklistRepository checklistRepository;
     private ChecklistItemRepository checklistItemRepository;
     private final IdentifierAssignmentRepository identifierAssignmentRepository;
-    private final FormMappingRepository formMappingRepository;
+    private FormMappingService formMappingService;
 
     @Autowired
     public ProgramEnrolmentService(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -60,7 +62,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
                                    ChecklistRepository checklistRepository,
                                    ChecklistItemRepository checklistItemRepository,
                                    IdentifierAssignmentRepository identifierAssignmentRepository,
-                                   FormMappingRepository formMappingRepository) {
+                                   FormMappingRepository formMappingRepository, FormMappingService formMappingService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.programEncounterService = programEncounterService;
         this.programEncounterRepository = programEncounterRepository;
@@ -73,7 +75,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         this.checklistRepository = checklistRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
-        this.formMappingRepository = formMappingRepository;
+        this.formMappingService = formMappingService;
     }
 
     @Transactional
@@ -273,5 +275,10 @@ public class ProgramEnrolmentService implements ScopeAwareService {
     @Override
     public OperatingIndividualScopeAwareRepository repository() {
         return programEnrolmentRepository;
+    }
+
+    public FormMapping getFormMapping(ProgramEnrolment programEnrolment) {
+        FormType formType = programEnrolment.isExited() ?  FormType.ProgramExit : FormType.ProgramEnrolment;
+        return formMappingService.findBy(programEnrolment.getIndividual().getSubjectType(),programEnrolment.getProgram(), null , formType);
     }
 }

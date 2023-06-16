@@ -30,7 +30,6 @@ public class FormMappingService implements NonScopeAwareService {
     private final FormMappingRepository formMappingRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final FormRepository formRepository;
-    private final OrganisationConfigService organisationConfigService;
     private final TaskTypeRepository taskTypeRepository;
 
     @Autowired
@@ -39,14 +38,12 @@ public class FormMappingService implements NonScopeAwareService {
                               ProgramRepository programRepository,
                               SubjectTypeRepository subjectTypeRepository,
                               FormRepository formRepository,
-                              OrganisationConfigService organisationConfigService,
                               TaskTypeRepository taskTypeRepository) {
         this.formMappingRepository = formMappingRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.programRepository = programRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.formRepository = formRepository;
-        this.organisationConfigService = organisationConfigService;
         this.taskTypeRepository = taskTypeRepository;
     }
 
@@ -236,5 +233,10 @@ public class FormMappingService implements NonScopeAwareService {
 
     public FormMapping find(SubjectType subjectType) {
         return formMappingRepository.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndIsVoidedFalse(subjectType);
+    }
+
+
+    public FormMapping findBy(SubjectType subjectType, Program program, EncounterType encounterType, FormType formType) {
+        return formMappingRepository.findBySubjectTypeAndProgramAndEncounterTypeAndIsVoidedFalseAndFormFormType(subjectType, program, encounterType, formType);
     }
 }

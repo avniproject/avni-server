@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.application.FormMapping;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.web.request.EntityApprovalStatusRequest;
@@ -60,7 +61,12 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         return entityApprovalStatusRepository.save(entityApprovalStatus);
     }
 
-    public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid) {
+    public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid, FormMapping formMapping) {
+
+        if (!formMapping.isEnableApproval()) {
+            return;
+        }
+
         ApprovalStatus approvalStatus = approvalStatusRepository.findByStatus(status);
         List<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findByEntityIdAndEntityTypeAndIsVoidedFalse(entityId, entityType);
         if (entityApprovalStatuses != null && entityApprovalStatuses.stream().anyMatch(x -> x.getApprovalStatus().getStatus().equals(status))) {
