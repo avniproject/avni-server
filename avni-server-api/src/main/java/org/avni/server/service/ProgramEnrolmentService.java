@@ -278,7 +278,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
     }
 
     public FormMapping getFormMapping(ProgramEnrolment programEnrolment) {
-        FormType formType = programEnrolment.isExited() ? FormType.ProgramEnrolment : FormType.ProgramExit;
+        FormType formType = programEnrolment.isExited() ?  FormType.ProgramExit : FormType.ProgramEnrolment;
         return formMappingService.findBy(programEnrolment.getIndividual().getSubjectType(),programEnrolment.getProgram(), null , formType);
     }
 }
