@@ -3,8 +3,10 @@ package org.avni.server.web;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.GroupsService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.webapp.ProgramContractWeb;
 import org.springframework.http.ResponseEntity;
@@ -16,26 +18,28 @@ import java.util.List;
 
 @RestController
 public class GroupsController implements RestControllerResourceProcessor<ProgramContractWeb> {
+    private final GroupRepository groupRepository;
+    private final GroupsService groupsService;
+    private final AccessControlService accessControlService;
 
-    private GroupRepository groupRepository;
-    private GroupsService groupsService;
-
-    public GroupsController(GroupRepository groupRepository, GroupsService groupsService) {
+    public GroupsController(GroupRepository groupRepository, GroupsService groupsService, AccessControlService accessControlService) {
         this.groupRepository = groupRepository;
         this.groupsService = groupsService;
+        this.accessControlService = accessControlService;
     }
 
     @GetMapping(value = "/web/groups")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
     public List<Group> getAll() {
+        // since this is security related information added check for get also
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         return groupRepository.findAllByIsVoidedFalse();
     }
 
     @PostMapping(value = "web/groups")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @Transactional
-    public ResponseEntity saveProgramForWeb(@RequestBody GroupContract group) {
+    public ResponseEntity saveGroup(@RequestBody GroupContract group) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         if (group.getName() == null || group.getName().trim().equals("")) {
             return ResponseEntity.badRequest().body("Group name cannot be blank.");
@@ -48,9 +52,9 @@ public class GroupsController implements RestControllerResourceProcessor<Program
     }
 
     @PutMapping(value = "web/group")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @Transactional
     public ResponseEntity updateGroup(@RequestBody Group updatedGroup) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         Group group = groupRepository.findByIdAndOrganisationId(updatedGroup.getId(), organisation.getId());
         if (group == null) {
@@ -69,9 +73,9 @@ public class GroupsController implements RestControllerResourceProcessor<Program
     }
 
     @DeleteMapping(value = "/groups/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity voidGroup(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         Group group = groupRepository.findOne(id);
         if (group == null)
             return ResponseEntity.badRequest().body(String.format("Group with id '%d' not found", id));

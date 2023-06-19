@@ -12,12 +12,14 @@ import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.task.Task;
 import org.avni.server.domain.task.TaskStatus;
 import org.avni.server.domain.task.TaskType;
 import org.avni.server.domain.task.TaskTypeName;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.MediaObservationService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.api.ApiTaskRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.ResponsePage;
@@ -46,9 +48,10 @@ public class TaskApiController {
     private final IndividualRepository individualRepository;
     private final ConceptService conceptService;
     private final MediaObservationService mediaObservationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public TaskApiController(TaskRepository taskRepository, TaskTypeRepository taskTypeRepository, UserRepository userRepository, TaskStatusRepository taskStatusRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, ConceptService conceptService, MediaObservationService mediaObservationService) {
+    public TaskApiController(TaskRepository taskRepository, TaskTypeRepository taskTypeRepository, UserRepository userRepository, TaskStatusRepository taskStatusRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, ConceptService conceptService, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
         this.taskRepository = taskRepository;
         this.taskTypeRepository = taskTypeRepository;
         this.userRepository = userRepository;
@@ -57,13 +60,14 @@ public class TaskApiController {
         this.individualRepository = individualRepository;
         this.conceptService = conceptService;
         this.mediaObservationService = mediaObservationService;
+        this.accessControlService = accessControlService;
     }
 
     @PostMapping(value = "/api/task")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiTaskRequest request) throws IOException {
+        accessControlService.checkPrivilege(PrivilegeType.EditTask);
         Task task = createTask(request.getExternalId());
         TaskType taskType = taskTypeRepository.findByName(request.getTaskTypeName());
         if (taskType == null) {
@@ -108,10 +112,10 @@ public class TaskApiController {
     @RequestMapping(value = "/api/tasks", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional(readOnly = true)
-    public ResponsePage getSubjects(@RequestParam(value = "type") String type,
-                                    @RequestParam(value = "isTerminalStatus") boolean isTerminalStatus,
-                                    @RequestParam(value = "metadata") String metadataConcepts,
-                                    Pageable pageable) {
+    public ResponsePage getTasks(@RequestParam(value = "type") String type,
+                                 @RequestParam(value = "isTerminalStatus") boolean isTerminalStatus,
+                                 @RequestParam(value = "metadata") String metadataConcepts,
+                                 Pageable pageable) {
         Map<Concept, String> conceptsMap = conceptService.readConceptsFromJsonObject(metadataConcepts);
         Page<Task> tasks = taskRepository.findByTaskTypeMetadataAndTaskStatus(type, isTerminalStatus, conceptsMap, pageable);
         ArrayList<ApiTaskResponse> taskResponses = new ArrayList<>();

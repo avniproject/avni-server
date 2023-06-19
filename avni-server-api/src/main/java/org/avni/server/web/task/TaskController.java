@@ -3,9 +3,11 @@ package org.avni.server.web.task;
 import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.task.Task;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.TaskService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.AbstractController;
 import org.avni.server.web.RestControllerResourceProcessor;
@@ -30,11 +32,13 @@ public class TaskController extends AbstractController<Task> implements RestCont
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TaskController.class);
     private final TaskRepository taskRepository;
     private final TaskService taskService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public TaskController(TaskRepository taskRepository, TaskService taskService) {
+    public TaskController(TaskRepository taskRepository, TaskService taskService, AccessControlService accessControlService) {
         this.taskRepository = taskRepository;
         this.taskService = taskService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/task", method = RequestMethod.GET)
@@ -61,8 +65,8 @@ public class TaskController extends AbstractController<Task> implements RestCont
 
     @RequestMapping(value = "/tasks", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse save(@RequestBody TaskRequest taskRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditTask);
         logger.info(String.format("Saving task with UUID %s", taskRequest.getUuid()));
         Task savedTask = taskService.save(taskRequest);
         return new AvniEntityResponse(savedTask);

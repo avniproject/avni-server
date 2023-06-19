@@ -2,6 +2,8 @@ package org.avni.server.web;
 
 
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.joda.time.DateTime;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
@@ -28,18 +30,19 @@ import java.util.stream.Collectors;
 
 @RestController
 public class UserGroupController extends AbstractController<UserGroup> implements RestControllerResourceProcessor<UserGroup> {
-    private UserGroupRepository userGroupRepository;
-    private UserRepository userRepository;
-    private GroupRepository groupRepository;
+    private final UserGroupRepository userGroupRepository;
+    private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
+    private final AccessControlService accessControlService;
 
 
     @Autowired
-    public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository) {
+    public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository, AccessControlService accessControlService) {
         this.userGroupRepository = userGroupRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
+        this.accessControlService = accessControlService;
     }
-
 
     @RequestMapping(value = "/myGroups/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
@@ -51,16 +54,16 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     }
 
     @RequestMapping(value = "/groups/{id}/users", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public List<UserGroupContract> getById(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         return userGroupRepository.findByGroup_IdAndIsVoidedFalse(id).stream()
                 .map(UserGroupContract::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @RequestMapping(value = "/userGroups", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public List<UserGroupContract> getByOrganisationId() {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         return userGroupRepository.findByOrganisationId(UserContextHolder.getUserContext().getOrganisationId()).stream()
                 .map(UserGroupContract::fromEntity)
                 .collect(Collectors.toList());
@@ -68,8 +71,8 @@ public class UserGroupController extends AbstractController<UserGroup> implement
 
     @RequestMapping(value = "/userGroup", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public ResponseEntity addUsersToGroup(@RequestBody List<UserGroupContract> request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         List<UserGroup> usersToBeAdded = new ArrayList<>();
 
         for (UserGroupContract userGroupContract : request) {
@@ -92,8 +95,8 @@ public class UserGroupController extends AbstractController<UserGroup> implement
 
     @RequestMapping(value = "/userGroup/{id}", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public ResponseEntity removeUserFromGroup(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         UserGroup userGroup = userGroupRepository.findOne(id);
         if (userGroup == null)
             return ResponseEntity.badRequest().body(String.format("UserGroup with id '%d' not found", id));

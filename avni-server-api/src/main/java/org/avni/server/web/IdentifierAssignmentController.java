@@ -27,16 +27,15 @@ import javax.transaction.Transactional;
 @RestController
 @Transactional
 public class IdentifierAssignmentController extends AbstractController<IdentifierAssignment> implements RestControllerResourceProcessor<IdentifierAssignment> {
-
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
-    private IdentifierAssignmentRepository identifierAssignmentRepository;
-    private UserService userService;
-    private IdentifierAssignmentService identifierAssignmentService;
-    private IndividualRepository individualRepository;
-    private ProgramEnrolmentRepository programEnrolmentRepository;
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private final IdentifierAssignmentRepository identifierAssignmentRepository;
+    private final UserService userService;
+    private final IdentifierAssignmentService identifierAssignmentService;
+    private final IndividualRepository individualRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
 
     @Autowired
-    public IdentifierAssignmentController(IdentifierAssignmentRepository identifierAssignmentRepository, IdentifierSourceRepository identifierSourceRepository, UserService userService, IdentifierAssignmentService identifierAssignmentService, IndividualRepository individualRepository, ProgramEnrolmentRepository programEnrolmentRepository) {
+    public IdentifierAssignmentController(IdentifierAssignmentRepository identifierAssignmentRepository, UserService userService, IdentifierAssignmentService identifierAssignmentService, IndividualRepository individualRepository, ProgramEnrolmentRepository programEnrolmentRepository) {
         this.identifierAssignmentRepository = identifierAssignmentRepository;
         this.userService = userService;
         this.identifierAssignmentService = identifierAssignmentService;

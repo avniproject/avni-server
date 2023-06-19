@@ -1,9 +1,10 @@
 package org.avni.server.web;
 
-import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.IdentifierSource;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.IdentifierSourceService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.slf4j.LoggerFactory;
@@ -20,35 +21,35 @@ import javax.transaction.Transactional;
 
 @RestController
 public class IdentifierSourceWebController extends AbstractController<IdentifierSource> implements RestControllerResourceProcessor<IdentifierSourceContractWeb> {
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
-    private IdentifierSourceRepository identifierSourceRepository;
-    private CatchmentRepository catchmentRepository;
-    private IdentifierSourceService identifierSourceService;
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private final IdentifierSourceRepository identifierSourceRepository;
+    private final IdentifierSourceService identifierSourceService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public IdentifierSourceWebController(IdentifierSourceRepository identifierSourceRepository, CatchmentRepository catchmentRepository, IdentifierSourceService identifierSourceService) {
+    public IdentifierSourceWebController(IdentifierSourceRepository identifierSourceRepository, IdentifierSourceService identifierSourceService, AccessControlService accessControlService) {
         this.identifierSourceRepository = identifierSourceRepository;
-        this.catchmentRepository = catchmentRepository;
         this.identifierSourceService = identifierSourceService;
+        this.accessControlService = accessControlService;
     }
 
     @GetMapping(value = "/web/identifierSource/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         Long[] id = {ids};
         return wrap(identifierSourceRepository.findByIdIn(id, pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
 
-
     @GetMapping(value = "/web/identifierSource")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
         return wrap(identifierSourceRepository.findPageByIsVoidedFalse(pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
 
     @GetMapping(value = "/web/identifierSource/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierSource identifierSource = identifierSourceRepository.findOne(id);
@@ -59,18 +60,18 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
 
 
     @PostMapping(value = "/web/identifierSource")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     @Transactional
     ResponseEntity saveProgramForWeb(@RequestBody IdentifierSourceContractWeb request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         IdentifierSource identifierSource = identifierSourceService.saveIdSource(request);
         return ResponseEntity.ok(IdentifierSourceContractWeb.fromIdentifierSource(identifierSource));
     }
 
     @PutMapping(value = "/web/identifierSource/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     @Transactional
     public ResponseEntity updateProgramForWeb(@RequestBody IdentifierSourceContractWeb request,
                                               @PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         IdentifierSource identifierSource = identifierSourceRepository.findOne(id);
         if (identifierSource == null)
             return ResponseEntity.badRequest()
@@ -81,9 +82,9 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
     }
 
     @DeleteMapping(value = "/web/identifierSource/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity voidProgram(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         IdentifierSource identifierSource = identifierSourceRepository.findOne(id);
         if (identifierSource == null)
             return ResponseEntity.notFound().build();

@@ -5,6 +5,8 @@ import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.joda.time.DateTime;
 import org.avni.server.service.UserService;
 import org.avni.server.web.request.IdentifierSourceContract;
@@ -22,17 +24,19 @@ import java.util.List;
 
 @RestController
 public class IdentifierSourceController extends AbstractController<IdentifierSource> implements RestControllerResourceProcessor<IdentifierSource> {
-    private IdentifierSourceRepository identifierSourceRepository;
+    private final IdentifierSourceRepository identifierSourceRepository;
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
-    private UserService userService;
-    private CatchmentRepository catchmentRepository;
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private final UserService userService;
+    private final CatchmentRepository catchmentRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public IdentifierSourceController(IdentifierSourceRepository identifierSourceRepository, UserService userService, CatchmentRepository catchmentRepository) {
+    public IdentifierSourceController(IdentifierSourceRepository identifierSourceRepository, UserService userService, CatchmentRepository catchmentRepository, AccessControlService accessControlService) {
         this.identifierSourceRepository = identifierSourceRepository;
         this.userService = userService;
         this.catchmentRepository = catchmentRepository;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/identifierSource/search/lastModified", method = RequestMethod.GET)
@@ -47,8 +51,8 @@ public class IdentifierSourceController extends AbstractController<IdentifierSou
 
     @RequestMapping(value = "/identifierSource", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     void save(@RequestBody List<IdentifierSourceContract> identifierSourceRequests) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         identifierSourceRequests.forEach(this::save);
     }
 
