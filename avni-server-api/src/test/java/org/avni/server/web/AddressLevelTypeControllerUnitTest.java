@@ -1,14 +1,15 @@
 package org.avni.server.web;
 
-import org.avni.server.web.AddressLevelTypeController;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.service.LocationService;
+import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.accessControl.AccessControlServiceStub;
 import org.avni.server.web.request.AddressLevelTypeContract;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.http.ResponseEntity;
 
@@ -38,7 +39,7 @@ public class AddressLevelTypeControllerUnitTest {
     @Before
     public void setup() {
         initMocks(this);
-        addressLevelTypeController = new AddressLevelTypeController(addressLevelTypeRepository, locationRepository, locationService, projectionFactory);
+        addressLevelTypeController = new AddressLevelTypeController(addressLevelTypeRepository, locationService, projectionFactory, new AccessControlServiceStub());
         AddressLevelType foo = new AddressLevelType();
         foo.setUuid(FOO_UUID);
         foo.setName("foo");

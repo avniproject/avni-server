@@ -4,7 +4,9 @@ import org.avni.server.dao.RuleFailureTelemetryRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.RuleFailureTelemetry;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.RuleFailureTelemetryRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +26,12 @@ import java.util.List;
 public class RuleFailureTelemetryController implements RestControllerResourceProcessor<RuleFailureTelemetry> {
 
     private final RuleFailureTelemetryRepository ruleFailureTelemetryRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public RuleFailureTelemetryController(RuleFailureTelemetryRepository ruleFailureTelemetryRepository) {
+    public RuleFailureTelemetryController(RuleFailureTelemetryRepository ruleFailureTelemetryRepository, AccessControlService accessControlService) {
         this.ruleFailureTelemetryRepository = ruleFailureTelemetryRepository;
+        this.accessControlService = accessControlService;
     }
 
     // -------------------Sync APIS Start ----------------------------------------
@@ -75,10 +79,10 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
     }
 
     @RequestMapping(value = "/web/ruleFailureTelemetry", method = RequestMethod.PUT)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public ResponseEntity<List<RuleFailureTelemetry>> updateStatus(@RequestParam("ids") List<Long> ids,
                                        @RequestParam(value = "isClosed") Boolean isClosed) {
+        accessControlService.checkPrivilege(PrivilegeType.EditRuleFailure);
         List<RuleFailureTelemetry> ruleFailureTelemetries = ruleFailureTelemetryRepository.findAllById(ids);
         ruleFailureTelemetries.forEach(ruleFailureTelemetry -> {
             ruleFailureTelemetry.setClosed(isClosed);

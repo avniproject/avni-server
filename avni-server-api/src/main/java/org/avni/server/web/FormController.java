@@ -8,11 +8,13 @@ import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.task.TaskType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.FormWebProjection;
 import org.avni.server.projection.IdentifierAssignmentProjection;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.validation.ValidationException;
 import org.avni.server.util.BadRequestError;
@@ -58,14 +60,15 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     private final FormMappingRepository formMappingRepository;
     private final FormMappingService formMappingService;
     private final FormService formService;
-    private FormRepository formRepository;
-    private ProgramRepository programRepository;
-    private OperationalProgramRepository operationalProgramRepository;
-    private RepositoryEntityLinks entityLinks;
-    private ProjectionFactory projectionFactory;
-    private UserService userService;
-    private IdentifierAssignmentService identifierAssignmentService;
+    private final FormRepository formRepository;
+    private final ProgramRepository programRepository;
+    private final OperationalProgramRepository operationalProgramRepository;
+    private final RepositoryEntityLinks entityLinks;
+    private final ProjectionFactory projectionFactory;
+    private final UserService userService;
+    private final IdentifierAssignmentService identifierAssignmentService;
     private final ConceptService conceptService;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public FormController(FormRepository formRepository,
@@ -77,7 +80,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
                           FormMappingService formMappingService,
                           FormService formService,
                           UserService userService,
-                          IdentifierAssignmentService identifierAssignmentService, ConceptService conceptService) {
+                          IdentifierAssignmentService identifierAssignmentService, ConceptService conceptService, AccessControlService accessControlService) {
         this.formRepository = formRepository;
         this.programRepository = programRepository;
         this.formMappingRepository = formMappingRepository;
@@ -89,11 +92,12 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         this.userService = userService;
         this.identifierAssignmentService = identifierAssignmentService;
         this.conceptService = conceptService;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @GetMapping(value = "/web/forms")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<BasicFormDetails>> getAllFormsWeb(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "includeVoided", required = false) boolean includeVoided,
@@ -132,8 +136,8 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
     @RequestMapping(value = "/forms", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity<?> save(@RequestBody FormContract formRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         logger.info(String.format("Saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formRequest.validate();
@@ -148,8 +152,8 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
     @PostMapping(value = "/web/forms")
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity createWeb(@RequestBody CreateUpdateFormRequest request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         validateCreate(request);
         FormBuilder formBuilder = new FormBuilder(null);
         Form form = formBuilder
@@ -164,8 +168,8 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
     @DeleteMapping(value = "/web/forms/{formUUID}")
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity deleteWeb(@PathVariable String formUUID) {
+        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         try {
             Form existingForm = formRepository.findByUuid(formUUID);
             List<FormMapping> formMappings = formMappingRepository.findByFormId(existingForm.getId());
@@ -192,8 +196,8 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
     @PutMapping(value = "web/forms/{formUUID}/metadata")
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity updateMetadata(@RequestBody CreateUpdateFormRequest request, @PathVariable String formUUID) {
+        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         Form form = validateUpdateMetadata(request, formUUID);
         List<FormMappingRequest> formMappingRequests = request.getFormMappings();
         form.setName(request.getName());
@@ -229,8 +233,8 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
     @RequestMapping(value = "/forms", method = RequestMethod.PATCH)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> patch(@RequestBody FormContract formRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         logger.info(String.format("Patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formService.saveForm(formRequest);
@@ -243,8 +247,8 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
 
     @RequestMapping(value = "/forms", method = RequestMethod.DELETE)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> remove(@RequestBody FormContract formRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         logger.info(String.format("Deleting from form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
@@ -261,7 +265,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @RequestMapping(value = "/forms/export", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public FormContract export(@RequestParam String formUUID) {
         Form form = formRepository.findByUuid(formUUID);
 
@@ -373,7 +377,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
      * </ol>
      */
     @RequestMapping(value = "/forms/program/{programId}", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<BasicFormDetails> getForms(@PathVariable("programId") Long programId, Pageable pageable) {
         Program program = programRepository.findOne(programId);
         if (program == null) {
@@ -417,7 +421,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
      * @return list of program/forms
      */
     @RequestMapping(value = "/forms", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<Map<String, Object>> getForms(Pageable pageable) {
 
         Iterable<OperationalProgram> programItr = operationalProgramRepository.findAllByIsVoidedFalse();
@@ -445,7 +449,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/form/{uuid}/identifierAssignments")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IdentifierAssignmentProjection> getFormIdentifiers(@PathVariable String uuid) {
         try {

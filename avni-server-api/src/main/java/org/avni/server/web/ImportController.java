@@ -7,9 +7,11 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -49,6 +51,7 @@ public class ImportController {
     private final IndividualService individualService;
     private final LocationService locationService;
     private final FormElementRepository formElementRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public ImportController(OldDataImportService oldDataImportService,
@@ -58,7 +61,7 @@ public class ImportController {
                             S3Service s3Service,
                             IndividualService individualService,
                             LocationService locationService,
-                            FormElementRepository formElementRepository) {
+                            FormElementRepository formElementRepository, AccessControlService accessControlService) {
         this.oldDataImportService = oldDataImportService;
         this.jobService = jobService;
         this.bulkUploadS3Service = bulkUploadS3Service;
@@ -67,21 +70,22 @@ public class ImportController {
         this.individualService = individualService;
         this.locationService = locationService;
         this.formElementRepository = formElementRepository;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(getClass());
     }
 
     @RequestMapping(value = "/excelImport", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> uploadData(@RequestParam("metaDataFile") MultipartFile metaDataFile,
                                         @RequestParam MultipartFile dataFile,
                                         @RequestParam(required = false) Integer maxNumberOfRecords,
                                         @RequestParam List<Integer> activeSheets) throws Exception {
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         oldDataImportService.importExcel(metaDataFile.getInputStream(), dataFile.getInputStream(), dataFile.getOriginalFilename(), true, maxNumberOfRecords, activeSheets);
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public void getSampleImportFile(@RequestParam String uploadType, HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
@@ -90,16 +94,17 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity getImportTypes() {
         return ResponseEntity.ok(importService.getImportTypes());
     }
 
     @PostMapping("/import/new")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
     public ResponseEntity<?> doit(@RequestParam MultipartFile file,
                                   @RequestParam String type,
                                   @RequestParam boolean autoApprove,
                                   @RequestParam String locationUploadMode) {
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
@@ -126,7 +131,7 @@ public class ImportController {
     }
 
     @GetMapping("/import/status")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public Page<JobStatus> getUploadStats(Pageable pageable) {
         return jobService.getAll(pageable);
     }
@@ -134,6 +139,7 @@ public class ImportController {
     @GetMapping(value = "/import/errorfile",
             produces = TEXT_PLAIN_VALUE,
             consumes = APPLICATION_OCTET_STREAM_VALUE)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<InputStreamResource> getDocument(@RequestParam String jobUuid) {
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
         return ResponseEntity.ok()
@@ -144,9 +150,9 @@ public class ImportController {
     }
 
     @GetMapping("/upload/media")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public JsonObject uploadMedia(@RequestParam("url") String url,
                                   @RequestParam("oldValue") String oldValue) {
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         JsonObject response = new JsonObject();
         String decodedURL = new String(Base64.getDecoder().decode(url));
         try {

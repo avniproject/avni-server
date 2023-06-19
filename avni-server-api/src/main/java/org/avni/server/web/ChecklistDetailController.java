@@ -1,6 +1,8 @@
 package org.avni.server.web;
 
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.ChecklistDetailService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,23 +19,25 @@ import java.util.List;
 @RestController
 public class ChecklistDetailController {
     private final ChecklistDetailService checklistDetailService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ChecklistDetailController(ChecklistDetailService checklistDetailService) {
+    public ChecklistDetailController(ChecklistDetailService checklistDetailService, AccessControlService accessControlService) {
         this.checklistDetailService = checklistDetailService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/checklistDetail", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> save(@RequestBody ChecklistDetailRequest checklistDetail) {
+        accessControlService.checkPrivilege(PrivilegeType.EditChecklistConfiguration);
         checklistDetailService.saveChecklist(checklistDetail);
         return new ResponseEntity<>("Created", HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/web/checklistDetails", method = RequestMethod.GET)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<ChecklistDetailRequest> getChecklistDetails() {
         return checklistDetailService.getAllChecklistDetail();
     }

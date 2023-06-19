@@ -1,10 +1,11 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.AddressLevelTypeRepository;
-import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.LocationService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.AddressLevelTypeContract;
 import org.slf4j.Logger;
@@ -25,31 +26,30 @@ import java.util.stream.Collectors;
 
 @RestController
 public class AddressLevelTypeController extends AbstractController<AddressLevelType> {
-
     private final AddressLevelTypeRepository addressLevelTypeRepository;
-    private final LocationRepository locationRepository;
-    private Logger logger;
-    private LocationService locationService;
+    private final Logger logger;
+    private final LocationService locationService;
     private final ProjectionFactory projectionFactory;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public AddressLevelTypeController(AddressLevelTypeRepository addressLevelTypeRepository, LocationRepository locationRepository, LocationService locationService, ProjectionFactory projectionFactory) {
+    public AddressLevelTypeController(AddressLevelTypeRepository addressLevelTypeRepository, LocationService locationService, ProjectionFactory projectionFactory, AccessControlService accessControlService) {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
-        this.locationRepository = locationRepository;
         this.locationService = locationService;
         this.projectionFactory = projectionFactory;
+        this.accessControlService = accessControlService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @GetMapping(value = "/addressLevelType")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<AddressLevelType> getAllNonVoidedAddressLevelType(Pageable pageable) {
         return addressLevelTypeRepository.findPageByIsVoidedFalse(pageable);
     }
 
     @GetMapping(value = "/web/addressLevelType")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<AddressLevelType.AddressLevelTypeProjection> findAll() {
         return addressLevelTypeRepository.findAllByIsVoidedFalse()
@@ -64,9 +64,9 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @PostMapping(value = "/addressLevelType")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity<?> createAddressLevelType(@RequestBody AddressLevelTypeContract contract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
         //Do not allow to create location type when there is already another location type with the same name
         if (addressLevelTypeRepository.findByName(contract.getName()) != null)
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
@@ -76,9 +76,9 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @PostMapping(value = "/addressLevelTypes")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity<?> save(@RequestBody List<AddressLevelTypeContract> addressLevelTypeContracts) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
         for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
             logger.info(String.format("Processing addressLevelType request: %s", addressLevelTypeContract.getUuid()));
             locationService.createAddressLevelType(addressLevelTypeContract);
@@ -87,9 +87,9 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @PutMapping(value = "/addressLevelType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity<?> updateAddressLevelType(@PathVariable("id") Long id, @RequestBody AddressLevelTypeContract contract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
         AddressLevelType addressLevelType = addressLevelTypeRepository.findByUuid(contract.getUuid());
         AddressLevelType addressLevelTypeWithSameName = addressLevelTypeRepository.findByName(contract.getName());
         //Do not allow to change location type name when there is already another location type with the same name
@@ -105,9 +105,9 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @DeleteMapping(value = "/addressLevelType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity<?> voidAddressLevelType(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocationType);
         AddressLevelType addressLevelType = addressLevelTypeRepository.findOne(id);
         if (addressLevelType == null) {
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("AddressLevelType with id %d not found", id)));

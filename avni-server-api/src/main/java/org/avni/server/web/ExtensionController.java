@@ -4,9 +4,11 @@ import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.S3Service;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.web.request.ExtensionRequest;
 import org.joda.time.DateTime;
@@ -47,21 +49,23 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     private final S3Service s3Service;
     private final OrganisationConfigService organisationConfigService;
     private final ImplementationRepository implementationRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public ExtensionController(S3Service s3Service, OrganisationConfigService organisationConfigService,
-                               ImplementationRepository implementationRepository) {
+                               ImplementationRepository implementationRepository, AccessControlService accessControlService) {
         this.s3Service = s3Service;
         this.organisationConfigService = organisationConfigService;
         this.implementationRepository = implementationRepository;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @PostMapping("/extension/upload")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     @Transactional
     public ResponseEntity<?> uploadExtensions(@RequestPart(value = "file") MultipartFile file,
                                               @RequestPart(value = "extensionSettings") @Valid List<ExtensionRequest> extensionSettings) {
+        accessControlService.checkPrivilege(PrivilegeType.EditExtension);
         organisationConfigService.updateSettings(OrganisationConfig.Extension.EXTENSION_DIR, extensionSettings);
         try {
             Path tempPath = Files.createTempDirectory(UUID.randomUUID().toString()).toFile().toPath();
@@ -78,7 +82,7 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     }
 
     @GetMapping(value = "/extensions")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<S3ExtensionFile>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
         return wrap(new PageImpl<>(s3Service.listExtensionFiles(lastModifiedDateTime)));
     }

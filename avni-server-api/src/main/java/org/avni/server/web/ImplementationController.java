@@ -2,8 +2,10 @@ package org.avni.server.web;
 
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.repository.query.Param;
@@ -19,23 +21,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.zip.ZipOutputStream;
 
 @RestController
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
 
     private final OrganisationService organisationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ImplementationController(OrganisationService organisationService) {
+    public ImplementationController(OrganisationService organisationService, AccessControlService accessControlService) {
         this.organisationService = organisationService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/implementation/export/{includeLocations}", method = RequestMethod.GET)
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity<ByteArrayResource> export(@PathVariable boolean includeLocations) throws Exception {
-
+        accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         Long orgId = organisation.getId();
 
@@ -87,9 +89,9 @@ public class ImplementationController implements RestControllerResourceProcessor
     }
 
     @RequestMapping(value = "/implementation/delete", method = RequestMethod.DELETE)
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     @Transactional
     public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata) {
+        accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
         organisationService.deleteTransactionalData();
         if (deleteMetadata) {
             organisationService.deleteMetadata();

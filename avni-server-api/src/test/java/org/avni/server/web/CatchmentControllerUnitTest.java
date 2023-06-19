@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.service.ResetSyncService;
-import org.avni.server.web.CatchmentController;
+import org.avni.server.service.accessControl.AccessControlServiceStub;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -29,7 +29,7 @@ public class CatchmentControllerUnitTest {
     @Before
     public void setup() {
         initMocks(this);
-        catchmentController = new CatchmentController(catchmentRepository, null, null, null, resetSyncService);
+        catchmentController = new CatchmentController(catchmentRepository, null, null, null, resetSyncService, new AccessControlServiceStub());
     }
 
     @Test()

@@ -3,7 +3,9 @@ package org.avni.server.web;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.IndividualService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.ProgramEncountersContract;
 import org.avni.server.web.request.RuleDependencyRequest;
@@ -13,7 +15,6 @@ import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
 import org.avni.server.web.request.rules.response.RuleResponseEntity;
 import org.avni.server.web.validation.ValidationException;
-import org.codehaus.jettison.json.JSONException;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.framework.security.UserContextHolder;
@@ -26,7 +27,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,16 +40,18 @@ public class RuleController {
     private final IndividualRepository individualRepository;
     private final FormMappingRepository formMappingRepository;
     private final IndividualService individualService;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public RuleController(RuleService ruleService,
                           ProgramEnrolmentRepository programEnrolmentRepository,
                           IndividualRepository individualRepository,
-                          FormMappingRepository formMappingRepository, IndividualService individualService) {
+                          FormMappingRepository formMappingRepository, IndividualService individualService, AccessControlService accessControlService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.individualRepository = individualRepository;
         this.formMappingRepository = formMappingRepository;
         this.individualService = individualService;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
         this.ruleService = ruleService;
     }

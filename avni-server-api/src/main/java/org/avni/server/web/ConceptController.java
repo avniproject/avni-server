@@ -1,15 +1,15 @@
 package org.avni.server.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.ConceptAnswerRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.projection.CodedConceptProjection;
 import org.avni.server.projection.ConceptProjection;
 import org.avni.server.service.ConceptService;
-import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.ConceptContract;
@@ -38,38 +38,38 @@ import java.util.stream.Stream;
 @RestController
 public class ConceptController implements RestControllerResourceProcessor<Concept> {
     private final Logger logger;
-    private ConceptRepository conceptRepository;
-    private ConceptService conceptService;
-    private ProjectionFactory projectionFactory;
-    ObjectMapper objectMapper;
-    private ConceptAnswerRepository conceptAnswerRepository;
+    private final ConceptRepository conceptRepository;
+    private final ConceptService conceptService;
+    private final ProjectionFactory projectionFactory;
+    private final ConceptAnswerRepository conceptAnswerRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ConceptController(ConceptRepository conceptRepository, ConceptService conceptService, ProjectionFactory projectionFactory, ConceptAnswerRepository conceptAnswerRepository) {
+    public ConceptController(ConceptRepository conceptRepository, ConceptService conceptService, ProjectionFactory projectionFactory, ConceptAnswerRepository conceptAnswerRepository, AccessControlService accessControlService) {
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
         this.projectionFactory = projectionFactory;
         this.conceptAnswerRepository = conceptAnswerRepository;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
-        objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     @RequestMapping(value = "/concepts", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     void save(@RequestBody List<ConceptContract> conceptRequests) {
+        accessControlService.checkPrivilege(PrivilegeType.EditConcept);
         conceptService.saveOrUpdateConcepts(conceptRequests);
     }
 
     @GetMapping(value = "/web/concept/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ConceptProjection getOneForWeb(@PathVariable String uuid) {
         return projectionFactory.createProjection(ConceptProjection.class, conceptService.get(uuid));
     }
 
     @GetMapping(value = "/web/concept")
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<ConceptProjection> getOneForWebByName(@RequestParam String name) {
         Concept concept = conceptRepository.findByName(name);
@@ -79,7 +79,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concepts")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<Concept>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         Sort sortWithId = pageable.getSort().and(new Sort("id"));
@@ -92,7 +92,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concept/usage/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<ConceptUsageContract> getConceptUsage(@PathVariable String uuid) {
         ConceptUsageContract conceptUsageContract = new ConceptUsageContract();
@@ -108,7 +108,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/codedConcepts")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<CodedConceptProjection> getAllCodedConcepts() {
         return conceptRepository.findAllByDataType("Coded")
@@ -118,7 +118,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/concept/dataTypes")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<String> getDataTypes() {
         return Stream.of(ConceptDataType.values())
@@ -128,8 +128,8 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
 
     @DeleteMapping(value = "/concept/{conceptUUID}")
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity deleteWeb(@PathVariable String conceptUUID) {
+        accessControlService.checkPrivilege(PrivilegeType.EditConcept);
         try {
             Concept existingConcept = conceptRepository.findByUuid(conceptUUID);
             existingConcept.setVoided(!existingConcept.isVoided());
@@ -143,7 +143,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = {"/concept/answerConcepts",  "/concept/answerConcepts/search/find"})
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public Page<ConceptSyncAttributeContract> getAnswerConcept(@RequestParam(value = "conceptUUID", required = false) String conceptUUID, Pageable pageable) {
         if(S.isEmpty(conceptUUID)) {
             return new PageImpl<>(Collections.emptyList());
@@ -154,7 +154,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/concept/answerConcepts/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<ConceptSyncAttributeContract> findByIds(@Param("ids") String[] ids, Pageable pageable) {
         return this.conceptRepository.findAllByUuidIn(ids, pageable).map(ConceptSyncAttributeContract::fromConcept);

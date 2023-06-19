@@ -6,9 +6,11 @@ import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.AddressLevelContractWeb;
 import org.avni.server.web.request.LocationContract;
@@ -38,25 +40,27 @@ import java.util.stream.Collectors;
 @RepositoryRestController
 public class LocationController implements RestControllerResourceProcessor<AddressLevel> {
 
-    private LocationRepository locationRepository;
-    private Logger logger;
-    private UserService userService;
-    private LocationService locationService;
-    private ScopeBasedSyncService<AddressLevel> scopeBasedSyncService;
+    private final LocationRepository locationRepository;
+    private final Logger logger;
+    private final UserService userService;
+    private final LocationService locationService;
+    private final ScopeBasedSyncService<AddressLevel> scopeBasedSyncService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService) {
+    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService, AccessControlService accessControlService) {
         this.locationRepository = locationRepository;
         this.userService = userService;
         this.locationService = locationService;
         this.scopeBasedSyncService = scopeBasedSyncService;
+        this.accessControlService = accessControlService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @RequestMapping(value = "/locations", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @Transactional
     public ResponseEntity<?> save(@RequestBody List<LocationContract> locationContracts) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocation);
         try {
             List<AddressLevel> list = locationService.saveAll(locationContracts);
             if (list.size() == 1) {
@@ -70,14 +74,14 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @GetMapping(value = "/locations")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<LocationProjection> getAll(Pageable pageable) {
         return locationRepository.findNonVoidedLocations(pageable);
     }
 
     @GetMapping(value = "locations/search/find")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<LocationProjection> find(
             @RequestParam(value = "title", defaultValue = "") String title,
@@ -88,7 +92,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @GetMapping(value = "/locations/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<LocationProjection> findByIdIn(@Param("ids") Long[] ids) {
         if (ids == null || ids.length == 0) {
@@ -98,7 +102,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @RequestMapping(value = {"/locations/search/lastModified", "/locations/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user','admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<AddressLevel>> getAddressLevelsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
@@ -108,10 +112,10 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @PutMapping(value = "/locations/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity updateLocation(@RequestBody LocationEditContract locationEditContract,
                                          @PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocation);
         logger.info(String.format("Processing location update request: %s", locationEditContract.toString()));
         AddressLevel location;
         try {
@@ -124,9 +128,9 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @DeleteMapping(value = "/locations/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
     public ResponseEntity voidLocation(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocation);
         AddressLevel location = locationRepository.findOne(id);
         if (location == null)
             return ResponseEntity.badRequest().body(String.format("Location with id '%d' not found", id));
@@ -145,16 +149,17 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @GetMapping(value = "/locations/search/typeId/{typeId}")
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<AddressLevelContractWeb> getLocationsByTypeId(@PathVariable("typeId") Long typeId) {
+        accessControlService.checkPrivilege(PrivilegeType.EditLocation);
         return locationRepository.findNonVoidedLocationsByTypeId(typeId).stream()
                 .map(AddressLevelContractWeb::fromEntity)
                 .collect(Collectors.toList());
     }
 
     @GetMapping(value = "locations/parents/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<LocationProjection> getParents(@PathVariable("uuid") String uuid,
                                                @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {

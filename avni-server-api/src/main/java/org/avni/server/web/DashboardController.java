@@ -2,8 +2,10 @@ package org.avni.server.web;
 
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.domain.Dashboard;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.service.DashboardService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.DashboardRequest;
 import org.avni.server.web.request.DashboardResponse;
 import org.joda.time.DateTime;
@@ -26,17 +28,19 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     private final DashboardRepository dashboardRepository;
     private final DashboardService dashboardService;
     private final DashboardMapper dashboardMapper;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public DashboardController(DashboardRepository dashboardRepository,
-                               DashboardService dashboardService, DashboardMapper dashboardMapper) {
+                               DashboardService dashboardService, DashboardMapper dashboardMapper, AccessControlService accessControlService) {
         this.dashboardRepository = dashboardRepository;
         this.dashboardService = dashboardService;
         this.dashboardMapper = dashboardMapper;
+        this.accessControlService = accessControlService;
     }
 
     @GetMapping(value = "/web/dashboard")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<DashboardResponse> getAll() {
         return dashboardRepository.findAllByIsVoidedFalse()
@@ -45,7 +49,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     }
 
     @GetMapping(value = "/web/dashboard/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public DashboardResponse getById(@PathVariable Long id) {
         Dashboard dashboard = dashboardRepository.findEntity(id);
@@ -53,19 +57,19 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     }
 
     @PostMapping(value = "/web/dashboard")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
     public ResponseEntity<DashboardResponse> newDashboard(@RequestBody DashboardRequest dashboardRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Dashboard dashboard = dashboardService.saveDashboard(dashboardRequest);
         return ResponseEntity.ok(dashboardMapper.fromEntity(dashboard));
     }
 
     @PutMapping(value = "/web/dashboard/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
     public ResponseEntity<DashboardResponse> editDashboard(@PathVariable Long id, @RequestBody DashboardRequest dashboardRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<Dashboard> dashboard = dashboardRepository.findById(id);
         if (!dashboard.isPresent()) {
             return ResponseEntity.notFound().build();
@@ -75,10 +79,10 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     }
 
     @DeleteMapping(value = "/web/dashboard/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
     public void deleteDashboard(@PathVariable Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<Dashboard> dashboard = dashboardRepository.findById(id);
         dashboard.ifPresent(dashboardService::deleteDashboard);
     }

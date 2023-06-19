@@ -3,8 +3,10 @@ package org.avni.server.web;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.OrganisationConfigRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
@@ -21,16 +23,18 @@ import javax.transaction.Transactional;
 @RepositoryRestController
 public class OrganisationConfigController implements RestControllerResourceProcessor<OrganisationConfig> {
     private final OrganisationConfigService organisationConfigService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public OrganisationConfigController(OrganisationConfigService organisationConfigService) {
+    public OrganisationConfigController(OrganisationConfigService organisationConfigService, AccessControlService accessControlService) {
         this.organisationConfigService = organisationConfigService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/organisationConfig", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity save(@RequestBody OrganisationConfigRequest request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         OrganisationConfig organisationConfig = organisationConfigService.saveOrganisationConfig(request, organisation);
         return new ResponseEntity<>(organisationConfig, HttpStatus.CREATED);
@@ -38,8 +42,8 @@ public class OrganisationConfigController implements RestControllerResourceProce
 
     @RequestMapping(value = "/organisationConfig", method = RequestMethod.PUT)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity update(@RequestBody OrganisationConfigRequest request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
         if (organisationConfig == null ) {
@@ -56,26 +60,26 @@ public class OrganisationConfigController implements RestControllerResourceProce
     }
 
     @RequestMapping(value = "/organisationConfig/exportSettings", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public JsonObject getExportSettings() {
         return organisationConfigService.getExportSettings();
     }
 
     @RequestMapping(value = "/organisationConfig/exportSettings", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> saveNewExportSettings(@RequestParam(value = "name") String name, @RequestBody JsonObject request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         return organisationConfigService.saveNewExportSettings(name, request);
     }
 
     @RequestMapping(value = "/organisationConfig/exportSettings", method = RequestMethod.PUT)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> updateExistingExportSettings(@RequestParam(value = "name") String name, @RequestBody JsonObject request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         return organisationConfigService.updateExistingExportSettings(name, request);
     }
 
     @RequestMapping(value = "/organisationConfig/exportSettings", method = RequestMethod.DELETE)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> deleteExportSettings(@RequestParam(value = "name") String name) {
+        accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
         return organisationConfigService.deleteExportSettings(name);
     }
 }

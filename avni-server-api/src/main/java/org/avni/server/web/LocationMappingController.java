@@ -22,22 +22,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class LocationMappingController implements RestControllerResourceProcessor<ParentLocationMapping> {
-
-    private LocationMappingRepository locationMappingRepository;
-    private Logger logger;
-    private UserService userService;
-    private ScopeBasedSyncService<ParentLocationMapping> scopeBasedSyncService;
+    private final LocationMappingRepository locationMappingRepository;
+    private final UserService userService;
+    private final ScopeBasedSyncService<ParentLocationMapping> scopeBasedSyncService;
 
     @Autowired
     public LocationMappingController(UserService userService, LocationMappingRepository locationMappingRepository, ScopeBasedSyncService<ParentLocationMapping> scopeBasedSyncService) {
         this.userService = userService;
         this.locationMappingRepository = locationMappingRepository;
         this.scopeBasedSyncService = scopeBasedSyncService;
-        this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @RequestMapping(value = {"/locationMapping/search/lastModified", "/locationMapping/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user','admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
