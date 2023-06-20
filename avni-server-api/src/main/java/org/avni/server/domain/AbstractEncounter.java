@@ -94,10 +94,6 @@ public class AbstractEncounter extends SyncAttributeEntity {
         return cancelDateTime;
     }
 
-    public boolean isCancelled() {
-        return cancelDateTime != null;
-    }
-
     public void setCancelDateTime(DateTime cancelDateTime) {
         this.cancelDateTime = cancelDateTime;
     }

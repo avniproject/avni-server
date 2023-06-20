@@ -25,7 +25,9 @@ public class EntityApprovalStatusWriter {
 
     public void saveStatus(FormMapping formMapping, Long entityId, EntityApprovalStatus.EntityType entityType, String entityTypeUuid) {
         boolean isAutoApprove = Boolean.parseBoolean(autoApprove);
+        if (formMapping.isEnableApproval()) {
             ApprovalStatus.Status status = isAutoApprove ? ApprovalStatus.Status.Approved : ApprovalStatus.Status.Pending;
-            entityApprovalStatusService.createStatus(entityType, entityId, status, entityTypeUuid, formMapping);
+            entityApprovalStatusService.createStatus(entityType, entityId, status, entityTypeUuid);
+        }
     }
 }

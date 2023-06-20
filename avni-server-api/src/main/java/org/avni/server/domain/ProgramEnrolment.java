@@ -64,10 +64,6 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @Column(name = "address_id")
     private Long addressId;
 
-    public boolean isExited() {
-        return this.getProgramExitDateTime() != null;
-    }
-
     public Program getProgram() {
         return program;
     }

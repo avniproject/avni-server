@@ -2,8 +2,6 @@ package org.avni.server.service;
 
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.EntityType;
-import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -48,10 +46,9 @@ public class EncounterService implements ScopeAwareService {
     private EncounterTypeRepository encounterTypeRepository;
     private FormMappingRepository formMappingRepository;
     private EncounterSearchRepository encounterSearchRepository;
-    private FormMappingService formMappingService;
 
     @Autowired
-    public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, RuleFailureLogRepository ruleFailureLogRepository, EncounterTypeRepository encounterTypeRepository, FormMappingRepository formMappingRepository, EncounterSearchRepository encounterSearchRepository, FormMappingService formMappingService) {
+    public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, RuleFailureLogRepository ruleFailureLogRepository, EncounterTypeRepository encounterTypeRepository, FormMappingRepository formMappingRepository, EncounterSearchRepository encounterSearchRepository) {
         this.encounterRepository = encounterRepository;
         this.observationService = observationService;
         this.individualRepository = individualRepository;
@@ -59,7 +56,6 @@ public class EncounterService implements ScopeAwareService {
         this.encounterTypeRepository = encounterTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.encounterSearchRepository = encounterSearchRepository;
-        this.formMappingService = formMappingService;
     }
 
     public EncounterContract getEncounterByUuid(String uuid) {
@@ -195,10 +191,5 @@ public class EncounterService implements ScopeAwareService {
         } else {
             return encounterRepository.findByConceptsAndEncounterTypeAndSubject(encounterSearchRequest.getLastModifiedDateTime(), encounterSearchRequest.getNow(), encounterSearchRequest.getConceptsMap(), encounterSearchRequest.getEncounterType(), encounterSearchRequest.getSubjectUUID(), encounterSearchRequest.getPageable());
         }
-    }
-
-    public FormMapping getFormMapping(Encounter encounter) {
-        FormType formType = encounter.isCancelled() ? FormType.IndividualEncounterCancellation : FormType.Encounter;
-        return formMappingService.findBy(encounter.getIndividual().getSubjectType(), null, encounter.getEncounterType(), formType);
     }
 }

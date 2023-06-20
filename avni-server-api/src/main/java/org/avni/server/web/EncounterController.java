@@ -44,7 +44,6 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final EncounterService encounterService;
     private ScopeBasedSyncService<Encounter> scopeBasedSyncService;
     private FormMappingService formMappingService;
-    private EntityApprovalStatusService entityApprovalStatusService;
 
     @Autowired
     public EncounterController(IndividualRepository individualRepository,
@@ -53,7 +52,7 @@ public class EncounterController extends AbstractController<Encounter> implement
                                ObservationService observationService,
                                UserService userService,
                                Bugsnag bugsnag,
-                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService) {
+                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService) {
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
@@ -63,7 +62,6 @@ public class EncounterController extends AbstractController<Encounter> implement
         this.encounterService = encounterService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
-        this.entityApprovalStatusService = entityApprovalStatusService;
     }
 
     @GetMapping(value = "/web/encounter/{uuid}")
@@ -91,31 +89,6 @@ public class EncounterController extends AbstractController<Encounter> implement
     public void save(@RequestBody EncounterRequest request) {
         logger.info("Saving encounter with uuid %s", request.getUuid());
 
-        createEncounter(request, encounterService);
-
-        logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
-    }
-
-    @RequestMapping(value = "/web/encounters", method = RequestMethod.POST)
-    @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void saveForWeb(@RequestBody EncounterRequest request) {
-        logger.info("Saving encounter with uuid %s", request.getUuid());
-
-        Encounter encounter = createEncounter(request, encounterService);
-        addEntityApprovalStatusIfRequired(encounter);
-
-        logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
-    }
-
-    private void addEntityApprovalStatusIfRequired(Encounter encounter) {
-        FormMapping formMapping = encounterService.getFormMapping(encounter);
-
-        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Encounter, encounter.getId(), ApprovalStatus.Status.Pending, encounter.getEncounterType().getUuid(), formMapping);
-    }
-
-    private Encounter createEncounter(EncounterRequest request, EncounterService encounterService) {
-
         checkForSchedulingCompleteConstraintViolation(request);
 
         EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterType(), request.getEncounterTypeUUID());
@@ -127,7 +100,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         Encounter encounter = newOrExistingEntity(encounterRepository, request, new Encounter());
         //Planned visit can not overwrite completed encounter
         if (encounter.isCompleted() && request.isPlanned())
-            return null;
+            return;
 
         encounter.setEncounterDateTime(request.getEncounterDateTime());
         encounter.setIndividual(individual);
@@ -156,12 +129,11 @@ public class EncounterController extends AbstractController<Encounter> implement
                 encounter.getObservations().putAll(observationsFromDecisions);
             }
         }
-        this.encounterService.save(encounter);
-
+        encounterService.save(encounter);
         if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
-            this.encounterService.saveVisitSchedules(individual.getUuid(), request.getVisitSchedules(), request.getUuid());
+            encounterService.saveVisitSchedules(individual.getUuid(), request.getVisitSchedules(), request.getUuid());
         }
-        return encounter;
+        logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
     }
 
     @RequestMapping(value = "/encounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
