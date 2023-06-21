@@ -72,11 +72,6 @@ public class IndividualRelationController {
     @ResponseBody
     @Transactional
     public void deleteIndividualRelation(@PathVariable Long id) {
-        Optional<IndividualRelation> relation = individualRelationRepository.findById(id);
-        if (relation.isPresent()) {
-            IndividualRelation individualRelation = relation.get();
-            individualRelation.setVoided(true);
-            individualRelationRepository.save(individualRelation);
-        }
+        individualRelationService.deleteRelation(id);
     }
 }

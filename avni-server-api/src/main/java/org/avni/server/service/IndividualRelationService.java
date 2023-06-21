@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -126,6 +127,20 @@ public class IndividualRelationService implements NonScopeAwareService {
         IndividualRelation existingRelation = individualRelationRepository.findByNameIgnoreCase(name);
         if (existingRelation != null) {
             throw new BadRequestError(String.format("Relation %s already exists", name));
+        }
+    }
+
+    public void deleteRelation(Long id) {
+        Optional<IndividualRelation> relation = individualRelationRepository.findById(id);
+        if (relation.isPresent()) {
+            IndividualRelation individualRelation = relation.get();
+            individualRelation.setVoided(true);
+
+            for (IndividualRelationGenderMapping individualRelationGenderMapping : individualRelation.getGenderMappings()) {
+                individualRelationGenderMapping.setVoided(true);
+            }
+
+            individualRelationRepository.save(individualRelation);
         }
     }
 
