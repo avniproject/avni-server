@@ -2,6 +2,8 @@ package org.avni.server.dao;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.framework.security.UserContextHolder;
+import org.flywaydb.core.api.android.ContextHolder;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -16,12 +18,18 @@ public class UserRepositoryTest extends AbstractControllerIntegrationTest {
     @Test
     public void hasPrivilege() {
         setUser("demo-user");
-        assertFalse(userRepository.hasPrivilege(PrivilegeType.EditSubjectType.name(), 4));
+        assertFalse(userRepository.hasPrivilege(PrivilegeType.EditSubjectType.name(), UserContextHolder.getUser().getId()));
     }
 
     @Test
     public void hasAllPrivileges() {
         setUser("demo-admin");
-        assertTrue(userRepository.hasAllPrivileges(4));
+        assertTrue(userRepository.hasAllPrivileges(UserContextHolder.getUser().getId()));
+    }
+
+    @Test
+    public void hasNoSubjectPrivilege() {
+        setUser("user-no-access");
+        assertFalse(userRepository.hasSubjectPrivilege(PrivilegeType.ViewSubject.name(), 1, UserContextHolder.getUser().getId()));
     }
 }

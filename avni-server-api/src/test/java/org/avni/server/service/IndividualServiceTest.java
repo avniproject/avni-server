@@ -23,7 +23,7 @@ public class IndividualServiceTest {
     public void setUp() throws Exception {
         initMocks(this);
         individualService = new IndividualService(individualRepository,
-                null, null, null, null, null, null, conceptService);
+                null, null, null, null, null, null, conceptService, null);
     }
 
 

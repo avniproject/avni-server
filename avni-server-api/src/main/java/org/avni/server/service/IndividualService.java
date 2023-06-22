@@ -7,10 +7,12 @@ import org.avni.server.application.*;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.observation.PhoneNumber;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
@@ -45,9 +47,10 @@ public class IndividualService implements ScopeAwareService {
     private final AddressLevelService addressLevelService;
     private final ConceptService conceptService;
     private final ObjectMapper objectMapper;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, AddressLevelService addressLevelService, ConceptService conceptService) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -56,6 +59,7 @@ public class IndividualService implements ScopeAwareService {
         this.subjectTypeRepository = subjectTypeRepository;
         this.addressLevelService = addressLevelService;
         this.conceptService = conceptService;
+        this.accessControlService = accessControlService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -72,6 +76,7 @@ public class IndividualService implements ScopeAwareService {
         if (individual == null) {
             return null;
         }
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
         Set<EncounterContract> encountersContractList = constructEncounters(individual.nonVoidedEncounters());
         IndividualContract individualContract = new IndividualContract();
         individualContract.setEncounters(encountersContractList);
@@ -83,6 +88,8 @@ public class IndividualService implements ScopeAwareService {
         if (individual == null) {
             return null;
         }
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
+
         List<EnrolmentContract> enrolmentContractList = constructEnrolmentsMetadata(individual);
         IndividualContract individualContract = new IndividualContract();
         individualContract.setUuid(individual.getUuid());
@@ -143,6 +150,7 @@ public class IndividualService implements ScopeAwareService {
 
     public List<EnrolmentContract> constructEnrolmentsMetadata(Individual individual) {
         return individual.getProgramEnrolments().stream().filter(x -> !x.isVoided()).map(programEnrolment -> {
+            accessControlService.checkProgramPrivilege(PrivilegeType.ViewEnrolmentDetails, programEnrolment);
             EnrolmentContract enrolmentContract = new EnrolmentContract();
             enrolmentContract.setUuid(programEnrolment.getUuid());
             enrolmentContract.setId(programEnrolment.getId());
@@ -164,6 +172,7 @@ public class IndividualService implements ScopeAwareService {
 
     public Set<EncounterContract> constructEncounters(Stream<Encounter> encounters) {
         return encounters.map(encounter -> {
+            accessControlService.checkEncounterPrivilege(PrivilegeType.ViewVisit, encounter);
             EncounterContract encounterContract = new EncounterContract();
             EntityTypeContract entityTypeContract = new EntityTypeContract();
             entityTypeContract.setUuid(encounter.getEncounterType().getUuid());

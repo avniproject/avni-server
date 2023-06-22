@@ -9,6 +9,8 @@ import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.S;
 import org.avni.server.web.api.EncounterSearchRequest;
 import org.avni.server.web.request.EncounterContract;
@@ -39,23 +41,21 @@ public class EncounterService implements ScopeAwareService {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterService.class);
     @Autowired
     Bugsnag bugsnag;
-    private EncounterRepository encounterRepository;
-    private ObservationService observationService;
-    private IndividualRepository individualRepository;
-    private RuleFailureLogRepository ruleFailureLogRepository;
-    private EncounterTypeRepository encounterTypeRepository;
-    private FormMappingRepository formMappingRepository;
-    private EncounterSearchRepository encounterSearchRepository;
+    private final EncounterRepository encounterRepository;
+    private final ObservationService observationService;
+    private final IndividualRepository individualRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final EncounterSearchRepository encounterSearchRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, RuleFailureLogRepository ruleFailureLogRepository, EncounterTypeRepository encounterTypeRepository, FormMappingRepository formMappingRepository, EncounterSearchRepository encounterSearchRepository) {
+    public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterSearchRepository encounterSearchRepository, AccessControlService accessControlService) {
         this.encounterRepository = encounterRepository;
         this.observationService = observationService;
         this.individualRepository = individualRepository;
-        this.ruleFailureLogRepository = ruleFailureLogRepository;
         this.encounterTypeRepository = encounterTypeRepository;
-        this.formMappingRepository = formMappingRepository;
         this.encounterSearchRepository = encounterSearchRepository;
+        this.accessControlService = accessControlService;
     }
 
     public EncounterContract getEncounterByUuid(String uuid) {
@@ -63,13 +63,14 @@ public class EncounterService implements ScopeAwareService {
         return constructEncounters(encounter);
     }
 
-    public Page<EncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable){
-        Page<EncounterContract> encountersContract = null;
+    public Page<EncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable) {
+        Page<EncounterContract> encountersContract;
         List<String> encounterTypeIdList = new ArrayList<>();
-        if(encounterTypeUuids != null) {
+        if (encounterTypeUuids != null) {
             encounterTypeIdList = Arrays.asList(encounterTypeUuids.split(","));
         }
         Individual individual = individualRepository.findByUuid(uuid);
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individual);
         Specification<Encounter> completedEncounterSpecification = Specification.where(encounterRepository.withNotNullEncounterDateTime())
                 .or(encounterRepository.withNotNullCancelDateTime());
         encountersContract = encounterRepository.findAll(
@@ -79,33 +80,34 @@ public class EncounterService implements ScopeAwareService {
                         .and(encounterRepository.withEncounterDateTime(encounterDateTime))
                         .and(encounterRepository.withVoidedFalse())
                         .and(completedEncounterSpecification)
-                ,pageable).map(encounter -> constructEncounters(encounter));
+                , pageable).map(this::constructEncounters);
         return encountersContract;
     }
 
     public EncounterContract constructEncounters(Encounter encounter) {
-            EncounterContract encountersContract = new EncounterContract();
-            EntityTypeContract entityTypeContract = new EntityTypeContract();
-            entityTypeContract.setName(encounter.getEncounterType().getName());
-            entityTypeContract.setUuid(encounter.getEncounterType().getUuid());
-            entityTypeContract.setEntityEligibilityCheckRule(encounter.getEncounterType().getEncounterEligibilityCheckRule());
-            entityTypeContract.setImmutable(encounter.getEncounterType().isImmutable());
-            encountersContract.setUuid(encounter.getUuid());
-            encountersContract.setName(encounter.getName());
-            encountersContract.setEncounterType(entityTypeContract);
-            encountersContract.setSubjectUUID(encounter.getIndividual().getUuid());
-            encountersContract.setEncounterDateTime(encounter.getEncounterDateTime());
-            encountersContract.setCancelDateTime(encounter.getCancelDateTime());
-            encountersContract.setEarliestVisitDateTime(encounter.getEarliestVisitDateTime());
-            encountersContract.setMaxVisitDateTime(encounter.getMaxVisitDateTime());
-            encountersContract.setVoided(encounter.isVoided());
-            if(encounter.getObservations() != null) {
-                encountersContract.setObservations(observationService.constructObservations(encounter.getObservations()));
-            }
-            if(encounter.getCancelObservations() != null) {
-                encountersContract.setCancelObservations(observationService.constructObservations(encounter.getCancelObservations()));
-            }
-        return  encountersContract;
+        accessControlService.checkEncounterPrivilege(PrivilegeType.ViewVisit, encounter);
+        EncounterContract encountersContract = new EncounterContract();
+        EntityTypeContract entityTypeContract = new EntityTypeContract();
+        entityTypeContract.setName(encounter.getEncounterType().getName());
+        entityTypeContract.setUuid(encounter.getEncounterType().getUuid());
+        entityTypeContract.setEntityEligibilityCheckRule(encounter.getEncounterType().getEncounterEligibilityCheckRule());
+        entityTypeContract.setImmutable(encounter.getEncounterType().isImmutable());
+        encountersContract.setUuid(encounter.getUuid());
+        encountersContract.setName(encounter.getName());
+        encountersContract.setEncounterType(entityTypeContract);
+        encountersContract.setSubjectUUID(encounter.getIndividual().getUuid());
+        encountersContract.setEncounterDateTime(encounter.getEncounterDateTime());
+        encountersContract.setCancelDateTime(encounter.getCancelDateTime());
+        encountersContract.setEarliestVisitDateTime(encounter.getEarliestVisitDateTime());
+        encountersContract.setMaxVisitDateTime(encounter.getMaxVisitDateTime());
+        encountersContract.setVoided(encounter.isVoided());
+        if (encounter.getObservations() != null) {
+            encountersContract.setObservations(observationService.constructObservations(encounter.getObservations()));
+        }
+        if (encounter.getCancelObservations() != null) {
+            encountersContract.setCancelObservations(observationService.constructObservations(encounter.getCancelObservations()));
+        }
+        return encountersContract;
     }
 
     public List<Encounter> scheduledEncountersByType(Individual individual, String encounterTypeName, String currentEncounterUuid) {

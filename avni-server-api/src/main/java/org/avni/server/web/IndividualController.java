@@ -2,9 +2,11 @@ package org.avni.server.web;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.geo.Point;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.IndividualRequest;
 import org.avni.server.web.request.PointRequest;
@@ -59,6 +61,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final IndividualConstructionService individualConstructionService;
     private final ScopeBasedSyncService<Individual> scopeBasedSyncService;
     private final SubjectMigrationService subjectMigrationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -73,7 +76,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
                                 IndividualConstructionService individualConstructionService,
-                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService) {
+                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -88,8 +91,10 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.individualConstructionService = individualConstructionService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
+        this.accessControlService = accessControlService;
     }
 
+    // used in offline mode hence no access check
     @RequestMapping(value = "/individuals", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
@@ -137,7 +142,6 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = {"/individual/v2", "/individual/search/lastModified/v2"})
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public SlicedResources<Resource<Individual>> getIndividualsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -146,11 +150,11 @@ public class IndividualController extends AbstractController<Individual> impleme
         if (subjectTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subjectTypeUuid);
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(individualRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Individual));
     }
 
     @GetMapping(value = {"/individual", /*-->Both are Deprecated */ "/individual/search/byCatchmentAndLastModified", "/individual/search/lastModified"})
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<Individual>> getIndividualsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -159,6 +163,8 @@ public class IndividualController extends AbstractController<Individual> impleme
         if (subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
+
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subjectTypeUuid);
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(individualRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Individual));
     }
 
@@ -186,24 +192,27 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = "/web/individual/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public IndividualWebProjection getOneForWeb(@PathVariable String uuid) {
-        return projectionFactory.createProjection(IndividualWebProjection.class, individualRepository.findByUuid(uuid));
+        IndividualWebProjection projection = projectionFactory.createProjection(IndividualWebProjection.class, individualRepository.findByUuid(uuid));
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, projection.getSubjectType().getUuid());
+        return projection;
     }
 
     @GetMapping(value = "/web/individual")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IndividualWebProjection> getByUUIDs(@RequestParam(value = "uuids") List<String> uuids) {
-        return individualRepository.findAllByUuidIn(uuids);
+        List<IndividualWebProjection> projections = individualRepository.findAllByUuidIn(uuids);
+        List<String> subjectTypeUUIDs = projections.stream().map(individualWebProjection -> individualWebProjection.getSubjectType().getUuid()).distinct().collect(Collectors.toList());
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subjectTypeUUIDs);
+        return projections;
     }
 
     @GetMapping(value = "/web/subjectProfile")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<org.avni.server.web.request.IndividualContract> getSubjectProfile(@RequestParam("uuid") String uuid) {
         org.avni.server.web.request.IndividualContract individualContract = individualService.getSubjectInfo(uuid);
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, individualContract.getSubjectType().getUuid());
         return ResponseEntity.ok(individualContract);
     }
 
@@ -242,25 +251,25 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @DeleteMapping("/web/subject/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
     public ResponseEntity<?> voidSubject(@PathVariable String uuid) {
         Individual individual = individualRepository.findByUuid(uuid);
         if (individual == null) {
-            ResponseEntity.notFound().build();
+            return ResponseEntity.notFound().build();
         }
+        accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
         individualService.voidSubject(individual);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/subject/search")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IndividualContract> getAllSubjects(@RequestParam String addressLevelUUID,
                                                    @RequestParam String subjectTypeName) {
         AddressLevel addressLevel = locationRepository.findByUuid(addressLevelUUID);
         SubjectType subjectType = subjectTypeRepository.findByName(subjectTypeName);
+        accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, subjectType);
         List<Individual> individuals = individualRepository.findAllByAddressLevelAndSubjectTypeAndIsVoidedFalse(addressLevel, subjectType);
         return individuals.stream().map(individualConstructionService::getSubjectInfo).collect(Collectors.toList());
     }

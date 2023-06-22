@@ -115,10 +115,16 @@ INSERT INTO gender (id, name, uuid, version, organisation_id, created_by_id, las
 VALUES (3, 'Other', '188ad77e-fe46-4328-b0e2-98f3a05c554c', 1, 1, 1, 1, now(), now());
 
 insert into groups (id, uuid, name, is_voided, version, organisation_id, has_all_privileges, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-values (1, uuid_generate_v4(), 'Everyone', false, 1, 2, true, 1, 1, now(), now());
-
+values (1, uuid_generate_v4(), 'All Privileges Group', false, 1, 2, true, 1, 1, now(), now());
 insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 select uuid_generate_v4(), id, 1, false, 1, 2, 1, 1, now(), now() from users;
+
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id)
+VALUES (6, 'user-no-access', '07a9641b-e848-4efb-96a4-aea35ddb7ef0', 2, 'ByCatchment', false, 1);
+insert into groups (id, uuid, name, is_voided, version, organisation_id, has_all_privileges, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+values (2, uuid_generate_v4(), 'No Access', false, 1, 2, false, 1, 1, now(), now());
+insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+values (uuid_generate_v4(), 6, 2, false, 1, 2, 1, 1, now(), now());
 
 INSERT INTO concept (id, name, data_type, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES

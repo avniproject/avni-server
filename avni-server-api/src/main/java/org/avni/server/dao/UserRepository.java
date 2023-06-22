@@ -31,7 +31,9 @@ import java.util.Optional;
 public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByUsername(String username);
+
     User findByUuid(String uuid);
+
     Optional<User> findById(Long id);
 
     @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin', 'admin')")
@@ -84,13 +86,13 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
 
     default User getUser(String userId) {
         User user = null;
-        if(RequestUtils.isValidUUID(userId)) {
+        if (RequestUtils.isValidUUID(userId)) {
             user = findByUuid(userId);
         } else {
             user = findOne(Long.parseLong(userId));
         }
-        if(user == null) {
-            throw new EntityNotFoundException("User not found with id / uuid: "+ userId);
+        if (user == null) {
+            throw new EntityNotFoundException("User not found with id / uuid: " + userId);
         }
         return user;
     }
@@ -100,7 +102,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
             "    join groups on group_privilege.group_id = groups.id\n" +
             "    join user_group ug on groups.id = ug.group_id\n" +
             "    join users on ug.user_id = users.id\n" +
-            "where p.type = :type and users.id = :userId", nativeQuery = true)
+            "where p.type = :type and users.id = :userId and group_privilege.allow", nativeQuery = true)
     boolean hasPrivilege(String type, long userId);
 
     @Query(value = "select bool_or(groups.has_all_privileges) from users\n" +
@@ -108,6 +110,25 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
             "    left outer join groups on ug.group_id = groups.id\n" +
             "where users.id = :userId", nativeQuery = true)
     Boolean hasAll(long userId);
+
+    static final String BASE_ENTITY_TYPE_PRIVILEGE_QUERY = "select (count(p.id) > 0) as exists from group_privilege\n" +
+            "    join privilege p on group_privilege.privilege_id = p.id\n" +
+            "    join groups on group_privilege.group_id = groups.id\n" +
+            "    join user_group ug on groups.id = ug.group_id\n" +
+            "    join users on ug.user_id = users.id\n" +
+            "where p.type = :type and users.id = :userId and group_privilege.allow";
+
+    @Query(value = BASE_ENTITY_TYPE_PRIVILEGE_QUERY + " and group_privilege.subject_type_id = :subjectTypeId", nativeQuery = true)
+    boolean hasSubjectPrivilege(String type, long subjectTypeId, long userId);
+
+    @Query(value = BASE_ENTITY_TYPE_PRIVILEGE_QUERY + " and group_privilege.program_id = :programId", nativeQuery = true)
+    boolean hasProgramPrivilege(String type, long programId, long userId);
+
+    @Query(value = BASE_ENTITY_TYPE_PRIVILEGE_QUERY + " and group_privilege.program_encounter_type_id = :encounterTypeId", nativeQuery = true)
+    boolean hasProgramEncounterPrivilege(String type, long encounterTypeId, long userId);
+
+    @Query(value = BASE_ENTITY_TYPE_PRIVILEGE_QUERY + " and group_privilege.encounter_type_id = :encounterTypeId", nativeQuery = true)
+    boolean hasEncounterPrivilege(String type, long encounterTypeId, long userId);
 
     default boolean hasAllPrivileges(long userId) {
         Boolean aBoolean = this.hasAll(userId);
