@@ -32,14 +32,14 @@ import java.util.Optional;
 @RestController
 public class CommentController extends AbstractController<Comment> implements RestControllerResourceProcessor<Comment> {
 
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(CommentController.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CommentController.class);
     private final CommentRepository commentRepository;
     private final IndividualRepository individualRepository;
     private final CommentService commentService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final UserService userService;
     private final CommentThreadRepository commentThreadRepository;
-    private ScopeBasedSyncService<Comment> scopeBasedSyncService;
+    private final ScopeBasedSyncService<Comment> scopeBasedSyncService;
 
     @Autowired
     public CommentController(CommentRepository commentRepository,

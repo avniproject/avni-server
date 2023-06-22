@@ -11,7 +11,7 @@ import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.EntityTypeContract;
 import org.avni.server.web.request.PointRequest;
 import org.avni.server.web.request.ProgramEncounterRequest;
-import org.avni.server.web.request.ProgramEncountersContract;
+import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
 import org.avni.server.web.request.rules.RulesContractWrapper.VisitSchedule;
@@ -46,13 +46,13 @@ public class ProgramEncounterService implements ScopeAwareService {
         this.programEnrolmentRepository = programEnrolmentRepository;
     }
 
-    public ProgramEncountersContract getProgramEncounterByUuid(String uuid) {
+    public ProgramEncounterContract getProgramEncounterByUuid(String uuid) {
         ProgramEncounter programEncounter = programEncounterRepository.findByUuid(uuid);
         return constructProgramEncounters(programEncounter);
     }
 
-    public ProgramEncountersContract constructProgramEncounters(ProgramEncounter programEncounter) {
-        ProgramEncountersContract programEncountersContract = new ProgramEncountersContract();
+    public ProgramEncounterContract constructProgramEncounters(ProgramEncounter programEncounter) {
+        ProgramEncounterContract programEncountersContract = new ProgramEncounterContract();
         EntityTypeContract entityTypeContract = new EntityTypeContract();
         entityTypeContract.setName(programEncounter.getEncounterType().getName());
         entityTypeContract.setUuid(programEncounter.getEncounterType().getUuid());

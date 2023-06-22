@@ -101,7 +101,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         enrolmentContract.setProgramExitDateTime(programEnrolment.getProgramExitDateTime());
         enrolmentContract.setSubjectUuid(programEnrolment.getIndividual().getUuid());
         enrolmentContract.setVoided(programEnrolment.isVoided());
-        Set<ProgramEncountersContract> programEncounters = programEnrolment.nonVoidedEncounters()
+        Set<ProgramEncounterContract> programEncounters = programEnrolment.nonVoidedEncounters()
                 .map(programEncounterService::constructProgramEncounters)
                 .collect(Collectors.toSet());
         enrolmentContract.setProgramEncounters(programEncounters);
@@ -113,8 +113,8 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         return enrolmentContract;
     }
 
-    public Page<ProgramEncountersContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable){
-        Page<ProgramEncountersContract> programEncountersContract;
+    public Page<ProgramEncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable){
+        Page<ProgramEncounterContract> programEncountersContract;
         List<String> encounterTypeIdList = new ArrayList<>();
         if(encounterTypeUuids != null) {
             encounterTypeIdList = Arrays.asList(encounterTypeUuids.split(","));

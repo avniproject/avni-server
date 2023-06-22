@@ -3,11 +3,10 @@ package org.avni.server.web;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
-import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
-import org.avni.server.web.request.ProgramEncountersContract;
+import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.RuleDependencyRequest;
 import org.avni.server.web.request.RuleRequest;
 import org.avni.server.web.request.rules.request.RequestEntityWrapper;
@@ -175,7 +174,7 @@ public class RuleController {
             Stream<ProgramEncounter> scheduledEncountersStream = programEnrolment
                     .getEncounters(true)
                     .filter(enc -> !enc.isVoided() && enc.getEncounterDateTime() == null && enc.getCancelDateTime() == null);
-            Set<ProgramEncountersContract> scheduledEncounters = individualService.constructProgramEncounters(scheduledEncountersStream);
+            Set<ProgramEncounterContract> scheduledEncounters = individualService.constructProgramEncounters(scheduledEncountersStream);
             JsonObject response = new JsonObject().with("scheduledEncounters", scheduledEncounters);
             logger.info(String.format("Executing encounter Eligibility rule for the enrolment uuid %s", enrolmentUUID));
             EligibilityRuleResponseEntity ruleResponse = ruleService.executeEligibilityRule(programEnrolment.getIndividual(), encounterTypes);

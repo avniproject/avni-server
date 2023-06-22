@@ -29,7 +29,7 @@ import java.util.Collections;
 
 @RestController
 public class EntityApprovalStatusController implements RestControllerResourceProcessor<EntityApprovalStatus> {
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final EntityApprovalStatusRepository entityApprovalStatusRepository;
     private final SubjectTypeRepository subjectTypeRepository;

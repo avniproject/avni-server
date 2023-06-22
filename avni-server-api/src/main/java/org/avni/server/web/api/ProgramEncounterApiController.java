@@ -5,8 +5,10 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.ProgramEncounterService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.api.ApiProgramEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
@@ -38,9 +40,10 @@ public class ProgramEncounterApiController {
     private final EncounterTypeRepository encounterTypeRepository;
     private final ProgramEncounterService programEncounterService;
     private final MediaObservationService mediaObservationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService, MediaObservationService mediaObservationService) {
+    public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
         this.programEncounterRepository = programEncounterRepository;
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
@@ -48,6 +51,7 @@ public class ProgramEncounterApiController {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterService = programEncounterService;
         this.mediaObservationService = mediaObservationService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/api/programEncounters", method = RequestMethod.GET)
@@ -64,6 +68,7 @@ public class ProgramEncounterApiController {
         programEncounters.forEach(programEncounter -> {
             programEncounterResponses.add(EncounterResponse.fromProgramEncounter(programEncounter, conceptRepository, conceptService));
         });
+        accessControlService.checkProgramEncounterPrivileges(PrivilegeType.ViewVisit, programEncounters.getContent());
         return new ResponsePage(programEncounterResponses, programEncounters.getNumberOfElements(), programEncounters.getTotalPages(), programEncounters.getSize());
     }
 
@@ -91,6 +96,8 @@ public class ProgramEncounterApiController {
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (programEncounter == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.ViewVisit, programEncounter);
         return new ResponseEntity<>(EncounterResponse.fromProgramEncounter(programEncounter, conceptRepository, conceptService), HttpStatus.OK);
     }
 
@@ -99,6 +106,7 @@ public class ProgramEncounterApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiProgramEncounterRequest request) throws IOException {
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
         ProgramEncounter encounter = createEncounter(request.getExternalId());
         try {
             ProgramEnrolment programEnrolment = getProgramEnrolment(request);
@@ -129,6 +137,7 @@ public class ProgramEncounterApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity put(@PathVariable String id, @RequestBody ApiProgramEncounterRequest request) throws IOException {
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
         ProgramEncounter encounter = programEncounterRepository.findByLegacyIdOrUuid(id);
         if (encounter == null && StringUtils.hasLength(request.getExternalId())) {
             encounter = programEncounterRepository.findByLegacyId(request.getExternalId().trim());
@@ -151,6 +160,7 @@ public class ProgramEncounterApiController {
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (programEncounter == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.RejectEncounter, programEncounter);
         programEncounter.setVoided(true);
         programEncounter = programEncounterService.save(programEncounter);
         return new ResponseEntity<>(EncounterResponse.fromProgramEncounter(programEncounter, conceptRepository, conceptService), HttpStatus.OK);

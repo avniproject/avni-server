@@ -191,9 +191,9 @@ public class IndividualService implements ScopeAwareService {
     }
 
 
-    public Set<ProgramEncountersContract> constructProgramEncounters(Stream<ProgramEncounter> programEncounters) {
+    public Set<ProgramEncounterContract> constructProgramEncounters(Stream<ProgramEncounter> programEncounters) {
         return programEncounters.map(programEncounter -> {
-            ProgramEncountersContract programEncountersContract = new ProgramEncountersContract();
+            ProgramEncounterContract programEncountersContract = new ProgramEncounterContract();
             EntityTypeContract entityTypeContract =
                 EntityTypeContract.fromEncounterType(programEncounter.getEncounterType());
             programEncountersContract.setUuid(programEncounter.getUuid());

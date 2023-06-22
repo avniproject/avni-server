@@ -5,9 +5,11 @@ import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.MediaObservationService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.api.ApiEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
@@ -37,9 +39,10 @@ public class GeneralEncounterApiController {
     private final EncounterTypeRepository encounterTypeRepository;
     private final EncounterService encounterService;
     private final MediaObservationService mediaObservationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService, MediaObservationService mediaObservationService) {
+    public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
         this.conceptService = conceptService;
         this.encounterRepository = encounterRepository;
         this.conceptRepository = conceptRepository;
@@ -47,6 +50,7 @@ public class GeneralEncounterApiController {
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterService = encounterService;
         this.mediaObservationService = mediaObservationService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/api/encounters", method = RequestMethod.GET)
@@ -68,6 +72,7 @@ public class GeneralEncounterApiController {
         encounters.forEach(encounter -> {
             encounterResponses.add(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService));
         });
+        accessControlService.checkEncounterPrivileges(PrivilegeType.ViewVisit, encounters.getContent());
         return new ResponsePage(encounterResponses, encounters.getNumberOfElements(), encounters.getTotalPages(), encounters.getSize());
     }
 
@@ -78,6 +83,8 @@ public class GeneralEncounterApiController {
         Encounter encounter = encounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (encounter == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        accessControlService.checkEncounterPrivilege(PrivilegeType.ViewVisit, encounter);
         return new ResponseEntity<>(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService), HttpStatus.OK);
     }
 
@@ -86,6 +93,7 @@ public class GeneralEncounterApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiEncounterRequest request) throws IOException {
+        accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
         Encounter encounter = createEncounter(request.getExternalId());
         try {
             initializeIndividual(request, encounter);
@@ -115,6 +123,7 @@ public class GeneralEncounterApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity put(@PathVariable String id, @RequestBody ApiEncounterRequest request) throws IOException {
+        accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, request.getEncounterType());
         Encounter encounter = encounterRepository.findByLegacyIdOrUuid(id);
         if (encounter == null && StringUtils.hasLength(request.getExternalId())) {
             encounter = encounterRepository.findByLegacyId(request.getExternalId().trim());
@@ -137,6 +146,7 @@ public class GeneralEncounterApiController {
         Encounter encounter = encounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (encounter == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        accessControlService.checkEncounterPrivilege(PrivilegeType.RejectEncounter, encounter);
         encounter.setVoided(true);
         encounter = encounterService.save(encounter);
         return new ResponseEntity<>(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService), HttpStatus.OK);

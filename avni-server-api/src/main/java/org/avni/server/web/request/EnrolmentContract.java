@@ -20,7 +20,7 @@ public class EnrolmentContract extends ReferenceDataContract{
 
     private String subjectUuid;
 
-    private Set<ProgramEncountersContract> programEncounters = new HashSet<>();
+    private Set<ProgramEncounterContract> programEncounters = new HashSet<>();
 
     private List<ObservationContract> observations = new ArrayList<>();
     private String programColor;
@@ -70,11 +70,11 @@ public class EnrolmentContract extends ReferenceDataContract{
         this.observations = observations;
     }
 
-    public Set<ProgramEncountersContract> getProgramEncounters() {
+    public Set<ProgramEncounterContract> getProgramEncounters() {
         return programEncounters;
     }
 
-    public void setProgramEncounters(Set<ProgramEncountersContract> programEncounters) {
+    public void setProgramEncounters(Set<ProgramEncounterContract> programEncounters) {
         this.programEncounters = programEncounters;
     }
 

@@ -58,7 +58,7 @@ public class EncounterService implements ScopeAwareService {
 
     public EncounterContract getEncounterByUuid(String uuid) {
         Encounter encounter = encounterRepository.findByUuid(uuid);
-        return constructEncounters(encounter);
+        return constructEncounter(encounter);
     }
 
     public Page<EncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable) {
@@ -78,34 +78,34 @@ public class EncounterService implements ScopeAwareService {
                         .and(encounterRepository.withEncounterDateTime(encounterDateTime))
                         .and(encounterRepository.withVoidedFalse())
                         .and(completedEncounterSpecification)
-                , pageable).map(this::constructEncounters);
+                , pageable).map(this::constructEncounter);
         return encountersContract;
     }
 
-    public EncounterContract constructEncounters(Encounter encounter) {
+    public EncounterContract constructEncounter(Encounter encounter) {
         accessControlService.checkEncounterPrivilege(PrivilegeType.ViewVisit, encounter);
-        EncounterContract encountersContract = new EncounterContract();
+        EncounterContract encounterContract = new EncounterContract();
         EntityTypeContract entityTypeContract = new EntityTypeContract();
         entityTypeContract.setName(encounter.getEncounterType().getName());
         entityTypeContract.setUuid(encounter.getEncounterType().getUuid());
         entityTypeContract.setEntityEligibilityCheckRule(encounter.getEncounterType().getEncounterEligibilityCheckRule());
         entityTypeContract.setImmutable(encounter.getEncounterType().isImmutable());
-        encountersContract.setUuid(encounter.getUuid());
-        encountersContract.setName(encounter.getName());
-        encountersContract.setEncounterType(entityTypeContract);
-        encountersContract.setSubjectUUID(encounter.getIndividual().getUuid());
-        encountersContract.setEncounterDateTime(encounter.getEncounterDateTime());
-        encountersContract.setCancelDateTime(encounter.getCancelDateTime());
-        encountersContract.setEarliestVisitDateTime(encounter.getEarliestVisitDateTime());
-        encountersContract.setMaxVisitDateTime(encounter.getMaxVisitDateTime());
-        encountersContract.setVoided(encounter.isVoided());
+        encounterContract.setUuid(encounter.getUuid());
+        encounterContract.setName(encounter.getName());
+        encounterContract.setEncounterType(entityTypeContract);
+        encounterContract.setSubjectUUID(encounter.getIndividual().getUuid());
+        encounterContract.setEncounterDateTime(encounter.getEncounterDateTime());
+        encounterContract.setCancelDateTime(encounter.getCancelDateTime());
+        encounterContract.setEarliestVisitDateTime(encounter.getEarliestVisitDateTime());
+        encounterContract.setMaxVisitDateTime(encounter.getMaxVisitDateTime());
+        encounterContract.setVoided(encounter.isVoided());
         if (encounter.getObservations() != null) {
-            encountersContract.setObservations(observationService.constructObservations(encounter.getObservations()));
+            encounterContract.setObservations(observationService.constructObservations(encounter.getObservations()));
         }
         if (encounter.getCancelObservations() != null) {
-            encountersContract.setCancelObservations(observationService.constructObservations(encounter.getCancelObservations()));
+            encounterContract.setCancelObservations(observationService.constructObservations(encounter.getCancelObservations()));
         }
-        return encountersContract;
+        return encounterContract;
     }
 
     public List<Encounter> scheduledEncountersByType(Individual individual, String encounterTypeName, String currentEncounterUuid) {

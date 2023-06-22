@@ -16,7 +16,7 @@ import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EnrolmentContract;
-import org.avni.server.web.request.ProgramEncountersContract;
+import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
 import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
@@ -131,7 +131,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @GetMapping("/web/programEnrolment/{uuid}/completed")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
-    public Page<ProgramEncountersContract> getAllCompletedEncounters(
+    public Page<ProgramEncounterContract> getAllCompletedEncounters(
             @PathVariable String uuid,
             @RequestParam(value = "encounterDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime encounterDateTime,
             @RequestParam(value = "earliestVisitDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime earliestVisitDateTime,

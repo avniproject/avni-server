@@ -1,6 +1,5 @@
 package org.avni.server.service.accessControl;
 
-import org.avni.server.application.Subject;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -124,17 +124,33 @@ public class AccessControlService {
         }
     }
 
-    public boolean hasProgramEncounterPrivilege(String encounterTypeUUID) {
-        return this.hasProgramEncounterPrivilege(UserContextHolder.getUser(), encounterTypeUUID);
+    public boolean hasProgramEncounterPrivilege(@NotNull String encounterTypeUUID) {
+        return this.hasProgramEncounterPrivilege(Objects.requireNonNull(UserContextHolder.getUser()), encounterTypeUUID);
     }
 
-    public boolean hasProgramEncounterPrivilege(User contextUser, String encounterTypeUUID) {
+    public boolean hasProgramEncounterPrivilege(User contextUser, @NotNull String encounterTypeUUID) {
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
         return userRepository.hasProgramEncounterPrivilege(PrivilegeType.ViewVisit.name(), encounterType.getId(), contextUser.getId());
     }
 
+    public void checkProgramEncounterPrivilege(PrivilegeType privilegeType, @NotNull String encounterTypeUUID) {
+        this.checkProgramEncounterPrivilege(UserContextHolder.getUser(), privilegeType, encounterTypeUUID);
+    }
+
+    public void checkProgramEncounterPrivilege(PrivilegeType privilegeType, List<String> encounterTypeUUIDs) {
+        encounterTypeUUIDs.forEach(s -> this.checkProgramEncounterPrivilege(UserContextHolder.getUser(), privilegeType, s));
+    }
+
+    public void checkProgramEncounterPrivileges(PrivilegeType privilegeType, List<ProgramEncounter> programEncounters) {
+        this.checkProgramEncounterPrivilege(privilegeType, programEncounters.stream().map(ProgramEncounter::getEncounterType).distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
+    }
+
     public void checkEncounterPrivilege(PrivilegeType privilegeType, Encounter encounter) {
         checkEncounterPrivilege(UserContextHolder.getUser(), privilegeType, encounter.getEncounterType().getUuid());
+    }
+
+    public void checkEncounterPrivilege(PrivilegeType privilegeType, @NotNull String encounterTypeUUID) {
+        this.checkEncounterPrivilege(UserContextHolder.getUser(), privilegeType, encounterTypeUUID);
     }
 
     public void checkEncounterPrivilege(User contextUser, PrivilegeType privilegeType, @NotNull String encounterTypeUUID) {
@@ -144,5 +160,13 @@ public class AccessControlService {
         if (!userRepository.hasEncounterPrivilege(privilegeType.name(), encounterType.getId(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType, encounterTypeUUID, EncounterType.class);
         }
+    }
+
+    public void checkEncounterPrivilege(PrivilegeType privilegeType, List<String> encounterTypeUUIDs) {
+        encounterTypeUUIDs.forEach(s -> this.checkEncounterPrivilege(UserContextHolder.getUser(), privilegeType, s));
+    }
+
+    public void checkEncounterPrivileges(PrivilegeType privilegeType, List<Encounter> encounters) {
+        this.checkEncounterPrivilege(privilegeType, encounters.stream().map(Encounter::getEncounterType).distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
     }
 }

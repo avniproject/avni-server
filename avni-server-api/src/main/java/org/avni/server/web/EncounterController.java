@@ -8,8 +8,10 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.geo.Point;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EncounterRequest;
 import org.avni.server.web.request.PointRequest;
@@ -34,7 +36,7 @@ import java.util.Collections;
 
 @RestController
 public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter> {
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final IndividualRepository individualRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final EncounterRepository encounterRepository;
@@ -42,8 +44,9 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final UserService userService;
     private Bugsnag bugsnag;
     private final EncounterService encounterService;
-    private ScopeBasedSyncService<Encounter> scopeBasedSyncService;
-    private FormMappingService formMappingService;
+    private final ScopeBasedSyncService<Encounter> scopeBasedSyncService;
+    private final FormMappingService formMappingService;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public EncounterController(IndividualRepository individualRepository,
@@ -52,7 +55,7 @@ public class EncounterController extends AbstractController<Encounter> implement
                                ObservationService observationService,
                                UserService userService,
                                Bugsnag bugsnag,
-                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService) {
+                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService) {
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
@@ -62,6 +65,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         this.encounterService = encounterService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
+        this.accessControlService = accessControlService;
     }
 
     @GetMapping(value = "/web/encounter/{uuid}")
@@ -71,6 +75,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         EncounterContract encounterContract = encounterService.getEncounterByUuid(uuid);
         if (encounterContract == null)
             return ResponseEntity.notFound().build();
+        accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, encounterContract.getEncounterType().getUuid());
         return ResponseEntity.ok(encounterContract);
     }
 
@@ -87,7 +92,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody EncounterRequest request) {
-        logger.info("Saving encounter with uuid %s", request.getUuid());
+        logger.info(String.format("Saving encounter with uuid %s", request.getUuid()));
 
         checkForSchedulingCompleteConstraintViolation(request);
 
@@ -196,6 +201,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (encounter == null) {
             return ResponseEntity.notFound().build();
         }
+        accessControlService.checkEncounterPrivilege(PrivilegeType.RejectEncounter, encounter);
         encounter.setVoided(true);
         encounterService.save(encounter);
         return ResponseEntity.ok().build();

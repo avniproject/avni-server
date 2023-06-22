@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonInclude
-public class ProgramEncountersContract extends CHSRequest {
+public class ProgramEncounterContract extends CHSRequest {
     private String name;
     private DateTime cancelDateTime;
     private DateTime earliestVisitDateTime;
