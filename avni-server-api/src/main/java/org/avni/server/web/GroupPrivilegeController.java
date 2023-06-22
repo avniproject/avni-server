@@ -5,6 +5,8 @@ import org.avni.server.domain.Group;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.springframework.http.ResponseEntity;
@@ -19,16 +21,17 @@ import java.util.stream.Collectors;
 
 @RestController
 public class GroupPrivilegeController extends AbstractController<GroupPrivilege> implements RestControllerResourceProcessor<GroupPrivilege> {
-    private GroupPrivilegeRepository groupPrivilegeRepository;
-    private GroupRepository groupRepository;
-    private PrivilegeRepository privilegeRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private ProgramRepository programRepository;
-    private EncounterTypeRepository encounterTypeRepository;
-    private ChecklistDetailRepository checklistDetailRepository;
-    private GroupPrivilegeService groupPrivilegeService;
+    private final GroupPrivilegeRepository groupPrivilegeRepository;
+    private final GroupRepository groupRepository;
+    private final PrivilegeRepository privilegeRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final ProgramRepository programRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final ChecklistDetailRepository checklistDetailRepository;
+    private final GroupPrivilegeService groupPrivilegeService;
+    private final AccessControlService accessControlService;
 
-    public GroupPrivilegeController(GroupPrivilegeRepository groupPrivilegeRepository, GroupRepository groupRepository, PrivilegeRepository privilegeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, ChecklistDetailRepository checklistDetailRepository, GroupPrivilegeService groupPrivilegeService) {
+    public GroupPrivilegeController(GroupPrivilegeRepository groupPrivilegeRepository, GroupRepository groupRepository, PrivilegeRepository privilegeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, ChecklistDetailRepository checklistDetailRepository, GroupPrivilegeService groupPrivilegeService, AccessControlService accessControlService) {
         this.groupPrivilegeRepository = groupPrivilegeRepository;
         this.groupRepository = groupRepository;
         this.privilegeRepository = privilegeRepository;
@@ -37,6 +40,7 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
         this.encounterTypeRepository = encounterTypeRepository;
         this.checklistDetailRepository = checklistDetailRepository;
         this.groupPrivilegeService = groupPrivilegeService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/groups/{id}/privileges", method = RequestMethod.GET)
@@ -53,8 +57,8 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
 
     @RequestMapping(value = "/groupPrivilege", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public ResponseEntity addOrUpdateGroupPrivileges(@RequestBody List<GroupPrivilegeContract> request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         List<GroupPrivilege> privilegesToBeAddedOrUpdated = new ArrayList<>();
 
         for (GroupPrivilegeContract groupPrivilege : request) {

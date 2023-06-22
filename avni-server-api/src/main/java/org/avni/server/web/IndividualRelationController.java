@@ -15,9 +15,8 @@ import java.util.Optional;
 
 @RestController
 public class IndividualRelationController {
-
-    private IndividualRelationRepository individualRelationRepository;
-    private IndividualRelationService individualRelationService;
+    private final IndividualRelationRepository individualRelationRepository;
+    private final IndividualRelationService individualRelationService;
 
     @Autowired
     public IndividualRelationController(IndividualRelationRepository individualRelationRepository,
