@@ -8,11 +8,13 @@ import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.projection.ProgramEnrolmentProjection;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.ProgramEnrolmentService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.ProgramEncountersContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
@@ -39,17 +41,18 @@ import java.util.Collections;
 
 @RestController
 public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment> {
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final UserService userService;
     private final ProjectionFactory projectionFactory;
     private final ProgramEnrolmentService programEnrolmentService;
     private final ProgramRepository programRepository;
-    private ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService;
-    private FormMappingService formMappingService;
+    private final ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService;
+    private final FormMappingService formMappingService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingRepository formMappingRepository, FormMappingService formMappingService) {
+    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingRepository formMappingRepository, FormMappingService formMappingService, AccessControlService accessControlService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
         this.projectionFactory = projectionFactory;
@@ -57,13 +60,14 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         this.programRepository = programRepository;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/programEnrolments", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public AvniEntityResponse save(@RequestBody ProgramEnrolmentRequest request) {
-        ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
+        programEnrolmentService.programEnrolmentSave(request);
         return new AvniEntityResponse(programEnrolmentRepository.findByUuid(request.getUuid()));
     }
 
@@ -107,7 +111,9 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ProgramEnrolmentProjection getOneForWeb(@PathVariable String uuid) {
-        return projectionFactory.createProjection(ProgramEnrolmentProjection.class, programEnrolmentRepository.findByUuid(uuid));
+        ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
+        accessControlService.checkProgramPrivilege(PrivilegeType.ViewEnrolmentDetails, programEnrolment);
+        return projectionFactory.createProjection(ProgramEnrolmentProjection.class, programEnrolment);
     }
 
     @GetMapping("/web/programEnrolments/{uuid}")
@@ -118,6 +124,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         if (enrolmentContract == null) {
             return ResponseEntity.notFound().build();
         }
+        accessControlService.checkProgramPrivilege(PrivilegeType.ViewEnrolmentDetails, enrolmentContract.getProgramUuid());
         return ResponseEntity.ok(enrolmentContract);
     }
 
@@ -142,6 +149,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         if (programEnrolment == null) {
             return ResponseEntity.notFound().build();
         }
+        accessControlService.checkProgramPrivilege(PrivilegeType.RejectEnrolment, programEnrolment);
         programEnrolmentService.voidEnrolment(programEnrolment);
         return ResponseEntity.ok().build();
     }

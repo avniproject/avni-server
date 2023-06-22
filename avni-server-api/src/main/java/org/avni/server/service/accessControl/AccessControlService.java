@@ -90,6 +90,18 @@ public class AccessControlService {
         checkProgramPrivilege(UserContextHolder.getUser(), privilegeType, programEnrolment.getProgram().getUuid());
     }
 
+    public void checkProgramPrivilege(PrivilegeType privilegeType, @NotNull String programUUID) {
+        this.checkProgramPrivilege(UserContextHolder.getUser(), privilegeType, programUUID);
+    }
+
+    public void checkProgramPrivileges(PrivilegeType privilegeType, List<ProgramEnrolment> programEnrolments) {
+        this.checkProgramPrivilege(privilegeType, programEnrolments.stream().map(ProgramEnrolment::getProgram).distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
+    }
+
+    public void checkProgramPrivilege(PrivilegeType privilegeType, List<String> programUUIDs) {
+        programUUIDs.forEach(s -> this.checkProgramPrivilege(UserContextHolder.getUser(), privilegeType, s));
+    }
+
     public void checkProgramPrivilege(User contextUser, PrivilegeType privilegeType, @NotNull String programUUID) {
         if (userExistsAndHasAllPrivileges(contextUser)) return;
         Program program = programRepository.findByUuid(programUUID);
@@ -110,6 +122,15 @@ public class AccessControlService {
         if (!userRepository.hasProgramEncounterPrivilege(privilegeType.name(), encounterType.getId(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType, encounterTypeUUID, EncounterType.class);
         }
+    }
+
+    public boolean hasProgramEncounterPrivilege(String encounterTypeUUID) {
+        return this.hasProgramEncounterPrivilege(UserContextHolder.getUser(), encounterTypeUUID);
+    }
+
+    public boolean hasProgramEncounterPrivilege(User contextUser, String encounterTypeUUID) {
+        EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
+        return userRepository.hasProgramEncounterPrivilege(PrivilegeType.ViewVisit.name(), encounterType.getId(), contextUser.getId());
     }
 
     public void checkEncounterPrivilege(PrivilegeType privilegeType, Encounter encounter) {

@@ -8,9 +8,11 @@ import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.ProgramEnrolmentService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.S;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.ProgramEnrolmentResponse;
@@ -40,9 +42,10 @@ public class ProgramEnrolmentApiController {
     private final ProgramRepository programRepository;
     private final ProgramEnrolmentService programEnrolmentService;
     private final MediaObservationService mediaObservationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ProgramEnrolmentApiController(ProgramEnrolmentRepository programEnrolmentRepository, ConceptRepository conceptRepository, ConceptService conceptService, IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentService programEnrolmentService, MediaObservationService mediaObservationService) {
+    public ProgramEnrolmentApiController(ProgramEnrolmentRepository programEnrolmentRepository, ConceptRepository conceptRepository, ConceptService conceptService, IndividualRepository individualRepository, ProgramRepository programRepository, ProgramEnrolmentService programEnrolmentService, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
@@ -50,6 +53,7 @@ public class ProgramEnrolmentApiController {
         this.programRepository = programRepository;
         this.programEnrolmentService = programEnrolmentService;
         this.mediaObservationService = mediaObservationService;
+        this.accessControlService = accessControlService;
     }
 
     @PostMapping(value = "/api/programEnrolment")
@@ -57,6 +61,7 @@ public class ProgramEnrolmentApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiProgramEnrolmentRequest request) throws IOException {
+        accessControlService.checkProgramPrivilege(PrivilegeType.EnrolSubject, request.getProgram());
         ProgramEnrolment programEnrolment = createProgramEnrolment(request.getExternalId());
         initializeIndividual(request, programEnrolment);
         updateEnrolment(programEnrolment, request);
@@ -74,6 +79,7 @@ public class ProgramEnrolmentApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity<ProgramEnrolmentResponse> put(@PathVariable String id, @RequestBody ApiProgramEnrolmentRequest request) throws IOException {
+        accessControlService.checkProgramPrivilege(PrivilegeType.EnrolSubject, request.getProgram());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
         if (programEnrolment == null && StringUtils.hasLength(request.getExternalId())) {
             programEnrolment = programEnrolmentRepository.findByLegacyId(request.getExternalId().trim());
@@ -126,6 +132,7 @@ public class ProgramEnrolmentApiController {
         }
         ArrayList<ProgramEnrolmentResponse> programEnrolmentResponses = new ArrayList<>();
         programEnrolments.forEach(programEnrolment -> programEnrolmentResponses.add(ProgramEnrolmentResponse.fromProgramEnrolment(programEnrolment, conceptRepository, conceptService)));
+        accessControlService.checkProgramPrivileges(PrivilegeType.EnrolSubject, programEnrolments.getContent());
         return new ResponsePage(programEnrolmentResponses, programEnrolments.getNumberOfElements(), programEnrolments.getTotalPages(), programEnrolments.getSize());
     }
 
@@ -136,6 +143,7 @@ public class ProgramEnrolmentApiController {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (programEnrolment == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        accessControlService.checkProgramPrivilege(PrivilegeType.ViewEnrolmentDetails, programEnrolment);
         return new ResponseEntity<>(ProgramEnrolmentResponse.fromProgramEnrolment(programEnrolment, conceptRepository, conceptService), HttpStatus.OK);
     }
 
@@ -147,6 +155,7 @@ public class ProgramEnrolmentApiController {
         if (programEnrolment == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         programEnrolment = programEnrolmentService.voidEnrolment(programEnrolment);
+        accessControlService.checkProgramPrivilege(PrivilegeType.RejectEnrolment, programEnrolment);
         return new ResponseEntity<>(ProgramEnrolmentResponse.fromProgramEnrolment(programEnrolment, conceptRepository, conceptService), HttpStatus.OK);
     }
 

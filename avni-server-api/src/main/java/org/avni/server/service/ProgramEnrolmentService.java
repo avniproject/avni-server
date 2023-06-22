@@ -7,6 +7,7 @@ import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.geo.Point;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.ChecklistContract;
@@ -33,19 +34,19 @@ import static org.springframework.data.jpa.domain.Specification.where;
 public class ProgramEnrolmentService implements ScopeAwareService {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(ProgramEnrolmentService.class);
 
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    private ProgramEncounterService programEncounterService;
-    private ProgramEncounterRepository programEncounterRepository;
-    private ProgramRepository programRepository;
-    private ObservationService observationService;
-    private IndividualRepository individualRepository;
-    private ProgramOutcomeRepository programOutcomeRepository;
-    private ChecklistDetailRepository checklistDetailRepository;
-    private ChecklistItemDetailRepository checklistItemDetailRepository;
-    private ChecklistRepository checklistRepository;
-    private ChecklistItemRepository checklistItemRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
+    private final ProgramEncounterService programEncounterService;
+    private final ProgramEncounterRepository programEncounterRepository;
+    private final ProgramRepository programRepository;
+    private final ObservationService observationService;
+    private final IndividualRepository individualRepository;
+    private final ProgramOutcomeRepository programOutcomeRepository;
+    private final ChecklistDetailRepository checklistDetailRepository;
+    private final ChecklistItemDetailRepository checklistItemDetailRepository;
+    private final ChecklistRepository checklistRepository;
+    private final ChecklistItemRepository checklistItemRepository;
     private final IdentifierAssignmentRepository identifierAssignmentRepository;
-    private final FormMappingRepository formMappingRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public ProgramEnrolmentService(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -60,7 +61,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
                                    ChecklistRepository checklistRepository,
                                    ChecklistItemRepository checklistItemRepository,
                                    IdentifierAssignmentRepository identifierAssignmentRepository,
-                                   FormMappingRepository formMappingRepository) {
+                                   FormMappingRepository formMappingRepository, AccessControlService accessControlService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.programEncounterService = programEncounterService;
         this.programEncounterRepository = programEncounterRepository;
@@ -73,7 +74,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         this.checklistRepository = checklistRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
-        this.formMappingRepository = formMappingRepository;
+        this.accessControlService = accessControlService;
     }
 
     @Transactional
@@ -101,7 +102,7 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         enrolmentContract.setSubjectUuid(programEnrolment.getIndividual().getUuid());
         enrolmentContract.setVoided(programEnrolment.isVoided());
         Set<ProgramEncountersContract> programEncounters = programEnrolment.nonVoidedEncounters()
-                .map(programEncounter -> programEncounterService.constructProgramEncounters(programEncounter))
+                .map(programEncounterService::constructProgramEncounters)
                 .collect(Collectors.toSet());
         enrolmentContract.setProgramEncounters(programEncounters);
         List<ObservationContract> observationContractsList = observationService.constructObservations(programEnrolment.getObservations());
@@ -113,22 +114,23 @@ public class ProgramEnrolmentService implements ScopeAwareService {
     }
 
     public Page<ProgramEncountersContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable){
-        Page<ProgramEncountersContract> programEncountersContract = null;
+        Page<ProgramEncountersContract> programEncountersContract;
         List<String> encounterTypeIdList = new ArrayList<>();
         if(encounterTypeUuids != null) {
             encounterTypeIdList = Arrays.asList(encounterTypeUuids.split(","));
         }
+        List<String> accessibleEncounterTypeUUIDs = encounterTypeIdList.stream().filter(accessControlService::hasProgramEncounterPrivilege).collect(Collectors.toList());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
         Specification<ProgramEncounter> completedEncounterSpecification = where(programEncounterRepository.withNotNullEncounterDateTime())
                 .or(programEncounterRepository.withNotNullCancelDateTime())
                 .and(programEncounterRepository.withVoidedFalse());
         programEncountersContract = programEncounterRepository.findAll(
                 where(programEncounterRepository.withProgramEncounterId(programEnrolment.getId()))
-                        .and(programEncounterRepository.withProgramEncounterTypeIdUuids(encounterTypeIdList))
+                        .and(programEncounterRepository.withProgramEncounterTypeIdUuids(accessibleEncounterTypeUUIDs))
                         .and(programEncounterRepository.withProgramEncounterEarliestVisitDateTime(earliestVisitDateTime))
                         .and(programEncounterRepository.withProgramEncounterDateTime(encounterDateTime))
                         .and(completedEncounterSpecification)
-                ,pageable).map(programEncounter -> programEncounterService.constructProgramEncounters(programEncounter));
+                ,pageable).map(programEncounterService::constructProgramEncounters);
         return programEncountersContract;
     }
 

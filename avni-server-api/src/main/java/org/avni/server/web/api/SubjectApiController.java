@@ -98,7 +98,6 @@ public class SubjectApiController {
 
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subject.getSubjectType());
         List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(Collections.singletonList(subject));
-        accessControlService.checkSubjectPrivileges(PrivilegeType.ViewSubject, groupsOfAllMemberSubjects.stream().map(GroupSubject::getGroupSubject).collect(Collectors.toList()));
         return new ResponseEntity<>(SubjectResponse.fromSubject(subject, true, conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
     }
 
