@@ -2,7 +2,9 @@ package org.avni.server.web.api;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.S;
 import org.avni.server.web.request.api.ApiSubjectRequest;
 import org.avni.server.web.request.api.RequestUtils;
@@ -38,6 +40,7 @@ public class SubjectApiController {
     private final IndividualService individualService;
     private final S3Service s3Service;
     private final MediaObservationService mediaObservationService;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public SubjectApiController(ConceptService conceptService, IndividualRepository individualRepository,
@@ -45,7 +48,7 @@ public class SubjectApiController {
                                 LocationService locationService, SubjectTypeRepository subjectTypeRepository,
                                 LocationRepository locationRepository, GenderRepository genderRepository,
                                 SubjectMigrationService subjectMigrationService, IndividualService individualService,
-                                S3Service s3Service, MediaObservationService mediaObservationService) {
+                                S3Service s3Service, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
         this.conceptService = conceptService;
         this.individualRepository = individualRepository;
         this.conceptRepository = conceptRepository;
@@ -58,6 +61,7 @@ public class SubjectApiController {
         this.individualService = individualService;
         this.s3Service = s3Service;
         this.mediaObservationService = mediaObservationService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
@@ -80,6 +84,7 @@ public class SubjectApiController {
         subjects.forEach(subject -> {
             subjectResponses.add(SubjectResponse.fromSubject(subject, subjectTypeRequested, conceptRepository, conceptService, findGroupAffiliation(subject, groupsOfAllMemberSubjects), s3Service));
         });
+        accessControlService.checkSubjectPrivileges(PrivilegeType.ViewSubject, subjects.getContent());
         return new ResponsePage(subjectResponses, subjects.getNumberOfElements(), subjects.getTotalPages(), subjects.getSize());
     }
 
@@ -90,8 +95,10 @@ public class SubjectApiController {
         Individual subject = individualRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (subject == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(Collections.singletonList(subject));
 
+        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subject.getSubjectType());
+        List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(Collections.singletonList(subject));
+        accessControlService.checkSubjectPrivileges(PrivilegeType.ViewSubject, groupsOfAllMemberSubjects.stream().map(GroupSubject::getGroupSubject).collect(Collectors.toList()));
         return new ResponseEntity<>(SubjectResponse.fromSubject(subject, true, conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
     }
 
@@ -100,6 +107,7 @@ public class SubjectApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity post(@RequestBody ApiSubjectRequest request) throws IOException {
+        accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, request.getSubjectType());
         Individual subject = getOrCreateSubject(request.getExternalId());
         return processSubject(request, subject);
     }
@@ -120,6 +128,7 @@ public class SubjectApiController {
     @Transactional
     @ResponseBody
     public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request) throws IOException {
+        accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, request.getSubjectType());
         String externalId = request.getExternalId();
         Individual subject = individualRepository.findByUuid(id);
         if (subject == null && StringUtils.hasLength(externalId)) {
@@ -138,6 +147,8 @@ public class SubjectApiController {
         Individual subject = individualRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (subject == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, subject);
         List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(Collections.singletonList(subject));
         subject = individualService.voidSubject(subject);
         return new ResponseEntity<>(SubjectResponse.fromSubject(subject,

@@ -142,6 +142,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = {"/individual/v2", "/individual/search/lastModified/v2"})
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public SlicedResources<Resource<Individual>> getIndividualsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -150,11 +151,11 @@ public class IndividualController extends AbstractController<Individual> impleme
         if (subjectTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
-        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subjectTypeUuid);
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(individualRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Individual));
     }
 
     @GetMapping(value = {"/individual", /*-->Both are Deprecated */ "/individual/search/byCatchmentAndLastModified", "/individual/search/lastModified"})
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<Individual>> getIndividualsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -164,7 +165,6 @@ public class IndividualController extends AbstractController<Individual> impleme
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
 
-        accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subjectTypeUuid);
         return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(individualRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Individual));
     }
 
@@ -200,6 +200,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = "/web/individual")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IndividualWebProjection> getByUUIDs(@RequestParam(value = "uuids") List<String> uuids) {
         List<IndividualWebProjection> projections = individualRepository.findAllByUuidIn(uuids);

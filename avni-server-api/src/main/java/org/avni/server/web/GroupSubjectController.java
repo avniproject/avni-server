@@ -5,10 +5,12 @@ import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.GroupSubjectService;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.GroupRoleContract;
 import org.avni.server.web.request.GroupSubjectContract;
@@ -43,11 +45,12 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     private final SubjectTypeRepository subjectTypeRepository;
     private final IndividualService individualService;
     private final Logger logger;
-    private ScopeBasedSyncService<GroupSubject> scopeBasedSyncService;
-    private GroupSubjectService groupSubjectService;
+    private final ScopeBasedSyncService<GroupSubject> scopeBasedSyncService;
+    private final GroupSubjectService groupSubjectService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService, GroupSubjectService groupSubjectService) {
+    public GroupSubjectController(GroupSubjectRepository groupSubjectRepository, UserService userService, IndividualRepository individualRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, IndividualService individualService, ScopeBasedSyncService<GroupSubject> scopeBasedSyncService, GroupSubjectService groupSubjectService, AccessControlService accessControlService) {
         this.groupSubjectRepository = groupSubjectRepository;
         this.userService = userService;
         this.individualRepository = individualRepository;
@@ -56,6 +59,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
         this.individualService = individualService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.groupSubjectService = groupSubjectService;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -111,6 +115,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     public void delete(@PathVariable String groupSubjectUuid) {
         GroupSubject groupSubject = groupSubjectRepository.findByUuid(groupSubjectUuid);
         if (groupSubject != null) {
+            accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, groupSubject);
             groupSubject.setVoided(true);
             groupSubjectRepository.save(groupSubject);
         } else {
@@ -119,11 +124,11 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     }
 
     @RequestMapping(value = "/web/groupSubjects/{groupUuid}/members", method = RequestMethod.GET)
-    @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<GroupSubjectContractWeb> getGroupMembers(@PathVariable String groupUuid) {
         Individual group = individualRepository.findByUuid(groupUuid);
         if (group != null) {
+            accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, group);
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group);
             return groupSubjects.stream().map(groupSubject -> {
                 Individual member = individualRepository.findByUuid(groupSubject.getMemberSubjectUUID());
@@ -136,11 +141,11 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     }
 
     @RequestMapping(value = "/web/groupSubjects/{groupUuid}/roles", method = RequestMethod.GET)
-    @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     public List<GroupRoleContract> getGroupRoles(@PathVariable String groupUuid) {
         Individual group = individualRepository.findByUuid(groupUuid);
         if (group != null) {
+            accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, group);
             return groupRoleRepository.findByGroupSubjectType_IdAndIsVoidedFalse(group.getSubjectType().getId())
                     .stream()
                     .map(GroupRoleContract::fromEntity).collect(Collectors.toList());

@@ -8,10 +8,12 @@ import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepo
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.IndividualRelationshipRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
@@ -37,16 +39,18 @@ public class IndividualRelationshipController extends AbstractController<Individ
     private final IndividualRelationshipRepository individualRelationshipRepository;
     private final SubjectTypeRepository subjectTypeRepository;
     private final UserService userService;
-    private ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService;
+    private final ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public IndividualRelationshipController(IndividualRelationshipRepository individualRelationshipRepository, IndividualRepository individualRepository, IndividualRelationshipTypeRepository individualRelationshipTypeRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService) {
+    public IndividualRelationshipController(IndividualRelationshipRepository individualRelationshipRepository, IndividualRepository individualRepository, IndividualRelationshipTypeRepository individualRelationshipTypeRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<IndividualRelationship> scopeBasedSyncService, AccessControlService accessControlService) {
         this.individualRelationshipRepository = individualRelationshipRepository;
         this.individualRepository = individualRepository;
         this.individualRelationshipTypeRepository = individualRelationshipTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.userService = userService;
         this.scopeBasedSyncService = scopeBasedSyncService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/individualRelationships", method = RequestMethod.POST)
@@ -126,13 +130,13 @@ public class IndividualRelationshipController extends AbstractController<Individ
 
 
     @DeleteMapping(value = "/web/relationShip/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
     public void deleteIndividualRelationShip(@PathVariable Long id) {
         Optional<IndividualRelationship> relationShip = individualRelationshipRepository.findById(id);
         if (relationShip.isPresent()) {
             IndividualRelationship individualRelationShip = relationShip.get();
+            accessControlService.checkPrivilege(PrivilegeType.EditRelationship);
             individualRelationShip.setVoided(true);
             individualRelationshipRepository.save(individualRelationShip);
         }

@@ -1,5 +1,6 @@
 package org.avni.server.service.accessControl;
 
+import org.avni.server.application.Subject;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AccessControlService {
@@ -50,6 +52,10 @@ public class AccessControlService {
         this.checkSubjectPrivilege(privilegeType, subjectType.getUuid());
     }
 
+    public void checkSubjectPrivilege(PrivilegeType privilegeType, GroupSubject groupSubject) {
+        this.checkSubjectPrivilege(privilegeType, groupSubject.getGroupSubject());
+    }
+
     public void checkSubjectPrivilege(PrivilegeType privilegeType, @NotNull String subjectTypeUUID) {
         this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, subjectTypeUUID);
     }
@@ -60,6 +66,15 @@ public class AccessControlService {
 
     public void checkSubjectPrivilege(PrivilegeType privilegeType, List<String> subjectTypeUUIDs) {
         subjectTypeUUIDs.forEach(s -> this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, s));
+    }
+
+    public void checkSubjectPrivileges(PrivilegeType privilegeType, List<Individual> subjects) {
+        this.checkSubjectPrivilege(privilegeType, subjects.stream().map(Individual::getSubjectType).distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
+    }
+
+    public void checkGroupSubjectPrivileges(PrivilegeType privilegeType, List<GroupSubject> groupSubjects) {
+        this.checkSubjectPrivilege(privilegeType, groupSubjects.stream().map(groupSubject -> groupSubject.getGroupSubject().getSubjectType())
+                .distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
     }
 
     public void checkSubjectPrivilege(User contextUser, PrivilegeType privilegeType, @NotNull String subjectTypeUUID) {

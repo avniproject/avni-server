@@ -29,11 +29,11 @@ import java.util.Collections;
 
 @RestController
 public class SubjectMigrationController extends AbstractController<SubjectMigration> implements RestControllerResourceProcessor<SubjectMigration>{
-    private SubjectMigrationRepository subjectMigrationRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private UserService userService;
+    private final SubjectMigrationRepository subjectMigrationRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final UserService userService;
     private final Logger logger;
-    private ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService;
+    private final ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService;
 
     @Autowired
     public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService) {
