@@ -42,12 +42,6 @@ public class VideoTelemetricController implements RestControllerResourceProcesso
         videoTelemetricRepository.save(createVideoTelemetric(videoTelemetricContract));
     }
 
-    @RequestMapping(value = "/videotelemetric", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<VideoTelemetric>> getEmpty(Pageable pageable) {
-        return empty(pageable);
-    }
-
     private VideoTelemetric createVideoTelemetric(VideoTelemetricContract contract) {
         VideoTelemetric existing = videoTelemetricRepository.findByUuid(contract.getUuid());
         VideoTelemetricBuilder builder = new VideoTelemetricBuilder(existing);

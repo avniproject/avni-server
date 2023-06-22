@@ -27,13 +27,6 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         this.syncTelemetryRepository = syncTelemetryRepository;
     }
 
-    @RequestMapping(value = "syncTelemetry", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<SyncTelemetry>> getEmpty(Pageable pageable) {
-        return empty(pageable);
-    }
-
-
     @RequestMapping(value = "syncTelemetry", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")

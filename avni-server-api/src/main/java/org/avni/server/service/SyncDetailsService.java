@@ -111,7 +111,7 @@ public class SyncDetailsService {
                 "IdentifierSource", "OrganisationConfig", "PlatformTranslation", "Translation", "Groups",
                 "MyGroups", "GroupPrivileges", "Extension", "GroupRole", "LocationHierarchy", "ReportCard",
                 "Dashboard", "DashboardSection", "DashboardFilter", "DashboardSectionCardMapping", "ApprovalStatus", "GroupDashboard",
-                "EntityApprovalStatus", "News", "UserInfo", "Privilege", "StandardReportCardType", "Documentation", "DocumentationItem",
+                "News", "UserInfo", "Privilege", "StandardReportCardType", "Documentation", "DocumentationItem",
                 "Task", "TaskType", "TaskStatus", "TaskUnAssignment", "UserSubjectAssignment", "LocationMapping"
         ));
 
