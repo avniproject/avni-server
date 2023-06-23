@@ -6,6 +6,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.AvniAccessException;
+import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,7 @@ public class AccessControlService {
     }
 
     private boolean userExistsAndHasAllPrivileges(User contextUser) {
-        if (contextUser == null) throw AvniAccessException.createNoUserException();
+        if (contextUser == null) throw new AvniNoUserSessionException("User not logged in");
         return userRepository.hasAllPrivileges(contextUser.getId());
     }
 
