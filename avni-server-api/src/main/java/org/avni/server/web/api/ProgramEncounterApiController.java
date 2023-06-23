@@ -160,7 +160,7 @@ public class ProgramEncounterApiController {
         ProgramEncounter programEncounter = programEncounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (programEncounter == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.RejectEncounter, programEncounter);
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.VoidVisit, programEncounter);
         programEncounter.setVoided(true);
         programEncounter = programEncounterService.save(programEncounter);
         return new ResponseEntity<>(EncounterResponse.fromProgramEncounter(programEncounter, conceptRepository, conceptService), HttpStatus.OK);

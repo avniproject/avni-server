@@ -75,7 +75,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         EncounterContract encounterContract = encounterService.getEncounterByUuid(uuid);
         if (encounterContract == null)
             return ResponseEntity.notFound().build();
-        accessControlService.checkEncounterPrivilege(PrivilegeType.EditVisit, encounterContract.getEncounterType().getUuid());
+        accessControlService.checkEncounterPrivilege(PrivilegeType.ViewVisit, encounterContract.getEncounterType().getUuid());
         return ResponseEntity.ok(encounterContract);
     }
 
@@ -201,7 +201,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (encounter == null) {
             return ResponseEntity.notFound().build();
         }
-        accessControlService.checkEncounterPrivilege(PrivilegeType.RejectEncounter, encounter);
+        accessControlService.checkEncounterPrivilege(PrivilegeType.VoidVisit, encounter);
         encounter.setVoided(true);
         encounterService.save(encounter);
         return ResponseEntity.ok().build();

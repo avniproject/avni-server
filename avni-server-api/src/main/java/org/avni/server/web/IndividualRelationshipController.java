@@ -29,6 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -136,7 +137,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
         Optional<IndividualRelationship> relationShip = individualRelationshipRepository.findById(id);
         if (relationShip.isPresent()) {
             IndividualRelationship individualRelationShip = relationShip.get();
-            accessControlService.checkPrivilege(PrivilegeType.EditRelationship);
+            accessControlService.checkSubjectPrivileges(PrivilegeType.VoidSubject, individualRelationShip.getIndividuala(), individualRelationShip.getIndividualB());
             individualRelationShip.setVoided(true);
             individualRelationshipRepository.save(individualRelationShip);
         }

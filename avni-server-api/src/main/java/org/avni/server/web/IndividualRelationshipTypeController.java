@@ -37,7 +37,7 @@ public class IndividualRelationshipTypeController {
     @ResponseBody
     @Transactional
     public ResponseEntity<IndividualRelationshipTypeContract> newRelationshipType(@RequestBody IndividualRelationshipTypeContract relationshipTypeContract) {
-        accessControlService.checkPrivilege(PrivilegeType.EditRelationship);
+        accessControlService.checkPrivilege(PrivilegeType.EditRelation);
         IndividualRelationshipType individualRelationshipType = individualRelationshipTypeService.saveRelationshipType(relationshipTypeContract);
         return ResponseEntity.ok(IndividualRelationshipTypeContract.fromEntity(individualRelationshipType));
     }
@@ -46,7 +46,7 @@ public class IndividualRelationshipTypeController {
     @ResponseBody
     @Transactional
     public void deleteIndividualRelationshipType(@PathVariable Long id) {
-        accessControlService.checkPrivilege(PrivilegeType.EditRelationship);
+        accessControlService.checkPrivilege(PrivilegeType.EditRelation);
         IndividualRelationshipType individualRelationshipType = individualRelationshipTypeRepository.findOne(id);
         if (individualRelationshipType != null) {
             individualRelationshipType.setVoided(true);

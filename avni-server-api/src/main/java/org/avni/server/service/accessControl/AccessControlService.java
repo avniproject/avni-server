@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -66,6 +67,10 @@ public class AccessControlService {
 
     public void checkSubjectPrivilege(PrivilegeType privilegeType, List<String> subjectTypeUUIDs) {
         subjectTypeUUIDs.forEach(s -> this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, s));
+    }
+
+    public void checkSubjectPrivileges(PrivilegeType privilegeType, Individual ... subjects) {
+        this.checkSubjectPrivileges(privilegeType, Arrays.stream(subjects).collect(Collectors.toList()));
     }
 
     public void checkSubjectPrivileges(PrivilegeType privilegeType, List<Individual> subjects) {

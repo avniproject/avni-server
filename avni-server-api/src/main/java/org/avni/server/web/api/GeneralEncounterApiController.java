@@ -146,7 +146,7 @@ public class GeneralEncounterApiController {
         Encounter encounter = encounterRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (encounter == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        accessControlService.checkEncounterPrivilege(PrivilegeType.RejectEncounter, encounter);
+        accessControlService.checkEncounterPrivilege(PrivilegeType.VoidVisit, encounter);
         encounter.setVoided(true);
         encounter = encounterService.save(encounter);
         return new ResponseEntity<>(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService), HttpStatus.OK);

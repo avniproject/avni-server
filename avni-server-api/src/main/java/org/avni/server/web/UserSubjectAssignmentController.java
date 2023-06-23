@@ -2,8 +2,10 @@ package org.avni.server.web;
 
 import org.avni.server.dao.UserSubjectAssignmentRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.UserSubjectAssignmentService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.UserSubjectAssignmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.avni.server.web.response.slice.SlicedResources;
@@ -27,11 +29,13 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
 
     private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     private final UserSubjectAssignmentService userSubjectAssignmentService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public UserSubjectAssignmentController(UserSubjectAssignmentRepository userSubjectAssignmentRepository, UserSubjectAssignmentService userSubjectAssignmentService) {
+    public UserSubjectAssignmentController(UserSubjectAssignmentRepository userSubjectAssignmentRepository, UserSubjectAssignmentService userSubjectAssignmentService, AccessControlService accessControlService) {
         this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
         this.userSubjectAssignmentService = userSubjectAssignmentService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/userSubjectAssignment", method = RequestMethod.GET)
@@ -70,9 +74,9 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     }
 
     @RequestMapping(value = "/web/userSubjectAssignment", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     @Transactional
     ResponseEntity<?> save(@RequestBody UserSubjectAssignmentContract userSubjectAssignmentContract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         userSubjectAssignmentService.save(userSubjectAssignmentContract, organisation);
         return ResponseEntity.ok(userSubjectAssignmentContract);

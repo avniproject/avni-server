@@ -111,7 +111,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
             "where users.id = :userId", nativeQuery = true)
     Boolean hasAll(long userId);
 
-    static final String BASE_ENTITY_TYPE_PRIVILEGE_QUERY = "select (count(p.id) > 0) as exists from group_privilege\n" +
+    String BASE_ENTITY_TYPE_PRIVILEGE_QUERY = "select (count(p.id) > 0) as exists from group_privilege\n" +
             "    join privilege p on group_privilege.privilege_id = p.id\n" +
             "    join groups on group_privilege.group_id = groups.id\n" +
             "    join user_group ug on groups.id = ug.group_id\n" +

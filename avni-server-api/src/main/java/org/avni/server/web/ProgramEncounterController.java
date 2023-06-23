@@ -63,7 +63,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         ProgramEncounterContract programEncounterContract = programEncounterService.getProgramEncounterByUuid(uuid);
         if (programEncounterContract == null)
             return ResponseEntity.notFound().build();
-        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.EditVisit, programEncounterContract.getEncounterType().getUuid());
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.ViewVisit, programEncounterContract.getEncounterType().getUuid());
         return ResponseEntity.ok(programEncounterContract);
     }
 
@@ -140,7 +140,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         if (programEncounter == null) {
             return ResponseEntity.notFound().build();
         }
-        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.RejectEncounter, programEncounter);
+        accessControlService.checkProgramEncounterPrivilege(PrivilegeType.VoidVisit, programEncounter);
         programEncounter.setVoided(true);
         programEncounterService.save(programEncounter);
         return ResponseEntity.ok().build();
