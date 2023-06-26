@@ -38,7 +38,7 @@ public class AccessControlService {
     }
 
     public void checkPrivilege(User contextUser, PrivilegeType privilegeType) {
-        if (userExistsAndHasAllPrivileges(contextUser)) return;
+        if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && PrivilegeType.NonTransaction.contains(privilegeType))) return;
 
         if (!userRepository.hasPrivilege(privilegeType.name(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType);
