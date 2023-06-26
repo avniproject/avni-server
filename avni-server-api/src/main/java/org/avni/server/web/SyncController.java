@@ -303,7 +303,7 @@ public class SyncController {
         Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
-        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems);
+        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true);
         logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
         return ResponseEntity.ok().body(new JsonObject()
                 .with("syncDetails", changedEntities)
@@ -328,7 +328,7 @@ public class SyncController {
         Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(false);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
-        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems);
+        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, false);
         logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
         return ResponseEntity.ok().body(new JsonObject()
                 .with("syncDetails", changedEntities)
@@ -337,7 +337,7 @@ public class SyncController {
         );
     }
 
-    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems) {
+    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems, boolean scopeAwareEAS) {
         allSyncableItems.forEach(syncableItem -> {
             if (entitySyncStatusContracts.stream().noneMatch(entitySyncStatusContract ->
                     entitySyncStatusContract.matchesEntity(syncableItem))) {
@@ -347,7 +347,7 @@ public class SyncController {
         removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);
 
         return entitySyncStatusContracts.stream()
-                .filter(this::filterChangedEntities)
+                .filter((entitySyncStatusContract) -> filterChangedEntities(entitySyncStatusContract, scopeAwareEAS))
                 .collect(Collectors.toList());
     }
 
@@ -386,9 +386,10 @@ public class SyncController {
                 allSyncableItems.stream().noneMatch(entitySyncStatusContract::matchesEntity));
     }
 
-    private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract) {
+    private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract, boolean scopeAwareEAS) {
         String entityName = entitySyncStatusContract.getEntityName();
         DateTime loadedSince = entitySyncStatusContract.getLoadedSince();
+        if(scopeAwareEAS) nonScopeAwareServiceMap.remove("EntityApprovalStatus");
         ScopeAwareService scopeAwareService = this.scopeAwareServiceMap.get(entityName);
         NonScopeAwareService nonScopeAwareService = this.nonScopeAwareServiceMap.get(entityName);
 
