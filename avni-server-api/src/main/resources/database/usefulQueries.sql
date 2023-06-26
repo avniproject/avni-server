@@ -26,6 +26,12 @@ from address_level
 where o.name = ?
 order by c2.name;
 
+-- Fetch list of roles in postgres openchs DB
+SELECT usename as username FROM pg_user;
+
+-- Command to create db_user for that on local
+select create_db_user('<username>', 'password') FROM pg_user;
+
 -- ITEMS FOR TRANSLATION
 select distinct name
 from
