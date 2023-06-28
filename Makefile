@@ -1,6 +1,10 @@
 # <makefile>
 # Objects: db, schema, server, package, env (code environment)
 # Actions: clean, build, deploy, test
+include makefiles/staging.mk
+include makefiles/util.mk
+include makefiles/externalDB.mk
+
 help:
 	@IFS=$$'\n' ; \
 	help_lines=(`fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//'`); \
@@ -21,10 +25,6 @@ su:=$(shell id -un)
 DB=openchs
 dbServer=localhost
 dbPort=5432
-
-include makefiles/staging.mk
-include makefiles/util.mk
-include makefiles/externalDB.mk
 
 # <postgres>
 clean_db_server: _clean_db_server _clean_test_server _drop_roles
