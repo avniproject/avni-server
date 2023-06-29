@@ -6,10 +6,12 @@ create table table_metadata
     db_user           text,
     name              text,
     type              text,
-    subject_type_id   integer references subject_type (id),
-    program_id        integer references program (id),
-    encounter_type_id integer references encounter_type (id),
-    form_id           integer references form (id)
+    subject_type_uuid   varchar(255),
+    program_uuid        varchar(255),
+    encounter_type_uuid varchar(255),
+    form_uuid           varchar(255),
+    group_subject_type_uuid   varchar(255),
+    member_subject_type_uuid   varchar(255)
 );
 
 create policy table_metadata_rls_policy on table_metadata
