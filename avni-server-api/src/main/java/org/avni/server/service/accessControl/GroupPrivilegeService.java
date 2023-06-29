@@ -156,6 +156,16 @@ public class GroupPrivilegeService implements NonScopeAwareService {
             });
         });
 
+        privilegeList.stream().filter(privilege -> privilege.getEntityType() == EntityType.NonTransaction || privilege.getEntityType() == EntityType.Task)
+            .forEach(nonTransactionPrivilege -> {
+                GroupPrivilege groupPrivilege = new GroupPrivilege();
+                groupPrivilege.setGroup(group);
+                groupPrivilege.setPrivilege(nonTransactionPrivilege);
+                groupPrivilege.setAllow(false);
+                groupPrivilege.assignUUID();
+                allGroupPrivileges.add(groupPrivilege);
+            });
+
         return allGroupPrivileges;
     }
 

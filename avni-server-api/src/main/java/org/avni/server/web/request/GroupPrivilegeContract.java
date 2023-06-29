@@ -4,6 +4,7 @@ import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.Program;
+import org.avni.server.domain.SubjectType;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -37,8 +38,8 @@ public class GroupPrivilegeContract {
         groupPrivilegeContract.setPrivilegeEntityType(groupPrivilege.getPrivilege().getEntityType().toString());
         groupPrivilegeContract.setPrivilegeName(groupPrivilege.getPrivilege().getName());
         groupPrivilegeContract.setPrivilegeDescription(groupPrivilege.getPrivilege().getDescription());
-        groupPrivilegeContract.setSubjectTypeId(groupPrivilege.getSubjectType().getId());
-        groupPrivilegeContract.setSubjectTypeName(groupPrivilege.getSubjectType().getName());
+        groupPrivilegeContract.setSubjectTypeId(Optional.ofNullable(groupPrivilege.getSubjectType()).map(SubjectType::getId).orElse(null));
+        groupPrivilegeContract.setSubjectTypeName(Optional.ofNullable(groupPrivilege.getSubjectType()).map(SubjectType::getName).orElse(null));
         groupPrivilegeContract.setProgramId(Optional.ofNullable(groupPrivilege.getProgram()).map(Program::getId));
         groupPrivilegeContract.setProgramName(Optional.ofNullable(groupPrivilege.getProgram()).map(Program::getName).orElse(null));
         groupPrivilegeContract.setProgramEncounterTypeId(Optional.ofNullable(groupPrivilege.getProgramEncounterType()).map(EncounterType::getId));
@@ -204,7 +205,7 @@ public class GroupPrivilegeContract {
         GroupPrivilegeContract that = (GroupPrivilegeContract) o;
         return groupId.equals(that.groupId) &&
                 privilegeId.equals(that.privilegeId) &&
-                subjectTypeId.equals(that.subjectTypeId) &&
+                Objects.equals(subjectTypeId, that.subjectTypeId) &&
                 Objects.equals(programId, that.programId) &&
                 Objects.equals(programEncounterTypeId, that.programEncounterTypeId) &&
                 Objects.equals(encounterTypeId, that.encounterTypeId) &&

@@ -70,10 +70,13 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
                 newGroupPrivilege = new GroupPrivilege();
                 Optional<Privilege> optionalPrivilege = privilegeRepository.findById(groupPrivilege.getPrivilegeId());
                 Group group = groupRepository.findOne(groupPrivilege.getGroupId());
-                SubjectType subjectType = subjectTypeRepository.findOne(groupPrivilege.getSubjectTypeId());
+                SubjectType subjectType = null;
+                if (groupPrivilege.getSubjectTypeId() != null) {
+                    subjectType = subjectTypeRepository.findOne(groupPrivilege.getSubjectTypeId());
+                }
 
-                if (!optionalPrivilege.isPresent() || group == null || subjectType == null) {
-                    return ResponseEntity.badRequest().body(String.format("Invalid privilege id %d or group id %d or subject type %s", groupPrivilege.getPrivilegeId(), groupPrivilege.getGroupId(), groupPrivilege.getSubjectTypeName()));
+                if (!optionalPrivilege.isPresent() || group == null) {
+                    return ResponseEntity.badRequest().body(String.format("Invalid privilege id %d or group id %d", groupPrivilege.getPrivilegeId(), groupPrivilege.getGroupId()));
                 }
                 newGroupPrivilege.setUuid(groupPrivilege.getUuid());
                 newGroupPrivilege.setPrivilege(optionalPrivilege.get());
