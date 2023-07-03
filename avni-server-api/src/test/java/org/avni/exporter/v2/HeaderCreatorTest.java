@@ -33,7 +33,7 @@ public class HeaderCreatorTest {
         List<String> addressLevelTypes = Arrays.asList("Village");
         HeaderCreator headerCreator = new HeaderCreator();
         StringBuilder registrationHeaders = headerCreator.addRegistrationHeaders(subjectType, new HashMap<>(), addressLevelTypes, new ArrayList<>());
-        assertEquals(registrationHeaders.toString(), "ABC_id,ABC_uuid,ABC_first_name,ABC_middle_name,ABC_last_name,ABC_date_of_birth,ABC_registration_date,ABC_gender,ABC_created_by,ABC_created_date_time,ABC_last_modified_by,ABC_last_modified_date_time,ABC_voided,\"Village\"");
+        assertEquals(registrationHeaders.toString(), "ABC_id,ABC_uuid,ABC_first_name,ABC_middle_name,ABC_last_name,ABC_date_of_birth,ABC_registration_date,ABC_gender,ABC_created_by,ABC_created_date_time,ABC_last_modified_by,ABC_last_modified_date_time,ABC_registration_location,ABC_voided,\"Village\"");
     }
 
     @Test
