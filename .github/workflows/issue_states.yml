@@ -1,21 +1,23 @@
 name: 'Close cards moved to Done Lane'
 
-on:
-  project_card:
-    types: [created, edited, moved]
-
-permissions:
-  repository-projects: read
-  issues: write
-  pull-requests: write
+on: 
+  schedule:
+    # Once an hour
+    - cron: 0 * * * *
+  
+  workflow_dispatch:
+    # Manual trigger
 
 jobs:
-  action:
+  issue-state-sync:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: dessant/issue-states@v3
+      - name: Close cards moved to Done Lane
+        uses: dasmerlon/project-issue-state-sync@v2
         with:
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
-          open-issue-columns: ''
-          closed-issue-columns: 'Done'
-          log-output: false
+          github_token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          owner: avniproject
+          project_number: 2
+          closed_statuses: Done
+          open_statuses: New Issues,Triaged,Focus Items,Hold,In Analysis,Analysis Complete,Ready,QA Failed,In Progress,Code Review Ready,In Code Review,Code Review with Comments,QA Ready,In QA
