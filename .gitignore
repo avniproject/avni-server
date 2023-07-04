@@ -34,3 +34,5 @@ write.lock
 dev-commands.txt
 /log/
 /avni-server-api/src/test/resources/externalTestDataSensitive.sql
+/report.html
+/report.json

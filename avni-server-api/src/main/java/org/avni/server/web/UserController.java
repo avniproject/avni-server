@@ -113,7 +113,7 @@ public class UserController {
             logger.error(ex.getMessage());
             return ResponseEntity.badRequest().body(generateJsonError(ex.getMessage()));
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
@@ -152,7 +152,7 @@ public class UserController {
             logger.error(ex.getMessage());
             return ResponseEntity.badRequest().body(generateJsonError(ex.getMessage()));
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
@@ -206,7 +206,7 @@ public class UserController {
             logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
@@ -235,7 +235,7 @@ public class UserController {
             }
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
@@ -249,7 +249,7 @@ public class UserController {
             idpServiceFactory.getIdpService(user).resetPassword(user, resetPasswordRequest.getPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
@@ -263,7 +263,7 @@ public class UserController {
             idpServiceFactory.getIdpService(user).resetPassword(user, changePasswordRequest.getNewPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
