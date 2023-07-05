@@ -55,7 +55,7 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
 
     @Transactional
     public List<IdentifierAssignment> generateIdentifiersForAForm(Form form, User user) {
-        return form.getAllFormElements().stream()
+        return form.getApplicableFormElements().stream()
                 .filter(formElement -> formElement.getKeyValues().containsKey(KeyType.IdSourceUUID))
                 .map(formElement -> {
                     String idSourceUuid = (String) formElement.getKeyValues().getKeyValue(KeyType.IdSourceUUID).getValue();
