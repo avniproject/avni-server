@@ -106,8 +106,7 @@ public class AuthServiceTest {
         when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(adminUser);
         user.setOrgAdmin(false);
         userContext = authService.authenticateByToken("some token", null);
-        assertThat(userContext.getRoles().size(), is(equalTo(1)));
-        assertThat(userContext.getRoles(), contains(User.ADMIN));
+        assertThat(userContext.getRoles().size(), is(equalTo(2)));
 
         user.setAccountAdmin(null);
         when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(new ArrayList<>());

@@ -9,6 +9,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.GroupPrivilegeContract;
+import org.avni.server.web.request.GroupPrivilegeWebRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +47,7 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
     @RequestMapping(value = "/groups/{id}/privileges", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public List<GroupPrivilegeContract> getById(@PathVariable("id") Long id) {
-        List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllPossibleGroupPrivileges(id);
+        List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllCategorisedGroupPrivileges(id);
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByGroup_Id(id);
         groupPrivileges.addAll(allPossibleGroupPrivileges);
         return groupPrivileges.stream()
@@ -57,36 +58,36 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
 
     @RequestMapping(value = "/groupPrivilege", method = RequestMethod.POST)
     @Transactional
-    public ResponseEntity addOrUpdateGroupPrivileges(@RequestBody List<GroupPrivilegeContract> request) {
+    public ResponseEntity addOrUpdateGroupPrivileges(@RequestBody List<GroupPrivilegeWebRequest> request) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         List<GroupPrivilege> privilegesToBeAddedOrUpdated = new ArrayList<>();
 
-        for (GroupPrivilegeContract groupPrivilege : request) {
-            GroupPrivilege newGroupPrivilege = groupPrivilegeRepository.findByUuid(groupPrivilege.getUuid());
+        for (GroupPrivilegeWebRequest groupPrivilegeRequest : request) {
+            GroupPrivilege newGroupPrivilege = groupPrivilegeRepository.findByUuid(groupPrivilegeRequest.getUuid());
             if (newGroupPrivilege != null) {
-                newGroupPrivilege.setAllow(groupPrivilege.isAllow());
+                newGroupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
                 privilegesToBeAddedOrUpdated.add(newGroupPrivilege);
             } else {
                 newGroupPrivilege = new GroupPrivilege();
-                Optional<Privilege> optionalPrivilege = privilegeRepository.findById(groupPrivilege.getPrivilegeId());
-                Group group = groupRepository.findOne(groupPrivilege.getGroupId());
+                Optional<Privilege> optionalPrivilege = privilegeRepository.findById(groupPrivilegeRequest.getPrivilegeId());
+                Group group = groupRepository.findOne(groupPrivilegeRequest.getGroupId());
                 SubjectType subjectType = null;
-                if (groupPrivilege.getSubjectTypeId() != null) {
-                    subjectType = subjectTypeRepository.findOne(groupPrivilege.getSubjectTypeId());
+                if (groupPrivilegeRequest.getSubjectTypeId() != null) {
+                    subjectType = subjectTypeRepository.findOne(groupPrivilegeRequest.getSubjectTypeId());
                 }
 
                 if (!optionalPrivilege.isPresent() || group == null) {
-                    return ResponseEntity.badRequest().body(String.format("Invalid privilege id %d or group id %d", groupPrivilege.getPrivilegeId(), groupPrivilege.getGroupId()));
+                    return ResponseEntity.badRequest().body(String.format("Invalid privilege id %d or group id %d", groupPrivilegeRequest.getPrivilegeId(), groupPrivilegeRequest.getGroupId()));
                 }
-                newGroupPrivilege.setUuid(groupPrivilege.getUuid());
+                newGroupPrivilege.setUuid(groupPrivilegeRequest.getUuid());
                 newGroupPrivilege.setPrivilege(optionalPrivilege.get());
                 newGroupPrivilege.setGroup(group);
                 newGroupPrivilege.setSubjectType(subjectType);
-                newGroupPrivilege.setProgram(groupPrivilege.getProgramId().isPresent() ? programRepository.findOne(groupPrivilege.getProgramId().get()) : null);
-                newGroupPrivilege.setEncounterType(groupPrivilege.getEncounterTypeId().isPresent() ? encounterTypeRepository.findOne(groupPrivilege.getEncounterTypeId().get()) : null);
-                newGroupPrivilege.setProgramEncounterType(groupPrivilege.getProgramEncounterTypeId().isPresent() ? encounterTypeRepository.findOne(groupPrivilege.getProgramEncounterTypeId().get()) : null);
-                newGroupPrivilege.setChecklistDetail(groupPrivilege.getChecklistDetailId().isPresent() ? checklistDetailRepository.findOne(groupPrivilege.getChecklistDetailId().get()) : null);
-                newGroupPrivilege.setAllow(groupPrivilege.isAllow());
+                newGroupPrivilege.setProgram(groupPrivilegeRequest.getProgramId() != null ? programRepository.findOne(groupPrivilegeRequest.getProgramId()) : null);
+                newGroupPrivilege.setEncounterType(groupPrivilegeRequest.getEncounterTypeId() != null ? encounterTypeRepository.findOne(groupPrivilegeRequest.getEncounterTypeId()) : null);
+                newGroupPrivilege.setProgramEncounterType(groupPrivilegeRequest.getProgramEncounterTypeId() != null ? encounterTypeRepository.findOne(groupPrivilegeRequest.getProgramEncounterTypeId()) : null);
+                newGroupPrivilege.setChecklistDetail(groupPrivilegeRequest.getChecklistDetailId() != null ? checklistDetailRepository.findOne(groupPrivilegeRequest.getChecklistDetailId()) : null);
+                newGroupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
 
                 privilegesToBeAddedOrUpdated.add(newGroupPrivilege);
             }
@@ -94,5 +95,4 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
 
         return ResponseEntity.ok(groupPrivilegeRepository.saveAll(privilegesToBeAddedOrUpdated));
     }
-
 }

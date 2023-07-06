@@ -94,6 +94,11 @@ public class User {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
     private List<UserGroup> userGroups;
 
+    @JsonIgnore
+    public boolean hasAllPrivileges() {
+        return userGroups.stream().anyMatch(userGroup -> userGroup.getGroup().isHasAllPrivileges());
+    }
+
     public enum SyncSettingKeys {
         syncAttribute1,
         syncAttribute2,
@@ -268,7 +273,10 @@ public class User {
     public String[] getRoles() {
         ArrayList<String> roles = new ArrayList<>();
         if (!(isOrgAdmin || isAdmin())) roles.add(USER);
-        if (isAdmin()) roles.add(ADMIN);
+        if (isAdmin()) {
+            roles.add(ADMIN);
+            roles.add(USER);
+        }
         if (isOrgAdmin) {
             roles.add(ORGANISATION_ADMIN);
             roles.add(USER);

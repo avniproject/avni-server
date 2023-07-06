@@ -20,7 +20,7 @@ import java.util.Set;
 @JsonIgnoreProperties({"operationalEncounterTypes"})
 @DynamicInsert
 @BatchSize(size = 100)
-public class EncounterType extends OrganisationAwareEntity {
+public class EncounterType extends OrganisationAwareEntity implements NamedEntity {
     @NotNull
     @Column
     private String name;

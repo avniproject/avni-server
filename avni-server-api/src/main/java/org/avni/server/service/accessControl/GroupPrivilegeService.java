@@ -50,8 +50,11 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         return true;
     }
 
-    public List<GroupPrivilege> getAllPossibleGroupPrivileges(long groupId) {
+    public List<GroupPrivilege> getAllGroupPrivileges() {
+        return groupPrivilegeRepository.findAllByIsVoidedFalse();
+    }
 
+    public List<GroupPrivilege> getAllCategorisedGroupPrivileges(long groupId) {
         List<FormMapping> formMappings = formMappingRepository.findAllByIsVoidedFalse();
         List<SubjectType.SubjectTypeProjection> subjectTypes = subjectTypeRepository.findAllOperational();
 

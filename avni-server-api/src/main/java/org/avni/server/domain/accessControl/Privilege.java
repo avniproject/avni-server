@@ -86,11 +86,6 @@ public class Privilege {
         this.id = id;
     }
 
-
-    /**
-     * Use only for sync
-     */
-    @Deprecated
     public String getName() {
         return name;
     }
