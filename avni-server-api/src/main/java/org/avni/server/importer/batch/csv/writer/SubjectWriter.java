@@ -97,6 +97,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAllByIsVoidedFalse();
             locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
 
+            List<LocationProjection> locations = locationRepository.findAllNonVoided();
+
             Individual individual = getOrCreateIndividual(row);
             List<String> allErrorMsgs = new ArrayList<>();
 
@@ -111,7 +113,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             individual.setDateOfBirthVerified(row.getBool(SubjectHeaders.dobVerified));
             setRegistrationDate(individual, row, allErrorMsgs);
             individual.setRegistrationLocation(locationCreator.getLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
-            setAddressLevel(individual, row, locationTypes, allErrorMsgs);
+            setAddressLevel(individual, row, locationTypes, locations, allErrorMsgs);
             if (individual.getSubjectType().getType().equals(Subject.Person)) setGender(individual, row);
             FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
             individual.setVoided(false);
@@ -202,37 +204,38 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private void setAddressLevel(Individual individual,
                                  Row row,
                                  List<AddressLevelType> locationTypes,
+                                 List<LocationProjection> locations,
                                  List<String> errorMsgs) {
         try {
-            AddressLevel addressLevel;
+            LocationProjection addressLevel;
             AddressLevelType lowestAddressLevelType = locationTypes.get(locationTypes.size() - 1);
 
             String lowestInputAddressLevel = row.get(lowestAddressLevelType.getName());
             if (lowestInputAddressLevel == null)
                 throw new Exception(String.format("Missing '%s'", lowestAddressLevelType.getName()));
 
-            List<LocationProjection> locationsOfLowestAddressLevelType = locationRepository.findNonVoidedLocationsByTypeId(lowestAddressLevelType.getId());
             Supplier<Stream<LocationProjection>> addressMatches = () ->
-                    locationsOfLowestAddressLevelType.stream()
+                    locations.stream()
                             .filter(location ->
-                                    location.getTitle().toLowerCase().equals(lowestInputAddressLevel.toLowerCase()));
+                                    location.getTitle().toLowerCase().equals(lowestInputAddressLevel.toLowerCase()) &&
+                                            location.getTypeString().equals(lowestAddressLevelType.getName()));
 
             if (addressMatches.get().count() > 1) {
                 // filter by lineage if more than one location with same name present
-                addressLevel = getAddressLevelByLineage(row, locationTypes);
+                addressLevel = getAddressLevelByLineage(row, locationTypes, locations);
             } else {
                 // exactly 1 or no match
-                LocationProjection locationProjection = addressMatches.get().findFirst().orElseThrow(() -> new Exception("'Address' not found"));
-                addressLevel = locationRepository.findByUuid(locationProjection.getUuid());
+                addressLevel = addressMatches.get().findFirst().orElseThrow(() -> new Exception("'Address' not found"));
             }
-            individual.setAddressLevel(addressLevel);
+            individual.setAddressLevel(locationRepository.findByUuid(addressLevel.getUuid()));
         } catch (Exception ex) {
             errorMsgs.add(ex.getMessage());
         }
     }
 
-    private AddressLevel getAddressLevelByLineage(Row row,
-                                                  List<AddressLevelType> locationTypes) throws Exception {
+    private LocationProjection getAddressLevelByLineage(Row row,
+                                                        List<AddressLevelType> locationTypes,
+                                                        List<LocationProjection> locations) throws Exception {
         List<String> inputLocations = new ArrayList<>();
         for (AddressLevelType addressLevelType : locationTypes) {
             String _location = row.get(addressLevelType.getName());
@@ -244,8 +247,12 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             throw new Exception("Invalid address");
 
         String lineage = String.join(", ", inputLocations);
-
-        return locationRepository.findByTitleLineageIgnoreCase(lineage)
+        return locations.stream()
+                .filter(location ->
+                        location.getTitleLineage()
+                                .toLowerCase()
+                                .endsWith(lineage.toLowerCase()))
+                .findFirst()
                 .orElseThrow(() -> new Exception("'Address' not found"));
     }
 }
