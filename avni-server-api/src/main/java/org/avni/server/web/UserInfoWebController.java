@@ -36,8 +36,7 @@ public class UserInfoWebController {
     @RequestMapping(value = "/web/userInfo", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public UserInfoWebResponse getUserInfo() {
-        Organisation organisation = UserContextHolder.getOrganisation();
-        if (organisation == null) {
+        if (UserContextHolder.getUser().isAdmin()) {
             List<Privilege> allPrivileges = privilegeRepository.findAllByIsVoidedFalse();
             List<UserPrivilegeWebResponse> groupPrivilegeResponses = allPrivileges.stream()
                     .filter(x -> x.getEntityType().equals(EntityType.NonTransaction))
@@ -45,6 +44,7 @@ public class UserInfoWebController {
             return UserInfoWebResponse.createForAdminUser(groupPrivilegeResponses);
         }
 
+        Organisation organisation = UserContextHolder.getOrganisation();
         User contextUser = UserContextHolder.getUser();
         User user = userRepository.findOne(contextUser.getId());
         List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
