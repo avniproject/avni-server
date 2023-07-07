@@ -60,7 +60,6 @@ public class UserInfoWebController {
                 organisation.getName(),
                 organisation.getId(),
                 usernameSuffix,
-                user.getRoles(),
                 user.getSettings(),
                 user.getName(),
                 catchmentName,

@@ -20,8 +20,8 @@ public class UserInfoWebResponse extends UserInfoContract {
         return userInfoWebResponse;
     }
 
-    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, String[] roles, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges) {
-        super(username, orgName, orgId, usernameSuffix, roles, settings, name, catchmentName, syncSettings);
+    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges) {
+        super(username, orgName, orgId, usernameSuffix, settings, name, catchmentName, syncSettings);
         this.privileges = privileges;
         this.hasAllPrivileges = hasAllPrivileges;
     }

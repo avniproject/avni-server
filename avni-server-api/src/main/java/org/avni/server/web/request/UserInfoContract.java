@@ -16,16 +16,14 @@ public class UserInfoContract {
 
     private JsonObject settings;
     private DateTime lastModifiedDateTime;
-    private String[] roles;
     private String name;
     private String catchmentName;
     private JsonObject syncSettings;
 
-    protected UserInfoContract(String username, String orgName, Long orgId, String usernameSuffix, String[] roles, JsonObject settings, String name, String catchmentName, JsonObject syncSettings) {
+    protected UserInfoContract(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings) {
         this.username = username;
         this.organisationName = orgName;
         this.organisationId = orgId;
-        this.roles = roles;
         this.settings = settings;
         this.lastModifiedDateTime = DateTime.now();
         this.usernameSuffix = usernameSuffix;
@@ -56,14 +54,6 @@ public class UserInfoContract {
 
     public void setOrganisationId(Long organisationId) {
         this.organisationId = organisationId;
-    }
-
-    public String[] getRoles() {
-        return roles;
-    }
-
-    public void setRoles(String[] roles) {
-        this.roles = roles;
     }
 
     public JsonObject getSettings() {
