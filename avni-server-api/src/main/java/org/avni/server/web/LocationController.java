@@ -91,6 +91,15 @@ public class LocationController implements RestControllerResourceProcessor<Addre
         return locationService.find(new LocationSearchRequest(title, typeId, parentId, pageable));
     }
 
+    @GetMapping(value = "locations/search/findAsList")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @ResponseBody
+    public List<LocationProjection> findAsList(
+        @RequestParam(value = "title", defaultValue = "") String title,
+        @RequestParam(value = "typeId", required = false) Integer typeId) {
+        return locationRepository.findLocationProjectionByTitleIgnoreCaseAndTypeIdAsList(title, typeId);
+    }
+
     @GetMapping(value = "/locations/search/findAllById")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody

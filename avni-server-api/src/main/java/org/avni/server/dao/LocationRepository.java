@@ -55,37 +55,36 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     AddressLevel findByTitleAndCatchmentsUuid(String title, String uuid);
 
-    //todo: The below 3 methods are similar queries. They can be combined.
-    @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, title_lineage as titleLineage, alt.level " +
-            "from address_level al " +
-            "left join address_level_type alt on alt.id = al.type_id " +
-            "left join title_lineage_locations_view tll on tll.lowestpoint_id = al.id " +
-            "where (:title is null or lower(al.title) like lower(concat('%', :title,'%'))) " +
-            "and al.is_voided = false order by al.title ",
+    String locationProjectionBaseQuery = "select al.id, al.uuid, al.title, al.type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
+        "cast(al.lineage as text) as lineage, tll.title_lineage as titleLineage, alt.level " +
+        "from address_level al " +
+        "left join address_level_type alt on alt.id = al.type_id " +
+        "left join title_lineage_locations_view tll on tll.lowestpoint_id = al.id " +
+        "where (:title is null or lower(al.title) like lower(concat('%', :title,'%'))) " +
+        "and al.is_voided = false ";
+
+    String orderByTitle = " order by al.title ";
+    String findLocationProjectionByTitleQuery = locationProjectionBaseQuery + orderByTitle;
+
+    @Query(value = findLocationProjectionByTitleQuery,
             nativeQuery = true)
     Page<LocationProjection> findLocationProjectionByTitleIgnoreCase(String title, Pageable pageable);
 
-    @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, title_lineage as titleLineage, alt.level " +
-            "from address_level al " +
-            "left join address_level_type alt on alt.id = al.type_id " +
-            "left join title_lineage_locations_view tll on tll.lowestpoint_id = al.id " +
-            "where (:title is null or lower(al.title) like lower(concat('%', :title,'%'))) " +
-            "and alt.id = :typeId " +
-            "and al.is_voided = false order by al.title ",
+    String addressLevelTypeClause = " and alt.id = :typeId ";
+    String findLocationProjectionByTitleIgnoreCaseAndTypeIdQuery = locationProjectionBaseQuery + addressLevelTypeClause + orderByTitle;
+
+    @Query(value = findLocationProjectionByTitleIgnoreCaseAndTypeIdQuery,
             nativeQuery = true)
     Page<LocationProjection> findLocationProjectionByTitleIgnoreCaseAndTypeId(String title, Integer typeId, Pageable pageable);
 
-    @Query(value = "select al.id, al.uuid, al.title, al.type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(al.lineage as text) as lineage, tll.title_lineage as titleLineage, alt.level " +
-            "from address_level al " +
-            "left join address_level_type alt on alt.id = al.type_id " +
-            "left join title_lineage_locations_view tll on tll.lowestpoint_id = al.id " +
-            "where (:title is null or lower(al.title) like lower(concat('%', :title,'%'))) " +
-            "and alt.id = :typeId " +
-            "and al.is_voided = false " +
-            "and al.parent_id = :parentId order by al.title ",
+    @Query(value = findLocationProjectionByTitleIgnoreCaseAndTypeIdQuery,
+        nativeQuery = true)
+    List<LocationProjection> findLocationProjectionByTitleIgnoreCaseAndTypeIdAsList(String title, Integer typeId);
+
+    String addressLevelParentClause = " and al.parent_id = :parentId ";
+    String findLocationProjectionByTitleIgnoreCaseAndTypeIdAndParentIdQuery = locationProjectionBaseQuery + addressLevelTypeClause + addressLevelParentClause + orderByTitle;
+
+    @Query(value = findLocationProjectionByTitleIgnoreCaseAndTypeIdAndParentIdQuery,
             nativeQuery = true)
     Page<LocationProjection> findLocationProjectionByTitleIgnoreCaseAndTypeIdAndParentId(String title, int typeId, Integer parentId, Pageable pageable);
 
