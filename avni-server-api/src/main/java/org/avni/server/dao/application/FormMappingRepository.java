@@ -64,6 +64,7 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
         return findAllBySubjectTypeAndProgramNotNullAndEncounterTypeNullAndFormFormTypeAndIsVoidedFalse(subjectType, FormType.ProgramEnrolment);
     }
     List<FormMapping> findByFormFormTypeAndIsVoidedFalse(FormType formType);
+    List<FormMapping> findByFormFormTypeAndIsVoidedTrueOrderByLastModifiedDateTimeDesc(FormType formType);
     default List<FormMapping> getAllProgramEnrolmentFormMappings() {
         return findByFormFormTypeAndIsVoidedFalse(FormType.ProgramEnrolment);
     }
