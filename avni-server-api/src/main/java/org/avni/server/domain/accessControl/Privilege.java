@@ -116,4 +116,11 @@ public class Privilege {
     public PrivilegeType getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return "Privilege{" +
+                "type=" + type +
+                '}';
+    }
 }

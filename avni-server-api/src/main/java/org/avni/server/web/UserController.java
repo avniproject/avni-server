@@ -358,13 +358,15 @@ public class UserController {
                 .map(Organisation::getId).collect(Collectors.toList());
     }
 
-    @GetMapping(value = "/user/search/findByOrganisation")
+    @GetMapping( "/user/search/findByOrganisation")
+    @ResponseBody
     public Page<User> getUsersByOrganisation(@RequestParam("organisationId") Long organisationId, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         return userRepository.findByOrganisationIdAndIsVoidedFalse(organisationId, pageable);
     }
 
-    @RestResource(path = "findAllById", rel = "findAllById")
+    @RestResource(path = "/user/search/findAllById", rel = "findAllById")
+    @ResponseBody
     public List<User> findByIdIn(@RequestParam Long[] ids) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         return userRepository.findByIdIn(ids);

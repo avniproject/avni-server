@@ -40,7 +40,6 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
         return findById(id).orElse(null);
     }
 
-    @RestResource(exported = false)
     Page<User> findByOrganisationIdAndIsVoidedFalse(@Param("organisationId") Long organisationId,
                                                     Pageable pageable);
 

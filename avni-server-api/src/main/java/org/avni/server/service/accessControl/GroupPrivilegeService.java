@@ -2,6 +2,7 @@ package org.avni.server.service.accessControl;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
@@ -14,10 +15,9 @@ import org.avni.server.web.request.GroupPrivilegeContractWeb;
 import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
@@ -50,124 +50,103 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         return true;
     }
 
-    public List<GroupPrivilege> getAllGroupPrivileges() {
-        return groupPrivilegeRepository.findAllByIsVoidedFalse();
-    }
-
-    public List<GroupPrivilege> getAllCategorisedGroupPrivileges(long groupId) {
+    public List<GroupPrivilege> getAllGroupPrivileges(long groupId) {
         List<FormMapping> formMappings = formMappingRepository.findAllByIsVoidedFalse();
-        List<SubjectType.SubjectTypeProjection> subjectTypes = subjectTypeRepository.findAllOperational();
-
-        List<Program.ProgramProjection> operationalPrograms = programRepository.findAllOperational();
-        Set<Long> operationalProgramIds = operationalPrograms.stream().map(Program.ProgramProjection::getId).collect(Collectors.toSet());
-
-        List<EncounterType.EncounterTypeProjection> operationalEncounterTypes = encounterTypeRepository.findAllOperational();
-        Set<Long> operationalEncounterTypeIds = operationalEncounterTypes.stream().map(EncounterType.EncounterTypeProjection::getId).collect(Collectors.toSet());
-
         List<ChecklistDetail> checklistDetails = checklistDetailRepository.findAllByOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
 
         Group group = groupRepository.findOne(groupId);
         List<Privilege> privilegeList = IterableUtils.toList(privilegeRepository.findAllByIsVoidedFalse());
 
-        List<FormMapping> operationalFormMappings = formMappings.stream()
-                .filter(formMapping -> (formMapping.getProgram() == null) || (formMapping.getProgram() != null && operationalProgramIds.contains(formMapping.getProgram().getId())))
-                .collect(Collectors.toList());
-
         List<GroupPrivilege> allGroupPrivileges = new ArrayList<>();
 
-        subjectTypes.forEach(subjectTypeProjection -> {
-            SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeProjection.getUuid());
-            privilegeList.stream()
-                    .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
-                    .forEach(subjectPrivilege -> {
-                                GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                groupPrivilege.setGroup(group);
-                                groupPrivilege.setPrivilege(subjectPrivilege);
-                                groupPrivilege.setSubjectType(subjectType);
-                                groupPrivilege.setAllow(false);
-                                groupPrivilege.assignUUID();
-                                allGroupPrivileges.add(groupPrivilege);
-                            }
-                    );
+        formMappings.forEach(formMapping -> {
+            SubjectType subjectType = formMapping.getSubjectType();
+            Program program = formMapping.getProgram();
+            EncounterType encounterType = formMapping.getEncounterType();
+            FormType formType = formMapping.getForm().getFormType();
 
-            operationalFormMappings.forEach(operationalFormMapping -> {
-                if (operationalFormMapping.getSubjectType() != subjectType) return;
-
-                Program program = operationalFormMapping.getProgram();
-                EncounterType encounterType = operationalFormMapping.getEncounterType();
-                if (program != null) {
-                    privilegeList.stream()
-                            .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Enrolment)
-                            .forEach(enrolmentPrivilege -> {
-                                GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                groupPrivilege.setGroup(group);
-                                groupPrivilege.setPrivilege(enrolmentPrivilege);
-                                groupPrivilege.setSubjectType(subjectType);
-                                groupPrivilege.setProgram(program);
-                                groupPrivilege.setAllow(false);
-                                groupPrivilege.assignUUID();
-                                allGroupPrivileges.add(groupPrivilege);
-                            });
-
-                    if (encounterType != null && operationalEncounterTypeIds.contains(encounterType.getId())) {
-                        privilegeList.stream()
-                                .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Encounter)
-                                .forEach(encounterPrivilege -> {
+            if (formType.equals(FormType.IndividualProfile)) {
+                privilegeList.stream()
+                        .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
+                        .forEach(subjectPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
                                     groupPrivilege.setGroup(group);
-                                    groupPrivilege.setPrivilege(encounterPrivilege);
+                                    groupPrivilege.setPrivilege(subjectPrivilege);
                                     groupPrivilege.setSubjectType(subjectType);
-                                    groupPrivilege.setProgram(program);
-                                    groupPrivilege.setProgramEncounterType(encounterType);
+                                    groupPrivilege.assignUUID();
+                                    allGroupPrivileges.add(groupPrivilege);
+                                }
+                        );
+            }
+
+            if (formType.equals(FormType.ProgramEnrolment)) {
+                privilegeList.stream()
+                        .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Enrolment)
+                        .forEach(enrolmentPrivilege -> {
+                            GroupPrivilege groupPrivilege = new GroupPrivilege();
+                            groupPrivilege.setGroup(group);
+                            groupPrivilege.setPrivilege(enrolmentPrivilege);
+                            groupPrivilege.setSubjectType(subjectType);
+                            groupPrivilege.setProgram(program);
+                            groupPrivilege.assignUUID();
+                            allGroupPrivileges.add(groupPrivilege);
+                        });
+
+                checklistDetails.forEach(checklistDetail ->
+                        privilegeList.stream()
+                                .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Checklist)
+                                .forEach(privilege -> {
+                                    GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                    groupPrivilege.setGroup(group);
+                                    groupPrivilege.setPrivilege(privilege);
+                                    groupPrivilege.setSubjectType(subjectType);
+                                    groupPrivilege.setChecklistDetail(checklistDetail);
                                     groupPrivilege.setAllow(false);
                                     groupPrivilege.assignUUID();
                                     allGroupPrivileges.add(groupPrivilege);
-                                });
-                    }
+                                })
+                );
+            }
 
-                    checklistDetails.forEach(checklistDetail ->
-                            privilegeList.stream()
-                                    .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Checklist)
-                                    .forEach(privilege -> {
-                                        GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                        groupPrivilege.setGroup(group);
-                                        groupPrivilege.setPrivilege(privilege);
-                                        groupPrivilege.setSubjectType(subjectType);
-                                        groupPrivilege.setChecklistDetail(checklistDetail);
-                                        groupPrivilege.setAllow(false);
-                                        groupPrivilege.assignUUID();
-                                        allGroupPrivileges.add(groupPrivilege);
-                                    })
-                    );
-                } else {
-                    if (encounterType != null && operationalEncounterTypeIds.contains(encounterType.getId())) {
+            if (formType.equals(FormType.ProgramEncounter)) {
+                privilegeList.stream()
+                        .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Encounter)
+                        .forEach(encounterPrivilege -> {
+                            GroupPrivilege groupPrivilege = new GroupPrivilege();
+                            groupPrivilege.setGroup(group);
+                            groupPrivilege.setPrivilege(encounterPrivilege);
+                            groupPrivilege.setSubjectType(subjectType);
+                            groupPrivilege.setProgram(program);
+                            groupPrivilege.setProgramEncounterType(encounterType);
+                            groupPrivilege.setAllow(false);
+                            groupPrivilege.assignUUID();
+                            allGroupPrivileges.add(groupPrivilege);
+                        });
+            }
 
-                        privilegeList.stream()
-                                .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Encounter)
-                                .forEach(encounterPrivilege -> {
-                                    GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                    groupPrivilege.setGroup(group);
-                                    groupPrivilege.setPrivilege(encounterPrivilege);
-                                    groupPrivilege.setSubjectType(subjectType);
-                                    groupPrivilege.setEncounterType(operationalFormMapping.getEncounterType());
-                                    groupPrivilege.setAllow(false);
-                                    groupPrivilege.assignUUID();
-                                    allGroupPrivileges.add(groupPrivilege);
-                                });
-                    }
-                }
-            });
+            if (formType.equals(FormType.Encounter)) {
+                privilegeList.stream()
+                        .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Encounter)
+                        .forEach(encounterPrivilege -> {
+                            GroupPrivilege groupPrivilege = new GroupPrivilege();
+                            groupPrivilege.setGroup(group);
+                            groupPrivilege.setPrivilege(encounterPrivilege);
+                            groupPrivilege.setSubjectType(subjectType);
+                            groupPrivilege.setEncounterType(formMapping.getEncounterType());
+                            groupPrivilege.assignUUID();
+                            allGroupPrivileges.add(groupPrivilege);
+                        });
+            }
         });
 
-        privilegeList.stream().filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.NonTransaction || privilege.getEntityType() == PrivilegeEntityType.Task)
-            .forEach(nonTransactionPrivilege -> {
-                GroupPrivilege groupPrivilege = new GroupPrivilege();
-                groupPrivilege.setGroup(group);
-                groupPrivilege.setPrivilege(nonTransactionPrivilege);
-                groupPrivilege.setAllow(false);
-                groupPrivilege.assignUUID();
-                allGroupPrivileges.add(groupPrivilege);
-            });
+        privilegeList.stream().filter(privilege -> PrivilegeEntityType.NotMappingViaForms.contains(privilege.getEntityType()))
+                .forEach(nonFormMappedPrivilege -> {
+                    GroupPrivilege groupPrivilege = new GroupPrivilege();
+                    groupPrivilege.setGroup(group);
+                    groupPrivilege.setPrivilege(nonFormMappedPrivilege);
+                    groupPrivilege.assignUUID();
+                    allGroupPrivileges.add(groupPrivilege);
+                });
 
         return allGroupPrivileges;
     }

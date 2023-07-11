@@ -194,4 +194,17 @@ public class GroupPrivilege extends OrganisationAwareEntity {
         }
     }
 
+    @Override
+    public String toString() {
+        return "GroupPrivilege{" +
+                "group=" + group.getName() +
+                ", privilege=" + privilege.getType() +
+                (subjectType != null ? ", subjectType=" + subjectType.getName() : "") +
+                (program != null ? ", program=" + program.getName() : "") +
+                (programEncounterType != null ? ", programEncounterType=" + programEncounterType.getName() : "") +
+                (encounterType != null ? ", encounterType=" + encounterType.getName() : "") +
+                (checklistDetail != null ? ", checklistDetail=" + checklistDetail.getName() : "") +
+                ", allow=" + allow +
+                '}';
+    }
 }

@@ -10,10 +10,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -33,10 +33,10 @@ public interface PrivilegeRepository extends PagingAndSortingRepository<Privileg
 
     Privilege findByName(String name);
 
-    List<Privilege> findAllByIsVoidedFalseAndEntityType(PrivilegeEntityType privilegeEntityType);
+    List<Privilege> findAllByIsVoidedFalseAndEntityTypeIn(List<PrivilegeEntityType> privilegeEntityType);
 
     default List<Privilege> getAdminPrivileges() {
-        return this.findAllByIsVoidedFalseAndEntityType(PrivilegeEntityType.NonTransaction);
+        return this.findAllByIsVoidedFalseAndEntityTypeIn(Collections.singletonList(PrivilegeEntityType.NonTransaction));
     }
 
     boolean existsByEntityTypeAndTypeAndIsVoidedFalse(PrivilegeEntityType privilegeEntityType, PrivilegeType privilegeType);

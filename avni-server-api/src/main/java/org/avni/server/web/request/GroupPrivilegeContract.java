@@ -15,6 +15,7 @@ public class GroupPrivilegeContract {
     private Long groupId;
     private Long privilegeId;
     private String privilegeEntityType;
+    private String privilegeTypeName;
     private String privilegeName;
     private String privilegeDescription;
     private Long subjectTypeId;
@@ -35,7 +36,8 @@ public class GroupPrivilegeContract {
         groupPrivilegeContract.setGroupPrivilegeId(groupPrivilege.getId());
         groupPrivilegeContract.setGroupId(groupPrivilege.getGroup().getId());
         groupPrivilegeContract.setPrivilegeId(groupPrivilege.getPrivilege().getId());
-        groupPrivilegeContract.setPrivilegeEntityType(groupPrivilege.getPrivilege().getEntityType().toString());
+        groupPrivilegeContract.setPrivilegeEntityType(groupPrivilege.getPrivilege().getEntityType().name());
+        groupPrivilegeContract.privilegeTypeName = groupPrivilege.getPrivilege().getType().name();
         groupPrivilegeContract.setPrivilegeName(groupPrivilege.getPrivilege().getName());
         groupPrivilegeContract.setPrivilegeDescription(groupPrivilege.getPrivilege().getDescription());
         groupPrivilegeContract.setSubjectTypeId(Optional.ofNullable(groupPrivilege.getSubjectType()).map(SubjectType::getId).orElse(null));
@@ -196,6 +198,10 @@ public class GroupPrivilegeContract {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getPrivilegeTypeName() {
+        return privilegeTypeName;
     }
 
     @Override

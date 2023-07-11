@@ -11,7 +11,6 @@ import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.GroupPrivilegeWebRequest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -46,7 +45,7 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
 
     @RequestMapping(value = "/groups/{id}/privileges", method = RequestMethod.GET)
     public List<GroupPrivilegeContract> getById(@PathVariable("id") Long id) {
-        List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllCategorisedGroupPrivileges(id);
+        List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllGroupPrivileges(id);
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByGroup_Id(id);
         groupPrivileges.addAll(allPossibleGroupPrivileges);
         return groupPrivileges.stream()
