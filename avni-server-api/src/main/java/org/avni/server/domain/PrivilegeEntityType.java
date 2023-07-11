@@ -1,6 +1,6 @@
 package org.avni.server.domain;
 
-public enum EntityType {
+public enum PrivilegeEntityType {
     Subject,
     Enrolment,
     Encounter,

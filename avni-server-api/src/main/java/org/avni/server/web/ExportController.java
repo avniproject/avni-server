@@ -10,8 +10,10 @@ import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.exporter.ExportJobService;
 import org.avni.server.service.ExportS3Service;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.external.request.export.ExportJobRequest;
 import org.avni.server.web.external.request.export.ExportOutput;
@@ -40,25 +42,27 @@ public class ExportController {
     private final SubjectTypeRepository subjectTypeRepository;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public ExportController(ExportJobService exportJobService, ExportS3Service exportS3Service, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
+    public ExportController(ExportJobService exportJobService, ExportS3Service exportS3Service, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AccessControlService accessControlService) {
         this.exportJobService = exportJobService;
         this.exportS3Service = exportS3Service;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/export", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> getVisitData(@RequestBody ExportJobRequest exportJobRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         return exportJobService.runExportJob(exportJobRequest);
     }
 
     @RequestMapping(value = "/export/v2", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> getVisitDataV2(@RequestBody ExportV2JobRequest exportJobRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         ExportOutput exportOutput = getExportOutput(exportJobRequest);
         ResponseEntity<?> validationErrorResponseEntity = validateHeader(exportOutput);
         if(validationErrorResponseEntity != null) {
@@ -80,8 +84,8 @@ public class ExportController {
     }
 
     @RequestMapping(value = "/export/status", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public Page<JobStatus> getUploadStatus(Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         return exportJobService.getAll(pageable);
     }
 

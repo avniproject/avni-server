@@ -5,6 +5,7 @@ import org.avni.server.domain.Account;
 import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.AccountRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,17 +23,19 @@ import java.util.Set;
 
 @RestController
 public class AccountController implements RestControllerResourceProcessor<Account> {
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public AccountController(AccountRepository accountRepository) {
+    public AccountController(AccountRepository accountRepository, AccessControlService accessControlService) {
         this.accountRepository = accountRepository;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/account", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     public ResponseEntity createAccount(@RequestBody AccountRequest accountRequest) {
+        accessControlService.checkIsAdmin();
         if (accountRepository.findByName(accountRequest.getName()) != null) {
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Account with name %s already exists", accountRequest.getName())));
         }
@@ -46,8 +49,8 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
 
     @RequestMapping(value = "/account/{id}", method = RequestMethod.PUT)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     public ResponseEntity<?> updateAccount(@PathVariable Long id, @RequestBody AccountRequest accountRequest) {
+        accessControlService.checkIsAdmin();
         Account account = accountRepository.findOne(id);
         account.setName(accountRequest.getName());
         accountRepository.save(account);
@@ -55,8 +58,8 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
     }
 
     @RequestMapping(value = {"/account/search/findAll", "/account", "/account/search/find"}, method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     public Page<Account> get(@Param("name") String name, Pageable pageable) {
+        accessControlService.checkIsAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         if (name != null) {
             return accountRepository.findByAccountAdmin_User_IdAndNameIgnoreCaseContaining(user.getId(), name, pageable);
@@ -66,8 +69,8 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
     }
 
     @RequestMapping(value = "/account/{id}", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     public Account getById(@PathVariable Long id) {
+        accessControlService.checkIsAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         return accountRepository.findByIdAndAccountAdmin_User_Id(id, user.getId());
     }

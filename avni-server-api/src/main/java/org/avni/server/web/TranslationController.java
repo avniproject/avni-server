@@ -7,7 +7,9 @@ import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.TranslationContract;
 import org.avni.server.web.request.TranslationRequest;
 import org.slf4j.Logger;
@@ -51,6 +53,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
     private final DashboardRepository dashboardRepository;
     private final String REGISTRATION_PREFIX = "REG_DISPLAY-";
     private final String ENROLMENT_PREFIX = "REG_ENROL_DISPLAY-";
+    private final AccessControlService accessControlService;
 
     @Autowired
     TranslationController(TranslationRepository translationRepository,
@@ -71,7 +74,7 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
                           AddressLevelTypeRepository addressLevelTypeRepository,
                           OperationalSubjectTypeRepository operationalSubjectTypeRepository,
                           CardRepository cardRepository,
-                          DashboardRepository dashboardRepository) {
+                          DashboardRepository dashboardRepository, AccessControlService accessControlService) {
         this.translationRepository = translationRepository;
         this.formElementGroupRepository = formElementGroupRepository;
         this.formElementRepository = formElementRepository;
@@ -91,13 +94,14 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.cardRepository = cardRepository;
         this.dashboardRepository = dashboardRepository;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @RequestMapping(value = "/translation", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity<?> uploadTranslations(@RequestBody TranslationRequest request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         Locale language = Locale.valueOf(request.getLanguage());
         Translation translation = translationRepository.findByLanguage(language);
         if (translation == null) {
@@ -113,7 +117,6 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
     }
 
     @RequestMapping(value = "/translation", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     public ResponseEntity<?> downloadTranslations(@RequestParam(value = "platform") String platform,
                                                   @RequestParam(value = "emptyValue", defaultValue = "") String valueForEmptyKey) {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();

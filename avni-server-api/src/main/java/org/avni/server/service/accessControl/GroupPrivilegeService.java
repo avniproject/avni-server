@@ -78,7 +78,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         subjectTypes.forEach(subjectTypeProjection -> {
             SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeProjection.getUuid());
             privilegeList.stream()
-                    .filter(privilege -> privilege.getEntityType() == EntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
+                    .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
                     .forEach(subjectPrivilege -> {
                                 GroupPrivilege groupPrivilege = new GroupPrivilege();
                                 groupPrivilege.setGroup(group);
@@ -97,7 +97,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                 EncounterType encounterType = operationalFormMapping.getEncounterType();
                 if (program != null) {
                     privilegeList.stream()
-                            .filter(privilege -> privilege.getEntityType() == EntityType.Enrolment)
+                            .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Enrolment)
                             .forEach(enrolmentPrivilege -> {
                                 GroupPrivilege groupPrivilege = new GroupPrivilege();
                                 groupPrivilege.setGroup(group);
@@ -111,7 +111,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
 
                     if (encounterType != null && operationalEncounterTypeIds.contains(encounterType.getId())) {
                         privilegeList.stream()
-                                .filter(privilege -> privilege.getEntityType() == EntityType.Encounter)
+                                .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Encounter)
                                 .forEach(encounterPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
                                     groupPrivilege.setGroup(group);
@@ -127,7 +127,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
 
                     checklistDetails.forEach(checklistDetail ->
                             privilegeList.stream()
-                                    .filter(privilege -> privilege.getEntityType() == EntityType.Checklist)
+                                    .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Checklist)
                                     .forEach(privilege -> {
                                         GroupPrivilege groupPrivilege = new GroupPrivilege();
                                         groupPrivilege.setGroup(group);
@@ -143,7 +143,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                     if (encounterType != null && operationalEncounterTypeIds.contains(encounterType.getId())) {
 
                         privilegeList.stream()
-                                .filter(privilege -> privilege.getEntityType() == EntityType.Encounter)
+                                .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Encounter)
                                 .forEach(encounterPrivilege -> {
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
                                     groupPrivilege.setGroup(group);
@@ -159,7 +159,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
             });
         });
 
-        privilegeList.stream().filter(privilege -> privilege.getEntityType() == EntityType.NonTransaction || privilege.getEntityType() == EntityType.Task)
+        privilegeList.stream().filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.NonTransaction || privilege.getEntityType() == PrivilegeEntityType.Task)
             .forEach(nonTransactionPrivilege -> {
                 GroupPrivilege groupPrivilege = new GroupPrivilege();
                 groupPrivilege.setGroup(group);

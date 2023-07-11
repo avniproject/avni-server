@@ -30,14 +30,12 @@ public class IndividualRelationController {
     }
 
     @GetMapping(value = "/web/relation")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     public List<IndividualRelationContract> getAllIndividualRelations() {
         return individualRelationService.getAll();
     }
 
     @GetMapping(value = "/web/relation/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<IndividualRelationContract> getIndividualRelation(@PathVariable Long id) {
         Optional<IndividualRelation> relation = individualRelationRepository.findById(id);

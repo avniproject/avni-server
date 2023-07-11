@@ -96,35 +96,29 @@ public class AuthServiceTest {
         assertThat(userContext.getRoles().size(), is(equalTo(1)));
 
         user.setAccountAdmin(null);
-        user.setOrgAdmin(true);
 
         userContext = authService.authenticateByToken("some token", null);
-        assertThat(userContext.getRoles().size(), is(equalTo(2)));
-        assertThat(userContext.getRoles(), containsInAnyOrder(User.ORGANISATION_ADMIN, User.USER));
+        assertThat(userContext.getRoles(), containsInAnyOrder(User.USER));
 
         user.setAccountAdmin(accountAdmin);
         when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(adminUser);
-        user.setOrgAdmin(false);
         userContext = authService.authenticateByToken("some token", null);
-        assertThat(userContext.getRoles().size(), is(equalTo(2)));
+        assertThat(userContext.getRoles().size(), is(equalTo(0)));
 
         user.setAccountAdmin(null);
         when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(new ArrayList<>());
-        user.setOrgAdmin(false);
         userContext = authService.authenticateByToken("some token", null);
         assertThat(userContext.getRoles().size(), is(equalTo(1)));
         assertThat(userContext.getRoles(), contains(User.USER));
 
         user.setAccountAdmin(accountAdmin);
         when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(adminUser);
-        user.setOrgAdmin(true);
         userContext = authService.authenticateByToken("some token", null);
-        assertThat(userContext.getRoles().size(), is(equalTo(3)));
-        assertThat(userContext.getRoles(), containsInAnyOrder(User.ADMIN, User.ORGANISATION_ADMIN, User.USER));
+        assertThat(userContext.getRoles().size(), is(equalTo(0)));
     }
 
     @Test
-    public void shouldSetcontextBasedOnUserId() throws SigningKeyNotFoundException {
+    public void shouldSetContextBasedOnUserId() throws SigningKeyNotFoundException {
         Organisation organisation = new Organisation();
         when(organisationRepository.findOne(1L)).thenReturn(organisation);
         when(userRepository.findById(100L)).thenReturn(Optional.of(user));

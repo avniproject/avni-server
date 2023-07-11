@@ -97,7 +97,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/forms")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<BasicFormDetails>> getAllFormsWeb(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "includeVoided", required = false) boolean includeVoided,
@@ -265,7 +264,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @RequestMapping(value = "/forms/export", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public FormContract export(@RequestParam String formUUID) {
         Form form = formRepository.findByUuid(formUUID);
 
@@ -377,7 +375,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
      * </ol>
      */
     @RequestMapping(value = "/forms/program/{programId}", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<BasicFormDetails> getForms(@PathVariable("programId") Long programId, Pageable pageable) {
         Program program = programRepository.findOne(programId);
         if (program == null) {
@@ -421,7 +418,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
      * @return list of program/forms
      */
     @RequestMapping(value = "/forms", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<Map<String, Object>> getForms(Pageable pageable) {
 
         Iterable<OperationalProgram> programItr = operationalProgramRepository.findAllByIsVoidedFalse();
@@ -442,14 +438,12 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/form/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public FormWebProjection getFormForWeb(@PathVariable String uuid) {
         return projectionFactory.createProjection(FormWebProjection.class, formRepository.findByUuid(uuid));
     }
 
     @GetMapping(value = "/web/form/{uuid}/identifierAssignments")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IdentifierAssignmentProjection> getFormIdentifiers(@PathVariable String uuid) {
         try {

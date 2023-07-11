@@ -1,5 +1,7 @@
 package org.avni.server.web;
 
+import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RestController;
 import org.avni.server.dao.IdentifierSourceRepository;
@@ -21,19 +23,20 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class IdentifierUserAssignmentWebController extends AbstractController<IdentifierUserAssignment> implements RestControllerResourceProcessor<IdentifierUserAssignmentContractWeb> {
-    private IdentifierUserAssignmentRepository identifierUserAssignmentRepository;
-    private UserRepository userRepository;
-    private IdentifierSourceRepository identifierSourceRepository;
+    private final IdentifierUserAssignmentRepository identifierUserAssignmentRepository;
+    private final UserRepository userRepository;
+    private final IdentifierSourceRepository identifierSourceRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public IdentifierUserAssignmentWebController(IdentifierUserAssignmentRepository identifierUserAssignmentRepository, UserRepository userRepository, IdentifierSourceRepository identifierSourceRepository) {
+    public IdentifierUserAssignmentWebController(IdentifierUserAssignmentRepository identifierUserAssignmentRepository, UserRepository userRepository, IdentifierSourceRepository identifierSourceRepository, AccessControlService accessControlService) {
         this.identifierUserAssignmentRepository = identifierUserAssignmentRepository;
         this.userRepository = userRepository;
         this.identifierSourceRepository = identifierSourceRepository;
+        this.accessControlService = accessControlService;
     }
 
     @GetMapping(value = "/web/identifierUserAssignment")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
     public PagedResources<Resource<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
         Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageable);
@@ -42,7 +45,6 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     }
 
     @GetMapping(value = "/web/identifierUserAssignment/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
@@ -52,9 +54,9 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     }
 
     @PostMapping(value = "/web/identifierUserAssignment")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     @Transactional
-    ResponseEntity saveProgramForWeb(@RequestBody IdentifierUserAssignmentContractWeb request) {
+    ResponseEntity saveIdentifierAssignment(@RequestBody IdentifierUserAssignmentContractWeb request) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
         IdentifierUserAssignment identifierUserAssignment = new IdentifierUserAssignment();
         identifierUserAssignment.assignUUID();
         identifierUserAssignment.setAssignedTo(request.getUserId() == null ? null : userRepository.findOne(request.getUserId()));
@@ -67,10 +69,10 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     }
 
     @PutMapping(value = "/web/identifierUserAssignment/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     @Transactional
-    public ResponseEntity updateProgramForWeb(@RequestBody IdentifierUserAssignmentContractWeb request,
-                                              @PathVariable("id") Long id) {
+    public ResponseEntity updateIdAssignment(@RequestBody IdentifierUserAssignmentContractWeb request,
+                                             @PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
         IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
         if (identifierUserAssignment == null)
             return ResponseEntity.badRequest()
@@ -86,9 +88,9 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     }
 
     @DeleteMapping(value = "/web/identifierUserAssignment/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @Transactional
-    public ResponseEntity voidProgram(@PathVariable("id") Long id) {
+    public ResponseEntity voidIdentifierUserAssignment(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
         IdentifierUserAssignment identifierSource = identifierUserAssignmentRepository.findOne(id);
         if (identifierSource == null)
             return ResponseEntity.notFound().build();

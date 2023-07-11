@@ -3,8 +3,7 @@ package org.avni.server.domain.accessControl;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.avni.server.domain.EntityType;
+import org.avni.server.domain.PrivilegeEntityType;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
@@ -35,7 +34,7 @@ public class Privilege {
 
     @Column
     @Enumerated(EnumType.STRING)
-    private EntityType entityType;
+    private PrivilegeEntityType entityType;
 
     @Column
     private boolean isVoided;
@@ -106,11 +105,11 @@ public class Privilege {
         this.description = description;
     }
 
-    public EntityType getEntityType() {
+    public PrivilegeEntityType getEntityType() {
         return entityType;
     }
 
-    public void setEntityType(EntityType entityType) {
+    public void setEntityType(PrivilegeEntityType entityType) {
         this.entityType = entityType;
     }
 

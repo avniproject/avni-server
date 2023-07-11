@@ -34,7 +34,6 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
     }
 
     @GetMapping(value = "/web/identifierSource/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         Long[] id = {ids};
@@ -42,14 +41,12 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
     }
 
     @GetMapping(value = "/web/identifierSource")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
         return wrap(identifierSourceRepository.findPageByIsVoidedFalse(pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
 
     @GetMapping(value = "/web/identifierSource/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierSource identifierSource = identifierSourceRepository.findOne(id);

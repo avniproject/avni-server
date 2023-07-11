@@ -8,10 +8,8 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.program.SubjectProgramEligibility;
 import org.avni.server.framework.security.UserContextHolder;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
@@ -22,7 +20,6 @@ import static org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil.joinUs
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "subjectProgramEligibility", path = "subjectProgramEligibility", exported = false)
-@PreAuthorize("hasAnyAuthority('user','admin')")
 public interface SubjectProgramEligibilityRepository extends TransactionalDataRepository<SubjectProgramEligibility>, OperatingIndividualScopeAwareRepository<SubjectProgramEligibility> {
 
     default Specification<SubjectProgramEligibility> syncStrategySpecification(SyncParameters syncParameters) {

@@ -85,7 +85,6 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public void getSampleImportFile(@RequestParam String uploadType, HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
@@ -94,7 +93,6 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity getImportTypes() {
         return ResponseEntity.ok(importService.getImportTypes());
     }
@@ -131,7 +129,6 @@ public class ImportController {
     }
 
     @GetMapping("/import/status")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public Page<JobStatus> getUploadStats(Pageable pageable) {
         return jobService.getAll(pageable);
     }
@@ -139,8 +136,8 @@ public class ImportController {
     @GetMapping(value = "/import/errorfile",
             produces = TEXT_PLAIN_VALUE,
             consumes = APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<InputStreamResource> getDocument(@RequestParam String jobUuid) {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
         return ResponseEntity.ok()
                 .contentType(TEXT_PLAIN)
@@ -165,10 +162,10 @@ public class ImportController {
     }
 
     @GetMapping("/upload")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public JsonObject getSubjectOrLocationObsValue(@RequestParam("type") String type,
                                                    @RequestParam("ids") String ids,
                                                    @RequestParam("formElementUuid") String formElementUuid) {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         FormElement formElement = formElementRepository.findByUuid(formElementUuid);
         JsonObject response = new JsonObject();
         if (ConceptDataType.Location.toString().equals(type)) {

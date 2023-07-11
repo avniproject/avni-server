@@ -30,7 +30,6 @@ public class OrganisationConfigSearchController {
     }
 
     @GetMapping(value = "/web/organisationConfig")
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     @ResponseBody
     public ResponseEntity<LinkedHashMap<String, Object>> getOrganisationSearchConfig() {
         Long organisationId = UserContextHolder.getUserContext().getOrganisation().getId();
@@ -43,7 +42,6 @@ public class OrganisationConfigSearchController {
     }
 
     @GetMapping(value = "/web/locations")
-    @PreAuthorize(value = "hasAnyAuthority('user','admin')")
     @ResponseBody
     public ResponseEntity<List<AddressLevelContract>> getAll() {
         return new ResponseEntity(addressLevelService.getAllLocations(), HttpStatus.OK);

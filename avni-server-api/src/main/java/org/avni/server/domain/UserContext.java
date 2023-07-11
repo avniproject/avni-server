@@ -42,18 +42,6 @@ public class UserContext {
         return roles;
     }
 
-    public UserContext addUserRole() {
-        return addRole(User.USER);
-    }
-
-    public UserContext addOrganisationAdminRole() {
-        return addRole(User.ORGANISATION_ADMIN);
-    }
-
-    public UserContext addAdminRole() {
-        return addRole(User.ADMIN);
-    }
-
     public UserContext addRole(String role) {
         this.roles.add(role);
         return this;

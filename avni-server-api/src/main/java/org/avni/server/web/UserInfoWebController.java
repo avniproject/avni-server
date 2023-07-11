@@ -2,7 +2,7 @@ package org.avni.server.web;
 
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.EntityType;
+import org.avni.server.domain.PrivilegeEntityType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.GroupPrivilege;
@@ -12,7 +12,6 @@ import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.response.UserPrivilegeWebResponse;
 import org.avni.server.web.response.UserInfoWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,12 +33,10 @@ public class UserInfoWebController {
     }
 
     @RequestMapping(value = "/web/userInfo", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public UserInfoWebResponse getUserInfo() {
         if (UserContextHolder.getUser().isAdmin()) {
-            List<Privilege> allPrivileges = privilegeRepository.findAllByIsVoidedFalse();
-            List<UserPrivilegeWebResponse> groupPrivilegeResponses = allPrivileges.stream()
-                    .filter(x -> x.getEntityType().equals(EntityType.NonTransaction))
+            List<Privilege> adminPrivileges = privilegeRepository.getAdminPrivileges();
+            List<UserPrivilegeWebResponse> groupPrivilegeResponses = adminPrivileges.stream()
                     .map(UserPrivilegeWebResponse::createForAdminUser).collect(Collectors.toList());
             return UserInfoWebResponse.createForAdminUser(groupPrivilegeResponses);
         }

@@ -1,5 +1,7 @@
 package org.avni.server.dao;
+import org.avni.server.domain.PrivilegeEntityType;
 import org.avni.server.domain.accessControl.Privilege;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,12 +18,7 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "privilege", path = "privilege")
-@PreAuthorize("hasAnyAuthority('user','admin')")
 public interface PrivilegeRepository extends PagingAndSortingRepository<Privilege, Long> {
-
-    @PreAuthorize("hasAnyAuthority('admin' ,'organisation_admin')")
-    <S extends Privilege> S save(S entity);
-
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<Privilege> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
@@ -35,4 +32,16 @@ public interface PrivilegeRepository extends PagingAndSortingRepository<Privileg
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
     Privilege findByName(String name);
+
+    List<Privilege> findAllByIsVoidedFalseAndEntityType(PrivilegeEntityType privilegeEntityType);
+
+    default List<Privilege> getAdminPrivileges() {
+        return this.findAllByIsVoidedFalseAndEntityType(PrivilegeEntityType.NonTransaction);
+    }
+
+    boolean existsByEntityTypeAndTypeAndIsVoidedFalse(PrivilegeEntityType privilegeEntityType, PrivilegeType privilegeType);
+
+    default boolean isAllowedForAdmin(PrivilegeType privilegeType) {
+        return this.existsByEntityTypeAndTypeAndIsVoidedFalse(PrivilegeEntityType.NonTransaction, privilegeType);
+    }
 }

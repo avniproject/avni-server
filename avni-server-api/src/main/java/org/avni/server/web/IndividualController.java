@@ -279,7 +279,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = {"/subjects", "/subjects/search/find"})
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<?> searchByName(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         if (name == null || name.isEmpty()) {
@@ -290,7 +290,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @GetMapping(value = "/subjects/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<SubjectSearchContract> findByIds(@Param("ids") Long[] ids, Pageable pageable) {
         return this.individualRepository.findByIdIn(ids, pageable).map(SubjectSearchContract::fromSubject);

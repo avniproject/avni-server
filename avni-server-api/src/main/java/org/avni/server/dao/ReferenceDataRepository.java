@@ -12,7 +12,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @NoRepositoryBean
-@PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
 public interface ReferenceDataRepository<T extends CHSEntity> extends CHSRepository<T>, CustomJpaRepository<T, Long> {
     T findByName(String name);
     T findByNameIgnoreCase(String name);
@@ -25,8 +24,7 @@ public interface ReferenceDataRepository<T extends CHSEntity> extends CHSReposit
     @RestResource(exported = false)
     Page<T> findAllByOrganisationId(Long organisationId, Pageable pageable);
 
-
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
+    @RestResource(exported = false)
     <S extends T> S save(S entity);
 
     default T findOne(Long id) {

@@ -5,8 +5,10 @@ import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.UserBulkUploadContract;
@@ -45,10 +47,11 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     private final IdpServiceFactory idpServiceFactory;
     private final OrganisationConfigService organisationConfigService;
     private final GroupPrivilegeService groupPrivilegeService;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public UserInfoController(CatchmentRepository catchmentRepository, UserRepository userRepository, OrganisationRepository organisationRepository, UserService userService,
-                              IdpServiceFactory idpServiceFactory, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService) {
+                              IdpServiceFactory idpServiceFactory, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService, AccessControlService accessControlService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -56,11 +59,11 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         this.idpServiceFactory = idpServiceFactory;
         this.organisationConfigService = organisationConfigService;
         this.groupPrivilegeService = groupPrivilegeService;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @RequestMapping(value = "/userInfo", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     public ResponseEntity<UserInfoContract> getUserInfo() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -82,13 +85,11 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
      */
     @Deprecated
     @RequestMapping(value = "/me", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     public ResponseEntity<UserInfoContract> getMyProfileOld() {
         return getUserInfo();
     }
 
     @RequestMapping(value = "/v2/me", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     public PagedResources<Resource<UserInfoContract>> getMyProfile() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -98,7 +99,6 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/me/v3", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     public SlicedResources<Resource<UserInfoContract>> getMyProfileAsSlice() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
@@ -130,7 +130,6 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
 
     @RequestMapping(value = "/me", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public void saveMyProfile(@RequestBody UserInfoContract userInfo) {
         User user = userService.getCurrentUser();
         user.setSettings(userInfo.getSettings());
@@ -141,8 +140,8 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
 
     @RequestMapping(value = "/users", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public void save(@RequestBody UserBulkUploadContract[] userContracts) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         Arrays.stream(userContracts).forEach(userContract -> {
             logger.info(String.format("Saving user with UUID/Name %s/%s", userContract.getUuid(), userContract.getName()));
             User user = userContract.getUuid() == null ? userRepository.findByUsername(userContract.getName()) : userRepository.findByUuid(userContract.getUuid());
@@ -158,7 +157,6 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
 
             Long organisationId = getOrganisationId(userContract);
             user.setOrganisationId(organisationId);
-            user.setOrgAdmin(userContract.isOrgAdmin());
             user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
             user.setSettings(userContract.getSettings());
             user.setPhoneNumber(userContract.getPhoneNumber());

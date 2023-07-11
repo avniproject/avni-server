@@ -3,7 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.domain.Gender;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -12,7 +12,7 @@ public interface GenderRepository extends CHSRepository<Gender>, PagingAndSortin
     Gender findByName(String name);
     Gender findByNameIgnoreCase(String name);
 
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
+    @RestResource(exported = false)
     Gender save(Gender gender);
 
     default Gender findOne(long id) {
