@@ -61,12 +61,12 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
         List<GroupPrivilege> privilegesToBeAddedOrUpdated = new ArrayList<>();
 
         for (GroupPrivilegeWebRequest groupPrivilegeRequest : request) {
-            GroupPrivilege newGroupPrivilege = groupPrivilegeRepository.findByUuid(groupPrivilegeRequest.getUuid());
-            if (newGroupPrivilege != null) {
-                newGroupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
-                privilegesToBeAddedOrUpdated.add(newGroupPrivilege);
+            GroupPrivilege groupPrivilege = groupPrivilegeRepository.findByUuid(groupPrivilegeRequest.getUuid());
+            if (groupPrivilege != null) {
+                groupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
+                privilegesToBeAddedOrUpdated.add(groupPrivilege);
             } else {
-                newGroupPrivilege = new GroupPrivilege();
+                groupPrivilege = new GroupPrivilege();
                 Optional<Privilege> optionalPrivilege = privilegeRepository.findById(groupPrivilegeRequest.getPrivilegeId());
                 Group group = groupRepository.findOne(groupPrivilegeRequest.getGroupId());
                 SubjectType subjectType = null;
@@ -77,17 +77,17 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
                 if (!optionalPrivilege.isPresent() || group == null) {
                     return ResponseEntity.badRequest().body(String.format("Invalid privilege id %d or group id %d", groupPrivilegeRequest.getPrivilegeId(), groupPrivilegeRequest.getGroupId()));
                 }
-                newGroupPrivilege.setUuid(groupPrivilegeRequest.getUuid());
-                newGroupPrivilege.setPrivilege(optionalPrivilege.get());
-                newGroupPrivilege.setGroup(group);
-                newGroupPrivilege.setSubjectType(subjectType);
-                newGroupPrivilege.setProgram(groupPrivilegeRequest.getProgramId() != null ? programRepository.findOne(groupPrivilegeRequest.getProgramId()) : null);
-                newGroupPrivilege.setEncounterType(groupPrivilegeRequest.getEncounterTypeId() != null ? encounterTypeRepository.findOne(groupPrivilegeRequest.getEncounterTypeId()) : null);
-                newGroupPrivilege.setProgramEncounterType(groupPrivilegeRequest.getProgramEncounterTypeId() != null ? encounterTypeRepository.findOne(groupPrivilegeRequest.getProgramEncounterTypeId()) : null);
-                newGroupPrivilege.setChecklistDetail(groupPrivilegeRequest.getChecklistDetailId() != null ? checklistDetailRepository.findOne(groupPrivilegeRequest.getChecklistDetailId()) : null);
-                newGroupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
+                groupPrivilege.setUuid(groupPrivilegeRequest.getUuid());
+                groupPrivilege.setPrivilege(optionalPrivilege.get());
+                groupPrivilege.setGroup(group);
+                groupPrivilege.setSubjectType(subjectType);
+                groupPrivilege.setProgram(groupPrivilegeRequest.getProgramId() != null ? programRepository.findOne(groupPrivilegeRequest.getProgramId()) : null);
+                groupPrivilege.setEncounterType(groupPrivilegeRequest.getEncounterTypeId() != null ? encounterTypeRepository.findOne(groupPrivilegeRequest.getEncounterTypeId()) : null);
+                groupPrivilege.setProgramEncounterType(groupPrivilegeRequest.getProgramEncounterTypeId() != null ? encounterTypeRepository.findOne(groupPrivilegeRequest.getProgramEncounterTypeId()) : null);
+                groupPrivilege.setChecklistDetail(groupPrivilegeRequest.getChecklistDetailId() != null ? checklistDetailRepository.findOne(groupPrivilegeRequest.getChecklistDetailId()) : null);
+                groupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
 
-                privilegesToBeAddedOrUpdated.add(newGroupPrivilege);
+                privilegesToBeAddedOrUpdated.add(groupPrivilege);
             }
         }
 
