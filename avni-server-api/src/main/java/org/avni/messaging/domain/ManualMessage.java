@@ -30,6 +30,9 @@ public class ManualMessage extends OrganisationAwareEntity {
     }
 
     public String[] getParameters() {
+        if(parameters == null) {
+            return new String[] {};
+        }
         return parameters;
     }
 

@@ -33,7 +33,7 @@ public class GlificMessageRepository extends AbstractGlificRepository {
     }
 
     private String arrayToString(String[] items) {
-        if(items.length == 0) return "[]";
+        if(items == null || items.length <= 0) return "[]";
         StringBuffer result = new StringBuffer();
         result.append("[");
         for (String item : items) {
