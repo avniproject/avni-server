@@ -4,10 +4,7 @@ import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.User;
-import org.avni.server.domain.UserContext;
-import org.avni.server.domain.UserGroup;
+import org.avni.server.domain.*;
 
 import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
 
@@ -52,7 +49,7 @@ public class UserService implements NonScopeAwareService {
     public void addToDefaultUserGroup(User user) {
         if (user.getOrganisationId() != null) {
             UserGroup userGroup = new UserGroup();
-            userGroup.setGroup(groupRepository.findByNameAndOrganisationId("Everyone", user.getOrganisationId()));
+            userGroup.setGroup(groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId()));
             userGroup.setUser(user);
             userGroup.setUuid(UUID.randomUUID().toString());
             userGroup.setOrganisationId(user.getOrganisationId());

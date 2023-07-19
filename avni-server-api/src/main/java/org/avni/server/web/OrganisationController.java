@@ -92,7 +92,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
 
     private void addDefaultGroup(Long organisationId){
         Group group = new Group();
-        group.setName("Everyone");
+        group.setName(Group.Everyone);
         group.setOrganisationId(organisationId);
         group.setUuid(UUID.randomUUID().toString());
         group.setHasAllPrivileges(true);
