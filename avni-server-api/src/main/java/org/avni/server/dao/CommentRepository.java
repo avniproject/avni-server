@@ -2,10 +2,8 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.Individual;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
@@ -14,7 +12,6 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "comment", path = "comment", exported = false)
-@PreAuthorize("hasAnyAuthority('user','admin')")
 public interface CommentRepository extends TransactionalDataRepository<Comment>, FindByLastModifiedDateTime<Comment>, OperatingIndividualScopeAwareRepository<Comment> {
 
     List<Comment> findByIsVoidedFalseAndCommentThreadIdOrderByLastModifiedDateTimeAscIdAsc(Long threadId);

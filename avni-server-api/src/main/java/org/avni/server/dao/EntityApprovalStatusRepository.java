@@ -1,7 +1,6 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.EntityApprovalStatus;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,7 +17,7 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "entityApprovalStatus", path = "entityApprovalStatus")
-@PreAuthorize("hasAnyAuthority('user', 'admin')")
+@PreAuthorize("hasAnyAuthority('user')")
 public interface EntityApprovalStatusRepository extends TransactionalDataRepository<EntityApprovalStatus>, FindByLastModifiedDateTime<EntityApprovalStatus>,
         OperatingIndividualScopeAwareRepository<EntityApprovalStatus> {
     List<EntityApprovalStatus> findByEntityIdAndEntityTypeAndIsVoidedFalse(Long entityId, EntityApprovalStatus.EntityType entityType);

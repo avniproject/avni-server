@@ -55,7 +55,6 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @GetMapping(value = "catchment")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<CatchmentContract>> get(Pageable pageable) {
         Page<Catchment> all = catchmentRepository.findPageByIsVoidedFalse(pageable);
         Page<CatchmentContract> catchmentContracts = all.map(CatchmentContract::fromEntity);
@@ -63,7 +62,6 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @GetMapping(value = "catchment/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public Resource<CatchmentContract> getById(@PathVariable Long id) {
         Catchment catchment = catchmentRepository.findOne(id);
         CatchmentContract catchmentContract = CatchmentContract.fromEntity(catchment);
@@ -73,14 +71,12 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @GetMapping(value = "catchment/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<CatchmentContract> getById(@Param("ids") Long[] ids) {
         List<Catchment> catchments = catchmentRepository.findByIdIn(ids);
         return catchments.stream().map(CatchmentContract::fromEntity).collect(Collectors.toList());
     }
 
     @GetMapping(value = "catchment/search/find")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<CatchmentContract>> find(@RequestParam(value = "name") String name, Pageable pageable) {
         Page<Catchment> catchments = catchmentRepository.findByIsVoidedFalseAndNameIgnoreCaseStartingWithOrderByNameAsc(name, pageable);
         Page<CatchmentContract> catchmentContracts = catchments.map(CatchmentContract::fromEntity);

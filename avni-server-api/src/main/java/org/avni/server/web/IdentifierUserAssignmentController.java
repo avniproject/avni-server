@@ -34,7 +34,6 @@ public class IdentifierUserAssignmentController extends AbstractController<Ident
 
     @RequestMapping(value = "/identifierUserAssignments", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     void save(@RequestBody List<IdentifierUserAssignmentContract> contracts) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
         contracts.forEach(this::save);

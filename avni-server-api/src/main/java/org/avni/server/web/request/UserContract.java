@@ -15,14 +15,12 @@ public class UserContract extends ReferenceDataContract {
     private Long catchmentId;
     private String phoneNumber;
     private String email;
-    private boolean orgAdmin = false;
-    private boolean admin = false;
+    private boolean admin;
     private String operatingIndividualScope = OperatingIndividualScope.None.toString();
     private JsonObject settings;
     private Long organisationId;
     private List<Long> accountIds;
     private boolean disabledInCognito;
-    private String[] roles;
     private String password;
     private JsonObject syncSettings;
     private String createdBy;
@@ -39,8 +37,6 @@ public class UserContract extends ReferenceDataContract {
         userContract.setPhoneNumber(user.getPhoneNumber());
         userContract.setOrganisationId(user.getOrganisationId());
         userContract.setDisabledInCognito(user.isDisabledInCognito());
-        userContract.setOrgAdmin(user.isOrgAdmin());
-        userContract.setRoles(user.getRoles());
         userContract.setCatchmentId(user.getCatchmentId().orElse(null));
         userContract.setSettings(user.getSettings());
         userContract.setCreatedBy(user.getCreatedByUserName());
@@ -48,14 +44,6 @@ public class UserContract extends ReferenceDataContract {
         userContract.setLastModifiedBy(user.getLastModifiedByUserName());
         userContract.setLastModifiedDateTime(user.getLastModifiedDateTime());
         return userContract;
-    }
-
-    public String[] getRoles() {
-        return roles;
-    }
-
-    public void setRoles(String[] roles) {
-        this.roles = roles;
     }
 
     public boolean isDisabledInCognito() {
@@ -104,14 +92,6 @@ public class UserContract extends ReferenceDataContract {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public boolean isOrgAdmin() {
-        return orgAdmin;
-    }
-
-    public void setOrgAdmin(boolean orgAdmin) {
-        this.orgAdmin = orgAdmin;
     }
 
     public boolean isAdmin() {

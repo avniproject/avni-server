@@ -4,10 +4,12 @@ import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metadata.SubjectTypes;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.reporting.ViewGenService;
 import org.avni.server.service.MetaDataRepository;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.visitor.CreateReportingViewVisitor;
 import org.avni.server.visitor.GetReportingViewSourceVisitor;
 import org.avni.server.web.request.ViewConfig;
@@ -32,20 +34,21 @@ public class ViewGenController {
     private CreateReportingViewVisitor createReportingViewVisitor;
     private ImplementationRepository implementationRepository;
     private final Logger logger;
+    private AccessControlService accessControlService;
 
     public ViewGenController(ViewGenService viewGenService, SubjectTypeRepository subjectTypeRepository,
-                             FormMappingRepository formMappingRepository, MetaDataRepository metaDataService, CreateReportingViewVisitor createReportingViewVisitor, ImplementationRepository implementationRepository) {
+                             FormMappingRepository formMappingRepository, MetaDataRepository metaDataService, CreateReportingViewVisitor createReportingViewVisitor, ImplementationRepository implementationRepository, AccessControlService accessControlService) {
         this.viewGenService = viewGenService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.metaDataService = metaDataService;
         this.createReportingViewVisitor = createReportingViewVisitor;
         this.implementationRepository = implementationRepository;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @PostMapping(value = "/query")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public Map<String, String> query(@RequestBody ViewConfig viewConfig) {
         switch (viewConfig.getType()) {
             case Registration:
@@ -60,9 +63,9 @@ public class ViewGenController {
     }
 
     @PostMapping(value = "/createReportingViews")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     @Transactional
     public List<ReportingViewResponse> createViews() {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         Organisation organisation = UserContextHolder.getOrganisation();
         SubjectTypes subjectTypes = metaDataService.getSubjectTypes();
         subjectTypes.accept(createReportingViewVisitor);
@@ -73,7 +76,6 @@ public class ViewGenController {
     }
 
     @GetMapping(value = "/viewsInDb")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public List<ReportingViewResponse> getAllViews() {
         Organisation organisation = UserContextHolder.getOrganisation();
         SubjectTypes subjectTypes = metaDataService.getSubjectTypes();
@@ -83,8 +85,8 @@ public class ViewGenController {
     }
 
     @DeleteMapping(value = "/reportingView/{viewName}")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin')")
     public ResponseEntity deleteView(@PathVariable String viewName) {
+        accessControlService.checkPrivilege(PrivilegeType.Report);
         Organisation organisation = UserContextHolder.getOrganisation();
         implementationRepository.dropView(viewName, organisation.getSchemaName());
         return ResponseEntity.ok().build();

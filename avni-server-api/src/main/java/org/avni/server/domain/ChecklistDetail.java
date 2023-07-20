@@ -12,7 +12,7 @@ import java.util.List;
 @Entity
 @Table(name = "checklist_detail")
 @BatchSize(size = 100)
-public class ChecklistDetail extends OrganisationAwareEntity {
+public class ChecklistDetail extends OrganisationAwareEntity implements NamedEntity {
     @NotNull
     @Column(name = "name")
     private String name;

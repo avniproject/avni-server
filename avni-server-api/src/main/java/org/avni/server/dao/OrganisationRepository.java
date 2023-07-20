@@ -13,14 +13,10 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "organisation", path = "organisation")
-@PreAuthorize("hasAnyAuthority('user','admin')")
 public interface OrganisationRepository extends CrudRepository<Organisation, Long>, JpaSpecificationExecutor<Organisation> {
     Organisation findByName(String name);
 
     Organisation findByUuid(String organisationUuid);
-
-    @PreAuthorize("hasAnyAuthority('admin')")
-    <S extends Organisation> S save(S entity);
 
     default Organisation findOne(Long organisationId) {
         return findById(organisationId).orElse(null);

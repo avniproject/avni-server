@@ -60,7 +60,6 @@ public class OrganisationConfigController implements RestControllerResourceProce
     }
 
     @RequestMapping(value = "/organisationConfig/exportSettings", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public JsonObject getExportSettings() {
         return organisationConfigService.getExportSettings();
     }

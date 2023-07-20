@@ -46,8 +46,6 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
         this.scopeBasedSyncService = scopeBasedSyncService;
     }
 
-    @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @RequestMapping(value = "/checklistItems", method = RequestMethod.POST)
     public void saveOld(@RequestBody Object object) {
     }

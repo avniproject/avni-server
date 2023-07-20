@@ -5,9 +5,11 @@ import com.amazonaws.services.cognitoidp.model.UsernameExistsException;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.ChangePasswordRequest;
 import org.avni.server.web.request.UserContract;
@@ -19,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +55,7 @@ public class UserController {
 
     @Value("${avni.userPhoneNumberPattern}")
     private String MOBILE_NUMBER_PATTERN;
+    private final AccessControlService accessControlService;
 
     @Autowired
     public UserController(CatchmentRepository catchmentRepository,
@@ -61,7 +66,7 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          OrganisationConfigService organisationConfigService) {
+                          OrganisationConfigService organisationConfigService, AccessControlService accessControlService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -73,6 +78,7 @@ public class UserController {
         this.resetSyncService = resetSyncService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.organisationConfigService = organisationConfigService;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -88,8 +94,8 @@ public class UserController {
 
     @RequestMapping(value = {"/user", "/user/accountOrgAdmin"}, method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity createUser(@RequestBody UserContract userContract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             if (usernameExists(userContract.getUsername()))
                 throw new ValidationException(String.format("Username %s already exists", userContract.getUsername()));
@@ -113,15 +119,15 @@ public class UserController {
             logger.error(ex.getMessage());
             return ResponseEntity.badRequest().body(generateJsonError(ex.getMessage()));
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
 
     @GetMapping(value = "/user/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     public UserContract getUser(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         User user = userRepository.findOne(id);
         if (user == null) {
             throw new EntityNotFoundException(String.format("User not found with id %d", id));
@@ -133,8 +139,8 @@ public class UserController {
 
     @PutMapping(value = {"/user/{id}", "/user/accountOrgAdmin/{id}"})
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
-    public ResponseEntity updateUser(@RequestBody UserContract userContract, @PathVariable("id") Long id) throws Exception {
+    public ResponseEntity updateUser(@RequestBody UserContract userContract, @PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findByUsername(userContract.getUsername());
             if (user == null)
@@ -152,7 +158,7 @@ public class UserController {
             logger.error(ex.getMessage());
             return ResponseEntity.badRequest().body(generateJsonError(ex.getMessage()));
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
@@ -179,7 +185,6 @@ public class UserController {
             user.setCatchment(catchmentRepository.findOne(userContract.getCatchmentId()));
         }
 
-        user.setOrgAdmin(userContract.isOrgAdmin());
         user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
         user.setSettings(userContract.getSettings());
         user.setSyncSettings(UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
@@ -195,8 +200,8 @@ public class UserController {
 
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity deleteUser(@PathVariable("id") Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(id);
             idpServiceFactory.getIdpService(user).deleteUser(user);
@@ -206,16 +211,16 @@ public class UserController {
             logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
 
     @RequestMapping(value = {"/user/{id}/disable", "/user/accountOrgAdmin/{id}/disable"}, method = RequestMethod.PUT)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity disableUser(@PathVariable("id") Long id,
                                       @RequestParam(value = "disable", required = false, defaultValue = "false") boolean disable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(id);
             if (disable) {
@@ -235,47 +240,46 @@ public class UserController {
             }
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
 
     @RequestMapping(value = {"/user/resetPassword"}, method = RequestMethod.PUT)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(resetPasswordRequest.getUserId());
             idpServiceFactory.getIdpService(user).resetPassword(user, resetPasswordRequest.getPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
 
     @RequestMapping(value = {"/user/changePassword"}, method = RequestMethod.PUT)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
     public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         try {
             User user = userRepository.findOne(UserContextHolder.getUser().getId());
             idpServiceFactory.getIdpService(user).resetPassword(user, changePasswordRequest.getNewPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
-            logger.error(ex.getMessage());
+            logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
 
     @GetMapping(value = "/user/search/find")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     public Page<User> find(@RequestParam(value = "username", required = false) String username,
                            @RequestParam(value = "name", required = false) String name,
                            @RequestParam(value = "email", required = false) String email,
                            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
                            Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         Long organisationId = UserContextHolder.getUserContext().getOrganisation().getId();
         return userRepository.findAll((root, query, builder) -> {
             Predicate predicate = builder.equal(root.get("organisationId"), organisationId);
@@ -300,13 +304,13 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/accountOrgAdmin/search/find")
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     @ResponseBody
     public Page<UserContract> findOrgAdmin(@RequestParam(value = "username", required = false) String username,
                                            @RequestParam(value = "name", required = false) String name,
                                            @RequestParam(value = "email", required = false) String email,
                                            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
                                            Pageable pageable) {
+        accessControlService.checkIsAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Long> userAccountIds = getOwnedAccountIds(user);
         List<Long> organisationIds = getOwnedOrganisationIds(user);
@@ -318,9 +322,9 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/accountOrgAdmin/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     @ResponseBody
     public UserContract getOne(@PathVariable("id") Long id) {
+        accessControlService.checkIsAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Long> userAccountIds = getOwnedAccountIds(user);
         List<Long> organisationIds = getOwnedOrganisationIds(user);
@@ -331,9 +335,9 @@ public class UserController {
     }
 
     @GetMapping(value = "/user/search/findAll")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     public List<UserWebProjection> getAll() {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         return userRepository.findAllByOrganisationIdAndIsVoidedFalse(organisation.getId());
     }
@@ -345,20 +349,26 @@ public class UserController {
     private void setAccountIds(UserContract uc) {
         List<Long> accountIds = accountRepository.findAllByAccountAdmin_User_Id(uc.getId()).stream().map(Account::getId).collect(Collectors.toList());
         boolean isAdmin = accountAdminRepository.findByUser_Id(uc.getId()).size() > 0;
-        List<String> roles = new ArrayList<>();
-        if (isAdmin) {
-            roles.add(User.ADMIN);
-            if (uc.isOrgAdmin()) roles.add(User.ORGANISATION_ADMIN);
-        } else {
-            roles.addAll(Arrays.asList(uc.getRoles()));
-        }
         uc.setAccountIds(accountIds);
         uc.setAdmin(isAdmin);
-        uc.setRoles(roles.toArray(new String[0]));
     }
 
     private List<Long> getOwnedOrganisationIds(User user) {
         return organisationRepository.findByAccount_AccountAdmin_User_Id(user.getId()).stream()
                 .map(Organisation::getId).collect(Collectors.toList());
+    }
+
+    @GetMapping( "/user/search/findByOrganisation")
+    @ResponseBody
+    public Page<User> getUsersByOrganisation(@RequestParam("organisationId") Long organisationId, Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+        return userRepository.findByOrganisationIdAndIsVoidedFalse(organisationId, pageable);
+    }
+
+    @RestResource(path = "/user/search/findAllById", rel = "findAllById")
+    @ResponseBody
+    public List<User> findByIdIn(@RequestParam Long[] ids) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+        return userRepository.findByIdIn(ids);
     }
 }

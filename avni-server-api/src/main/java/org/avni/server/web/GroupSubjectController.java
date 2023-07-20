@@ -141,7 +141,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     }
 
     @RequestMapping(value = "/web/groupSubjects/{groupUuid}/roles", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<GroupRoleContract> getGroupRoles(@PathVariable String groupUuid) {
         Individual group = individualRepository.findByUuid(groupUuid);
         if (group != null) {

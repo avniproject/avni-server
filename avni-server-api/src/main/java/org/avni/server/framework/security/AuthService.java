@@ -17,18 +17,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
     public final static SimpleGrantedAuthority USER_AUTHORITY = new SimpleGrantedAuthority(User.USER);
-    public final static SimpleGrantedAuthority ADMIN_AUTHORITY = new SimpleGrantedAuthority(User.ADMIN);
-    public final static SimpleGrantedAuthority ORGANISATION_ADMIN_AUTHORITY = new SimpleGrantedAuthority(User.ORGANISATION_ADMIN);
-    public final static List<SimpleGrantedAuthority> ALL_AUTHORITIES = Arrays.asList(USER_AUTHORITY, ADMIN_AUTHORITY, ORGANISATION_ADMIN_AUTHORITY);
+    public final static List<SimpleGrantedAuthority> ALL_AUTHORITIES = Collections.singletonList(USER_AUTHORITY);
     private final UserRepository userRepository;
     private final OrganisationRepository organisationRepository;
     private final AccountAdminRepository accountAdminRepository;
@@ -78,8 +73,7 @@ public class AuthService {
         List<AccountAdmin> accountAdmins = accountAdminRepository.findByUser_Id(user.getId());
         user.setAdmin(accountAdmins.size() > 0);
         Organisation organisation = null;
-        if (user.isAdmin() && organisationUUID != null) {
-            user.setOrgAdmin(true);
+        if (organisationUUID != null) {
             organisation = organisationRepository.findByUuid(organisationUUID);
         } else if (user.getOrganisationId() != null) {
             organisation = organisationRepository.findOne(user.getOrganisationId());

@@ -1,9 +1,6 @@
 package org.avni.server.service.accessControl;
 
-import org.avni.server.dao.EncounterTypeRepository;
-import org.avni.server.dao.ProgramRepository;
-import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.UserRepository;
+import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
@@ -24,13 +21,15 @@ public class AccessControlService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
+    private final PrivilegeRepository privilegeRepository;
 
     @Autowired
-    public AccessControlService(UserRepository userRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
+    public AccessControlService(UserRepository userRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, PrivilegeRepository privilegeRepository) {
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
+        this.privilegeRepository = privilegeRepository;
     }
 
     public void checkPrivilege(PrivilegeType privilegeType) {
@@ -38,7 +37,7 @@ public class AccessControlService {
     }
 
     public void checkPrivilege(User contextUser, PrivilegeType privilegeType) {
-        if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && PrivilegeType.NonTransaction.contains(privilegeType))) return;
+        if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && privilegeRepository.isAllowedForAdmin(privilegeType))) return;
 
         if (!userRepository.hasPrivilege(privilegeType.name(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType);
@@ -174,5 +173,11 @@ public class AccessControlService {
 
     public void checkEncounterPrivileges(PrivilegeType privilegeType, List<Encounter> encounters) {
         this.checkEncounterPrivilege(privilegeType, encounters.stream().map(Encounter::getEncounterType).distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
+    }
+
+    public void checkIsAdmin() {
+        User user = UserContextHolder.getUser();
+        if (!user.isAdmin())
+            throw AvniAccessException.createForNotAdmin(user);
     }
 }

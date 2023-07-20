@@ -3,7 +3,9 @@ package org.avni.server.web;
 import org.avni.server.builder.VideoBuilder;
 import org.avni.server.dao.VideoRepository;
 import org.avni.server.domain.Video;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.VideoService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.VideoContract;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,28 +22,28 @@ public class VideoController {
 
     private final VideoRepository videoRepository;
     private final VideoService videoService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public VideoController(VideoRepository videoRepository, VideoService videoService) {
+    public VideoController(VideoRepository videoRepository, VideoService videoService, AccessControlService accessControlService) {
         this.videoRepository = videoRepository;
         this.videoService = videoService;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/videos", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     public void save(@RequestBody VideoContract[] videoContracts) {
+        accessControlService.checkPrivilege(PrivilegeType.EditVideo);
         Arrays.stream(videoContracts).map(this::createVideo).forEach(videoRepository::save);
     }
 
     @RequestMapping(value = "/web/video", method = RequestMethod.GET)
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
     public List<VideoContract> getAll() {
         return videoService.getAllVideos();
     }
 
     @RequestMapping(value = "/web/video/{id}", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity<VideoContract> getById(@PathVariable Long id) {
         return videoRepository.findById(id)
                 .map(video -> ResponseEntity.ok(VideoContract.fromEntity(video)))
@@ -49,8 +51,8 @@ public class VideoController {
     }
 
     @RequestMapping(value = "/web/video", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity<?> saveVideo(@RequestBody VideoContract videoContract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditVideo);
         Video video = videoRepository.findByTitle(videoContract.getTitle());
         if (video != null) {
             return ResponseEntity.badRequest().body(String.format("Record with the name %s already exists", videoContract.getTitle()));
@@ -60,8 +62,8 @@ public class VideoController {
     }
 
     @RequestMapping(value = "/web/video/{id}", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity<?> editVideo(@RequestBody VideoContract videoContract, @PathVariable Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditVideo);
         Video video = videoRepository.getOne(id);
         if (video == null) {
             return ResponseEntity.notFound().build();
@@ -71,8 +73,8 @@ public class VideoController {
     }
 
     @RequestMapping(value = "/web/video/{id}", method = RequestMethod.DELETE)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     public ResponseEntity voidVideo(@PathVariable Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditVideo);
         Video video = videoRepository.getOne(id);
         if (video == null) {
             return ResponseEntity.notFound().build();

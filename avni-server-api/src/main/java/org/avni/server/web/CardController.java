@@ -2,7 +2,9 @@ package org.avni.server.web;
 
 import org.avni.server.dao.CardRepository;
 import org.avni.server.domain.Card;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.CardService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.CardContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,15 +20,16 @@ import java.util.stream.Collectors;
 public class CardController {
     private final CardRepository cardRepository;
     private final CardService cardService;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public CardController(CardRepository cardRepository, CardService cardService) {
+    public CardController(CardRepository cardRepository, CardService cardService, AccessControlService accessControlService) {
         this.cardRepository = cardRepository;
         this.cardService = cardService;
+        this.accessControlService = accessControlService;
     }
 
     @GetMapping(value = "/web/card")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
     public List<CardContract> getAll() {
         return cardRepository.findAllByIsVoidedFalse()
@@ -35,7 +38,6 @@ public class CardController {
     }
 
     @GetMapping(value = "/web/card/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','organisation_admin')")
     @ResponseBody
     public ResponseEntity<CardContract> getById(@PathVariable Long id) {
         Optional<Card> card = cardRepository.findById(id);
@@ -44,19 +46,19 @@ public class CardController {
     }
 
     @PostMapping(value = "/web/card")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
     public ResponseEntity<CardContract> newCard(@RequestBody CardContract cardContract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Card card = cardService.saveCard(cardContract);
         return ResponseEntity.ok(CardContract.fromEntity(card));
     }
 
     @PutMapping(value = "/web/card/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
     public ResponseEntity<CardContract> editCard(@PathVariable Long id, @RequestBody CardContract cardContract) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<Card> card = cardRepository.findById(id);
         if (!card.isPresent()) {
             return ResponseEntity.notFound().build();
@@ -66,10 +68,10 @@ public class CardController {
     }
 
     @DeleteMapping(value = "/web/card/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'organisation_admin')")
     @ResponseBody
     @Transactional
     public void deleteCard(@PathVariable Long id) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<Card> card = cardRepository.findById(id);
         card.ifPresent(cardService::deleteCard);
     }

@@ -35,7 +35,6 @@ public class SearchController {
     }
 
     @RequestMapping(value = "/search/concept", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
     public List<ConceptContract> searchConcept(@RequestParam String name,
                                                @RequestParam(required = false) String dataType) {
         if (dataType == null) {
@@ -46,7 +45,6 @@ public class SearchController {
     }
 
     @RequestMapping(value = "/search/location", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<AddressLevelContractWeb> searchLocation(@RequestParam String name) {
         return locationRepository.findByIsVoidedFalseAndTitleIgnoreCaseContains(name)
                 .stream()
@@ -55,7 +53,6 @@ public class SearchController {
     }
 
     @RequestMapping(value = "/search/locationType", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<AddressLevelTypeContract> searchLocationType(@RequestParam String name) {
         return addressLevelTypeRepository.findByIsVoidedFalseAndNameIgnoreCaseContains(name)
                 .stream()

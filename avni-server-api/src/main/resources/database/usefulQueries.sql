@@ -391,12 +391,12 @@ WHERE NOT blocked_locks.GRANTED;
 
 
 -- To get Form element groups, form element,isMandatory, datatype and concept answers for form with specified id
-select form_group.name "Form element group", 
+select form_group.name "Form element group",
        group_element.name "Form element",
        concept.data_type::text "Datatype",
        (is_mandatory)::text  "Is mandatory",
         string_agg(distinct answer_concept_name,',') "Concept answers"
-       
+
 
 from form_element_group form_group
 
@@ -431,7 +431,7 @@ where fe.organisation_id = :orgId
   or fea.last_modified_by_id in (select id from users where organisation_id != :orgId and organisation_id is not null)
   or fa.last_modified_by_id in (select id from users where organisation_id != :orgId and organisation_id is not null)
   or ca.last_modified_by_id in (select id from users where organisation_id != :orgId and organisation_id is not null));
-                                
+
  --- To get a full list of locations with respect herierachies
  --- Update the type_id as per the address_level_type setup done for the org
  with state as (select address_level.title as name, id from address_level where type_id = 85 and address_level.is_voided = false),
@@ -679,4 +679,38 @@ set
     last_modified_by_id = (select id from users where username = 'username@org'),
     last_modified_date_time = current_timestamp + interval '1 millisecond'
 where type_id = 1055 and organisation_id = 301;
+-- END
+
+
+-- Find out usages of a function in a rule. This section gives all the tables where the rule can be found
+-- START
+use openchs;
+
+select program_eligibility_check_rule, subject_summary_rule from subject_type
+where ((program_eligibility_check_rule like '%eligiblePrograms%')
+    or (subject_summary_rule like '%eligiblePrograms%'));
+
+select encounter_eligibility_check_rule
+from encounter_type where encounter_eligibility_check_rule like '%eligiblePrograms%';
+
+select enrolment_summary_rule, enrolment_eligibility_check_rule, manual_enrolment_eligibility_check_rule from program
+where (
+              (enrolment_summary_rule like '%eligiblePrograms%') or
+              (enrolment_eligibility_check_rule like '%eligiblePrograms%') or
+              (manual_enrolment_eligibility_check_rule like '%eligiblePrograms%')
+          );
+
+select decision_rule, validation_rule,
+       visit_schedule_rule, checklists_rule, task_schedule_rule
+from form
+where (
+              (decision_rule like '%eligiblePrograms%') or
+              (validation_rule like '%eligiblePrograms%') or
+              (visit_schedule_rule like '%eligiblePrograms%') or
+              (checklists_rule like '%eligiblePrograms%') or
+              (task_schedule_rule like '%eligiblePrograms%')
+          );
+
+select query from report_card
+where query like ('%eligiblePrograms%');
 -- END

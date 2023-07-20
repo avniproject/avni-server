@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.joda.time.DateTime;
 import org.avni.server.application.Platform;
 import org.avni.server.dao.PlatformTranslationRepository;
@@ -25,16 +26,18 @@ public class PlatformTranslationController implements RestControllerResourceProc
 
     private final PlatformTranslationRepository platformTranslationRepository;
     private final Logger logger;
+    private final AccessControlService accessControlService;
 
-    public PlatformTranslationController(PlatformTranslationRepository platformTranslationRepository) {
+    public PlatformTranslationController(PlatformTranslationRepository platformTranslationRepository, AccessControlService accessControlService) {
         this.platformTranslationRepository = platformTranslationRepository;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     @RequestMapping(value = "/platformTranslation", method = RequestMethod.POST)
     @Transactional
-    @PreAuthorize(value = "hasAnyAuthority('admin')")
     public ResponseEntity<?> uploadPlatformTranslations(@RequestBody TranslationRequest request) {
+        accessControlService.checkIsAdmin();
         Platform platform = Platform.valueOf(request.getPlatform());
         Locale language = Locale.valueOf(request.getLanguage());
         PlatformTranslation platformTranslation = platformTranslationRepository.findByPlatformAndLanguage(platform, language);
@@ -52,7 +55,6 @@ public class PlatformTranslationController implements RestControllerResourceProc
     }
 
     @RequestMapping(value = "/platformTranslation/search/lastModified", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     public PagedResources<Resource<PlatformTranslation>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
