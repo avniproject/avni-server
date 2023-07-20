@@ -20,7 +20,7 @@ import java.util.Set;
 @JsonIgnoreProperties({"operationalPrograms"})
 @DynamicInsert
 @BatchSize(size = 100)
-public class Program extends OrganisationAwareEntity {
+public class Program extends OrganisationAwareEntity implements NamedEntity {
     @NotNull
     @Column
     private String name;

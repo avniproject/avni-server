@@ -4,12 +4,9 @@ import org.joda.time.DateTime;
 import org.avni.server.domain.JsonObject;
 import org.springframework.hateoas.core.Relation;
 
-import java.util.List;
-
 @Relation(collectionRelation = "userInfo")
-public class UserInfo {
-
-    public UserInfo() {
+public class UserInfoContract {
+    protected UserInfoContract() {
     }
 
     private String username;
@@ -19,26 +16,21 @@ public class UserInfo {
 
     private JsonObject settings;
     private DateTime lastModifiedDateTime;
-    private String[] roles;
     private String name;
     private String catchmentName;
     private JsonObject syncSettings;
-    private List<GroupPrivilegeContract> privileges;
 
-    public UserInfo(String username, String orgName, Long orgId, String usernameSuffix, String[] roles, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<GroupPrivilegeContract> privileges) {
+    protected UserInfoContract(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings) {
         this.username = username;
         this.organisationName = orgName;
         this.organisationId = orgId;
-        this.roles = roles;
         this.settings = settings;
         this.lastModifiedDateTime = DateTime.now();
         this.usernameSuffix = usernameSuffix;
         this.name = name;
         this.catchmentName = catchmentName;
         this.syncSettings = syncSettings;
-        this.privileges = privileges;
     }
-
 
     public String getUsername() {
         return username;
@@ -62,14 +54,6 @@ public class UserInfo {
 
     public void setOrganisationId(Long organisationId) {
         this.organisationId = organisationId;
-    }
-
-    public String[] getRoles() {
-        return roles;
-    }
-
-    public void setRoles(String[] roles) {
-        this.roles = roles;
     }
 
     public JsonObject getSettings() {
@@ -119,14 +103,4 @@ public class UserInfo {
     public void setSyncSettings(JsonObject syncSettings) {
         this.syncSettings = syncSettings;
     }
-
-    public List<GroupPrivilegeContract> getPrivileges() {
-        return privileges;
-    }
-
-    public void setPrivileges(List<GroupPrivilegeContract> privileges) {
-        this.privileges = privileges;
-    }
-
-
 }

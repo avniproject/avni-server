@@ -69,7 +69,6 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
 
     // -------------------Web APIS Start ----------------------------------------
     @RequestMapping(value = "/web/ruleFailureTelemetry", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<RuleFailureTelemetry>> getByStatus(@RequestParam(value = "isClosed", required = false) Boolean isClosed,
                                                   Pageable pageable) {
         Page<RuleFailureTelemetry> ruleFailureTelemetries = isClosed != null

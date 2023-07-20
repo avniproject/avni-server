@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
@@ -56,16 +57,16 @@ public class RuleController {
     }
 
     @RequestMapping(value = "/ruleDependency", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> saveDependency(@RequestBody RuleDependencyRequest ruleDependency) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         logger.info(String.format("Creating rule dependency for: %s", UserContextHolder.getUserContext().getOrganisation().getName()));
         return new ResponseEntity<>(ruleService.createDependency(ruleDependency.getCode(), ruleDependency.getHash()).getUuid(),
                 HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/rules", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> saveRules(@RequestBody List<RuleRequest> ruleRequests) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         logger.info(String.format("Creating rules for: %s", UserContextHolder.getUserContext().getOrganisation().getName()));
         try {
             ruleService.createOrUpdate(ruleRequests);
@@ -77,8 +78,8 @@ public class RuleController {
     }
 
     @RequestMapping(value = "/rule", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin')")
     public ResponseEntity<?> saveRule(@RequestBody RuleRequest ruleRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         logger.info(String.format("Creating rules for: %s", UserContextHolder.getUserContext().getOrganisation().getName()));
         ruleService.createOrUpdate(ruleRequest);
         return new ResponseEntity<>(HttpStatus.CREATED);

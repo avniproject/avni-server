@@ -34,7 +34,6 @@ public class DocumentationController extends AbstractController<Documentation> i
     }
 
     @GetMapping(value = "/web/documentation")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<DocumentationContract> getAllDocumentNodes() {
         return documentationService.getAllNonVoided();
@@ -50,7 +49,6 @@ public class DocumentationController extends AbstractController<Documentation> i
     }
 
     @RequestMapping(value = "/search/documentation", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public Page<DocumentationProjection> searchDocumentation(@RequestParam String name, Pageable pageable) {
         return documentationRepository.findByIsVoidedFalseAndNameIgnoreCaseContains(name, pageable);
     }

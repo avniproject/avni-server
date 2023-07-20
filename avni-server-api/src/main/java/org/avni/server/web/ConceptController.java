@@ -62,14 +62,12 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concept/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ConceptProjection getOneForWeb(@PathVariable String uuid) {
         return projectionFactory.createProjection(ConceptProjection.class, conceptService.get(uuid));
     }
 
     @GetMapping(value = "/web/concept")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<ConceptProjection> getOneForWebByName(@RequestParam String name) {
         Concept concept = conceptRepository.findByName(name);
@@ -79,7 +77,6 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concepts")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<Concept>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
         Sort sortWithId = pageable.getSort().and(new Sort("id"));
@@ -92,7 +89,6 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/web/concept/usage/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<ConceptUsageContract> getConceptUsage(@PathVariable String uuid) {
         ConceptUsageContract conceptUsageContract = new ConceptUsageContract();
@@ -108,7 +104,6 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/codedConcepts")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<CodedConceptProjection> getAllCodedConcepts() {
         return conceptRepository.findAllByDataType("Coded")
@@ -118,7 +113,6 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/concept/dataTypes")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<String> getDataTypes() {
         return Stream.of(ConceptDataType.values())
@@ -143,7 +137,6 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = {"/concept/answerConcepts",  "/concept/answerConcepts/search/find"})
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public Page<ConceptSyncAttributeContract> getAnswerConcept(@RequestParam(value = "conceptUUID", required = false) String conceptUUID, Pageable pageable) {
         if(S.isEmpty(conceptUUID)) {
             return new PageImpl<>(Collections.emptyList());
@@ -154,14 +147,12 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     }
 
     @GetMapping(value = "/concept/answerConcepts/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<ConceptSyncAttributeContract> findByIds(@Param("ids") String[] ids, Pageable pageable) {
         return this.conceptRepository.findAllByUuidIn(ids, pageable).map(ConceptSyncAttributeContract::fromConcept);
     }
 
     @RequestMapping(value = "/web/concept/dashboardFilter/search", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<ConceptContract> dashboardFilterSearch(@RequestParam String namePart) {
         List<Concept> dashboardFilterConcepts = conceptRepository.findDashboardFilterConcepts(namePart);
         return dashboardFilterConcepts.stream().map(ConceptContract::createForSearchResult).collect(Collectors.toList());

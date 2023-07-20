@@ -73,7 +73,6 @@ public class OperationalModulesController {
     }
 
     @GetMapping("/web/operationalModules")
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     @ResponseBody
     public JsonObject getModules() {
         List<Form> forms = formRepository.findAllByIsVoidedFalse();
@@ -126,7 +125,6 @@ public class OperationalModulesController {
     }
 
     @GetMapping("/web/subjectTypeMetadata")
-    @PreAuthorize(value = "hasAnyAuthority('user', 'admin')")
     @ResponseBody
     public List<JsonObject> getRegistrationFormsForSubjectTypes() {
         List<SubjectType.SubjectTypeProjection> subjectTypes = subjectTypeRepository.findAllOperational();
@@ -143,7 +141,6 @@ public class OperationalModulesController {
     }
 
     @GetMapping("/web/assignmentMetadata")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public JsonObject getAssignmentMetadata() {
         boolean isAnyDirectlyAssignable = subjectTypeRepository

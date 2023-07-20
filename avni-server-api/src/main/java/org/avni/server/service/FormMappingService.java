@@ -215,19 +215,35 @@ public class FormMappingService implements NonScopeAwareService {
     }
 
     public FormMapping find(EncounterType encounterType, FormType formType) {
-        return formMappingRepository.findByFormFormTypeAndIsVoidedFalse(formType)
+        FormMapping formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedFalse(formType)
                 .stream()
                 .filter(fm -> encounterType.equals(fm.getEncounterType()))
                 .findFirst()
                 .orElse(null);
+        if (formMapping == null) {
+            formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedTrueOrderByLastModifiedDateTimeDesc(formType)
+                .stream()
+                .filter(fm -> encounterType.equals(fm.getEncounterType()))
+                .findFirst()
+                .orElse(null);
+        }
+        return formMapping;
     }
 
     public FormMapping find(Program program, FormType formType) {
-        return formMappingRepository.findByFormFormTypeAndIsVoidedFalse(formType)
+        FormMapping formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedFalse(formType)
                 .stream()
                 .filter(fm ->  program.equals(fm.getProgram()))
                 .findFirst()
                 .orElse(null);
+        if (formMapping == null) {
+            formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedTrueOrderByLastModifiedDateTimeDesc(formType)
+                .stream()
+                .filter(fm -> program.equals(fm.getProgram()))
+                .findFirst()
+                .orElse(null);
+        }
+        return formMapping;
     }
 
     public FormMapping find(SubjectType subjectType) {

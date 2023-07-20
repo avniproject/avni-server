@@ -315,7 +315,7 @@ public class OrganisationService {
 
     public void addGroupsJson(ZipOutputStream zos) throws IOException {
         List<GroupContract> groups = groupRepository.findAll().stream()
-                .filter(group -> !group.getName().equals("Everyone"))
+                .filter(group -> !group.isEveryone())
                 .map(GroupContract::fromEntity).collect(Collectors.toList());
         if (!groups.isEmpty()) {
             addFileToZip(zos, "groups.json", groups);
@@ -324,7 +324,7 @@ public class OrganisationService {
 
     public void addGroupPrivilegeJson(ZipOutputStream zos) throws IOException {
         List<GroupPrivilegeContractWeb> groupPrivileges = groupPrivilegeRepository.findAll().stream()
-                .filter(groupPrivilege -> !groupPrivilege.getGroup().getName().equals("Everyone"))
+                .filter(groupPrivilege -> !groupPrivilege.getGroup().isEveryone())
                 .map(GroupPrivilegeContractWeb::fromEntity).collect(Collectors.toList());
         if (!groupPrivileges.isEmpty()) {
             addFileToZip(zos, "groupPrivilege.json", groupPrivileges);
@@ -629,9 +629,8 @@ public class OrganisationService {
         };
 
         Arrays.asList(metadataRepositories).forEach(this::deleteAll);
-        String defaultGroupName = "Everyone";
-        userGroupRepository.deleteAllByGroupIsNotIn(groupRepository.findAllByName(defaultGroupName));
-        groupRepository.deleteAllByNameNot(defaultGroupName);
+        userGroupRepository.deleteAllByGroupIsNotIn(groupRepository.findAllByName(Group.Everyone));
+        groupRepository.deleteAllByNameNot(Group.Everyone);
     }
 
     private void deleteAll(JpaRepository repository) {

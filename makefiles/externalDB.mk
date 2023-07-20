@@ -24,6 +24,9 @@ else
 	-psql -U $(su) -d avni_staging -c "select create_db_user('$(user)', 'password')"
 endif
 
+create_all_local_staging_db_user: ## Creates all implementation db users in local staging database
+	-psql -U $(su) -d avni_staging -c "select create_db_user(db_user, 'password') from organisation where is_voided = false and id <> 1"
+
 create_local_staging_db_user_release_branch:
 ifndef user
 	@echo "Provde the variable"

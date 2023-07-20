@@ -3,8 +3,10 @@ package org.avni.server.web;
 import com.amazonaws.HttpMethod;
 import org.apache.commons.io.FilenameUtils;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.S3Service;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.web.validation.ValidationException;
 import org.slf4j.Logger;
@@ -34,10 +36,12 @@ import static java.lang.String.format;
 public class MediaController {
     private final Logger logger;
     private final S3Service s3Service;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public MediaController(S3Service s3Service) {
+    public MediaController(S3Service s3Service, AccessControlService accessControlService) {
         this.s3Service = s3Service;
+        this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -122,7 +126,7 @@ public class MediaController {
     }
 
     @PostMapping("/web/uploadMedia")
-    @PreAuthorize(value = "hasAnyAuthority('admin', 'user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> uploadMedia(@RequestParam MultipartFile file) {
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();
@@ -140,13 +144,10 @@ public class MediaController {
     }
 
     @PostMapping("/media/saveImage")
-    @PreAuthorize(value = "hasAnyAuthority('organisation_admin', 'admin', 'user')")
     public ResponseEntity<?> saveImage(@RequestParam MultipartFile file, @RequestParam String bucketName) {
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();
-        if(!(user.isAdmin() || user.isOrgAdmin()) && !(bucketName.equals("profile-pics"))) {
-            throw new AccessDeniedException(String.format("User is not allowed to upload images to this bucket %s", bucketName));
-        }
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         File tempSourceFile;
         try {
             tempSourceFile = AvniFiles.convertMultiPartToFile(file, "");
@@ -164,8 +165,7 @@ public class MediaController {
             URL s3FileUrl = s3Service.uploadImageFile(tempSourceFile, targetFilePath);
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3FileUrl.toString());
         } catch (Exception e) {
-            logger.error(format("Image upload failed. bucketName: '%s' file:'%s', user:'%s'", bucketName, file.getOriginalFilename(), user.getUsername()));
-            e.printStackTrace();
+            logger.error(format("Image upload failed. bucketName: '%s' file:'%s', user:'%s'", bucketName, file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Unable to save Image. %s", e.getMessage()));
         }
     }

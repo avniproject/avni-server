@@ -174,7 +174,6 @@ workflows:
           branches:
             only:
               - master
-              - /^3\..*/
         requires:
           - build
     - STAGING_deploy:
@@ -183,7 +182,6 @@ workflows:
           branches:
             only:
               - master
-              - /^3\..*/
         requires:
           - STAGING_approve
     - UAT_approve:

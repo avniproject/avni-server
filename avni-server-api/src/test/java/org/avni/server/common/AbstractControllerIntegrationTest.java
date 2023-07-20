@@ -30,8 +30,6 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertTrue;
-import static org.avni.server.framework.security.AuthService.ADMIN_AUTHORITY;
-import static org.avni.server.framework.security.AuthService.ORGANISATION_ADMIN_AUTHORITY;
 import static org.avni.server.framework.security.AuthService.USER_AUTHORITY;
 import static org.avni.server.framework.security.AuthenticationFilter.USER_NAME_HEADER;
 
@@ -93,14 +91,12 @@ public abstract class AbstractControllerIntegrationTest {
     protected void setUser(String name) {
         setUserNameHeader(name);
 
-        setRoles(ADMIN_AUTHORITY);
-
         User user = userRepository.findByUsername(name);
         UserContext userContext = new UserContext();
         userContext.setOrganisation(organisationRepository.findOne(user.getOrganisationId()));
         userContext.setUser(user);
         UserContextHolder.create(userContext);
-        SimpleGrantedAuthority[] authorities = Stream.of(USER_AUTHORITY, ADMIN_AUTHORITY, ORGANISATION_ADMIN_AUTHORITY)
+        SimpleGrantedAuthority[] authorities = Stream.of(USER_AUTHORITY)
                 .filter(authority -> userContext.getRoles().contains(authority.getAuthority()))
                 .toArray(SimpleGrantedAuthority[]::new);
 

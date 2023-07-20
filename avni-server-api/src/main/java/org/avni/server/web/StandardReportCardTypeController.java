@@ -26,7 +26,6 @@ public class StandardReportCardTypeController {
     }
 
     @GetMapping(value = "/web/standardReportCardType")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<StandardReportCardTypeContract> getAll() {
         return standardReportCardTypeRepository.findAllByIsVoidedFalse()
@@ -35,7 +34,6 @@ public class StandardReportCardTypeController {
     }
 
     @GetMapping(value = "/web/standardReportCardType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity<StandardReportCardTypeContract> getById(@PathVariable Long id) {
         Optional<StandardReportCardType> card = standardReportCardTypeRepository.findById(id);

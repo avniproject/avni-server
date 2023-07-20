@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +22,6 @@ public class MessageRuleController {
     }
 
     @RequestMapping(value = "/web/messageRule", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public ResponseEntity<MessageRuleContract> save(@RequestBody MessageRuleContract messageRuleContract) {
         MessageRule existingEntity = messagingService.findByIdOrUuid(messageRuleContract.getId(), messageRuleContract.getUuid());
@@ -44,7 +42,6 @@ public class MessageRuleController {
      * @return
      */
     @RequestMapping(value = "/web/messageRule", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public Page<MessageRuleContract> find(@RequestParam(required = false) String entityType, @RequestParam (required = false) Long entityTypeId, Pageable pageable) {
         if (isAString(entityType) && entityTypeId != null) {
@@ -56,7 +53,6 @@ public class MessageRuleController {
     }
 
     @RequestMapping(value = "/web/messageRule/{id}", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public ResponseEntity<MessageRuleContract> findOne(@PathVariable("id") Long id ) {
         MessageRule messageRule = messagingService.find(id);

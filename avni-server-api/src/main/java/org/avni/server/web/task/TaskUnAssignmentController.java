@@ -3,8 +3,10 @@ package org.avni.server.web.task;
 import org.avni.server.dao.task.TaskUnAssignmentRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.task.TaskUnAssignment;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.AbstractController;
 import org.avni.server.web.RestControllerResourceProcessor;
 import org.avni.server.web.response.slice.SlicedResources;
@@ -27,30 +29,32 @@ import javax.transaction.Transactional;
 public class TaskUnAssignmentController extends AbstractController<TaskUnAssignment> implements RestControllerResourceProcessor<TaskUnAssignment> {
 
     private final TaskUnAssignmentRepository taskUnAssignmentRepository;
+    private final AccessControlService accessControlService;
 
     @Autowired
-    public TaskUnAssignmentController(TaskUnAssignmentRepository taskUnAssignmentRepository) {
+    public TaskUnAssignmentController(TaskUnAssignmentRepository taskUnAssignmentRepository, AccessControlService accessControlService) {
         this.taskUnAssignmentRepository = taskUnAssignmentRepository;
+        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/taskUnAssignments", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public PagedResources<Resource<TaskUnAssignment>> getTasks(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditTask);
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(taskUnAssignmentRepository.findByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
 
     @RequestMapping(value = "/taskUnAssignments/v2", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public SlicedResources<Resource<TaskUnAssignment>> getTasksAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditTask);
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(taskUnAssignmentRepository.findSliceByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }

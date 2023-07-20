@@ -164,7 +164,6 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "/web/program")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<ProgramContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalProgramRepository
@@ -173,7 +172,6 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "web/eligiblePrograms")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<ProgramContractWeb> getEligiblePrograms(@RequestParam String subjectUuid) {
         Individual individual = individualRepository.findByUuid(subjectUuid);
@@ -190,14 +188,12 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
     }
 
     @GetMapping(value = "/web/programs")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<OperationalProgram> getAllPrograms() {
         return operationalProgramRepository.findAll();
     }
 
     @GetMapping(value = "/web/program/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         OperationalProgram operationalProgram = operationalProgramRepository.findOne(id);

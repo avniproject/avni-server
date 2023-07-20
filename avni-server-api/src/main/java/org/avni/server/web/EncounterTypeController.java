@@ -64,7 +64,6 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterType")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<EncounterTypeContractWeb>> getAll(Pageable pageable) {
         return wrap(operationalEncounterTypeRepository
@@ -73,14 +72,12 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterTypes")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<OperationalEncounterType> encounterTypes() {
         return operationalEncounterTypeRepository.findAll();
     }
 
     @GetMapping(value = "/web/encounterType/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         OperationalEncounterType operationalEncounterType = operationalEncounterTypeRepository.findOne(id);
@@ -91,7 +88,6 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
     }
 
     @GetMapping(value = "/web/encounterTypeDetails/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("uuid") String uuid) {
         EncounterType encounterType = encounterTypeRepository.findByUuid(uuid);

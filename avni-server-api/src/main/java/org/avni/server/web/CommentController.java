@@ -58,7 +58,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     }
 
     @GetMapping(value = "/web/comment")
-    @PreAuthorize(value = "hasAnyAuthority('admin','user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
     public List<Comment> getCommentsForSubject(@RequestParam(value = "commentThreadId") Long threadId) {
@@ -66,7 +66,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     }
 
     @PostMapping(value = "/web/comment")
-    @PreAuthorize(value = "hasAnyAuthority('admin','user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
     public ResponseEntity<Comment> createComment(@RequestBody CommentContract commentContract) {
@@ -74,7 +74,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     }
 
     @PutMapping(value = "/web/comment/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
     public ResponseEntity<Comment> editComment(@PathVariable Long id, @RequestBody CommentContract commentContract) {
@@ -86,7 +86,7 @@ public class CommentController extends AbstractController<Comment> implements Re
     }
 
     @DeleteMapping(value = "/web/comment/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('admin','user')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
     public ResponseEntity<Comment> deleteComment(@PathVariable Long id) {

@@ -40,7 +40,6 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     }
 
     @GetMapping(value = "/web/dashboard")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<DashboardResponse> getAll() {
         return dashboardRepository.findAllByIsVoidedFalse()
@@ -49,7 +48,6 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     }
 
     @GetMapping(value = "/web/dashboard/{id}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public DashboardResponse getById(@PathVariable Long id) {
         Dashboard dashboard = dashboardRepository.findEntity(id);
@@ -90,7 +88,6 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     //This is here because dashboardCardMapping used to get synced earlier which is no longer required now
     @Deprecated
     @RequestMapping(value = "/dashboardCardMapping/search/lastModified", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin')")
     public PagedResources<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now) {
         return wrap(new PageImpl<>(Collections.emptyList()));

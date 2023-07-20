@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "groupSubject", path = "groupSubject", exported = false)
-@PreAuthorize("hasAnyAuthority('user','admin')")
+@PreAuthorize("hasAnyAuthority('user')")
 public interface GroupSubjectRepository extends TransactionalDataRepository<GroupSubject>, FindByLastModifiedDateTime<GroupSubject>, OperatingIndividualScopeAwareRepository<GroupSubject> {
     default GroupSubject findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in GroupSubject");

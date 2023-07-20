@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "translation", path = "translation")
-@PreAuthorize("hasAnyAuthority('user','admin')")
+
 public interface TranslationRepository extends ReferenceDataRepository<Translation>, FindByLastModifiedDateTime<Translation> {
 
     Translation findByLanguage(Locale language);

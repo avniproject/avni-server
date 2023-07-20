@@ -82,7 +82,6 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     }
 
     @GetMapping(value = "/extensions")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<S3ExtensionFile>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
         return wrap(new PageImpl<>(s3Service.listExtensionFiles(lastModifiedDateTime)));
     }

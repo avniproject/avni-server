@@ -36,21 +36,14 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
 
     Optional<User> findById(Long id);
 
-    @PreAuthorize(value = "hasAnyAuthority('user', 'organisation_admin', 'admin')")
     default User findOne(Long id) {
         return findById(id).orElse(null);
     }
 
-    @PreAuthorize("hasAnyAuthority('admin', 'user')")
-    User save(User user);
-
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
-    @RestResource(path = "findByOrganisation", rel = "findByOrganisation")
     Page<User> findByOrganisationIdAndIsVoidedFalse(@Param("organisationId") Long organisationId,
                                                     Pageable pageable);
 
-    @PreAuthorize("hasAnyAuthority('admin','organisation_admin')")
-    @RestResource(path = "findAllById", rel = "findAllById")
+    @RestResource(exported = false)
     List<User> findByIdIn(@Param("ids") Long[] ids);
 
     List<UserWebProjection> findAllByOrganisationIdAndIsVoidedFalse(Long organisationId);
@@ -69,7 +62,6 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
             "(((:organisationIds) is not null and u.organisationId in (:organisationIds) and u.isOrgAdmin = true) or aa.account.id in (:accountIds))")
     User getOne(Long id, List<Long> accountIds, List<Long> organisationIds);
 
-    @PreAuthorize("hasAnyAuthority('user')")
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
     List<User> findByCatchment_IdInAndIsVoidedFalse(List<Long> catchmentIds);

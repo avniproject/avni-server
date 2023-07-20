@@ -100,7 +100,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
     }
 
     @RequestMapping(value = "/web/commentThreads", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user','admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public List<CommentThreadResponse> getAllThreads(@RequestParam(value = "subjectUUID") String subjectUUID) {
         Individual subject = individualRepository.findByUuid(subjectUUID);
         return commentThreadRepository.findDistinctByIsVoidedFalseAndCommentsIsVoidedFalseAndComments_SubjectOrderByOpenDateTimeDescIdDesc(subject)
@@ -110,14 +110,14 @@ public class CommentThreadController extends AbstractController<CommentThread> i
     }
 
     @RequestMapping(value = "/web/commentThread", method = RequestMethod.POST)
-    @PreAuthorize(value = "hasAnyAuthority('user','admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<CommentThreadResponse> saveThread(@RequestBody CommentThreadContract threadContract) {
         CommentThread savedThread = commentThreadService.createNewThread(threadContract);
         return ResponseEntity.ok(CommentThreadResponse.fromEntity(savedThread));
     }
 
     @RequestMapping(value = "/web/commentThread/{id}/resolve", method = RequestMethod.PUT)
-    @PreAuthorize(value = "hasAnyAuthority('user','admin')")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<CommentThreadResponse> editThread(@PathVariable Long id) {
         Optional<CommentThread> commentThread = commentThreadRepository.findById(id);
         if (!commentThread.isPresent()) {

@@ -12,6 +12,9 @@ import java.util.Set;
 @Table(name = "groups")
 @BatchSize(size = 100)
 public class Group extends OrganisationAwareEntity {
+    public static final String Administrators = "Administrators";
+    public static final String Everyone = "Everyone";
+
     @Column
     private String name;
 
@@ -40,5 +43,13 @@ public class Group extends OrganisationAwareEntity {
     @JsonIgnore
     public Set<GroupPrivilege> getGroupPrivileges() {
         return groupPrivileges;
+    }
+
+    public boolean isAdministrator() {
+        return Administrators.equals(name);
+    }
+
+    public boolean isEveryone() {
+        return Everyone.equals(name);
     }
 }

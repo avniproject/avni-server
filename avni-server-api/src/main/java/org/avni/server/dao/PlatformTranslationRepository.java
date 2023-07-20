@@ -14,12 +14,7 @@ import java.util.Date;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "platformTranslation", path = "platformTranslation", exported = false)
-@PreAuthorize("hasAnyAuthority('user','admin')")
 public interface PlatformTranslationRepository extends PagingAndSortingRepository<PlatformTranslation, Long> {
-
-    @PreAuthorize("hasAnyAuthority('admin')")
-    <S extends PlatformTranslation> S save(S entity);
-
     PlatformTranslation findByPlatformAndLanguage(Platform platform, Locale language);
 
     PlatformTranslation findByLanguage(Locale language);

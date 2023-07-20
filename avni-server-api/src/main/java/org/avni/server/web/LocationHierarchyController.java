@@ -40,7 +40,6 @@ public class LocationHierarchyController implements RestControllerResourceProces
     }
 
     @GetMapping(value = "/locationHierarchy/search/lastModified")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<AddressLevel>> getAddressLevels(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,

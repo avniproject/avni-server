@@ -42,14 +42,12 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
     }
 
     @GetMapping(value = "/addressLevelType")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<AddressLevelType> getAllNonVoidedAddressLevelType(Pageable pageable) {
         return addressLevelTypeRepository.findPageByIsVoidedFalse(pageable);
     }
 
     @GetMapping(value = "/web/addressLevelType")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<AddressLevelType.AddressLevelTypeProjection> findAll() {
         return addressLevelTypeRepository.findAllByIsVoidedFalse()

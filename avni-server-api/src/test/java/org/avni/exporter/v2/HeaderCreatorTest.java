@@ -61,6 +61,23 @@ public class HeaderCreatorTest {
     }
 
     @Test
+    public void shouldAddAllStaticHeadersIfNoFieldsIsPassed() {
+        SubjectType subjectType = getSubjectType("ABC", Subject.Person);
+
+        when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        when(exportFieldsManager.getCoreFields(any())).thenReturn(Arrays.asList(ID, UUID, FIRST_NAME, MIDDLE_NAME, LAST_NAME, DATE_OF_BIRTH, REGISTRATION_DATE, GENDER, CREATED_BY, CREATED_DATE_TIME, LAST_MODIFIED_BY, LAST_MODIFIED_DATE_TIME, REGISTRATION_LOCATION, VOIDED));
+        when(exportFieldsManager.getMainFields(any())).thenReturn(getMainFields());
+
+        List<String> addressLevelTypes = Arrays.asList("Village");
+        HeaderCreator headerCreator = new HeaderCreator(subjectTypeRepository, addressLevelTypes, new HashMap<>(), encounterTypeRepository, exportFieldsManager, programRepository);
+
+        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().build();
+
+        headerCreator.visitSubject(exportEntityType);
+        assertEquals("ABC_id,ABC_uuid,ABC_first_name,ABC_middle_name,ABC_last_name,ABC_date_of_birth,ABC_registration_date,ABC_gender,ABC_created_by,ABC_created_date_time,ABC_last_modified_by,ABC_last_modified_date_time,ABC_registration_location,ABC_voided,\"ABC_Village\",\"ABC_C1\",",  headerCreator.getHeader());
+    }
+
+    @Test
     public void shouldAddMultiSelectColumns() {
         SubjectType subjectType = getSubjectType("Individual", Subject.Person);
 
@@ -143,6 +160,7 @@ public class HeaderCreatorTest {
         headerCreator.visitSubject(exportEntityType);
         assertEquals("Individual_id,\"Individual_Village\",\"Individual_GC_1_MC1\",\"Individual_GC_1_MC2\",\"Individual_GC_2_MC1\",\"Individual_GC_2_MC2\",", headerCreator.getHeader());
     }
+
 
     @Test
     public void shouldGenerateMultipleColumnsForEncounter() {

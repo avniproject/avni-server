@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties({"operationalSubjectTypes"})
 @DynamicInsert
 @BatchSize(size = 100)
-public class SubjectType extends OrganisationAwareEntity {
+public class SubjectType extends OrganisationAwareEntity implements NamedEntity {
     @NotNull
     @Column
     private String name;

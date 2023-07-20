@@ -27,7 +27,6 @@ public class IndividualRelationshipTypeController {
     }
 
     @GetMapping(value = "/web/relationshipType")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IndividualRelationshipTypeContract> getAllIndividualRelationshipTypes() {
         return individualRelationshipTypeService.getAllRelationshipTypes();

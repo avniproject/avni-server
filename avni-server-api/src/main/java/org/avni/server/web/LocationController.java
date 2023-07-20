@@ -74,14 +74,12 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @GetMapping(value = "/locations")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<LocationProjection> getAll(Pageable pageable) {
         return locationRepository.findNonVoidedLocations(pageable);
     }
 
     @GetMapping(value = "locations/search/find")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public Page<LocationProjection> find(
             @RequestParam(value = "title", defaultValue = "") String title,
@@ -91,8 +89,15 @@ public class LocationController implements RestControllerResourceProcessor<Addre
         return locationService.find(new LocationSearchRequest(title, typeId, parentId, pageable));
     }
 
+    @GetMapping(value = "locations/search/findAsList")
+    @ResponseBody
+    public List<LocationProjection> findAsList(
+        @RequestParam(value = "title", defaultValue = "") String title,
+        @RequestParam(value = "typeId", required = false) Integer typeId) {
+        return locationRepository.findLocationProjectionByTitleIgnoreCaseAndTypeIdAsList(title, typeId);
+    }
+
     @GetMapping(value = "/locations/search/findAllById")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<LocationProjection> findByIdIn(@Param("ids") Long[] ids) {
         if (ids == null || ids.length == 0) {
@@ -102,7 +107,6 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @RequestMapping(value = {"/locations/search/lastModified", "/locations/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public PagedResources<Resource<AddressLevel>> getAddressLevelsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
@@ -158,7 +162,6 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @GetMapping(value = "/locations/search/typeId/{typeId}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<AddressLevelContractWeb> getLocationsByTypeId(@PathVariable("typeId") Long typeId) {
         accessControlService.checkPrivilege(PrivilegeType.EditLocation);
@@ -168,7 +171,6 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     }
 
     @GetMapping(value = "locations/parents/{uuid}")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<LocationProjection> getParents(@PathVariable("uuid") String uuid,
                                                @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {
@@ -177,7 +179,6 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
 
     @GetMapping(value = "/locations/web")
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public ResponseEntity getLocationByParam(@RequestParam("uuid") String uuid) {
         LocationProjection addressLevel = locationRepository.findNonVoidedLocationsByUuid(uuid);

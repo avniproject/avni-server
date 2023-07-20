@@ -3,10 +3,8 @@ package org.avni.server.dao;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
 import org.avni.server.domain.Individual;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
@@ -15,7 +13,6 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "commentThread", path = "commentThread", exported = false)
-@PreAuthorize("hasAnyAuthority('user','admin')")
 public interface CommentThreadRepository extends TransactionalDataRepository<CommentThread>, FindByLastModifiedDateTime<CommentThread>, OperatingIndividualScopeAwareRepository<CommentThread> {
 
     default Specification<CommentThread> syncStrategySpecification(SyncParameters syncParameters) {

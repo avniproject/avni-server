@@ -55,13 +55,18 @@ public class GroupsController implements RestControllerResourceProcessor<Program
     @Transactional
     public ResponseEntity updateGroup(@RequestBody Group updatedGroup) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
+
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         Group group = groupRepository.findByIdAndOrganisationId(updatedGroup.getId(), organisation.getId());
         if (group == null) {
             return ResponseEntity.badRequest().body(String.format("Group with id %s not found.", updatedGroup.getId()));
         }
 
-        if (!updatedGroup.getName().equals(group.getName()) && !group.getName().equals("Everyone")) {
+        if (group.isAdministrator() && !updatedGroup.isHasAllPrivileges()) {
+            return ResponseEntity.badRequest().body("Admin group's all privileges flag cannot be changed");
+        }
+
+        if (!updatedGroup.getName().equals(group.getName()) && !group.isEveryone()) {
             group.setName(updatedGroup.getName());
         }
 
@@ -79,6 +84,9 @@ public class GroupsController implements RestControllerResourceProcessor<Program
         Group group = groupRepository.findOne(id);
         if (group == null)
             return ResponseEntity.badRequest().body(String.format("Group with id '%d' not found", id));
+        if (group.isAdministrator())
+            return ResponseEntity.badRequest().body("Admin group cannot be deleted");
+
         group.setVoided(true);
         group.updateAudit();
         groupRepository.save(group);
