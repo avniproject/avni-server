@@ -2,12 +2,17 @@ package org.avni.server.web.request;
 
 import org.joda.time.DateTime;
 import org.avni.server.domain.JsonObject;
+//import org.avni.server.domain.User;
 
 public class SyncTelemetryRequest {
     private String uuid;
     private Long organisationId;
     private String syncStatus;
     private JsonObject entityStatus;
+//    private User createdBy;
+    private DateTime createdDateTime;
+//    private User lastModifiedBy;
+    private DateTime lastModifiedDateTime;
     private DateTime syncStartTime;
     private DateTime syncEndTime;
     private String appVersion;
@@ -54,6 +59,38 @@ public class SyncTelemetryRequest {
 
     public void setEntityStatus(JsonObject entityStatus) {
         this.entityStatus = entityStatus;
+    }
+
+//    public User getCreatedBy() {
+//        return createdBy;
+//    }
+
+//    public void setCreatedBy(User createdBy) {
+//        this.createdBy = createdBy;
+//    }
+
+    public DateTime getCreatedDateTime() {
+        return createdDateTime;
+    }
+
+    public void setCreatedDateTime(DateTime createdDateTime) {
+        this.createdDateTime = createdDateTime;
+    }
+
+//    public User getLastModifiedBy() {
+//        return lastModifiedBy;
+//    }
+
+//    public void setLastModifiedBy(User lastModifiedBy) {
+//        this.lastModifiedBy = lastModifiedBy;
+//    }
+
+    public DateTime getLastModifiedDateTime() {
+        return lastModifiedDateTime;
+    }
+
+    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
+        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public DateTime getSyncStartTime() {

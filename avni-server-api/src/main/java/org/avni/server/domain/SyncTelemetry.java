@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -35,6 +36,20 @@ public class SyncTelemetry {
     @Column
     @Type(type = "jsonObject")
     private JsonObject entityStatus;
+
+//    @JsonIgnore
+//    @JoinColumn(name = "created_by_id")
+//    @ManyToOne(targetEntity = User.class)
+//    private User createdBy;
+
+    private DateTime createdDateTime;
+
+//    @JsonIgnore
+//    @JoinColumn(name = "last_modified_by_id")
+//    @ManyToOne(targetEntity = User.class)
+//    private User lastModifiedBy;
+
+    private DateTime lastModifiedDateTime;
 
     @Column
     private DateTime syncStartTime;
@@ -96,6 +111,36 @@ public class SyncTelemetry {
 
     public void setEntityStatus(JsonObject entityStatus) {
         this.entityStatus = entityStatus;
+    }
+
+//    public void setCreatedBy(User createdBy) {
+//        this.createdBy = createdBy;
+//    }
+
+    public void setCreatedDateTime(DateTime createdDateTime) {
+        this.createdDateTime = createdDateTime;
+    }
+
+//    public void setLastModifiedBy(User lastModifiedBy) {
+//        this.lastModifiedBy = lastModifiedBy;
+//    }
+
+    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
+        this.lastModifiedDateTime = lastModifiedDateTime;
+    }
+
+//    public User getCreatedBy() { return createdBy; }
+
+    public DateTime getCreatedDateTime() {
+        return createdDateTime;
+    }
+
+//    public User getLastModifiedBy() {
+//        return lastModifiedBy;
+//    }
+
+    public DateTime getLastModifiedDateTime() {
+        return lastModifiedDateTime;
     }
 
     public DateTime getSyncStartTime() {
@@ -160,5 +205,12 @@ public class SyncTelemetry {
 
     public void setSyncSource(String syncSource) {
         this.syncSource = syncSource;
+    }
+
+    public void setAuditInfo() {
+        if (this.getCreatedDateTime() == null) {
+            this.setCreatedDateTime(DateTime.now());
+        }
+        this.setLastModifiedDateTime(DateTime.now());
     }
 }
