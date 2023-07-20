@@ -36,3 +36,4 @@ dev-commands.txt
 /avni-server-api/src/test/resources/externalTestDataSensitive.sql
 /report.html
 /report.json
+/static/
