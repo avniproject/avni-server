@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "sync_telemetry")
 @BatchSize(size = 100)
-public class SyncTelemetry {
+public class SyncTelemetry extends OrganisationAwareEntity{
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
@@ -35,10 +35,6 @@ public class SyncTelemetry {
     @Column
     @Type(type = "jsonObject")
     private JsonObject entityStatus;
-
-    private DateTime createdDateTime;
-
-    private DateTime lastModifiedDateTime;
 
     @Column
     private DateTime syncStartTime;
@@ -100,22 +96,6 @@ public class SyncTelemetry {
 
     public void setEntityStatus(JsonObject entityStatus) {
         this.entityStatus = entityStatus;
-    }
-
-    public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime;
-    }
-
-    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime;
-    }
-
-    public DateTime getCreatedDateTime() {
-        return createdDateTime;
-    }
-
-    public DateTime getLastModifiedDateTime() {
-        return lastModifiedDateTime;
     }
 
     public DateTime getSyncStartTime() {
@@ -182,10 +162,4 @@ public class SyncTelemetry {
         this.syncSource = syncSource;
     }
 
-    public void setAuditInfo() {
-        if (this.getCreatedDateTime() == null) {
-            this.setCreatedDateTime(DateTime.now());
-        }
-        this.setLastModifiedDateTime(DateTime.now());
-    }
 }

@@ -39,8 +39,6 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setUser(user);
         syncTelemetry.setOrganisationId(organisation.getId());
         syncTelemetry.setSyncStatus(request.getSyncStatus());
-        syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
-        syncTelemetry.setLastModifiedDateTime(request.getLastModifiedDateTime());
         syncTelemetry.setSyncStartTime(request.getSyncStartTime());
         syncTelemetry.setSyncEndTime(request.getSyncEndTime());
         syncTelemetry.setEntityStatus(request.getEntityStatus());
@@ -49,7 +47,6 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setDeviceName(request.getDeviceName());
         syncTelemetry.setDeviceInfo(request.getDeviceInfo());
         syncTelemetry.setSyncSource(request.getSyncSource());
-        syncTelemetry.setAuditInfo();
         syncTelemetryRepository.save(syncTelemetry);
     }
 

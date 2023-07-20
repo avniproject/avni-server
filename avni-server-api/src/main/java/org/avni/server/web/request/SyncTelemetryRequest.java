@@ -8,8 +8,6 @@ public class SyncTelemetryRequest {
     private Long organisationId;
     private String syncStatus;
     private JsonObject entityStatus;
-    private DateTime createdDateTime;
-    private DateTime lastModifiedDateTime;
     private DateTime syncStartTime;
     private DateTime syncEndTime;
     private String appVersion;
@@ -56,22 +54,6 @@ public class SyncTelemetryRequest {
 
     public void setEntityStatus(JsonObject entityStatus) {
         this.entityStatus = entityStatus;
-    }
-
-    public DateTime getCreatedDateTime() {
-        return createdDateTime;
-    }
-
-    public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime;
-    }
-
-    public DateTime getLastModifiedDateTime() {
-        return lastModifiedDateTime;
-    }
-
-    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public DateTime getSyncStartTime() {
