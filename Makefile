@@ -122,16 +122,16 @@ deploy_test_schema: ## Runs all migrations to create the schema with all the obj
 
 # <server>
 start_server: build_server
-	OPENCHS_DATABASE=$(DB) java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+	OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=none java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 start_server_keycloak: build_server
-	OPENCHS_MODE=on-premise OPENCHS_DATABASE=$(DB) java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+	OPENCHS_MODE=on-premise OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=keycloak java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 start_server_remote_db: build_server
 	OPENCHS_DATABASE_URL=jdbc:postgresql://192.168.33.11:5432/openchs?currentSchema=public java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 debug_server: build_server
-	OPENCHS_DATABASE=$(DB) java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+	AVNI_IDP_TYPE=none OPENCHS_DATABASE=$(DB) java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 debug_server_remote_db: build_server
 	OPENCHS_DATABASE_URL=jdbc:postgresql://192.168.33.11:5432/openchs?currentSchema=public java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
@@ -153,7 +153,7 @@ test_external:
 	./gradlew externalTest
 
 start_server_wo_gradle:
-	java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+	AVNI_IDP_TYPE=none java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 # LIVE
 log_live:
