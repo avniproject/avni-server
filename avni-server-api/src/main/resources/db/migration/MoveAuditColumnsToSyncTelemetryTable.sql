@@ -8,7 +8,7 @@ alter table sync_telemetry
     drop column uuid,
     drop column organisationId;
 
-ALTER TABLE sync_telemetry ADD COLUMN created_date_time TIMESTAMP NOT NULL DEFAULT (sync_start_time) ;
+ALTER TABLE sync_telemetry ADD COLUMN created_date_time TIMESTAMP NOT NULL DEFAULT '2023-07-11 20:14:01.424634+05:30' ;
 ALTER TABLE sync_telemetry ADD COLUMN last_modified_date_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ;
-ALTER TABLE sync_telemetry ADD COLUMN created_by_id USER NOT NULL DEFAULT 1;
-ALTER TABLE sync_telemetry ADD COLUMN last_modified_by_id USER NOT NULL DEFAULT 1;
+ALTER TABLE sync_telemetry ADD COLUMN created_by_id BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE sync_telemetry ADD COLUMN last_modified_by_id BIGINT NOT NULL DEFAULT 1;
