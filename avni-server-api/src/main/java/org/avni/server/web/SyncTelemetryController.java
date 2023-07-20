@@ -41,10 +41,15 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setUser(user);
         syncTelemetry.setOrganisationId(organisation.getId());
         syncTelemetry.setSyncStatus(request.getSyncStatus());
+<<<<<<< Updated upstream
 //        syncTelemetry.setCreatedBy(request.getCreatedBy());
         syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
 //        syncTelemetry.setLastModifiedBy(request.getLastModifiedBy());
         syncTelemetry.setLastModifiedDateTime(request.getLastModifiedDateTime());
+=======
+        syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
+        syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
+>>>>>>> Stashed changes
         syncTelemetry.setSyncStartTime(request.getSyncStartTime());
         syncTelemetry.setSyncEndTime(request.getSyncEndTime());
         syncTelemetry.setEntityStatus(request.getEntityStatus());
@@ -53,7 +58,10 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setDeviceName(request.getDeviceName());
         syncTelemetry.setDeviceInfo(request.getDeviceInfo());
         syncTelemetry.setSyncSource(request.getSyncSource());
+<<<<<<< Updated upstream
 //        syncTelemetry = setUserAttributes(user);
+=======
+>>>>>>> Stashed changes
         syncTelemetry.setAuditInfo();
         syncTelemetryRepository.save(syncTelemetry);
     }
