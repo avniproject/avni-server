@@ -2,20 +2,13 @@ package org.avni.server.web.request;
 
 import org.joda.time.DateTime;
 import org.avni.server.domain.JsonObject;
-//import org.avni.server.domain.User;
 
 public class SyncTelemetryRequest {
     private String uuid;
     private Long organisationId;
     private String syncStatus;
     private JsonObject entityStatus;
-<<<<<<< Updated upstream
-//    private User createdBy;
     private DateTime createdDateTime;
-//    private User lastModifiedBy;
-=======
-    private DateTime createdDateTime;
->>>>>>> Stashed changes
     private DateTime lastModifiedDateTime;
     private DateTime syncStartTime;
     private DateTime syncEndTime;
@@ -65,17 +58,6 @@ public class SyncTelemetryRequest {
         this.entityStatus = entityStatus;
     }
 
-<<<<<<< Updated upstream
-//    public User getCreatedBy() {
-//        return createdBy;
-//    }
-
-//    public void setCreatedBy(User createdBy) {
-//        this.createdBy = createdBy;
-//    }
-
-=======
->>>>>>> Stashed changes
     public DateTime getCreatedDateTime() {
         return createdDateTime;
     }
@@ -84,17 +66,6 @@ public class SyncTelemetryRequest {
         this.createdDateTime = createdDateTime;
     }
 
-<<<<<<< Updated upstream
-//    public User getLastModifiedBy() {
-//        return lastModifiedBy;
-//    }
-
-//    public void setLastModifiedBy(User lastModifiedBy) {
-//        this.lastModifiedBy = lastModifiedBy;
-//    }
-
-=======
->>>>>>> Stashed changes
     public DateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
     }

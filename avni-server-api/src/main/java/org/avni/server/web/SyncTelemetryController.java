@@ -22,12 +22,10 @@ import java.util.List;
 @RestController
 public class SyncTelemetryController implements RestControllerResourceProcessor<SyncTelemetry> {
     private final SyncTelemetryRepository syncTelemetryRepository;
-//    private final UserService userService;
 
     @Autowired
-    public SyncTelemetryController(SyncTelemetryRepository syncTelemetryRepository, UserService userService) {
+    public SyncTelemetryController(SyncTelemetryRepository syncTelemetryRepository) {
         this.syncTelemetryRepository = syncTelemetryRepository;
-//        this.userService = userService;
     }
 
     @RequestMapping(value = "syncTelemetry", method = RequestMethod.POST)
@@ -41,15 +39,8 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setUser(user);
         syncTelemetry.setOrganisationId(organisation.getId());
         syncTelemetry.setSyncStatus(request.getSyncStatus());
-<<<<<<< Updated upstream
-//        syncTelemetry.setCreatedBy(request.getCreatedBy());
         syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
-//        syncTelemetry.setLastModifiedBy(request.getLastModifiedBy());
         syncTelemetry.setLastModifiedDateTime(request.getLastModifiedDateTime());
-=======
-        syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
-        syncTelemetry.setCreatedDateTime(request.getCreatedDateTime());
->>>>>>> Stashed changes
         syncTelemetry.setSyncStartTime(request.getSyncStartTime());
         syncTelemetry.setSyncEndTime(request.getSyncEndTime());
         syncTelemetry.setEntityStatus(request.getEntityStatus());
@@ -58,10 +49,6 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         syncTelemetry.setDeviceName(request.getDeviceName());
         syncTelemetry.setDeviceInfo(request.getDeviceInfo());
         syncTelemetry.setSyncSource(request.getSyncSource());
-<<<<<<< Updated upstream
-//        syncTelemetry = setUserAttributes(user);
-=======
->>>>>>> Stashed changes
         syncTelemetry.setAuditInfo();
         syncTelemetryRepository.save(syncTelemetry);
     }
@@ -90,10 +77,4 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         resource.add(new Link(syncTelemetry.getUser().getName(), "userName"));
         return resource;
     }
-
-//    private User setUserAttributes(){
-//        User currentUser = userService.getCurrentUser();
-//        user.setAuditInfo(currentUser);
-//        return user;
-//    }
 }

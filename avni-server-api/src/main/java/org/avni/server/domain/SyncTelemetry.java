@@ -1,6 +1,5 @@
 package org.avni.server.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -37,23 +36,8 @@ public class SyncTelemetry {
     @Type(type = "jsonObject")
     private JsonObject entityStatus;
 
-<<<<<<< Updated upstream
-//    @JsonIgnore
-//    @JoinColumn(name = "created_by_id")
-//    @ManyToOne(targetEntity = User.class)
-//    private User createdBy;
-
     private DateTime createdDateTime;
 
-//    @JsonIgnore
-//    @JoinColumn(name = "last_modified_by_id")
-//    @ManyToOne(targetEntity = User.class)
-//    private User lastModifiedBy;
-
-=======
-    private DateTime createdDateTime;
-
->>>>>>> Stashed changes
     private DateTime lastModifiedDateTime;
 
     @Column
@@ -118,44 +102,18 @@ public class SyncTelemetry {
         this.entityStatus = entityStatus;
     }
 
-<<<<<<< Updated upstream
-//    public void setCreatedBy(User createdBy) {
-//        this.createdBy = createdBy;
-//    }
-
-=======
->>>>>>> Stashed changes
     public void setCreatedDateTime(DateTime createdDateTime) {
         this.createdDateTime = createdDateTime;
     }
 
-<<<<<<< Updated upstream
-//    public void setLastModifiedBy(User lastModifiedBy) {
-//        this.lastModifiedBy = lastModifiedBy;
-//    }
-
-=======
->>>>>>> Stashed changes
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
-<<<<<<< Updated upstream
-//    public User getCreatedBy() { return createdBy; }
-
-=======
->>>>>>> Stashed changes
     public DateTime getCreatedDateTime() {
         return createdDateTime;
     }
 
-<<<<<<< Updated upstream
-//    public User getLastModifiedBy() {
-//        return lastModifiedBy;
-//    }
-
-=======
->>>>>>> Stashed changes
     public DateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
     }
