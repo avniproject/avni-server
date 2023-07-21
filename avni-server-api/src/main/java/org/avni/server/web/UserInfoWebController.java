@@ -34,19 +34,19 @@ public class UserInfoWebController {
 
     @RequestMapping(value = "/web/userInfo", method = RequestMethod.GET)
     public UserInfoWebResponse getUserInfo() {
+        Organisation contextOrganisation = UserContextHolder.getOrganisation();
+        User contextUser = UserContextHolder.getUser();
+        User user = userRepository.findOne(contextUser.getId());
         if (UserContextHolder.getUser().isAdmin()) {
             List<Privilege> adminPrivileges = privilegeRepository.getAdminPrivileges();
             List<UserPrivilegeWebResponse> groupPrivilegeResponses = adminPrivileges.stream()
                     .map(UserPrivilegeWebResponse::createForAdminUser).collect(Collectors.toList());
-            return UserInfoWebResponse.createForAdminUser(groupPrivilegeResponses);
+            return UserInfoWebResponse.createForAdminUser(groupPrivilegeResponses, contextOrganisation, user);
         }
 
-        Organisation organisation = UserContextHolder.getOrganisation();
-        User contextUser = UserContextHolder.getUser();
-        User user = userRepository.findOne(contextUser.getId());
         List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
-        String usernameSuffix = organisation.getUsernameSuffix() != null
-                ? organisation.getUsernameSuffix() : organisation.getDbUser();
+        String usernameSuffix = contextOrganisation.getUsernameSuffix() != null
+                ? contextOrganisation.getUsernameSuffix() : contextOrganisation.getDbUser();
         String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
 
         List<UserPrivilegeWebResponse> groupPrivilegeResponses = groupPrivileges.stream()
@@ -54,8 +54,8 @@ public class UserInfoWebController {
                 .distinct()
                 .collect(Collectors.toList());
         return new UserInfoWebResponse(user.getUsername(),
-                organisation.getName(),
-                organisation.getId(),
+                contextOrganisation.getName(),
+                contextOrganisation.getId(),
                 usernameSuffix,
                 user.getSettings(),
                 user.getName(),
