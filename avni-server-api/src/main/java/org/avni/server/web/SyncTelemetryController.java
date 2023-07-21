@@ -4,7 +4,6 @@ import org.avni.server.dao.SyncTelemetryRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.SyncTelemetry;
 import org.avni.server.domain.User;
-import org.avni.server.service.UserService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.SyncTelemetryRequest;
 import org.joda.time.DateTime;
