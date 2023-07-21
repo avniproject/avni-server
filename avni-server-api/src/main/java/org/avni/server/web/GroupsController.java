@@ -10,7 +10,6 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.webapp.ProgramContractWeb;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -66,7 +65,7 @@ public class GroupsController implements RestControllerResourceProcessor<Program
             return ResponseEntity.badRequest().body("Admin group's all privileges flag cannot be changed");
         }
 
-        if (!updatedGroup.getName().equals(group.getName()) && !group.isEveryone()) {
+        if (!updatedGroup.getName().equals(group.getName()) && !group.isOneOfTheDefaultGroups()) {
             group.setName(updatedGroup.getName());
         }
 
@@ -84,8 +83,8 @@ public class GroupsController implements RestControllerResourceProcessor<Program
         Group group = groupRepository.findOne(id);
         if (group == null)
             return ResponseEntity.badRequest().body(String.format("Group with id '%d' not found", id));
-        if (group.isAdministrator())
-            return ResponseEntity.badRequest().body("Admin group cannot be deleted");
+        if (group.isOneOfTheDefaultGroups())
+            return ResponseEntity.badRequest().body(String.format("Default group %s cannot be deleted", group.getName()));
 
         group.setVoided(true);
         group.updateAudit();

@@ -315,7 +315,7 @@ public class OrganisationService {
 
     public void addGroupsJson(ZipOutputStream zos) throws IOException {
         List<GroupContract> groups = groupRepository.findAll().stream()
-                .filter(group -> !group.isEveryone())
+                .filter(group -> !group.isOneOfTheDefaultGroups())
                 .map(GroupContract::fromEntity).collect(Collectors.toList());
         if (!groups.isEmpty()) {
             addFileToZip(zos, "groups.json", groups);
@@ -324,7 +324,7 @@ public class OrganisationService {
 
     public void addGroupPrivilegeJson(ZipOutputStream zos) throws IOException {
         List<GroupPrivilegeContractWeb> groupPrivileges = groupPrivilegeRepository.findAll().stream()
-                .filter(groupPrivilege -> !groupPrivilege.getGroup().isEveryone())
+                .filter(groupPrivilege -> !groupPrivilege.getGroup().isOneOfTheDefaultGroups())
                 .map(GroupPrivilegeContractWeb::fromEntity).collect(Collectors.toList());
         if (!groupPrivileges.isEmpty()) {
             addFileToZip(zos, "groupPrivilege.json", groupPrivileges);

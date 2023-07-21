@@ -52,4 +52,8 @@ public class Group extends OrganisationAwareEntity {
     public boolean isEveryone() {
         return Everyone.equals(name);
     }
+
+    public boolean isOneOfTheDefaultGroups() {
+        return Administrators.equals(name) || Everyone.equals(name);
+    }
 }
