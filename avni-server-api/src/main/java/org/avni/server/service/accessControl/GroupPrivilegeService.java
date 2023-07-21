@@ -175,7 +175,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     }
 
     public GroupPrivileges getGroupPrivileges(User user) {
-        List<GroupPrivilege> privileges = groupPrivilegeRepository.getAllAllowPrivilegesForUser(user.getId());
+        List<GroupPrivilege> privileges = groupPrivilegeRepository.getAllAllowedPrivilegesForUser(user.getId());
         return new GroupPrivileges(false, privileges);
     }
 
@@ -184,7 +184,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
             return new GroupPrivileges();
         }
         User user = UserContextHolder.getUserContext().getUser();
-        List<GroupPrivilege> privileges = groupPrivilegeRepository.getAllAllowPrivilegesForUser(user.getId());
+        List<GroupPrivilege> privileges = groupPrivilegeRepository.getAllAllowedPrivilegesForUser(user.getId());
         return new GroupPrivileges(false, privileges);
     }
 
