@@ -26,7 +26,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -137,7 +136,7 @@ public class ImportController {
             produces = TEXT_PLAIN_VALUE,
             consumes = APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<InputStreamResource> getDocument(@RequestParam String jobUuid) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         InputStream file = bulkUploadS3Service.downloadErrorFile(jobUuid);
         return ResponseEntity.ok()
                 .contentType(TEXT_PLAIN)
@@ -165,7 +164,7 @@ public class ImportController {
     public JsonObject getSubjectOrLocationObsValue(@RequestParam("type") String type,
                                                    @RequestParam("ids") String ids,
                                                    @RequestParam("formElementUuid") String formElementUuid) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         FormElement formElement = formElementRepository.findByUuid(formElementUuid);
         JsonObject response = new JsonObject();
         if (ConceptDataType.Location.toString().equals(type)) {

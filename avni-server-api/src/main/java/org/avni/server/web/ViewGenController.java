@@ -17,7 +17,6 @@ import org.avni.server.web.response.ReportingViewResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -65,7 +64,7 @@ public class ViewGenController {
     @PostMapping(value = "/createReportingViews")
     @Transactional
     public List<ReportingViewResponse> createViews() {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         Organisation organisation = UserContextHolder.getOrganisation();
         SubjectTypes subjectTypes = metaDataService.getSubjectTypes();
         subjectTypes.accept(createReportingViewVisitor);
@@ -86,7 +85,7 @@ public class ViewGenController {
 
     @DeleteMapping(value = "/reportingView/{viewName}")
     public ResponseEntity deleteView(@PathVariable String viewName) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         Organisation organisation = UserContextHolder.getOrganisation();
         implementationRepository.dropView(viewName, organisation.getSchemaName());
         return ResponseEntity.ok().build();

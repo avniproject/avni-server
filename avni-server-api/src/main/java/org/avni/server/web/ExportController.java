@@ -25,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -56,13 +55,13 @@ public class ExportController {
 
     @RequestMapping(value = "/export", method = RequestMethod.POST)
     public ResponseEntity<?> getVisitData(@RequestBody ExportJobRequest exportJobRequest) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return exportJobService.runExportJob(exportJobRequest);
     }
 
     @RequestMapping(value = "/export/v2", method = RequestMethod.POST)
     public ResponseEntity<?> getVisitDataV2(@RequestBody ExportV2JobRequest exportJobRequest) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         ExportOutput exportOutput = getExportOutput(exportJobRequest);
         ResponseEntity<?> validationErrorResponseEntity = validateHeader(exportOutput);
         if(validationErrorResponseEntity != null) {
@@ -85,7 +84,7 @@ public class ExportController {
 
     @RequestMapping(value = "/export/status", method = RequestMethod.GET)
     public Page<JobStatus> getUploadStatus(Pageable pageable) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return exportJobService.getAll(pageable);
     }
 

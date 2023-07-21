@@ -17,7 +17,6 @@ import org.avni.server.report.UserActivityResult;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -67,7 +66,7 @@ public class ReportingController {
                                           @RequestParam(value = "startDate", required = false) String startDate,
                                           @RequestParam(value = "endDate", required = false) String endDate,
                                           @RequestParam(value = "locationIds", required = false, defaultValue = "") List<Long> locationIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         if (formMappingId == null && formUUID == null) {
             throw new BadRequestError("One of formMappingId or formUUID is required");
         }
@@ -104,7 +103,7 @@ public class ReportingController {
                                                @RequestParam(value = "subjectTypeIds", required = false, defaultValue = "") List<Long> subjectTypeIds,
                                                @RequestParam(value = "programIds", required = false, defaultValue = "") List<Long> programIds,
                                                @RequestParam(value = "encounterTypeIds", required = false, defaultValue = "") List<Long> encounterTypeIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         List<Long> lowestLocationIds = getLocations(locationIds);
         switch (type){
             case "registrations" : return reportService.allRegistrations(startDate, endDate, subjectTypeIds, lowestLocationIds);
@@ -122,7 +121,7 @@ public class ReportingController {
     public List<UserActivityResult> getUserWiseActivities(@RequestParam(value = "startDate", required = false) String startDate,
                                                           @RequestParam(value = "endDate", required = false) String endDate,
                                                           @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateUserActivityResults(
                 reportService.getDateDynamicWhere(startDate, endDate, "registration_date"),
                 reportService.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
@@ -135,7 +134,7 @@ public class ReportingController {
     public List<UserActivityResult> getUserWiseSyncFailures(@RequestParam(value = "startDate", required = false) String startDate,
                                                             @RequestParam(value = "endDate", required = false) String endDate,
                                                             @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateUserSyncFailures(
                 reportService.getDateDynamicWhere(startDate, endDate, "sync_start_time"),
                 reportService.getDynamicUserWhere(userIds, "u.id")
@@ -144,19 +143,19 @@ public class ReportingController {
 
     @RequestMapping(value = "/report/hr/deviceModels", method = RequestMethod.GET)
     public List<AggregateReportResult> getUserWiseDeviceModels(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateUserDeviceModels(reportService.getDynamicUserWhere(userIds, "u.id"));
     }
 
     @RequestMapping(value = "/report/hr/appVersions", method = RequestMethod.GET)
     public List<AggregateReportResult> getUserWiseAppVersions(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateUserAppVersions(reportService.getDynamicUserWhere(userIds, "u.id"));
     }
 
     @RequestMapping(value = "/report/hr/userDetails", method = RequestMethod.GET)
     public List<UserActivityResult> getUserDetails(@RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateUserDetails(reportService.getDynamicUserWhere(userIds, "u.id"));
     }
 
@@ -164,7 +163,7 @@ public class ReportingController {
     public List<AggregateReportResult> getChampionUsers(@RequestParam(value = "startDate", required = false) String startDate,
                                                         @RequestParam(value = "endDate", required = false) String endDate,
                                                         @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateCompletedVisitsOnTimeByProportion(
                 ">= 0.8",
                 reportService.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
@@ -176,7 +175,7 @@ public class ReportingController {
     public List<AggregateReportResult> getNonPerformingUsers(@RequestParam(value = "startDate", required = false) String startDate,
                                                              @RequestParam(value = "endDate", required = false) String endDate,
                                                              @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateCompletedVisitsOnTimeByProportion(
                 "<= 0.5",
                 reportService.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
@@ -188,7 +187,7 @@ public class ReportingController {
     public List<AggregateReportResult> getUsersCancellingMostVisits(@RequestParam(value = "startDate", required = false) String startDate,
                                                                     @RequestParam(value = "endDate", required = false) String endDate,
                                                                     @RequestParam(value = "userIds", required = false, defaultValue = "") List<Long> userIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         return avniReportRepository.generateUserCancellingMostVisits(
                 reportService.getDateDynamicWhere(startDate, endDate, "encounter_date_time"),
                 reportService.getDynamicUserWhere(userIds, "u.id"));
@@ -197,7 +196,7 @@ public class ReportingController {
     @RequestMapping(value = "/report/hr/commonUserIds", method = RequestMethod.GET)
     public Set<Long> getCommonsUsersByLocationAndGroup(@RequestParam(value = "groupId", required = false) Long groupId,
                                                        @RequestParam(value = "locationIds", required = false, defaultValue = "") List<Long> locationIds) {
-        accessControlService.checkPrivilege(PrivilegeType.Report);
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
         if (groupId == null && locationIds.isEmpty()) {
             return new HashSet<>();
         } else if (groupId != null && !locationIds.isEmpty()) {
