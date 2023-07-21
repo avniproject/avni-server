@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
@@ -59,7 +58,8 @@ public class OrganisationController implements RestControllerResourceProcessor<O
 
         organisationRepository.save(org);
         createDefaultGenders(org);
-        addDefaultGroup(org.getId());
+        addDefaultGroup(org.getId(), Group.Everyone);
+        addDefaultGroup(org.getId(), Group.Administrators);
         createDefaultOrgConfig(org);
 
         return new ResponseEntity<>(org, HttpStatus.CREATED);
@@ -90,9 +90,9 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         genderRepository.save(gender);
     }
 
-    private void addDefaultGroup(Long organisationId){
+    private void addDefaultGroup(Long organisationId, String groupType){
         Group group = new Group();
-        group.setName(Group.Everyone);
+        group.setName(groupType);
         group.setOrganisationId(organisationId);
         group.setUuid(UUID.randomUUID().toString());
         group.setHasAllPrivileges(true);
