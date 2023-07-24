@@ -25,6 +25,11 @@ public class UserBuilder {
         return this;
     }
 
+    public UserBuilder organisationId(long orgId) {
+        user.setOrganisationId(orgId);
+        return this;
+    }
+
     public User build() {
         return user;
     }

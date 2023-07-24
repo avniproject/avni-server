@@ -70,6 +70,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String datePickerMode = row.get("Date picker mode");
         Boolean beneficiaryMode = row.getBool("Enable Beneficiary mode");
         String idPrefix = row.get("Beneficiary ID Prefix");
+        String groupsSpecified = row.get("User Groups");
         JsonObject syncSettings = constructSyncSettings(row);
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress)
@@ -110,7 +111,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setAuditInfo(currentUser);
         idpServiceFactory.getIdpService(organisation).createUser(user, organisationConfigService.getOrganisationConfig(organisation));
         userService.save(user);
-        userService.addToDefaultUserGroup(user);
+        userService.addToGroups(user, groupsSpecified);
     }
 
     private JsonObject constructSyncSettings(Row row) throws Exception {

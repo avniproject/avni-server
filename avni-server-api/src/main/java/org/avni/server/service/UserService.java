@@ -9,13 +9,16 @@ import org.avni.server.domain.*;
 import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
 
 import org.avni.server.framework.security.UserContextHolder;
+import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,11 +51,8 @@ public class UserService implements NonScopeAwareService {
     @Transactional
     public void addToDefaultUserGroup(User user) {
         if (user.getOrganisationId() != null) {
-            UserGroup userGroup = new UserGroup();
-            userGroup.setGroup(groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId()));
-            userGroup.setUser(user);
-            userGroup.setUuid(UUID.randomUUID().toString());
-            userGroup.setOrganisationId(user.getOrganisationId());
+            Group group = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
+            UserGroup userGroup = UserGroup.createMembership(user, group);
             userGroupRepository.save(userGroup);
         }
     }
@@ -70,8 +70,33 @@ public class UserService implements NonScopeAwareService {
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
+
     public Optional<User> findByPhoneNumber(String phoneNumber) {
         phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
         return userRepository.findUserWithMatchingPropertyValue("phoneNumber", phoneNumber);
+    }
+
+    @Transactional
+    public void addToGroups(User user, String groupsSpecified) {
+        if (groupsSpecified == null) {
+            this.addToDefaultUserGroup(user);
+            return;
+        }
+
+        String[] groupNames = Strings.split(groupsSpecified, '|');
+        Arrays.stream(groupNames).forEach(groupName -> {
+            if (!StringUtils.hasLength(groupName.trim())) return;
+
+            Group group = this.groupRepository.findByName(groupName);
+            if (group == null) {
+                String errorMessage = String.format("Group '%s' not found", groupName);
+                throw new RuntimeException(errorMessage);
+            }
+            UserGroup userGroup = UserGroup.createMembership(user, group);
+            this.userGroupRepository.save(userGroup);
+        });
+        if (!Arrays.asList(groupNames).contains(Group.Everyone)) {
+            this.addToDefaultUserGroup(user);
+        }
     }
 }

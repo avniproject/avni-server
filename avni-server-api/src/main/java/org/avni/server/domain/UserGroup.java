@@ -6,6 +6,7 @@ import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_group")
@@ -51,4 +52,12 @@ public class UserGroup extends OrganisationAwareEntity {
         return group.getName();
     }
 
+    public static UserGroup createMembership(User user, Group group) {
+        UserGroup userGroup = new UserGroup();
+        userGroup.setGroup(group);
+        userGroup.setUser(user);
+        userGroup.setUuid(UUID.randomUUID().toString());
+        userGroup.setOrganisationId(user.getOrganisationId());
+        return userGroup;
+    }
 }
