@@ -25,6 +25,7 @@ public class UserInfoWebResponse extends UserInfoContract {
         if (contextOrganisation != null) {
             response.setOrganisationId(contextOrganisation.getId());
             response.setOrganisationName(contextOrganisation.getName());
+            response.setUsernameSuffix(contextOrganisation.getUsernameSuffix());
         }
         return response;
     }
