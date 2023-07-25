@@ -109,9 +109,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         user.setOrganisationId(organisation.getId());
         user.setAuditInfo(currentUser);
-        idpServiceFactory.getIdpService(organisation).createUser(user, organisationConfigService.getOrganisationConfig(organisation));
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
+        idpServiceFactory.getIdpService(organisation).createUser(user, organisationConfigService.getOrganisationConfig(organisation));
     }
 
     private JsonObject constructSyncSettings(Row row) throws Exception {
