@@ -24,6 +24,10 @@ public interface UserGroupRepository extends ReferenceDataRepository<UserGroup> 
             Date now,
             Pageable pageable);
 
+    Page<UserGroup> findByUserIdOrderByIdAsc(
+            Long userId,
+            Pageable pageable);
+
     default UserGroup findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in UserGroup.");
     }

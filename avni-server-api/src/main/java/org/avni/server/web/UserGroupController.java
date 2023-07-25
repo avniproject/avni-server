@@ -14,6 +14,7 @@ import org.avni.server.domain.UserGroup;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.UserGroupContract;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.PagedResources;
@@ -66,6 +67,14 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         return userGroupRepository.findByOrganisationId(UserContextHolder.getUserContext().getOrganisationId()).stream()
                 .map(UserGroupContract::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping(value = "/userGroups/search/findByUser")
+    @ResponseBody
+    public Page<UserGroup> find(@RequestParam(value = "userId", required = true) Long userId,
+                           Pageable pageable) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
+        return userGroupRepository.findByUserIdOrderByIdAsc(userId, pageable);
     }
 
     @RequestMapping(value = "/userGroup", method = RequestMethod.POST)
