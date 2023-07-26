@@ -10,24 +10,12 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "sync_telemetry")
 @BatchSize(size = 100)
-public class SyncTelemetry {
-
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    @Id
-    private Long id;
-
-    @Column
-    @NotNull
-    private String uuid;
+public class SyncTelemetry extends OrganisationAwareEntity{
 
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
     @JoinColumn(name = "user_id")
     private User user;
-
-    @Column
-    private Long organisationId;
 
     @Column
     private String syncStatus;
@@ -74,14 +62,6 @@ public class SyncTelemetry {
         this.user = user;
     }
 
-    public Long getOrganisationId() {
-        return organisationId;
-    }
-
-    public void setOrganisationId(Long organisationId) {
-        this.organisationId = organisationId;
-    }
-
     public String getSyncStatus() {
         return syncStatus;
     }
@@ -112,22 +92,6 @@ public class SyncTelemetry {
 
     public void setSyncEndTime(DateTime syncEndTime) {
         this.syncEndTime = syncEndTime;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public String getAppVersion() {
