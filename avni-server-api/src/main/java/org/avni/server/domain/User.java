@@ -91,7 +91,7 @@ public class User {
     @Type(type = "jsonObject")
     private JsonObject syncSettings;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private List<UserGroup> userGroups;
 
     @JsonIgnore
@@ -189,6 +189,9 @@ public class User {
     }
 
     public List<UserGroup> getUserGroups() {
+        if (userGroups == null) {
+            userGroups = new ArrayList<>();
+        }
         return userGroups;
     }
 

@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserContract extends ReferenceDataContract {
@@ -27,6 +28,8 @@ public class UserContract extends ReferenceDataContract {
     private String lastModifiedBy;
     private DateTime lastModifiedDateTime;
     private DateTime createdDateTime;
+    private List<Long> groupIds;
+    private List<String> userGroupNames;
 
     public static UserContract fromEntity(User user) {
         UserContract userContract = new UserContract();
@@ -43,6 +46,12 @@ public class UserContract extends ReferenceDataContract {
         userContract.setCreatedDateTime(user.getCreatedDateTime());
         userContract.setLastModifiedBy(user.getLastModifiedByUserName());
         userContract.setLastModifiedDateTime(user.getLastModifiedDateTime());
+        userContract.setGroupIds(user.getUserGroups().stream()
+                .filter(userGroup -> !userGroup.isVoided())
+                .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
+        userContract.setUserGroupNames(user.getUserGroups().stream()
+                .filter(userGroup -> !userGroup.isVoided())
+                .map(userGroup -> userGroup.getGroupName()).collect(Collectors.toList()));
         return userContract;
     }
 
@@ -172,5 +181,21 @@ public class UserContract extends ReferenceDataContract {
 
     public void setCreatedDateTime(DateTime createdDateTime) {
         this.createdDateTime = createdDateTime;
+    }
+
+    public List<Long> getGroupIds() {
+        return groupIds;
+    }
+
+    public void setGroupIds(List<Long> groupIds) {
+        this.groupIds = groupIds;
+    }
+
+    public List<String> getUserGroupNames() {
+        return userGroupNames;
+    }
+
+    public void setUserGroupNames(List<String> userGroupNames) {
+        this.userGroupNames = userGroupNames;
     }
 }

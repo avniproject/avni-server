@@ -9,6 +9,7 @@ import org.avni.server.service.GroupsService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.webapp.ProgramContractWeb;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,13 @@ public class GroupsController implements RestControllerResourceProcessor<Program
         this.groupRepository = groupRepository;
         this.groupsService = groupsService;
         this.accessControlService = accessControlService;
+    }
+
+    @GetMapping(value = "/groups/search/findAllById")
+    @ResponseBody
+    public List<Group> findAllById(@Param("ids") Long[] ids) {
+        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
+        return groupRepository.findByIdIn(ids);
     }
 
     @GetMapping(value = "/web/groups")

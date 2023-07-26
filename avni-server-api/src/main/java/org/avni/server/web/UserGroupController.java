@@ -81,11 +81,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
                 return ResponseEntity.badRequest().body(String.format("Invalid user id %d or group id %d", userGroupContract.getUserId(), userGroupContract.getGroupId()));
             }
 
-            UserGroup userGroup = new UserGroup();
-            userGroup.setUser(user);
-            userGroup.setGroup(group);
-            userGroup.assignUUID();
-            userGroup.setOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
+            UserGroup userGroup = UserGroup.createMembership(user, group);
             usersToBeAdded.add(userGroup);
         }
 

@@ -114,6 +114,7 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             userService.addToDefaultUserGroup(user);
+            userService.associateUserToGroups(user, userContract.getGroupIds());
             logger.info(String.format("Saved new user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (ValidationException | UsernameExistsException ex) {
@@ -153,6 +154,7 @@ public class UserController {
             idpServiceFactory.getIdpService(user).updateUser(user);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
+            userService.associateUserToGroups(user, userContract.getGroupIds());
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (ValidationException ex) {

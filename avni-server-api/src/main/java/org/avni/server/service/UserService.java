@@ -9,6 +9,7 @@ import org.avni.server.domain.*;
 import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
 
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.exception.GroupNotFoundException;
 import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -18,9 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements NonScopeAwareService {
@@ -55,6 +55,33 @@ public class UserService implements NonScopeAwareService {
             UserGroup userGroup = UserGroup.createMembership(user, group);
             userGroupRepository.save(userGroup);
         }
+    }
+
+    @Transactional
+    public void associateUserToGroups(User user, List<Long> associatedGroupIds) {
+        List<UserGroup> userGroupsToBeSaved = new ArrayList<>();
+        Group everyoneGroup = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
+        List<Long> currentlyLinkedGroups = user.getUserGroups().stream()
+                .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList());
+
+        //Create new UserGroups for newly associated groups
+        associatedGroupIds.stream()
+                .filter(gid -> !currentlyLinkedGroups.contains(gid) && !everyoneGroup.getId().equals(gid))
+                .forEach(groupId -> {
+            Group group = this.groupRepository.findById(groupId)
+                    .orElseThrow(GroupNotFoundException::new);
+            UserGroup userGroup = UserGroup.createMembership(user, group);
+            userGroupsToBeSaved.add(userGroup);
+        });
+
+        //Update voided flag for UserGroups that already exist
+        user.getUserGroups().stream().forEach(userGroup -> {
+            userGroup.setVoided(!associatedGroupIds
+                    .contains(userGroup.getGroupId()) && !everyoneGroup.getId().equals(userGroup.getGroupId()));
+            userGroupsToBeSaved.add(userGroup);
+        });
+
+        this.userGroupRepository.saveAll(userGroupsToBeSaved);
     }
 
     @Override
