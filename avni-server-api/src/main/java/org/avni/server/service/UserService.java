@@ -84,7 +84,7 @@ public class UserService implements NonScopeAwareService {
         }
 
         String[] groupNames = Strings.split(groupsSpecified, '|');
-        Arrays.stream(groupNames).forEach(groupName -> {
+        Arrays.stream(groupNames).distinct().forEach(groupName -> {
             if (!StringUtils.hasLength(groupName.trim())) return;
 
             Group group = this.groupRepository.findByName(groupName);

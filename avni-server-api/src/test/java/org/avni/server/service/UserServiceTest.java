@@ -69,4 +69,25 @@ public class UserServiceTest {
         assertEquals(user, allValues.get(0).getUser());
         assertEquals(everyone, allValues.get(0).getGroup());
     }
+
+    @Test
+    public void shouldDeduplicateListOfGroupsSpecified() {
+        long orgId = 1234;
+        User user = new UserBuilder().organisationId(orgId).build();
+        Group group1 = new Group();
+        Group group2 = new Group();
+        Group everyone = new Group();
+        when(groupRepository.findByName("group1")).thenReturn(group1);
+        when(groupRepository.findByName("group2")).thenReturn(group2);
+        when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(group1);
+
+        userService.addToGroups(user, "group1|group2|group1");
+        verify(userGroupRepository, times(3)).save(userGroupArgumentCaptor.capture());
+
+        List<UserGroup> allValues = userGroupArgumentCaptor.getAllValues();
+        assertEquals(user, allValues.get(0).getUser());
+        assertEquals(group1, allValues.get(0).getGroup());
+        assertEquals(group2, allValues.get(1).getGroup());
+        assertEquals(everyone, allValues.get(2).getGroup());
+    }
 }
