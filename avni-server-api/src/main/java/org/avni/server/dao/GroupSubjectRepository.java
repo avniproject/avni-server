@@ -6,23 +6,32 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "groupSubject", path = "groupSubject", exported = false)
-@PreAuthorize("hasAnyAuthority('user')")
 public interface GroupSubjectRepository extends TransactionalDataRepository<GroupSubject>, FindByLastModifiedDateTime<GroupSubject>, OperatingIndividualScopeAwareRepository<GroupSubject> {
+    @PreAuthorize("hasAnyAuthority('user')")
+    @RestResource(path = "lastModified", rel = "lastModified")
+    Page<GroupSubject> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
+            Pageable pageable);
+
     default GroupSubject findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in GroupSubject");
     }

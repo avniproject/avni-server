@@ -10,8 +10,8 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.ChangePasswordRequest;
+import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.avni.server.web.validation.ValidationException;
@@ -21,12 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityNotFoundException;
@@ -34,7 +32,10 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RepositoryRestController
