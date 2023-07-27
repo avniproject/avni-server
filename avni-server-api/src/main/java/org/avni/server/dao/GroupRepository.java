@@ -19,5 +19,6 @@ public interface GroupRepository extends ReferenceDataRepository<Group>, FindByL
 
     List<Group> findAllByName(String name);
 
-    List<Group> findByIdIn(Long[] ids);
+    List<Group> findByIdInAndIsVoidedFalse(Long[] ids);
+
 }

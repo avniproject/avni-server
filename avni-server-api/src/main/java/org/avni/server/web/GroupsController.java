@@ -1,38 +1,55 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.GroupRepository;
+import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.GroupsService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupContract;
-import org.avni.server.web.request.webapp.ProgramContractWeb;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
-public class GroupsController implements RestControllerResourceProcessor<ProgramContractWeb> {
+public class GroupsController implements RestControllerResourceProcessor<GroupContract> {
     private final GroupRepository groupRepository;
     private final GroupsService groupsService;
     private final AccessControlService accessControlService;
+    private final UserGroupRepository userGroupRepository;
 
-    public GroupsController(GroupRepository groupRepository, GroupsService groupsService, AccessControlService accessControlService) {
+    public GroupsController(GroupRepository groupRepository, GroupsService groupsService, AccessControlService accessControlService, UserGroupRepository userGroupRepository) {
         this.groupRepository = groupRepository;
         this.groupsService = groupsService;
         this.accessControlService = accessControlService;
+        this.userGroupRepository = userGroupRepository;
     }
 
-    @GetMapping(value = "/groups/search/findAllById")
+    @GetMapping(value = "group")
+    public PagedResources<Resource<GroupContract>> get(Pageable pageable) {
+        Page<Group> all = groupRepository.findPageByIsVoidedFalse(pageable);
+        Page<GroupContract> groupContracts = all.map(GroupContract::fromEntity);
+        return wrap(groupContracts);
+    }
+
+    @GetMapping(value = "/group/search/findAllById")
     @ResponseBody
-    public List<Group> findAllById(@Param("ids") Long[] ids) {
+    public List<GroupContract> findAllById(@Param("ids") Long[] ids) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
-        return groupRepository.findByIdIn(ids);
+        return groupRepository.findByIdInAndIsVoidedFalse(ids).stream()
+                .map(GroupContract::fromEntity).collect(Collectors.toList());
     }
 
     @GetMapping(value = "/web/groups")
@@ -97,6 +114,12 @@ public class GroupsController implements RestControllerResourceProcessor<Program
         group.setVoided(true);
         group.updateAudit();
         groupRepository.save(group);
+
+        List<UserGroup> userGroupsToBeVoided = userGroupRepository.findByGroup_IdAndIsVoidedFalse(id);
+        if(!CollectionUtils.isEmpty(userGroupsToBeVoided)) {
+            userGroupsToBeVoided.forEach((u) -> u.setVoided(true));
+            userGroupRepository.saveAll(userGroupsToBeVoided);
+        }
         return ResponseEntity.ok(null);
     }
 }

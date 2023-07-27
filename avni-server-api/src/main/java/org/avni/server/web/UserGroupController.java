@@ -80,8 +80,10 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             if (user == null || group == null) {
                 return ResponseEntity.badRequest().body(String.format("Invalid user id %d or group id %d", userGroupContract.getUserId(), userGroupContract.getGroupId()));
             }
-
-            UserGroup userGroup = UserGroup.createMembership(user, group);
+            UserGroup userGroup = userGroupRepository.findByUserIDAndGroupIdAndIsVoidedFalse(user.getId(), group.getId());
+            if(userGroup == null) {
+                userGroup = UserGroup.createMembership(user, group);
+            }
             usersToBeAdded.add(userGroup);
         }
 
