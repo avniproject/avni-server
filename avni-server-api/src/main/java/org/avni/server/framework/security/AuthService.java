@@ -8,6 +8,7 @@ import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.service.IAMAuthService;
 import org.avni.server.service.IdpServiceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +50,7 @@ public class AuthService {
         try {
             userContext = changeUser(iamAuthService.getUserFromToken(authToken), organisationUUID);
         } catch (SigningKeyNotFoundException signingKeyNotFoundException) {
-            throw new RuntimeException(signingKeyNotFoundException);
+            throw new AvniNoUserSessionException(signingKeyNotFoundException);
         }
         userContext.setAuthToken(authToken);
         return userContext;
@@ -91,6 +92,9 @@ public class AuthService {
     }
 
     private UserContext changeUser(User user, String organisationUUID) {
+        if (user == null) {
+            throw new AvniNoUserSessionException("No user, or not logged in");
+        }
         SecurityContextHolder.getContext().setAuthentication(attemptAuthentication(user, organisationUUID));
         return UserContextHolder.getUserContext();
     }
