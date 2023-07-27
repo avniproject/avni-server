@@ -11,6 +11,7 @@ import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
+import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.security.AuthService;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,13 +58,10 @@ public class AuthServiceTest {
         accountAdmin.setUser(user);
     }
 
-    @Test
-    public void shouldReturnEmptyUserContextIfUserCannotBeFoundInToken() throws SigningKeyNotFoundException {
+    @Test (expected = AvniNoUserSessionException.class)
+    public void shouldThrowExceptionIfUserNotFound() throws SigningKeyNotFoundException {
         when(cognitoAuthService.getUserFromToken("some token")).thenReturn(null);
-        UserContext userContext = authService.authenticateByToken("some token", null);
-        assertThat(userContext.getUser(), is(equalTo(null)));
-        assertThat(userContext.getOrganisation(), is(equalTo(null)));
-        assertThat(userContext.getRoles().size(), is(equalTo(0)));
+        authService.authenticateByToken("some token", null);
     }
 
     @Test

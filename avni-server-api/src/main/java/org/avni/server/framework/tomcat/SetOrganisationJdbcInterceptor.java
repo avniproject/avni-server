@@ -1,5 +1,6 @@
 package org.avni.server.framework.tomcat;
 
+import com.google.common.base.Strings;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
@@ -28,7 +29,7 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
         if (organisation == null) return;
 
         String dbUser = organisation.getDbUser();
-        if ("".equals(dbUser)) return;
+        if (Strings.isNullOrEmpty(dbUser)) return;
 
         try {
             Statement statement = pooledConnection.getConnection().createStatement();
