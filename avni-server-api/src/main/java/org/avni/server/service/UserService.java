@@ -62,7 +62,6 @@ public class UserService implements NonScopeAwareService {
         List<UserGroup> userGroupsToBeSaved = new ArrayList<>();
         Group everyoneGroup = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
         List<Long> currentlyLinkedGroups = user.getUserGroups().stream()
-                .filter(ug -> !ug.isVoided())
                 .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList());
 
         //Create new UserGroups for newly associated groups
@@ -76,7 +75,6 @@ public class UserService implements NonScopeAwareService {
 
         //Update voided flag for UserGroups that already exist
         user.getUserGroups().stream()
-                .filter(ug -> !ug.isVoided())
                 .forEach(userGroup -> {
             userGroup.setVoided(!associatedGroupIds
                     .contains(userGroup.getGroupId()) && !everyoneGroup.getId().equals(userGroup.getGroupId()));

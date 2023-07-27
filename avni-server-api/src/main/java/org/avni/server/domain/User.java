@@ -10,6 +10,7 @@ import org.avni.server.web.validation.ValidationException;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -192,7 +193,7 @@ public class User {
         if (userGroups == null) {
             userGroups = new ArrayList<>();
         }
-        return userGroups;
+        return userGroups.stream().filter(ug -> !ug.isVoided()).collect(Collectors.toList());
     }
 
     public void setUserGroups(List<UserGroup> userGroups) {

@@ -47,10 +47,8 @@ public class UserContract extends ReferenceDataContract {
         userContract.setLastModifiedBy(user.getLastModifiedByUserName());
         userContract.setLastModifiedDateTime(user.getLastModifiedDateTime());
         userContract.setGroupIds(user.getUserGroups().stream()
-                .filter(userGroup -> !userGroup.isVoided())
                 .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
         userContract.setUserGroupNames(user.getUserGroups().stream()
-                .filter(userGroup -> !userGroup.isVoided())
                 .map(userGroup -> userGroup.getGroupName()).collect(Collectors.toList()));
         return userContract;
     }
