@@ -132,7 +132,7 @@ public class ProgramEnrolmentApiController {
         }
         ArrayList<ProgramEnrolmentResponse> programEnrolmentResponses = new ArrayList<>();
         programEnrolments.forEach(programEnrolment -> programEnrolmentResponses.add(ProgramEnrolmentResponse.fromProgramEnrolment(programEnrolment, conceptRepository, conceptService)));
-        accessControlService.checkProgramPrivileges(PrivilegeType.EnrolSubject, programEnrolments.getContent());
+        accessControlService.checkProgramPrivileges(PrivilegeType.ViewEnrolmentDetails, programEnrolments.getContent());
         return new ResponsePage(programEnrolmentResponses, programEnrolments.getNumberOfElements(), programEnrolments.getTotalPages(), programEnrolments.getSize());
     }
 
