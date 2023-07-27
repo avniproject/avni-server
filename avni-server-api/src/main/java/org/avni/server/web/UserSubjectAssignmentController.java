@@ -62,8 +62,8 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
 
 
     @RequestMapping(value = "/web/subjectAssignmentMetadata", method = RequestMethod.GET)
-    @PreAuthorize(value = "hasAnyAuthority('user')")
     public JsonObject getSubjectAssignmentMetadataForSearch() {
+        accessControlService.checkPrivilege(PrivilegeType.AssignSubject);
         return userSubjectAssignmentService.getUserSubjectAssignmentMetadata();
     }
 
