@@ -25,7 +25,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -156,5 +155,12 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     public List<ConceptContract> dashboardFilterSearch(@RequestParam String namePart) {
         List<Concept> dashboardFilterConcepts = conceptRepository.findDashboardFilterConcepts(namePart);
         return dashboardFilterConcepts.stream().map(ConceptContract::createForSearchResult).collect(Collectors.toList());
+    }
+
+    @RequestMapping(value = "/web/concept/media", method = RequestMethod.GET)
+    public List<ConceptContract> getMediaConcepts() {
+        List<String> mediaDataTypesNames = ConceptDataType.mediaDataTypes.stream().map(Enum::name).collect(Collectors.toList());
+        List<Concept> concepts = conceptRepository.findAllByDataTypeIn(mediaDataTypesNames);
+        return concepts.stream().map(ConceptContract::createForSearchResult).collect(Collectors.toList());
     }
 }
