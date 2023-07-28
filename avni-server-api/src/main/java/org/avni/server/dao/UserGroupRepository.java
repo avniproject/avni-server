@@ -32,7 +32,7 @@ public interface UserGroupRepository extends ReferenceDataRepository<UserGroup> 
         throw new UnsupportedOperationException("No field 'name' in UserGroup.");
     }
 
-    UserGroup findByUser_IdAndGroup_IdAndIsVoidedFalse(Long userId, Long groupId);
+    UserGroup findByUserAndGroupAndIsVoidedFalse(User user, Group group);
 
     List<UserGroup> findByGroup_IdAndIsVoidedFalse(Long groupId);
 

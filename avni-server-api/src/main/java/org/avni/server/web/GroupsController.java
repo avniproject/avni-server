@@ -47,7 +47,6 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
     @GetMapping(value = "/group/search/findAllById")
     @ResponseBody
     public List<GroupContract> findAllById(@Param("ids") Long[] ids) {
-        accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         return groupRepository.findByIdInAndIsVoidedFalse(ids).stream()
                 .map(GroupContract::fromEntity).collect(Collectors.toList());
     }

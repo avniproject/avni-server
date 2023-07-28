@@ -97,7 +97,7 @@ public class User {
 
     @JsonIgnore
     public boolean hasAllPrivileges() {
-        return userGroups.stream().anyMatch(userGroup -> userGroup.getGroup().isHasAllPrivileges());
+        return getUserGroups().stream().anyMatch(userGroup -> userGroup.getGroup().isHasAllPrivileges());
     }
 
     public enum SyncSettingKeys {
