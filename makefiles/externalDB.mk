@@ -20,9 +20,10 @@ create_local_staging_db_user: ## Creates new implementation db user in local sta
 ifndef user
 	@echo "Provde the variable user"
 	exit 1
-else
-	-psql -U $(su) -d avni_staging -c "select create_db_user('$(user)', 'password')"
 endif
+	-psql -U $(su) -d avni_staging -c "select create_db_user('$(user)', 'password')"
+	-psql -U $(su) -d avni_staging -c "select create_implementation_schema('$(user)', '$(user)')"
+	-psql -U $(su) -d avni_staging -c "grant all privileges on all tables in schema $(user) to $(user)"
 
 create_all_local_staging_db_user: ## Creates all implementation db users in local staging database
 	-psql -U $(su) -d avni_staging -c "select create_db_user(db_user, 'password') from organisation where is_voided = false and id <> 1"
