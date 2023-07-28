@@ -25,7 +25,7 @@ public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupP
             "from group_privilege gp\n" +
             "         join user_group ug on ug.group_id = gp.group_id\n" +
             "         join privilege p on gp.privilege_id = p.id\n" +
-            "where ug.user_id = 4\n" +
+            "where ug.user_id = :userId\n" +
             "  and gp.is_voided = false\n" +
             "  and ug.is_voided = false\n" +
             "  and allow = true", nativeQuery = true)
