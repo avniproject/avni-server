@@ -83,6 +83,10 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return organisationConfigRepository.findByOrganisationId(organisation.getId());
     }
 
+    public OrganisationConfig getOrganisationConfigByOrgId(Long organisationId) {
+        return organisationConfigRepository.findByOrganisationId(organisationId);
+    }
+
     public LinkedHashMap<String, Object> getOrganisationSettings(Long organisationId) {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
         JsonObject settings = new JsonObject(organisationConfig.getSettings());
