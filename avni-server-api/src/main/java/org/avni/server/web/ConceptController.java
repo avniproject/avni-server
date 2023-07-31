@@ -160,7 +160,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     @RequestMapping(value = "/web/concept/media", method = RequestMethod.GET)
     public List<ConceptContract> getMediaConcepts() {
         List<String> mediaDataTypesNames = ConceptDataType.mediaDataTypes.stream().map(Enum::name).collect(Collectors.toList());
-        List<Concept> concepts = conceptRepository.findAllByDataTypeIn(mediaDataTypesNames);
+        List<Concept> concepts = conceptRepository.findAllByDataTypeInAndIsVoidedFalse(mediaDataTypesNames);
         return concepts.stream().map(ConceptContract::createForSearchResult).collect(Collectors.toList());
     }
 }

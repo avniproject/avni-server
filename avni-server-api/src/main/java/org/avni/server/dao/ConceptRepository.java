@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public interface ConceptRepository extends ReferenceDataRepository<Concept>, FindByLastModifiedDateTime<Concept> {
     Page<Concept> findByIsVoidedFalseAndNameIgnoreCaseContaining(String name, Pageable pageable);
     List<Concept> findAllByDataType(String dataType);
-    List<Concept> findAllByDataTypeIn(List<String> conceptDataTypes);
+    List<Concept> findAllByDataTypeInAndIsVoidedFalse(List<String> conceptDataTypes);
     List<Concept> findByIsVoidedFalseAndDataType(String dataType);
 
     List<Concept> findByIsVoidedFalseAndActiveTrueAndNameIgnoreCaseContains(String name);
