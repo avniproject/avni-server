@@ -8,6 +8,7 @@ import java.util.List;
 
 public class ResourceProtectionStatus {
     private static final List<String> UnprotectedResources = Arrays.asList(
+            "/",
             "/cognito-details",
             "/idp-details",
             "/favicon.ico",
