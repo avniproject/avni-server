@@ -6,24 +6,18 @@ import org.springframework.hateoas.core.Relation;
 @Relation(collectionRelation = "group")
 public class GroupContract extends ReferenceDataContract {
 
-    private String name;
     private boolean hasAllPrivileges;
+
+    private boolean isNotEveryoneGroup;
 
     public static GroupContract fromEntity(Group group) {
         GroupContract groupContract = new GroupContract();
         groupContract.setId(group.getId());
         groupContract.setName(group.getName());
         groupContract.setHasAllPrivileges(group.isHasAllPrivileges());
+        groupContract.setNotEveryoneGroup(!group.isEveryone());
         groupContract.setUuid(group.getUuid());
         return groupContract;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public boolean isHasAllPrivileges() {
@@ -33,4 +27,13 @@ public class GroupContract extends ReferenceDataContract {
     public void setHasAllPrivileges(boolean hasAllPrivileges) {
         this.hasAllPrivileges = hasAllPrivileges;
     }
+
+    public boolean isNotEveryoneGroup() {
+        return isNotEveryoneGroup;
+    }
+
+    public void setNotEveryoneGroup(boolean notEveryoneGroup) {
+        isNotEveryoneGroup = notEveryoneGroup;
+    }
+
 }

@@ -51,6 +51,19 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
                 .map(GroupContract::fromEntity).collect(Collectors.toList());
     }
 
+    @GetMapping(value = "/group/search/find")
+    public PagedResources<Resource<GroupContract>> find(
+            @RequestParam(value = "isNotEveryoneGroup", defaultValue = "true") Boolean isNotEveryoneGroup,
+            Pageable pageable) {
+        Page<GroupContract> groupContracts = null;
+        if(isNotEveryoneGroup) {
+            groupContracts = groupRepository.findByNameNotAndIsVoidedFalse(Group.Everyone, pageable).map(GroupContract::fromEntity);
+        } else {
+            groupContracts = groupRepository.findPageByIsVoidedFalse(pageable).map(GroupContract::fromEntity);
+        }
+        return wrap(groupContracts);
+    }
+
     @GetMapping(value = "/web/groups")
     @ResponseBody
     public List<Group> getAll() {

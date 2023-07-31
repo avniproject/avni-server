@@ -1,6 +1,8 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.Group;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -20,5 +22,7 @@ public interface GroupRepository extends ReferenceDataRepository<Group>, FindByL
     List<Group> findAllByName(String name);
 
     List<Group> findByIdInAndIsVoidedFalse(Long[] ids);
+
+    Page<Group> findByNameNotAndIsVoidedFalse(String name, Pageable pageable);
 
 }
