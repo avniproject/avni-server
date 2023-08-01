@@ -55,7 +55,7 @@ public class UserServiceAssociateGroupsTest {
         // init
         orgId = 1234l;
         user = new UserBuilder().organisationId(orgId).build();
-        groupIds = new Long[]{1l,2l,3l};
+        groupIds = new Long[]{1l, 2l, 3l};
         group1 = initGroup(1l);
         group2 = initGroup(2l);
         everyone = initGroup(3l);
@@ -68,6 +68,20 @@ public class UserServiceAssociateGroupsTest {
         when(groupRepository.findById(1l)).thenReturn(Optional.of(group1));
         when(groupRepository.findById(2l)).thenReturn(Optional.of(group2));
         when(groupRepository.findById(3l)).thenReturn(Optional.of(everyone));
+    }
+
+    @Test
+    public void handleNullGroupIds() {
+        // init
+        user.setUserGroups(Arrays.asList(ugEveryone)); // Initially just 3
+
+        groupIds = null; //Group Ids is null
+
+        userService.associateUserToGroups(user, null);
+
+        verify(userGroupRepository, times(0)).saveAll(userGroupsToBeSavedArgumentCaptor.capture());
+        List<List<UserGroup>> allValues = userGroupsToBeSavedArgumentCaptor.getAllValues();
+        assertEquals(0, allValues.size());
     }
 
     @Test
@@ -184,7 +198,6 @@ public class UserServiceAssociateGroupsTest {
         assertEquals(targetGrp.getId(), group.get().getId());
         assertEquals(isPresent, group.get().isVoided());
     }
-
 
 
     private Optional<UserGroup> findGroup(Stream<UserGroup> userGroupsStream, long groupId) {

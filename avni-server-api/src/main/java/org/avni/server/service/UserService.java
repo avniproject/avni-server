@@ -59,6 +59,9 @@ public class UserService implements NonScopeAwareService {
 
     @Transactional
     public void associateUserToGroups(User user, List<Long> associatedGroupIds) {
+        if(associatedGroupIds == null) {
+            return;
+        }
         List<UserGroup> userGroupsToBeSaved = new ArrayList<>();
         Group everyoneGroup = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
         List<Long> currentlyLinkedGroups = user.getUserGroups().stream()
