@@ -2,9 +2,11 @@ package org.avni.server.web;
 
 import com.bugsnag.Bugsnag;
 import com.bugsnag.Report;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
+import org.avni.server.framework.rest.RestControllerErrorResponse;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,6 +26,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -77,8 +81,14 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(body, headers, status);
     }
 
+    private ResponseEntity <RestControllerErrorResponse> error(final Exception exception, final HttpStatus httpStatus) {
+        logAndReportToBugsnag(exception);
+        final String message = Optional.ofNullable(exception.getMessage()).orElse(exception.getClass().getSimpleName());
+        return new ResponseEntity(new RestControllerErrorResponse(message), httpStatus);
+    }
+
     @ExceptionHandler(value = {Exception.class})
-    public ResponseEntity<String> unknownException(Exception e) {
+    public ResponseEntity unknownException(Exception e) {
         if (e instanceof BadRequestError) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } else if (e instanceof ResourceNotFoundException) {
@@ -87,6 +97,8 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         } else if (e instanceof AvniAccessException) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } else if (e instanceof InvalidFormatException || e instanceof HttpMessageConversionException) {
+            return error(e, HttpStatus.BAD_REQUEST);
         } else {
             logAndReportToBugsnag(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
