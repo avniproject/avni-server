@@ -95,7 +95,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         group.setName(groupType);
         group.setOrganisationId(organisationId);
         group.setUuid(UUID.randomUUID().toString());
-        group.setHasAllPrivileges(true);
+        group.setHasAllPrivileges(group.isAdministrator());
         group.setVersion(0);
         groupRepository.save(group);
     }
