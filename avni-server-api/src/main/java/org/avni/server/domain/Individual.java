@@ -346,4 +346,8 @@ Individual extends SyncAttributeEntity implements MessageableEntity {
 
         return fullName;
     }
+
+    public void addObservations(ObservationCollection observations) {
+        this.observations.putAll(observations);
+    }
 }

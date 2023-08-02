@@ -18,13 +18,10 @@ import java.util.List;
 @Component
 public class MessageSenderJob {
     private static final Logger logger = LoggerFactory.getLogger(MessagingService.class);
-    private MessagingService messagingService;
-
-    private OrganisationConfigService organisationConfigService;
-
-    private AuthService authService;
-
-    private ExternalSystemConfigRepository externalSystemConfigRepository;
+    private final MessagingService messagingService;
+    private final OrganisationConfigService organisationConfigService;
+    private final AuthService authService;
+    private final ExternalSystemConfigRepository externalSystemConfigRepository;
 
     @Autowired
     public MessageSenderJob(MessagingService messagingService, OrganisationConfigService organisationConfigService,

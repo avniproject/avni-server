@@ -30,15 +30,15 @@ import java.util.stream.Stream;
 
 @Service
 public class ProgramEncounterService implements ScopeAwareService {
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(ProgramEncounterService.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ProgramEncounterService.class);
     @Autowired
     Bugsnag bugsnag;
-    private ProgramEncounterRepository programEncounterRepository;
-    private EncounterTypeRepository encounterTypeRepository;
-    private OperationalEncounterTypeRepository operationalEncounterTypeRepository;
-    private ObservationService observationService;
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    private FormMappingService formMappingService;
+    private final ProgramEncounterRepository programEncounterRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final OperationalEncounterTypeRepository operationalEncounterTypeRepository;
+    private final ObservationService observationService;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
+    private final FormMappingService formMappingService;
 
     @Autowired
     public ProgramEncounterService(ProgramEncounterRepository programEncounterRepository, EncounterTypeRepository encounterTypeRepository, OperationalEncounterTypeRepository operationalEncounterTypeRepository, ObservationService observationService, ProgramEnrolmentRepository programEnrolmentRepository, FormMappingService formMappingService) {
@@ -172,12 +172,17 @@ public class ProgramEncounterService implements ScopeAwareService {
             } else {
                 encounter.getObservations().putAll(observationsFromDecisions);
             }
+
             List<Decision> enrolmentDecisions = decisions.getEnrolmentDecisions();
             if (enrolmentDecisions != null) {
                 ObservationCollection enrolmentObservations = observationService.createObservationsFromDecisions(enrolmentDecisions);
                 programEnrolment.getObservations().putAll(enrolmentObservations);
             }
-
+            List<Decision> registrationDecisions = decisions.getRegistrationDecisions();
+            if (registrationDecisions != null) {
+                ObservationCollection registrationObservations = observationService.createObservationsFromDecisions(registrationDecisions);
+                programEnrolment.getIndividual().addObservations(registrationObservations);
+            }
         }
         encounter = this.save(encounter);
         logger.info(String.format("Saved programEncounter with uuid %s", request.getUuid()));
