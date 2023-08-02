@@ -8,6 +8,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.S3Service;
 import org.jadira.usertype.spi.utils.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.net.URL;
 import java.util.*;
@@ -73,7 +74,14 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
 
     private static void putCatchments(Individual subject, SubjectResponse subjectResponse) {
         List<String> catchments = new ArrayList<>();
-        for (Catchment catchment: subject.getAddressLevel().getVirtualCatchments()) {
+        if(subject.getAddressLevel() == null) {
+            return;
+        }
+        Set<Catchment> virtualCatchments = subject.getAddressLevel().getVirtualCatchments();
+        if (CollectionUtils.isEmpty(virtualCatchments)) {
+            return;
+        }
+        for (Catchment catchment : virtualCatchments) {
             catchments.add(catchment.getName());
         }
         subjectResponse.put("catchments", catchments);
