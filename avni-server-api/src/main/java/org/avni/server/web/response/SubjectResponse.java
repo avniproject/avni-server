@@ -73,7 +73,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
 
     private static void putCatchments(Individual subject, SubjectResponse subjectResponse) {
         List<String> catchments = new ArrayList<>();
-        for (Catchment catchment: subject.getAddressLevel().getCatchments()) {
+        for (Catchment catchment: subject.getAddressLevel().getVirtualCatchments()) {
             catchments.add(catchment.getName());
         }
         subjectResponse.put("catchments", catchments);
