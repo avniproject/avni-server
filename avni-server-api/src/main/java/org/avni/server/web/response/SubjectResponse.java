@@ -2,6 +2,7 @@ package org.avni.server.web.response;
 
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.Catchment;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
 import org.avni.server.service.ConceptService;
@@ -27,6 +28,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
         subjectResponse.put("Registration date", subject.getRegistrationDate());
         putLocation(subject, subjectResponse);
         putRelatives(subject, subjectResponse);
+        putCatchments(subject,subjectResponse);
 
         LinkedHashMap<String, Object> observations = new LinkedHashMap<>();
         Response.putIfPresent(observations, "First name", subject.getFirstName());
@@ -69,6 +71,13 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
         subjectResponse.put("location", location);
     }
 
+    private static void putCatchments(Individual subject, SubjectResponse subjectResponse) {
+        List<String> catchments = new ArrayList<>();
+        for (Catchment catchment: subject.getAddressLevel().getVirtualCatchments()) {
+            catchments.add(catchment.getName());
+        }
+        subjectResponse.put("catchments", catchments);
+    }
     private static void putAddressLevel(Map<String, String> map, AddressLevel addressLevel) {
         map.put(addressLevel.getTypeString(), addressLevel.getTitle());
         map.put(String.join(LOCATION_EXTERNAL_ID_DELIMITER, addressLevel.getTypeString(), EXTERNAL_ID), addressLevel.getLegacyId());
