@@ -1,5 +1,3 @@
-begin transaction;
-
 -- 1. Fetch list of all non admin groups with hasAllPrivileges set to true
 select * from groups
 where has_all_privileges = true and name <> 'Administrators' and organisation_id <> 1;
@@ -58,5 +56,4 @@ where privilege.entity_type = 'Enrolment' and groups.organisation_id = subject_t
 update groups set has_all_privileges = false
 where has_all_privileges = true and name <> 'Administrators' and organisation_id <> 1;
 
-rollback;
 --- end
