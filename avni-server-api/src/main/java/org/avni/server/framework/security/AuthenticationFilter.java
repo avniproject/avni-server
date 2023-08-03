@@ -59,11 +59,12 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
                 chain.doFilter(request, response);
             }
         } catch (AvniNoUserSessionException noUserSessionException) {
+            this.logException(request, noUserSessionException);
            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } catch (AvniAccessException accessException) {
+            this.logException(request, accessException);
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        }
-        catch (Exception exception) {
+        } catch (Exception exception) {
             this.logException(request, exception);
             throw exception;
         } finally {
