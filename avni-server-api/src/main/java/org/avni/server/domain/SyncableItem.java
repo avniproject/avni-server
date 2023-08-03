@@ -1,8 +1,8 @@
 package org.avni.server.domain;
 
 public class SyncableItem {
-    private String name;
-    private String entityTypeUuid;
+    private final String name;
+    private final String entityTypeUuid;
 
     public SyncableItem(String name, String entityTypeUuid) {
         this.name = name;
