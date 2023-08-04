@@ -289,21 +289,21 @@ public class SyncController {
 
     /**
      *
-     * @param clientEntitySyncStatuses : This would contain all entries from EntitySyncStatus table maintained on avni-client,
+     * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
      *                                 which get populated based on all type of entities synced previously
      * @param isStockApp
      * @return
      */
     @PostMapping(value = "/v2/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> clientEntitySyncStatuses,
+    public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
-        Set<SyncableItem> serverSyncableItems = syncDetailService.getAllSyncableItems(true);
+        Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
-        List<EntitySyncStatusContract> changedEntities = getChangedEntities(clientEntitySyncStatuses, serverSyncableItems, true);
+        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true);
         logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
         return ResponseEntity.ok().body(new JsonObject()
                 .with("syncDetails", changedEntities)
@@ -314,21 +314,21 @@ public class SyncController {
 
     /**
      *
-     * @param clientEntitySyncStatuses : This would contain all entries from EntitySyncStatus table maintained on avni-client,
+     * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
      *                                  which get populated based on all type of entities synced previously
      * @param isStockApp
      * @return
      */
     @PostMapping(value = "/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity<?> getSyncDetails(@RequestBody List<EntitySyncStatusContract> clientEntitySyncStatuses,
+    public ResponseEntity<?> getSyncDetails(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
-        Set<SyncableItem> allServerSyncableItems = syncDetailService.getAllSyncableItems(false);
+        Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(false);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
-        List<EntitySyncStatusContract> changedEntities = getChangedEntities(clientEntitySyncStatuses, allServerSyncableItems, false);
+        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, false);
         logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
         return ResponseEntity.ok().body(new JsonObject()
                 .with("syncDetails", changedEntities)
@@ -337,22 +337,22 @@ public class SyncController {
         );
     }
 
-    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> clientEntitySyncStatuses, Set<SyncableItem> serverSyncableItems, boolean scopeAwareEAS) {
-        serverSyncableItems.forEach(serverSyncableItem -> {
-            if (clientEntitySyncStatuses.stream().noneMatch(clientEntitySyncStatus ->
-                    clientEntitySyncStatus.matchesEntity(serverSyncableItem))) {
-                clientEntitySyncStatuses.add(EntitySyncStatusContract.create(serverSyncableItem.getName(), serverSyncableItem.getEntityTypeUuid()));
+    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems, boolean scopeAwareEAS) {
+        allSyncableItems.forEach(syncableItem -> {
+            if (entitySyncStatusContracts.stream().noneMatch(entitySyncStatusContract ->
+                    entitySyncStatusContract.matchesEntity(syncableItem))) {
+                entitySyncStatusContracts.add(EntitySyncStatusContract.create(syncableItem.getName(), syncableItem.getEntityTypeUuid()));
             }
         });
-        removeDisabledEntities(clientEntitySyncStatuses, serverSyncableItems);
+        removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);
 
-        return clientEntitySyncStatuses.stream()
+        return entitySyncStatusContracts.stream()
                 .filter((entitySyncStatusContract) -> filterChangedEntities(entitySyncStatusContract, scopeAwareEAS))
                 .collect(Collectors.toList());
     }
 
     /**
-     * The purpose of this method is to iterate on {@code clientSyncStatuses}(1st param) and removing from it entries corresponding
+     * The purpose of this method is to iterate on {@code entitySyncStatusContracts}(1st param) and removing from it entries corresponding
      * to entities with
      * <ul>
      *     <li>
@@ -360,7 +360,7 @@ public class SyncController {
      *     </li>
      *     <b>and</b>
      *     <li>
-     *         that are not present in {@code serverSyncableItems}(2nd param)
+     *         that are not present in {@code allSyncableItems}(2nd param)
      *     </li>
      * </ul>
      * <br/>
@@ -372,18 +372,18 @@ public class SyncController {
      *                                                as we do not separately store them as different subTypes in backend-server-database
      *      </li>
      *      <li>
-     *          [GeneralEncounter, ProgramEncounter and ProgramEnrolments] : Few entries of these types would be missing in {@code serverSyncableItems}(2nd param)
+     *          [GeneralEncounter, ProgramEncounter and ProgramEnrolments] : Few entries of these types would be missing in {@code allSyncableItems}(2nd param)
      *                                             as their FormMappings could have been voided at a later stage and aren't eligible for sync anymore
      *      </li>
      *  </ol>
      *  <p>
-     * @param clientSyncStatuses List of EntitySyncStatusContracts obtained after merging,
-     *                                 the avni-client specified clientSyncStatuses with {@code serverSyncableItems}(2nd param)
-     * @param serverSyncableItems List of EntitySyncStatusContract generated on server based on the status of latest FormMapping configurations and entity-relationships
+     * @param entitySyncStatusContracts List of EntitySyncStatusContracts obtained after merging,
+     *                                 the avni-client specified entitySyncStatusContracts with {@code allSyncableItems}(2nd param)
+     * @param allSyncableItems List of EntitySyncStatusContract generated on server based on the status of latest FormMapping configurations and entity-relationships
      */
-    private void removeDisabledEntities(List<EntitySyncStatusContract> clientSyncStatuses, Set<SyncableItem> serverSyncableItems) {
-        clientSyncStatuses.removeIf(clientSyncStatus -> clientSyncStatus.mightHaveToBeIgnoredDuringSync() &&
-                serverSyncableItems.stream().noneMatch(clientSyncStatus::matchesEntity));
+    private void removeDisabledEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems) {
+        entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.mightHaveToBeIgnoredDuringSync() &&
+                allSyncableItems.stream().noneMatch(entitySyncStatusContract::matchesEntity));
     }
 
     private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract, boolean scopeAwareEAS) {
