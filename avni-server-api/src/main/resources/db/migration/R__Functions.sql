@@ -135,12 +135,13 @@ END
 $$;
 
 -- Create or replace function to delete etl metadata for an org
-create or replace function delete_etl_metadata_for_schema(in_impl_schema text, in_db_user text) returns bool
+drop function delete_etl_metadata_for_schema;
+create function delete_etl_metadata_for_schema(in_impl_schema text, in_db_user text, in_db_owner text) returns bool
     language plpgsql
 as
 $$
 BEGIN
-    EXECUTE 'set role ' || in_db_user || ';';
+    EXECUTE 'set role ' || in_db_owner || ';';
     execute 'drop schema if exists ' || in_impl_schema || ' cascade;';
     execute 'delete from entity_sync_status where db_user = ''' || in_db_user || ''';';
     execute 'delete from entity_sync_status where schema_name = ''' || in_impl_schema || ''';';
