@@ -135,7 +135,7 @@ END
 $$;
 
 -- Create or replace function to delete etl metadata for an org
-drop function delete_etl_metadata_for_schema;
+drop function if exists delete_etl_metadata_for_schema;
 create function delete_etl_metadata_for_schema(in_impl_schema text, in_db_user text, in_db_owner text) returns bool
     language plpgsql
 as
