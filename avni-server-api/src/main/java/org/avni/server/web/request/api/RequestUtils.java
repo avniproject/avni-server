@@ -14,22 +14,32 @@ public class RequestUtils {
     public static ObservationCollection createObservations(Map<String, Object> observationsRequest, ConceptRepository conceptRepository) {
         Map<String, Object> observations = new HashMap<>();
         for (Map.Entry<String, Object> entry : observationsRequest.entrySet()) {
-            String conceptName = entry.getKey();
-            Concept concept = conceptRepository.findByName(conceptName);
-            if (concept == null) {
-                throw new NullPointerException(String.format("Concept with name=%s not found", conceptName));
-            }
-            String conceptUUID = concept.getUuid();
-            String conceptDataType = concept.getDataType();
-            Object obsValue;
-            Object entryValue = entry.getValue();
-
-            if (entryValue == null) continue; //Ignore null values as in Avni there is no difference between null value and non-existence of an observation
-
-            obsValue = getObsValue(conceptRepository, conceptDataType, entryValue);
-            observations.put(conceptUUID, obsValue);
+            putObservation(conceptRepository, observations, entry);
         }
         return new ObservationCollection(observations);
+    }
+
+    public static void patchObservations(Map<String, Object> observationsRequest, ConceptRepository conceptRepository, ObservationCollection observations) {
+        for (Map.Entry<String, Object> entry : observationsRequest.entrySet()) {
+            putObservation(conceptRepository, observations, entry);
+        }
+    }
+
+    private static void putObservation(ConceptRepository conceptRepository, Map<String, Object> observations, Map.Entry<String, Object> entry) {
+        String conceptName = entry.getKey();
+        Concept concept = conceptRepository.findByName(conceptName);
+        if (concept == null) {
+            throw new NullPointerException(String.format("Concept with name=%s not found", conceptName));
+        }
+        String conceptUUID = concept.getUuid();
+        String conceptDataType = concept.getDataType();
+        Object obsValue;
+        Object entryValue = entry.getValue();
+
+        if (entryValue == null) return;
+
+        obsValue = getObsValue(conceptRepository, conceptDataType, entryValue);
+        observations.put(conceptUUID, obsValue);
     }
 
     private static Object getObsValue(ConceptRepository conceptRepository, String conceptDataType, Object entryValue) {
