@@ -2,7 +2,6 @@ package org.avni.server.web;
 
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.PrivilegeEntityType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.GroupPrivilege;
@@ -45,8 +44,7 @@ public class UserInfoWebController {
         }
 
         List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
-        String usernameSuffix = contextOrganisation.getUsernameSuffix() != null
-                ? contextOrganisation.getUsernameSuffix() : contextOrganisation.getDbUser();
+        String usernameSuffix = contextOrganisation.getEffectiveUsernameSuffix();
         String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
 
         List<UserPrivilegeWebResponse> groupPrivilegeResponses = groupPrivileges.stream()
@@ -64,4 +62,5 @@ public class UserInfoWebController {
                 groupPrivilegeResponses,
                 user.hasAllPrivileges());
     }
+
 }

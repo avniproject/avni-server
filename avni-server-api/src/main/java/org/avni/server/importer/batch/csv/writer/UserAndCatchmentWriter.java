@@ -79,7 +79,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        String userSuffix = "@".concat(organisation.getUsernameSuffix());
+        String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         User.validateUsername(username, userSuffix);
         User user = userRepository.findByUsername(username);
         User currentUser = userService.getCurrentUser();
