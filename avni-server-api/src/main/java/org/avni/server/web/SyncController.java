@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 public class SyncController {
 
-    private final Map<String, Integer> nowMap = new HashMap<String, Integer>() {{
+    private static final Map<String, Integer> nowMap = new HashMap<String, Integer>() {{
         put("live", 10);
     }};
 
@@ -341,7 +341,7 @@ public class SyncController {
         allSyncableItems.forEach(syncableItem -> {
             if (entitySyncStatusContracts.stream().noneMatch(entitySyncStatusContract ->
                     entitySyncStatusContract.matchesEntity(syncableItem))) {
-                entitySyncStatusContracts.add(EntitySyncStatusContract.create(syncableItem.getName(), syncableItem.getEntityTypeUuid()));
+                entitySyncStatusContracts.add(EntitySyncStatusContract.create(syncableItem.getSyncEntityName().name(), syncableItem.getEntityTypeUuid()));
             }
         });
         removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);

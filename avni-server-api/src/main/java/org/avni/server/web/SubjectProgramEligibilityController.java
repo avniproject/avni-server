@@ -3,8 +3,8 @@ package org.avni.server.web;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.Program;
@@ -73,7 +73,7 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
             return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(subjectProgramEligibilityRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.SubjectProgramEligibility));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(subjectProgramEligibilityRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.SubjectProgramEligibility));
     }
 
     @RequestMapping(value = "/subjectProgramEligibility", method = RequestMethod.GET)
@@ -87,7 +87,7 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
             return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(subjectProgramEligibilityRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.SubjectProgramEligibility));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(subjectProgramEligibilityRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.SubjectProgramEligibility));
     }
 
     @RequestMapping(value = "/subjectProgramEligibility", method = RequestMethod.POST)

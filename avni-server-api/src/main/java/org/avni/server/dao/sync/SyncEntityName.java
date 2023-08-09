@@ -1,0 +1,32 @@
+package org.avni.server.dao.sync;
+
+public enum SyncEntityName {
+    Subject,
+    ProgramEnrolment,
+    Individual,
+    Enrolment,
+    Encounter,
+    ProgramEncounter,
+    ChecklistItem,
+    Checklist,
+    Comment,
+    CommentThread,
+    IndividualRelationShip,
+    LocationMapping,
+    Location,
+    SubjectMigration,
+    GroupSubject,
+    SubjectProgramEligibility,
+    IndividualRelationship,
+    SubjectEntityApprovalStatus,
+    EncounterEntityApprovalStatus,
+    ProgramEncounterEntityApprovalStatus,
+    ProgramEnrolmentEntityApprovalStatus,
+    ChecklistDetail,
+    IdentifierAssignment,
+    RuleDependency,
+    Form,
+    FormMapping,
+    EncounterType,
+    Rule, IndividualRelation, IndividualRelationGenderMapping, IndividualRelationshipType, Program, ProgramOutcome, Gender, Concept, ProgramConfig, Video, SubjectType, ChecklistItemDetail, FormElementGroup, FormElement, ConceptAnswer, Groups, Translation, PlatformTranslation, OrganisationConfig, IdentifierSource, MyGroups, GroupPrivileges, Extension, GroupRole, LocationHierarchy, ReportCard, GroupDashboard, ApprovalStatus, DashboardSectionCardMapping, DashboardFilter, DashboardSection, Dashboard, News, Task, TaskType, UserInfo, Privilege, TaskStatus, StandardReportCardType, TaskUnAssignment, UserSubjectAssignment, Documentation, DocumentationItem, EntityApprovalStatus;
+}

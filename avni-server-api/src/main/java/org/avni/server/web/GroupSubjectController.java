@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
@@ -74,7 +75,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(groupSubjectTypeUuid);
         if(subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(groupSubjectRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.GroupSubject));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(groupSubjectRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.GroupSubject));
     }
 
     @RequestMapping(value = "/groupSubject", method = RequestMethod.GET)
@@ -88,7 +89,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
             return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(groupSubjectTypeUuid);
         if(subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(groupSubjectRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.GroupSubject));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(groupSubjectRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.GroupSubject));
     }
 
     @RequestMapping(value = "/groupSubjects", method = RequestMethod.POST)

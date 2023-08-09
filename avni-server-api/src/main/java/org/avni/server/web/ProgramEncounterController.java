@@ -4,7 +4,7 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.*;
@@ -121,7 +121,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         FormMapping formMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for program encounter %s", encounterType.getName()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.ProgramEncounter));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEncounter));
     }
 
     @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
@@ -138,7 +138,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         FormMapping formMapping = formMappingService.find(encounterType, FormType.ProgramEncounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for program encounter %s", encounterType.getName()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.ProgramEncounter));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(programEncounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEncounter));
     }
 
     @DeleteMapping("/web/programEncounter/{uuid}")
