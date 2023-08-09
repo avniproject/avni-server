@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
 import org.avni.server.domain.Individual;
@@ -124,7 +125,7 @@ public class CommentController extends AbstractController<Comment> implements Re
         if (subjectType == null) {
             return wrap(new SliceImpl<>(Collections.emptyList()));
         }
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(commentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Comment));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(commentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.Comment));
     }
 
     @GetMapping(value = {"/comment"})
@@ -138,7 +139,7 @@ public class CommentController extends AbstractController<Comment> implements Re
         if (subjectType == null) {
             return wrap(new PageImpl<>(Collections.emptyList()));
         }
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(commentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.Comment));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(commentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.Comment));
     }
 
     @Override

@@ -3,7 +3,7 @@ package org.avni.server.web;
 import org.avni.server.dao.CommentThreadRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.CommentThread;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
@@ -68,7 +68,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
         if (subjectType == null) {
             return wrap(new SliceImpl<>(Collections.emptyList()));
         }
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.CommentThread));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.CommentThread));
     }
 
     @GetMapping(value = {"/commentThread"})
@@ -82,7 +82,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
         if (subjectType == null) {
             return wrap(new PageImpl<>(Collections.emptyList()));
         }
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.CommentThread));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(commentThreadRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.CommentThread));
     }
 
     @RequestMapping(value = "/commentThreads", method = RequestMethod.POST)

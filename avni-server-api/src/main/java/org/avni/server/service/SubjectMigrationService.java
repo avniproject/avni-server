@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.IndividualController;
@@ -55,7 +56,7 @@ public class SubjectMigrationService implements ScopeAwareService {
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String subjectTypeUUID) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         User user = UserContextHolder.getUserContext().getUser();
-        return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncParameters.SyncEntityName.SubjectMigration);
+        return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.SubjectMigration);
     }
 
     @Transactional

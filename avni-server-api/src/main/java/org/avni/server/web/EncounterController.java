@@ -6,7 +6,7 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.geo.Point;
@@ -201,7 +201,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         FormMapping formMapping = formMappingService.find(encounterType, FormType.Encounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for encounter %s", encounterType.getName()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.Encounter));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Encounter));
     }
 
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)
@@ -217,7 +217,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         FormMapping formMapping = formMappingService.find(encounterType, FormType.Encounter);
         if (formMapping == null)
             throw new Exception(String.format("No form mapping found for encounter %s", encounterType.getName()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.Encounter));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(encounterRepository, userService.getCurrentUser(), lastModifiedDateTime, now, encounterType.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Encounter));
     }
 
     @DeleteMapping("/web/encounter/{uuid}")

@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.joda.time.DateTime;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
@@ -57,7 +58,7 @@ public class CommentThreadService implements ScopeAwareService {
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String subjectTypeUUID) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         User user = UserContextHolder.getUserContext().getUser();
-        return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncParameters.SyncEntityName.CommentThread);
+        return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.CommentThread);
     }
 
     @Override

@@ -55,7 +55,7 @@ public class EntitySyncStatusContract {
     }
 
     public boolean matchesEntity(SyncableItem syncableItem) {
-        return syncableItem.getName().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
+        return syncableItem.getSyncEntityName().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
     }
 
     public boolean isApprovalStatusType() {
