@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class MediaObservationService {
@@ -25,19 +26,34 @@ public class MediaObservationService {
         Map<Concept, Object> mediaObservations = observationService.filterObservationsByDataType(ConceptDataType.mediaDataTypes, allEntityObservations);
         for (Map.Entry<Concept, Object> entry : mediaObservations.entrySet()) {
             Concept concept = entry.getKey();
-            if (entry.getValue() instanceof String) {
-                String value = (String) entry.getValue();
+            putObservation(allEntityObservations, entry, concept);
+        }
+    }
+
+    public void patchMediaObservations(ObservationCollection allEntityObservations, Set<String> conceptsReceived) throws IOException {
+        Map<Concept, Object> mediaObservations = observationService.filterObservationsByDataType(ConceptDataType.mediaDataTypes, allEntityObservations);
+        for (Map.Entry<Concept, Object> entry : mediaObservations.entrySet()) {
+            Concept concept = entry.getKey();
+            if (conceptsReceived.stream().noneMatch(s -> s.equals(concept.getName())))
+                continue;
+
+            putObservation(allEntityObservations, entry, concept);
+        }
+    }
+
+    private void putObservation(ObservationCollection allEntityObservations, Map.Entry<Concept, Object> entry, Concept concept) throws IOException {
+        if (entry.getValue() instanceof String) {
+            String value = (String) entry.getValue();
+            String newValue = copyMediaToAvni(value);
+            allEntityObservations.put(concept.getUuid(), newValue);
+        } else {
+            List<String> values = (List<String>) entry.getValue();
+            List<String> newValues = new ArrayList<>();
+            for (String value : values) {
                 String newValue = copyMediaToAvni(value);
-                allEntityObservations.put(concept.getUuid(), newValue);
-            } else {
-                List<String> values = (List<String>) entry.getValue();
-                List<String> newValues = new ArrayList<>();
-                for (String value : values) {
-                    String newValue = copyMediaToAvni(value);
-                    newValues.add(newValue);
-                }
-                allEntityObservations.put(concept.getUuid(), newValues);
+                newValues.add(newValue);
             }
+            allEntityObservations.put(concept.getUuid(), newValues);
         }
     }
 

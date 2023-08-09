@@ -6,42 +6,55 @@ import org.avni.server.web.api.CommonFieldNames;
 import org.joda.time.LocalDate;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ApiSubjectRequest {
+    public static final String SUBJECT_TYPE = "Subject type";
+    public static final String ADDRESS = "Address";
+    public static final String DATE_OF_BIRTH = "Date of birth";
+    public static final String GENDER = "Gender";
+    public static final String REGISTRATION_DATE = "Registration date";
+    public static final String FIRST_NAME = "First name";
+    public static final String MIDDLE_NAME = "Middle name";
+    public static final String LAST_NAME = "Last name";
+    public static final String PROFILE_PICTURE = "Profile picture";
+    public static final String REGISTRATION_LOCATION = "Registration location";
+    public static final String OBSERVATIONS = "observations";
+
     @JsonProperty(CommonFieldNames.EXTERNAL_ID)
     private String externalId;
 
-    @JsonProperty("Subject type")
+    @JsonProperty(SUBJECT_TYPE)
     private String subjectType;
 
-    @JsonProperty("Address")
+    @JsonProperty(ADDRESS)
     private String address;
 
-    @JsonProperty("Date of birth")
+    @JsonProperty(DATE_OF_BIRTH)
     private LocalDate dateOfBirth;
 
-    @JsonProperty("Gender")
+    @JsonProperty(GENDER)
     private String gender;
 
-    @JsonProperty("Registration date")
+    @JsonProperty(REGISTRATION_DATE)
     private LocalDate registrationDate;
 
-    @JsonProperty("First name")
+    @JsonProperty(FIRST_NAME)
     private String firstName;
 
-    @JsonProperty("Middle name")
+    @JsonProperty(MIDDLE_NAME)
     private String middleName;
 
-    @JsonProperty("Last name")
+    @JsonProperty(LAST_NAME)
     private String lastName;
 
-    @JsonProperty("Profile picture")
+    @JsonProperty(PROFILE_PICTURE)
     private String profilePicture;
 
-    @JsonProperty("Registration location")
+    @JsonProperty(REGISTRATION_LOCATION)
     private Point registrationLocation;
 
-    @JsonProperty("observations")
+    @JsonProperty(OBSERVATIONS)
     private LinkedHashMap<String, Object> observations;
 
     @JsonProperty(CommonFieldNames.VOIDED)

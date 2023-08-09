@@ -2,6 +2,7 @@ package org.avni.server.geo;
 
 import java.awt.geom.Point2D;
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * A simple immutable point object.
@@ -14,9 +15,13 @@ public class Point implements Serializable, Cloneable {
     private final double x;
     private final double y;
 
-    public Point( double x, double y ) {
+    public Point(double x, double y) {
         this.x = x;
         this.y = y;
+    }
+
+    public static Point fromMap(Map<String, Double> location) {
+        return new Point(location.get("X"), location.get("Y"));
     }
 
     public double getX() {
@@ -31,7 +36,7 @@ public class Point implements Serializable, Cloneable {
         return new Point2D.Double(x, y);
     }
 
-    public boolean equals( Object obj ) {
+    public boolean equals(Object obj) {
         if (obj instanceof Point) {
             return x == ((Point) obj).x && y == ((Point) obj).y;
         }
