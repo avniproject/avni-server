@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
@@ -55,7 +56,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         return null;
     }
 
-    default Specification<T> syncTypeIdSpecification(String uuid, SyncParameters.SyncEntityName syncEntityName) {
+    default Specification<T> syncTypeIdSpecification(String uuid, SyncEntityName syncEntityName) {
         return null;
     }
 

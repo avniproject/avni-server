@@ -4,7 +4,7 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.ApprovalStatus;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Program;
@@ -15,7 +15,6 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
-import org.avni.server.web.request.rules.RulesContractWrapper.ProgramEnrolmentContract;
 import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.springframework.hateoas.PagedResources;
@@ -98,7 +97,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));
-            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.Enrolment));
+            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Enrolment));
         }
     }
 
@@ -116,7 +115,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));
-            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncParameters.SyncEntityName.Enrolment));
+            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Enrolment));
         }
     }
 

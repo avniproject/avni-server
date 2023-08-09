@@ -7,6 +7,7 @@ import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
@@ -261,7 +262,7 @@ public class LocationService implements ScopeAwareService {
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID) {
         User user = UserContextHolder.getUserContext().getUser();
-        return isChangedByCatchment(user, lastModifiedDateTime, SyncParameters.SyncEntityName.Location);
+        return isChangedByCatchment(user, lastModifiedDateTime, SyncEntityName.Location);
     }
 
     @Override

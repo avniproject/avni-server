@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.joda.time.DateTime;
 import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
@@ -22,7 +22,7 @@ public class LocationMappingService implements ScopeAwareService {
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID) {
         User user = UserContextHolder.getUserContext().getUser();
-        return isChangedByCatchment(user, lastModifiedDateTime, SyncParameters.SyncEntityName.LocationMapping);
+        return isChangedByCatchment(user, lastModifiedDateTime, SyncEntityName.LocationMapping);
     }
 
     @Override

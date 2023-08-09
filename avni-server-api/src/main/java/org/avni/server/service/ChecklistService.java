@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
@@ -46,7 +47,7 @@ public class ChecklistService implements ScopeAwareService {
         Checklist checklist = checklistRepository.findFirstByChecklistDetail(checklistDetail);
         return checklistDetail != null &&
                 checklist != null &&
-                isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, checklistDetail.getId(), checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncParameters.SyncEntityName.Checklist);
+                isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, checklistDetail.getId(), checklist.getProgramEnrolment().getIndividual().getSubjectType(), SyncEntityName.Checklist);
     }
 
     @Override

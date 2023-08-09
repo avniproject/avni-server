@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.service.EntityApprovalStatusService;
 import org.avni.server.service.FormMappingService;
@@ -19,7 +20,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -70,7 +70,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
     public PagedResources<Resource<EntityApprovalStatus>> getEntityApprovals(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-            @RequestParam(value = "entityType", required = false)  SyncParameters.SyncEntityName entityName,
+            @RequestParam(value = "entityType", required = false) SyncEntityName entityName,
             @RequestParam(value = "entityTypeUuid", required = false) String entityTypeUuid,
             Pageable pageable) {
         if(entityName == null) {
@@ -87,7 +87,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
     public SlicedResources<Resource<EntityApprovalStatus>> getEntityApprovalsAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-            @RequestParam(value = "entityType", required = false)  SyncParameters.SyncEntityName entityName,
+            @RequestParam(value = "entityType", required = false) SyncEntityName entityName,
             @RequestParam(value = "entityTypeUuid", required = false) String entityTypeUuid,
             Pageable pageable) {
 
@@ -104,7 +104,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
         return resource;
     }
 
-    private String fetchSubjectTypeForEntityNameAndUuid(SyncParameters.SyncEntityName entityName, String entityTypeUuid) {
+    private String fetchSubjectTypeForEntityNameAndUuid(SyncEntityName entityName, String entityTypeUuid) {
         switch (entityName) {
             case Subject: return entityTypeUuid.isEmpty() ? null : entityTypeUuid;
             case Encounter:
@@ -139,8 +139,8 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
     }
 
     private SlicedResources<Resource<EntityApprovalStatus>> getScopeBasedSyncResultsAsSlice(DateTime lastModifiedDateTime,
-                                                                                     DateTime now, String subjectTypeUuid, Pageable pageable,
-                                                                                     SyncParameters.SyncEntityName entityName, String entityTypeUuid) {
+                                                                                            DateTime now, String subjectTypeUuid, Pageable pageable,
+                                                                                            SyncEntityName entityName, String entityTypeUuid) {
         if (subjectTypeUuid == null || subjectTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
@@ -150,7 +150,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
 
     private PagedResources<Resource<EntityApprovalStatus>> getScopeBasedSyncResults(DateTime lastModifiedDateTime,
                                                                                     DateTime now, String subjectTypeUuid, Pageable pageable,
-                                                                                    SyncParameters.SyncEntityName entityName, String entityTypeUuid) {
+                                                                                    SyncEntityName entityName, String entityTypeUuid) {
         if (subjectTypeUuid == null || subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));

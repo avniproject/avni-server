@@ -4,7 +4,7 @@ package org.avni.server.web;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.LocationService;
@@ -29,7 +29,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -112,7 +111,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return wrap(scopeBasedSyncService.getSyncResultsByCatchment(locationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, pageable, SyncParameters.SyncEntityName.Location));
+        return wrap(scopeBasedSyncService.getSyncResultsByCatchment(locationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, pageable, SyncEntityName.Location));
     }
 
     @PutMapping(value = "/locations/{id}")
