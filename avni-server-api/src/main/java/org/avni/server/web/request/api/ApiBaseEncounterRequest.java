@@ -9,34 +9,45 @@ import java.util.LinkedHashMap;
 import static org.avni.server.web.api.CommonFieldNames.VOIDED;
 
 public abstract class ApiBaseEncounterRequest {
-    @JsonProperty("External ID")
+    public static final String EXTERNAL_ID = "External ID";
+    public static final String ENCOUNTER_TYPE = "Encounter type";
+    public static final String ENCOUNTER_LOCATION = "Encounter location";
+    public static final String CANCEL_LOCATION = "Cancel location";
+    public static final String ENCOUNTER_DATE_TIME = "Encounter date time";
+    public static final String EARLIEST_SCHEDULED_DATE = "Earliest scheduled date";
+    public static final String MAX_SCHEDULED_DATE = "Max scheduled date";
+    public static final String CANCEL_DATE_TIME = "Cancel date time";
+    public static final String OBSERVATIONS = "observations";
+    public static final String CANCEL_OBSERVATIONS = "cancelObservations";
+
+    @JsonProperty(EXTERNAL_ID)
     private String externalId;
 
-    @JsonProperty("Encounter type")
+    @JsonProperty(ENCOUNTER_TYPE)
     private String encounterType;
 
-    @JsonProperty("Encounter location")
+    @JsonProperty(ENCOUNTER_LOCATION)
     private Point encounterLocation;
 
-    @JsonProperty("Cancel location")
+    @JsonProperty(CANCEL_LOCATION)
     private Point cancelLocation;
 
-    @JsonProperty("Encounter date time")
+    @JsonProperty(ENCOUNTER_DATE_TIME)
     private DateTime encounterDateTime;
 
-    @JsonProperty("Earliest scheduled date")
+    @JsonProperty(EARLIEST_SCHEDULED_DATE)
     private DateTime earliestScheduledDate;
 
-    @JsonProperty("Max scheduled date")
+    @JsonProperty(MAX_SCHEDULED_DATE)
     private DateTime maxScheduledDate;
 
-    @JsonProperty("Cancel date time")
+    @JsonProperty(CANCEL_DATE_TIME)
     private DateTime cancelDateTime;
 
-    @JsonProperty("observations")
+    @JsonProperty(OBSERVATIONS)
     private LinkedHashMap<String, Object> observations;
 
-    @JsonProperty("cancelObservations")
+    @JsonProperty(CANCEL_OBSERVATIONS)
     private LinkedHashMap<String, Object> cancelObservations;
 
     @JsonProperty(VOIDED)
