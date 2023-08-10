@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SyncableItem;
 import org.avni.server.service.*;
@@ -23,6 +24,8 @@ import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.avni.server.dao.sync.SyncEntityName.*;
+
 @RestController
 public class SyncController {
 
@@ -31,8 +34,8 @@ public class SyncController {
     }};
 
     private final Environment environment;
-    private final Map<String, ScopeAwareService> scopeAwareServiceMap = new HashMap<>();
-    private final Map<String, NonScopeAwareService> nonScopeAwareServiceMap = new HashMap<>();
+    private final Map<SyncEntityName, ScopeAwareService> scopeAwareServiceMap = new HashMap<>();
+    private final Map<SyncEntityName, NonScopeAwareService> nonScopeAwareServiceMap = new HashMap<>();
     private final IndividualService individualService;
     private final EncounterService encounterService;
     private final ProgramEnrolmentService programEnrolmentService;
@@ -212,92 +215,89 @@ public class SyncController {
     }
 
     private void populateScopeAwareRepositoryMap() {
-        scopeAwareServiceMap.put("Individual", individualService);
-        scopeAwareServiceMap.put("Encounter", encounterService);
-        scopeAwareServiceMap.put("ProgramEnrolment", programEnrolmentService);
-        scopeAwareServiceMap.put("ProgramEncounter", programEncounterService);
-        scopeAwareServiceMap.put("Checklist", checklistService);
-        scopeAwareServiceMap.put("ChecklistItem", checklistItemService);
-        scopeAwareServiceMap.put("IndividualRelationship", individualRelationshipService);
-        scopeAwareServiceMap.put("GroupSubject", groupSubjectService);
-        scopeAwareServiceMap.put("Comment", commentService);
-        scopeAwareServiceMap.put("CommentThread", commentThreadService);
-        scopeAwareServiceMap.put("AddressLevel", addressLevelService);
-        scopeAwareServiceMap.put("LocationMapping", locationMappingService);
-        scopeAwareServiceMap.put("SubjectMigration", subjectMigrationService);
-        scopeAwareServiceMap.put("SubjectProgramEligibility", subjectProgramEligibilityService);
-        scopeAwareServiceMap.put("SubjectEntityApprovalStatus", scopedEntityApprovalStatusService);
-        scopeAwareServiceMap.put("EncounterEntityApprovalStatus", scopedEntityApprovalStatusService);
-        scopeAwareServiceMap.put("ProgramEncounterEntityApprovalStatus", scopedEntityApprovalStatusService);
-        scopeAwareServiceMap.put("ProgramEnrolmentEntityApprovalStatus", scopedEntityApprovalStatusService);
-        scopeAwareServiceMap.put("ChecklistItemEntityApprovalStatus", scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put(Individual, individualService);
+        scopeAwareServiceMap.put(Encounter, encounterService);
+        scopeAwareServiceMap.put(ProgramEnrolment, programEnrolmentService);
+        scopeAwareServiceMap.put(ProgramEncounter, programEncounterService);
+        scopeAwareServiceMap.put(Checklist, checklistService);
+        scopeAwareServiceMap.put(ChecklistItem, checklistItemService);
+        scopeAwareServiceMap.put(IndividualRelationship, individualRelationshipService);
+        scopeAwareServiceMap.put(GroupSubject, groupSubjectService);
+        scopeAwareServiceMap.put(Comment, commentService);
+        scopeAwareServiceMap.put(CommentThread, commentThreadService);
+        scopeAwareServiceMap.put(AddressLevel, addressLevelService);
+        scopeAwareServiceMap.put(LocationMapping, locationMappingService);
+        scopeAwareServiceMap.put(SubjectMigration, subjectMigrationService);
+        scopeAwareServiceMap.put(SubjectProgramEligibility, subjectProgramEligibilityService);
+        scopeAwareServiceMap.put(SubjectEntityApprovalStatus, scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put(EncounterEntityApprovalStatus, scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put(ProgramEncounterEntityApprovalStatus, scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put(ProgramEnrolmentEntityApprovalStatus, scopedEntityApprovalStatusService);
+        scopeAwareServiceMap.put(ChecklistItemEntityApprovalStatus, scopedEntityApprovalStatusService);
     }
 
     private void populateEntityNameToTableMap() {
-        nonScopeAwareServiceMap.put("IdentifierAssignment", identifierAssignmentService);
-        nonScopeAwareServiceMap.put("ChecklistDetail", checklistDetailService);
-        nonScopeAwareServiceMap.put("Rule", ruleService);
-        nonScopeAwareServiceMap.put("RuleDependency", ruleDependencyService);
-        nonScopeAwareServiceMap.put("Form", formService);
-        nonScopeAwareServiceMap.put("FormMapping", formMappingService);
-        nonScopeAwareServiceMap.put("EncounterType", encounterTypeService);
-        nonScopeAwareServiceMap.put("Program", programService);
-        nonScopeAwareServiceMap.put("ProgramOutcome", programOutcomeService);
-        nonScopeAwareServiceMap.put("Gender", genderService);
-        nonScopeAwareServiceMap.put("IndividualRelation", individualRelationService);
-        nonScopeAwareServiceMap.put("IndividualRelationGenderMapping", individualRelationGenderMappingService);
-        nonScopeAwareServiceMap.put("IndividualRelationshipType", individualRelationshipTypeService);
-        nonScopeAwareServiceMap.put("Concept", conceptService);
-        nonScopeAwareServiceMap.put("ProgramConfig", programConfigService);
-        nonScopeAwareServiceMap.put("Video", videoService);
-        nonScopeAwareServiceMap.put("SubjectType", subjectTypeService);
-        nonScopeAwareServiceMap.put("ChecklistItemDetail", checklistItemDetailService);
-        nonScopeAwareServiceMap.put("FormElementGroup", formElementGroupService);
-        nonScopeAwareServiceMap.put("FormElement", formElementService);
-        nonScopeAwareServiceMap.put("ConceptAnswer", conceptAnswerService);
-        nonScopeAwareServiceMap.put("IdentifierSource", identifierSourceService);
-        nonScopeAwareServiceMap.put("OrganisationConfig", organisationConfigService);
-        nonScopeAwareServiceMap.put("PlatformTranslation", platformTranslationService);
-        nonScopeAwareServiceMap.put("Translation", translationService);
-        nonScopeAwareServiceMap.put("Groups", groupsService);
-        nonScopeAwareServiceMap.put("MyGroups", userGroupService);
-        nonScopeAwareServiceMap.put("GroupPrivileges", groupPrivilegeService);
-        nonScopeAwareServiceMap.put("Extension", extensionService);
-        nonScopeAwareServiceMap.put("GroupRole", groupRoleService);
-        nonScopeAwareServiceMap.put("LocationHierarchy", locationHierarchyService);
-        nonScopeAwareServiceMap.put("ReportCard", cardService);
-        nonScopeAwareServiceMap.put("Dashboard", dashboardService);
-        nonScopeAwareServiceMap.put("DashboardSection", dashboardSectionService);
-        nonScopeAwareServiceMap.put("DashboardFilter", dashboardFilterService);
-        nonScopeAwareServiceMap.put("DashboardSectionCardMapping", dashboardSectionCardMappingService);
-        nonScopeAwareServiceMap.put("ApprovalStatus", approvalStatusService);
-        nonScopeAwareServiceMap.put("GroupDashboard", groupDashboardService);
-        nonScopeAwareServiceMap.put("EntityApprovalStatus", entityApprovalStatusService);
-        nonScopeAwareServiceMap.put("News", newsService);
-        nonScopeAwareServiceMap.put("Documentation", documentationService);
-        nonScopeAwareServiceMap.put("DocumentationItem", documentationItemService);
-        nonScopeAwareServiceMap.put("UserInfo", userService);
-        nonScopeAwareServiceMap.put("Privilege", privilegeService);
-        nonScopeAwareServiceMap.put("StandardReportCardType", standardReportCardTypeService);
-        nonScopeAwareServiceMap.put("Task", taskService);
-        nonScopeAwareServiceMap.put("TaskType", taskTypeService);
-        nonScopeAwareServiceMap.put("TaskStatus", taskStatusService);
-        nonScopeAwareServiceMap.put("TaskUnAssignment", taskUnAssigmentService);
-        nonScopeAwareServiceMap.put("MenuItem", menuItemService);
-        nonScopeAwareServiceMap.put("UserSubjectAssignment", userSubjectAssignmentService);
+        nonScopeAwareServiceMap.put(IdentifierAssignment, identifierAssignmentService);
+        nonScopeAwareServiceMap.put(ChecklistDetail, checklistDetailService);
+        nonScopeAwareServiceMap.put(Rule, ruleService);
+        nonScopeAwareServiceMap.put(RuleDependency, ruleDependencyService);
+        nonScopeAwareServiceMap.put(Form, formService);
+        nonScopeAwareServiceMap.put(FormMapping, formMappingService);
+        nonScopeAwareServiceMap.put(EncounterType, encounterTypeService);
+        nonScopeAwareServiceMap.put(Program, programService);
+        nonScopeAwareServiceMap.put(ProgramOutcome, programOutcomeService);
+        nonScopeAwareServiceMap.put(Gender, genderService);
+        nonScopeAwareServiceMap.put(IndividualRelation, individualRelationService);
+        nonScopeAwareServiceMap.put(IndividualRelationGenderMapping, individualRelationGenderMappingService);
+        nonScopeAwareServiceMap.put(IndividualRelationshipType, individualRelationshipTypeService);
+        nonScopeAwareServiceMap.put(Concept, conceptService);
+        nonScopeAwareServiceMap.put(ProgramConfig, programConfigService);
+        nonScopeAwareServiceMap.put(Video, videoService);
+        nonScopeAwareServiceMap.put(SubjectType, subjectTypeService);
+        nonScopeAwareServiceMap.put(ChecklistItemDetail, checklistItemDetailService);
+        nonScopeAwareServiceMap.put(FormElementGroup, formElementGroupService);
+        nonScopeAwareServiceMap.put(FormElement, formElementService);
+        nonScopeAwareServiceMap.put(ConceptAnswer, conceptAnswerService);
+        nonScopeAwareServiceMap.put(IdentifierSource, identifierSourceService);
+        nonScopeAwareServiceMap.put(OrganisationConfig, organisationConfigService);
+        nonScopeAwareServiceMap.put(PlatformTranslation, platformTranslationService);
+        nonScopeAwareServiceMap.put(Translation, translationService);
+        nonScopeAwareServiceMap.put(Groups, groupsService);
+        nonScopeAwareServiceMap.put(MyGroups, userGroupService);
+        nonScopeAwareServiceMap.put(GroupPrivileges, groupPrivilegeService);
+        nonScopeAwareServiceMap.put(Extension, extensionService);
+        nonScopeAwareServiceMap.put(GroupRole, groupRoleService);
+        nonScopeAwareServiceMap.put(LocationHierarchy, locationHierarchyService);
+        nonScopeAwareServiceMap.put(ReportCard, cardService);
+        nonScopeAwareServiceMap.put(Dashboard, dashboardService);
+        nonScopeAwareServiceMap.put(DashboardSection, dashboardSectionService);
+        nonScopeAwareServiceMap.put(DashboardFilter, dashboardFilterService);
+        nonScopeAwareServiceMap.put(DashboardSectionCardMapping, dashboardSectionCardMappingService);
+        nonScopeAwareServiceMap.put(ApprovalStatus, approvalStatusService);
+        nonScopeAwareServiceMap.put(GroupDashboard, groupDashboardService);
+        nonScopeAwareServiceMap.put(EntityApprovalStatus, entityApprovalStatusService);
+        nonScopeAwareServiceMap.put(News, newsService);
+        nonScopeAwareServiceMap.put(Documentation, documentationService);
+        nonScopeAwareServiceMap.put(DocumentationItem, documentationItemService);
+        nonScopeAwareServiceMap.put(UserInfo, userService);
+        nonScopeAwareServiceMap.put(Privilege, privilegeService);
+        nonScopeAwareServiceMap.put(StandardReportCardType, standardReportCardTypeService);
+        nonScopeAwareServiceMap.put(Task, taskService);
+        nonScopeAwareServiceMap.put(TaskType, taskTypeService);
+        nonScopeAwareServiceMap.put(TaskStatus, taskStatusService);
+        nonScopeAwareServiceMap.put(TaskUnAssignment, taskUnAssigmentService);
+        nonScopeAwareServiceMap.put(MenuItem, menuItemService);
+        nonScopeAwareServiceMap.put(UserSubjectAssignment, userSubjectAssignmentService);
     }
 
     /**
-     *
      * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
-     *                                 which get populated based on all type of entities synced previously
-     * @param isStockApp
-     * @return
+     *                                  which get populated based on all type of entities synced previously
      */
     @PostMapping(value = "/v2/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
-                                            @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
+                                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
         Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true);
@@ -313,7 +313,6 @@ public class SyncController {
     }
 
     /**
-     *
      * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
      *                                  which get populated based on all type of entities synced previously
      * @param isStockApp
@@ -341,7 +340,7 @@ public class SyncController {
         allSyncableItems.forEach(syncableItem -> {
             if (entitySyncStatusContracts.stream().noneMatch(entitySyncStatusContract ->
                     entitySyncStatusContract.matchesEntity(syncableItem))) {
-                entitySyncStatusContracts.add(EntitySyncStatusContract.create(syncableItem.getSyncEntityName().name(), syncableItem.getEntityTypeUuid()));
+                entitySyncStatusContracts.add(EntitySyncStatusContract.createForEntityWithSubType(syncableItem.getSyncEntityName(), syncableItem.getEntityTypeUuid()));
             }
         });
         removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);
@@ -376,10 +375,11 @@ public class SyncController {
      *                                             as their FormMappings could have been voided at a later stage and aren't eligible for sync anymore
      *      </li>
      *  </ol>
-     *  <p>
+     * <p>
+     *
      * @param entitySyncStatusContracts List of EntitySyncStatusContracts obtained after merging,
-     *                                 the avni-client specified entitySyncStatusContracts with {@code allSyncableItems}(2nd param)
-     * @param allSyncableItems List of EntitySyncStatusContract generated on server based on the status of latest FormMapping configurations and entity-relationships
+     *                                  the avni-client specified entitySyncStatusContracts with {@code allSyncableItems}(2nd param)
+     * @param allSyncableItems          List of EntitySyncStatusContract generated on server based on the status of latest FormMapping configurations and entity-relationships
      */
     private void removeDisabledEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems) {
         entitySyncStatusContracts.removeIf(entitySyncStatusContract -> entitySyncStatusContract.mightHaveToBeIgnoredDuringSync() &&
@@ -389,9 +389,10 @@ public class SyncController {
     private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract, boolean scopeAwareEAS) {
         String entityName = entitySyncStatusContract.getEntityName();
         DateTime loadedSince = entitySyncStatusContract.getLoadedSince();
-        if(scopeAwareEAS) nonScopeAwareServiceMap.remove("EntityApprovalStatus");
-        ScopeAwareService scopeAwareService = this.scopeAwareServiceMap.get(entityName);
-        NonScopeAwareService nonScopeAwareService = this.nonScopeAwareServiceMap.get(entityName);
+        if (scopeAwareEAS) nonScopeAwareServiceMap.remove(EntityApprovalStatus);
+        SyncEntityName syncEntityName = valueOf(entityName);
+        ScopeAwareService scopeAwareService = this.scopeAwareServiceMap.get(syncEntityName);
+        NonScopeAwareService nonScopeAwareService = this.nonScopeAwareServiceMap.get(syncEntityName);
 
         if (nonScopeAwareService != null) {
             return nonScopeAwareService.isNonScopeEntityChanged(loadedSince);
