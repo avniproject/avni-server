@@ -19,7 +19,7 @@ public class EncounterControllerIntegrationTest extends AbstractControllerIntegr
     @Autowired
     private EncounterRepository encounterRepository;
 
-    private String ENCOUNTER_UUID = "fbfd4ce8-b03b-45b9-b919-1ef8a0d9651e";
+    private final String ENCOUNTER_UUID = "fbfd4ce8-b03b-45b9-b919-1ef8a0d9651e";
 
     @Override
     public void setUp() throws Exception {

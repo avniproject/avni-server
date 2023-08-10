@@ -1,5 +1,6 @@
 package org.avni.server.web.request;
 
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.SyncableItem;
 import org.joda.time.DateTime;
 
@@ -13,13 +14,17 @@ public class EntitySyncStatusContract {
     private DateTime loadedSince;
     private String entityTypeUuid;
 
-    public static EntitySyncStatusContract create(String entityName, String entityTypeUuid) {
+    public static EntitySyncStatusContract createForEntityWithSubType(SyncEntityName syncEntityName, String entityTypeUuid) {
         EntitySyncStatusContract contract = new EntitySyncStatusContract();
         contract.setUuid(UUID.randomUUID().toString());
         contract.setLoadedSince(REALLY_OLD_DATE);
-        contract.setEntityName(entityName);
+        contract.setEntityName(syncEntityName.name());
         contract.setEntityTypeUuid(entityTypeUuid);
         return contract;
+    }
+
+    public static EntitySyncStatusContract createForEntityWithoutSubType(SyncEntityName syncEntityName) {
+        return EntitySyncStatusContract.createForEntityWithSubType(syncEntityName, null);
     }
 
     public String getUuid() {
@@ -55,17 +60,16 @@ public class EntitySyncStatusContract {
     }
 
     public boolean matchesEntity(SyncableItem syncableItem) {
-        return syncableItem.getSyncEntityName().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
+        return syncableItem.getSyncEntityName().name().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
     }
 
     public boolean isApprovalStatusType() {
-        String[] approvalStatuses = {"SubjectEntityApprovalStatus", "EncounterEntityApprovalStatus", "ProgramEncounterEntityApprovalStatus", "ProgramEnrolmentEntityApprovalStatus", "ChecklistItemEntityApprovalStatus"};
-        return Arrays.stream(approvalStatuses).anyMatch(this.entityName::equals);
+        return SyncEntityName.approvalStatusEntities.stream().anyMatch(x -> x.nameEquals(entityName));
     }
 
     public boolean isEncounterOrEnrolmentType() {
-        String[] types = {"Encounter", "ProgramEncounter", "ProgramEnrolment"};
-        return Arrays.stream(types).anyMatch(this.entityName::equals);
+        SyncEntityName[] types = {SyncEntityName.Encounter, SyncEntityName.ProgramEncounter, SyncEntityName.ProgramEnrolment};
+        return Arrays.stream(types).anyMatch(x -> x.nameEquals(entityName));
     }
 
     public boolean mightHaveToBeIgnoredDuringSync() {

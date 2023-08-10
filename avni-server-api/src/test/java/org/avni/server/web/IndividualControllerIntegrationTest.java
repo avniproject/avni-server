@@ -24,7 +24,7 @@ public class IndividualControllerIntegrationTest extends AbstractControllerInteg
     @Autowired
     private IndividualRepository individualRepository;
 
-    private String INDIVIDUAL_UUID = "0a1bf764-4576-4d71-b8ec-25895a113e81";
+    private final String INDIVIDUAL_UUID = "0a1bf764-4576-4d71-b8ec-25895a113e81";
 
     @Before
     public void setUp() throws Exception {
