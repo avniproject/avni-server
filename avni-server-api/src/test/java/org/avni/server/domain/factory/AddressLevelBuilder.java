@@ -3,25 +3,37 @@ package org.avni.server.domain.factory;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 
+import java.util.UUID;
+
 public class AddressLevelBuilder {
-    private final AddressLevel addressLevel = new AddressLevel();
+    private final AddressLevel entity = new AddressLevel();
 
     public AddressLevel build() {
-        return this.addressLevel;
+        return this.entity;
     }
 
     public AddressLevelBuilder title(String title) {
-        addressLevel.setTitle(title);
+        entity.setTitle(title);
         return this;
     }
 
     public AddressLevelBuilder type(AddressLevelType addressLevelType) {
-        addressLevel.setType(addressLevelType);
+        entity.setType(addressLevelType);
         return this;
     }
 
     public AddressLevelBuilder id(long id) {
-        addressLevel.setId(id);
+        entity.setId(id);
         return this;
+    }
+
+    public AddressLevelBuilder withUuid(String uuid) {
+        entity.setUuid(uuid);
+        return this;
+    }
+
+    public AddressLevelBuilder withDefaultValuesForNewEntity() {
+        String s = UUID.randomUUID().toString();
+        return withUuid(s).title(s);
     }
 }

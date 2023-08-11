@@ -11,6 +11,7 @@ import java.util.Set;
 @Table(name = "account")
 @BatchSize(size = 100)
 public class Account {
+    public static final String DEFAULT_ACCOUNT_NAME = "default";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

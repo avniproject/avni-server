@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 @Table(name = "users")
 @BatchSize(size = 100)
 public class User {
+    public static final String DEFAULT_SUPER_ADMIN = "5fed2907-df3a-4867-aef5-c87f4c78a31a";
+
     public static String MOBILE_NUMBER_PATTERN = "^\\+91[0-9]{10}";
 
     @Column
