@@ -4,7 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
-public class ETLEntity {
+public class ETLEntity extends CHSBaseEntity {
 
     @Column
     private String name;

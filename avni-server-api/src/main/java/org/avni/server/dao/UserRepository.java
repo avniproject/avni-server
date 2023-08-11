@@ -26,6 +26,8 @@ import javax.persistence.criteria.Root;
 import java.util.List;
 import java.util.Optional;
 
+import static org.avni.server.domain.User.DEFAULT_SUPER_ADMIN;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
 public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -125,5 +127,9 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
     default boolean hasAllPrivileges(long userId) {
         Boolean aBoolean = this.hasAll(userId);
         return aBoolean != null && aBoolean;
+    }
+
+    default User getDefaultSuperAdmin() {
+        return this.findByUuid(DEFAULT_SUPER_ADMIN);
     }
 }
