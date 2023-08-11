@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static org.avni.server.domain.Account.DEFAULT_ACCOUNT_NAME;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "account", path = "account")
 public interface AccountRepository extends CrudRepository<Account, Long>, PagingAndSortingRepository<Account, Long>, JpaRepository<Account, Long> {
@@ -34,4 +36,8 @@ public interface AccountRepository extends CrudRepository<Account, Long>, Paging
     List<Account> findByIdIn(@Param("ids") Long[] ids);
 
     Page<Account> findByAccountAdmin_User_IdAndNameIgnoreCaseContaining(Long userId, String name, Pageable pageable);
+
+    default Account getDefaultAccount() {
+        return this.findByName(DEFAULT_ACCOUNT_NAME);
+    }
 }

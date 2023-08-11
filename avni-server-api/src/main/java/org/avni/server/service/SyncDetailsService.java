@@ -8,6 +8,7 @@ import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.ChecklistDetail;
+import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.SyncableItem;
@@ -40,7 +41,7 @@ public class SyncDetailsService {
     public Set<SyncableItem> getAllSyncableItems(boolean scopeAwareEAS) {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll()
                 .stream()
-                .map(operationalSubjectType -> operationalSubjectType.getSubjectType())
+                .map(OperationalSubjectType::getSubjectType)
                 .collect(Collectors.toList());
 
         List<FormMapping> generalEncounters = formMappingRepository.getAllGeneralEncounterFormMappings();
