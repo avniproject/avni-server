@@ -1,11 +1,17 @@
 package org.avni.server.web;
 
+import org.avni.server.application.Form;
 import org.avni.server.application.Subject;
+import org.avni.server.builder.FormBuilder;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.*;
+import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.dao.application.FormRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.*;
+import org.avni.server.domain.factory.metadata.FormMappingBuilder;
+import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.factory.txn.TestGroupRoleBuilder;
 import org.avni.server.domain.factory.txn.TestGroupSubjectBuilder;
@@ -49,12 +55,19 @@ public class SyncControllerTest extends AbstractControllerIntegrationTest {
     private GroupSubjectRepository groupSubjectRepository;
     @Autowired
     private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
+    @Autowired
+    private FormRepository formRepository;
+    @Autowired
+    private FormMappingRepository formMappingRepository;
 
     @Test
-    public void syncSubjectsAndGroupSubjectsBasedOnDirectAssignment() {
+    public void getSyncDetailsOfSubjectsAndGroupSubjectsBasedOnDirectAssignment() {
         Organisation organisation = organisationRepository.save(new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build());
+
         User user = userRepository.save(new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).organisationId(organisation.getId()).build());
         setUser(user.getUsername());
+
+
 
         AddressLevelType addressLevelType = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build());
         AddressLevel addressLevel1 = locationRepository.save(new AddressLevelBuilder().withDefaultValuesForNewEntity().type(addressLevelType).build());
@@ -64,22 +77,30 @@ public class SyncControllerTest extends AbstractControllerIntegrationTest {
         organisationConfigRepository.save(new TestOrganisationConfigBuilder().withMandatoryFields().withOrganisationId(organisation.getId()).build());
 
         SubjectType st1 = subjectTypeRepository.save(new SubjectTypeBuilder().withMandatoryFieldsForNewEntity().withType(Subject.Individual).build());
-        Individual syncsDueToLocation1 = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel1).build()));
-        Individual syncsDueToAssignmentOfItsGroup = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel2).build()));
-        Individual syncsDueToLocation2 = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel1).build()));
-        Individual doesntSync1 = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel2).build()));
         SubjectType st2 = subjectTypeRepository.save(new SubjectTypeBuilder().withMandatoryFieldsForNewEntity().withType(Subject.Group).build());
-        Individual syncsDueToLocation3 = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel1).build()));
-        Individual syncsDueToLocation4 = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel1).build()));
-        Individual syncsDueToAssignment = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel2).build()));
-        Individual doesntSync2 = subjectRepository.save(subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel2).build()));
-
         GroupRole groupRole = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withMemberSubjectType(st1).withGroupSubjectType(st2).build());
-        GroupSubject groupSubject = groupSubjectRepository.save(new TestGroupSubjectBuilder().withUuid(UUID.randomUUID().toString()).withGroup(syncsDueToLocation3).withMember(syncsDueToLocation1).withGroupRole(groupRole).build());
+        Form form1 = formRepository.save(new TestFormBuilder().withDefaultFieldsForNewEntity().build());
+        formMappingRepository.save(new FormMappingBuilder().withForm(form1).withSubjectType(st1).build());
+        Form form2 = formRepository.save(new TestFormBuilder().withDefaultFieldsForNewEntity().build());
+        formMappingRepository.save(new FormMappingBuilder().withForm(form2).withSubjectType(st2).build());
+
+        Individual syncsDueToLocation1 = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel1).build());
+        Individual syncsDueToAssignmentOfItsGroup = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel2).build());
+        Individual syncsDueToLocation2 = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel1).build());
+        Individual doesntSync1 = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st1).withLocation(addressLevel2).build());
+
+        Individual syncsDueToLocation3 = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel1).build());
+        Individual syncsDueToLocation4 = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel1).build());
+        Individual syncsDueToAssignment = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel2).build());
+        Individual doesntSync2 = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st2).withLocation(addressLevel2).build());
+
+        GroupSubject groupSubject = groupSubjectRepository.save(new TestGroupSubjectBuilder().withGroup(syncsDueToLocation3).withMember(syncsDueToLocation1).withGroupRole(groupRole).build());
 
         userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(syncsDueToAssignment).withUser(user).build());
 
         List<EntitySyncStatusContract> contracts = SyncEntityName.getEntitiesWithoutSubEntity().stream().map(EntitySyncStatusContract::createForEntityWithoutSubType).collect(Collectors.toList());
         ResponseEntity<?> response = syncController.getSyncDetailsWithScopeAwareEAS(contracts, false);
+        JsonObject jsonObject = (JsonObject) response.getBody();
+        Object syncDetails = jsonObject.get("syncDetails");
     }
 }

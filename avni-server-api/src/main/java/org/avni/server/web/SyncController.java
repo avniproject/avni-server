@@ -336,16 +336,15 @@ public class SyncController {
         );
     }
 
-    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> entitySyncStatusContracts, Set<SyncableItem> allSyncableItems, boolean scopeAwareEAS) {
-        allSyncableItems.forEach(syncableItem -> {
-            if (entitySyncStatusContracts.stream().noneMatch(entitySyncStatusContract ->
-                    entitySyncStatusContract.matchesEntity(syncableItem))) {
-                entitySyncStatusContracts.add(EntitySyncStatusContract.createForEntityWithSubType(syncableItem.getSyncEntityName(), syncableItem.getEntityTypeUuid()));
+    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> clientSyncStatuses, Set<SyncableItem> serverSyncableItems, boolean scopeAwareEAS) {
+        serverSyncableItems.forEach(syncableItem -> {
+            if (clientSyncStatuses.stream().noneMatch(clientSyncStatus -> clientSyncStatus.matchesEntity(syncableItem))) {
+                clientSyncStatuses.add(EntitySyncStatusContract.createForEntityWithSubType(syncableItem.getSyncEntityName(), syncableItem.getEntityTypeUuid()));
             }
         });
-        removeDisabledEntities(entitySyncStatusContracts, allSyncableItems);
+        removeDisabledEntities(clientSyncStatuses, serverSyncableItems);
 
-        return entitySyncStatusContracts.stream()
+        return clientSyncStatuses.stream()
                 .filter((entitySyncStatusContract) -> filterChangedEntities(entitySyncStatusContract, scopeAwareEAS))
                 .collect(Collectors.toList());
     }

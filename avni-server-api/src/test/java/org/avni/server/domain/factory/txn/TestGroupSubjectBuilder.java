@@ -4,8 +4,14 @@ import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
 
+import java.util.UUID;
+
 public class TestGroupSubjectBuilder {
     private final GroupSubject entity = new GroupSubject();
+
+    public TestGroupSubjectBuilder() {
+        withUuid(UUID.randomUUID().toString());
+    }
 
     public TestGroupSubjectBuilder withUuid(String uuid) {
         entity.setUuid(uuid);
