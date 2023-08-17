@@ -324,7 +324,7 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
             case "groups.json":
                 GroupContract[] groupContracts = convertString(fileData, GroupContract[].class);
                 for (GroupContract groupContract : groupContracts) {
-                    groupsService.saveGroup(groupContract);
+                    groupsService.saveGroup(groupContract, organisation);
                 }
                 break;
             case "groupRole.json":
@@ -338,7 +338,7 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
             case "groupPrivilege.json":
                 GroupPrivilegeContractWeb[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeContractWeb[].class);
                 for (GroupPrivilegeContractWeb groupPrivilegeContract : groupPrivilegeContracts) {
-                    groupPrivilegeService.uploadPrivileges(groupPrivilegeContract);
+                    groupPrivilegeService.uploadPrivileges(groupPrivilegeContract, organisation);
                 }
                 break;
             case "video.json":

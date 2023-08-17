@@ -12,6 +12,7 @@ public class GroupPrivilegeContractWeb extends CHSRequest {
     private String encounterTypeUUID;
     private String checklistDetailUUID;
     private boolean allow;
+    private boolean isNotEveryoneGroup = true;
 
     public static GroupPrivilegeContractWeb fromEntity(GroupPrivilege groupPrivilege) {
         GroupPrivilegeContractWeb groupPrivilegeContractWeb = new GroupPrivilegeContractWeb();
@@ -24,6 +25,7 @@ public class GroupPrivilegeContractWeb extends CHSRequest {
         groupPrivilegeContractWeb.setEncounterTypeUUID(groupPrivilege.getEncounterTypeUuid());
         groupPrivilegeContractWeb.setChecklistDetailUUID(groupPrivilege.getChecklistDetailUuid());
         groupPrivilegeContractWeb.setAllow(groupPrivilege.isAllow());
+        groupPrivilegeContractWeb.setNotEveryoneGroup(!groupPrivilege.getGroup().isEveryone());
         return groupPrivilegeContractWeb;
     }
 
@@ -89,5 +91,13 @@ public class GroupPrivilegeContractWeb extends CHSRequest {
 
     public void setAllow(boolean allow) {
         this.allow = allow;
+    }
+
+    public boolean isNotEveryoneGroup() {
+        return isNotEveryoneGroup;
+    }
+
+    public void setNotEveryoneGroup(boolean notEveryoneGroup) {
+        isNotEveryoneGroup = notEveryoneGroup;
     }
 }
