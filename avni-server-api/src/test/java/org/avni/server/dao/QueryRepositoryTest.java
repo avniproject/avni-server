@@ -7,6 +7,7 @@ import org.avni.server.web.response.CustomQueryResponse;
 import org.joda.time.Instant;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 public class QueryRepositoryTest extends AbstractControllerIntegrationTest {
 
     @Autowired
+    @Qualifier("externalQueryJdbcTemplate")
     private NamedParameterJdbcTemplate externalQueryJdbcTemplate;
 
     private CustomQueryRepository customQueryRepository = mock(CustomQueryRepository.class);

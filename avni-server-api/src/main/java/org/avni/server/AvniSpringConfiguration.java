@@ -16,6 +16,7 @@ import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
@@ -77,6 +78,13 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     public Boolean isDev() {
         String[] activeProfiles = environment.getActiveProfiles();
         return activeProfiles.length == 1 && (activeProfiles[0].equals("dev") || activeProfiles[0].equals("test"));
+    }
+
+    @Bean
+    @Primary
+    public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+        return new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 
     @Bean(name = "externalQueryJdbcTemplate")
