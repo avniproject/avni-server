@@ -108,22 +108,13 @@ public class LocationService implements ScopeAwareService {
             throw new BuilderException(String.format("Unable to create Location{name='%s',level='%s',orgUUID='%s',..}: '%s'", contract.getName(), contract.getLevel(), contract.getOrganisationUUID(), e.getMessage()));
         }
         try {
-            updateLineage(location);
+            location.calculateLineage();
             locationRepository.save(location);
         } catch (Exception e) {
             logger.error(e.getMessage());
             throw new BuilderException(String.format("Unable to update lineage for location with Id %s - %s", location.getId(), e.getMessage()));
         }
         return location;
-    }
-
-    private void updateLineage(AddressLevel location) {
-        if (location.getParent() == null) {
-            location.setLineage(location.getId().toString());
-        } else {
-            String lineage = location.getParent().getLineage() + "." + location.getId().toString();
-            location.setLineage(lineage);
-        }
     }
 
     private void updateOrganisationIfNeeded(AddressLevel location, @NotNull LocationContract contract) {

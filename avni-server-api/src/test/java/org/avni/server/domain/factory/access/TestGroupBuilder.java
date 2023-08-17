@@ -16,6 +16,20 @@ public class TestGroupBuilder {
         return this;
     }
 
+    public TestGroupBuilder withName(String name) {
+        entity.setName(name);
+    	return this;
+    }
+
+    public TestGroupBuilder withMandatoryFieldsForNewEntity() {
+    	return withName(entity.getUuid());
+    }
+
+    public TestGroupBuilder withAllPrivileges(boolean b) {
+        entity.setHasAllPrivileges(b);
+    	return this;
+    }
+
     public Group build() {
         return entity;
     }
