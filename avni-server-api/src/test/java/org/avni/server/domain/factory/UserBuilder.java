@@ -1,6 +1,7 @@
 package org.avni.server.domain.factory;
 
 import org.avni.server.domain.Catchment;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.OperatingIndividualScope;
 import org.avni.server.domain.User;
 import org.joda.time.DateTime;
