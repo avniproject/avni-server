@@ -254,6 +254,9 @@ public class AddressLevel extends OrganisationAwareEntity {
         String getTitle();
 
         AddressLevelProjection getParentLocation();
+    }
 
+    public void calculateLineage() {
+        this.lineage = this.getParent() == null ? this.getId().toString() : this.getParent().lineage + "." + this.getId().toString();
     }
 }

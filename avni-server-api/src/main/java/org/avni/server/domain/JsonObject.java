@@ -4,6 +4,7 @@ import org.avni.server.util.S;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class JsonObject extends HashMap<String, Object> implements Serializable {
@@ -28,5 +29,9 @@ public class JsonObject extends HashMap<String, Object> implements Serializable 
 
     public String getString(String key) {
         return (String) this.get(key);
+    }
+
+    public List getList(String key) {
+        return (List) get(key);
     }
 }

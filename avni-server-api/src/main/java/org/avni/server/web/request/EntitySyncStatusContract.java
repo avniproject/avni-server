@@ -5,6 +5,7 @@ import org.avni.server.domain.SyncableItem;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 public class EntitySyncStatusContract {
@@ -13,6 +14,13 @@ public class EntitySyncStatusContract {
     private String entityName;
     private DateTime loadedSince;
     private String entityTypeUuid;
+
+    public static EntitySyncStatusContract createForComparison(String entityName, String entityTypeUuid) {
+        EntitySyncStatusContract entitySyncStatusContract = new EntitySyncStatusContract();
+        entitySyncStatusContract.entityName = entityName;
+        entitySyncStatusContract.entityTypeUuid = entityTypeUuid;
+        return entitySyncStatusContract;
+    }
 
     public static EntitySyncStatusContract createForEntityWithSubType(SyncEntityName syncEntityName, String entityTypeUuid) {
         EntitySyncStatusContract contract = new EntitySyncStatusContract();
@@ -84,5 +92,18 @@ public class EntitySyncStatusContract {
                 ", loadedSince=" + loadedSince +
                 ", entityTypeUuid='" + entityTypeUuid + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EntitySyncStatusContract that = (EntitySyncStatusContract) o;
+        return entityName.equals(that.entityName) && Objects.equals(entityTypeUuid, that.entityTypeUuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(entityName, entityTypeUuid);
     }
 }
