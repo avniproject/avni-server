@@ -136,7 +136,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @RequestMapping(value = "/forms", method = RequestMethod.POST)
     @Transactional
     public ResponseEntity<?> save(@RequestBody FormContract formRequest) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         logger.info(String.format("Saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formRequest.validate();
@@ -152,7 +151,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @PostMapping(value = "/web/forms")
     @Transactional
     public ResponseEntity createWeb(@RequestBody CreateUpdateFormRequest request) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         validateCreate(request);
         FormBuilder formBuilder = new FormBuilder(null);
         Form form = formBuilder
@@ -160,15 +158,14 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
                 .withType(request.getFormType())
                 .withUUID(UUID.randomUUID().toString())
                 .build();
+        accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
         formRepository.save(form);
-
         return ResponseEntity.ok(form);
     }
 
     @DeleteMapping(value = "/web/forms/{formUUID}")
     @Transactional
     public ResponseEntity deleteWeb(@PathVariable String formUUID) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         try {
             Form existingForm = formRepository.findByUuid(formUUID);
             List<FormMapping> formMappings = formMappingRepository.findByFormId(existingForm.getId());
@@ -179,6 +176,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             }
             existingForm.setVoided(!existingForm.isVoided());
             existingForm.setName(ReactAdminUtil.getVoidedName(existingForm.getName(), existingForm.getId()));
+            accessControlService.checkPrivilege(FormType.getPrivilegeType(existingForm));
             formRepository.save(existingForm);
         } catch (Exception e) {
             e.printStackTrace();
@@ -196,12 +194,12 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @PutMapping(value = "web/forms/{formUUID}/metadata")
     @Transactional
     public ResponseEntity updateMetadata(@RequestBody CreateUpdateFormRequest request, @PathVariable String formUUID) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         Form form = validateUpdateMetadata(request, formUUID);
         List<FormMappingRequest> formMappingRequests = request.getFormMappings();
         form.setName(request.getName());
         form.setFormType(FormType.valueOf(request.getFormType()));
 
+        accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
         formRepository.save(form);
         formMappingRequests.forEach(formMappingRequest -> {
             FormMappingContract formMappingContract = new FormMappingContract();
@@ -233,7 +231,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @RequestMapping(value = "/forms", method = RequestMethod.PATCH)
     @Transactional
     public ResponseEntity<?> patch(@RequestBody FormContract formRequest) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         logger.info(String.format("Patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formService.saveForm(formRequest);
@@ -247,7 +244,6 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @RequestMapping(value = "/forms", method = RequestMethod.DELETE)
     @Transactional
     public ResponseEntity<?> remove(@RequestBody FormContract formRequest) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         logger.info(String.format("Deleting from form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
@@ -255,6 +251,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             FormBuilder formBuilder = new FormBuilder(existingForm);
             Form form = formBuilder.withoutFormElements(organisation, formRequest.getFormElementGroups())
                     .build();
+            accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
             formRepository.save(form);
         } catch (FormBuilderException e) {
             e.printStackTrace();
