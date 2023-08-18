@@ -236,10 +236,34 @@ public class ObservationService {
     public ObservationModelContract constructObservation(ObservationContract observationContract) {
         Concept concept = conceptRepository.findByUuid(observationContract.getConcept().getUuid());
         ObservationModelContract observationModelContract = new ObservationModelContract();
-        observationModelContract.setValue(observationContract.getValue());
+        Object value = observationContract.getValue();
+        if (value instanceof ArrayList) {
+            if (((ArrayList<?>) value).get(0) instanceof ArrayList)
+                value = constructRepeatableQuestionGroupValue((List<List<ObservationContract>>) value);
+            else
+                value = constructQuestionGroupValue((List<ObservationContract>) value);
+        }
+
+        observationModelContract.setValue(value);
         ConceptModelContract conceptModelContract = ConceptModelContract.fromConcept(concept);
         observationModelContract.setConcept(conceptModelContract);
         return observationModelContract;
+    }
+
+    private List<List<ObservationModelContract>> constructRepeatableQuestionGroupValue(List<List<ObservationContract>> repeatableQuestionGroupObservationContract) {
+        List<List<ObservationModelContract>> observationModelContracts = new ArrayList<>();
+        for (List<ObservationContract> questionGroupObservationContract : repeatableQuestionGroupObservationContract) {
+            observationModelContracts.add(constructQuestionGroupValue(questionGroupObservationContract));
+        }
+
+        return observationModelContracts;
+    }
+
+    private List<ObservationModelContract> constructQuestionGroupValue(List<ObservationContract> questionGroupEntries) {
+        return questionGroupEntries
+                .stream()
+                .map(this::constructObservation)
+                .collect(Collectors.toList());
     }
 
     public List<ObservationContract> constructObservations(@NotNull ObservationCollection observationCollection) {
