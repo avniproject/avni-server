@@ -16,7 +16,7 @@ import java.util.List;
 
 @Service
 public class ScopeBasedSyncService<T extends CHSEntity> {
-    private AddressLevelService addressLevelService;
+    private final AddressLevelService addressLevelService;
 
     public ScopeBasedSyncService(AddressLevelService addressLevelService) {
         this.addressLevelService = addressLevelService;

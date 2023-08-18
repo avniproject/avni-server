@@ -261,4 +261,12 @@ public class Concept extends OrganisationAwareEntity {
     public boolean isViewColumnNameTruncated() {
         return this.getName().length() > POSTGRES_MAX_COLUMN_NAME_LENGTH;
     }
+
+    public Concept getAnswerConcept(String answerConceptName) {
+        if (!ConceptDataType.Coded.name().equals(dataType)) throw new RuntimeException("Not a coded concept");
+
+        ConceptAnswer conceptAnswer = this.conceptAnswers.stream().filter(x -> x.getAnswerConcept().getName().equals(answerConceptName)).findAny().orElse(null);
+        if (conceptAnswer == null) return null;
+        return conceptAnswer.getConcept();
+    }
 }

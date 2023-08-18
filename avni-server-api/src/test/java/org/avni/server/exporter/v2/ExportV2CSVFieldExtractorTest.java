@@ -72,7 +72,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void extractIndividualWithoutObservations() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
-        SubjectType subjectType = new SubjectTypeBuilder().withUuid("st1").withName("ST1").build();
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
         Individual individual = new SubjectBuilder().withSubjectType(subjectType).withAuditUser(user).withUUID("s1").build();
         LongitudinalExportItemRow longitudinalExportItemRow = new LongitudinalExportItemRowBuilder().withSubject(individual).build();
 
@@ -95,7 +95,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void extractIndividualWithQuestionGroup() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
-        SubjectType subjectType = new SubjectTypeBuilder().withUuid("st1").withName("ST1").build();
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
         Map<String, String> qgObs = new HashMap<String, String>() {{
             put("c2", "2");
             put("c3", "3");
@@ -134,7 +134,7 @@ public class ExportV2CSVFieldExtractorTest {
     public void extractIndividualWithRepeatableQuestionGroup() throws IOException {
         User user = new UserBuilder().build();
         exportOutput.setUuid("st1");
-        SubjectType subjectType = new SubjectTypeBuilder().withUuid("st1").withName("ST1").build();
+        SubjectType subjectType = new SubjectTypeBuilder().setUuid("st1").setName("ST1").build();
         Map<String, String> qgObs1 = new HashMap<String, String>() {{
             put("c2", "21");
             put("c3", "31");
