@@ -33,10 +33,10 @@ delete from message_request_queue where 1 = 1;
 delete from message_receiver where 1 = 1;
 delete from message_rule where 1 = 1;
 DELETE FROM users where id <> 1;
+DELETE FROM group_privilege where 1 = 1;
 DELETE FROM operational_subject_type where 1 = 1;
 DELETE FROM subject_type where 1 = 1;
 DELETE FROM groups where 1 = 1;
-DELETE FROM group_privilege where 1 = 1;
 DELETE FROM organisation where id <> 1;
 DELETE FROM audit where 1 = 1;
 
