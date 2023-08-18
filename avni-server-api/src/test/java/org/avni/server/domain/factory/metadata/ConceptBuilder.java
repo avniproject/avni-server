@@ -5,9 +5,14 @@ import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 public class ConceptBuilder {
     private final Concept concept = new Concept();
+
+    public ConceptBuilder() {
+        withUuid(UUID.randomUUID().toString());
+    }
 
     public ConceptBuilder withUuid(String uuid) {
         concept.setUuid(uuid);

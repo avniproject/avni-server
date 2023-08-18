@@ -1,6 +1,5 @@
 package org.avni.server.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;

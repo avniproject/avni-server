@@ -1,9 +1,7 @@
 package org.avni.server.domain.factory;
 
-import org.avni.server.domain.Catchment;
-import org.avni.server.domain.Group;
-import org.avni.server.domain.OperatingIndividualScope;
-import org.avni.server.domain.User;
+import org.avni.server.domain.*;
+import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
 
 import java.util.UUID;
@@ -70,6 +68,11 @@ public class UserBuilder {
     public UserBuilder withCatchment(Catchment catchment) {
         this.user.setCatchment(catchment);
     	return this;
+    }
+
+    public UserBuilder withSubjectTypeSyncSettings(UserSyncSettings ... userSyncSettings) {
+        this.user.setSyncSettings(new JsonObject().with(User.SyncSettingKeys.subjectTypeSyncSettings.name(), userSyncSettings));
+        return this;
     }
 
     public User build() {
