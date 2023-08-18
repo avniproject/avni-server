@@ -20,7 +20,7 @@ public abstract class IdpServiceImpl implements IdpService {
     }
 
     @Override
-    public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) {
+    public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) throws IDPException {
         if (!this.exists(user)) {
             return this.createUser(user, organisationConfig);
         }

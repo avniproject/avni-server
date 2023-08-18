@@ -123,6 +123,9 @@ public class UserController {
         } catch (AWSCognitoIdentityProviderException ex) {
             logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
+        } catch (IDPException ex) {
+            logger.error(ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
         }
     }
 
@@ -259,6 +262,9 @@ public class UserController {
         } catch (AWSCognitoIdentityProviderException ex) {
             logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
+        } catch (IDPException ex) {
+            logger.error(ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
         }
     }
 
@@ -272,6 +278,9 @@ public class UserController {
         } catch (AWSCognitoIdentityProviderException ex) {
             logger.error(ex.getMessage(), ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(generateJsonError(ex.getMessage()));
+        } catch (IDPException ex) {
+            logger.error(ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
         }
     }
 

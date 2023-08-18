@@ -4,7 +4,7 @@ import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 
 public interface IdpService {
-    UserCreateStatus createUser(User user, OrganisationConfig organisationConfig);
+    UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) throws IDPException;
 
     void updateUser(User user);
 
@@ -14,11 +14,11 @@ public interface IdpService {
 
     void enableUser(User user);
 
-    boolean resetPassword(User user, String password);
+    boolean resetPassword(User user, String password) throws IDPException;
 
-    UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig);
+    UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) throws IDPException;
 
     boolean exists(User user);
 
-    UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig);
+    UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) throws IDPException;
 }
