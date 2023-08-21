@@ -22,9 +22,9 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         Specification specification = syncAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters));
 
-        if(syncParameters.getTypeId() != null)
+        if (syncParameters.getTypeId() != null)
             specification = specification.and(syncTypeIdSpecification(syncParameters.getTypeId()));
-        if(syncParameters.getSyncEntityName() != null && syncParameters.getEntityTypeUuid() != null)
+        if (syncParameters.getSyncEntityName() != null && syncParameters.getEntityTypeUuid() != null)
             specification = specification.and(syncTypeIdSpecification(syncParameters.getEntityTypeUuid(), syncParameters.getSyncEntityName()));
 
         return specification;
@@ -39,7 +39,8 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         Specification specification = getSpecification(syncParameters);
         return findAll(specification, syncParameters.getPageable());
     }
-    boolean isEntityChangedForCatchment(SyncParameters syncParameters);
+
+    boolean isEntityChanged(SyncParameters syncParameters);
 
     default Specification<T> syncAuditSpecification(SyncParameters syncParameters) {
         Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
@@ -60,7 +61,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         return null;
     }
 
-        default Specification<T> syncEntityChangedAuditSpecification(SyncParameters syncParameters) {
+    default Specification<T> syncEntityChangedAuditSpecification(SyncParameters syncParameters) {
         Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
