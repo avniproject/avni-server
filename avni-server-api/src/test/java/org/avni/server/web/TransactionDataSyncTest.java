@@ -1,6 +1,5 @@
 package org.avni.server.web;
 
-import org.avni.server.application.Subject;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
@@ -8,12 +7,9 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.factory.*;
 import org.avni.server.domain.factory.access.TestGroupBuilder;
 import org.avni.server.domain.factory.access.TestUserGroupBuilder;
-import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
-import org.avni.server.domain.factory.txn.TestGroupRoleBuilder;
-import org.avni.server.domain.factory.txn.TestGroupSubjectBuilder;
 import org.avni.server.domain.factory.txn.TestUserSubjectAssignmentBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
@@ -75,6 +71,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestGroupService testGroupService;
     @Autowired
     private TestConceptService testConceptService;
+    @Autowired
+    private TestSubjectService testSubjectService;
 
     private User setupOrganisation(Group group) {
         User user = new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
@@ -117,11 +115,11 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual inTheCatchment = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(addressLevel1).build());
         Individual outsideCatchment = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(addressLevel2).build());
         Individual noAccessToSubjectType = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_NoAccess).withLocation(addressLevel1).build());
-        Individual hasMatchingObs = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
-        Individual obsNotMatching = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 2").getUuid())).build());
-        Individual obsNotPresent = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).build());
-        Individual assigned = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).build());
-        Individual notAssigned = subjectRepository.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).build());
+        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel1).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
+        Individual obsNotMatching = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel1).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 2").getUuid())).build());
+        Individual obsNotPresent = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel1).build());
+        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).build());
+        Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel2).build());
 
         userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(user).build());
 
@@ -130,20 +128,38 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         setUser(user.getUsername());
 
         List syncDetails = getSyncDetails();
+
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_NoAccess.getUuid())));
+
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_CatchmentBasedSync.getUuid())));
-        assertEquals(1, getNumberOfSubjects(st_CatchmentBasedSync));
-//        assertEquals(1, getNumberOfSubjects(st_SyncAttributes));
-//        assertEquals(1, getNumberOfSubjects(st_DirectAssignment));
+        List<Individual> subjects = getSubjects(st_CatchmentBasedSync);
+        assertTrue(hasSubject(inTheCatchment, subjects));
+        assertFalse(hasSubject(outsideCatchment, subjects));
+
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_SyncAttributes.getUuid())));
+        subjects = getSubjects(st_SyncAttributes);
+        assertTrue(hasSubject(hasMatchingObs, subjects));
+        assertFalse(hasSubject(obsNotMatching, subjects));
+        assertFalse(hasSubject(obsNotPresent, subjects));
+
+//        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_DirectAssignment.getUuid())));
+//        subjects = getSubjects(st_DirectAssignment);
+//        assertTrue(hasSubject(assigned, subjects));
+//        assertFalse(hasSubject(notAssigned, subjects));
+    }
+
+    private boolean hasSubject(Individual hasMatchingObs, List<Individual> subjects) {
+        return subjects.stream().anyMatch(individual -> individual.getUuid().equals(hasMatchingObs.getUuid()));
     }
 
     private List getSyncDetails() {
-        List<EntitySyncStatusContract> contracts = SyncEntityName.getEntitiesWithoutSubEntity().stream().map(EntitySyncStatusContract::createForEntityWithoutSubType).collect(Collectors.toList());
+        List<EntitySyncStatusContract> contracts = SyncEntityName.getNonTransactionalEntities().stream().map(EntitySyncStatusContract::createForEntityWithoutSubType).collect(Collectors.toList());
         ResponseEntity<?> response = syncController.getSyncDetailsWithScopeAwareEAS(contracts, false);
         return ((JsonObject) response.getBody()).getList("syncDetails");
     }
 
-    private long getNumberOfSubjects(SubjectType st1) {
+    private List<Individual> getSubjects(SubjectType st1) {
         PagedResources<Resource<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(DateTime.now().minusDays(1), DateTime.now(), st1.getUuid(), PageRequest.of(0, 10));
-        return individuals.getContent().size();
+        return individuals.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
     }
 }

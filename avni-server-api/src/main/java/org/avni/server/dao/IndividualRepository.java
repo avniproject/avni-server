@@ -35,10 +35,13 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters) {
-        return count(syncEntityChangedAuditSpecification(syncParameters)
-                .and(syncTypeIdSpecification(syncParameters.getTypeId()))
-                .and(syncStrategySpecification(syncParameters))
+    default boolean isEntityChanged(SyncParameters syncParameters) {
+        Specification<Individual> audit = syncEntityChangedAuditSpecification(syncParameters);
+        Specification<Individual> subjectType = syncTypeIdSpecification(syncParameters.getTypeId());
+        Specification<Individual> location_AndDirectAssignment_AndSyncAttributes = syncStrategySpecification(syncParameters);
+        return count(audit
+                .and(subjectType)
+                .and(location_AndDirectAssignment_AndSyncAttributes)
         ) > 0;
     }
 

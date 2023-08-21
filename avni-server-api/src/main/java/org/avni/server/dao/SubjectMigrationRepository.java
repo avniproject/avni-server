@@ -42,7 +42,7 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters) {
+    default boolean isEntityChanged(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
         ) > 0;

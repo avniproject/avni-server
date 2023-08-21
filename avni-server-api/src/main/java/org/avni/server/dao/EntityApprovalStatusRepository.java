@@ -47,7 +47,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters){
+    default boolean isEntityChanged(SyncParameters syncParameters){
         return true;
     }
 

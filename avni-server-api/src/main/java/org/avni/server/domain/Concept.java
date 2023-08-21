@@ -267,6 +267,6 @@ public class Concept extends OrganisationAwareEntity {
 
         ConceptAnswer conceptAnswer = this.conceptAnswers.stream().filter(x -> x.getAnswerConcept().getName().equals(answerConceptName)).findAny().orElse(null);
         if (conceptAnswer == null) return null;
-        return conceptAnswer.getConcept();
+        return conceptAnswer.getAnswerConcept();
     }
 }

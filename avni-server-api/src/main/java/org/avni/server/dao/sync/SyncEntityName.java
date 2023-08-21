@@ -19,13 +19,12 @@ public enum SyncEntityName {
     Checklist,
     Comment,
     CommentThread,
-    IndividualRelationShip,
+    IndividualRelationship,
     LocationMapping,
     Location,
     SubjectMigration,
     GroupSubject,
     SubjectProgramEligibility,
-    IndividualRelationship,
     SubjectEntityApprovalStatus,
     EncounterEntityApprovalStatus,
     ProgramEncounterEntityApprovalStatus,
@@ -38,13 +37,14 @@ public enum SyncEntityName {
     EncounterType,
     Rule, IndividualRelation, IndividualRelationGenderMapping, IndividualRelationshipType, Program, ProgramOutcome, Gender, Concept, ProgramConfig, Video, SubjectType, ChecklistItemDetail, FormElementGroup, FormElement, ConceptAnswer, Groups, Translation, PlatformTranslation, OrganisationConfig, IdentifierSource, MyGroups, GroupPrivileges, Extension, GroupRole, LocationHierarchy, ReportCard, GroupDashboard, ApprovalStatus, DashboardSectionCardMapping, DashboardFilter, DashboardSection, Dashboard, News, Task, TaskType, UserInfo, Privilege, TaskStatus, StandardReportCardType, TaskUnAssignment, UserSubjectAssignment, Documentation, DocumentationItem, EntityApprovalStatus, ChecklistItemEntityApprovalStatus, MenuItem;
 
-    public static List<SyncEntityName> entitiesWithSubEntity = ListUtils.unmodifiableList(Arrays.asList(Encounter, Comment, ProgramEncounterEntityApprovalStatus, SubjectMigration, ProgramEncounter, Individual, ProgramEnrolment, Encounter, GroupSubject, CommentThread));
+    public static List<SyncEntityName> transactionalEntities = ListUtils.unmodifiableList(Arrays.asList(Subject, Encounter, Comment, ProgramEncounterEntityApprovalStatus, SubjectMigration, ProgramEncounter, Individual, ProgramEnrolment, Encounter, GroupSubject, CommentThread, IndividualRelationship, SubjectEntityApprovalStatus, EncounterEntityApprovalStatus, ProgramEncounterEntityApprovalStatus, ProgramEnrolmentEntityApprovalStatus, ChecklistItemEntityApprovalStatus, SubjectProgramEligibility, Task, Checklist, ChecklistItem, EntityApprovalStatus));
 
     //EntityApprovalStatus should not be added to it, as it is deprecated now
     public static List<SyncEntityName> approvalStatusEntities = ListUtils.unmodifiableList(Arrays.asList(SubjectEntityApprovalStatus, EncounterEntityApprovalStatus, ProgramEncounterEntityApprovalStatus, ProgramEnrolmentEntityApprovalStatus, ChecklistItemEntityApprovalStatus));
 
-    public static List<SyncEntityName> getEntitiesWithoutSubEntity() {
-        return Arrays.stream(SyncEntityName.values()).filter(x -> entitiesWithSubEntity.stream().anyMatch(x::equals)).collect(Collectors.toList());
+    // These list of entities are sent when mobile app calls for the first time
+    public static List<SyncEntityName> getNonTransactionalEntities() {
+        return Arrays.stream(SyncEntityName.values()).filter(x -> transactionalEntities.stream().noneMatch(x::equals)).collect(Collectors.toList());
     }
 
     public boolean nameEquals(String otherName) {
