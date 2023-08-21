@@ -35,7 +35,7 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters){
+    default boolean isEntityChanged(SyncParameters syncParameters){
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                 .and(syncStrategySpecification(syncParameters))
