@@ -43,7 +43,6 @@ public class SyncParameters {
         this.catchment = catchment;
     }
 
-
     public DateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
     }
@@ -104,4 +103,8 @@ public class SyncParameters {
         this.entityTypeUuid = entityTypeUuid;
     }
 
+    public boolean isModificationCheckOnEntity() {
+        return this.getSubjectType() == null || !this.getSubjectType().isDirectlyAssignable()
+                || (!this.isParentOrSelfIndividual() && !this.isProgramEncounter() && !this.isEncounter() && !this.isParentOrSelfEnrolment());
+    }
 }
