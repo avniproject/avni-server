@@ -21,7 +21,7 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
             List<Predicate> predicates = new ArrayList<>();
             Join<Comment, Individual> individualJoin = root.join("subject");
             predicates.add(cb.equal(individualJoin.get("subjectType").get("id"), syncParameters.getTypeId()));
-            addSyncStrategyPredicates(syncParameters, cb, predicates, individualJoin);
+            addSyncStrategyPredicates(syncParameters, cb, predicates, individualJoin, query);
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
