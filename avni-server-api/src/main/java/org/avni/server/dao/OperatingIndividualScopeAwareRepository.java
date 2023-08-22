@@ -16,11 +16,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@SuppressWarnings("rawtypes")
 @NoRepositoryBean
 public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> extends JpaSpecificationExecutor<T>, CustomJpaRepository<T, Long> {
     default Specification getSpecification(SyncParameters syncParameters) {
-        Specification specification = syncAuditSpecification(syncParameters)
-                .and(syncStrategySpecification(syncParameters));
+        Specification specification;
+        if (syncParameters.isModificationCheckOnEntity()) {
+            specification = getAuditSpecification(syncParameters).and(syncStrategySpecification(syncParameters));
+        } else {
+            specification = syncStrategySpecification(syncParameters);
+        }
 
         if (syncParameters.getTypeId() != null)
             specification = specification.and(syncTypeIdSpecification(syncParameters.getTypeId()));
@@ -42,12 +47,13 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
 
     boolean isEntityChanged(SyncParameters syncParameters);
 
-    default Specification<T> syncAuditSpecification(SyncParameters syncParameters) {
+    default Specification<T> getAuditSpecification(SyncParameters syncParameters) {
         Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
         Date now = syncParameters.getNow().toDate();
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime), cb.literal(now)));
+            if (syncParameters.getSubjectType() == null || !syncParameters.getSubjectType().isDirectlyAssignable())
+                predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime), cb.literal(now)));
             query.orderBy(cb.asc(root.get("lastModifiedDateTime")), cb.asc(root.get("id")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -73,7 +79,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
     default <A extends CHSEntity> Specification<A> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<A> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            addSyncStrategyPredicates(syncParameters, cb, predicates, root);
+            addSyncStrategyPredicates(syncParameters, cb, predicates, root, query);
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -81,7 +87,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
     default <A extends CHSEntity, B extends CHSEntity> void addSyncStrategyPredicates(SyncParameters syncParameters,
                                                                                       CriteriaBuilder cb,
                                                                                       List<Predicate> predicates,
-                                                                                      From<A, B> from) {
+                                                                                      From<A, B> from, CriteriaQuery<?> query) {
         SubjectType subjectType = syncParameters.getSubjectType();
         if (subjectType.isShouldSyncByLocation()) {
             List<Long> addressLevels = syncParameters.getAddressLevels();
@@ -114,6 +120,17 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
             if (userSubjectAssignmentJoin != null) {
                 predicates.add(cb.equal(userSubjectAssignmentJoin.get("user"), user));
                 predicates.add(cb.equal(userSubjectAssignmentJoin.get("isVoided"), false));
+
+                Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
+                Path<Date> lastModifiedDateTimePath = userSubjectAssignmentJoin.get("lastModifiedDateTime");
+                if (syncParameters.getNow() == null) {
+                    predicates.add(cb.greaterThanOrEqualTo(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime)));
+                } else {
+                    Date now = syncParameters.getNow().toDate();
+                    predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime), cb.literal(now)));
+                }
+
+                query.orderBy(cb.asc(lastModifiedDateTimePath), cb.asc(userSubjectAssignmentJoin.get("id")));
             }
         }
         addSyncAttributeConceptPredicate(cb, predicates, from, syncParameters, "syncConcept1Value", "syncConcept2Value");
