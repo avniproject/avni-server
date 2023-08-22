@@ -1,9 +1,11 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.JsonObject;
+import org.springframework.hateoas.core.Relation;
 
 import java.util.List;
 
+@Relation(collectionRelation = "userInfo")
 public class UserInfoClientContract extends UserInfoContract {
     private List<GroupPrivilegeContract> privileges;
     private String[] roles;
