@@ -4,6 +4,7 @@ import org.avni.server.dao.GroupPrivilegeRepository;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.domain.Group;
+import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
@@ -44,6 +45,12 @@ public class TestGroupService {
     public void giveViewSubjectPrivilegeTo(Group group, SubjectType ... subjectTypes) {
         Arrays.stream(subjectTypes).forEach(subjectType -> {
             this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).build(), PrivilegeType.ViewSubject);
+        });
+    }
+
+    public void giveViewProgramPrivilegeTo(Group group, SubjectType subjectType, Program... programs) {
+        Arrays.stream(programs).forEach(program -> {
+            this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).setProgram(program).build(), PrivilegeType.ViewEnrolmentDetails);
         });
     }
 }
