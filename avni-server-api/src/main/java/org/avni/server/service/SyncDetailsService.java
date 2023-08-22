@@ -12,6 +12,7 @@ import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.SyncableItem;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +55,7 @@ public class SyncDetailsService {
         HashSet<SyncableItem> syncableItems = new HashSet<>();
 
         subjectTypes.forEach(subjectType -> {
-            if (!groupPrivileges.hasPrivilege("View subject", subjectType, null, null, null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewSubject, subjectType, null, null, null)) {
                 return;
             }
             addToSyncableItems(syncableItems, SyncEntityName.Individual, subjectType.getUuid());
@@ -77,7 +78,7 @@ public class SyncDetailsService {
 
         });
         generalEncounters.forEach(formMapping -> {
-            if (!groupPrivileges.hasPrivilege("View visit", formMapping.getSubjectType(), null, formMapping.getEncounterType(), null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewVisit, formMapping.getSubjectType(), null, formMapping.getEncounterType(), null)) {
                 return;
             }
             addToSyncableItems(syncableItems, SyncEntityName.Encounter, formMapping.getEncounterTypeUuid());
@@ -85,7 +86,7 @@ public class SyncDetailsService {
                 addToSyncableItems(syncableItems, SyncEntityName.EncounterEntityApprovalStatus, formMapping.getEncounterTypeUuid());
         });
         programEncounters.forEach(formMapping -> {
-            if (!groupPrivileges.hasPrivilege("View visit", formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewVisit, formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
                 return;
             }
             addToSyncableItems(syncableItems, SyncEntityName.ProgramEncounter, formMapping.getEncounterTypeUuid());
@@ -93,7 +94,7 @@ public class SyncDetailsService {
                 addToSyncableItems(syncableItems, SyncEntityName.ProgramEncounterEntityApprovalStatus, formMapping.getEncounterTypeUuid());
         });
         programEnrolments.forEach(formMapping -> {
-            if (!groupPrivileges.hasPrivilege("View enrolment details", formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewEnrolmentDetails, formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
                 return;
             }
             addToSyncableItems(syncableItems, SyncEntityName.ProgramEnrolment, formMapping.getProgramUuid());
@@ -102,7 +103,7 @@ public class SyncDetailsService {
         });
 
         checklistDetails.forEach(checklistDetail -> {
-            if (subjectTypes.stream().anyMatch(subjectType -> groupPrivileges.hasPrivilege("View checklist", subjectType, null, null, checklistDetail))) {
+            if (subjectTypes.stream().anyMatch(subjectType -> groupPrivileges.hasPrivilege(PrivilegeType.ViewChecklist, subjectType, null, null, checklistDetail))) {
                 addToSyncableItems(syncableItems, SyncEntityName.Checklist, checklistDetail.getUuid());
                 addToSyncableItems(syncableItems, SyncEntityName.ChecklistItem, checklistDetail.getUuid());
             }

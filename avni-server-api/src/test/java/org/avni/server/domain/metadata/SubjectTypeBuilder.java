@@ -32,11 +32,6 @@ public class SubjectTypeBuilder {
     	return this;
     }
 
-    public SubjectTypeBuilder withIsDirectlyAssignable(boolean value) {
-        subjectType.setDirectlyAssignable(value);
-    	return this;
-    }
-
     public SubjectTypeBuilder setGroupRoles(Set<GroupRole> groupRoles) {
         subjectType.setGroupRoles(groupRoles);
         return this;

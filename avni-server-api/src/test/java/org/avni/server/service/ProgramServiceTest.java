@@ -38,7 +38,7 @@ public class ProgramServiceTest {
     }
 
     public List<Program> getEligiblePrograms(Program program) throws RuleExecutionException {
-        ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().program(program).build();
+        ProgramEnrolment enrolment = new ProgramEnrolmentBuilder().setProgram(program).build();
         Individual subject = new SubjectBuilder().addEnrolment(enrolment).build();
 
         FormMapping formMapping = new FormMappingBuilder().withProgram(program).build();
