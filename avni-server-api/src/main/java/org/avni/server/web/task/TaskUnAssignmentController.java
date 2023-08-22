@@ -43,7 +43,6 @@ public class TaskUnAssignmentController extends AbstractController<TaskUnAssignm
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        accessControlService.checkPrivilege(PrivilegeType.EditTask);
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(taskUnAssignmentRepository.findByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
@@ -54,7 +53,6 @@ public class TaskUnAssignmentController extends AbstractController<TaskUnAssignm
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        accessControlService.checkPrivilege(PrivilegeType.EditTask);
         User user = UserContextHolder.getUserContext().getUser();
         return wrap(taskUnAssignmentRepository.findSliceByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(user, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
