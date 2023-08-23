@@ -48,8 +48,8 @@ public class DeploymentSpecificConfiguration {
         boolean isMinioConfiguredOrgUser = false;
         if (user != null && organisation != null) {
             OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
-            Object useMinioForStorage = organisationConfig.getConfigValue(OrganisationConfigSettingKey.useMinioForStorage);
-            if (useMinioForStorage != null && Boolean.parseBoolean((String) useMinioForStorage)) {
+            Boolean useMinioForStorage = (Boolean) organisationConfig.getConfigValue(OrganisationConfigSettingKey.useMinioForStorage);
+            if (useMinioForStorage != null && useMinioForStorage) {
                 isMinioConfiguredOrgUser = true;
             }
         }
