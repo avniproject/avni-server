@@ -18,18 +18,15 @@ import java.util.List;
 @RestController
 public class FormMappingController extends AbstractController<FormMapping> {
     private final FormMappingService formMappingService;
-    private final AccessControlService accessControlService;
 
     @Autowired
-    public FormMappingController(FormMappingService formMappingService, AccessControlService accessControlService) {
+    public FormMappingController(FormMappingService formMappingService) {
         this.formMappingService = formMappingService;
-        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/formMappings", method = RequestMethod.POST)
     @Transactional
     void save(@RequestBody List<FormMappingContract> formMappingRequests) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         for (FormMappingContract formMappingRequest : formMappingRequests) {
             formMappingService.createOrUpdateFormMapping(formMappingRequest);
         }
@@ -38,11 +35,8 @@ public class FormMappingController extends AbstractController<FormMapping> {
     @RequestMapping(value = "/emptyFormMapping", method = RequestMethod.POST)
     @Transactional
     void save_empty(@RequestBody List<FormMappingContract> formMappingRequests) {
-        accessControlService.checkPrivilege(PrivilegeType.EditForm);
         for (FormMappingContract formMappingRequest : formMappingRequests) {
             formMappingService.createOrUpdateEmptyFormMapping(formMappingRequest);
         }
     }
-
-
 }

@@ -14,7 +14,7 @@ public class OrganisationContract extends ETLContract {
         organisationContract.setUuid(organisation.getUuid());
         organisationContract.setParentOrganisationId(organisation.getParentOrganisationId());
         organisationContract.setMediaDirectory(organisation.getMediaDirectory());
-        organisationContract.setUsernameSuffix(organisation.getUsernameSuffix());
+        organisationContract.setUsernameSuffix(organisation.getEffectiveUsernameSuffix());
         organisationContract.setAccountId(organisation.getAccount() == null ? null : organisation.getAccount().getId());
         mapEntity(organisationContract, organisation);
         return organisationContract;

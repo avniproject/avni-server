@@ -105,22 +105,17 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
                     predicates.add(cb.equal(root.get("id"), cb.literal(0)));
                 }
             }
-            List<Predicate> userGroupSubjectPredicates = new ArrayList<>();
-            List<Predicate> userMemberSubjectPredicates = new ArrayList<>();
             if (subjectType.isDirectlyAssignable()) {
                 User user = UserContextHolder.getUserContext().getUser();
                 Join<Object, Object> userGroupSubjectJoin = TransactionDataCriteriaBuilderUtil.joinUserSubjectAssignment(root.join("groupSubject"));
                 Join<Object, Object> userMemberSubjectJoin = TransactionDataCriteriaBuilderUtil.joinUserSubjectAssignment(root.join("memberSubject"));
-
-                userGroupSubjectPredicates.add(cb.equal(userGroupSubjectJoin.get("user"), user));
-                userGroupSubjectPredicates.add(cb.equal(userGroupSubjectJoin.get("isVoided"), false));
-
-                userMemberSubjectPredicates.add(cb.equal(userMemberSubjectJoin.get("user"), user));
-                userMemberSubjectPredicates.add(cb.equal(userMemberSubjectJoin.get("isVoided"), false));
+                predicates.add(cb.equal(userGroupSubjectJoin.get("user"), user));
+                predicates.add(cb.equal(userGroupSubjectJoin.get("isVoided"), false));
+                predicates.add(cb.equal(userMemberSubjectJoin.get("user"), user));
+                predicates.add(cb.equal(userMemberSubjectJoin.get("isVoided"), false));
             }
             addSyncAttributeConceptPredicate(cb, predicates, root, syncParameters, "groupSubjectSyncConcept1Value", "groupSubjectSyncConcept2Value");
-            cb.and(predicates.toArray(new Predicate[0]));
-            return cb.or(cb.and(userGroupSubjectPredicates.toArray(new Predicate[0])), cb.and(userMemberSubjectPredicates.toArray(new Predicate[0])));
+            return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 

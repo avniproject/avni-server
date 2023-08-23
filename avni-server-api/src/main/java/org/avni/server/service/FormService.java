@@ -6,6 +6,7 @@ import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
@@ -20,11 +21,13 @@ public class FormService implements NonScopeAwareService {
     private final FormRepository formRepository;
     private final OrganisationConfigService organisationConfigService;
     private final ConceptRepository conceptRepository;
+    private final AccessControlService accessControlService;
 
-    public FormService(FormRepository formRepository, OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository) {
+    public FormService(FormRepository formRepository, OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AccessControlService accessControlService) {
         this.formRepository = formRepository;
         this.organisationConfigService = organisationConfigService;
         this.conceptRepository = conceptRepository;
+        this.accessControlService = accessControlService;
     }
 
     public void saveForm(FormContract formRequest) throws FormBuilderException {
@@ -50,6 +53,7 @@ public class FormService implements NonScopeAwareService {
         //Form audit values might not change for changes in form element groups or form elements.
         //This updateAudit forces audit updates
         form.updateAudit();
+        accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
         formRepository.save(form);
     }
 

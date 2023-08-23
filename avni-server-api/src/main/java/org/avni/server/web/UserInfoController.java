@@ -108,8 +108,6 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     public UserInfoContract getUserInfoObject(Organisation organisation, User user) {
-        String usernameSuffix = organisation.getUsernameSuffix() != null
-                ? organisation.getUsernameSuffix() : organisation.getDbUser();
         String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
         List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
         List<GroupPrivilegeContract> groupPrivilegeContractList = groupPrivileges.stream()
@@ -119,7 +117,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         return new UserInfoClientContract(user.getUsername(),
                 organisation.getName(),
                 organisation.getId(),
-                usernameSuffix,
+                organisation.getEffectiveUsernameSuffix(),
                 user.getRoles(),
                 user.getSettings(),
                 user.getName(),

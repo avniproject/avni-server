@@ -152,14 +152,14 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     }
 
 
-    public void uploadPrivileges(GroupPrivilegeContractWeb request) {
+    public void uploadPrivileges(GroupPrivilegeContractWeb request, Organisation organisation) {
         GroupPrivilege groupPrivilege = groupPrivilegeRepository.findByUuid(request.getUuid());
         if (groupPrivilege == null) {
             groupPrivilege = new GroupPrivilege();
         }
         groupPrivilege.setUuid(request.getUuid());
         groupPrivilege.setPrivilege(privilegeRepository.findByUuid(request.getPrivilegeUUID()));
-        groupPrivilege.setGroup(groupRepository.findByUuid(request.getGroupUUID()));
+        groupPrivilege.setGroup(getCorrespondingGroup(request, organisation));
         groupPrivilege.setSubjectType(subjectTypeRepository.findByUuid(request.getSubjectTypeUUID()));
         groupPrivilege.setProgram(programRepository.findByUuid(request.getProgramUUID()));
         groupPrivilege.setEncounterType(encounterTypeRepository.findByUuid(request.getEncounterTypeUUID()));
@@ -167,6 +167,14 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         groupPrivilege.setChecklistDetail(checklistDetailRepository.findByUuid(request.getChecklistDetailUUID()));
         groupPrivilege.setAllow(request.isAllow());
         groupPrivilegeRepository.save(groupPrivilege);
+    }
+
+    private Group getCorrespondingGroup(GroupPrivilegeContractWeb request, Organisation organisation) {
+        if (request.isNotEveryoneGroup()) {
+            return groupRepository.findByUuid(request.getGroupUUID());
+        } else {
+            return groupRepository.findByNameAndOrganisationId(Group.Everyone, organisation.getId());
+        }
     }
 
     @Override

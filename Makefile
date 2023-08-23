@@ -18,7 +18,7 @@ help:
 # </makefile>
 
 define _deploy_schema
-	flyway -user=openchs -password=password -url=jdbc:postgresql://localhost:5432/$1 -schemas=public -locations=filesystem:./avni-server-api/src/main/resources/db/migration/ -table=schema_version migrate
+	flyway -validateOnMigrate=false -user=openchs -password=password -url=jdbc:postgresql://localhost:5432/$1 -schemas=public -locations=filesystem:./avni-server-api/src/main/resources/db/migration/ -table=schema_version migrate
 endef
 
 su:=$(shell id -un)

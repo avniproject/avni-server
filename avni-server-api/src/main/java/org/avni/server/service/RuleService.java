@@ -246,6 +246,9 @@ public class RuleService implements NonScopeAwareService {
         Object entity = null;
         String entityUuid = null;
         String workFlowType = requestEntityWrapper.getRule().getWorkFlowType();
+        if(StringUtils.isEmpty(rule.getRuleType())) {
+            rule.setRuleType(workFlowType);
+        }
         switch (WorkFlowTypeEnum.findByValue(workFlowType.toLowerCase())) {
             case PROGRAM_ENROLMENT:
                 ProgramEnrolmentRequestEntity programEnrolmentRequestEntity = requestEntityWrapper.getProgramEnrolmentRequestEntity();

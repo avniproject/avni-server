@@ -8,7 +8,7 @@ public class GroupContract extends ReferenceDataContract {
 
     private boolean hasAllPrivileges;
 
-    private boolean isNotEveryoneGroup;
+    private boolean isNotEveryoneGroup = true;
 
     public static GroupContract fromEntity(Group group) {
         GroupContract groupContract = new GroupContract();

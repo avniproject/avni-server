@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface GroupRepository extends ReferenceDataRepository<Group>, FindByLastModifiedDateTime<Group> {
 
-    Group findByNameAndOrganisationId(String name, Long groupId);
+    Group findByNameAndOrganisationId(String name, Long organisationId);
 
     Group findByIdAndOrganisationId(Long groupId, Long organisationId);
 

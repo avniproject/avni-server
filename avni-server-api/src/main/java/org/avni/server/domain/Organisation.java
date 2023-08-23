@@ -88,6 +88,10 @@ public class Organisation extends ETLEntity {
         this.parentOrganisationId = parentOrganisationId;
     }
 
+    /**
+     * Use getEffectiveUsernameSuffix instead
+     */
+    @Deprecated
     public String getUsernameSuffix() {
         return usernameSuffix;
     }
@@ -128,4 +132,7 @@ public class Organisation extends ETLEntity {
         isVoided = voided;
     }
 
+    public String getEffectiveUsernameSuffix() {
+        return usernameSuffix == null ? getDbUser() : usernameSuffix;
+    }
 }

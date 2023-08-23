@@ -5,6 +5,7 @@ import org.avni.server.web.request.CustomQueryRequest;
 import org.avni.server.web.response.CustomQueryResponse;
 import org.flywaydb.core.internal.util.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class QueryRepository {
     private final CustomQueryRepository customQueryRepository;
 
     @Autowired
-    public QueryRepository(NamedParameterJdbcTemplate externalQueryJdbcTemplate,
+    public QueryRepository(@Qualifier("externalQueryJdbcTemplate") NamedParameterJdbcTemplate externalQueryJdbcTemplate,
                            CustomQueryRepository customQueryRepository) {
         this.externalQueryJdbcTemplate = externalQueryJdbcTemplate;
         this.customQueryRepository = customQueryRepository;
