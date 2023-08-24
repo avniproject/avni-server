@@ -5,8 +5,6 @@ import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.*;
-import org.avni.server.domain.factory.access.TestGroupBuilder;
-import org.avni.server.domain.factory.access.TestUserGroupBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.*;
@@ -40,27 +38,16 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private ProgramEnrolmentController programEnrolmentController;
     @Autowired
     private GroupSubjectController groupSubjectController;
-
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private AccountRepository accountRepository;
     @Autowired
     private AddressLevelTypeRepository addressLevelTypeRepository;
     @Autowired
     private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     @Autowired
-    private GroupRepository groupRepository;
-    @Autowired
     private GroupRoleRepository groupRoleRepository;
     @Autowired
-    private UserGroupRepository userGroupRepository;
-    @Autowired
     private TestSubjectTypeService testSubjectTypeService;
-    @Autowired
-    private TestOrganisationService testOrganisationService;
-    @Autowired
-    private OrganisationConfigRepository organisationConfigRepository;
     @Autowired
     private TestCatchmentService testCatchmentService;
     @Autowired
@@ -77,25 +64,14 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestProgramService testProgramService;
     @Autowired
     private TestGroupSubjectService testGroupSubjectService;
-
-    private User setupOrganisation(Group group) {
-        User user = new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
-        Organisation organisation = new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build();
-        testOrganisationService.createOrganisation(organisation, user);
-        userRepository.save(new UserBuilder(user).withAuditUser(user).build());
-        setUser(user.getUsername());
-
-        organisationConfigRepository.save(new TestOrganisationConfigBuilder().withMandatoryFields().withOrganisationId(organisation.getId()).build());
-
-        groupRepository.save(group);
-        userGroupRepository.save(new TestUserGroupBuilder().withGroup(group).withUser(user).build());
-        return user;
-    }
+    @Autowired
+    private TestOrganisationSetupService testOrganisationSetupService;
 
     @Test
     public void sync() throws Exception {
-        Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
-        User user = setupOrganisation(group);
+        testOrganisationSetupService.setupOrganisation(this);
+        User user = testOrganisationSetupService.getUser();
+        Group group = testOrganisationSetupService.getGroup();
 
         AddressLevelType addressLevelType = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build());
         AddressLevel addressLevel1 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity().type(addressLevelType).build());

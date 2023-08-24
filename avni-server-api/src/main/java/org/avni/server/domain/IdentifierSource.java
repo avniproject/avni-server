@@ -106,6 +106,12 @@ public class IdentifierSource extends OrganisationAwareEntity {
     }
 
     public String getPrefix() {
-        return this.getOptions().getString("prefix");
+        return this.getOptions().getString(PREFIX);
+    }
+
+    public void addPrefix(String value) {
+        if (this.options == null)
+            this.options = new JsonObject();
+        this.options.with(PREFIX, value);
     }
 }

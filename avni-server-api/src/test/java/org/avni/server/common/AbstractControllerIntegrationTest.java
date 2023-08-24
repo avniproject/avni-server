@@ -88,7 +88,7 @@ public abstract class AbstractControllerIntegrationTest {
         return String.valueOf(responseEntity.getBody());
     }
 
-    protected void setUser(String name) {
+    public void setUser(String name) {
         setUserNameHeader(name);
 
         User user = userRepository.findByUsername(name);
