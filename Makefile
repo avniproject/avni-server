@@ -2,6 +2,7 @@
 # Objects: db, schema, server, package, env (code environment)
 # Actions: clean, build, deploy, test
 include makefiles/staging.mk
+include makefiles/prerelease.mk
 include makefiles/util.mk
 include makefiles/externalDB.mk
 
