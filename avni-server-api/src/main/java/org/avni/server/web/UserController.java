@@ -377,7 +377,7 @@ public class UserController {
         return userRepository.findByOrganisationIdAndIsVoidedFalse(organisationId, pageable);
     }
 
-    @RestResource(path = "/user/search/findAllById", rel = "findAllById")
+    @GetMapping(path = "/user/search/findAllById")
     @ResponseBody
     public List<User> findByIdIn(@RequestParam Long[] ids) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
