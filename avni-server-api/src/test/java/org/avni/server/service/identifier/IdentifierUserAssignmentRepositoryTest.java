@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class IdentifierUserAssignmentServiceIntegrationTest extends AbstractControllerIntegrationTest {
+public class IdentifierUserAssignmentRepositoryTest extends AbstractControllerIntegrationTest {
     @Autowired
     private IdentifierSourceRepository identifierSourceRepository;
     @Autowired

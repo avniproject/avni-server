@@ -122,7 +122,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
 
         JsonObject syncSettings = new JsonObject();
-        if(!syncSettingsMap.values().isEmpty())
+        if (!syncSettingsMap.values().isEmpty())
             syncSettings = syncSettings.with(User.SyncSettingKeys.subjectTypeSyncSettings.name(),
                     new ArrayList<>(syncSettingsMap.values()));
 
@@ -134,7 +134,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         if (headerPatternMatcher.matches()) {
             String conceptName = headerPatternMatcher.group("conceptName");
             String conceptValues = row.get(saHeader);
-            if(conceptValues.isEmpty()) return;
+            if (conceptValues.isEmpty()) return;
             String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
             SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
 
@@ -173,8 +173,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         for (String syncSettingsValue : syncSettingsValues) {
             Optional<Concept> conceptAnswer = Optional.ofNullable(conceptService.getByName(syncSettingsValue));
             conceptAnswer.orElseThrow(() -> new Exception(String.format("'%s' is not a valid value for the concept '%s'. " +
-                                "To input this value, add this as an answer to the coded concept '%s'",
-                        syncSettingsValue, concept.getName(), concept.getName())));
+                            "To input this value, add this as an answer to the coded concept '%s'",
+                    syncSettingsValue, concept.getName(), concept.getName())));
             syncSettingCodedConceptValues.add(conceptAnswer.get().getUuid());
         }
 

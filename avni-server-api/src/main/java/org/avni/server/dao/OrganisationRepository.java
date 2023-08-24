@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,5 +28,4 @@ public interface OrganisationRepository extends CrudRepository<Organisation, Lon
     Organisation findByIdAndAccount_AccountAdmin_User_Id(Long id, Long userId);
 
     Page<Organisation> findAllByIdInAndIsVoidedFalse(Long[] ids, Pageable pageable);
-
 }

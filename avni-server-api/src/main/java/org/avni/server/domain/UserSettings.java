@@ -9,7 +9,11 @@ public class UserSettings {
     }
 
     public String getIdPrefix() {
-        if (this.jsonObject == null) return null;
+        return UserSettings.getIdPrefix(this.jsonObject);
+    }
+
+    public static String getIdPrefix(JsonObject jsonObject) {
+        if (jsonObject == null) return null;
         return jsonObject.getString(ID_PREFIX);
     }
 }

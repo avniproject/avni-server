@@ -24,11 +24,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService implements NonScopeAwareService {
-    private static Logger logger = LoggerFactory.getLogger(UserService.class);
-    private UserRepository userRepository;
-    private OrganisationRepository organisationRepository;
-    private GroupRepository groupRepository;
-    private UserGroupRepository userGroupRepository;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final UserRepository userRepository;
+    private final OrganisationRepository organisationRepository;
+    private final GroupRepository groupRepository;
+    private final UserGroupRepository userGroupRepository;
 
     @Autowired
     public UserService(UserRepository userRepository, OrganisationRepository organisationRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
@@ -45,7 +45,19 @@ public class UserService implements NonScopeAwareService {
 
     @Transactional
     public User save(User user) {
-        return userRepository.save(user);
+        String idPrefix = UserSettings.getIdPrefix(user.getSettings());
+        if (StringUtils.hasLength(idPrefix)) {
+            synchronized (String.format("%d-USER-ID-PREFIX-%s", user.getOrganisationId(), idPrefix).intern()) {
+                List<User> usersWithSameIdPrefix = userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
+                if (usersWithSameIdPrefix.size() == 0) {
+                    return userRepository.save(user);
+                } else {
+                    throw new RuntimeException(String.format("There is another user with same prefix: %s", usersWithSameIdPrefix.get(0).getUsername()));
+                }
+            }
+        } else {
+            return userRepository.save(user);
+        }
     }
 
     @Transactional

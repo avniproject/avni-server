@@ -21,14 +21,16 @@ public class IdentifierUserAssignmentService {
 
     public void save(IdentifierUserAssignment identifierUserAssignment) throws IdentifierOverlappingException {
         IdentifierSource identifierSource = identifierUserAssignment.getIdentifierSource();
-        List<IdentifierUserAssignment> overlappingWithAssignments;
-        if (identifierSource.getType().equals(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)) {
-            overlappingWithAssignments = identifierUserAssignmentRepository.getOverlappingAssignmentForPooledIdentifier(identifierUserAssignment);
-        } else {
-            overlappingWithAssignments = identifierUserAssignmentRepository.getOverlappingAssignmentForNonPooledIdentifier(identifierUserAssignment);
+        synchronized (identifierSource.getUuid().intern()) {
+            List<IdentifierUserAssignment> overlappingWithAssignments;
+            if (identifierSource.getType().equals(IdentifierGeneratorType.userPoolBasedIdentifierGenerator)) {
+                overlappingWithAssignments = identifierUserAssignmentRepository.getOverlappingAssignmentForPooledIdentifier(identifierUserAssignment);
+            } else {
+                overlappingWithAssignments = identifierUserAssignmentRepository.getOverlappingAssignmentForNonPooledIdentifier(identifierUserAssignment);
+            }
+            if (overlappingWithAssignments.size() > 0)
+                throw new IdentifierOverlappingException(overlappingWithAssignments);
+            identifierUserAssignmentRepository.save(identifierUserAssignment);
         }
-        if (overlappingWithAssignments.size() > 0)
-            throw new IdentifierOverlappingException(overlappingWithAssignments);
-        identifierUserAssignmentRepository.save(identifierUserAssignment);
     }
 }

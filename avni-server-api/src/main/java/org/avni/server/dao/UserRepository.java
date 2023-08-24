@@ -132,4 +132,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long>, 
     default User getDefaultSuperAdmin() {
         return this.findByUuid(DEFAULT_SUPER_ADMIN);
     }
+
+    @Query(value = "select * from users where users.settings->>'idPrefix' = :prefix and id <> :exceptUserId", nativeQuery = true)
+    List<User> getUsersWithSameIdPrefix(String prefix, long exceptUserId);
 }

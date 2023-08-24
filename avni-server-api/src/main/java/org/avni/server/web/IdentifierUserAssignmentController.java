@@ -49,5 +49,4 @@ public class IdentifierUserAssignmentController extends AbstractController<Ident
 
         identifierUserAssignmentRepository.save(identifierUserAssignment);
     }
-
 }
