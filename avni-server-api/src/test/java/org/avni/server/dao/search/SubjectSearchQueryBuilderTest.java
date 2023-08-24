@@ -106,5 +106,4 @@ public class SubjectSearchQueryBuilderTest {
         SqlQuery query = new SubjectSearchQueryBuilder().forCount()
                 .build();
     }
-
 }

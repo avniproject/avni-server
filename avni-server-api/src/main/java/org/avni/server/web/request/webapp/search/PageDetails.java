@@ -4,7 +4,7 @@ public class PageDetails {
     private Integer pageNumber;
     private Integer numberOfRecordPerPage;
     private String sortColumn;
-    private String sortOrder;
+    private SortOrder sortOrder;
 
     public Integer getPageNumber() {
         return pageNumber;
@@ -30,11 +30,11 @@ public class PageDetails {
         this.sortColumn = sortColumn;
     }
 
-    public String getSortOrder() {
+    public SortOrder getSortOrder() {
         return sortOrder;
     }
 
-    public void setSortOrder(String sortOrder) {
+    public void setSortOrder(SortOrder sortOrder) {
         this.sortOrder = sortOrder;
     }
 }

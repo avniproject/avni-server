@@ -99,10 +99,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
         String sortColumn = pageElement.getSortColumn();
         if (sortColumn != null && !sortColumn.isEmpty()) {
-            String sortOrder = pageElement.getSortOrder();
-            if (sortOrder == null) {
-                sortOrder = "asc";
-            }
+            SortOrder sortOrder = Optional.ofNullable(pageElement.getSortOrder()).orElse(SortOrder.asc);
 
             Map<String, String> columnsMap = new HashMap<String, String>() {
                 {
@@ -116,7 +113,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 }
             };
 
-            this.orderByClause = "order by " + columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder + ", i.id desc";
+            this.orderByClause = "order by " + columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder.name() + ", i.id desc";
         }
 
 
