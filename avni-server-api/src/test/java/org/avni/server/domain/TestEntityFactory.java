@@ -1,9 +1,5 @@
 package org.avni.server.domain;
 
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptAnswer;
-import org.avni.server.domain.ConceptDataType;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;

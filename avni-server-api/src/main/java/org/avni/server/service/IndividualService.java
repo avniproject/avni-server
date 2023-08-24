@@ -6,6 +6,7 @@ import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.application.*;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
@@ -341,7 +342,7 @@ public class IndividualService implements ScopeAwareService {
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String subjectTypeUUID) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
         User user = UserContextHolder.getUserContext().getUser();
-        return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncParameters.SyncEntityName.Individual);
+        return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.Individual);
     }
 
     @Override

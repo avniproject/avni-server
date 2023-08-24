@@ -37,13 +37,13 @@ public interface ChecklistRepository extends TransactionalDataRepository<Checkli
             List<Predicate> predicates = new ArrayList<>();
             Join<Checklist, ProgramEnrolment> programEnrolmentJoin = root.join("programEnrolment");
             predicates.add(cb.equal(root.get("checklistDetail").get("id"), syncParameters.getTypeId()));
-            addSyncStrategyPredicates(syncParameters, cb, predicates, programEnrolmentJoin);
+            addSyncStrategyPredicates(syncParameters, cb, predicates, programEnrolmentJoin, query);
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters){
+    default boolean isEntityChanged(SyncParameters syncParameters){
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
         ) > 0;

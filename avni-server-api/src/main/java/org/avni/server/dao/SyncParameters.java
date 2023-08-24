@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SubjectType;
@@ -12,14 +13,14 @@ import java.util.List;
 public class SyncParameters {
     private final DateTime lastModifiedDateTime;
     private final DateTime now;
-    private Long typeId;
+    private final Long typeId;
     private String entityTypeUuid;
     private final Pageable pageable;
-    private List<Long> addressLevels;
-    private SubjectType subjectType;
-    private JsonObject syncSettings;
-    private SyncEntityName syncEntityName;
-    private Catchment catchment;
+    private final List<Long> addressLevels;
+    private final SubjectType subjectType;
+    private final JsonObject syncSettings;
+    private final SyncEntityName syncEntityName;
+    private final Catchment catchment;
 
     public SyncParameters(DateTime lastModifiedDateTime,
                           DateTime now, Long typeId,
@@ -41,7 +42,6 @@ public class SyncParameters {
         this.syncEntityName = syncEntityName;
         this.catchment = catchment;
     }
-
 
     public DateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
@@ -103,22 +103,8 @@ public class SyncParameters {
         this.entityTypeUuid = entityTypeUuid;
     }
 
-    public enum SyncEntityName {
-        Subject,
-        ProgramEnrolment,
-        Individual,
-        Enrolment,
-        Encounter,
-        ProgramEncounter,
-        ChecklistItem,
-        Checklist,
-        Comment,
-        CommentThread,
-        IndividualRelationShip,
-        LocationMapping,
-        Location,
-        SubjectMigration,
-        GroupSubject,
-        SubjectProgramEligibility
+    public boolean isModificationCheckOnEntity() {
+        return this.getSubjectType() == null || !this.getSubjectType().isDirectlyAssignable()
+                || (!this.isParentOrSelfIndividual() && !this.isProgramEncounter() && !this.isEncounter() && !this.isParentOrSelfEnrolment());
     }
 }

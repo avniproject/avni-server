@@ -2,7 +2,7 @@ package org.avni.server.web;
 
 import org.avni.server.dao.SubjectMigrationRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.SubjectMigration;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.ScopeBasedSyncService;
@@ -55,7 +55,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
 
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(subjectMigrationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.SubjectMigration));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(subjectMigrationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.SubjectMigration));
     }
 
     @RequestMapping(value = "/subjectMigrations", method = RequestMethod.GET)
@@ -69,7 +69,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
 
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(subjectMigrationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.SubjectMigration));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(subjectMigrationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.SubjectMigration));
     }
 
     @Override

@@ -4,11 +4,15 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
+import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.ChecklistDetail;
+import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.SyncableItem;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +23,11 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class SyncDetailsService {
-    private OperationalSubjectTypeRepository subjectTypeRepository;
-    private FormMappingRepository formMappingRepository;
-    private ChecklistDetailRepository checklistDetailRepository;
-    private OrganisationConfigService organisationConfigService;
-    private GroupPrivilegeService groupPrivilegeService;
+    private final OperationalSubjectTypeRepository subjectTypeRepository;
+    private final FormMappingRepository formMappingRepository;
+    private final ChecklistDetailRepository checklistDetailRepository;
+    private final OrganisationConfigService organisationConfigService;
+    private final GroupPrivilegeService groupPrivilegeService;
 
 
     public SyncDetailsService(OperationalSubjectTypeRepository subjectTypeRepository1, EncounterTypeRepository encounterTypeRepository, FormMappingRepository formMappingRepository, ChecklistDetailRepository checklistDetailRepository, OrganisationConfigService organisationConfigService, GroupPrivilegeService groupPrivilegeService) {
@@ -38,7 +42,7 @@ public class SyncDetailsService {
     public Set<SyncableItem> getAllSyncableItems(boolean scopeAwareEAS) {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll()
                 .stream()
-                .map(operationalSubjectType -> operationalSubjectType.getSubjectType())
+                .map(OperationalSubjectType::getSubjectType)
                 .collect(Collectors.toList());
 
         List<FormMapping> generalEncounters = formMappingRepository.getAllGeneralEncounterFormMappings();
@@ -51,80 +55,80 @@ public class SyncDetailsService {
         HashSet<SyncableItem> syncableItems = new HashSet<>();
 
         subjectTypes.forEach(subjectType -> {
-            if (!groupPrivileges.hasPrivilege("View subject", subjectType, null, null, null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewSubject, subjectType, null, null, null)) {
                 return;
             }
-            addToSyncableItems(syncableItems, "Individual", subjectType.getUuid());
-            addToSyncableItems(syncableItems, "SubjectMigration", subjectType.getUuid());
-            addToSyncableItems(syncableItems, "SubjectProgramEligibility", subjectType.getUuid());
+            addToSyncableItems(syncableItems, SyncEntityName.Individual, subjectType.getUuid());
+            addToSyncableItems(syncableItems, SyncEntityName.SubjectMigration, subjectType.getUuid());
+            addToSyncableItems(syncableItems, SyncEntityName.SubjectProgramEligibility, subjectType.getUuid());
             if (subjectType.isPerson()) {
-                addToSyncableItems(syncableItems, "IndividualRelationship", subjectType.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.IndividualRelationship, subjectType.getUuid());
             }
             if (subjectType.isGroup()) {
-                addToSyncableItems(syncableItems, "GroupSubject", subjectType.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.GroupSubject, subjectType.getUuid());
             }
             if (organisationConfigService.isCommentEnabled()) {
-                addToSyncableItems(syncableItems, "Comment", subjectType.getUuid());
-                addToSyncableItems(syncableItems, "CommentThread", subjectType.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.Comment, subjectType.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.CommentThread, subjectType.getUuid());
             }
 
             Optional<FormMapping> subjectTypeFormMapping = allRegistrationFormMappings.stream().filter((formMapping -> Objects.equals(formMapping.getSubjectType().getId(), subjectType.getId()))).findFirst();
-            if(scopeAwareEAS && subjectTypeFormMapping.isPresent() && subjectTypeFormMapping.get().isEnableApproval())
-                addToSyncableItems(syncableItems, "SubjectEntityApprovalStatus", subjectType.getUuid());
+            if (scopeAwareEAS && subjectTypeFormMapping.isPresent() && subjectTypeFormMapping.get().isEnableApproval())
+                addToSyncableItems(syncableItems, SyncEntityName.SubjectEntityApprovalStatus, subjectType.getUuid());
 
         });
         generalEncounters.forEach(formMapping -> {
-            if (!groupPrivileges.hasPrivilege("View visit", formMapping.getSubjectType(), null, formMapping.getEncounterType(), null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewVisit, formMapping.getSubjectType(), null, formMapping.getEncounterType(), null)) {
                 return;
             }
-            addToSyncableItems(syncableItems, "Encounter", formMapping.getEncounterTypeUuid());
-            if(scopeAwareEAS && formMapping.isEnableApproval())
-                addToSyncableItems(syncableItems, "EncounterEntityApprovalStatus", formMapping.getEncounterTypeUuid());
+            addToSyncableItems(syncableItems, SyncEntityName.Encounter, formMapping.getEncounterTypeUuid());
+            if (scopeAwareEAS && formMapping.isEnableApproval())
+                addToSyncableItems(syncableItems, SyncEntityName.EncounterEntityApprovalStatus, formMapping.getEncounterTypeUuid());
         });
         programEncounters.forEach(formMapping -> {
-            if (!groupPrivileges.hasPrivilege("View visit", formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewVisit, formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
                 return;
             }
-            addToSyncableItems(syncableItems, "ProgramEncounter", formMapping.getEncounterTypeUuid());
-            if(scopeAwareEAS && formMapping.isEnableApproval())
-                addToSyncableItems(syncableItems, "ProgramEncounterEntityApprovalStatus", formMapping.getEncounterTypeUuid());
+            addToSyncableItems(syncableItems, SyncEntityName.ProgramEncounter, formMapping.getEncounterTypeUuid());
+            if (scopeAwareEAS && formMapping.isEnableApproval())
+                addToSyncableItems(syncableItems, SyncEntityName.ProgramEncounterEntityApprovalStatus, formMapping.getEncounterTypeUuid());
         });
         programEnrolments.forEach(formMapping -> {
-            if (!groupPrivileges.hasPrivilege("View enrolment details", formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
+            if (!groupPrivileges.hasPrivilege(PrivilegeType.ViewEnrolmentDetails, formMapping.getSubjectType(), formMapping.getProgram(), formMapping.getEncounterType(), null)) {
                 return;
             }
-            addToSyncableItems(syncableItems, "ProgramEnrolment", formMapping.getProgramUuid());
-            if(scopeAwareEAS && formMapping.isEnableApproval())
-                addToSyncableItems(syncableItems, "ProgramEnrolmentEntityApprovalStatus", formMapping.getProgramUuid());
+            addToSyncableItems(syncableItems, SyncEntityName.ProgramEnrolment, formMapping.getProgramUuid());
+            if (scopeAwareEAS && formMapping.isEnableApproval())
+                addToSyncableItems(syncableItems, SyncEntityName.ProgramEnrolmentEntityApprovalStatus, formMapping.getProgramUuid());
         });
 
         checklistDetails.forEach(checklistDetail -> {
-            if (subjectTypes.stream().anyMatch(subjectType -> groupPrivileges.hasPrivilege("View checklist", subjectType, null, null,checklistDetail))) {
-                addToSyncableItems(syncableItems, "Checklist", checklistDetail.getUuid());
-                addToSyncableItems(syncableItems, "ChecklistItem", checklistDetail.getUuid());
+            if (subjectTypes.stream().anyMatch(subjectType -> groupPrivileges.hasPrivilege(PrivilegeType.ViewChecklist, subjectType, null, null, checklistDetail))) {
+                addToSyncableItems(syncableItems, SyncEntityName.Checklist, checklistDetail.getUuid());
+                addToSyncableItems(syncableItems, SyncEntityName.ChecklistItem, checklistDetail.getUuid());
             }
         });
-        addToSyncableItems(syncableItems, Arrays.asList("IdentifierAssignment", "ChecklistDetail", "Rule", "RuleDependency",
-                "Form", "FormMapping", "EncounterType", "Program", "ProgramOutcome", "Gender", "IndividualRelation",
-                "IndividualRelationGenderMapping", "IndividualRelationshipType", "Concept", "ProgramConfig", "Video",
-                "SubjectType", "ChecklistItemDetail", "FormElementGroup", "FormElement", "ConceptAnswer",
-                "IdentifierSource", "OrganisationConfig", "PlatformTranslation", "Translation", "Groups",
-                "MyGroups", "GroupPrivileges", "Extension", "GroupRole", "LocationHierarchy", "ReportCard",
-                "Dashboard", "DashboardSection", "DashboardFilter", "DashboardSectionCardMapping", "ApprovalStatus", "GroupDashboard",
-                "News", "UserInfo", "Privilege", "StandardReportCardType", "Documentation", "DocumentationItem",
-                "Task", "TaskType", "TaskStatus", "TaskUnAssignment", "UserSubjectAssignment", "LocationMapping"
+        addToSyncableItems(syncableItems, Arrays.asList(SyncEntityName.IdentifierAssignment, SyncEntityName.ChecklistDetail, SyncEntityName.Rule, SyncEntityName.RuleDependency,
+                SyncEntityName.Form, SyncEntityName.FormMapping, SyncEntityName.EncounterType, SyncEntityName.Program, SyncEntityName.ProgramOutcome, SyncEntityName.Gender,
+                SyncEntityName.IndividualRelation, SyncEntityName.IndividualRelationGenderMapping, SyncEntityName.IndividualRelationshipType, SyncEntityName.Concept, SyncEntityName.ProgramConfig, SyncEntityName.Video,
+                SyncEntityName.SubjectType, SyncEntityName.ChecklistItemDetail, SyncEntityName.FormElementGroup, SyncEntityName.FormElement, SyncEntityName.ConceptAnswer,
+                SyncEntityName.IdentifierSource, SyncEntityName.OrganisationConfig, SyncEntityName.PlatformTranslation, SyncEntityName.Translation, SyncEntityName.Groups,
+                SyncEntityName.MyGroups, SyncEntityName.GroupPrivileges, SyncEntityName.Extension, SyncEntityName.GroupRole, SyncEntityName.LocationHierarchy, SyncEntityName.ReportCard,
+                SyncEntityName.Dashboard, SyncEntityName.DashboardSection, SyncEntityName.DashboardFilter, SyncEntityName.DashboardSectionCardMapping, SyncEntityName.ApprovalStatus, SyncEntityName.GroupDashboard,
+                SyncEntityName.News, SyncEntityName.UserInfo, SyncEntityName.Privilege, SyncEntityName.StandardReportCardType, SyncEntityName.Documentation, SyncEntityName.DocumentationItem,
+                SyncEntityName.Task, SyncEntityName.TaskType, SyncEntityName.TaskStatus, SyncEntityName.TaskUnAssignment, SyncEntityName.UserSubjectAssignment, SyncEntityName.LocationMapping
         ));
 
-        if(!scopeAwareEAS) addToSyncableItems(syncableItems, Arrays.asList("EntityApprovalStatus"));
+        if (!scopeAwareEAS) addToSyncableItems(syncableItems, Collections.singletonList(SyncEntityName.EntityApprovalStatus));
 
         return syncableItems;
     }
 
-    private boolean addToSyncableItems(HashSet<SyncableItem> syncableItems, String entityName, String uuid) {
-        return syncableItems.add(new SyncableItem(entityName, uuid));
+    private boolean addToSyncableItems(HashSet<SyncableItem> syncableItems, SyncEntityName syncEntityName, String uuid) {
+        return syncableItems.add(new SyncableItem(syncEntityName, uuid));
     }
 
-    private void addToSyncableItems(HashSet<SyncableItem> syncableItems, List<String> entityNames) {
+    private void addToSyncableItems(HashSet<SyncableItem> syncableItems, List<SyncEntityName> entityNames) {
         entityNames.forEach(entityName -> syncableItems.add(new SyncableItem(entityName, "")));
     }
 }

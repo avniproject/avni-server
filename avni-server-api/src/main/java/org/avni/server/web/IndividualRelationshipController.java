@@ -2,9 +2,9 @@ package org.avni.server.web;
 
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
@@ -29,7 +29,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -92,7 +91,6 @@ public class IndividualRelationshipController extends AbstractController<Individ
         return wrap(individualRelationshipRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable));
     }
 
-
     @RequestMapping(value = "/individualRelationship/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public SlicedResources<Resource<IndividualRelationship>> getIndividualRelationshipsByOperatingIndividualScopeAsSlice(
@@ -103,7 +101,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
         if (subjectTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(individualRelationshipRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.IndividualRelationShip));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(individualRelationshipRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.IndividualRelationship));
     }
 
     @RequestMapping(value = "/individualRelationship", method = RequestMethod.GET)
@@ -116,7 +114,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
         if (subjectTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
         if (subjectType == null) return wrap(new PageImpl<>(Collections.emptyList()));
-        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(individualRelationshipRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncParameters.SyncEntityName.IndividualRelationShip));
+        return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(individualRelationshipRepository, userService.getCurrentUser(), lastModifiedDateTime, now, subjectType.getId(), pageable, subjectType, SyncEntityName.IndividualRelationship));
     }
 
     @Override

@@ -1,16 +1,18 @@
 package org.avni.server.domain;
 
-public class SyncableItem {
-    private String name;
-    private String entityTypeUuid;
+import org.avni.server.dao.sync.SyncEntityName;
 
-    public SyncableItem(String name, String entityTypeUuid) {
-        this.name = name;
+public class SyncableItem {
+    private final SyncEntityName syncEntityName;
+    private final String entityTypeUuid;
+
+    public SyncableItem(SyncEntityName name, String entityTypeUuid) {
+        this.syncEntityName = name;
         this.entityTypeUuid = entityTypeUuid;
     }
 
-    public String getName() {
-        return name;
+    public SyncEntityName getSyncEntityName() {
+        return syncEntityName;
     }
 
     public String getEntityTypeUuid() {
@@ -20,7 +22,7 @@ public class SyncableItem {
     @Override
     public String toString() {
         return "{" +
-                "name='" + name + '\'' +
+                "name='" + syncEntityName + '\'' +
                 ", entityTypeUuid='" + entityTypeUuid + '\'' +
                 '}';
     }

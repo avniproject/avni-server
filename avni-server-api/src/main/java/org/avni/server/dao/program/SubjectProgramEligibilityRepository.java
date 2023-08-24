@@ -52,7 +52,7 @@ public interface SubjectProgramEligibilityRepository extends TransactionalDataRe
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters) {
+    default boolean isEntityChanged(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
         ) > 0;

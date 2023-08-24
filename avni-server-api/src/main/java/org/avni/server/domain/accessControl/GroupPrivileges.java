@@ -20,8 +20,8 @@ public class GroupPrivileges {
         this.privileges = new ArrayList<>();
     }
 
-    public boolean hasPrivilege(String privilegeName, SubjectType subjectType, Program program, EncounterType encounterType, ChecklistDetail checklistDetail) {
-        return this.hasAllPrivileges || privileges.stream().anyMatch(groupPrivilege -> groupPrivilege.matches(privilegeName, subjectType, program, encounterType, checklistDetail));
+    public boolean hasPrivilege(PrivilegeType privilegeType, SubjectType subjectType, Program program, EncounterType encounterType, ChecklistDetail checklistDetail) {
+        return this.hasAllPrivileges || privileges.stream().anyMatch(groupPrivilege -> groupPrivilege.matches(privilegeType, subjectType, program, encounterType, checklistDetail));
     }
 
     public boolean hasViewPrivilege(ChecklistItem checklistItem) {
@@ -29,7 +29,7 @@ public class GroupPrivileges {
     }
 
     public boolean hasViewPrivilege(ProgramEncounter programEncounter) {
-        return this.hasPrivilege("View visit",
+        return this.hasPrivilege(PrivilegeType.ViewVisit,
                 programEncounter.getProgramEnrolment().getIndividual().getSubjectType(),
                 programEncounter.getProgramEnrolment().getProgram(),
                 null, null
@@ -37,19 +37,19 @@ public class GroupPrivileges {
     }
 
     public boolean hasViewPrivilege(Encounter encounter) {
-        return this.hasPrivilege("View visit",
+        return this.hasPrivilege(PrivilegeType.ViewVisit,
                 encounter.getIndividual().getSubjectType(),
                 null, null, null
         );
     }
 
     public boolean hasViewPrivilege(Individual individual) {
-        return this.hasPrivilege("View subject", individual.getSubjectType(),
+        return this.hasPrivilege(PrivilegeType.ViewSubject, individual.getSubjectType(),
                 null, null, null
         );
     }
     public boolean hasViewPrivilege(ProgramEnrolment programEnrolment) {
-        return this.hasPrivilege("View enrolment details",
+        return this.hasPrivilege(PrivilegeType.ViewEnrolmentDetails,
                 programEnrolment.getIndividual().getSubjectType(),
                 programEnrolment.getProgram(),
                 null, null
@@ -57,7 +57,7 @@ public class GroupPrivileges {
     }
 
     public boolean hasViewPrivilege(Checklist checklist) {
-        return this.hasPrivilege("View checklist",
+        return this.hasPrivilege(PrivilegeType.ViewChecklist,
                 checklist.getProgramEnrolment().getIndividual().getSubjectType(),
                 null,
                 null, checklist.getChecklistDetail()

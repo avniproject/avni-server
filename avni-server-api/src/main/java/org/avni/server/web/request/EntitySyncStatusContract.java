@@ -1,9 +1,11 @@
 package org.avni.server.web.request;
 
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.SyncableItem;
 import org.joda.time.DateTime;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 public class EntitySyncStatusContract {
@@ -13,13 +15,24 @@ public class EntitySyncStatusContract {
     private DateTime loadedSince;
     private String entityTypeUuid;
 
-    public static EntitySyncStatusContract create(String entityName, String entityTypeUuid) {
+    public static EntitySyncStatusContract createForComparison(String entityName, String entityTypeUuid) {
+        EntitySyncStatusContract entitySyncStatusContract = new EntitySyncStatusContract();
+        entitySyncStatusContract.entityName = entityName;
+        entitySyncStatusContract.entityTypeUuid = entityTypeUuid;
+        return entitySyncStatusContract;
+    }
+
+    public static EntitySyncStatusContract createForEntityWithSubType(SyncEntityName syncEntityName, String entityTypeUuid) {
         EntitySyncStatusContract contract = new EntitySyncStatusContract();
         contract.setUuid(UUID.randomUUID().toString());
         contract.setLoadedSince(REALLY_OLD_DATE);
-        contract.setEntityName(entityName);
+        contract.setEntityName(syncEntityName.name());
         contract.setEntityTypeUuid(entityTypeUuid);
         return contract;
+    }
+
+    public static EntitySyncStatusContract createForEntityWithoutSubType(SyncEntityName syncEntityName) {
+        return EntitySyncStatusContract.createForEntityWithSubType(syncEntityName, null);
     }
 
     public String getUuid() {
@@ -55,17 +68,16 @@ public class EntitySyncStatusContract {
     }
 
     public boolean matchesEntity(SyncableItem syncableItem) {
-        return syncableItem.getName().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
+        return syncableItem.getSyncEntityName().name().equals(this.entityName) && syncableItem.getEntityTypeUuid().equals(this.entityTypeUuid);
     }
 
     public boolean isApprovalStatusType() {
-        String[] approvalStatuses = {"SubjectEntityApprovalStatus", "EncounterEntityApprovalStatus", "ProgramEncounterEntityApprovalStatus", "ProgramEnrolmentEntityApprovalStatus", "ChecklistItemEntityApprovalStatus"};
-        return Arrays.stream(approvalStatuses).anyMatch(this.entityName::equals);
+        return SyncEntityName.approvalStatusEntities.stream().anyMatch(x -> x.nameEquals(entityName));
     }
 
     public boolean isEncounterOrEnrolmentType() {
-        String[] types = {"Encounter", "ProgramEncounter", "ProgramEnrolment"};
-        return Arrays.stream(types).anyMatch(this.entityName::equals);
+        SyncEntityName[] types = {SyncEntityName.Encounter, SyncEntityName.ProgramEncounter, SyncEntityName.ProgramEnrolment};
+        return Arrays.stream(types).anyMatch(x -> x.nameEquals(entityName));
     }
 
     public boolean mightHaveToBeIgnoredDuringSync() {
@@ -80,5 +92,18 @@ public class EntitySyncStatusContract {
                 ", loadedSince=" + loadedSince +
                 ", entityTypeUuid='" + entityTypeUuid + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EntitySyncStatusContract that = (EntitySyncStatusContract) o;
+        return entityName.equals(that.entityName) && Objects.equals(entityTypeUuid, that.entityTypeUuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(entityName, entityTypeUuid);
     }
 }

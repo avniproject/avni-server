@@ -23,6 +23,10 @@ public interface ImplementationRepository extends CrudRepository<Organisation, L
     @Procedure(value = "create_db_user")
     void createDBUser(String name, String pass);
 
+    default void createDBUser(Organisation organisation) {
+        this.createDBUser(organisation.getDbUser(), "password");
+    }
+
     @Procedure(value = "create_implementation_schema")
     void createImplementationSchema(String schemaName, String dbUser);
 

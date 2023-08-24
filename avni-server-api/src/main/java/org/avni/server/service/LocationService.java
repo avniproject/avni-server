@@ -7,6 +7,7 @@ import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
 import org.avni.server.dao.*;
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
@@ -107,22 +108,13 @@ public class LocationService implements ScopeAwareService {
             throw new BuilderException(String.format("Unable to create Location{name='%s',level='%s',orgUUID='%s',..}: '%s'", contract.getName(), contract.getLevel(), contract.getOrganisationUUID(), e.getMessage()));
         }
         try {
-            updateLineage(location);
+            location.calculateLineage();
             locationRepository.save(location);
         } catch (Exception e) {
             logger.error(e.getMessage());
             throw new BuilderException(String.format("Unable to update lineage for location with Id %s - %s", location.getId(), e.getMessage()));
         }
         return location;
-    }
-
-    private void updateLineage(AddressLevel location) {
-        if (location.getParent() == null) {
-            location.setLineage(location.getId().toString());
-        } else {
-            String lineage = location.getParent().getLineage() + "." + location.getId().toString();
-            location.setLineage(lineage);
-        }
     }
 
     private void updateOrganisationIfNeeded(AddressLevel location, @NotNull LocationContract contract) {
@@ -261,7 +253,7 @@ public class LocationService implements ScopeAwareService {
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID) {
         User user = UserContextHolder.getUserContext().getUser();
-        return isChangedByCatchment(user, lastModifiedDateTime, SyncParameters.SyncEntityName.Location);
+        return isChangedByCatchment(user, lastModifiedDateTime, SyncEntityName.Location);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +37,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     List<EntityApprovalStatus> findByEntityIdAndEntityTypeAndIsVoidedFalse(Long entityId, EntityApprovalStatus.EntityType entityType);
 
     @Override
-    default Specification<EntityApprovalStatus> syncTypeIdSpecification(String uuid, SyncParameters.SyncEntityName syncEntityName) {
+    default Specification<EntityApprovalStatus> syncTypeIdSpecification(String uuid, SyncEntityName syncEntityName) {
         return (Root<EntityApprovalStatus> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("entityTypeUuid"), uuid));
@@ -46,7 +47,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     }
 
     @Override
-    default boolean isEntityChangedForCatchment(SyncParameters syncParameters){
+    default boolean isEntityChanged(SyncParameters syncParameters){
         return true;
     }
 

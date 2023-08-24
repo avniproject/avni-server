@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.Catchment;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ public class AddressLevelCache {
 
     private final LocationRepository locationRepository;
 
+    @Autowired
     public AddressLevelCache(LocationRepository locationRepository) {
         this.locationRepository = locationRepository;
     }
