@@ -115,10 +115,15 @@ public class EncounterSearchQueryBuilder {
     public EncounterSearchQueryBuilder withConceptsMap(Map<Concept, String> conceptsMap) {
         if (conceptsMap == null) return this;
 
-        Set<Map.Entry<Concept, String>> entries = conceptsMap.entrySet();
-        conceptsMap.entrySet().stream().forEach(entry -> {
-            whereClauses.add(String.format("e.observations @> cast ('{\"%s\":\"%s\"}' as jsonb)", entry.getKey().getUuid(), entry.getValue()));
-        });
+        ArrayList<Map.Entry<Concept, String>> entries = new ArrayList<>(conceptsMap.entrySet());
+        for (int i = 0; i < entries.size(); i++) {
+            Map.Entry<Concept, String> entry = entries.get(i);
+            String param = "codedConceptValue" + i;
+            whereClauses.add(String.format("e.observations @> cast (:%s as jsonb)", param));
+            String value = String.format("{\"%s\":\"%s\"}", entry.getKey().getUuid(), entry.getValue());
+            addParameter(param, value);
+        }
+
         return this;
     }
 
