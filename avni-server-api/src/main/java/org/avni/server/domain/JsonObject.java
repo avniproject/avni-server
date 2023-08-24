@@ -25,4 +25,8 @@ public class JsonObject extends HashMap<String, Object> implements Serializable 
         }
         return this;
     }
+
+    public String getString(String key) {
+        return (String) this.get(key);
+    }
 }

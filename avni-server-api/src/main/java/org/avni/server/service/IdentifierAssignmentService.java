@@ -48,7 +48,7 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
     @Transactional
     public void generateIdentifiersIfNecessary(User user, IdentifierSource identifierSource) {
         if (shouldGenerateIdentifiers(user, identifierSource)) {
-            IdentifierGenerator identifierGenerator = context.getBean(identifierSource.getType(), IdentifierGenerator.class);
+            IdentifierGenerator identifierGenerator = context.getBean(identifierSource.getType().name(), IdentifierGenerator.class);
             identifierGenerator.generateIdentifiers(identifierSource, user);
         }
     }
@@ -60,7 +60,7 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
                 .map(formElement -> {
                     String idSourceUuid = (String) formElement.getKeyValues().getKeyValue(KeyType.IdSourceUUID).getValue();
                     IdentifierSource identifierSource = identifierSourceRepository.findByUuid(idSourceUuid);
-                    IdentifierGenerator identifierGenerator = context.getBean(identifierSource.getType(), IdentifierGenerator.class);
+                    IdentifierGenerator identifierGenerator = context.getBean(identifierSource.getType().name(), IdentifierGenerator.class);
                     return identifierGenerator.generateSingleIdentifier(identifierSource, user);
                 }).collect(Collectors.toList());
     }

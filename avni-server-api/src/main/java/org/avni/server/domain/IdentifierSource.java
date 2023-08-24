@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.domain.identifier.IdentifierGeneratorType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -10,12 +11,15 @@ import javax.validation.constraints.NotNull;
 @Table(name = "identifier_source")
 @BatchSize(size = 100)
 public class IdentifierSource extends OrganisationAwareEntity {
+    private static final String PREFIX = "prefix";
+
     @NotNull
     private String name;
 
     @Column
     @NotNull
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private IdentifierGeneratorType type;
 
     @ManyToOne(fetch= FetchType.LAZY)
     @JoinColumn(name = "catchment_id")
@@ -45,11 +49,11 @@ public class IdentifierSource extends OrganisationAwareEntity {
         this.name = name;
     }
 
-    public String getType() {
+    public IdentifierGeneratorType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(IdentifierGeneratorType type) {
         this.type = type;
     }
 
@@ -99,5 +103,9 @@ public class IdentifierSource extends OrganisationAwareEntity {
 
     public void setMaxLength(Integer maxLength) {
         this.maxLength = maxLength;
+    }
+
+    public String getPrefix() {
+        return this.getOptions().getString("prefix");
     }
 }

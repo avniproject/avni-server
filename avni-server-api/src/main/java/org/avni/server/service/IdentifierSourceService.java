@@ -6,6 +6,7 @@ import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.identifier.IdentifierGeneratorType;
 import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class IdentifierSourceService implements NonScopeAwareService {
         identifierSource.setMinimumBalance(request.getMinimumBalance());
         identifierSource.setName(request.getName());
         identifierSource.setOptions(request.getOptions() == null ? new JsonObject() : request.getOptions());
-        identifierSource.setType(request.getType());
+        identifierSource.setType(IdentifierGeneratorType.valueOf(request.getType()));
         identifierSource.setVoided(request.isVoided());
         identifierSource.setMinLength(request.getMinLength());
         identifierSource.setMaxLength(request.getMaxLength());

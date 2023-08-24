@@ -31,4 +31,11 @@ public interface IdentifierUserAssignmentRepository extends ReferenceDataReposit
     default IdentifierUserAssignment findByNameIgnoreCase(String name) {
         throw new UnsupportedOperationException("No field 'name' in IdentifierUserAssignment");
     }
+
+    @Query(value = "select other_identifier_assignment.* from identifier_user_assignment other_identifier_assignment where other_identifier_assignment.identifier_source_id = :identifierSourceId and replace(:identifierStart, :prefix, '')::int >= replace(other_identifier_assignment.identifier_start, :prefix, '')::int and replace(:identifierStart, :prefix, '')::int <= replace(other_identifier_assignment.identifier_end, :prefix, '')::int and other_identifier_assignment.is_voided = false", nativeQuery = true)
+    List<IdentifierUserAssignment> getOverlappingAssignment(String prefix, long identifierSourceId, String identifierStart);
+
+    default List<IdentifierUserAssignment> getOverlappingAssignmentForIdentifierSourceWithPrefix(IdentifierUserAssignment identifierUserAssignment) {
+        return getOverlappingAssignment(identifierUserAssignment.getIdentifierSource().getPrefix(), identifierUserAssignment.getIdentifierSource().getId(), identifierUserAssignment.getIdentifierStart());
+    }
 }

@@ -6,6 +6,7 @@ import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.identifier.IdentifierGeneratorType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.joda.time.DateTime;
 import org.avni.server.service.UserService;
@@ -62,7 +63,7 @@ public class IdentifierSourceController extends AbstractController<IdentifierSou
         identifierSource.setMinimumBalance(identifierSourceContract.getMinimumBalance());
         identifierSource.setName(identifierSourceContract.getName());
         identifierSource.setOptions(identifierSourceContract.getOptions());
-        identifierSource.setType(identifierSourceContract.getType());
+        identifierSource.setType(IdentifierGeneratorType.valueOf(identifierSourceContract.getType()));
         identifierSource.setVoided(identifierSourceContract.isVoided());
         identifierSource.setMinLength(identifierSourceContract.getMinLength());
         identifierSource.setMaxLength(identifierSourceContract.getMaxLength());

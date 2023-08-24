@@ -13,9 +13,7 @@ import javax.transaction.Transactional;
 @Service
 @Qualifier("userPoolBasedIdentifierGenerator")
 public class UserPoolBasedIdentifierGenerator implements IdentifierGenerator {
-
-    private static final String PREFIX = "prefix";
-    private PrefixedUserPoolBasedIdentifierGenerator prefixedUserPoolBasedIdentifierGenerator;
+    private final PrefixedUserPoolBasedIdentifierGenerator prefixedUserPoolBasedIdentifierGenerator;
 
 
     @Autowired
@@ -26,14 +24,13 @@ public class UserPoolBasedIdentifierGenerator implements IdentifierGenerator {
     @Override
     @Transactional
     public void generateIdentifiers(IdentifierSource identifierSource, User user) {
-        String prefix = (String) identifierSource.getOptions().get(PREFIX);
+        String prefix = identifierSource.getPrefix();
         prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(identifierSource, user, prefix);
     }
 
     @Override
     public IdentifierAssignment generateSingleIdentifier(IdentifierSource identifierSource, User user) {
-        String prefix = (String) identifierSource.getOptions().get(PREFIX);
-        IdentifierAssignment identifierAssignment = prefixedUserPoolBasedIdentifierGenerator.generateSingleIdentifier(identifierSource, user, prefix);
-        return identifierAssignment;
+        String prefix = identifierSource.getPrefix();
+        return prefixedUserPoolBasedIdentifierGenerator.generateSingleIdentifier(identifierSource, user, prefix);
     }
 }
