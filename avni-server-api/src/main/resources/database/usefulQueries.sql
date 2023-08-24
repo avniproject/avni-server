@@ -213,14 +213,12 @@ order by
   , fe.display_order asc;
 --------------
 
+------- GET All Observation concepts of a form, for providing external API contract
+
 select
-    f.name  as FormName,
-    feg.name as FormElementGroup,
-    CASE WHEN fe.is_mandatory=true THEN '* ' ELSE '  ' END || fe.name as "M  FormElement",
-    co.name as ConceptOwn,
-    feo.name as FormElementOwn,
-    c.name as Concept,
-    coalesce(ca.answers, '(DataType: '||c.data_type||')') as Answers
+CASE WHEN fe.is_mandatory=true THEN 'YES' ELSE 'NO' END as "Mandatory",
+c.name as Concept,
+coalesce(ca.answers, '(DataType: '||c.data_type||')') as Answers
 from form f
          inner join form_element_group feg on feg.form_id = f.id
          inner join form_element fe on fe.form_element_group_id = feg.id
@@ -230,6 +228,7 @@ from form f
          left join (
     select ca.concept_id, string_agg(a.name,E'\n' order by ca.answer_order) answers
     from concept_answer ca inner join concept a on ca.answer_concept_id = a.id
+    where a.is_voided = false
     group by ca.concept_id
 ) ca on ca.concept_id = c.id
          left join non_applicable_form_element rem on rem.form_element_id = fe.id and rem.is_voided <> TRUE and rem.organisation_id = ?
