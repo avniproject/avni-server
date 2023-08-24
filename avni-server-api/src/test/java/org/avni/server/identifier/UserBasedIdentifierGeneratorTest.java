@@ -1,5 +1,6 @@
 package org.avni.server.identifier;
 
+import org.avni.server.domain.UserSettings;
 import org.avni.server.identifier.IdentifierGenerator;
 import org.avni.server.identifier.PrefixedUserPoolBasedIdentifierGenerator;
 import org.avni.server.identifier.UserBasedIdentifierGenerator;
@@ -20,7 +21,7 @@ public class UserBasedIdentifierGeneratorTest {
         User user = new User();
 
         JsonObject settings = new JsonObject();
-        settings.put("idPrefix", "ABC");
+        settings.put(UserSettings.ID_PREFIX, "ABC");
         user.setSettings(settings);
 
         IdentifierSource identifierSource = new IdentifierSource();

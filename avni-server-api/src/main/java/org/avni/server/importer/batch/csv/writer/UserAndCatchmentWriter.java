@@ -105,7 +105,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
                 .with("trackLocation", trackLocation)
                 .withEmptyCheck("datePickerMode", datePickerMode)
                 .with("showBeneficiaryMode", beneficiaryMode)
-                .withEmptyCheck("idPrefix", idPrefix));
+                .withEmptyCheck(UserSettings.ID_PREFIX, idPrefix));
 
         user.setOrganisationId(organisation.getId());
         user.setAuditInfo(currentUser);

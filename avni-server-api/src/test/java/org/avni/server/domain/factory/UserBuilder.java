@@ -75,6 +75,11 @@ public class UserBuilder {
         return this;
     }
 
+    public UserBuilder setSettings(JsonObject settings) {
+        user.setSettings(settings);
+        return this;
+    }
+
     public User build() {
         return user;
     }

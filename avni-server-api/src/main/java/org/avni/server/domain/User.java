@@ -310,8 +310,16 @@ public class User {
         this.operatingIndividualScope = operatingIndividualScope;
     }
 
+    /**
+     * Use only for mapping to contracts
+     */
     public JsonObject getSettings() {
         return settings;
+    }
+
+    @JsonIgnore
+    public UserSettings getUserSettings() {
+        return new UserSettings(this.settings);
     }
 
     public void setSettings(JsonObject settings) {

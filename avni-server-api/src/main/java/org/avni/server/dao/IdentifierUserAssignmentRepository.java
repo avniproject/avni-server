@@ -35,7 +35,15 @@ public interface IdentifierUserAssignmentRepository extends ReferenceDataReposit
     @Query(value = "select other_identifier_assignment.* from identifier_user_assignment other_identifier_assignment where other_identifier_assignment.identifier_source_id = :identifierSourceId and ((cast(replace(:identifierStart, :prefix, '') as integer) between cast(replace(other_identifier_assignment.identifier_start, :prefix, '') as integer) and cast(replace(other_identifier_assignment.identifier_end, :prefix, '') as integer)) OR (cast(replace(:identifierEnd, :prefix, '') as integer) between cast(replace(other_identifier_assignment.identifier_start, :prefix, '') as integer) and cast(replace(other_identifier_assignment.identifier_end, :prefix, '') as integer))) and other_identifier_assignment.is_voided = false", nativeQuery = true)
     List<IdentifierUserAssignment> getOverlappingAssignment(String prefix, long identifierSourceId, String identifierStart, String identifierEnd);
 
-    default List<IdentifierUserAssignment> getOverlappingAssignmentForIdentifierSourceWithPrefix(IdentifierUserAssignment identifierUserAssignment) {
+    @Query(value = "select other_identifier_assignment.* from identifier_user_assignment other_identifier_assignment where other_identifier_assignment.identifier_source_id = :identifierSourceId and other_identifier_assignment.assigned_to_user_id = :userId and ((cast(replace(:identifierStart, :prefix, '') as integer) between cast(replace(other_identifier_assignment.identifier_start, :prefix, '') as integer) and cast(replace(other_identifier_assignment.identifier_end, :prefix, '') as integer)) OR (cast(replace(:identifierEnd, :prefix, '') as integer) between cast(replace(other_identifier_assignment.identifier_start, :prefix, '') as integer) and cast(replace(other_identifier_assignment.identifier_end, :prefix, '') as integer))) and other_identifier_assignment.is_voided = false", nativeQuery = true)
+    List<IdentifierUserAssignment> getOverlappingAssignmentWithSamePrefix(String prefix, long identifierSourceId, String identifierStart, String identifierEnd, long userId);
+
+    default List<IdentifierUserAssignment> getOverlappingAssignmentForPooledIdentifier(IdentifierUserAssignment identifierUserAssignment) {
         return getOverlappingAssignment(identifierUserAssignment.getIdentifierSource().getPrefix(), identifierUserAssignment.getIdentifierSource().getId(), identifierUserAssignment.getIdentifierStart(), identifierUserAssignment.getIdentifierEnd());
+    }
+
+    default List<IdentifierUserAssignment> getOverlappingAssignmentForNonPooledIdentifier(IdentifierUserAssignment identifierUserAssignment) {
+        User assignedTo = identifierUserAssignment.getAssignedTo();
+        return getOverlappingAssignmentWithSamePrefix(assignedTo.getUserSettings().getIdPrefix(), identifierUserAssignment.getIdentifierSource().getId(), identifierUserAssignment.getIdentifierStart(), identifierUserAssignment.getIdentifierEnd(), assignedTo.getId());
     }
 }

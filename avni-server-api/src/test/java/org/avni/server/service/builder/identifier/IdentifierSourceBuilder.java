@@ -12,7 +12,7 @@ public class IdentifierSourceBuilder {
 
     public IdentifierSourceBuilder() {
         String uuid = UUID.randomUUID().toString();
-        setUuid(uuid).setName(uuid).setMaxLength(10).setMinLength(3).setBatchGenerationSize(100l).setMinimumBalance(10l);
+        setUuid(uuid).setName(uuid).setMaxLength(10).setMinLength(3).setBatchGenerationSize(100l).setMinimumBalance(10l).setOptions(new JsonObject());
     }
 
     public IdentifierSourceBuilder setUuid(String uuid) {
