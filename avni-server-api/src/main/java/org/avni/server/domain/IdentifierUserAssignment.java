@@ -69,4 +69,14 @@ public class IdentifierUserAssignment extends OrganisationAwareEntity {
     public boolean isExhausted() {
         return getLastAssignedIdentifier() != null && getLastAssignedIdentifier().equals(getIdentifierEnd());
     }
+
+    @Override
+    public String toString() {
+        return "IdentifierUserAssignment{" +
+                "identifierSource=" + identifierSource.getName() +
+                ", assignedTo=" + assignedTo.getUsername() +
+                ", identifierStart='" + identifierStart + '\'' +
+                ", identifierEnd='" + identifierEnd + '\'' +
+                '}';
+    }
 }

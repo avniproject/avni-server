@@ -1,7 +1,12 @@
 package org.avni.server.web;
 
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.identifier.IdentifierOverlappingException;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.identifier.IdentifierUserAssignmentService;
+import org.avni.server.util.WebResponseUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RestController;
 import org.avni.server.dao.IdentifierSourceRepository;
@@ -27,20 +32,23 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     private final UserRepository userRepository;
     private final IdentifierSourceRepository identifierSourceRepository;
     private final AccessControlService accessControlService;
+    private final IdentifierUserAssignmentService identifierUserAssignmentService;
+    private final static Logger logger = LoggerFactory.getLogger(IdentifierUserAssignmentWebController.class);;
 
     @Autowired
-    public IdentifierUserAssignmentWebController(IdentifierUserAssignmentRepository identifierUserAssignmentRepository, UserRepository userRepository, IdentifierSourceRepository identifierSourceRepository, AccessControlService accessControlService) {
+    public IdentifierUserAssignmentWebController(IdentifierUserAssignmentRepository identifierUserAssignmentRepository, UserRepository userRepository, IdentifierSourceRepository identifierSourceRepository, AccessControlService accessControlService, IdentifierUserAssignmentService identifierUserAssignmentService) {
         this.identifierUserAssignmentRepository = identifierUserAssignmentRepository;
         this.userRepository = userRepository;
         this.identifierSourceRepository = identifierSourceRepository;
         this.accessControlService = accessControlService;
+        this.identifierUserAssignmentService = identifierUserAssignmentService;
     }
 
     @GetMapping(value = "/web/identifierUserAssignment")
     @ResponseBody
     public PagedResources<Resource<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
         Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageable);
-        Page<IdentifierUserAssignmentContractWeb> response = nonVoided.map(identifierUserAssignment -> IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
+        Page<IdentifierUserAssignmentContractWeb> response = nonVoided.map(IdentifierUserAssignmentContractWeb::fromIdentifierUserAssignment);
         return wrap(response);
     }
 
@@ -64,7 +72,11 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
         identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
         identifierUserAssignment.setVoided(false);
-        identifierUserAssignmentRepository.save(identifierUserAssignment);
+        try {
+            identifierUserAssignmentService.save(identifierUserAssignment);
+        } catch (IdentifierOverlappingException e) {
+            return WebResponseUtil.createBadRequestResponse(e, logger);
+        }
         return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
     }
 
@@ -83,7 +95,11 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
         identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
         identifierUserAssignment.setVoided(request.isVoided());
-        identifierUserAssignmentRepository.save(identifierUserAssignment);
+        try {
+            identifierUserAssignmentService.save(identifierUserAssignment);
+        } catch (IdentifierOverlappingException e) {
+            return WebResponseUtil.createBadRequestResponse(e, logger);
+        }
         return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
     }
 

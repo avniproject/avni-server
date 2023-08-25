@@ -10,6 +10,7 @@ import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_
 
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
+import org.avni.server.web.validation.ValidationException;
 import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -43,7 +44,6 @@ public class UserService implements NonScopeAwareService {
         return userContext.getUser();
     }
 
-    @Transactional
     public User save(User user) {
         String idPrefix = UserSettings.getIdPrefix(user.getSettings());
         if (StringUtils.hasLength(idPrefix)) {
@@ -52,7 +52,7 @@ public class UserService implements NonScopeAwareService {
                 if (usersWithSameIdPrefix.size() == 0) {
                     return userRepository.save(user);
                 } else {
-                    throw new RuntimeException(String.format("There is another user with same prefix: %s", usersWithSameIdPrefix.get(0).getUsername()));
+                    throw new ValidationException(String.format("There is another user %s with same prefix: %s", usersWithSameIdPrefix.get(0).getUsername(), idPrefix));
                 }
             }
         } else {
@@ -77,7 +77,7 @@ public class UserService implements NonScopeAwareService {
         List<UserGroup> userGroupsToBeSaved = new ArrayList<>();
         Group everyoneGroup = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
         List<Long> currentlyLinkedGroups = user.getUserGroups().stream()
-                .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList());
+                .map(UserGroup::getGroupId).collect(Collectors.toList());
 
         //Create new UserGroups for newly associated groups
         associatedGroupIds.stream()
