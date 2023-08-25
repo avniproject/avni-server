@@ -1,12 +1,10 @@
 package org.avni.server.util;
 
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import static org.avni.server.util.AvniFiles.validateFileName;
 
@@ -22,7 +20,8 @@ public class AvniFilesTest {
         AvniFiles.validateMimeType(readFile("sample-files/angled.xml", "application/xml"), "application/xml");
         AvniFiles.validateMimeType(readFile("sample-files/phpfile.php", "text/html"), "text/html");
         AvniFiles.validateMimeType(readFile("sample-files/spreadsheet.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        AvniFiles.validateMimeType(readFile("sample-files/document.pdf", "application/pdf"), "application/pdf");    }
+        AvniFiles.validateMimeType(readFile("sample-files/document.pdf", "application/pdf"), "application/pdf");
+    }
 
     @Test
     public void validateMimeTypeShouldUnderstandZipFiles() throws IOException {

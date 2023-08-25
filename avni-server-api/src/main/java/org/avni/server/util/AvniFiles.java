@@ -150,7 +150,7 @@ public class AvniFiles {
     public static void validateFile(MultipartFile file, String expectedMimeType) throws IOException {
         String fileExtension = fileExtensionMap.getOrDefault(expectedMimeType, "");
 
-        validateFileName(file.getName(), fileExtension);
+        validateFileName(file.getOriginalFilename(), fileExtension);
         validateMimeType(file, expectedMimeType);
     }
 
@@ -223,7 +223,7 @@ public class AvniFiles {
     private static String detectMimeType(MultipartFile file) throws IOException {
         TikaConfig tika = TikaConfig.getDefaultConfig();
         Metadata metadata = new Metadata();
-        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getOriginalFilename());
         return String.valueOf(tika
                 .getDetector()
                 .detect(TikaInputStream.get(file.getInputStream()), metadata));
