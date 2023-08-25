@@ -33,7 +33,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -42,7 +41,6 @@ import static org.springframework.http.MediaType.*;
 
 @RestController
 public class ImportController {
-    private final OldDataImportService oldDataImportService;
     private final Logger logger;
     private final JobService jobService;
     private final BulkUploadS3Service bulkUploadS3Service;
@@ -54,15 +52,13 @@ public class ImportController {
     private final AccessControlService accessControlService;
 
     @Autowired
-    public ImportController(OldDataImportService oldDataImportService,
-                            JobService jobService,
+    public ImportController(JobService jobService,
                             BulkUploadS3Service bulkUploadS3Service,
                             ImportService importService,
                             S3Service s3Service,
                             IndividualService individualService,
                             LocationService locationService,
                             FormElementRepository formElementRepository, AccessControlService accessControlService) {
-        this.oldDataImportService = oldDataImportService;
         this.jobService = jobService;
         this.bulkUploadS3Service = bulkUploadS3Service;
         this.importService = importService;
@@ -72,17 +68,6 @@ public class ImportController {
         this.formElementRepository = formElementRepository;
         this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(getClass());
-    }
-
-    //todo: Temporarily disable excel import. Need to revisit this later because we have not used this functionality in years.
-//    @RequestMapping(value = "/excelImport", method = RequestMethod.POST)
-    public ResponseEntity<?> uploadData(@RequestParam("metaDataFile") MultipartFile metaDataFile,
-                                        @RequestParam MultipartFile dataFile,
-                                        @RequestParam(required = false) Integer maxNumberOfRecords,
-                                        @RequestParam List<Integer> activeSheets) throws Exception {
-        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-        oldDataImportService.importExcel(metaDataFile.getInputStream(), dataFile.getInputStream(), dataFile.getOriginalFilename(), true, maxNumberOfRecords, activeSheets);
-        return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
