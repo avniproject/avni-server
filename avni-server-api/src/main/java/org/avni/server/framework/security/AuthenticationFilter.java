@@ -1,10 +1,13 @@
 package org.avni.server.framework.security;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.avni.server.config.IdpType;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
+import org.avni.server.util.FileUtil;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +19,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 import static org.avni.server.framework.security.ResourceProtectionStatus.isProtected;
 
@@ -28,12 +32,17 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     private final AuthService authService;
     private final String defaultUserName;
     private final IdpType idpType;
+    private final List<String> blacklistedUrls;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName) {
+    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile) throws IOException {
         super(authenticationManager);
         this.authService = authService;
         this.idpType = idpType;
         this.defaultUserName = defaultUserName;
+
+        String content = FileUtil.readJsonFileFromFileSystem(avniBlacklistedUrlsFile);
+        blacklistedUrls = ObjectMapperSingleton.getObjectMapper().readValue(content == null ? "[]" : content , new TypeReference<List<String>>() {
+        });
     }
 
     @Override
@@ -45,7 +54,10 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
             String requestURI = request.getRequestURI();
             String queryString = request.getQueryString();
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
-            if (isProtected(request)) {
+            boolean isProtected = isProtected(request);
+            if (isProtected && ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, String.format("%s is blacklisted for the implementation", request.getServletPath()));
+            } else if (isProtected) {
                 String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
                 UserContext userContext = idpType.equals(IdpType.none)
                         ? authService.authenticateByUserName(StringUtils.isEmpty(username) ? defaultUserName : username, organisationUUID)

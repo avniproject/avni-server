@@ -25,6 +25,9 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Value("${avni.idp.type}")
     private IdpType idpType;
 
+    @Value("${avni.blacklisted.urls-file}")
+    private String avniBlacklistedUrlsFile;
+
     @Autowired
     public ApiSecurity(AuthService authService) {
         this.authService = authService;
@@ -38,7 +41,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()
                 .and()
-                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName))
+                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName, avniBlacklistedUrlsFile))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }

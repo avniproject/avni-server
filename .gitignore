@@ -38,3 +38,4 @@ dev-commands.txt
 /report.json
 /static/
 /avni-server-api/log/
+/blacklisted.json

@@ -1,6 +1,6 @@
 package org.avni.messaging.repository;
 
-import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.util.FileUtil;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.io.IOException;
 public abstract class AbstractGlificRepository {
     protected String getJson(String fileNameWithoutExtension) {
         try {
-            return ObjectMapperSingleton.getObjectMapper().readTree(this.getClass().getResource(String.format("/external/glific/%s.json", fileNameWithoutExtension))).toString();
+            return FileUtil.readJsonFileFromClasspath(String.format("/external/glific/%s.json", fileNameWithoutExtension));
         } catch (IOException ioException) {
             throw new RuntimeException(ioException);
         }
