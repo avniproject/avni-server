@@ -82,6 +82,7 @@ dependencies {
     testCompile 'org.powermock:powermock-api-mockito2:2.0.9'
     testCompile 'org.powermock:powermock-module-junit4:2.0.9'
     runtime("org.springframework.boot:spring-boot-properties-migrator")
+    implementation 'org.apache.tika:tika-core:2.7.0'
 }
 
 bootRun {

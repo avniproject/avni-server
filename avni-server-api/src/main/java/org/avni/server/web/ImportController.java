@@ -12,6 +12,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.AvniFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static java.lang.String.format;
+import static org.avni.server.util.AvniFiles.validateFile;
 import static org.springframework.http.MediaType.*;
 
 @RestController
@@ -100,8 +102,11 @@ public class ImportController {
     public ResponseEntity<?> doit(@RequestParam MultipartFile file,
                                   @RequestParam String type,
                                   @RequestParam boolean autoApprove,
-                                  @RequestParam String locationUploadMode) {
+                                  @RequestParam String locationUploadMode) throws IOException {
+
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        validateFile(file, type.equals("metadataZip") ? "application/zip" : "text/csv");
+
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();

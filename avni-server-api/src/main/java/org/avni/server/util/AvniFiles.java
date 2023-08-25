@@ -1,5 +1,9 @@
 package org.avni.server.util;
 
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +17,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -23,6 +29,12 @@ import static java.lang.String.format;
 public class AvniFiles {
 
     private static final Logger logger = LoggerFactory.getLogger(AvniFiles.class.getName());
+    private static final Map<String, String> fileExtensionMap;
+    static {
+        fileExtensionMap = new HashMap<>();
+        fileExtensionMap.put("application/zip","zip");
+        fileExtensionMap.put("text/csv","csv");
+    }
 
     /**
      * Sources:
@@ -109,15 +121,16 @@ public class AvniFiles {
     /**
      * Sources:
      * https://stackoverflow.com/a/12164026
-     *
+     * <p>
      * Gets image dimensions for given file
+     *
      * @param imgFile image file
      * @return dimensions of image
      * @throws IOException if the file is not a known image
      */
     public static Dimension getImageDimension(File imgFile, ImageType type) throws IOException {
         Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(type.toString().toLowerCase());
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             ImageReader reader = iter.next();
             try {
                 ImageInputStream stream = new FileImageInputStream(imgFile);
@@ -135,18 +148,23 @@ public class AvniFiles {
         throw new IOException("Not a known image file: " + imgFile.getAbsolutePath());
     }
 
-    private static File getFile(MultipartFile file, File tempFile) throws IOException {
-        try {
-            FileOutputStream fos;
-            fos = new FileOutputStream(tempFile);
-            fos.write(file.getBytes());
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IOException(
-                    format("Unable to create temp file %s. Error: %s", file.getOriginalFilename(), e.getMessage()));
-        }
-        return tempFile;
+    public static void validateFile(MultipartFile file, String expectedMimeType) throws IOException {
+        String fileExtension = fileExtensionMap.getOrDefault(expectedMimeType, "");
+
+        validateFileName(file.getName(), fileExtension);
+        validateMimeType(file, expectedMimeType);
+    }
+
+    public static void validateFileName(String fileName, String extension) {
+        assertTrue(fileName.split("[.]").length == 2, "Double extension file detected");
+        assertTrue(fileName.endsWith("." + extension), format("Expected file extension: %s, Got %s", extension, fileName.split("[.]")[1]));
+    }
+
+    public static void validateMimeType(MultipartFile file, String expectedMimeType) throws IOException {
+        assertTrue(expectedMimeType.equals(file.getContentType()), format("Expected content type: %s, Got, %s", expectedMimeType, file.getContentType()));
+
+        String actualMimeType = detectMimeType(file);
+        assertTrue(expectedMimeType.equals(actualMimeType), format("Expected mimetype: %s, Got, %s", expectedMimeType, actualMimeType));
     }
 
     public static File convertMultiPartToFile(MultipartFile file, String ext) throws IOException {
@@ -195,5 +213,34 @@ public class AvniFiles {
             throw new IOException("Bad zip entry: " + zipEntry.getName());
         }
         return normalizePath;
+    }
+
+    private static void assertTrue(boolean value, String errorMessage) {
+        if (!value) {
+            throw new BadRequestError(errorMessage);
+        }
+    }
+
+    private static String detectMimeType(MultipartFile file) throws IOException {
+        TikaConfig tika = TikaConfig.getDefaultConfig();
+        Metadata metadata = new Metadata();
+        metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
+        return String.valueOf(tika
+                .getDetector()
+                .detect(TikaInputStream.get(file.getInputStream()), metadata));
+    }
+
+    private static File getFile(MultipartFile file, File tempFile) throws IOException {
+        try {
+            FileOutputStream fos;
+            fos = new FileOutputStream(tempFile);
+            fos.write(file.getBytes());
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IOException(
+                    format("Unable to create temp file %s. Error: %s", file.getOriginalFilename(), e.getMessage()));
+        }
+        return tempFile;
     }
 }
