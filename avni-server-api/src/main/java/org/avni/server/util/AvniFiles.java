@@ -121,9 +121,8 @@ public class AvniFiles {
     /**
      * Sources:
      * https://stackoverflow.com/a/12164026
-     * <p>
-     * Gets image dimensions for given file
      *
+     * Gets image dimensions for given file
      * @param imgFile image file
      * @return dimensions of image
      * @throws IOException if the file is not a known image

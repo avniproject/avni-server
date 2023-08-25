@@ -12,7 +12,6 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.AvniFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -75,7 +74,8 @@ public class ImportController {
         logger = LoggerFactory.getLogger(getClass());
     }
 
-    @RequestMapping(value = "/excelImport", method = RequestMethod.POST)
+    //todo: Temporarily disable excel import. Need to revisit this later because we have not used this functionality in years.
+//    @RequestMapping(value = "/excelImport", method = RequestMethod.POST)
     public ResponseEntity<?> uploadData(@RequestParam("metaDataFile") MultipartFile metaDataFile,
                                         @RequestParam MultipartFile dataFile,
                                         @RequestParam(required = false) Integer maxNumberOfRecords,
