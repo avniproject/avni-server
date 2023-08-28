@@ -33,28 +33,28 @@ public class RequestUtils {
         }
         String conceptUUID = concept.getUuid();
         String conceptDataType = concept.getDataType();
-        Object obsValue;
         Object entryValue = entry.getValue();
 
-        if (entryValue == null) return;
-
-        obsValue = getObsValue(conceptRepository, conceptDataType, entryValue);
+        Object obsValue = null;
+        if (entryValue != null) {
+            obsValue = getObsValue(conceptRepository, conceptDataType, entryValue);
+        }
         observations.put(conceptUUID, obsValue);
     }
 
-    private static Object getObsValue(ConceptRepository conceptRepository, String conceptDataType, Object entryValue) {
+    private static Object getObsValue(ConceptRepository conceptRepository, String conceptDataType, Object newValue) {
         Object obsValue;
         switch (ConceptDataType.valueOf(conceptDataType)) {
             case Coded: {
-                if (entryValue instanceof Collection<?>) {
-                    obsValue = ((List<String>) entryValue).stream().map(answerConceptName -> {
+                if (newValue instanceof Collection<?>) {
+                    obsValue = ((List<String>) newValue).stream().map(answerConceptName -> {
                         Concept answerConcept = conceptRepository.findByName(answerConceptName);
                         if (answerConcept == null)
                             throw new BadRequestError(String.format("Answer concept with name=%s not found", answerConceptName));
                         return answerConcept.getUuid();
                     }).collect(Collectors.toList());
                 } else {
-                    String answerConceptName = (String) entryValue;
+                    String answerConceptName = (String) newValue;
                     Concept answerConcept = conceptRepository.findByName(answerConceptName);
                     if (answerConcept == null)
                         throw new BadRequestError(String.format("Answer concept with name=%s not found", answerConceptName));
@@ -63,22 +63,22 @@ public class RequestUtils {
                 break;
             }
             case QuestionGroup: {
-                if (entryValue instanceof Collection<?>) {
+                if (newValue instanceof Collection<?>) {
                     List<ObservationCollection> groupOfChildObservations = new ArrayList<>();
-                    for (Object o : ((Collection<?>) entryValue)) {
+                    for (Object o : ((Collection<?>) newValue)) {
                         Map<String, Object> childObsCollection = (Map<String, Object>) o;
                         ObservationCollection childObservations = createObservations(childObsCollection, conceptRepository);
                         groupOfChildObservations.add(childObservations);
                     }
                     obsValue = groupOfChildObservations;
                 } else {
-                    Map<String, Object> childObsCollection = (Map<String, Object>) entryValue;
+                    Map<String, Object> childObsCollection = (Map<String, Object>) newValue;
                     obsValue = createObservations(childObsCollection, conceptRepository);
                 }
                 break;
             }
             default: {
-                obsValue = entryValue;
+                obsValue = newValue;
                 break;
             }
         }

@@ -11,6 +11,7 @@ import org.avni.server.service.ConceptService;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.api.ApiEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
@@ -167,7 +168,7 @@ public class GeneralEncounterApiController {
         return new ResponseEntity<>(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService), HttpStatus.OK);
     }
 
-    private Encounter patchEncounter(Encounter encounter, Map<String, Object> request) throws ValidationException, IOException{
+    private Encounter patchEncounter(Encounter encounter, Map<String, Object> request) throws ValidationException, IOException {
         String encounterTypeName = (String) request.get(ENCOUNTER_TYPE);
         EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
         if (encounterType == null) {
@@ -177,40 +178,41 @@ public class GeneralEncounterApiController {
 
         String externalId = (String) request.get(EXTERNAL_ID);
 
-        if(StringUtils.hasLength(externalId)) {
+        if (StringUtils.hasLength(externalId)) {
             encounter.setLegacyId(externalId.trim());
         }
 
-        if(request.containsKey(ENCOUNTER_LOCATION))
-            encounter.setEncounterLocation(Point.fromMap((Map<String,Double>) request.get(ENCOUNTER_LOCATION)));
+        if (request.containsKey(ENCOUNTER_LOCATION))
+            encounter.setEncounterLocation(Point.fromMap((Map<String, Double>) request.get(ENCOUNTER_LOCATION)));
 
-        if(request.containsKey(CANCEL_LOCATION))
+        if (request.containsKey(CANCEL_LOCATION))
             encounter.setCancelLocation(Point.fromMap((Map<String, Double>) request.get(CANCEL_LOCATION)));
 
-        if(request.containsKey(ENCOUNTER_DATE_TIME))
-            encounter.setEncounterDateTime(DateTime.parse((String) request.get(ENCOUNTER_DATE_TIME)));
+        if (request.containsKey(ENCOUNTER_DATE_TIME))
+            encounter.setEncounterDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(ENCOUNTER_DATE_TIME)));
 
-        if(request.containsKey(EARLIEST_SCHEDULED_DATE))
-            encounter.setEarliestVisitDateTime(DateTime.parse((String) request.get(EARLIEST_SCHEDULED_DATE)));
+        if (request.containsKey(EARLIEST_SCHEDULED_DATE))
+            encounter.setEarliestVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(EARLIEST_SCHEDULED_DATE)));
 
-        if(request.containsKey(MAX_SCHEDULED_DATE))
-            encounter.setMaxVisitDateTime(DateTime.parse((String) request.get(MAX_SCHEDULED_DATE)));
+        if (request.containsKey(MAX_SCHEDULED_DATE)) {
+            encounter.setMaxVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(MAX_SCHEDULED_DATE)));
+        }
 
-        if(request.containsKey(CANCEL_DATE_TIME))
-            encounter.setCancelDateTime(DateTime.parse((String) request.get(CANCEL_DATE_TIME)));
+        if (request.containsKey(CANCEL_DATE_TIME))
+            encounter.setCancelDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(CANCEL_DATE_TIME)));
 
 
-        if(request.containsKey(OBSERVATIONS)) {
+        if (request.containsKey(OBSERVATIONS)) {
             Map<String, Object> observationsFromRequest = (Map<String, Object>) request.get(OBSERVATIONS);
             RequestUtils.patchObservations(observationsFromRequest, conceptRepository, encounter.getObservations());
         }
 
-        if(request.containsKey(CANCEL_OBSERVATIONS)) {
+        if (request.containsKey(CANCEL_OBSERVATIONS)) {
             Map<String, Object> cancelObservationsFromRequest = (Map<String, Object>) request.get(CANCEL_OBSERVATIONS);
             RequestUtils.patchObservations(cancelObservationsFromRequest, conceptRepository, encounter.getCancelObservations());
         }
 
-        if(request.containsKey(CommonFieldNames.VOIDED))
+        if (request.containsKey(CommonFieldNames.VOIDED))
             encounter.setVoided((Boolean) request.get(CommonFieldNames.VOIDED));
 
         encounter.validate();
