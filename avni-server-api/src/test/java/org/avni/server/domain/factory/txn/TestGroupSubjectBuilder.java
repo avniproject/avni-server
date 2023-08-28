@@ -1,5 +1,6 @@
 package org.avni.server.domain.factory.txn;
 
+import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
@@ -20,19 +21,28 @@ public class TestGroupSubjectBuilder {
 
     public TestGroupSubjectBuilder withGroup(Individual subject) {
         entity.setGroupSubject(subject);
-        entity.setGroupSubjectAddressId(subject.getAddressLevel().getId());
+        AddressLevel addressLevel = subject.getAddressLevel();
+        if (addressLevel != null)
+            entity.setGroupSubjectAddressId(addressLevel.getId());
     	return this;
     }
 
     public TestGroupSubjectBuilder withMember(Individual subject) {
         entity.setMemberSubject(subject);
-        entity.setMemberSubjectAddressId(subject.getAddressLevel().getId());
+        AddressLevel addressLevel = subject.getAddressLevel();
+        if (addressLevel != null)
+            entity.setMemberSubjectAddressId(addressLevel.getId());
     	return this;
     }
 
     public TestGroupSubjectBuilder withGroupRole(GroupRole groupRole) {
         entity.setGroupRole(groupRole);
     	return this;
+    }
+
+    public TestGroupSubjectBuilder setId(Long id) {
+        entity.setId(id);
+        return this;
     }
 
     public GroupSubject build() {
