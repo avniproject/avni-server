@@ -21,6 +21,7 @@ import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -362,7 +363,12 @@ public class IndividualController extends AbstractController<Individual> impleme
         individual.setDateOfBirth(individualRequest.getDateOfBirth());
         individual.setAddressLevel(addressLevel);
         individual.setGender(gender);
-        individual.setRegistrationDate(individualRequest.getRegistrationDate());
+
+        LocalDate registrationDate = individualRequest.getRegistrationDate();
+        if(registrationDate != null && registrationDate.isAfter(LocalDate.now())){
+            throw new IllegalArgumentException("Registration date is in the future");
+        }
+        individual.setRegistrationDate(registrationDate);
         individual.setVoided(individualRequest.isVoided());
         PointRequest pointRequest = individualRequest.getRegistrationLocation();
         if (pointRequest != null)
