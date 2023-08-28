@@ -102,7 +102,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
 
         Map<String, List<User>> groupedSubjects = userSubjectAssignmentBySubjectIds.stream()
                 .filter(usa -> !usa.isVoided())
-                .collect(Collectors.groupingBy( UserSubjectAssignment::getSubjectIdAsString,TreeMap::new,
+                .collect(Collectors.groupingBy(UserSubjectAssignment::getSubjectIdAsString, TreeMap::new,
                         Collectors.mapping(UserSubjectAssignment::getUser, Collectors.toList())));
 
         ProjectionFactory pf = new SpelAwareProxyProjectionFactory();
@@ -123,29 +123,36 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return recordsMap;
     }
 
-    @Transactional
     public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) {
-        UserSubjectAssignment userSubjectAssignment;
         List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
         List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
 
-        for(Individual subject : subjectList) {
-            Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserAndSubject(user, subject);
-            if (userSubjectAssignmentOptional.isPresent()) {
-                userSubjectAssignment = userSubjectAssignmentOptional.get();
-            } else {
-                userSubjectAssignment = new UserSubjectAssignment();
-                userSubjectAssignment.assignUUID();
-                userSubjectAssignment.setUser(user);
-                userSubjectAssignment.setSubject(subject);
-                userSubjectAssignment.setOrganisationId(organisation.getId());
-            }
-            userSubjectAssignment.setVoided(userSubjectAssignmentRequest.isVoided());
-            updateAuditForUserSubjectAssignment(userSubjectAssignment);
-            userSubjectAssignmentList.add(userSubjectAssignment);
+        for (Individual subject : subjectList) {
+            createUpdateAssignment(userSubjectAssignmentRequest.isVoided(), organisation, userSubjectAssignmentList, user, subject);
         }
         return userSubjectAssignmentRepository.saveAll(userSubjectAssignmentList);
+    }
+
+    private void createUpdateAssignment(boolean assignmentVoided, Organisation organisation, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
+        UserSubjectAssignment userSubjectAssignment;
+        Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserAndSubject(user, subject);
+        if (userSubjectAssignmentOptional.isPresent()) {
+            userSubjectAssignment = userSubjectAssignmentOptional.get();
+        } else {
+            userSubjectAssignment = new UserSubjectAssignment();
+            userSubjectAssignment.assignUUID();
+            userSubjectAssignment.setUser(user);
+            userSubjectAssignment.setSubject(subject);
+            userSubjectAssignment.setOrganisationId(organisation.getId());
+        }
+        userSubjectAssignment.setVoided(assignmentVoided);
+        updateAuditForUserSubjectAssignment(userSubjectAssignment);
+        if (subject.getSubjectType().isGroup()) {
+            List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
+            groupSubjects.forEach(groupSubject -> createUpdateAssignment(assignmentVoided, organisation, userSubjectAssignmentList, user, groupSubject.getMemberSubject()));
+        }
+        userSubjectAssignmentList.add(userSubjectAssignment);
     }
 
     private void updateAuditForUserSubjectAssignment(UserSubjectAssignment userSubjectAssignment) {
@@ -153,40 +160,39 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         triggerSyncForSubjectAndItsChildrenForUser(userSubjectAssignment.getSubject(), userSubjectAssignment.getUser());
     }
 
+    /**
+     * The sync uses last modified date time of assignment and updating audit values is not required. This has not been removed yet as this is harmless mostly to have these. But if this code starts giving trouble we should remove it.
+     */
+    @Deprecated
     private void triggerSyncForSubjectAndItsChildrenForUser(Individual individual, User user) {
         individual.updateAudit();
         individual.getProgramEnrolments()
-                .stream()
-                .forEach(enr -> enr.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         individual.getProgramEncounters()
-                .stream()
-                .forEach(enc -> enc.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         individual.getEncounters()
-                .stream()
-                .forEach(enr -> enr.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         GroupPrivileges groupPrivileges = privilegeService.getGroupPrivileges(user);
         checklistService.findChecklistsByIndividual(individual)
                 .stream()
-                .filter(checklist ->
-                        groupPrivileges.hasViewPrivilege(checklist))
-                .forEach(ent -> ent.updateAudit());
+                .filter(groupPrivileges::hasViewPrivilege)
+                .forEach(CHSEntity::updateAudit);
         checklistItemService.findChecklistItemsByIndividual(individual)
                 .stream()
-                .filter(checklistItem ->
-                        groupPrivileges.hasViewPrivilege(checklistItem))
-                .forEach(ent -> ent.updateAudit());
+                .filter(groupPrivileges::hasViewPrivilege)
+                .forEach(CHSEntity::updateAudit);
         individualRelationshipService.findByIndividual(individual)
                 .stream()
                 .filter(individualRelationship ->
                         groupPrivileges.hasViewPrivilege(individualRelationship.getIndividuala()) &&
                                 groupPrivileges.hasViewPrivilege(individualRelationship.getIndividualB()))
-                .forEach(ent -> ent.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         groupSubjectRepository.findAllByGroupSubjectOrMemberSubject(individual)
                 .stream()
                 .filter(groupSubject ->
                         groupPrivileges.hasViewPrivilege(groupSubject.getGroupSubject()) &&
                                 groupPrivileges.hasViewPrivilege(groupSubject.getMemberSubject())
                 )
-                .forEach(ent -> ent.updateAudit());
+                .forEach(CHSEntity::updateAudit);
     }
 }

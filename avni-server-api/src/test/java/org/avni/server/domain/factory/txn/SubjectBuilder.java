@@ -3,7 +3,6 @@ package org.avni.server.domain.factory.txn;
 import org.avni.server.domain.*;
 import org.joda.time.LocalDate;
 
-import java.util.Date;
 import java.util.UUID;
 
 public class SubjectBuilder {
@@ -15,6 +14,11 @@ public class SubjectBuilder {
 
     public SubjectBuilder withUUID(String uuid) {
         individual.setUuid(uuid);
+        return this;
+    }
+
+    public SubjectBuilder setId(int id) {
+        individual.setId((long) id);
         return this;
     }
 
