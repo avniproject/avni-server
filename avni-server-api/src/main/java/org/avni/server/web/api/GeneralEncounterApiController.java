@@ -6,12 +6,10 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.geo.Point;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.api.ApiEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
@@ -30,12 +28,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static org.avni.server.web.request.api.ApiBaseEncounterRequest.*;
-import static org.avni.server.web.request.api.ApiSubjectRequest.OBSERVATIONS;
 
 @RestController
 public class GeneralEncounterApiController {
@@ -161,67 +156,11 @@ public class GeneralEncounterApiController {
             throw new IllegalArgumentException(String.format("Encounter not found with id '%s' or External ID '%s'", id, externalId));
         }
         try {
-            encounter = patchEncounter(encounter, request);
+            encounter = encounterService.patchEncounter(encounter, request);
         } catch (ValidationException ve) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
         return new ResponseEntity<>(EncounterResponse.fromEncounter(encounter, conceptRepository, conceptService), HttpStatus.OK);
-    }
-
-    private Encounter patchEncounter(Encounter encounter, Map<String, Object> request) throws ValidationException, IOException {
-        if (request.containsKey(ENCOUNTER_TYPE)) {
-            String encounterTypeName = (String) request.get(ENCOUNTER_TYPE);
-            EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
-            encounter.setEncounterType(encounterType);
-        }
-
-        String externalId = (String) request.get(EXTERNAL_ID);
-
-        if (StringUtils.hasLength(externalId)) {
-            encounter.setLegacyId(externalId.trim());
-        }
-
-        if (request.containsKey(ENCOUNTER_LOCATION))
-            encounter.setEncounterLocation(Point.fromMap((Map<String, Double>) request.get(ENCOUNTER_LOCATION)));
-
-        if (request.containsKey(CANCEL_LOCATION))
-            encounter.setCancelLocation(Point.fromMap((Map<String, Double>) request.get(CANCEL_LOCATION)));
-
-        if (request.containsKey(ENCOUNTER_DATE_TIME))
-            encounter.setEncounterDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(ENCOUNTER_DATE_TIME)));
-
-        if (request.containsKey(EARLIEST_SCHEDULED_DATE))
-            encounter.setEarliestVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(EARLIEST_SCHEDULED_DATE)));
-
-        if (request.containsKey(MAX_SCHEDULED_DATE)) {
-            encounter.setMaxVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(MAX_SCHEDULED_DATE)));
-        }
-
-        if (request.containsKey(CANCEL_DATE_TIME))
-            encounter.setCancelDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(CANCEL_DATE_TIME)));
-
-
-        if (request.containsKey(OBSERVATIONS)) {
-            Map<String, Object> observationsFromRequest = (Map<String, Object>) request.get(OBSERVATIONS);
-            RequestUtils.patchObservations(observationsFromRequest, conceptRepository, encounter.getObservations());
-        }
-
-        if (request.containsKey(CANCEL_OBSERVATIONS)) {
-            Map<String, Object> cancelObservationsFromRequest = (Map<String, Object>) request.get(CANCEL_OBSERVATIONS);
-            RequestUtils.patchObservations(cancelObservationsFromRequest, conceptRepository, encounter.getCancelObservations());
-        }
-
-        if (request.containsKey(CommonFieldNames.VOIDED))
-            encounter.setVoided((Boolean) request.get(CommonFieldNames.VOIDED));
-
-        encounter.validate();
-        Set<String> observationKeys = request.containsKey(OBSERVATIONS) ? ((Map<String, Object>) request.get(OBSERVATIONS)).keySet() : new HashSet<>();
-        mediaObservationService.patchMediaObservations(encounter.getObservations(), observationKeys);
-
-        Set<String> cancelObservationKeys = request.containsKey(CANCEL_OBSERVATIONS) ? ((Map<String, Object>) request.get(CANCEL_OBSERVATIONS)).keySet() : new HashSet<>();
-        mediaObservationService.patchMediaObservations(encounter.getCancelObservations(), cancelObservationKeys);
-
-        return encounterService.save(encounter);
     }
 
     @DeleteMapping(value = "/api/encounter/{id}")
