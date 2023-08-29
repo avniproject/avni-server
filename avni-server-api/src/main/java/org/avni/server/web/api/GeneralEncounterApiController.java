@@ -169,12 +169,11 @@ public class GeneralEncounterApiController {
     }
 
     private Encounter patchEncounter(Encounter encounter, Map<String, Object> request) throws ValidationException, IOException {
-        String encounterTypeName = (String) request.get(ENCOUNTER_TYPE);
-        EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
-        if (encounterType == null) {
-            throw new IllegalArgumentException(String.format("Encounter type not found with name '%s'", encounterTypeName));
+        if (request.containsKey(ENCOUNTER_TYPE)) {
+            String encounterTypeName = (String) request.get(ENCOUNTER_TYPE);
+            EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
+            encounter.setEncounterType(encounterType);
         }
-        encounter.setEncounterType(encounterType);
 
         String externalId = (String) request.get(EXTERNAL_ID);
 
