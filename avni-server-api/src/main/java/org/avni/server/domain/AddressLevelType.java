@@ -7,6 +7,9 @@ import org.avni.server.application.projections.BaseProjection;
 import org.springframework.data.rest.core.config.Projection;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -17,8 +20,11 @@ import java.util.Set;
 @JsonIgnoreProperties({"subTypes", "addressLevels"})
 public class AddressLevelType extends OrganisationAwareEntity {
     @Column(name = "name", nullable = false)
+    @NotEmpty
     private String name;
 
+    @NotNull
+    @PositiveOrZero
     private Double level;
 
     @ManyToOne(cascade = {CascadeType.ALL})
