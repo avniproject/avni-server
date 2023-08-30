@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
@@ -29,6 +30,9 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Value("${avni.blacklisted.urls-file}")
     private String avniBlacklistedUrlsFile;
 
+    @Value("${avni.csrf.enabled}")
+    private boolean csrfEnabled;
+
     @Autowired
     public ApiSecurity(AuthService authService) {
         this.authService = authService;
@@ -37,8 +41,14 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-        http.cors().and().csrf()
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and()
+        CsrfConfigurer<HttpSecurity> csrf = http.cors().and().csrf();
+        HttpSecurity httpSecurity;
+        if (csrfEnabled)
+            httpSecurity = csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and();
+        else
+            httpSecurity = csrf.disable();
+
+        httpSecurity
                 .formLogin().disable()
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()

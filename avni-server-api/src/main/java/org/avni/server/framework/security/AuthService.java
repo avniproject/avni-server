@@ -48,7 +48,8 @@ public class AuthService {
         IAMAuthService iamAuthService = idpServiceFactory.getAuthService();
         UserContext userContext;
         try {
-            userContext = changeUser(iamAuthService.getUserFromToken(authToken), organisationUUID);
+            User userFromToken = iamAuthService.getUserFromToken(authToken);
+            userContext = changeUser(userFromToken, organisationUUID);
         } catch (SigningKeyNotFoundException signingKeyNotFoundException) {
             throw new AvniNoUserSessionException(signingKeyNotFoundException);
         }
