@@ -236,7 +236,7 @@ public class AvniFiles {
             fos.write(file.getBytes());
             fos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(String.format("Could not read file: %s", tempFile), e);
             throw new IOException(
                     format("Unable to create temp file %s. Error: %s", file.getOriginalFilename(), e.getMessage()));
         }
