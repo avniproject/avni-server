@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.domain.identifier.IdentifierGeneratorType;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
@@ -68,6 +69,11 @@ public class IdentifierUserAssignment extends OrganisationAwareEntity {
 
     public boolean isExhausted() {
         return getLastAssignedIdentifier() != null && getLastAssignedIdentifier().equals(getIdentifierEnd());
+    }
+
+    public boolean isValid() {
+        String prefix = identifierSource.getType().equals(IdentifierGeneratorType.userPoolBasedIdentifierGenerator) ? identifierSource.getPrefix() : assignedTo.getUserSettings().getIdPrefix();
+        return Long.parseLong(identifierStart.replace(prefix, "")) < Long.parseLong(identifierEnd.replace(prefix, ""));
     }
 
     @Override

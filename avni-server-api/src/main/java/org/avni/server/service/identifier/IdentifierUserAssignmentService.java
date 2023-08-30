@@ -3,6 +3,7 @@ package org.avni.server.service.identifier;
 import org.avni.server.dao.IdentifierUserAssignmentRepository;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.IdentifierUserAssignment;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.identifier.IdentifierGeneratorType;
 import org.avni.server.domain.identifier.IdentifierOverlappingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,10 @@ public class IdentifierUserAssignmentService {
         this.identifierUserAssignmentRepository = identifierUserAssignmentRepository;
     }
 
-    public void save(IdentifierUserAssignment identifierUserAssignment) throws IdentifierOverlappingException {
+    public void save(IdentifierUserAssignment identifierUserAssignment) throws IdentifierOverlappingException, ValidationException {
+        if (!identifierUserAssignment.isValid())
+            throw new ValidationException("Identifier start should be less than identifier end");
+
         IdentifierSource identifierSource = identifierUserAssignment.getIdentifierSource();
         synchronized (identifierSource.getUuid().intern()) {
             List<IdentifierUserAssignment> overlappingWithAssignments;

@@ -13,7 +13,7 @@ public class WebResponseUtil {
     }
 
     public static ResponseEntity<Map<String, String>> createInternalServerErrorResponse(Exception e, Logger logger) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
         return ResponseEntity.badRequest().body(generateJsonError(e.getMessage()));
     }
 

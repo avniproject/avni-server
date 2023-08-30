@@ -37,6 +37,7 @@ public class IdentifierUserAssignmentRepositoryTest extends AbstractControllerIn
         assertTrue(hasOverlapPooled(identifierSource, 50, 120));
         assertTrue(hasOverlapPooled(identifierSource, 250, 320));
         assertTrue(hasOverlapPooled(identifierSource, 210, 230));
+        assertTrue(hasOverlapPooled(identifierSource, 90, 210));
         assertFalse(hasOverlapPooled(identifierSource, 10, 50));
         assertFalse(hasOverlapPooled(identifierSource, 410, 550));
     }
@@ -57,6 +58,7 @@ public class IdentifierUserAssignmentRepositoryTest extends AbstractControllerIn
         assertTrue(hasOverlapUserSpecific(identifierSource, assignmentUserUsingSamePrefix, 50, 120));
         assertTrue(hasOverlapUserSpecific(identifierSource, assignmentUserUsingSamePrefix, 250, 320));
         assertTrue(hasOverlapUserSpecific(identifierSource, assignmentUserUsingSamePrefix, 210, 230));
+        assertTrue(hasOverlapUserSpecific(identifierSource, assignmentUserUsingSamePrefix, 80, 210));
         assertFalse(hasOverlapUserSpecific(identifierSource, assignmentUserUsingSamePrefix, 10, 50));
         assertFalse(hasOverlapUserSpecific(identifierSource, assignmentUserUsingSamePrefix, 310, 550));
     }

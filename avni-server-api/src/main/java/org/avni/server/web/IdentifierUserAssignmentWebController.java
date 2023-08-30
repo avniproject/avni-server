@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.identifier.IdentifierOverlappingException;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -74,7 +75,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         identifierUserAssignment.setVoided(false);
         try {
             identifierUserAssignmentService.save(identifierUserAssignment);
-        } catch (IdentifierOverlappingException e) {
+        } catch (IdentifierOverlappingException | ValidationException e) {
             return WebResponseUtil.createBadRequestResponse(e, logger);
         }
         return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
@@ -97,7 +98,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         identifierUserAssignment.setVoided(request.isVoided());
         try {
             identifierUserAssignmentService.save(identifierUserAssignment);
-        } catch (IdentifierOverlappingException e) {
+        } catch (IdentifierOverlappingException | ValidationException e) {
             return WebResponseUtil.createBadRequestResponse(e, logger);
         }
         return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
