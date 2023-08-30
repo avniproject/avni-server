@@ -1,5 +1,7 @@
 package org.avni.server.web.request.rules.constructWrappers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -154,6 +156,16 @@ public class ProgramEncounterConstructionService {
         return programEncounterContract;
     }
 
+    private void logObject(Object observationContract, String infoString) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String jsonString = objectMapper.writeValueAsString(observationContract);
+            logger.info(String.format(infoString, jsonString));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public ProgramEnrolmentContract constructEnrolments(ProgramEnrolment programEnrolment, String currentProgramEncounterUUID) {
         ProgramEnrolmentContract enrolmentContract = new ProgramEnrolmentContract();
         enrolmentContract.setUuid(programEnrolment.getUuid());
@@ -163,7 +175,9 @@ public class ProgramEncounterConstructionService {
         enrolmentContract.setVoided(programEnrolment.isVoided());
 
         if (programEnrolment.getObservations() != null) {
+            logObject(programEnrolment.getObservations(), "constructEnrolments:programEnrolment.getObservations():::%s");
             List<ObservationContract> observationContracts = observationService.constructObservations(programEnrolment.getObservations());
+            logObject(observationContracts, "constructEnrolments:observationContracts:::%s");
             enrolmentContract.setObservations(getObservationModelContracts(observationContracts));
         }
         if (programEnrolment.getProgramExitObservations() != null) {
