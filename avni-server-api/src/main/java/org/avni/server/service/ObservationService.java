@@ -1,5 +1,7 @@
 package org.avni.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.common.dbSchema.ColumnNames;
@@ -16,6 +18,8 @@ import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
 import org.avni.server.web.request.rules.response.KeyValueResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -35,6 +39,8 @@ public class ObservationService {
     private final LocationRepository locationRepository;
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final FormRepository formRepository;
+
+    private final Logger logger = LoggerFactory.getLogger(ObservationService.class);
 
     @Autowired
     public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository) {
@@ -234,10 +240,12 @@ public class ObservationService {
     }
 
     public ObservationModelContract constructObservation(ObservationContract observationContract) {
+        logObject(observationContract, "constructObservation:::%s");
         Concept concept = conceptRepository.findByUuid(observationContract.getConcept().getUuid());
         ObservationModelContract observationModelContract = new ObservationModelContract();
         Object value = observationContract.getValue();
         if (concept.getDataType().equals(ConceptDataType.QuestionGroup.toString())) {
+            logObject(value,"value::%s");
             if (((ArrayList<?>) value).get(0) instanceof ArrayList)
                 value = constructRepeatableQuestionGroupValue((List<List<ObservationContract>>) value);
             else
@@ -250,7 +258,18 @@ public class ObservationService {
         return observationModelContract;
     }
 
+    private void logObject(Object observationContract, String infoString) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String jsonString = objectMapper.writeValueAsString(observationContract);
+            logger.info(String.format(infoString, jsonString));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private List<List<ObservationModelContract>> constructRepeatableQuestionGroupValue(List<List<ObservationContract>> repeatableQuestionGroupObservationContract) {
+        logger.info(String.format("constructRepeatableQuestionGroupValue:::"));
         List<List<ObservationModelContract>> observationModelContracts = new ArrayList<>();
         for (List<ObservationContract> questionGroupObservationContract : repeatableQuestionGroupObservationContract) {
             observationModelContracts.add(constructQuestionGroupValue(questionGroupObservationContract));
@@ -260,6 +279,7 @@ public class ObservationService {
     }
 
     private List<ObservationModelContract> constructQuestionGroupValue(List<ObservationContract> questionGroupEntries) {
+        logger.info(String.format("constructQuestionGroupValue:::"));
         return questionGroupEntries
                 .stream()
                 .map(this::constructObservation)
