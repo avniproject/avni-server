@@ -1,14 +1,13 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.Gender;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "gender", path = "gender")
-public interface GenderRepository extends CHSRepository<Gender>, PagingAndSortingRepository<Gender, Long>, FindByLastModifiedDateTime<Gender> {
+public interface GenderRepository extends CHSRepository<Gender>, CustomCHSJpaRepository<Gender, Long>, FindByLastModifiedDateTime<Gender> {
     Gender findByName(String name);
     Gender findByNameIgnoreCase(String name);
 

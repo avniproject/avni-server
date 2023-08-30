@@ -13,7 +13,7 @@ import javax.persistence.TypedQuery;
 import java.io.Serializable;
 import java.util.List;
 
-public class CustomJpaRepositoryImpl<T extends CHSEntity, ID extends Serializable> extends SimpleJpaRepository<T, ID> implements CustomJpaRepository<T, ID> {
+public class CustomJpaRepositoryImpl<T extends CHSEntity, ID extends Serializable> extends SimpleJpaRepository<T, ID> implements CustomCHSJpaRepository<T, ID> {
 
     public CustomJpaRepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);

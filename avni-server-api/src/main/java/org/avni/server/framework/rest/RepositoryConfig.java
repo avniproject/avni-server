@@ -37,5 +37,17 @@ public class RepositoryConfig extends RepositoryRestConfigurerAdapter {
         config.exposeIdsFor(CommentThread.class);
         config.exposeIdsFor(RuleFailureTelemetry.class);
         config.exposeIdsFor(Individual.class);
+
+        //TODO
+        /**
+         * After we upgrade to a higher spring-boot version(2.1 and above), we would also have updated spring-data-repository plugin,
+         * which would allow us to specify a simple 2-line configuration to not expose POST, PUT, PATCH and DELETE methods,
+         * using ExposureConfiguration. Sample code snippet:
+         *
+         *
+         ExposureConfiguration config = restConfig.getExposureConfiguration();
+         config.forDomainType(User.class).withItemExposure((metadata, httpMethods) ->
+         httpMethods.disable(HttpMethod.PATCH));
+         */
     }
 }

@@ -4,13 +4,12 @@ import org.avni.server.application.projections.ReportingViewProjection;
 import org.avni.server.domain.Organisation;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.Procedure;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ImplementationRepository extends CrudRepository<Organisation, Long> {
+public interface ImplementationRepository extends AvniCrudRepository<Organisation, Long> {
     @Procedure(value = "create_view")
     void createView(String schemaName, String viewName, String sqlQuery);
 

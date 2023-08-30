@@ -3,14 +3,12 @@ package org.avni.server.dao;
 import org.avni.server.domain.OrganisationGroup;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "organisationGroup", path = "organisationGroup")
-public interface OrganisationGroupRepository extends CrudRepository<OrganisationGroup, Long>, PagingAndSortingRepository<OrganisationGroup, Long> {
+public interface OrganisationGroupRepository extends AvniCrudRepository<OrganisationGroup, Long>, AvniJpaRepository<OrganisationGroup, Long> {
 
     OrganisationGroup findByName(String orgGroupName);
 

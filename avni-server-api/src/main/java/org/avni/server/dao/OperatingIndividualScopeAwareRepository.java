@@ -18,7 +18,7 @@ import java.util.List;
 
 @SuppressWarnings("rawtypes")
 @NoRepositoryBean
-public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> extends JpaSpecificationExecutor<T>, CustomJpaRepository<T, Long> {
+public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> extends JpaSpecificationExecutor<T>, CustomCHSJpaRepository<T, Long> {
     default Specification getSpecification(SyncParameters syncParameters) {
         Specification specification;
         if (syncParameters.isModificationCheckOnEntity()) {

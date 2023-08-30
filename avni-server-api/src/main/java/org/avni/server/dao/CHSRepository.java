@@ -3,7 +3,6 @@ package org.avni.server.dao;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Concept;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import javax.persistence.criteria.*;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @NoRepositoryBean
-public interface CHSRepository<T extends CHSEntity> extends CrudRepository<T, Long> {
+public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T, Long> {
     T findByUuid(String uuid);
     List<T> findAll();
     List<T> findAllByIsVoidedFalse();

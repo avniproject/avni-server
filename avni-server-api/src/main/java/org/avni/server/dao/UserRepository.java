@@ -30,7 +30,7 @@ import static org.avni.server.domain.User.DEFAULT_SUPER_ADMIN;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
-public interface UserRepository extends PagingAndSortingRepository<User, Long>, JpaSpecificationExecutor<User> {
+public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByUsername(String username);
 
