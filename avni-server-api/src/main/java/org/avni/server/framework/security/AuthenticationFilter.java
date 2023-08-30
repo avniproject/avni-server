@@ -53,6 +53,9 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
             String method = request.getMethod();
             String requestURI = request.getRequestURI();
             String queryString = request.getQueryString();
+
+            logger.info(String.format("Received request %s %s?%s", method, requestURI, queryString));
+
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
             boolean isProtected = isProtected(request);
             if (isProtected && ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
