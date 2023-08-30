@@ -71,9 +71,13 @@ public class IdentifierUserAssignment extends OrganisationAwareEntity {
         return getLastAssignedIdentifier() != null && getLastAssignedIdentifier().equals(getIdentifierEnd());
     }
 
-    public boolean isValid() {
+    public void validate() throws ValidationException {
         String prefix = identifierSource.getType().equals(IdentifierGeneratorType.userPoolBasedIdentifierGenerator) ? identifierSource.getPrefix() : assignedTo.getUserSettings().getIdPrefix();
-        return Long.parseLong(identifierStart.replace(prefix, "")) < Long.parseLong(identifierEnd.replace(prefix, ""));
+        if (Long.parseLong(identifierStart.replace(prefix, "")) > Long.parseLong(identifierEnd.replace(prefix, "")))
+            throw new ValidationException("Identifier start should be less than identifier end");
+
+        if (identifierSource.getType().equals(IdentifierGeneratorType.userBasedIdentifierGenerator) && assignedTo.getUserSettings().getIdPrefix() == null)
+            throw new ValidationException("Id prefix is not assigned to the user");
     }
 
     @Override

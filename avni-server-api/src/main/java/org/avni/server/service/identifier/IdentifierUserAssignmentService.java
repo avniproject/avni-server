@@ -21,8 +21,7 @@ public class IdentifierUserAssignmentService {
     }
 
     public void save(IdentifierUserAssignment identifierUserAssignment) throws IdentifierOverlappingException, ValidationException {
-        if (!identifierUserAssignment.isValid())
-            throw new ValidationException("Identifier start should be less than identifier end");
+        identifierUserAssignment.validate();
 
         IdentifierSource identifierSource = identifierUserAssignment.getIdentifierSource();
         synchronized (identifierSource.getUuid().intern()) {
