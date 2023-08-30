@@ -70,7 +70,7 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
             writer.append('\n');
             writer.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Unable to create temp file to record failures", e);
             throw new RuntimeException("Unable to create temp file to record failures");
         }
     }
@@ -82,8 +82,7 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
             ObjectInfo metadata = bulkUploadS3Service.uploadErrorFile(errorFile, uuid);
             logger.info(format("Bulkupload '%s'! Check for errors at '%s'", jobExecution.getStatus(), metadata.getKey()));
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.error("Unable to create error files in S3 {}", e.getMessage());
+            logger.error("Unable to create error files in S3 {}", e);
         }
     }
 }

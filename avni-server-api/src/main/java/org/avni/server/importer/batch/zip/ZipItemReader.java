@@ -2,6 +2,9 @@ package org.avni.server.importer.batch.zip;
 
 import org.apache.commons.io.IOUtils;
 import org.avni.server.importer.batch.model.BundleFile;
+import org.avni.server.importer.batch.sync.attributes.SyncAttributesJobListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemStreamException;
@@ -16,6 +19,7 @@ import java.util.zip.ZipInputStream;
 @StepScope
 public class ZipItemReader implements ItemReader<BundleFile> {
 
+    private static final Logger logger = LoggerFactory.getLogger(ZipItemReader.class);
     private List<BundleFile> bundleFiles = new ArrayList<>();
     private int nextFileIndex;
 
@@ -40,7 +44,7 @@ public class ZipItemReader implements ItemReader<BundleFile> {
                 try {
                     stream.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.error("Error closing stream", e);
                 }
             }
         }

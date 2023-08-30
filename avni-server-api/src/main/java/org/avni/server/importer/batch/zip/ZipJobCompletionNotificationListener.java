@@ -60,8 +60,7 @@ public class ZipJobCompletionNotificationListener extends JobExecutionListenerSu
                 ObjectInfo metadata = bulkUploadS3Service.uploadErrorFile(bulkUploadS3Service.getLocalErrorFile(uuid), uuid);
                 logger.info(format("BulkUpload '%s'! Check for errors at '%s'", jobExecution.getStatus(), metadata.getKey()));
             } catch (IOException e) {
-                e.printStackTrace();
-                logger.info("Error while uploading file to S3");
+                logger.error("Error while uploading file to S3", e);
             }
         }
     }

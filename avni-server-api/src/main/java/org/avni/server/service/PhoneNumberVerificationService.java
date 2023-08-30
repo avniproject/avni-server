@@ -136,8 +136,7 @@ public class PhoneNumberVerificationService {
                 return new PhoneNumberVerificationResponse(true, msg91Response);
             }
         } catch (IOException ioException) {
-            logger.error(format("Error in phone number verification flow. API: %s, Request: %s", uri, msg91Request));
-            ioException.printStackTrace();
+            logger.error(format("Error in phone number verification flow. API: %s, Request: %s", uri, msg91Request), ioException);
             throw ioException;
         }
     }

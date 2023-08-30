@@ -8,6 +8,7 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.importer.batch.sync.attributes.SyncAttributesJobListener;
 import org.avni.server.service.CatchmentService;
 import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.S3Service;
@@ -15,6 +16,8 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.CatchmentContract;
 import org.avni.server.web.request.CatchmentsContract;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +42,8 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     private final S3Service s3Service;
     private final ResetSyncService resetSyncService;
     private final AccessControlService accessControlService;
+    private static final Logger logger = LoggerFactory.getLogger(CatchmentController.class);
+
 
     @Autowired
     public CatchmentController(CatchmentRepository catchmentRepository,
@@ -149,7 +154,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
             Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
             catchmentService.saveAllCatchments(catchmentsContract, organisation);
         } catch (BuilderException e) {
-            e.printStackTrace();
+            logger.error("Error saving catchments", e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok(null);

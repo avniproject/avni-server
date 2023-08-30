@@ -70,11 +70,11 @@ public class ExotelClient {
                 baseErrorMessage = getErrorMessageString(e.getResponseBodyAsString(), baseErrorMessage);
             }
             bugsnag.notify(e);
-            e.printStackTrace();
+            logger.error(baseErrorMessage, e);
             throw new ConnectException(baseErrorMessage);
         } catch (Exception e) {
             bugsnag.notify(e);
-            e.printStackTrace();
+            logger.error("Error connecting to Exotel", e);
             throw new ConnectException(format("Error connecting to Exotel. %s", e.getMessage()));
         }
     }

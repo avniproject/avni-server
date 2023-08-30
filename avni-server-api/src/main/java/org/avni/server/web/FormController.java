@@ -51,6 +51,7 @@ import java.io.InvalidObjectException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
@@ -136,13 +137,13 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @RequestMapping(value = "/forms", method = RequestMethod.POST)
     @Transactional
     public ResponseEntity<?> save(@RequestBody FormContract formRequest) {
-        logger.info(String.format("Saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
+        logger.info(format("Saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formRequest.validate();
             formService.checkIfLocationConceptsHaveBeenUsed(formRequest);
             formService.saveForm(formRequest);
         } catch (InvalidObjectException | FormBuilderException e) {
-            e.printStackTrace();
+            logger.error(format("Error saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok(null);
@@ -179,7 +180,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             accessControlService.checkPrivilege(FormType.getPrivilegeType(existingForm));
             formRepository.save(existingForm);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(format("Error saving form with uuid: %s", formUUID), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok(null);
@@ -231,11 +232,11 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @RequestMapping(value = "/forms", method = RequestMethod.PATCH)
     @Transactional
     public ResponseEntity<?> patch(@RequestBody FormContract formRequest) {
-        logger.info(String.format("Patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
+        logger.info(format("Patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formService.saveForm(formRequest);
         } catch (FormBuilderException e) {
-            e.printStackTrace();
+            logger.info(format("Error patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok(null);
@@ -244,7 +245,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     @RequestMapping(value = "/forms", method = RequestMethod.DELETE)
     @Transactional
     public ResponseEntity<?> remove(@RequestBody FormContract formRequest) {
-        logger.info(String.format("Deleting from form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
+        logger.info(format("Deleting from form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
             Form existingForm = formRepository.findByUuid(formRequest.getUuid());
@@ -254,7 +255,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             accessControlService.checkPrivilege(FormType.getPrivilegeType(form));
             formRepository.save(form);
         } catch (FormBuilderException e) {
-            e.printStackTrace();
+            logger.error(format("Error deleting from form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok(null);
@@ -375,7 +376,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     public List<BasicFormDetails> getForms(@PathVariable("programId") Long programId, Pageable pageable) {
         Program program = programRepository.findOne(programId);
         if (program == null) {
-            throw new ValidationException(String.format("No program found for ID %s", programId));
+            throw new ValidationException(format("No program found for ID %s", programId));
         }
         return getFormsByProgram(program, pageable);
     }

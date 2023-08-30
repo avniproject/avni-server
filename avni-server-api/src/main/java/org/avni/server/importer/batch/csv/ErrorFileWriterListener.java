@@ -2,6 +2,8 @@ package org.avni.server.importer.batch.csv;
 
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.BulkUploadS3Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.annotation.OnSkipInWrite;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ import static java.lang.String.format;
 public class ErrorFileWriterListener {
 
     private final BulkUploadS3Service bulkUploadS3Service;
+    private static final Logger logger = LoggerFactory.getLogger(ErrorFileWriterListener.class);
     @Value("#{jobParameters['uuid']}")
     private String uuid;
 
@@ -45,7 +48,7 @@ public class ErrorFileWriterListener {
             fileWriter.append("\"\n");
             fileWriter.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error recording error", e);
             throw new RuntimeException(format("Error recording error: '%s'", e.getMessage()));
         }
     }

@@ -51,8 +51,7 @@ public class LocationHierarchyController implements RestControllerResourceProces
                 return wrap(locationRepository.findByLastModifiedDateTimeAfterAndTypeIn(CHSEntity.toDate(lastModifiedDateTime), addressLevelTypes, pageable));
             }
         } catch (Exception exception) {
-            exception.printStackTrace();
-            logger.error(exception.getMessage());
+            logger.error("Error getting locationHierarchy", exception);
             return wrap(new PageImpl<>(Collections.emptyList()));
         }
         return wrap(new PageImpl<>(Collections.emptyList()));

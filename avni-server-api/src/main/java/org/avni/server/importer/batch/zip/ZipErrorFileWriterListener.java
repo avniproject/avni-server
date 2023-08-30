@@ -1,7 +1,10 @@
 package org.avni.server.importer.batch.zip;
 
 import org.avni.server.importer.batch.model.BundleFile;
+import org.avni.server.importer.batch.sync.attributes.SyncAttributesJobListener;
 import org.avni.server.service.BulkUploadS3Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.annotation.OnSkipInWrite;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +22,8 @@ import static java.lang.String.format;
 public class ZipErrorFileWriterListener {
 
     private final BulkUploadS3Service bulkUploadS3Service;
+    private static final Logger logger = LoggerFactory.getLogger(ZipErrorFileWriterListener.class);
+
     @Value("#{jobParameters['uuid']}")
     private String uuid;
 
@@ -45,7 +50,7 @@ public class ZipErrorFileWriterListener {
             fileWriter.append("\"\n");
             fileWriter.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error recording error", e);
             throw new RuntimeException(format("Error recording error: '%s'", e.getMessage()));
         }
     }

@@ -55,7 +55,7 @@ public class SyncAttributesJobListener extends JobExecutionListenerSupport {
         } else {
             logger.info("Sync attribute job finished with status {}", jobExecution.getStatus());
             for (Throwable t : jobExecution.getAllFailureExceptions()) {
-                t.printStackTrace();
+                logger.info("Sync attribute job error", t);
             }
         }
     }

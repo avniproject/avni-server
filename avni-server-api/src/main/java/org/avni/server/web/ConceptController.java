@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.lang.String.format;
+
 
 @RestController
 public class ConceptController implements RestControllerResourceProcessor<Concept> {
@@ -129,7 +131,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
             existingConcept.setName(ReactAdminUtil.getVoidedName(existingConcept.getName(), existingConcept.getId()));
             conceptRepository.save(existingConcept);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(format("Error deleting concept: %s", conceptUUID), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.OK);

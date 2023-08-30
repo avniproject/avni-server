@@ -71,7 +71,7 @@ public class RuleController {
         try {
             ruleService.createOrUpdate(ruleRequests);
         } catch (ValidationException e) {
-            e.printStackTrace();
+            logger.info(String.format("Error creating rules for: %s", UserContextHolder.getUserContext().getOrganisation().getName()), e);
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return new ResponseEntity<>(HttpStatus.CREATED);

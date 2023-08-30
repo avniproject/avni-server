@@ -48,13 +48,12 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
                 exportS3Service.uploadFile(file, uuid);
                 logger.info("Uploaded Export Job file {} to s3", uuid.concat(ExportS3Service.FILE_NAME_EXTENSION));
             } catch (IOException e) {
-                logger.error("Export Job error in uploading file to S3");
-                e.printStackTrace();
+                logger.error("Export Job error in uploading file to S3", e);
             }
         } else {
             logger.info("Job finished with status {}", jobExecution.getStatus());
             for (Throwable t : jobExecution.getAllFailureExceptions()) {
-                t.printStackTrace();
+                logger.error("Error during job", t);
             }
         }
     }

@@ -5,9 +5,12 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.importer.batch.sync.attributes.SyncAttributesJobListener;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.OrganisationConfigRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,8 @@ import javax.transaction.Transactional;
 public class OrganisationConfigController implements RestControllerResourceProcessor<OrganisationConfig> {
     private final OrganisationConfigService organisationConfigService;
     private final AccessControlService accessControlService;
+    private static final Logger logger = LoggerFactory.getLogger(OrganisationConfigController.class);
+
 
     @Autowired
     public OrganisationConfigController(OrganisationConfigService organisationConfigService, AccessControlService accessControlService) {
@@ -53,7 +58,7 @@ public class OrganisationConfigController implements RestControllerResourceProce
                 organisationConfigService.updateOrganisationConfig(request, organisationConfig);
                 return new ResponseEntity<>(organisationConfig, HttpStatus.OK);
             } catch(Exception e) {
-                e.printStackTrace();
+                logger.error("Error updating organisationConfig", e);
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
         }

@@ -137,8 +137,7 @@ public class MediaController {
             URL s3FileUrl = s3Service.uploadImageFile(tempSourceFile, targetFilePath);
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3FileUrl.toString());
         } catch (Exception e) {
-            logger.error(format("Media upload failed.  file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()));
-            e.printStackTrace();
+            logger.error(format("Media upload failed.  file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Unable to upload media. %s", e.getMessage()));
         }
     }

@@ -40,10 +40,9 @@ public class UtilityController {
                 .map((String str) -> {
                     try {
                         return (String) invocable.invokeFunction("camelCase", str);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {//ignore
+                        return "";
                     }
-                    return "";
                 })
                 .collect(Collectors.toList());
     }
