@@ -44,7 +44,8 @@ public class RuleServiceEntityContractBuilder {
     }
 
     public ProgramEncounterContract toContract(ProgramEncounter programEncounter) {
-        logObject(programEncounter, "toContract::programEncounter::%s");
+        logObject(programEncounter.getEntityId(), "toContract::programEncounter::%s");
+        logObject(programEncounter.getProgramEnrolment().getId(), "toContract::programEnrolment::%s");
         return programEncounterConstructionService.programEnrolmentWrapperForMessageSchedule(programEncounter);
     }
 
