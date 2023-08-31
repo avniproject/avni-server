@@ -6,13 +6,14 @@ import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.domain.program.SubjectProgramEligibility;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SubjectProgramEligibilityService implements ScopeAwareService {
+public class SubjectProgramEligibilityService implements ScopeAwareService<SubjectProgramEligibility> {
 
     private final SubjectTypeRepository subjectTypeRepository;
     private final SubjectProgramEligibilityRepository subjectProgramEligibilityRepository;
@@ -32,7 +33,7 @@ public class SubjectProgramEligibilityService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<SubjectProgramEligibility> repository() {
         return subjectProgramEligibilityRepository;
     }
 }

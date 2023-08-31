@@ -41,18 +41,16 @@ import java.util.stream.Stream;
 import static org.springframework.data.jpa.domain.Specifications.where;
 
 @Service
-public class EncounterService implements ScopeAwareService {
+public class EncounterService implements ScopeAwareService<Encounter> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(EncounterService.class);
     @Autowired
     Bugsnag bugsnag;
-    private EncounterRepository encounterRepository;
-    private ObservationService observationService;
-    private IndividualRepository individualRepository;
-    private RuleFailureLogRepository ruleFailureLogRepository;
-    private EncounterTypeRepository encounterTypeRepository;
-    private FormMappingRepository formMappingRepository;
-    private EncounterSearchRepository encounterSearchRepository;
-    private FormMappingService formMappingService;
+    private final EncounterRepository encounterRepository;
+    private final ObservationService observationService;
+    private final IndividualRepository individualRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
+    private final EncounterSearchRepository encounterSearchRepository;
+    private final FormMappingService formMappingService;
     private final AccessControlService accessControlService;
 
     @Autowired
@@ -172,7 +170,7 @@ public class EncounterService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<Encounter> repository() {
         return encounterRepository;
     }
 

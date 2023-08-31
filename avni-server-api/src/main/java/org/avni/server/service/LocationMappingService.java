@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.ParentLocationMapping;
 import org.joda.time.DateTime;
 import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
@@ -10,9 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class LocationMappingService implements ScopeAwareService {
+public class LocationMappingService implements ScopeAwareService<ParentLocationMapping> {
 
-    private LocationMappingRepository locationMappingRepository;
+    private final LocationMappingRepository locationMappingRepository;
 
     @Autowired
     public LocationMappingService(LocationMappingRepository locationMappingRepository) {
@@ -26,7 +27,7 @@ public class LocationMappingService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<ParentLocationMapping> repository() {
         return locationMappingRepository;
     }
 

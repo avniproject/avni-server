@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-public class LocationService implements ScopeAwareService {
+public class LocationService implements ScopeAwareService<AddressLevel> {
 
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationRepository organisationRepository;
@@ -257,7 +257,7 @@ public class LocationService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<AddressLevel> repository() {
         return locationRepository;
     }
 
@@ -265,7 +265,7 @@ public class LocationService implements ScopeAwareService {
         Concept concept = formElement.getConcept();
         List<String> lowestLevelUuids = (List<String>) concept.getKeyValues().get(KeyType.lowestAddressLevelTypeUUIDs).getValue();
         List<AddressLevelType> lowestLevels = lowestLevelUuids.stream()
-                .map(uuid -> addressLevelTypeRepository.findByUuid(uuid))
+                .map(addressLevelTypeRepository::findByUuid)
                 .collect(Collectors.toList());
         if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
             String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);

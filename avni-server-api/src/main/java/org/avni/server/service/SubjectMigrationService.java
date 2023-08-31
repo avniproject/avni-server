@@ -14,18 +14,17 @@ import javax.transaction.Transactional;
 import java.util.Objects;
 
 @Service
-public class SubjectMigrationService implements ScopeAwareService {
-
+public class SubjectMigrationService implements ScopeAwareService<SubjectMigration> {
     private static org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
-    private EntityApprovalStatusRepository entityApprovalStatusRepository;
-    private SubjectMigrationRepository subjectMigrationRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private IndividualRepository individualRepository;
-    private EncounterRepository encounterRepository;
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    private ProgramEncounterRepository programEncounterRepository;
-    private GroupSubjectRepository groupSubjectRepository;
-    private AddressLevelService addressLevelService;
+    private final EntityApprovalStatusRepository entityApprovalStatusRepository;
+    private final SubjectMigrationRepository subjectMigrationRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final IndividualRepository individualRepository;
+    private final EncounterRepository encounterRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
+    private final ProgramEncounterRepository programEncounterRepository;
+    private final GroupSubjectRepository groupSubjectRepository;
+    private final AddressLevelService addressLevelService;
 
     @Autowired
     public SubjectMigrationService(EntityApprovalStatusRepository entityApprovalStatusRepository,
@@ -48,7 +47,7 @@ public class SubjectMigrationService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<SubjectMigration> repository() {
         return subjectMigrationRepository;
     }
 
