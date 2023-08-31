@@ -60,6 +60,6 @@ public class SubjectBuilder {
 
     public SubjectBuilder withMandatoryFieldsForNewEntity() {
         String s = UUID.randomUUID().toString();
-        return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now());
+        return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now()).withObservations(new ObservationCollection());
     }
 }

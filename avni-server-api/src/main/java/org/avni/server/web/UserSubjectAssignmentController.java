@@ -10,6 +10,8 @@ import org.avni.server.web.request.UserSubjectAssignmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -26,7 +28,7 @@ import java.util.LinkedHashMap;
 
 @RestController
 public class UserSubjectAssignmentController extends AbstractController<UserSubjectAssignment> implements RestControllerResourceProcessor<UserSubjectAssignment> {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserSubjectAssignmentController.class);
     private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     private final UserSubjectAssignmentService userSubjectAssignmentService;
     private final AccessControlService accessControlService;
@@ -76,10 +78,15 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     @RequestMapping(value = "/web/userSubjectAssignment", method = RequestMethod.POST)
     @Transactional
     ResponseEntity<?> save(@RequestBody UserSubjectAssignmentContract userSubjectAssignmentContract) {
-        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        userSubjectAssignmentService.save(userSubjectAssignmentContract, organisation);
-        return ResponseEntity.ok(userSubjectAssignmentContract);
+        try {
+            accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+            Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+            userSubjectAssignmentService.save(userSubjectAssignmentContract, organisation);
+            return ResponseEntity.ok(userSubjectAssignmentContract);
+        } catch (ValidationException validationException) {
+            logger.error("Failed to assign subject(s) to user", validationException);
+            return ResponseEntity.badRequest().body(validationException.getMessage());
+        }
     }
 
     @Override

@@ -1,12 +1,10 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.GroupSubjectRepository;
-import org.avni.server.dao.IndividualRepository;
-import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.UserSubjectAssignmentRepository;
+import org.avni.server.dao.*;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserSubjectAssignment;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.factory.TestOrganisationBuilder;
 import org.avni.server.domain.factory.UserBuilder;
@@ -24,8 +22,7 @@ import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class UserSubjectAssignmentServiceTest {
@@ -46,10 +43,10 @@ public class UserSubjectAssignmentServiceTest {
     @Mock
     private IndividualRelationshipService individualRelationshipService;
     @Captor
-    ArgumentCaptor<List<UserSubjectAssignment>> userSubjectAssignmentCaptor;
+    ArgumentCaptor<UserSubjectAssignment> userSubjectAssignmentCaptor;
 
     @Test
-    public void assigningSubjectShouldAssignMemberSubjects() {
+    public void assigningSubjectShouldAssignMemberSubjects() throws ValidationException {
         initMocks(this);
 
         UserSubjectAssignmentService userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService);
@@ -65,9 +62,8 @@ public class UserSubjectAssignmentServiceTest {
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).build());
 
         userSubjectAssignmentService.save(userSubjectAssignmentContract, organisation);
-        verify(userSubjectAssignmentRepository).saveAll(userSubjectAssignmentCaptor.capture());
-        List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getValue();
-        assertEquals(usa.size(), 2);
+        verify(userSubjectAssignmentRepository, times(2)).save(userSubjectAssignmentCaptor.capture());
+        List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getAllValues();
         assertEquals(usa.get(0).getUser().getId().longValue(), 1l);
         assertEquals(usa.get(1).getUser().getId().longValue(), 1l);
     }

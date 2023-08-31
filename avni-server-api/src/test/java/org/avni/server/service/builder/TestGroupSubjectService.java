@@ -17,8 +17,8 @@ public class TestGroupSubjectService {
     }
 
     public GroupSubject save(GroupSubject groupSubject) {
-        groupSubject.setMemberSubjectAddressId(groupSubject.getMemberSubjectAddressId());
-        groupSubject.setGroupSubjectAddressId(groupSubject.getGroupSubjectAddressId());
+        groupSubject.setMemberSubjectAddressId(groupSubject.getMemberSubject().getAddressLevel().getId());
+        groupSubject.setGroupSubjectAddressId(groupSubject.getGroupSubject().getAddressLevel().getId());
         ObservationCollection observations = groupSubject.getGroupSubject().getObservations();
         if (observations != null) {
             SubjectType subjectType = groupSubject.getGroupSubject().getSubjectType();

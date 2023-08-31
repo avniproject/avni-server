@@ -27,8 +27,8 @@ import java.util.List;
 
 @Component
 public class IndividualImporter extends Importer<IndividualRequest> {
-    private IndividualController individualController;
-    private static String ALIAS_CONCEPT_NAME_ADDRESS_TITLE = "ADDRESS_LEVEL_TITLE";
+    private final IndividualController individualController;
+    private static final String ALIAS_CONCEPT_NAME_ADDRESS_TITLE = "ADDRESS_LEVEL_TITLE";
 
     @Autowired
     public IndividualImporter(ConceptRepository conceptRepository, FormElementRepository formElementRepository, IndividualController individualController, UserRepository userRepository) {
