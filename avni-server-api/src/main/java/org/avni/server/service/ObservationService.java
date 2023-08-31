@@ -242,6 +242,7 @@ public class ObservationService {
     public ObservationModelContract constructObservation(ObservationContract observationContract) {
         logObject(observationContract, "constructObservation:::%s");
         Concept concept = conceptRepository.findByUuid(observationContract.getConcept().getUuid());
+        logObject(concept.getDataType(), "constructObservation::concept.getDataType()::%s");
         ObservationModelContract observationModelContract = new ObservationModelContract();
         Object value = observationContract.getValue();
         if (concept.getDataType().equals(ConceptDataType.QuestionGroup.toString())) {
