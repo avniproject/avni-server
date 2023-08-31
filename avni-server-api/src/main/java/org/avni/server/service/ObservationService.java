@@ -334,8 +334,6 @@ public class ObservationService {
                 observationContract.setValue(this.constructObservations(new ObservationCollection(values)));
             }
         } else {
-            logObject(entry.getValue(), "getObservationContract:entry.getValue():%s:::");
-            logObject(entry.getKey(), "getObservationContract:entry.getKey():%s:::");
             observationContract.setValue(entry.getValue());
         }
         return observationContract;
