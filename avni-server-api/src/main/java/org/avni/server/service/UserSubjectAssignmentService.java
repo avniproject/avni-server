@@ -128,7 +128,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
 
         for (Individual subject : subjectList) {
-            createUpdateAssignment(userSubjectAssignmentRequest.isVoided(), organisation, userSubjectAssignmentList, user, subject);
+            createUpdateAssignment(userSubjectAssignmentRequest.isVoided(), userSubjectAssignmentList, user, subject);
         }
         return this.saveAll(userSubjectAssignmentList);
     }
@@ -154,23 +154,19 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return userSubjectAssignmentRepository.save(userSubjectAssignment);
     }
 
-    private void createUpdateAssignment(boolean assignmentVoided, Organisation organisation, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
+    private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
         UserSubjectAssignment userSubjectAssignment;
-        Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserAndSubject(user, subject);
+        Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user, subject);
         if (userSubjectAssignmentOptional.isPresent()) {
             userSubjectAssignment = userSubjectAssignmentOptional.get();
         } else {
-            userSubjectAssignment = new UserSubjectAssignment();
-            userSubjectAssignment.assignUUID();
-            userSubjectAssignment.setUser(user);
-            userSubjectAssignment.setSubject(subject);
-            userSubjectAssignment.setOrganisationId(organisation.getId());
+            userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
         }
         userSubjectAssignment.setVoided(assignmentVoided);
         updateAuditForUserSubjectAssignment(userSubjectAssignment);
         if (subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
-            groupSubjects.forEach(groupSubject -> createUpdateAssignment(assignmentVoided, organisation, userSubjectAssignmentList, user, groupSubject.getMemberSubject()));
+            groupSubjects.forEach(groupSubject -> createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject()));
         }
         userSubjectAssignmentList.add(userSubjectAssignment);
     }

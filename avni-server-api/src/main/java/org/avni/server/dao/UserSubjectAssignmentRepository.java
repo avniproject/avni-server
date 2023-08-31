@@ -16,8 +16,8 @@ import java.util.Optional;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "userSubjectAssignment", path = "userSubjectAssignment", exported = false)
 public interface UserSubjectAssignmentRepository extends ReferenceDataRepository<UserSubjectAssignment> {
-
-    Optional<UserSubjectAssignment> findUserSubjectAssignmentByUserAndSubject(User user, Individual subject);
+    Optional<UserSubjectAssignment> findByUserAndSubjectAndIsVoidedFalse(User user, Individual subject);
+    Optional<UserSubjectAssignment> findBySubjectAndIsVoidedFalse(Individual subject);
 
     List<UserSubjectAssignment> findUserSubjectAssignmentBySubject_IdIn(List<Long> subjectIds);
     List<UserSubjectAssignment> findUserSubjectAssignmentByUserIsNotAndSubject_IdIn(User user, List<Long> subjectIds);
