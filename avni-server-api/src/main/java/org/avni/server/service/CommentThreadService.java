@@ -16,11 +16,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Service
-public class CommentThreadService implements ScopeAwareService {
-
-    private CommentThreadRepository commentThreadRepository;
-    private IndividualRepository individualRepository;
-    private SubjectTypeRepository subjectTypeRepository;
+public class CommentThreadService implements ScopeAwareService<CommentThread> {
+    private final CommentThreadRepository commentThreadRepository;
+    private final IndividualRepository individualRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
 
     @Autowired
     public CommentThreadService(CommentThreadRepository commentThreadRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
@@ -62,7 +61,7 @@ public class CommentThreadService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<CommentThread> repository() {
         return commentThreadRepository;
     }
 }

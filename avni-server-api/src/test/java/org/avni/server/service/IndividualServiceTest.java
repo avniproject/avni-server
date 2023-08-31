@@ -11,21 +11,17 @@ import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class IndividualServiceTest {
-
     @Mock
     private IndividualRepository individualRepository;
 
     private IndividualService individualService;
 
-    private ConceptService conceptService;
-
     @Before
     public void setUp() throws Exception {
         initMocks(this);
         individualService = new IndividualService(individualRepository,
-                null, null, null, null, null, null, conceptService, null);
+                null, null, null, null, null, null, null, null);
     }
-
 
     @Test
     public void shouldFindById() {

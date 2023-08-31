@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 
 @Service
-public class IndividualRelationshipService implements ScopeAwareService {
+public class IndividualRelationshipService implements ScopeAwareService<IndividualRelationship> {
 
     private final IndividualRelationshipRepository individualRelationshipRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -35,7 +35,7 @@ public class IndividualRelationshipService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<IndividualRelationship> repository() {
         return individualRelationshipRepository;
     }
 
