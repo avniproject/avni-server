@@ -237,7 +237,7 @@ public class ObservationService {
         Concept concept = conceptRepository.findByUuid(observationContract.getConcept().getUuid());
         ObservationModelContract observationModelContract = new ObservationModelContract();
         Object value = observationContract.getValue();
-        if (value instanceof ArrayList) {
+        if (concept.getDataType().equals(ConceptDataType.QuestionGroup.toString())) {
             if (((ArrayList<?>) value).get(0) instanceof ArrayList)
                 value = constructRepeatableQuestionGroupValue((List<List<ObservationContract>>) value);
             else
