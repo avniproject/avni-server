@@ -30,9 +30,6 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Value("${avni.blacklisted.urls-file}")
     private String avniBlacklistedUrlsFile;
 
-    @Value("${avni.csrf.enabled}")
-    private boolean csrfEnabled;
-
     @Autowired
     public ApiSecurity(AuthService authService) {
         this.authService = authService;
@@ -41,14 +38,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-        CsrfConfigurer<HttpSecurity> csrf = http.cors().and().csrf();
-        HttpSecurity httpSecurity;
-        if (csrfEnabled)
-            httpSecurity = csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and();
-        else
-            httpSecurity = csrf.disable();
-
-        httpSecurity
+        http.cors().and().csrf().ignoringAntMatchers("/api/**").csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and()
                 .formLogin().disable()
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()
