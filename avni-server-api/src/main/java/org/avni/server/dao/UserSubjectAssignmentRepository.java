@@ -20,6 +20,7 @@ public interface UserSubjectAssignmentRepository extends ReferenceDataRepository
     Optional<UserSubjectAssignment> findUserSubjectAssignmentByUserAndSubject(User user, Individual subject);
 
     List<UserSubjectAssignment> findUserSubjectAssignmentBySubject_IdIn(List<Long> subjectIds);
+    List<UserSubjectAssignment> findUserSubjectAssignmentByUserIsNotAndSubject_IdIn(User user, List<Long> subjectIds);
 
     boolean existsByUserAndIsVoidedTrueAndLastModifiedDateTimeGreaterThan(User user, Date lastModifiedDateTime);
 

@@ -34,7 +34,7 @@ public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
         return groupSubjectRepository;
     }
 
-    public GroupSubject save(GroupSubject groupSubject) {
+    public GroupSubject save(GroupSubject groupSubject) throws ValidationException {
         this.addSyncAttributes(groupSubject);
         return groupSubjectRepository.save(groupSubject);
     }

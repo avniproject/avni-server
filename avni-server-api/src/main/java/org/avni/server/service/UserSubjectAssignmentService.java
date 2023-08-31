@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 
 @Service
 public class UserSubjectAssignmentService implements NonScopeAwareService {
-
     private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     private final UserRepository userRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -123,7 +122,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return recordsMap;
     }
 
-    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) {
+    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) throws ValidationException {
         List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
         List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
@@ -131,7 +130,28 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         for (Individual subject : subjectList) {
             createUpdateAssignment(userSubjectAssignmentRequest.isVoided(), organisation, userSubjectAssignmentList, user, subject);
         }
-        return userSubjectAssignmentRepository.saveAll(userSubjectAssignmentList);
+        return this.saveAll(userSubjectAssignmentList);
+    }
+
+    public List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList) throws ValidationException {
+        List<UserSubjectAssignment> savedUSA = new ArrayList<>();
+        for (UserSubjectAssignment userSubjectAssignment : userSubjectAssignmentList) {
+            savedUSA.add(save(userSubjectAssignment));
+        }
+        return savedUSA;
+    }
+
+    public UserSubjectAssignment save(UserSubjectAssignment userSubjectAssignment) throws ValidationException {
+        if (!userSubjectAssignment.getSubject().getSubjectType().isGroup()) {
+            List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByMemberSubject(userSubjectAssignment.getSubject());
+            List<Long> directlyAssignableGroupIds = groupSubjects.stream().filter(groupSubject -> groupSubject.getGroupSubject().getSubjectType().isDirectlyAssignable()).map(groupSubject1 -> groupSubject1.getGroupSubject().getId()).collect(Collectors.toList());
+            List<UserSubjectAssignment> userSubjectAssignmentsForGroups = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserIsNotAndSubject_IdIn(userSubjectAssignment.getUser(), directlyAssignableGroupIds);
+            if (userSubjectAssignmentsForGroups.size() > 0) {
+                String subjectsAssignedToDifferentUser = userSubjectAssignmentsForGroups.stream().map(x -> x.getSubject().getUuid()).collect(Collectors.joining(","));
+                throw new ValidationException(String.format("This subject %s, is assigned to group(s) - %s who are not assigned to the same user", userSubjectAssignment.getSubject().getFullName(), subjectsAssignedToDifferentUser));
+            }
+        }
+        return userSubjectAssignmentRepository.save(userSubjectAssignment);
     }
 
     private void createUpdateAssignment(boolean assignmentVoided, Organisation organisation, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
