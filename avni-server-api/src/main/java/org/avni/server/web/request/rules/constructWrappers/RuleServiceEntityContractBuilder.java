@@ -1,9 +1,13 @@
 package org.avni.server.web.request.rules.constructWrappers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.domain.*;
 import org.avni.server.service.EntityApprovalStatusService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.web.request.rules.RulesContractWrapper.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,8 @@ public class RuleServiceEntityContractBuilder {
     private EntityApprovalStatusService entityApprovalStatusService;
     private ProgramEncounterConstructionService programEncounterConstructionService;
     private IndividualConstructionService individualConstructionService;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     public RuleServiceEntityContractBuilder(ObservationService observationService, EntityApprovalStatusService entityApprovalStatusService, ProgramEncounterConstructionService programEncounterConstructionService, IndividualConstructionService individualConstructionService) {
@@ -38,6 +44,7 @@ public class RuleServiceEntityContractBuilder {
     }
 
     public ProgramEncounterContract toContract(ProgramEncounter programEncounter) {
+        logObject(programEncounter, "toContract::programEncounter::%s");
         return programEncounterConstructionService.programEnrolmentWrapperForMessageSchedule(programEncounter);
     }
 
@@ -45,6 +52,16 @@ public class RuleServiceEntityContractBuilder {
         EncounterContract encounterContract = EncounterContract.fromEncounter(encounter, observationService, entityApprovalStatusService);
         encounterContract.setSubject(individualConstructionService.getSubjectInfo(encounter.getIndividual()));
         return encounterContract;
+    }
+
+    private void logObject(Object observationContract, String infoString) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String jsonString = objectMapper.writeValueAsString(observationContract);
+            logger.info(String.format(infoString, jsonString));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public RuleServerEntityContract toContract(String entityType, CHSEntity entity) {
