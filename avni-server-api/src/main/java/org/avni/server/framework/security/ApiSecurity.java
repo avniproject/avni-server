@@ -45,7 +45,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
         String policyDirectives = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com";
         http.headers().xssProtection().and().contentSecurityPolicy(policyDirectives);
 
-        CsrfConfigurer<HttpSecurity> csrf = http.cors().and().csrf();
+        CsrfConfigurer<HttpSecurity> csrf = http.headers().frameOptions().sameOrigin().and().csrf();
         HttpSecurity httpSecurity;
         if (csrfEnabled)
             httpSecurity = csrf.ignoringAntMatchers("/api/**").csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and();
