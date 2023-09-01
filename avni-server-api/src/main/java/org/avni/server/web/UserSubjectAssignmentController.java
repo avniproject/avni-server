@@ -81,7 +81,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
         try {
             accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
             Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-            userSubjectAssignmentService.save(userSubjectAssignmentContract, organisation);
+            userSubjectAssignmentService.save(userSubjectAssignmentContract);
             return ResponseEntity.ok(userSubjectAssignmentContract);
         } catch (ValidationException validationException) {
             logger.error("Failed to assign subject(s) to user", validationException);

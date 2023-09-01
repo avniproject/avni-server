@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
+import javax.persistence.EntityManager;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -61,7 +62,7 @@ public class UserSubjectAssignmentServiceTest {
         when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).build());
 
-        userSubjectAssignmentService.save(userSubjectAssignmentContract, organisation);
+        userSubjectAssignmentService.save(userSubjectAssignmentContract);
         verify(userSubjectAssignmentRepository, times(2)).save(userSubjectAssignmentCaptor.capture());
         List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getAllValues();
         assertEquals(usa.get(0).getUser().getId().longValue(), 1l);
