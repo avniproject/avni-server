@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class GroupSubjectService implements ScopeAwareService {
+public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
 
     private final GroupSubjectRepository groupSubjectRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -30,7 +30,7 @@ public class GroupSubjectService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<GroupSubject> repository() {
         return groupSubjectRepository;
     }
 

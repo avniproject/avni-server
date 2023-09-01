@@ -28,15 +28,14 @@ import java.util.stream.Stream;
 
 @Service
 public class GroupMessagingService {
-
     private static final Logger logger = LoggerFactory.getLogger(MessagingService.class);
     public static final String NON_STATIC_NAME_PARAMETER = "@name";
     public static final int CONTACT_MEMBER_PAGE_SIZE = 500;
-    private GlificMessageRepository glificMessageRepository;
-    private GlificContactRepository glificContactRepository;
-    private IndividualService individualService;
-    private UserService userService;
-    private Bugsnag bugsnag;
+    private final GlificMessageRepository glificMessageRepository;
+    private final GlificContactRepository glificContactRepository;
+    private final IndividualService individualService;
+    private final UserService userService;
+    private final Bugsnag bugsnag;
 
     @Autowired
     public GroupMessagingService(GlificMessageRepository glificMessageRepository,

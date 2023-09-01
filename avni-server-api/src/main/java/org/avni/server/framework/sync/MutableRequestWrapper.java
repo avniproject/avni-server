@@ -5,8 +5,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import java.util.*;
 
 public class MutableRequestWrapper extends HttpServletRequestWrapper {
-    private HttpServletRequest wrapped;
-
+    private final HttpServletRequest wrapped;
     private Map<String, String[]> parameterMap;
 
     public MutableRequestWrapper(HttpServletRequest wrapped) {

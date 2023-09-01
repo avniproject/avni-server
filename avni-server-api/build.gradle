@@ -83,6 +83,7 @@ dependencies {
     testCompile 'org.powermock:powermock-module-junit4:2.0.9'
     runtime("org.springframework.boot:spring-boot-properties-migrator")
     implementation 'org.apache.tika:tika-core:2.7.0'
+    compile 'org.owasp.encoder:encoder:1.2.3'
 }
 
 bootRun {

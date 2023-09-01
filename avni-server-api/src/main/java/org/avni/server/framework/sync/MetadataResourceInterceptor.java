@@ -15,8 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 @Component
 public class MetadataResourceInterceptor extends HandlerInterceptorAdapter {
-
-    private UserUtil userUtil;
+    private final UserUtil userUtil;
 
     @Autowired
     public MetadataResourceInterceptor(UserUtil userUtil) {

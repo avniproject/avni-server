@@ -41,6 +41,10 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
+
+        String policyDirectives = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com";
+        http.headers().xssProtection().and().contentSecurityPolicy(policyDirectives);
+
         CsrfConfigurer<HttpSecurity> csrf = http.cors().and().csrf();
         HttpSecurity httpSecurity;
         if (csrfEnabled)
