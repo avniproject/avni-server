@@ -20,6 +20,9 @@ public class AuthDetailsController {
     @Value("${avni.idp.type}")
     private IdpType idpType;
 
+    @Value("${avni.webapp.timeout.in.minutes}")
+    private int webAppTimeoutInMinutes;
+
     @Autowired
     public AuthDetailsController(AvniKeycloakConfig avniKeycloakConfig, AdapterConfig adapterConfig, CognitoConfig cognitoConfig) {
         this.avniKeycloakConfig = avniKeycloakConfig;
@@ -40,20 +43,23 @@ public class AuthDetailsController {
         String keycloakAuthServerUrl = adapterConfig.getAuthServerUrl();
         String cognitoConfigPoolId = cognitoConfig.getPoolId();
         String cognitoConfigClientId = cognitoConfig.getClientId();
-        return new AuthDetailsController.CompositeIDPDetails(keycloakAuthServerUrl, keycloakClientId,
-                keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId, cognitoConfigClientId, idpType);
+        return new AuthDetailsController.CompositeIDPDetails( keycloakAuthServerUrl, keycloakClientId,
+                keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId,
+                cognitoConfigClientId, idpType, webAppTimeoutInMinutes);
     }
 
     public static class CompositeIDPDetails {
+        private final GenericConfig genericConfig;
         private final IdpType idpType;
         private final Keycloak keycloak;
         private final Cognito cognito;
 
-        public CompositeIDPDetails(String authServerUrl, String keycloakClientId, String grantType, String scope, String keycloakRealm,
-                                   String poolId, String clientId, IdpType idpType) {
+        public CompositeIDPDetails( String authServerUrl, String keycloakClientId, String grantType, String scope, String keycloakRealm,
+                                   String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes) {
             this.idpType = idpType;
             this.keycloak = new Keycloak(authServerUrl, keycloakClientId, grantType, scope, keycloakRealm);
             this.cognito = new Cognito(poolId, clientId);
+            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes);
         }
 
         public Keycloak getKeycloak() {
@@ -66,6 +72,10 @@ public class AuthDetailsController {
 
         public IdpType getIdpType() {
             return idpType;
+        }
+
+        public GenericConfig getGenericConfig() {
+            return genericConfig;
         }
 
         public class Keycloak {
@@ -119,6 +129,18 @@ public class AuthDetailsController {
 
             public String getClientId() {
                 return clientId;
+            }
+        }
+
+        public static class GenericConfig {
+            private final int webAppTimeoutInMinutes;
+
+            public GenericConfig(int webAppTimeoutInMinutes) {
+                this.webAppTimeoutInMinutes = webAppTimeoutInMinutes;
+            }
+
+            public int getWebAppTimeoutInMinutes() {
+                return webAppTimeoutInMinutes;
             }
         }
     }
