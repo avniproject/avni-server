@@ -11,12 +11,14 @@ import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.UserSubjectAssignmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
+import org.hibernate.Session;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
@@ -122,7 +124,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return recordsMap;
     }
 
-    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) throws ValidationException {
+    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest) throws ValidationException {
         List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
         List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
@@ -151,7 +153,9 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                 throw new ValidationException(String.format("This subject %s, is assigned to group(s) - %s who are not assigned to the same user", userSubjectAssignment.getSubject().getFullName(), subjectsAssignedToDifferentUser));
             }
         }
-        return userSubjectAssignmentRepository.save(userSubjectAssignment);
+        userSubjectAssignmentRepository.save(userSubjectAssignment);
+        updateAuditForUserSubjectAssignment(userSubjectAssignment);
+        return userSubjectAssignment;
     }
 
     private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
@@ -163,7 +167,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
         }
         userSubjectAssignment.setVoided(assignmentVoided);
-        updateAuditForUserSubjectAssignment(userSubjectAssignment);
         if (subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
             groupSubjects.forEach(groupSubject -> createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject()));
@@ -176,10 +179,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         triggerSyncForSubjectAndItsChildrenForUser(userSubjectAssignment.getSubject(), userSubjectAssignment.getUser());
     }
 
-    /**
-     * The sync uses last modified date time of assignment and updating audit values is not required. This has not been removed yet as this is harmless mostly to have these. But if this code starts giving trouble we should remove it.
-     */
-    @Deprecated
     private void triggerSyncForSubjectAndItsChildrenForUser(Individual individual, User user) {
         individual.updateAudit();
         individual.getProgramEnrolments()
@@ -188,6 +187,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                 .forEach(CHSEntity::updateAudit);
         individual.getEncounters()
                 .forEach(CHSEntity::updateAudit);
+
         GroupPrivileges groupPrivileges = privilegeService.getGroupPrivileges(user);
         checklistService.findChecklistsByIndividual(individual)
                 .stream()

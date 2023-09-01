@@ -37,7 +37,7 @@ public interface ChecklistRepository extends TransactionalDataRepository<Checkli
             List<Predicate> predicates = new ArrayList<>();
             Join<Checklist, ProgramEnrolment> programEnrolmentJoin = root.join("programEnrolment");
             predicates.add(cb.equal(root.get("checklistDetail").get("id"), syncParameters.getTypeId()));
-            addSyncStrategyPredicates(syncParameters, cb, predicates, programEnrolmentJoin, query);
+            addSyncStrategyPredicates(syncParameters, cb, predicates, programEnrolmentJoin);
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

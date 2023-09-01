@@ -436,4 +436,8 @@ public class IndividualService implements ScopeAwareService<Individual> {
             ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
             : Optional.empty();
     }
+
+    public IndividualRepository getIndividualRepository() {
+        return individualRepository;
+    }
 }

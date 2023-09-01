@@ -3,7 +3,6 @@ package org.avni.server.web;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.UserSubjectAssignmentRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.TestUserSyncSettingsBuilder;
@@ -13,6 +12,7 @@ import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.*;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.IndividualService;
+import org.avni.server.service.UserSubjectAssignmentService;
 import org.avni.server.service.builder.*;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -27,6 +27,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertFalse;
@@ -47,8 +48,6 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
-    @Autowired
     private GroupRoleRepository groupRoleRepository;
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
@@ -66,6 +65,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestGroupSubjectService testGroupSubjectService;
     @Autowired
     private TestDataSetupService testDataSetupService;
+    @Autowired
+    private UserSubjectAssignmentService userSubjectAssignmentService;
 
     @Test
     public void sync() throws Exception {
@@ -128,7 +129,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual notAssigned = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(notAssigned).build());
 
-        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(testOrganisationData.getUser()).build());
+        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(testOrganisationData.getUser()).build());
 
         UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
         User user = userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testCatchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
@@ -181,20 +182,31 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertTrue(hasEntity(enrolmentAssigned, enrolments));
         assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
         // Standalone Subject
-        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(user).build());
-        Thread.sleep(1);
+        DateTime beforeSave = takeTimeBeforeOperation();
+        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(user).build());
+        subjectService.getIndividualRepository().save(notAssigned); // required because test is not running in transaction to modified individual is not saved yet
         Individual assignedNow = notAssigned;
-        subjects = getSubjects(st_DirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
-        assertTrue(hasEntity(assignedNow, subjects));
+        assertTrue(hasEntity(assignedNow, getSubjects(st_DirectAssignment, beforeSave)));
         ProgramEnrolment enrolmentAssignedNow = enrolmentNotAssigned;
-        enrolments = getEnrolments(p_DirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
-        assertTrue(hasEntity(enrolmentAssignedNow, enrolments));
+        assertTrue(hasEntity(enrolmentAssignedNow, getEnrolments(p_DirectAssignment, beforeSave)));
+        //// modify after assignment
+        assignedNow.setFirstName(UUID.randomUUID().toString());
+        beforeSave = takeTimeBeforeOperation();
+        subjectService.getIndividualRepository().save(assignedNow);
+        assertTrue(hasEntity(assignedNow, getSubjects(st_DirectAssignment, beforeSave)));
         // Group Subject
         Individual assignedGroupSubject = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(assigned).withGroup(assignedGroupSubject).build());
-        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(user).build());
+        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(user).build());
         groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
+    }
+
+    private DateTime takeTimeBeforeOperation() throws InterruptedException {
+        DateTime beforeSave;
+        beforeSave = DateTime.now();
+        Thread.sleep(1);
+        return beforeSave;
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {
