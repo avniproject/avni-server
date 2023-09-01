@@ -19,12 +19,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.rest.webmvc.PersistentEntityResource;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 
 import java.util.stream.Collectors;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+import static java.util.Collections.emptyList;
 
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = CustomJpaRepositoryImpl.class)
@@ -185,16 +188,16 @@ public class Avni {
             @Override
             public Resource<FormElement> process(Resource<FormElement> resource) {
                 FormElement formElement = resource.getContent();
-                resource.removeLinks();
-                resource.add(new Link(formElement.getFormElementGroup().getUuid(), "formElementGroupUUID"));
-                resource.add(new Link(formElement.getConcept().getUuid(), "conceptUUID"));
+                Resource<FormElement> newResource = new Resource<>(formElement, emptyList());
+                newResource.add(new Link(formElement.getFormElementGroup().getUuid(), "formElementGroupUUID"));
+                newResource.add(new Link(formElement.getConcept().getUuid(), "conceptUUID"));
                 if (formElement.getGroup() != null) {
-                    resource.add(new Link(formElement.getGroup().getUuid(), "groupQuestionUUID"));
+                    newResource.add(new Link(formElement.getGroup().getUuid(), "groupQuestionUUID"));
                 }
                 if (formElement.getDocumentation() != null) {
-                    resource.add(new Link(formElement.getDocumentation().getUuid(), "documentationUUID"));
+                    newResource.add(new Link(formElement.getDocumentation().getUuid(), "documentationUUID"));
                 }
-                return resource;
+                return newResource;
             }
         };
     }
