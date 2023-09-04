@@ -208,6 +208,14 @@ workflows:
         context: non-prod-deploy
         requires:
           - PERF_approve
+    - PROD_approve:
+        type: approval
+        requires:
+          - build
+    - PROD_deploy:
+        context: prod-deploy
+        requires:
+          - PROD_approve
 notify:
   webhooks:
   - url: https://webhooks.gitter.im/e/0fdffde721194986f2a0
