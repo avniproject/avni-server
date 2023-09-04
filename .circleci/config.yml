@@ -160,6 +160,14 @@ jobs:
       - deploy:
           hostname: "ssh.perf.avniproject.org"
 
+  PROD_deploy:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    working_directory: ~/
+    steps:
+      - deploy:
+          hostname: "ssh.prod.avniproject.org"
+
 workflows:
   version: 2
   test_and_build_and_deploy:
