@@ -6,6 +6,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.geo.Point;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.api.ApiSubjectRequest;
 import org.avni.server.web.request.api.RequestUtils;
@@ -235,10 +236,12 @@ public class SubjectApiController {
     }
 
     private void patchSubject(Individual subject, Map<String, Object> request) throws ValidationException {
-        SubjectType subjectType = null;
+        SubjectType subjectType;
         if (request.containsKey(SUBJECT_TYPE)) {
             subjectType = this.getSubjectType((String) request.get(SUBJECT_TYPE));
             subject.setSubjectType(subjectType);
+        } else {
+            subjectType = subject.getSubjectType();
         }
 
         if (request.containsKey(CommonFieldNames.EXTERNAL_ID)) {
@@ -259,7 +262,7 @@ public class SubjectApiController {
             setProfilePicture(subject, subjectType, (String) request.get(PROFILE_PICTURE));
 
         if (request.containsKey(REGISTRATION_DATE))
-            subject.setRegistrationDate(LocalDate.parse((String) request.get(REGISTRATION_DATE)));
+            subject.setRegistrationDate(DateTimeUtil.parseNullableDate(request.get(REGISTRATION_DATE)));
 
         if (request.containsKey(OBSERVATIONS))
             RequestUtils.patchObservations((Map<String, Object>) request.get(OBSERVATIONS), conceptRepository, subject.getObservations());

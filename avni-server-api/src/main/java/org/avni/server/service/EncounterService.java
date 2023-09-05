@@ -7,22 +7,21 @@ import org.avni.server.application.FormType;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.Encounter;
-import org.avni.server.domain.EncounterType;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.geo.Point;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.S;
+import org.avni.server.web.api.CommonFieldNames;
 import org.avni.server.web.api.EncounterSearchRequest;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EntityTypeContract;
+import org.avni.server.web.request.api.RequestUtils;
 import org.joda.time.DateTime;
 import org.avni.server.dao.individualRelationship.RuleFailureLogRepository;
-import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.rules.RulesContractWrapper.VisitSchedule;
-import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,14 +29,15 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.avni.server.web.request.api.ApiBaseEncounterRequest.*;
+import static org.avni.server.web.request.api.ApiSubjectRequest.OBSERVATIONS;
 import static org.springframework.data.jpa.domain.Specifications.where;
 
 @Service
@@ -54,10 +54,12 @@ public class EncounterService implements ScopeAwareService {
     private EncounterSearchRepository encounterSearchRepository;
     private FormMappingService formMappingService;
     private final AccessControlService accessControlService;
+    private ConceptRepository conceptRepository;
+    private MediaObservationService mediaObservationService;
 
     @Autowired
     public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterSearchRepository encounterSearchRepository, AccessControlService accessControlService
-            , FormMappingService formMappingService) {
+            , FormMappingService formMappingService, ConceptRepository conceptRepository, MediaObservationService mediaObservationService) {
         this.encounterRepository = encounterRepository;
         this.observationService = observationService;
         this.individualRepository = individualRepository;
@@ -65,6 +67,8 @@ public class EncounterService implements ScopeAwareService {
         this.encounterSearchRepository = encounterSearchRepository;
         this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
+        this.conceptRepository = conceptRepository;
+        this.mediaObservationService = mediaObservationService;
     }
 
     public EncounterContract getEncounterByUuid(String uuid) {
@@ -207,5 +211,61 @@ public class EncounterService implements ScopeAwareService {
     public FormMapping getFormMapping(Encounter encounter) {
         FormType formType = encounter.isCancelled() ? FormType.IndividualEncounterCancellation : FormType.Encounter;
         return formMappingService.findBy(encounter.getIndividual().getSubjectType(), null, encounter.getEncounterType(), formType);
+    }
+
+    public Encounter patchEncounter(Encounter encounter, Map<String, Object> request) throws ValidationException, IOException {
+        if (request.containsKey(ENCOUNTER_TYPE)) {
+            String encounterTypeName = (String) request.get(ENCOUNTER_TYPE);
+            EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
+            encounter.setEncounterType(encounterType);
+        }
+
+        String externalId = (String) request.get(EXTERNAL_ID);
+
+        if (StringUtils.hasLength(externalId)) {
+            encounter.setLegacyId(externalId.trim());
+        }
+
+        if (request.containsKey(ENCOUNTER_LOCATION))
+            encounter.setEncounterLocation(Point.fromMap((Map<String, Double>) request.get(ENCOUNTER_LOCATION)));
+
+        if (request.containsKey(CANCEL_LOCATION))
+            encounter.setCancelLocation(Point.fromMap((Map<String, Double>) request.get(CANCEL_LOCATION)));
+
+        if (request.containsKey(ENCOUNTER_DATE_TIME))
+            encounter.setEncounterDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(ENCOUNTER_DATE_TIME)));
+
+        if (request.containsKey(EARLIEST_SCHEDULED_DATE))
+            encounter.setEarliestVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(EARLIEST_SCHEDULED_DATE)));
+
+        if (request.containsKey(MAX_SCHEDULED_DATE)) {
+            encounter.setMaxVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(MAX_SCHEDULED_DATE)));
+        }
+
+        if (request.containsKey(CANCEL_DATE_TIME))
+            encounter.setCancelDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(CANCEL_DATE_TIME)));
+
+
+        if (request.containsKey(OBSERVATIONS)) {
+            Map<String, Object> observationsFromRequest = (Map<String, Object>) request.get(OBSERVATIONS);
+            RequestUtils.patchObservations(observationsFromRequest, conceptRepository, encounter.getObservations());
+        }
+
+        if (request.containsKey(CANCEL_OBSERVATIONS)) {
+            Map<String, Object> cancelObservationsFromRequest = (Map<String, Object>) request.get(CANCEL_OBSERVATIONS);
+            RequestUtils.patchObservations(cancelObservationsFromRequest, conceptRepository, encounter.getCancelObservations());
+        }
+
+        if (request.containsKey(CommonFieldNames.VOIDED))
+            encounter.setVoided((Boolean) request.get(CommonFieldNames.VOIDED));
+
+        encounter.validate();
+        Set<String> observationKeys = request.containsKey(OBSERVATIONS) ? ((Map<String, Object>) request.get(OBSERVATIONS)).keySet() : new HashSet<>();
+        mediaObservationService.patchMediaObservations(encounter.getObservations(), observationKeys);
+
+        Set<String> cancelObservationKeys = request.containsKey(CANCEL_OBSERVATIONS) ? ((Map<String, Object>) request.get(CANCEL_OBSERVATIONS)).keySet() : new HashSet<>();
+        mediaObservationService.patchMediaObservations(encounter.getCancelObservations(), cancelObservationKeys);
+
+        return save(encounter);
     }
 }

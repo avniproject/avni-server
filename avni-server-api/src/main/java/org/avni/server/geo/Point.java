@@ -21,6 +21,9 @@ public class Point implements Serializable, Cloneable {
     }
 
     public static Point fromMap(Map<String, Double> location) {
+        if (location == null)
+            return null;
+
         return new Point(location.get("X"), location.get("Y"));
     }
 
