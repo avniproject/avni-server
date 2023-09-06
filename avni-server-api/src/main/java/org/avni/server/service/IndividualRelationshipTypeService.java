@@ -32,7 +32,6 @@ public class IndividualRelationshipTypeService implements NonScopeAwareService {
         return relationshipTypes
                 .stream()
                 .map(IndividualRelationshipTypeContract::fromEntity)
-                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
