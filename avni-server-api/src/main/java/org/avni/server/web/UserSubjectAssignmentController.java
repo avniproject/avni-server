@@ -80,7 +80,6 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     ResponseEntity<?> save(@RequestBody UserSubjectAssignmentContract userSubjectAssignmentContract) {
         try {
             accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-            Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
             userSubjectAssignmentService.save(userSubjectAssignmentContract);
             return ResponseEntity.ok(userSubjectAssignmentContract);
         } catch (ValidationException validationException) {

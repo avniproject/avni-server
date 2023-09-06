@@ -11,13 +11,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "userSubjectAssignment", path = "userSubjectAssignment", exported = false)
 public interface UserSubjectAssignmentRepository extends ReferenceDataRepository<UserSubjectAssignment> {
-    Optional<UserSubjectAssignment> findByUserAndSubjectAndIsVoidedFalse(User user, Individual subject);
-    Optional<UserSubjectAssignment> findBySubjectAndIsVoidedFalse(Individual subject);
+    UserSubjectAssignment findByUserAndSubjectAndIsVoidedFalse(User user, Individual subject);
+    List<UserSubjectAssignment> findAllBySubjectAndIsVoidedFalse(Individual subject);
 
     List<UserSubjectAssignment> findUserSubjectAssignmentBySubject_IdIn(List<Long> subjectIds);
     List<UserSubjectAssignment> findUserSubjectAssignmentByUserIsNotAndSubject_IdIn(User user, List<Long> subjectIds);
@@ -48,4 +47,11 @@ public interface UserSubjectAssignmentRepository extends ReferenceDataRepository
 
     List<UserSubjectAssignment> findByOrganisationId(Long organisationId);
 
+    default UserSubjectAssignment saveUserSubjectAssignment(UserSubjectAssignment usa) {
+        synchronized (String.format("USA-%d-%d", usa.getSubject().getId(), usa.getUser().getId()).intern()) {
+            if (usa.isNew() && this.findByUserAndSubjectAndIsVoidedFalse(usa.getUser(), usa.getSubject()) != null)
+                throw new RuntimeException(String.format("Another assignment with same subject %s and user %s exists.", usa.getSubject().getUuid(), usa.getUser().getUsername()));
+            return this.save(usa);
+        }
+    }
 }

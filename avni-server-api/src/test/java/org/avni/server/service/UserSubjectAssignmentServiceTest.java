@@ -63,7 +63,7 @@ public class UserSubjectAssignmentServiceTest {
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).build());
 
         userSubjectAssignmentService.save(userSubjectAssignmentContract);
-        verify(userSubjectAssignmentRepository, times(2)).save(userSubjectAssignmentCaptor.capture());
+        verify(userSubjectAssignmentRepository, times(2)).saveUserSubjectAssignment(userSubjectAssignmentCaptor.capture());
         List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getAllValues();
         assertEquals(usa.get(0).getUser().getId().longValue(), 1l);
         assertEquals(usa.get(1).getUser().getId().longValue(), 1l);

@@ -11,7 +11,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.List;
 
 @Service
 public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
@@ -46,15 +46,16 @@ public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
 
     private void assignMemberToTheAssigneeOfGroup(GroupSubject groupSubject) {
         if (groupSubject.getGroupSubject().getSubjectType().isDirectlyAssignable()) {
-            Optional<UserSubjectAssignment> groupAssigment = userSubjectAssignmentRepository.findBySubjectAndIsVoidedFalse(groupSubject.getGroupSubject());
-            UserSubjectAssignment memberAssignment = userSubjectAssignmentRepository.findBySubjectAndIsVoidedFalse(groupSubject.getMemberSubject()).orElse(null);
-            if (groupAssigment.isPresent()) {
-                User userAssignedToGroup = groupAssigment.get().getUser();
+            List<UserSubjectAssignment> groupAssignments = userSubjectAssignmentRepository.findAllBySubjectAndIsVoidedFalse(groupSubject.getGroupSubject());
+            List<UserSubjectAssignment> memberAssignments = userSubjectAssignmentRepository.findAllBySubjectAndIsVoidedFalse(groupSubject.getMemberSubject());
+            for (UserSubjectAssignment groupAssignment : groupAssignments) {
+                User userAssignedToGroup = groupAssignment.getUser();
+                UserSubjectAssignment memberAssignment = memberAssignments.stream().filter(x -> x.getUser().equals(userAssignedToGroup)).findFirst().orElse(null);
                 if (memberAssignment == null) {
                     memberAssignment = UserSubjectAssignment.createNew(userAssignedToGroup, groupSubject.getMemberSubject());
                 }
                 memberAssignment.setUser(userAssignedToGroup);
-                userSubjectAssignmentRepository.save(memberAssignment);
+                userSubjectAssignmentRepository.saveUserSubjectAssignment(memberAssignment);
             }
         }
     }

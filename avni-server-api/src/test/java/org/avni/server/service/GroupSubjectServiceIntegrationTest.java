@@ -56,7 +56,7 @@ public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegr
         User user2 = userRepository.save(new UserBuilder().withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
 
         userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(group).withUser(user1).build());
-        GroupSubject groupSubject = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleInvolvingDirectAssignment).withMember(directlyAssignableMember).withGroup(group).build());
-        assertNotNull(userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user1, directlyAssignableMember).get());
+        testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleInvolvingDirectAssignment).withMember(directlyAssignableMember).withGroup(group).build());
+        assertNotNull(userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user1, directlyAssignableMember));
     }
 }
