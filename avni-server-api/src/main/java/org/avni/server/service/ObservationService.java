@@ -2,6 +2,8 @@ package org.avni.server.service;
 
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
+import org.avni.server.application.FormMapping;
+import org.avni.server.common.ValidationResult;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.dao.ConceptRepository;
@@ -35,14 +37,16 @@ public class ObservationService {
     private final LocationRepository locationRepository;
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final FormRepository formRepository;
+    private final EnhancedValidationService enhancedValidationService;
 
     @Autowired
-    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository) {
+    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository, Optional<EnhancedValidationService> enhancedValidationService) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.formRepository = formRepository;
+        this.enhancedValidationService = enhancedValidationService.orElse(null);
     }
 
     public ObservationCollection createObservations(List<ObservationRequest> observationRequests) {
@@ -68,6 +72,13 @@ public class ObservationService {
                 .collect(Collectors
                         .toConcurrentMap((it -> it.getKey().getUuid()), SimpleEntry::getValue, (oldVal, newVal) -> newVal));
         return new ObservationCollection(completedObservationRequests);
+    }
+
+    public ValidationResult validateObservationsAndDecisions(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) {
+        if (enhancedValidationService != null) {
+            return enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+        }
+        return ValidationResult.Success;
     }
 
     public ObservationCollection createObservationsFromDecisions(List<Decision> decisions) {
@@ -210,19 +221,38 @@ public class ObservationService {
     private void validate(SimpleEntry<Concept, Object> obsReqAsMap) {
         Concept question = obsReqAsMap.getKey();
         Object value = obsReqAsMap.getValue();
-        if (ConceptDataType.valueOf(question.getDataType()).equals(ConceptDataType.Coded)) {
+//        if (ConceptDataType.valueOf(question.getDataType()).equals(ConceptDataType.Coded)) {
             if (value instanceof Collection<?>) {
                 ((Collection<String>) value).forEach(vl -> validateAnswer(question, vl));
             } else {
-                validateAnswer(question, (String) value);
+                validateAnswer(question, value);
             }
-        }
+//        }
     }
 
-    private void validateAnswer(Concept question, String uuid) {
-        if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(uuid))) {
-            throw new IllegalArgumentException(String.format("Concept answer '%s' not found in Concept '%s'", uuid, question.getUuid()));
+    private void validateAnswer(Concept question, Object value) {
+        switch (ConceptDataType.valueOf(question.getDataType())) {
+            case Coded:
+                if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(value))) {
+                    throw new IllegalArgumentException(String.format("Concept answer '%s' not found in Concept '%s'", value, question.getUuid()));
+                }
+                break;
+            case Numeric:
+                try {
+                    Double.parseDouble(value.toString());
+                } catch (NumberFormatException numberFormatException) {
+                    throw  new IllegalArgumentException(String.format("Invalid value '%s' for Numeric field %s", value, question.getName()));
+                }
+            case Text:
+            case Date:
+            case DateTime:
+            case Duration:
+            case Time:
+            case Subject:
+            case Location:
+            case PhoneNumber:
         }
+
     }
 
     public List<ObservationModelContract> constructObservationModelContracts(ObservationCollection observationCollection) {

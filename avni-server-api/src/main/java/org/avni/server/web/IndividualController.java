@@ -330,7 +330,8 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     private Individual createIndividual(IndividualRequest individualRequest) {
-
+        Decisions decisions = individualRequest.getDecisions();
+        observationService.validateObservationsAndDecisions(individualRequest.getObservations(), decisions != null ? decisions.getRegistrationDecisions() : null, formMappingService.findForSubject(individualRequest.getSubjectTypeUUID()));
         ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());
         addObservationsFromDecisions(observations, individualRequest.getDecisions());
         this.markSubjectMigrationIfRequired(individualRequest, observations);

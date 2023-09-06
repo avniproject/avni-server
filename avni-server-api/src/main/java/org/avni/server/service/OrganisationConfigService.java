@@ -240,6 +240,10 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return isFeatureEnabled(OrganisationConfigSettingKey.enableMessaging.name());
     }
 
+    public boolean isFailOnValidationErrorEnabled() {
+        return isFeatureEnabled(OrganisationConfigSettingKey.failOnValidationError.name());
+    }
+
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return organisationConfigRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);

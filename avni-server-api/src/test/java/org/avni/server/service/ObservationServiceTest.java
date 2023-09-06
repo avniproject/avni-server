@@ -36,6 +36,8 @@ public class ObservationServiceTest {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     @Mock
     private FormRepository formRepository;
+    @Mock
+    private EnhancedValidationService enhancedValidationService;
 
     private ObservationService observationService;
 
@@ -44,7 +46,7 @@ public class ObservationServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, formRepository);
+        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, formRepository, Optional.of(enhancedValidationService));
     }
 
     @Test
