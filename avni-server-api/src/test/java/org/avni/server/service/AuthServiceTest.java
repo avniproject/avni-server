@@ -3,6 +3,7 @@ package org.avni.server.service;
 import com.auth0.jwk.SigningKeyNotFoundException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.avni.server.config.IdpType;
 import org.avni.server.dao.AccountAdminRepository;
 import org.avni.server.dao.OrganisationRepository;
@@ -61,6 +62,12 @@ public class AuthServiceTest {
     @Test (expected = AvniNoUserSessionException.class)
     public void shouldThrowExceptionIfUserNotFound() throws SigningKeyNotFoundException {
         when(cognitoAuthService.getUserFromToken("some token")).thenReturn(null);
+        authService.authenticateByToken("some token", null);
+    }
+
+    @Test (expected = AvniNoUserSessionException.class)
+    public void shouldThrowExceptionIfTokenExpired() throws SigningKeyNotFoundException {
+        when(cognitoAuthService.getUserFromToken("some token")).thenThrow(new TokenExpiredException("token expired"));
         authService.authenticateByToken("some token", null);
     }
 

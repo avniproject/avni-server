@@ -6,6 +6,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.Verification;
@@ -83,6 +84,9 @@ public abstract class BaseIAMService implements IAMAuthService {
         } catch (JWTDecodeException e) {
             logger.error("Could not decode token " + token, e);
             throw new RuntimeException(e);
+        } catch (TokenExpiredException tokenExpiredException) {
+            logger.error("Token expired: " + token);
+            throw tokenExpiredException;
         } catch (JWTVerificationException e) {
             logger.error("Could not verify token " + token, e);
             throw new RuntimeException(e);
