@@ -33,6 +33,9 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Value("${avni.csrf.enabled}")
     private boolean csrfEnabled;
 
+    @Value("${csp.allowed.hosts}")
+    private String cspAllowedHosts;
+
     @Autowired
     public ApiSecurity(AuthService authService) {
         this.authService = authService;
@@ -41,8 +44,13 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
-
-        String policyDirectives = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com";
+        /*
+         * Refer the following documents for CSP
+         * https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
+         * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+         * https://developer.mozilla.org/en-US/docs/Glossary/Fetch_directive
+         */
+        String policyDirectives = "default-src 'self' " + cspAllowedHosts + "; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com";
         http.headers().xssProtection().and().contentSecurityPolicy(policyDirectives);
 
         CsrfConfigurer<HttpSecurity> csrf = http.headers().frameOptions().sameOrigin().and().csrf();
