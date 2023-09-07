@@ -56,11 +56,10 @@ public class ObservationService {
                     Concept concept;
                     if (observationRequest.getConceptUUID() == null && observationRequest.getConceptName() != null) {
                         concept = conceptRepository.findByName(observationRequest.getConceptName());
-                        if (concept == null) {
-                            throw new NullPointerException(String.format("Concept with name=%s not found", observationRequest.getConceptName()));
+                        if (concept != null) {
+                            String conceptUUID = concept.getUuid();
+                            observationRequest.setConceptUUID(conceptUUID);
                         }
-                        String conceptUUID = concept.getUuid();
-                        observationRequest.setConceptUUID(conceptUUID);
                     } else {
                         concept = conceptRepository.findByUuid(observationRequest.getConceptUUID());
                     }
@@ -86,39 +85,34 @@ public class ObservationService {
         for (Decision decision : decisions) {
             String conceptName = decision.getName();
             Concept concept = conceptRepository.findByName(conceptName);
-            if (concept == null) {
-                throw new NullPointerException(String.format("Concept with name=%s not found", conceptName));
-            }
-            String conceptUUID = concept.getUuid();
-            String dataType = concept.getDataType();
-            Object value;
-            Object decisionValue = decision.getValue();
-            switch (ConceptDataType.valueOf(dataType)) {
-                case Coded: {
-                    //TODO: validate that value is part of the concept answers set.
-                    if (decisionValue instanceof Collection<?>) {
-                        List<String> array = (List) decisionValue;
-                        value = array.stream().map(answerConceptName -> {
+            if (concept != null) {
+                String conceptUUID = concept.getUuid();
+                String dataType = concept.getDataType();
+                Object value = null;
+                Object decisionValue = decision.getValue();
+                switch (ConceptDataType.valueOf(dataType)) {
+                    case Coded: {
+                        //TODO: validate that value is part of the concept answers set.
+                        if (decisionValue instanceof Collection<?>) {
+                            List<String> array = (List) decisionValue;
+                            value = array.stream().map(answerConceptName -> {
+                                Concept answerConcept = conceptRepository.findByName(answerConceptName);
+                                return answerConcept != null ? answerConcept.getUuid() : null;
+                            }).filter(Objects::nonNull).toArray();
+                        } else {
+                            String answerConceptName = (String) decisionValue;
                             Concept answerConcept = conceptRepository.findByName(answerConceptName);
-                            if (answerConcept == null)
-                                throw new NullPointerException(String.format("Answer concept with name=%s not found", answerConceptName));
-                            return answerConcept.getUuid();
-                        }).toArray();
-                    } else {
-                        String answerConceptName = (String) decisionValue;
-                        Concept answerConcept = conceptRepository.findByName(answerConceptName);
-                        if (answerConcept == null)
-                            throw new NullPointerException(String.format("Answer concept with name=%s not found", answerConceptName));
-                        value = answerConcept.getUuid();
+                            if (answerConcept != null) value = answerConcept.getUuid();
+                        }
+                        break;
                     }
-                    break;
+                    default: {
+                        value = decisionValue;
+                        break;
+                    }
                 }
-                default: {
-                    value = decisionValue;
-                    break;
-                }
+                observations.put(conceptUUID, value);
             }
-            observations.put(conceptUUID, value);
         }
         return new ObservationCollection(observations);
     }

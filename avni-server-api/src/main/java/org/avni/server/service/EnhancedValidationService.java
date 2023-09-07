@@ -44,7 +44,7 @@ public class EnhancedValidationService {
             .collect(Collectors.toList());
 
         if (!nonMatchingConceptUuids.isEmpty()) {
-            String errorMessage = String.format("Invalid concept uuids %s found for Form uuid: %s", String.join(", ", nonMatchingConceptUuids), formMapping.getFormUuid());
+            String errorMessage = String.format("Invalid concept uuids/names %s found for Form uuid: %s", String.join(", ", nonMatchingConceptUuids), formMapping.getFormUuid());
             ValidationException validationException = new ValidationException(errorMessage);
             bugsnag.notify(validationException);
             if (organisationConfigService.isFailOnValidationErrorEnabled()) {
@@ -60,7 +60,14 @@ public class EnhancedValidationService {
         List<String> conceptUuids = observationRequests
             .stream()
             .filter(observationRequest -> observationRequest.getConceptUUID() == null && observationRequest.getConceptName() != null)
-            .map(observationRequest -> conceptRepository.findByName(observationRequest.getConceptName()))
+            .map(observationRequest -> {
+                Concept concept = conceptRepository.findByName(observationRequest.getConceptName());
+                if (concept == null) {
+                    concept = new Concept();
+                    concept.setUuid(observationRequest.getConceptName());
+                }
+                return concept;
+            })
             .map(Concept::getUuid)
             .collect(Collectors.toList());
         conceptUuids.addAll(observationRequests
