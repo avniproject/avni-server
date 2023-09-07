@@ -18,6 +18,8 @@ plugins {
 }
 
 ext { springBootVersion = '2.0.0.RELEASE' }
+//todo: Remove when upgrading Spring version. This was introduced to use SameSiteCookies
+ext['tomcat.version'] = '9.0.80'
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
