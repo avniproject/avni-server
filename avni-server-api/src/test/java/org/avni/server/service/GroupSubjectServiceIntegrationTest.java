@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -57,6 +58,16 @@ public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegr
 
         userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(group).withUser(user1).build());
         testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleInvolvingDirectAssignment).withMember(directlyAssignableMember).withGroup(group).build());
+        assertNotNull(userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user1, directlyAssignableMember));
+
+
+        Individual group2 = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectType).withLocation(testCatchmentData.getAddressLevel1()).build());
+        Individual directlyAssignableMember2 = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withLocation(testCatchmentData.getAddressLevel1()).withSubjectType(memberSubjectType).build());
+        //previously voided entry of member assignment exists
+        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(group2).withUser(user1).build());
+        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(directlyAssignableMember2).withUser(user1).setVoided(true).build());
+
+        testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleInvolvingDirectAssignment).withMember(directlyAssignableMember).withGroup(group2).build());
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user1, directlyAssignableMember));
     }
 }

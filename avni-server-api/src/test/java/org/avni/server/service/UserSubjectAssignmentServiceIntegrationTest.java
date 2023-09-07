@@ -12,9 +12,12 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestGroupSubjectService;
 import org.avni.server.service.builder.TestSubjectTypeService;
+import org.avni.server.web.request.UserSubjectAssignmentContract;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
+
+import java.util.Collections;
 
 import static org.junit.Assert.fail;
 
@@ -60,5 +63,26 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
         } catch (ValidationException ignored) {
         }
         userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(directlyAssignableMember).withUser(user1).build());
+    }
+
+    @Test
+    public void saveShouldUseTheSameEntityAndNotThrowUniqueConstrantException() throws ValidationException {
+        TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
+
+        SubjectType subjectType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).build());
+        User user1 = userRepository.save(new UserBuilder().withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
+        Individual subject = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(testCatchmentData.getAddressLevel1()).build());
+        userSubjectAssignmentService.save(createContract(user1, subject, false));
+        userSubjectAssignmentService.save(createContract(user1, subject, true));
+        userSubjectAssignmentService.save(createContract(user1, subject, false));
+    }
+
+    private UserSubjectAssignmentContract createContract(User user1, Individual subject, boolean voided) {
+        UserSubjectAssignmentContract userSubjectAssignmentContract = new UserSubjectAssignmentContract();
+        userSubjectAssignmentContract.setUserId(user1.getId());
+        userSubjectAssignmentContract.setSubjectIds(Collections.singletonList(subject.getId()));
+        userSubjectAssignmentContract.setVoided(voided);
+        return userSubjectAssignmentContract;
     }
 }
