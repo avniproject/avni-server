@@ -153,13 +153,13 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                 throw new ValidationException(String.format("This subject %s, is member of group(s) - %s who are not assigned to the same user", userSubjectAssignment.getSubject().getFullName(), subjectsAssignedToDifferentUser));
             }
         }
-        userSubjectAssignmentRepository.saveUserSubjectAssignment(userSubjectAssignment);
+        userSubjectAssignmentRepository.save(userSubjectAssignment);
         updateAuditForUserSubjectAssignment(userSubjectAssignment);
         return userSubjectAssignment;
     }
 
     private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
-        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user, subject);
+        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubject(user, subject);
         if (userSubjectAssignment == null) {
             userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
         }
