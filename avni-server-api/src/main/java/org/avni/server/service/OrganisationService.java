@@ -283,7 +283,7 @@ public class OrganisationService {
     }
 
     public void addRelationShipTypeJson(ZipOutputStream zos) throws IOException {
-        List<IndividualRelationshipTypeContract> allRelationshipTypes = individualRelationshipTypeService.getAllRelationshipTypes();
+        List<IndividualRelationshipTypeContract> allRelationshipTypes = individualRelationshipTypeService.getAllRelationshipTypes(true);
         if (!allRelationshipTypes.isEmpty()) {
             addFileToZip(zos, "relationshipType.json", allRelationshipTypes);
         }

@@ -29,7 +29,7 @@ public class IndividualRelationshipTypeController {
     @GetMapping(value = "/web/relationshipType")
     @ResponseBody
     public List<IndividualRelationshipTypeContract> getAllIndividualRelationshipTypes() {
-        return individualRelationshipTypeService.getAllRelationshipTypes();
+        return individualRelationshipTypeService.getAllRelationshipTypes(false);
     }
 
     @PostMapping(value = "/web/relationshipType")

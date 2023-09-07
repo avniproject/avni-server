@@ -27,8 +27,11 @@ public class IndividualRelationshipTypeService implements NonScopeAwareService {
         this.individualRelationRepository = individualRelationRepository;
     }
 
-    public List<IndividualRelationshipTypeContract> getAllRelationshipTypes() {
-        List<IndividualRelationshipType> relationshipTypes = individualRelationshipTypeRepository.findAllByIsVoidedFalse();
+    public List<IndividualRelationshipTypeContract> getAllRelationshipTypes(boolean includeVoided) {
+        List<IndividualRelationshipType> relationshipTypes =
+                includeVoided ?
+                        individualRelationshipTypeRepository.findAll() :
+                        individualRelationshipTypeRepository.findAllByIsVoidedFalse();
         return relationshipTypes
                 .stream()
                 .map(IndividualRelationshipTypeContract::fromEntity)
