@@ -26,7 +26,7 @@ public class QueryRepositoryTest extends AbstractControllerIntegrationTest {
     @Qualifier("externalQueryJdbcTemplate")
     private NamedParameterJdbcTemplate externalQueryJdbcTemplate;
 
-    private CustomQueryRepository customQueryRepository = mock(CustomQueryRepository.class);
+    private final CustomQueryRepository customQueryRepository = mock(CustomQueryRepository.class);
 
     @Test
     public void shouldExpireInFiveSeconds() {

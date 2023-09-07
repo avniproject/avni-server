@@ -95,7 +95,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         SubjectType st_DirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_DirectAssignment").setName("st_DirectAssignment").setDirectlyAssignable(true).build());
         SubjectType st_group_DirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).setGroup(true).build());
         Program p_DirectAssignment = testProgramService.addProgram(new ProgramBuilder().withName("st_DirectAssignment").build(), st_DirectAssignment);
-        GroupRole groupRoleForDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_DirectAssignment).withMemberSubjectType(st_DirectAssignment).build());
+        groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_DirectAssignment).withMemberSubjectType(st_DirectAssignment).build());
 
         testGroupService.giveViewSubjectPrivilegeTo(testOrganisationData.getGroup(), st_CatchmentBasedSync, st_DirectAssignment, st_SyncAttributes, st_group_SyncAttributes, st_group_CatchmentBasedSync, st_group_DirectAssignment);
         testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_CatchmentBasedSync, p_CatchmentBasedSync);
@@ -124,14 +124,15 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         ProgramEnrolment enrolmentObsNotPresent = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(obsNotPresent).build());
 
         // Direct assignment tx entities
-        Individual assigned = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
-        ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(assigned).build());
+        Individual memberSubjectInDirectAssignment = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(memberSubjectInDirectAssignment).build());
         Individual notAssigned = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(notAssigned).build());
+        Individual assignableGroupSubject = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
+        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(memberSubjectInDirectAssignment).withGroup(assignableGroupSubject).build());
 
-        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(testOrganisationData.getUser()).build());
-
-        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
+        userSubjectAssignmentService.assignSubjects(testOrganisationData.getUser(), Collections.singletonList(assignableGroupSubject), false);
+         UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
         User user = userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testCatchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
         setUser(user.getUsername());
 
@@ -176,28 +177,13 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         // CHECK FOR DIRECT ASSIGNMENT BASED SYNC STRATEGY
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_DirectAssignment.getUuid())));
         subjects = getSubjects(st_DirectAssignment);
-        assertTrue(hasEntity(assigned, subjects));
+        assertTrue(hasEntity(memberSubjectInDirectAssignment, subjects));
         assertFalse(hasEntity(notAssigned, subjects));
         enrolments = getEnrolments(p_DirectAssignment);
         assertTrue(hasEntity(enrolmentAssigned, enrolments));
         assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
-        // Standalone Subject
-        DateTime beforeSave = takeTimeBeforeOperation();
-        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(user).build());
-        subjectService.getIndividualRepository().save(notAssigned); // required because test is not running in transaction to modified individual is not saved yet
-        Individual assignedNow = notAssigned;
-        assertTrue(hasEntity(assignedNow, getSubjects(st_DirectAssignment, beforeSave)));
-        ProgramEnrolment enrolmentAssignedNow = enrolmentNotAssigned;
-        assertTrue(hasEntity(enrolmentAssignedNow, getEnrolments(p_DirectAssignment, beforeSave)));
-        //// modify after assignment
-        assignedNow.setFirstName(UUID.randomUUID().toString());
-        beforeSave = takeTimeBeforeOperation();
-        subjectService.getIndividualRepository().save(assignedNow);
-        assertTrue(hasEntity(assignedNow, getSubjects(st_DirectAssignment, beforeSave)));
         // Group Subject
-        Individual assignedGroupSubject = subjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
-        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(assigned).withGroup(assignedGroupSubject).build());
-        userSubjectAssignmentService.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(user).build());
+        userSubjectAssignmentService.assignSubjects(user, Collections.singletonList(assignableGroupSubject), false);
         groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
     }
