@@ -47,9 +47,8 @@ public class IndividualRelationshipTypeService implements NonScopeAwareService {
                 .findByIndividualAIsToBAndIndividualBIsToA(aToB, bToA);
         if (individualRelationshipType == null) {
             individualRelationshipType = createIndividualRelationshipType(aToB, bToA, relationshipTypeContract.getUuid());
-        } else {
-            individualRelationshipType.setVoided(false);
         }
+        individualRelationshipType.setVoided(relationshipTypeContract.isVoided());
         return individualRelationshipTypeRepository.save(individualRelationshipType);
     }
 
