@@ -11,14 +11,12 @@ import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.UserSubjectAssignmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
-import org.hibernate.Session;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
@@ -40,12 +38,13 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     private final IndividualRelationshipService individualRelationshipService;
     private final GroupSubjectRepository groupSubjectRepository;
     private final GroupPrivilegeService privilegeService;
+    private final AvniMetaDataRuleService avniMetaDataRuleService;
 
     @Autowired
     public UserSubjectAssignmentService(UserSubjectAssignmentRepository userSubjectAssignmentRepository, UserRepository userRepository,
                                         SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository,
                                         GroupRepository groupRepository, SubjectSearchRepository subjectSearchRepository,
-                                        ConceptRepository conceptRepository, IndividualRepository individualRepository, ChecklistService checklistService, ChecklistItemService checklistItemService, IndividualRelationshipService individualRelationshipService, GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService) {
+                                        ConceptRepository conceptRepository, IndividualRepository individualRepository, ChecklistService checklistService, ChecklistItemService checklistItemService, IndividualRelationshipService individualRelationshipService, GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService, AvniMetaDataRuleService avniMetaDataRuleService) {
         this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -59,6 +58,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         this.individualRelationshipService = individualRelationshipService;
         this.groupSubjectRepository = groupSubjectRepository;
         this.privilegeService = privilegeService;
+        this.avniMetaDataRuleService = avniMetaDataRuleService;
     }
 
     @Override
@@ -124,18 +124,24 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return recordsMap;
     }
 
-    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest) throws ValidationException {
-        List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
-        User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
+    public List<UserSubjectAssignment> assignSubjects(UserSubjectAssignmentContract userSubjectAssignmentRequest) throws ValidationException {
         List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
+        User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
+        return assignSubjects(user, subjectList, userSubjectAssignmentRequest.isVoided());
+    }
 
+    public List<UserSubjectAssignment> assignSubjects(User user, List<Individual> subjectList, boolean isVoided) throws ValidationException {
+        List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         for (Individual subject : subjectList) {
-            createUpdateAssignment(userSubjectAssignmentRequest.isVoided(), userSubjectAssignmentList, user, subject);
+            if (!avniMetaDataRuleService.isDirectAssignmentAllowedFor(subject.getSubjectType())) {
+                throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
+            }
+            createUpdateAssignment(isVoided, userSubjectAssignmentList, user, subject);
         }
         return this.saveAll(userSubjectAssignmentList);
     }
 
-    public List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList) throws ValidationException {
+    private List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList) throws ValidationException {
         List<UserSubjectAssignment> savedUSA = new ArrayList<>();
         for (UserSubjectAssignment userSubjectAssignment : userSubjectAssignmentList) {
             savedUSA.add(save(userSubjectAssignment));
@@ -144,15 +150,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     }
 
     public UserSubjectAssignment save(UserSubjectAssignment userSubjectAssignment) throws ValidationException {
-        if (!userSubjectAssignment.getSubject().getSubjectType().isGroup()) {
-            List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByMemberSubject(userSubjectAssignment.getSubject());
-            List<Long> directlyAssignableGroups = groupSubjects.stream().filter(groupSubject -> groupSubject.getGroupSubject().getSubjectType().isDirectlyAssignable()).map(groupSubject1 -> groupSubject1.getGroupSubject().getId()).collect(Collectors.toList());
-            List<UserSubjectAssignment> userSubjectAssignmentsForGroups = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserIsNotAndSubject_IdIn(userSubjectAssignment.getUser(), directlyAssignableGroups);
-            if (userSubjectAssignmentsForGroups.size() > 0) {
-                String subjectsAssignedToDifferentUser = userSubjectAssignmentsForGroups.stream().map(x -> x.getSubject().getUuid()).collect(Collectors.joining(","));
-                throw new ValidationException(String.format("This subject %s, is member of group(s) - %s who are not assigned to the same user", userSubjectAssignment.getSubject().getFullName(), subjectsAssignedToDifferentUser));
-            }
-        }
         userSubjectAssignmentRepository.save(userSubjectAssignment);
         updateAuditForUserSubjectAssignment(userSubjectAssignment);
         return userSubjectAssignment;

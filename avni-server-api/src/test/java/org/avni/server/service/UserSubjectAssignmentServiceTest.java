@@ -18,7 +18,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 
-import javax.persistence.EntityManager;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -45,12 +44,14 @@ public class UserSubjectAssignmentServiceTest {
     private IndividualRelationshipService individualRelationshipService;
     @Captor
     ArgumentCaptor<UserSubjectAssignment> userSubjectAssignmentCaptor;
+    @Mock
+    private AvniMetaDataRuleService avniMetaDataRuleService;
 
     @Test
     public void assigningSubjectShouldAssignMemberSubjects() throws ValidationException {
         initMocks(this);
 
-        UserSubjectAssignmentService userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService);
+        UserSubjectAssignmentService userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, avniMetaDataRuleService);
         UserSubjectAssignmentContract userSubjectAssignmentContract = new UserSubjectAssignmentContract();
         userSubjectAssignmentContract.setSubjectIds(Collections.singletonList(1l));
         userSubjectAssignmentContract.setUserId(1l);
@@ -61,8 +62,9 @@ public class UserSubjectAssignmentServiceTest {
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group).withMember(new SubjectBuilder().setId(2).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
         when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).build());
+        when(avniMetaDataRuleService.isDirectAssignmentAllowedFor(any())).thenReturn(true);
 
-        userSubjectAssignmentService.save(userSubjectAssignmentContract);
+        userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
         verify(userSubjectAssignmentRepository, times(2)).save(userSubjectAssignmentCaptor.capture());
         List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getAllValues();
         assertEquals(usa.get(0).getUser().getId().longValue(), 1l);

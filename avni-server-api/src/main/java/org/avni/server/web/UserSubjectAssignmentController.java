@@ -80,7 +80,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     ResponseEntity<?> save(@RequestBody UserSubjectAssignmentContract userSubjectAssignmentContract) {
         try {
             accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-            userSubjectAssignmentService.save(userSubjectAssignmentContract);
+            userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
             return ResponseEntity.ok(userSubjectAssignmentContract);
         } catch (ValidationException validationException) {
             logger.error("Failed to assign subject(s) to user", validationException);
