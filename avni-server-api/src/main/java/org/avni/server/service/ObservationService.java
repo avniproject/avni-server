@@ -67,7 +67,6 @@ public class ObservationService {
                 })
                 .filter(obsReqAsMap -> null != obsReqAsMap.getKey()
                         && !"null".equalsIgnoreCase(String.valueOf(obsReqAsMap.getValue())))
-                .peek(this::validate)
                 .collect(Collectors
                         .toConcurrentMap((it -> it.getKey().getUuid()), SimpleEntry::getValue, (oldVal, newVal) -> newVal));
         return new ObservationCollection(completedObservationRequests);
@@ -210,43 +209,6 @@ public class ObservationService {
                 .filter(programEncounter -> this.getObservationValue(concept, programEncounter.getObservations()) != null)
                 .findFirst().orElse(null);
         return getObservationValue(encounterWithObs, concept);
-    }
-
-    private void validate(SimpleEntry<Concept, Object> obsReqAsMap) {
-        Concept question = obsReqAsMap.getKey();
-        Object value = obsReqAsMap.getValue();
-//        if (ConceptDataType.valueOf(question.getDataType()).equals(ConceptDataType.Coded)) {
-            if (value instanceof Collection<?>) {
-                ((Collection<String>) value).forEach(vl -> validateAnswer(question, vl));
-            } else {
-                validateAnswer(question, value);
-            }
-//        }
-    }
-
-    private void validateAnswer(Concept question, Object value) {
-        switch (ConceptDataType.valueOf(question.getDataType())) {
-            case Coded:
-                if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(value))) {
-                    throw new IllegalArgumentException(String.format("Concept answer '%s' not found in Concept '%s'", value, question.getUuid()));
-                }
-                break;
-            case Numeric:
-                try {
-                    Double.parseDouble(value.toString());
-                } catch (NumberFormatException numberFormatException) {
-                    throw  new IllegalArgumentException(String.format("Invalid value '%s' for Numeric field %s", value, question.getName()));
-                }
-            case Text:
-            case Date:
-            case DateTime:
-            case Duration:
-            case Time:
-            case Subject:
-            case Location:
-            case PhoneNumber:
-        }
-
     }
 
     public List<ObservationModelContract> constructObservationModelContracts(ObservationCollection observationCollection) {
