@@ -5,7 +5,7 @@ import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.rest.RestControllerErrorResponse;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.util.Bugsnag;
+import org.avni.server.util.BugsnagReporter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ErrorInterceptors extends ResponseEntityExceptionHandler {
-    private Bugsnag bugsnag;
+    private BugsnagReporter bugsnagReporter;
 
     class ApiError {
         private String field;
@@ -55,8 +55,8 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     }
 
     @Autowired
-    public ErrorInterceptors(Bugsnag bugsnag) {
-        this.bugsnag = bugsnag;
+    public ErrorInterceptors(BugsnagReporter bugsnagReporter) {
+        this.bugsnagReporter = bugsnagReporter;
     }
 
     @Override
@@ -72,7 +72,7 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     }
 
     private ResponseEntity <RestControllerErrorResponse> error(final Exception exception, final HttpStatus httpStatus) {
-        bugsnag.logAndReportToBugsnag(exception);
+        bugsnagReporter.logAndReportToBugsnag(exception);
         final String message = Optional.ofNullable(exception.getMessage()).orElse(exception.getClass().getSimpleName());
         return new ResponseEntity(new RestControllerErrorResponse(message), httpStatus);
     }
@@ -90,14 +90,14 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
         } else if (e instanceof InvalidFormatException || e instanceof HttpMessageConversionException) {
             return error(e, HttpStatus.BAD_REQUEST);
         } else {
-            bugsnag.logAndReportToBugsnag(e);
+            bugsnagReporter.logAndReportToBugsnag(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        bugsnag.logAndReportToBugsnag(ex);
+        bugsnagReporter.logAndReportToBugsnag(ex);
         return super.handleExceptionInternal(ex, body, headers, status, request);
     }
 }

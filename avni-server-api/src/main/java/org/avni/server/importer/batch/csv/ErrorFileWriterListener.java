@@ -2,7 +2,7 @@ package org.avni.server.importer.batch.csv;
 
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.BulkUploadS3Service;
-import org.avni.server.util.Bugsnag;
+import org.avni.server.util.BugsnagReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.annotation.OnSkipInWrite;
@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
@@ -23,13 +21,13 @@ public class ErrorFileWriterListener {
 
     private final BulkUploadS3Service bulkUploadS3Service;
     private static final Logger logger = LoggerFactory.getLogger(ErrorFileWriterListener.class);
-    private Bugsnag bugsnag;
+    private BugsnagReporter bugsnagReporter;
     @Value("#{jobParameters['uuid']}")
     private String uuid;
 
-    public ErrorFileWriterListener(BulkUploadS3Service bulkUploadS3Service, Bugsnag bugsnag) {
+    public ErrorFileWriterListener(BulkUploadS3Service bulkUploadS3Service, BugsnagReporter bugsnagReporter) {
         this.bulkUploadS3Service = bulkUploadS3Service;
-        this.bugsnag = bugsnag;
+        this.bugsnagReporter = bugsnagReporter;
     }
 
     @OnSkipInWrite
@@ -39,7 +37,7 @@ public class ErrorFileWriterListener {
 
     public void appendToErrorFile(Row item, Throwable t) {
         try {
-            bugsnag.logAndReportToBugsnag(t);
+            bugsnagReporter.logAndReportToBugsnag(t);
             FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
             fileWriter.append(item.toString());
             fileWriter.append(",\"");
