@@ -41,7 +41,7 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
     private TestGroupSubjectService testGroupSubjectService;
 
     @Test
-    public void assignAllMemberSubjectsOnGroupAssignment___disallow_Member_Subject_To_Be_Assigned_To_User_Other_Than_One_Assigned_To_Group() throws ValidationException {
+    public void assignAllMemberSubjectsOnGroupAssignment___disallow_Member_Subject_To_Be_Assigned_Without_GroupSubject() throws ValidationException {
         TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
 
