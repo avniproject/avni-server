@@ -2,6 +2,8 @@ package org.avni.server.service;
 
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
+import org.avni.server.application.FormMapping;
+import org.avni.server.common.ValidationResult;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.dao.ConceptRepository;
@@ -35,14 +37,16 @@ public class ObservationService {
     private final LocationRepository locationRepository;
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final FormRepository formRepository;
+    private final EnhancedValidationService enhancedValidationService;
 
     @Autowired
-    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository) {
+    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository, Optional<EnhancedValidationService> enhancedValidationService) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.formRepository = formRepository;
+        this.enhancedValidationService = enhancedValidationService.orElse(null);
     }
 
     public ObservationCollection createObservations(List<ObservationRequest> observationRequests) {
@@ -52,11 +56,10 @@ public class ObservationService {
                     Concept concept;
                     if (observationRequest.getConceptUUID() == null && observationRequest.getConceptName() != null) {
                         concept = conceptRepository.findByName(observationRequest.getConceptName());
-                        if (concept == null) {
-                            throw new NullPointerException(String.format("Concept with name=%s not found", observationRequest.getConceptName()));
+                        if (concept != null) {
+                            String conceptUUID = concept.getUuid();
+                            observationRequest.setConceptUUID(conceptUUID);
                         }
-                        String conceptUUID = concept.getUuid();
-                        observationRequest.setConceptUUID(conceptUUID);
                     } else {
                         concept = conceptRepository.findByUuid(observationRequest.getConceptUUID());
                     }
@@ -64,10 +67,16 @@ public class ObservationService {
                 })
                 .filter(obsReqAsMap -> null != obsReqAsMap.getKey()
                         && !"null".equalsIgnoreCase(String.valueOf(obsReqAsMap.getValue())))
-                .peek(this::validate)
                 .collect(Collectors
                         .toConcurrentMap((it -> it.getKey().getUuid()), SimpleEntry::getValue, (oldVal, newVal) -> newVal));
         return new ObservationCollection(completedObservationRequests);
+    }
+
+    public ValidationResult validateObservationsAndDecisions(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) {
+        if (enhancedValidationService != null) {
+            return enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+        }
+        return ValidationResult.Success;
     }
 
     public ObservationCollection createObservationsFromDecisions(List<Decision> decisions) {
@@ -75,39 +84,34 @@ public class ObservationService {
         for (Decision decision : decisions) {
             String conceptName = decision.getName();
             Concept concept = conceptRepository.findByName(conceptName);
-            if (concept == null) {
-                throw new NullPointerException(String.format("Concept with name=%s not found", conceptName));
-            }
-            String conceptUUID = concept.getUuid();
-            String dataType = concept.getDataType();
-            Object value;
-            Object decisionValue = decision.getValue();
-            switch (ConceptDataType.valueOf(dataType)) {
-                case Coded: {
-                    //TODO: validate that value is part of the concept answers set.
-                    if (decisionValue instanceof Collection<?>) {
-                        List<String> array = (List) decisionValue;
-                        value = array.stream().map(answerConceptName -> {
+            if (concept != null) {
+                String conceptUUID = concept.getUuid();
+                String dataType = concept.getDataType();
+                Object value = null;
+                Object decisionValue = decision.getValue();
+                switch (ConceptDataType.valueOf(dataType)) {
+                    case Coded: {
+                        //TODO: validate that value is part of the concept answers set.
+                        if (decisionValue instanceof Collection<?>) {
+                            List<String> array = (List) decisionValue;
+                            value = array.stream().map(answerConceptName -> {
+                                Concept answerConcept = conceptRepository.findByName(answerConceptName);
+                                return answerConcept != null ? answerConcept.getUuid() : null;
+                            }).filter(Objects::nonNull).toArray();
+                        } else {
+                            String answerConceptName = (String) decisionValue;
                             Concept answerConcept = conceptRepository.findByName(answerConceptName);
-                            if (answerConcept == null)
-                                throw new NullPointerException(String.format("Answer concept with name=%s not found", answerConceptName));
-                            return answerConcept.getUuid();
-                        }).toArray();
-                    } else {
-                        String answerConceptName = (String) decisionValue;
-                        Concept answerConcept = conceptRepository.findByName(answerConceptName);
-                        if (answerConcept == null)
-                            throw new NullPointerException(String.format("Answer concept with name=%s not found", answerConceptName));
-                        value = answerConcept.getUuid();
+                            if (answerConcept != null) value = answerConcept.getUuid();
+                        }
+                        break;
                     }
-                    break;
+                    default: {
+                        value = decisionValue;
+                        break;
+                    }
                 }
-                default: {
-                    value = decisionValue;
-                    break;
-                }
+                observations.put(conceptUUID, value);
             }
-            observations.put(conceptUUID, value);
         }
         return new ObservationCollection(observations);
     }
@@ -205,24 +209,6 @@ public class ObservationService {
                 .filter(programEncounter -> this.getObservationValue(concept, programEncounter.getObservations()) != null)
                 .findFirst().orElse(null);
         return getObservationValue(encounterWithObs, concept);
-    }
-
-    private void validate(SimpleEntry<Concept, Object> obsReqAsMap) {
-        Concept question = obsReqAsMap.getKey();
-        Object value = obsReqAsMap.getValue();
-        if (ConceptDataType.valueOf(question.getDataType()).equals(ConceptDataType.Coded)) {
-            if (value instanceof Collection<?>) {
-                ((Collection<String>) value).forEach(vl -> validateAnswer(question, vl));
-            } else {
-                validateAnswer(question, (String) value);
-            }
-        }
-    }
-
-    private void validateAnswer(Concept question, String uuid) {
-        if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(uuid))) {
-            throw new IllegalArgumentException(String.format("Concept answer '%s' not found in Concept '%s'", uuid, question.getUuid()));
-        }
     }
 
     public List<ObservationModelContract> constructObservationModelContracts(ObservationCollection observationCollection) {

@@ -141,6 +141,8 @@ public class ProgramEncounterService implements ScopeAwareService {
         logger.info(String.format("Saving programEncounter with uuid %s", request.getUuid()));
         checkForSchedulingCompleteConstraintViolation(request);
         EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterType(), request.getEncounterTypeUUID());
+        Decisions decisions = request.getDecisions();
+        observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEncounterDecisions() : null, formMappingService.find(encounterType, FormType.ProgramEncounter));
         ProgramEncounter encounter = EntityHelper.newOrExistingEntity(programEncounterRepository, request, new ProgramEncounter());
         //Planned visit can not overwrite completed encounter
         if (encounter.isCompleted() && request.isPlanned())
@@ -163,7 +165,6 @@ public class ProgramEncounterService implements ScopeAwareService {
         if (cancelLocation != null)
             encounter.setCancelLocation(new Point(cancelLocation.getX(), cancelLocation.getY()));
 
-        Decisions decisions = request.getDecisions();
         if (decisions != null) {
             ObservationCollection observationsFromDecisions = observationService
                     .createObservationsFromDecisions(decisions.getEncounterDecisions());

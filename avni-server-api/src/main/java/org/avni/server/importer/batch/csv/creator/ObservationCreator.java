@@ -37,11 +37,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static org.avni.messaging.domain.Constants.PHONE_NUMBER_PATTERN;
 
 @Component
 public class ObservationCreator {
 
-    private static final String PHONE_NUMBER_PATTERN = "^[0-9]{10}";
     private static Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
     private AddressLevelTypeRepository addressLevelTypeRepository;
     private ConceptRepository conceptRepository;
