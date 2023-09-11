@@ -124,6 +124,8 @@ public class EncounterController extends AbstractController<Encounter> implement
         checkForSchedulingCompleteConstraintViolation(request);
 
         EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterType(), request.getEncounterTypeUUID());
+        Decisions decisions = request.getDecisions();
+        observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEncounterDecisions() : null, formMappingService.find(encounterType, FormType.Encounter));
         Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
         if (individual == null) {
             throw new IllegalArgumentException(String.format("Individual not found with UUID '%s'", request.getIndividualUUID()));
@@ -151,7 +153,6 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (cancelLocation != null)
             encounter.setCancelLocation(new Point(cancelLocation.getX(), cancelLocation.getY()));
 
-        Decisions decisions = request.getDecisions();
         if (decisions != null) {
             ObservationCollection observationsFromDecisions = observationService
                     .createObservationsFromDecisions(decisions.getEncounterDecisions());

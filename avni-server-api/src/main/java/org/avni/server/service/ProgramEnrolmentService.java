@@ -148,6 +148,8 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         } else {
             program = programRepository.findByUuid(request.getProgramUUID());
         }
+        Decisions decisions = request.getDecisions();
+        observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEnrolmentDecisions() : null, formMappingService.find(program, FormType.ProgramEnrolment));
         ProgramOutcome programOutcome = programOutcomeRepository.findByUuid(request.getProgramOutcomeUUID());
         ProgramEnrolment programEnrolment = EntityHelper.newOrExistingEntity(programEnrolmentRepository,request, new ProgramEnrolment());
         programEnrolment.setProgram(program);
@@ -163,7 +165,6 @@ public class ProgramEnrolmentService implements ScopeAwareService {
         programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
         programEnrolment.setProgramExitObservations(observationService.createObservations(request.getProgramExitObservations()));
 
-        Decisions decisions = request.getDecisions();
         if(decisions != null) {
             ObservationCollection observationsFromDecisions = observationService
                     .createObservationsFromDecisions(decisions.getEnrolmentDecisions());
