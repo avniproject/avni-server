@@ -50,7 +50,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
          * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
          * https://developer.mozilla.org/en-US/docs/Glossary/Fetch_directive
          */
-        String policyDirectives = "default-src 'self' " + cspAllowedHosts + "; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com";
+        String policyDirectives = "default-src 'self' " + cspAllowedHosts + "; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';";
         http.headers().xssProtection().and().contentSecurityPolicy(policyDirectives);
 
         CsrfConfigurer<HttpSecurity> csrf = http.headers().frameOptions().sameOrigin().and().csrf();
