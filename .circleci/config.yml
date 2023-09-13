@@ -101,8 +101,6 @@ jobs:
 
     - run: sudo apt-get install make openssl
 
-    - run: make build-server
-
     - run: make upload-rpm
 
     - save_cache:
