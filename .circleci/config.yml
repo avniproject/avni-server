@@ -101,6 +101,8 @@ jobs:
 
     - run: sudo apt-get install make openssl
 
+    - run: make build-server
+
     - run: make upload-rpm
 
     - save_cache:
@@ -118,12 +120,15 @@ jobs:
 
     - run: cp ~/avni-server/avni-server-api/build/distributions/avni-server-*.noarch.rpm ~/artifacts/;
 
+    - run: cp ~/avni-server/avni-server-api/build/libs/avni-server-*.jar ~/artifacts/;
+
     - persist_to_workspace:
         root: ~/artifacts
         paths:
         - minor_version
         - major_version
         - avni-server-*.noarch.rpm
+        - avni-server-*.jar
 
     - store_artifacts:
         path: ~/artifacts
