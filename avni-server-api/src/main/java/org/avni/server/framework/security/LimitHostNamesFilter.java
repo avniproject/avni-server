@@ -1,11 +1,14 @@
 package org.avni.server.framework.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.*;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -16,8 +19,8 @@ import static org.springframework.util.StringUtils.isEmpty;
 @Component
 @Order()
 public class LimitHostNamesFilter extends OncePerRequestFilter {
-
-    private String[] validHosts;
+    private final String[] validHosts;
+    private final Logger logger = LoggerFactory.getLogger(LimitHostNamesFilter.class);
 
     public LimitHostNamesFilter(@Value("${avni.web.validHosts}") String[] validHosts) {
         this.validHosts = validHosts;
@@ -30,7 +33,9 @@ public class LimitHostNamesFilter extends OncePerRequestFilter {
         if (isEmpty(errorMessage)) {
             filterChain.doFilter(request, response);
         } else {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            String msg = "Request rejected due to invalid host";
+            logger.warn(msg);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
         }
     }
 
@@ -43,7 +48,7 @@ public class LimitHostNamesFilter extends OncePerRequestFilter {
             return "Host header is empty";
         }
 
-        if (Arrays.stream(validHosts).noneMatch(validHost -> hostHeader.equalsIgnoreCase(validHost))) {
+        if (Arrays.stream(validHosts).noneMatch(hostHeader::equalsIgnoreCase)) {
             return "Incorrect host header";
         }
 
