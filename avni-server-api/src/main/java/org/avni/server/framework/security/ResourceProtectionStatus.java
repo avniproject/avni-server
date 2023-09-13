@@ -21,7 +21,8 @@ public class ResourceProtectionStatus {
             "/index.html",
             "/manifest.json",
             "/precache-manifest*",
-            "/service-worker.js"
+            "/service-worker.js",
+            "/ping"
     );
 
     public static boolean isProtected(HttpServletRequest request) {
