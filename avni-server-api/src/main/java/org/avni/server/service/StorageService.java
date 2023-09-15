@@ -39,7 +39,7 @@ public abstract class StorageService implements S3Service {
     protected final String bucketName;
     protected final boolean s3InDev;
     protected final Regions REGION = Regions.AP_SOUTH_1;
-    protected final long EXPIRY_DURATION = Duration.ofHours(1).toMillis();
+    protected final long EXPIRY_DURATION = Duration.ofMinutes(10).toMillis();
     protected final long DOWNLOAD_EXPIRY_DURATION = Duration.ofMinutes(2).toMillis();
     protected AmazonS3 s3Client;
     protected final Pattern mediaDirPattern = Pattern.compile("^/?(?<mediaDir>[^/]+)/.+$");
