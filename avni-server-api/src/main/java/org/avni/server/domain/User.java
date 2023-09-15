@@ -6,6 +6,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 import org.avni.server.web.validation.ValidationException;
+import org.owasp.encoder.Encode;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
