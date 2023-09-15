@@ -54,8 +54,6 @@ public class UserController {
 
     @Value("${avni.userPhoneNumberPattern}")
     private String MOBILE_NUMBER_PATTERN;
-
-    private final String NAME_PATTERN = "[a-zA-Z0-9 ]+";
     private final AccessControlService accessControlService;
 
     @Autowired
@@ -164,9 +162,6 @@ public class UserController {
         return phoneNumber.matches(MOBILE_NUMBER_PATTERN);
     }
 
-    private boolean nameIsValid(String name) {
-        return name.matches(NAME_PATTERN);
-    }
     private User setUserAttributes(User user, UserContract userContract) {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
@@ -176,11 +171,7 @@ public class UserController {
             throw new ValidationException(String.format("Invalid phone number %s", userContract.getPhoneNumber()));
         user.setPhoneNumber(userContract.getPhoneNumber());
 
-
-        if (!nameIsValid(userContract.getPhoneNumber()))
-            throw new ValidationException(String.format("Invalid name %s", userContract.getName()));
         user.setName(userContract.getName());
-
         if(userContract.getCatchmentId()!=null) {
             user.setCatchment(catchmentRepository.findOne(userContract.getCatchmentId()));
         }
