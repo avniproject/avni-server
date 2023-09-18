@@ -84,7 +84,7 @@ public class EnhancedValidationService {
         return ValidationResult.Success;
     }
 
-    private ValidationResult handleValidationFailure(String errorMessage) {
+    public ValidationResult handleValidationFailure(String errorMessage) {
         logger.error(String.format("ValidationError: %s", errorMessage));
         ValidationException validationException = new ValidationException(errorMessage);
         bugsnag.notify(validationException);
