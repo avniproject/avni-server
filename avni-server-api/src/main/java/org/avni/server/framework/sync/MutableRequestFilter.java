@@ -38,15 +38,26 @@ public class MutableRequestFilter implements Filter {
             super(request);
         }
 
+        private boolean isNotProtected() {
+            HttpServletRequest request = (HttpServletRequest) this.getRequest();
+            return request.getRequestURI().startsWith("/api");
+        }
+
         @Override
         public String getParameter(String name) {
             HttpServletRequest request = (HttpServletRequest) this.getRequest();
+            if (this.isNotProtected())
+                return super.getParameter(name);
+
             return Encode.forHtml(request.getParameter(name));
         }
 
         @Override
         public Map<String, String[]> getParameterMap() {
             Map<String, String[]> existingParameterMap = super.getParameterMap();
+            if (this.isNotProtected())
+                return existingParameterMap;
+
             if (existingParameterMap == null) return null;
 
             Map<String, String[]> newParameterMap = new HashMap<>();
@@ -59,7 +70,10 @@ public class MutableRequestFilter implements Filter {
         @Override
         public String[] getParameterValues(String name) {
             String[] existingValues = super.getParameterValues(name);
-            if (existingValues == null) return null;
+            if (this.isNotProtected())
+                return existingValues;
+
+        if (existingValues == null) return null;
 
             String[] newValues = new String[existingValues.length];
             for (int i = 0; i < existingValues.length; i++) {
