@@ -52,8 +52,10 @@ public class UserService implements NonScopeAwareService {
     public void addToDefaultUserGroup(User user) {
         if (user.getOrganisationId() != null) {
             Group group = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
-            UserGroup userGroup = UserGroup.createMembership(user, group);
-            userGroupRepository.save(userGroup);
+            if (userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group) == null) {
+                UserGroup userGroup = UserGroup.createMembership(user, group);
+                userGroupRepository.save(userGroup);
+            }
         }
     }
 
@@ -122,8 +124,10 @@ public class UserService implements NonScopeAwareService {
                 String errorMessage = String.format("Group '%s' not found", groupName);
                 throw new RuntimeException(errorMessage);
             }
-            UserGroup userGroup = UserGroup.createMembership(user, group);
-            this.userGroupRepository.save(userGroup);
+            if (userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group) == null) {
+                UserGroup userGroup = UserGroup.createMembership(user, group);
+                this.userGroupRepository.save(userGroup);
+            }
         });
         if (!Arrays.asList(groupNames).contains(Group.Everyone)) {
             this.addToDefaultUserGroup(user);
