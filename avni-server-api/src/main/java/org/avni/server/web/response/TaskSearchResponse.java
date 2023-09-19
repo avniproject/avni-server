@@ -8,19 +8,19 @@ import java.util.Map;
 public class TaskSearchResponse {
     private String name;
     private Long id;
-    private String createdOn;
+    private String createdDateTime;
     private String scheduledOn;
     private String completedOn;
-    private String status;
+    private String taskStatus;
     private String assignedTo;
-    private String type;
+    private String taskType;
     private Map<String, Object> metadata;
 
     public static TaskSearchResponse from(Task task, Map<String, Object> metadataMap) {
         TaskSearchResponse response = new TaskSearchResponse();
         response.setName(task.getName());
         response.setId(task.getId());
-        response.setCreatedOn(O.getDateInDbFormat(task.getCreatedDateTime().toDate()));
+        response.setCreatedDateTime(O.getDateInDbFormat(task.getCreatedDateTime().toDate()));
         response.setScheduledOn(O.getDateInDbFormat(task.getScheduledOn().toDate()));
         if (task.getCompletedOn() != null) {
             response.setCompletedOn(O.getDateInDbFormat(task.getCompletedOn().toDate()));
@@ -28,18 +28,18 @@ public class TaskSearchResponse {
         if (task.getAssignedTo() != null) {
             response.setAssignedTo(task.getAssignedTo().getName());
         }
-        response.setStatus(task.getTaskStatus().getName());
-        response.setType(task.getTaskType().getName());
+        response.setTaskStatus(task.getTaskStatus().getName());
+        response.setTaskType(task.getTaskType().getName());
         response.setMetadata(metadataMap);
         return response;
     }
 
-    public String getCreatedOn() {
-        return createdOn;
+    public String getCreatedDateTime() {
+        return createdDateTime;
     }
 
-    public void setCreatedOn(String createdOn) {
-        this.createdOn = createdOn;
+    public void setCreatedDateTime(String createdDateTime) {
+        this.createdDateTime = createdDateTime;
     }
 
     public String getCompletedOn() {
@@ -58,12 +58,12 @@ public class TaskSearchResponse {
         this.scheduledOn = scheduledOn;
     }
 
-    public String getStatus() {
-        return status;
+    public String getTaskStatus() {
+        return taskStatus;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setTaskStatus(String taskStatus) {
+        this.taskStatus = taskStatus;
     }
 
     public String getAssignedTo() {
@@ -82,12 +82,12 @@ public class TaskSearchResponse {
         this.metadata = metadata;
     }
 
-    public String getType() {
-        return type;
+    public String getTaskType() {
+        return taskType;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
     }
 
     public String getName() {
