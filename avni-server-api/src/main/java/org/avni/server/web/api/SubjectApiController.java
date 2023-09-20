@@ -123,8 +123,8 @@ public class SubjectApiController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
         mediaObservationService.processMediaObservations(subject.getObservations());
-        individualService.save(subject);
-        return new ResponseEntity<>(SubjectResponse.fromSubject(subject, true, conceptRepository, conceptService, s3Service), HttpStatus.OK);
+        Individual savedIndividual = individualService.save(subject);
+        return new ResponseEntity<>(SubjectResponse.fromSubject(savedIndividual, true, conceptRepository, conceptService, s3Service), HttpStatus.OK);
     }
 
     @PutMapping(value = "/api/subject/{id}")
@@ -162,8 +162,8 @@ public class SubjectApiController {
         }
         Set<String> observationKeys = request.containsKey(OBSERVATIONS) ? ((Map<String, Object>) request.get(OBSERVATIONS)).keySet() : new HashSet<>();
         mediaObservationService.patchMediaObservations(subject.getObservations(), observationKeys);
-        individualService.save(subject);
-        return new ResponseEntity<>(SubjectResponse.fromSubject(subject, true, conceptRepository, conceptService, s3Service), HttpStatus.OK);
+        Individual savedIndividual = individualService.save(subject);
+        return new ResponseEntity<>(SubjectResponse.fromSubject(savedIndividual, true, conceptRepository, conceptService, s3Service), HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/api/subject/{id}")
