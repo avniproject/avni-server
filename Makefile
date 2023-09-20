@@ -43,20 +43,20 @@ _drop_roles:
 	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c 'drop role organisation_user';
 
 _clean_db:
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$(database)' AND pid <> pg_backend_pid()"
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c 'drop database $(database)';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$(database)' AND pid <> pg_backend_pid()"
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres -c 'drop database $(database)';
 
 _build_db:
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c "create user openchs with password 'password' createrole";
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c 'create database $(database) with owner openchs';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d $(database) -c 'create extension if not exists "uuid-ossp"';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d $(database) -c 'create extension if not exists "ltree"';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d $(database) -c 'create extension if not exists "hstore"';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'grant demo to openchs';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'create role openchs_impl';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'grant openchs_impl to openchs';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'create role organisation_user createrole admin openchs_impl';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres -c "create user openchs with password 'password' createrole";
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres -c 'create database $(database) with owner openchs';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d $(database) -c 'create extension if not exists "uuid-ossp"';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d $(database) -c 'create extension if not exists "ltree"';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d $(database) -c 'create extension if not exists "hstore"';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres  -c 'grant demo to openchs';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres  -c 'create role openchs_impl';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres  -c 'grant openchs_impl to openchs';
+	-PGPASSWORD=postgres psql -h $(dbServer) -p $(dbPort) -U postgres -d postgres  -c 'create role organisation_user createrole admin openchs_impl';
 # </postgres>
 
 # <db>

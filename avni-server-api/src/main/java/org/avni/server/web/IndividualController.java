@@ -339,11 +339,11 @@ public class IndividualController extends AbstractController<Individual> impleme
         Individual individual = createIndividualWithoutObservations(individualRequest);
         individual.setObservations(observations);
 
-        individualService.save(individual);
-
+        Individual savedIndividual = individualService.save(individual);
         saveVisitSchedules(individualRequest);
-        saveIdentifierAssignments(individual, individualRequest);
-        return individual;
+        saveIdentifierAssignments(savedIndividual, individualRequest);
+
+        return savedIndividual;
     }
 
     private Individual createIndividualWithoutObservations(@RequestBody IndividualRequest individualRequest) {
