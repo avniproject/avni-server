@@ -1,2 +1,2 @@
-ALTER TABLE openchs.public.organisation_group
+ALTER TABLE organisation_group
     ADD COLUMN is_voided BOOLEAN NOT NULL DEFAULT FALSE;
