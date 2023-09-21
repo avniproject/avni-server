@@ -32,6 +32,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final SubjectTypeService subjectTypeService;
     private final ConceptService conceptService;
     private final Pattern compoundHeaderPattern;
+    private final ResetSyncService resetSyncService;
 
     @Autowired
     public UserAndCatchmentWriter(CatchmentService catchmentService,
@@ -40,7 +41,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
                                   UserRepository userRepository,
                                   OrganisationConfigService organisationConfigService,
                                   IdpServiceFactory idpServiceFactory,
-                                  SubjectTypeService subjectTypeService, ConceptService conceptService) {
+                                  SubjectTypeService subjectTypeService, ConceptService conceptService, ResetSyncService resetSyncService) {
         this.catchmentService = catchmentService;
         this.locationRepository = locationRepository;
         this.userService = userService;
@@ -49,6 +50,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         this.idpServiceFactory = idpServiceFactory;
         this.subjectTypeService = subjectTypeService;
         this.conceptService = conceptService;
+        this.resetSyncService = resetSyncService;
         this.compoundHeaderPattern = Pattern.compile("^(?<subjectTypeName>.*?)->(?<conceptName>.*)$");
     }
 
@@ -83,19 +85,19 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         User.validateUsername(username, userSuffix);
         User user = userRepository.findByUsername(username);
         User currentUser = userService.getCurrentUser();
-        if (user != null) {
-            user.setAuditInfo(currentUser);
-            userService.save(user);
-            return;
+        boolean isNewUser = false;
+        if (user == null) {
+            user = new User();
+            user.assignUUIDIfRequired();
+            user.setUsername(username);
+            isNewUser = true;
         }
-        user = new User();
-        user.assignUUIDIfRequired();
-        user.setUsername(username);
         User.validateEmail(email);
         user.setEmail(email);
         User.validatePhoneNumber(phoneNumber);
         user.setPhoneNumber(phoneNumber);
         user.setName(nameOfUser);
+        if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);
         user.setCatchment(catchment);
         user.setOperatingIndividualScope(ByCatchment);
         user.setSyncSettings(syncSettings);
@@ -111,7 +113,11 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setAuditInfo(currentUser);
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
-        idpServiceFactory.getIdpService(organisation).createUser(user, organisationConfigService.getOrganisationConfig(organisation));
+        if (isNewUser) {
+            idpServiceFactory.getIdpService(organisation).createUser(user, organisationConfigService.getOrganisationConfig(organisation));
+        } else {
+            idpServiceFactory.getIdpService(organisation).updateUser(user);
+        }
     }
 
     private JsonObject constructSyncSettings(Row row) throws Exception {

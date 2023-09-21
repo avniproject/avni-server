@@ -34,8 +34,11 @@ DELETE FROM organisation_config where 1 = 1;
 delete from message_request_queue where 1 = 1;
 delete from message_receiver where 1 = 1;
 delete from message_rule where 1 = 1;
+<<<<<<< HEAD
 delete from identifier_user_assignment where 1 = 1;
 delete from identifier_source where 1 = 1;
+=======
+>>>>>>> 4.0
 DELETE FROM users where id <> 1;
 DELETE FROM operational_subject_type where 1 = 1;
 DELETE FROM subject_type where 1 = 1;

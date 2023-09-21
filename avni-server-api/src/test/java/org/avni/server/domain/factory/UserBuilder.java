@@ -80,6 +80,11 @@ public class UserBuilder {
         return this;
     }
 
+    public UserBuilder setId(int id) {
+        user.setId((long) id);
+        return this;
+    }
+
     public User build() {
         return user;
     }

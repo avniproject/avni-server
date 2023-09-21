@@ -28,6 +28,14 @@ public class TestUserSubjectAssignmentBuilder {
         return withUuid(UUID.randomUUID().toString());
     }
 
+<<<<<<< HEAD
+=======
+    public TestUserSubjectAssignmentBuilder setVoided(boolean voided) {
+        entity.setVoided(voided);
+        return this;
+    }
+
+>>>>>>> 4.0
     public UserSubjectAssignment build() {
         return entity;
     }

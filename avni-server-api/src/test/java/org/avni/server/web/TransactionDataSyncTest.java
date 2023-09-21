@@ -1,14 +1,20 @@
 package org.avni.server.web;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.*;
+import org.avni.server.dao.AddressLevelTypeRepository;
+import org.avni.server.dao.GroupRoleRepository;
+import org.avni.server.dao.UserRepository;
+import org.avni.server.dao.UserSubjectAssignmentRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
-import org.avni.server.domain.factory.*;
+import org.avni.server.domain.factory.TestUserSyncSettingsBuilder;
+import org.avni.server.domain.factory.UserBuilder;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.*;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.service.IndividualService;
+import org.avni.server.service.UserSubjectAssignmentService;
 import org.avni.server.service.builder.*;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -25,7 +31,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -44,11 +51,15 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private AddressLevelTypeRepository addressLevelTypeRepository;
     @Autowired
     private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
+
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private GroupRoleRepository groupRoleRepository;
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
     @Autowired
+
     private TestCatchmentService testCatchmentService;
     @Autowired
     private TestLocationService testLocationService;
@@ -59,6 +70,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestSubjectService testSubjectService;
     @Autowired
+    private IndividualService subjectService;
+    @Autowired
     private TestProgramEnrolmentService testProgramEnrolmentService;
     @Autowired
     private TestProgramService testProgramService;
@@ -67,17 +80,16 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestOrganisationSetupService testOrganisationSetupService;
 
+    @Autowired
+    private TestDataSetupService testDataSetupService;
+    @Autowired
+    private UserSubjectAssignmentService userSubjectAssignmentService;
+
     @Test
     public void sync() throws Exception {
-        testOrganisationSetupService.setupOrganisation(this);
-        User user = testOrganisationSetupService.getUser();
+        TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
+        TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
         Group group = testOrganisationSetupService.getGroup();
-
-        AddressLevelType addressLevelType = addressLevelTypeRepository.save(new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build());
-        AddressLevel addressLevel1 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity().type(addressLevelType).build());
-        AddressLevel addressLevel2 = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity().type(addressLevelType).build());
-        Catchment catchment = new TestCatchmentBuilder().withDefaultValuesForNewEntity().build();
-        testCatchmentService.createCatchment(catchment, addressLevel1);
 
         // Metadata for Catchment based sync
         SubjectType st_CatchmentBasedSync = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_CatchmentBasedSync").setName("st_CatchmentBasedSync").build());
@@ -101,6 +113,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         SubjectType st_DirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_DirectAssignment").setName("st_DirectAssignment").setDirectlyAssignable(true).build());
         SubjectType st_group_DirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).setGroup(true).build());
         Program p_DirectAssignment = testProgramService.addProgram(new ProgramBuilder().withName("st_DirectAssignment").build(), st_DirectAssignment);
+
         GroupRole groupRoleForDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_DirectAssignment).withMemberSubjectType(st_DirectAssignment).build());
 
         testGroupService.giveViewSubjectPrivilegeTo(group, st_CatchmentBasedSync, st_DirectAssignment, st_SyncAttributes, st_group_SyncAttributes, st_group_CatchmentBasedSync, st_group_DirectAssignment);
@@ -109,37 +122,38 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         testGroupService.giveViewProgramPrivilegeTo(group, st_SyncAttributes, p_SyncAttributes);
 
         // Catchment tx entities
-        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(addressLevel1).build());
-        testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_CatchmentBasedSync).withLocation(addressLevel1).build());
+        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
+        testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentInTheCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_CatchmentBasedSync).setIndividual(inTheCatchment).build());
-        Individual groupInCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(addressLevel1).build());
+        Individual groupInCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
         GroupSubject groupSubjectInCatchment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(inTheCatchment).withGroup(groupInCatchment).build());
 
         // Outside catchment tx entities
-        Individual outsideCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(addressLevel2).build());
+        Individual outsideCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel2()).build());
         ProgramEnrolment enrolmentOutsideCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_CatchmentBasedSync).setIndividual(outsideCatchment).build());
-        Individual noAccessToSubjectType = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_NoAccess).withLocation(addressLevel1).build());
+        Individual noAccessToSubjectType = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_NoAccess).withLocation(testCatchmentData.getAddressLevel1()).build());
         testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_NoAccess).setIndividual(noAccessToSubjectType).build());
 
         // Sync attributes tx entities
-        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel1).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
+        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
         ProgramEnrolment enrolmentHasMatchingObs = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(hasMatchingObs).build());
-        Individual obsNotMatching = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel1).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 2").getUuid())).build());
+        Individual obsNotMatching = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 2").getUuid())).build());
         ProgramEnrolment enrolmentObsNotMatching = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(obsNotMatching).build());
-        Individual obsNotPresent = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(addressLevel1).build());
+        Individual obsNotPresent = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentObsNotPresent = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(obsNotPresent).build());
 
         // Direct assignment tx entities
-        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(addressLevel1).build());
+        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(assigned).build());
-        Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(addressLevel1).build());
+        Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(notAssigned).build());
 
         userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(user).build());
 
         UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
-        user = userRepository.save(new UserBuilder(user).withCatchment(catchment).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
-        setUser(user.getUsername());
+        userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testOrganisationData.getUser().getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
+
+        setUser(testOrganisationData.getUser().getUsername());
 
         List syncDetails = getSyncDetails();
 
@@ -171,7 +185,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertFalse(hasEntity(enrolmentObsNotMatching, enrolments));
         assertFalse(hasEntity(enrolmentObsNotPresent, enrolments));
         // Group Subject
-        Individual groupHasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_SyncAttributes).withLocation(addressLevel1).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
+        Individual groupHasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
         GroupSubject groupSubjectInObsMatching = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForSyncAttribute).withMember(hasMatchingObs).withGroup(groupHasMatchingObs).build());
         userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_group_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
         user = userRepository.save(new UserBuilder(user).withSubjectTypeSyncSettings(userSyncSettings).build());
@@ -187,8 +201,9 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         enrolments = getEnrolments(p_DirectAssignment);
         assertTrue(hasEntity(enrolmentAssigned, enrolments));
         assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
+
         // Standalone Subject
-        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(user).build());
+        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(testOrganisationData.getUser()).build());
         Thread.sleep(1);
         Individual assignedNow = notAssigned;
         subjects = getSubjects(st_DirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
@@ -197,11 +212,19 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         enrolments = getEnrolments(p_DirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
         assertTrue(hasEntity(enrolmentAssignedNow, enrolments));
         // Group Subject
-        Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(addressLevel1).build());
+        Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(assigned).withGroup(assignedGroupSubject).build());
+        userSubjectAssignmentService.assignSubjects(testOrganisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
         userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(user).build());
         groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
+    }
+
+    private DateTime takeTimeBeforeOperation() throws InterruptedException {
+        DateTime beforeSave;
+        beforeSave = DateTime.now();
+        Thread.sleep(1);
+        return beforeSave;
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {

@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 
 
 @Service
-public class IndividualService implements ScopeAwareService {
+public class IndividualService implements ScopeAwareService<Individual> {
     public static final String PHONE_NUMBER_FOR_SUBJECT_ID = "phoneNumberForSubjectId";
     private final IndividualRepository individualRepository;
     private final ObservationService observationService;
@@ -435,5 +435,9 @@ public class IndividualService implements ScopeAwareService {
         return phoneNumberConcept.isPresent()
             ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
             : Optional.empty();
+    }
+
+    public IndividualRepository getIndividualRepository() {
+        return individualRepository;
     }
 }

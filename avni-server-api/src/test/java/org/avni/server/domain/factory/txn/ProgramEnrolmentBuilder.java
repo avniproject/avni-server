@@ -32,6 +32,7 @@ public class ProgramEnrolmentBuilder {
 
     public ProgramEnrolmentBuilder setIndividual(Individual individual) {
         programEnrolment.setIndividual(individual);
+        individual.addEnrolment(programEnrolment);
         return this;
     }
 

@@ -8,9 +8,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "user_subject_assignment")
 @BatchSize(size = 100)
-public class
-UserSubjectAssignment extends OrganisationAwareEntity {
-
+public class UserSubjectAssignment extends OrganisationAwareEntity {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -39,5 +37,13 @@ UserSubjectAssignment extends OrganisationAwareEntity {
 
     public void setSubject(Individual subject) {
         this.subject = subject;
+    }
+
+    public static UserSubjectAssignment createNew(User user, Individual subject) {
+        UserSubjectAssignment userSubjectAssignment = new UserSubjectAssignment();
+        userSubjectAssignment.assignUUID();
+        userSubjectAssignment.setUser(user);
+        userSubjectAssignment.setSubject(subject);
+        return userSubjectAssignment;
     }
 }

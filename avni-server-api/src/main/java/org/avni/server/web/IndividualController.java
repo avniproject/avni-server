@@ -341,10 +341,8 @@ public class IndividualController extends AbstractController<Individual> impleme
 
         individualService.save(individual);
 
-
         saveVisitSchedules(individualRequest);
         saveIdentifierAssignments(individual, individualRequest);
-
         return individual;
     }
 
@@ -357,7 +355,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         individual.setFirstName(individualRequest.getFirstName());
         individual.setMiddleName(individualRequest.getMiddleName());
         individual.setLastName(individualRequest.getLastName());
-        if(subjectType.isAllowProfilePicture()) {
+        if (subjectType.isAllowProfilePicture()) {
             individual.setProfilePicture(individualRequest.getProfilePicture());
         }
         individual.setDateOfBirth(individualRequest.getDateOfBirth());

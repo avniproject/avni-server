@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.Set;
 
 @Service
-public class ChecklistItemService implements ScopeAwareService {
+public class ChecklistItemService implements ScopeAwareService<ChecklistItem> {
     private final ChecklistDetailRepository checklistDetailRepository;
     private final ChecklistItemRepository checklistItemRepository;
     private final ChecklistRepository checklistRepository;
@@ -34,7 +34,7 @@ public class ChecklistItemService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<ChecklistItem> repository() {
         return checklistItemRepository;
     }
 

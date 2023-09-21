@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 
 @Service
 public class UserSubjectAssignmentService implements NonScopeAwareService {
-
     private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     private final UserRepository userRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -39,12 +38,13 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     private final IndividualRelationshipService individualRelationshipService;
     private final GroupSubjectRepository groupSubjectRepository;
     private final GroupPrivilegeService privilegeService;
+    private final AvniMetaDataRuleService avniMetaDataRuleService;
 
     @Autowired
     public UserSubjectAssignmentService(UserSubjectAssignmentRepository userSubjectAssignmentRepository, UserRepository userRepository,
                                         SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository,
                                         GroupRepository groupRepository, SubjectSearchRepository subjectSearchRepository,
-                                        ConceptRepository conceptRepository, IndividualRepository individualRepository, ChecklistService checklistService, ChecklistItemService checklistItemService, IndividualRelationshipService individualRelationshipService, GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService) {
+                                        ConceptRepository conceptRepository, IndividualRepository individualRepository, ChecklistService checklistService, ChecklistItemService checklistItemService, IndividualRelationshipService individualRelationshipService, GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService, AvniMetaDataRuleService avniMetaDataRuleService) {
         this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -58,6 +58,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         this.individualRelationshipService = individualRelationshipService;
         this.groupSubjectRepository = groupSubjectRepository;
         this.privilegeService = privilegeService;
+        this.avniMetaDataRuleService = avniMetaDataRuleService;
     }
 
     @Override
@@ -102,7 +103,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
 
         Map<String, List<User>> groupedSubjects = userSubjectAssignmentBySubjectIds.stream()
                 .filter(usa -> !usa.isVoided())
-                .collect(Collectors.groupingBy( UserSubjectAssignment::getSubjectIdAsString,TreeMap::new,
+                .collect(Collectors.groupingBy(UserSubjectAssignment::getSubjectIdAsString, TreeMap::new,
                         Collectors.mapping(UserSubjectAssignment::getUser, Collectors.toList())));
 
         ProjectionFactory pf = new SpelAwareProxyProjectionFactory();
@@ -123,29 +124,48 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return recordsMap;
     }
 
-    @Transactional
-    public List<UserSubjectAssignment> save(UserSubjectAssignmentContract userSubjectAssignmentRequest, Organisation organisation) {
-        UserSubjectAssignment userSubjectAssignment;
-        List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
-        User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
+    public List<UserSubjectAssignment> assignSubjects(UserSubjectAssignmentContract userSubjectAssignmentRequest) throws ValidationException {
         List<Individual> subjectList = individualRepository.findAllById(userSubjectAssignmentRequest.getSubjectIds());
+        User user = userRepository.findOne(userSubjectAssignmentRequest.getUserId());
+        return assignSubjects(user, subjectList, userSubjectAssignmentRequest.isVoided());
+    }
 
-        for(Individual subject : subjectList) {
-            Optional<UserSubjectAssignment> userSubjectAssignmentOptional = userSubjectAssignmentRepository.findUserSubjectAssignmentByUserAndSubject(user, subject);
-            if (userSubjectAssignmentOptional.isPresent()) {
-                userSubjectAssignment = userSubjectAssignmentOptional.get();
-            } else {
-                userSubjectAssignment = new UserSubjectAssignment();
-                userSubjectAssignment.assignUUID();
-                userSubjectAssignment.setUser(user);
-                userSubjectAssignment.setSubject(subject);
-                userSubjectAssignment.setOrganisationId(organisation.getId());
+    public List<UserSubjectAssignment> assignSubjects(User user, List<Individual> subjectList, boolean isVoided) throws ValidationException {
+        List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
+        for (Individual subject : subjectList) {
+            if (!avniMetaDataRuleService.isDirectAssignmentAllowedFor(subject.getSubjectType())) {
+                throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
             }
-            userSubjectAssignment.setVoided(userSubjectAssignmentRequest.isVoided());
-            updateAuditForUserSubjectAssignment(userSubjectAssignment);
-            userSubjectAssignmentList.add(userSubjectAssignment);
+            createUpdateAssignment(isVoided, userSubjectAssignmentList, user, subject);
         }
-        return userSubjectAssignmentRepository.saveAll(userSubjectAssignmentList);
+        return this.saveAll(userSubjectAssignmentList);
+    }
+
+    private List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList) throws ValidationException {
+        List<UserSubjectAssignment> savedUSA = new ArrayList<>();
+        for (UserSubjectAssignment userSubjectAssignment : userSubjectAssignmentList) {
+            savedUSA.add(save(userSubjectAssignment));
+        }
+        return savedUSA;
+    }
+
+    public UserSubjectAssignment save(UserSubjectAssignment userSubjectAssignment) throws ValidationException {
+        userSubjectAssignmentRepository.save(userSubjectAssignment);
+        updateAuditForUserSubjectAssignment(userSubjectAssignment);
+        return userSubjectAssignment;
+    }
+
+    private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
+        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubject(user, subject);
+        if (userSubjectAssignment == null) {
+            userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
+        }
+        userSubjectAssignment.setVoided(assignmentVoided);
+        if (subject.getSubjectType().isGroup()) {
+            List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
+            groupSubjects.forEach(groupSubject -> createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject()));
+        }
+        userSubjectAssignmentList.add(userSubjectAssignment);
     }
 
     private void updateAuditForUserSubjectAssignment(UserSubjectAssignment userSubjectAssignment) {
@@ -156,37 +176,33 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     private void triggerSyncForSubjectAndItsChildrenForUser(Individual individual, User user) {
         individual.updateAudit();
         individual.getProgramEnrolments()
-                .stream()
-                .forEach(enr -> enr.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         individual.getProgramEncounters()
-                .stream()
-                .forEach(enc -> enc.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         individual.getEncounters()
-                .stream()
-                .forEach(enr -> enr.updateAudit());
+                .forEach(CHSEntity::updateAudit);
+
         GroupPrivileges groupPrivileges = privilegeService.getGroupPrivileges(user);
         checklistService.findChecklistsByIndividual(individual)
                 .stream()
-                .filter(checklist ->
-                        groupPrivileges.hasViewPrivilege(checklist))
-                .forEach(ent -> ent.updateAudit());
+                .filter(groupPrivileges::hasViewPrivilege)
+                .forEach(CHSEntity::updateAudit);
         checklistItemService.findChecklistItemsByIndividual(individual)
                 .stream()
-                .filter(checklistItem ->
-                        groupPrivileges.hasViewPrivilege(checklistItem))
-                .forEach(ent -> ent.updateAudit());
+                .filter(groupPrivileges::hasViewPrivilege)
+                .forEach(CHSEntity::updateAudit);
         individualRelationshipService.findByIndividual(individual)
                 .stream()
                 .filter(individualRelationship ->
                         groupPrivileges.hasViewPrivilege(individualRelationship.getIndividuala()) &&
                                 groupPrivileges.hasViewPrivilege(individualRelationship.getIndividualB()))
-                .forEach(ent -> ent.updateAudit());
+                .forEach(CHSEntity::updateAudit);
         groupSubjectRepository.findAllByGroupSubjectOrMemberSubject(individual)
                 .stream()
                 .filter(groupSubject ->
                         groupPrivileges.hasViewPrivilege(groupSubject.getGroupSubject()) &&
                                 groupPrivileges.hasViewPrivilege(groupSubject.getMemberSubject())
                 )
-                .forEach(ent -> ent.updateAudit());
+                .forEach(CHSEntity::updateAudit);
     }
 }

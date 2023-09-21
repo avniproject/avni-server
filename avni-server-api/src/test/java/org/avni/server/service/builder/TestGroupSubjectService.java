@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class TestGroupSubjectService {
+
     private final GroupSubjectRepository groupSubjectRepository;
 
     @Autowired

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
+import org.hibernate.proxy.HibernateProxyHelper;
 import org.joda.time.DateTime;
 import org.avni.server.web.validation.ValidationException;
 import org.owasp.encoder.Encode;
@@ -206,12 +207,12 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || HibernateProxyHelper.getClassWithoutInitializingProxy(this) != HibernateProxyHelper.getClassWithoutInitializingProxy(o)) return false;
 
         User other = (User) o;
 
-        if (id != null ? !id.equals(other.id) : other.id != null) return false;
-        return uuid != null ? uuid.equals(other.uuid) : other.uuid == null;
+        if (getId() != null ? !getId().equals(other.getId()) : other.getId() != null) return false;
+        return getUuid() != null ? getUuid().equals(other.getUuid()) : other.getUuid() == null;
     }
 
     @Override
