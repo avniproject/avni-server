@@ -105,7 +105,7 @@ public class TaskApiController {
         task.assignUUID();
         task.setVoided(request.isVoided());
         mediaObservationService.processMediaObservations(task.getObservations());
-        taskRepository.save(task);
+        task = taskRepository.save(task);
         return new ResponseEntity<>(ApiTaskResponse.fromTask(task, conceptRepository, conceptService), HttpStatus.OK);
     }
 

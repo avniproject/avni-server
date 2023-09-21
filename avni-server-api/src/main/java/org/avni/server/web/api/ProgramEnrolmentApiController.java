@@ -64,7 +64,7 @@ public class ProgramEnrolmentApiController {
         accessControlService.checkProgramPrivilege(PrivilegeType.EnrolSubject, request.getProgram());
         ProgramEnrolment programEnrolment = createProgramEnrolment(request.getExternalId());
         initializeIndividual(request, programEnrolment);
-        updateEnrolment(programEnrolment, request);
+        programEnrolment = updateEnrolment(programEnrolment, request);
         return new ResponseEntity<>(ProgramEnrolmentResponse.fromProgramEnrolment(programEnrolment, conceptRepository, conceptService), HttpStatus.OK);
     }
 

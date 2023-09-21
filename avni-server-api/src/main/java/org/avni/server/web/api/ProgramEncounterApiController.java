@@ -111,7 +111,7 @@ public class ProgramEncounterApiController {
         try {
             ProgramEnrolment programEnrolment = getProgramEnrolment(request);
             encounter.setProgramEnrolment(programEnrolment);
-            updateEncounter(encounter, request);
+            encounter = updateEncounter(encounter, request);
         } catch (ValidationException ve) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }

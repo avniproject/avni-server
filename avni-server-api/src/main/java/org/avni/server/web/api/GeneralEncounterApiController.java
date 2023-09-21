@@ -105,7 +105,7 @@ public class GeneralEncounterApiController {
         Encounter encounter = createEncounter(request.getExternalId());
         try {
             initializeIndividual(request, encounter);
-            updateEncounter(encounter, request);
+            encounter = updateEncounter(encounter, request);
         } catch (ValidationException ve) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
         }
