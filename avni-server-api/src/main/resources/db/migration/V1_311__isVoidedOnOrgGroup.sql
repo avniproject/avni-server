@@ -1,0 +1,2 @@
+ALTER TABLE organisation_group
+    ADD COLUMN is_voided BOOLEAN NOT NULL DEFAULT FALSE;
