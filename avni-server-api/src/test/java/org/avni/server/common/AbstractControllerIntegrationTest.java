@@ -81,7 +81,7 @@ public abstract class AbstractControllerIntegrationTest {
         return String.valueOf(responseEntity.getBody());
     }
 
-    protected void setUser(String name) {
+    public void setUser(String name) {
         testWebContextService.setUser(name);
     }
 }

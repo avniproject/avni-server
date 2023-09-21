@@ -3,10 +3,7 @@ package org.avni.server.domain.factory.txn;
 import org.avni.server.domain.*;
 import org.joda.time.LocalDate;
 
-<<<<<<< HEAD
 import java.util.Date;
-=======
->>>>>>> 4.0
 import java.util.UUID;
 
 public class SubjectBuilder {
@@ -19,14 +16,11 @@ public class SubjectBuilder {
     public SubjectBuilder withUUID(String uuid) {
         individual.setUuid(uuid);
         return this;
-<<<<<<< HEAD
-=======
     }
 
     public SubjectBuilder setId(int id) {
         individual.setId((long) id);
         return this;
->>>>>>> 4.0
     }
 
     public SubjectBuilder addEnrolment(ProgramEnrolment programEnrolment) {
@@ -67,10 +61,6 @@ public class SubjectBuilder {
 
     public SubjectBuilder withMandatoryFieldsForNewEntity() {
         String s = UUID.randomUUID().toString();
-<<<<<<< HEAD
-        return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now());
-=======
         return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now()).withObservations(new ObservationCollection());
->>>>>>> 4.0
     }
 }

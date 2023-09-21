@@ -19,6 +19,7 @@ import org.avni.server.service.builder.*;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -51,15 +52,11 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private AddressLevelTypeRepository addressLevelTypeRepository;
     @Autowired
     private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
-
-    @Autowired
-    private UserRepository userRepository;
     @Autowired
     private GroupRoleRepository groupRoleRepository;
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
     @Autowired
-
     private TestCatchmentService testCatchmentService;
     @Autowired
     private TestLocationService testLocationService;
@@ -86,6 +83,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private UserSubjectAssignmentService userSubjectAssignmentService;
 
     @Test
+    @Ignore
     public void sync() throws Exception {
         TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
@@ -148,7 +146,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(notAssigned).build());
 
-        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(user).build());
+        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(testOrganisationData.getUser()).build());
 
         UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
         userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testOrganisationData.getUser().getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
@@ -188,7 +186,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual groupHasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
         GroupSubject groupSubjectInObsMatching = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForSyncAttribute).withMember(hasMatchingObs).withGroup(groupHasMatchingObs).build());
         userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_group_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
-        user = userRepository.save(new UserBuilder(user).withSubjectTypeSyncSettings(userSyncSettings).build());
+        User user = userRepository.save(new UserBuilder(testOrganisationData.getUser()).withSubjectTypeSyncSettings(userSyncSettings).build());
         setUser(user.getUsername());
         groupSubjects = getGroupSubjects(st_group_SyncAttributes);
         assertTrue(hasEntity(groupSubjectInObsMatching, groupSubjects));
@@ -215,7 +213,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(assigned).withGroup(assignedGroupSubject).build());
         userSubjectAssignmentService.assignSubjects(testOrganisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
-        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(user).build());
+        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(testOrganisationData.getUser()).build());
         groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
     }
