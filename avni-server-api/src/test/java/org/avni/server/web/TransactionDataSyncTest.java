@@ -49,25 +49,17 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private AddressLevelTypeRepository addressLevelTypeRepository;
-    @Autowired
     private UserSubjectAssignmentRepository userSubjectAssignmentRepository;
     @Autowired
     private GroupRoleRepository groupRoleRepository;
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
     @Autowired
-    private TestCatchmentService testCatchmentService;
-    @Autowired
-    private TestLocationService testLocationService;
-    @Autowired
     private TestGroupService testGroupService;
     @Autowired
     private TestConceptService testConceptService;
     @Autowired
     private TestSubjectService testSubjectService;
-    @Autowired
-    private IndividualService subjectService;
     @Autowired
     private TestProgramEnrolmentService testProgramEnrolmentService;
     @Autowired
@@ -83,11 +75,9 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private UserSubjectAssignmentService userSubjectAssignmentService;
 
     @Test
-    @Ignore
     public void sync() throws Exception {
         TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
-        Group group = testOrganisationSetupService.getGroup();
 
         // Metadata for Catchment based sync
         SubjectType st_CatchmentBasedSync = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_CatchmentBasedSync").setName("st_CatchmentBasedSync").build());
@@ -114,10 +104,10 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
         GroupRole groupRoleForDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_DirectAssignment).withMemberSubjectType(st_DirectAssignment).build());
 
-        testGroupService.giveViewSubjectPrivilegeTo(group, st_CatchmentBasedSync, st_DirectAssignment, st_SyncAttributes, st_group_SyncAttributes, st_group_CatchmentBasedSync, st_group_DirectAssignment);
-        testGroupService.giveViewProgramPrivilegeTo(group, st_CatchmentBasedSync, p_CatchmentBasedSync);
-        testGroupService.giveViewProgramPrivilegeTo(group, st_DirectAssignment, p_DirectAssignment);
-        testGroupService.giveViewProgramPrivilegeTo(group, st_SyncAttributes, p_SyncAttributes);
+        testGroupService.giveViewSubjectPrivilegeTo(testOrganisationData.getGroup(), st_CatchmentBasedSync, st_DirectAssignment, st_SyncAttributes, st_group_SyncAttributes, st_group_CatchmentBasedSync, st_group_DirectAssignment);
+        testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_CatchmentBasedSync, p_CatchmentBasedSync);
+        testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_DirectAssignment, p_DirectAssignment);
+        testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_SyncAttributes, p_SyncAttributes);
 
         // Catchment tx entities
         Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
@@ -149,7 +139,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(testOrganisationData.getUser()).build());
 
         UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
-        userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testOrganisationData.getUser().getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
+        userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testCatchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
 
         setUser(testOrganisationData.getUser().getUsername());
 
@@ -213,16 +203,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
         GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(assigned).withGroup(assignedGroupSubject).build());
         userSubjectAssignmentService.assignSubjects(testOrganisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
-        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assignedGroupSubject).withUser(testOrganisationData.getUser()).build());
         groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
-    }
-
-    private DateTime takeTimeBeforeOperation() throws InterruptedException {
-        DateTime beforeSave;
-        beforeSave = DateTime.now();
-        Thread.sleep(1);
-        return beforeSave;
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {
