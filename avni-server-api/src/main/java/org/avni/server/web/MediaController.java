@@ -110,19 +110,18 @@ public class MediaController {
         }
     }
 
+    //unprotected endpoint
     @RequestMapping(value = "/web/media", method = RequestMethod.GET)
     public void downloadFile(@RequestParam String url, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
-
         User user = UserContextHolder.getUser();
         if (user == null) {
             String originalUrl = format("/web/media?url=%s", request.getParameter("url"));
             String redirectUrl = format("/?redirect_url=%s", URLEncoder.encode(originalUrl, "UTF-8"));
             response.setHeader("Location", redirectUrl);
-            response.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
         } else {
             response.setHeader("Location", s3Service.generateMediaDownloadUrl(url).toString());
-            response.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
         }
+        response.setStatus(HttpServletResponse.SC_MOVED_TEMPORARILY);
     }
 
     @PostMapping("/web/uploadMedia")

@@ -48,7 +48,7 @@ public class AuthTokenManager {
     private int getCookieMaxAge(String authToken) {
         DecodedJWT jwt = JWT.decode(authToken);
         int expiryDuration = (int) ((jwt.getExpiresAt().getTime() - new Date().getTime()) / 1000) - 60;
-        return expiryDuration < 0 ? 0 : expiryDuration;
+        return Math.max(expiryDuration, 0);
     }
 
     private Cookie makeCookie(String value, int age) {
