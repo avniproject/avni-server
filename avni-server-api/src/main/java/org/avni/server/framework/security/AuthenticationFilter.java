@@ -58,7 +58,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
 
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
             boolean isProtected = isProtected(request);
-            if (isProtected && ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
+            if (ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, String.format("%s is blacklisted for the implementation", request.getServletPath()));
             } else if (isProtected) {
                 String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
