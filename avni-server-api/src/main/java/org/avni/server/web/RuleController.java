@@ -14,6 +14,7 @@ import org.avni.server.web.request.rules.request.RequestEntityWrapper;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
 import org.avni.server.web.request.rules.response.RuleResponseEntity;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.avni.server.web.validation.ValidationException;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -41,17 +42,19 @@ public class RuleController {
     private final FormMappingRepository formMappingRepository;
     private final IndividualService individualService;
     private final AccessControlService accessControlService;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public RuleController(RuleService ruleService,
                           ProgramEnrolmentRepository programEnrolmentRepository,
                           IndividualRepository individualRepository,
-                          FormMappingRepository formMappingRepository, IndividualService individualService, AccessControlService accessControlService) {
+                          FormMappingRepository formMappingRepository, IndividualService individualService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.individualRepository = individualRepository;
         this.formMappingRepository = formMappingRepository;
         this.individualService = individualService;
         this.accessControlService = accessControlService;
+        this.errorBodyBuilder = errorBodyBuilder;
         logger = LoggerFactory.getLogger(this.getClass());
         this.ruleService = ruleService;
     }
@@ -72,7 +75,7 @@ public class RuleController {
             ruleService.createOrUpdate(ruleRequests);
         } catch (ValidationException e) {
             logger.info(String.format("Error creating rules for: %s", UserContextHolder.getUserContext().getOrganisation().getName()), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
     }

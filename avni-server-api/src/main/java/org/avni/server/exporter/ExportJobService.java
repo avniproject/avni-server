@@ -2,7 +2,6 @@ package org.avni.server.exporter;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.ExportJobParametersRepository;
 import org.avni.server.dao.JobStatus;
@@ -16,6 +15,7 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.external.request.export.ExportJobRequest;
 import org.avni.server.web.external.request.export.ExportOutput;
 import org.avni.server.web.external.request.export.ExportV2JobRequest;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -48,13 +48,15 @@ public class ExportJobService {
 
     private final JobLauncher bgJobLauncher;
     private final ExportJobParametersRepository exportJobParametersRepository;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public ExportJobService(Job exportVisitJob, JobLauncher bgJobLauncher, AvniJobRepository avniJobRepository,
-                            Job exportV2Job, ExportJobParametersRepository exportJobParametersRepository) {
+                            Job exportV2Job, ExportJobParametersRepository exportJobParametersRepository, ErrorBodyBuilder errorBodyBuilder) {
         this.avniJobRepository = avniJobRepository;
         this.exportV2Job = exportV2Job;
         this.exportJobParametersRepository = exportJobParametersRepository;
+        this.errorBodyBuilder = errorBodyBuilder;
         logger = LoggerFactory.getLogger(getClass());
         this.bgJobLauncher = bgJobLauncher;
         this.exportVisitJob = exportVisitJob;
@@ -111,7 +113,7 @@ public class ExportJobService {
         try {
             bgJobLauncher.run(job, jobParameters);
         } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
         return ResponseEntity.ok(true);
     }

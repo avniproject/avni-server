@@ -1,6 +1,7 @@
 package org.avni.server.framework.security;
 
 import org.avni.server.config.IdpType;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -35,10 +36,12 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
 
     @Value("${csp.allowed.hosts}")
     private String cspAllowedHosts;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
-    public ApiSecurity(AuthService authService) {
+    public ApiSecurity(AuthService authService, ErrorBodyBuilder errorBodyBuilder) {
         this.authService = authService;
+        this.errorBodyBuilder = errorBodyBuilder;
     }
 
     @Override
@@ -70,7 +73,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()
                 .and()
-                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName, avniBlacklistedUrlsFile))
+                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName, avniBlacklistedUrlsFile, errorBodyBuilder))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }

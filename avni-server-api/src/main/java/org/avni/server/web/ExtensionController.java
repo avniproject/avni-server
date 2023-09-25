@@ -11,6 +11,7 @@ import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.web.request.ExtensionRequest;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,6 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,14 +50,16 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     private final OrganisationConfigService organisationConfigService;
     private final ImplementationRepository implementationRepository;
     private final AccessControlService accessControlService;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public ExtensionController(S3Service s3Service, OrganisationConfigService organisationConfigService,
-                               ImplementationRepository implementationRepository, AccessControlService accessControlService) {
+                               ImplementationRepository implementationRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
         this.s3Service = s3Service;
         this.organisationConfigService = organisationConfigService;
         this.implementationRepository = implementationRepository;
         this.accessControlService = accessControlService;
+        this.errorBodyBuilder = errorBodyBuilder;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -74,10 +76,10 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
             return ResponseEntity.ok().build();
         } catch (IOException e) {
             logger.error(format("Error while uploading the files %s", e.getMessage()));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBodyBuilder.getErrorBody(e));
         } catch (Exception e) {
             logger.error(format("Error while uploading the files %s", e.getMessage()));
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }
 
@@ -105,7 +107,7 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
             return ResponseEntity.ok().body(new InputStreamResource(contentStream));
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
             logger.error(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Error in serving file %s", filePath));
@@ -130,10 +132,10 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
             return ResponseEntity.status(HttpStatus.FOUND).location(url.toURI()).build();
         } catch (AccessDeniedException e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
             logger.error(e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }
 }

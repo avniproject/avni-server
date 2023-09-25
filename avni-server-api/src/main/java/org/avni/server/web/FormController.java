@@ -8,7 +8,6 @@ import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
-import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.task.TaskType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.FormWebProjection;
@@ -16,6 +15,7 @@ import org.avni.server.projection.IdentifierAssignmentProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormElementContract;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.avni.server.web.validation.ValidationException;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ReactAdminUtil;
@@ -42,7 +42,6 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.criteria.Predicate;
@@ -70,6 +69,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     private final IdentifierAssignmentService identifierAssignmentService;
     private final ConceptService conceptService;
     private final AccessControlService accessControlService;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public FormController(FormRepository formRepository,
@@ -81,7 +81,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
                           FormMappingService formMappingService,
                           FormService formService,
                           UserService userService,
-                          IdentifierAssignmentService identifierAssignmentService, ConceptService conceptService, AccessControlService accessControlService) {
+                          IdentifierAssignmentService identifierAssignmentService, ConceptService conceptService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
         this.formRepository = formRepository;
         this.programRepository = programRepository;
         this.formMappingRepository = formMappingRepository;
@@ -94,6 +94,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         this.identifierAssignmentService = identifierAssignmentService;
         this.conceptService = conceptService;
         this.accessControlService = accessControlService;
+        this.errorBodyBuilder = errorBodyBuilder;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -144,7 +145,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formService.saveForm(formRequest);
         } catch (InvalidObjectException | FormBuilderException e) {
             logger.error(format("Error saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return ResponseEntity.ok(null);
     }
@@ -181,7 +182,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formRepository.save(existingForm);
         } catch (Exception e) {
             logger.error(format("Error saving form with uuid: %s", formUUID), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return ResponseEntity.ok(null);
     }
@@ -237,7 +238,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formService.saveForm(formRequest);
         } catch (FormBuilderException e) {
             logger.info(format("Error patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return ResponseEntity.ok(null);
     }
@@ -256,7 +257,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formRepository.save(form);
         } catch (FormBuilderException e) {
             logger.error(format("Error deleting from form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return ResponseEntity.ok(null);
     }

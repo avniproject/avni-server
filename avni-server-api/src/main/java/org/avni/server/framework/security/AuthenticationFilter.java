@@ -8,6 +8,7 @@ import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.util.FileUtil;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,15 +34,17 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     private final String defaultUserName;
     private final IdpType idpType;
     private final List<String> blacklistedUrls;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile) throws IOException {
+    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder) throws IOException {
         super(authenticationManager);
         this.authService = authService;
         this.idpType = idpType;
         this.defaultUserName = defaultUserName;
+        this.errorBodyBuilder = errorBodyBuilder;
 
         String content = FileUtil.readJsonFileFromFileSystem(avniBlacklistedUrlsFile);
-        blacklistedUrls = ObjectMapperSingleton.getObjectMapper().readValue(content == null ? "[]" : content , new TypeReference<List<String>>() {
+        blacklistedUrls = ObjectMapperSingleton.getObjectMapper().readValue(content == null ? "[]" : content, new TypeReference<List<String>>() {
         });
     }
 
@@ -79,10 +82,10 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
             }
         } catch (AvniNoUserSessionException noUserSessionException) {
             this.logException(request, noUserSessionException);
-           response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, errorBodyBuilder.getErrorBody(noUserSessionException));
         } catch (AvniAccessException accessException) {
             this.logException(request, accessException);
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, errorBodyBuilder.getErrorBody(accessException));
         } catch (Exception exception) {
             this.logException(request, exception);
             throw exception;

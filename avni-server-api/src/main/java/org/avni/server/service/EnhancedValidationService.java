@@ -208,11 +208,10 @@ public class EnhancedValidationService {
                         .flatMap(Collection::stream)
                         .map(AddressLevel::getUuid)
                         .collect(Collectors.toList())
-                        .contains((String) value)) {
+                        .contains(value)) {
                         return formatErrorMessage(question, value);
                     }
-                }
-                catch (ClassCastException classCastException) {
+                } catch (ClassCastException classCastException) {
                     return formatErrorMessage(question, value);
                 }
                 return null;
@@ -222,7 +221,7 @@ public class EnhancedValidationService {
                     if (!phoneNumber.getPhoneNumber().matches(PHONE_NUMBER_PATTERN)) {
                         return formatErrorMessage(question, value);
                     }
-                } catch (ClassCastException classCastException) {
+                } catch (ClassCastException | IllegalArgumentException e) {
                     return formatErrorMessage(question, value);
                 }
                 return null;
