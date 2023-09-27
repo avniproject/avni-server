@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.groupingBy;
+
 @Service
 public class UserSubjectAssignmentService implements NonScopeAwareService {
     private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
@@ -39,12 +41,17 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     private final GroupSubjectRepository groupSubjectRepository;
     private final GroupPrivilegeService privilegeService;
     private final AvniMetaDataRuleService avniMetaDataRuleService;
+    private final AddressLevelService addressLevelService;
 
     @Autowired
     public UserSubjectAssignmentService(UserSubjectAssignmentRepository userSubjectAssignmentRepository, UserRepository userRepository,
                                         SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository,
                                         GroupRepository groupRepository, SubjectSearchRepository subjectSearchRepository,
-                                        ConceptRepository conceptRepository, IndividualRepository individualRepository, ChecklistService checklistService, ChecklistItemService checklistItemService, IndividualRelationshipService individualRelationshipService, GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService, AvniMetaDataRuleService avniMetaDataRuleService) {
+                                        ConceptRepository conceptRepository, IndividualRepository individualRepository,
+                                        ChecklistService checklistService, ChecklistItemService checklistItemService,
+                                        IndividualRelationshipService individualRelationshipService,
+                                        GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService,
+                                        AvniMetaDataRuleService avniMetaDataRuleService, AddressLevelService addressLevelService) {
         this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -59,6 +66,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         this.groupSubjectRepository = groupSubjectRepository;
         this.privilegeService = privilegeService;
         this.avniMetaDataRuleService = avniMetaDataRuleService;
+        this.addressLevelService = addressLevelService;
     }
 
     @Override
@@ -103,7 +111,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
 
         Map<String, List<User>> groupedSubjects = userSubjectAssignmentBySubjectIds.stream()
                 .filter(usa -> !usa.isVoided())
-                .collect(Collectors.groupingBy(UserSubjectAssignment::getSubjectIdAsString, TreeMap::new,
+                .collect(groupingBy(UserSubjectAssignment::getSubjectIdAsString, TreeMap::new,
                         Collectors.mapping(UserSubjectAssignment::getUser, Collectors.toList())));
 
         ProjectionFactory pf = new SpelAwareProxyProjectionFactory();
@@ -132,13 +140,26 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
 
     public List<UserSubjectAssignment> assignSubjects(User user, List<Individual> subjectList, boolean isVoided) throws ValidationException {
         List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
-        for (Individual subject : subjectList) {
-            if (!avniMetaDataRuleService.isDirectAssignmentAllowedFor(subject.getSubjectType())) {
-                throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
+        Map<SubjectType, List<Individual>> subjectTypeListMap = subjectList.stream().collect(groupingBy(Individual::getSubjectType));
+        for (Map.Entry<SubjectType, List<Individual>> subjectTypeList : subjectTypeListMap.entrySet()) {
+            SubjectType subjectType = subjectTypeList.getKey();
+            List<Individual> listOfSubjects = subjectTypeList.getValue();
+            List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
+            for (Individual subject : listOfSubjects) {
+                if (!avniMetaDataRuleService.isDirectAssignmentAllowedFor(subject.getSubjectType())) {
+                    throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
+                }
+                checkIfSubjectLiesWithinUserCatchment(subject, addressLevels);
+                createUpdateAssignment(isVoided, userSubjectAssignmentList, user, subject, addressLevels);
             }
-            createUpdateAssignment(isVoided, userSubjectAssignmentList, user, subject);
         }
         return this.saveAll(userSubjectAssignmentList);
+    }
+
+    private void checkIfSubjectLiesWithinUserCatchment(Individual subject, List<Long> addressLevels) throws ValidationException {
+        if(!addressLevels.contains(subject.getAddressLevel().getId())) {
+            throw new ValidationException("Assigment of subject(s) cannot be done because they are outside the User's Catchment");
+        }
     }
 
     private List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList) throws ValidationException {
@@ -155,7 +176,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return userSubjectAssignment;
     }
 
-    private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
+    private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject, List<Long> addressLevels) throws ValidationException {
         UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubject(user, subject);
         if (userSubjectAssignment == null) {
             userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
@@ -163,7 +184,10 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         userSubjectAssignment.setVoided(assignmentVoided);
         if (subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
-            groupSubjects.forEach(groupSubject -> createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject()));
+            for (GroupSubject groupSubject : groupSubjects) {
+                checkIfSubjectLiesWithinUserCatchment(groupSubject.getMemberSubject(), addressLevels);
+                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject(), addressLevels);
+            }
         }
         userSubjectAssignmentList.add(userSubjectAssignment);
     }

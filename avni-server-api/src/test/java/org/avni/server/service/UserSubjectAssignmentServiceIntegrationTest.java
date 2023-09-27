@@ -56,8 +56,8 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
         testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleInvolvingDirectAssignment).withMember(directlyAssignableMember1).withGroup(group1).build());
         Individual groupNotDirectlyAssignable = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withLocation(testCatchmentData.getAddressLevel1()).withSubjectType(memberSubjectTypeButNotDirectlyAssignable).build());
         testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleWithoutDirectAssignment).withMember(directlyAssignableMember1).withGroup(groupNotDirectlyAssignable).build());
-        User user1 = userRepository.save(new UserBuilder().withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
-        User user2 = userRepository.save(new UserBuilder().withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
+        User user1 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
+        User user2 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
 
         userSubjectAssignmentService.assignSubjects(createContract(user1, group1, false));
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubject(user1, group1));
@@ -75,12 +75,12 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
     }
 
     @Test
-    public void saveShouldUseTheSameEntityAndNotThrowUniqueConstrantException() throws ValidationException {
+    public void saveShouldUseTheSameEntityAndNotThrowUniqueConstraintException() throws ValidationException {
         TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
 
         SubjectType subjectType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).build());
-        User user1 = userRepository.save(new UserBuilder().withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
+        User user1 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
         Individual subject = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(testCatchmentData.getAddressLevel1()).build());
         userSubjectAssignmentService.assignSubjects(createContract(user1, subject, false));
         userSubjectAssignmentService.assignSubjects(createContract(user1, subject, true));
