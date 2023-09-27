@@ -1,7 +1,6 @@
 package org.avni.server.web;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -13,13 +12,12 @@ import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.*;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
-import org.avni.server.service.IndividualService;
 import org.avni.server.service.UserSubjectAssignmentService;
 import org.avni.server.service.builder.*;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -74,137 +72,281 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
     private UserSubjectAssignmentService userSubjectAssignmentService;
 
-    @Test
-    public void sync() throws Exception {
-        TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
-        TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
+    private TestDataSetupService.TestOrganisationData organisationData;
+    private TestDataSetupService.TestCatchmentData catchmentData;
+    private SubjectType subjectTypeWithCatchmentBasedSync;
+    private SubjectType groupSubjectTypeForCatchmentBasedSync;
+    private Program programWithCatchmentBasedSync;
+    private SubjectType subjectTypeWithNoAccess;
+    private Program programWithNoAccess;
+    private GroupRole groupRoleForGroupSubjectTypeWithCatchmentBasedSync;
+    private Concept conceptForAttributeBasedSync;
+    private SubjectType subjectTypeWithSyncAttributeBasedSync;
+    private SubjectType groupSubjectTypeWithSyncAttributeBasedSync;
+    private Program programForSyncAttributeBasedSync;
+    private GroupRole groupRoleForGroupSubjectTypeWithSyncAttributeBasedSync;
+    private SubjectType subjectTypeForDirectAssignment;
+    private SubjectType groupSubjectTypeForDirectAssignment;
+    private Program programForDirectAssignment;
+    private GroupRole groupRoleForGroupSybjectTypeWithDirectAssignment;
+
+    @Before
+    public void setup() {
+        organisationData = testDataSetupService.setupOrganisation();
+        catchmentData = testDataSetupService.setupACatchment();
 
         // Metadata for Catchment based sync
-        SubjectType st_CatchmentBasedSync = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_CatchmentBasedSync").setName("st_CatchmentBasedSync").build());
-        SubjectType st_group_CatchmentBasedSync = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setGroup(true).setMandatoryFieldsForNewEntity().setUuid("st_group_CatchmentBasedSync").setName("st_group_CatchmentBasedSync").build());
-        Program p_CatchmentBasedSync = testProgramService.addProgram(new ProgramBuilder().withName("st_CatchmentBasedSync").build(), st_CatchmentBasedSync);
-        GroupRole groupRoleForCatchment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_CatchmentBasedSync).withMemberSubjectType(st_CatchmentBasedSync).build());
+        subjectTypeWithCatchmentBasedSync = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectTypeWithCatchmentBasedSync")
+                        .setName("subjectTypeWithCatchmentBasedSync")
+                        .build());
+        groupSubjectTypeForCatchmentBasedSync = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setGroup(true)
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("groupSubjectTypeForCatchmentBasedSync")
+                        .setName("groupSubjectTypeForCatchmentBasedSync").build());
+
+        programWithCatchmentBasedSync = testProgramService.addProgram(
+                new ProgramBuilder()
+                        .withName("subjectTypeWithCatchmentBasedSync")
+                        .build(),
+                subjectTypeWithCatchmentBasedSync);
+
+        groupRoleForGroupSubjectTypeWithCatchmentBasedSync = groupRoleRepository.save(
+                new TestGroupRoleBuilder()
+                        .withMandatoryFieldsForNewEntity()
+                        .withGroupSubjectType(groupSubjectTypeForCatchmentBasedSync)
+                        .withMemberSubjectType(subjectTypeWithCatchmentBasedSync)
+                        .build());
 
         // Metadata for no access
-        SubjectType st_NoAccess = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_NoAccess").setName("st_NoAccess").build());
-        Program p_NoAccess = testProgramService.addProgram(new ProgramBuilder().withName("st_NoAccess").build(), st_NoAccess);
+        subjectTypeWithNoAccess = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectTypeWithNoAccess")
+                        .setName("subjectTypeWithNoAccess")
+                        .build());
+
+        programWithNoAccess = testProgramService.addProgram(
+                new ProgramBuilder()
+                        .withName("subjectTypeWithNoAccess")
+                        .build(),
+                subjectTypeWithNoAccess);
 
         // Metadata for sync attribute based sync
-        Concept concept = testConceptService.createCodedConcept("Concept Name 1", "Answer 1", "Answer 2");
-        SubjectType st_SyncAttributes = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_SyncAttributes").setName("st_SyncAttributes")
-                        .setSyncRegistrationConcept1Usable(true).setSyncRegistrationConcept1(concept.getUuid()).build());
-        SubjectType st_group_SyncAttributes = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_group_SyncAttributes").setName("st_group_SyncAttributes").setSyncRegistrationConcept1Usable(true).setSyncRegistrationConcept1(concept.getUuid()).build());
-        Program p_SyncAttributes = testProgramService.addProgram(new ProgramBuilder().withName("st_SyncAttributes").build(), st_SyncAttributes);
-        GroupRole groupRoleForSyncAttribute = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_SyncAttributes).withMemberSubjectType(st_SyncAttributes).build());
+        conceptForAttributeBasedSync = testConceptService.createCodedConcept("Concept Name 1", "Answer 1", "Answer 2");
+        subjectTypeWithSyncAttributeBasedSync = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectTypeWithSyncAttributeBasedSync")
+                        .setName("subjectTypeWithSyncAttributeBasedSync")
+                        .setSyncRegistrationConcept1Usable(true)
+                        .setSyncRegistrationConcept1(conceptForAttributeBasedSync.getUuid()).build());
+
+        groupSubjectTypeWithSyncAttributeBasedSync = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder().setMandatoryFieldsForNewEntity()
+                        .setUuid("groupSubjectTypeWithSyncAttributeBasedSync")
+                        .setName("groupSubjectTypeWithSyncAttributeBasedSync")
+                        .setSyncRegistrationConcept1Usable(true)
+                        .setSyncRegistrationConcept1(conceptForAttributeBasedSync.getUuid())
+                        .build());
+
+        programForSyncAttributeBasedSync = testProgramService.addProgram(
+                new ProgramBuilder()
+                        .withName("programForSyncAttributeBasedSync")
+                        .build(),
+                subjectTypeWithSyncAttributeBasedSync);
+
+        groupRoleForGroupSubjectTypeWithSyncAttributeBasedSync = groupRoleRepository.save(
+                new TestGroupRoleBuilder()
+                        .withMandatoryFieldsForNewEntity()
+                        .withGroupSubjectType(groupSubjectTypeWithSyncAttributeBasedSync)
+                        .withMemberSubjectType(subjectTypeWithSyncAttributeBasedSync)
+                        .build());
 
         // Metadata for direct assignment based sync
-        SubjectType st_DirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_DirectAssignment").setName("st_DirectAssignment").setDirectlyAssignable(true).build());
-        SubjectType st_group_DirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).setGroup(true).build());
-        Program p_DirectAssignment = testProgramService.addProgram(new ProgramBuilder().withName("st_DirectAssignment").build(), st_DirectAssignment);
+        subjectTypeForDirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("subjectTypeForDirectAssignment").setName("subjectTypeForDirectAssignment").setDirectlyAssignable(true).build());
+        groupSubjectTypeForDirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).setGroup(true).build());
+        programForDirectAssignment = testProgramService.addProgram(new ProgramBuilder().withName("subjectTypeForDirectAssignment").build(), subjectTypeForDirectAssignment);
 
-        GroupRole groupRoleForDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(st_group_DirectAssignment).withMemberSubjectType(st_DirectAssignment).build());
+        groupRoleForGroupSybjectTypeWithDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(groupSubjectTypeForDirectAssignment).withMemberSubjectType(subjectTypeForDirectAssignment).build());
 
-        testGroupService.giveViewSubjectPrivilegeTo(testOrganisationData.getGroup(), st_CatchmentBasedSync, st_DirectAssignment, st_SyncAttributes, st_group_SyncAttributes, st_group_CatchmentBasedSync, st_group_DirectAssignment);
-        testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_CatchmentBasedSync, p_CatchmentBasedSync);
-        testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_DirectAssignment, p_DirectAssignment);
-        testGroupService.giveViewProgramPrivilegeTo(testOrganisationData.getGroup(), st_SyncAttributes, p_SyncAttributes);
+        testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectTypeWithCatchmentBasedSync, subjectTypeForDirectAssignment, subjectTypeWithSyncAttributeBasedSync, groupSubjectTypeWithSyncAttributeBasedSync, groupSubjectTypeForCatchmentBasedSync, groupSubjectTypeForDirectAssignment);
+        testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), subjectTypeWithCatchmentBasedSync, programWithCatchmentBasedSync);
+        testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), subjectTypeForDirectAssignment, programForDirectAssignment);
+        testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), subjectTypeWithSyncAttributeBasedSync, programForSyncAttributeBasedSync);
+    }
 
+    @Test
+    public void sync() throws Exception {
         // Catchment tx entities
-        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
-        testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
-        ProgramEnrolment enrolmentInTheCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_CatchmentBasedSync).setIndividual(inTheCatchment).build());
-        Individual groupInCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel1()).build());
-        GroupSubject groupSubjectInCatchment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(inTheCatchment).withGroup(groupInCatchment).build());
+        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentInTheCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithCatchmentBasedSync).setIndividual(inTheCatchment).build());
+        Individual groupInCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        GroupSubject groupSubjectInCatchment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithCatchmentBasedSync).withMember(inTheCatchment).withGroup(groupInCatchment).build());
 
         // Outside catchment tx entities
-        Individual outsideCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_CatchmentBasedSync).withLocation(testCatchmentData.getAddressLevel2()).build());
-        ProgramEnrolment enrolmentOutsideCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_CatchmentBasedSync).setIndividual(outsideCatchment).build());
-        Individual noAccessToSubjectType = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_NoAccess).withLocation(testCatchmentData.getAddressLevel1()).build());
-        testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_NoAccess).setIndividual(noAccessToSubjectType).build());
+        Individual outsideCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel2()).build());
+        ProgramEnrolment enrolmentOutsideCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithCatchmentBasedSync).setIndividual(outsideCatchment).build());
+        Individual noAccessToSubjectType = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithNoAccess).withLocation(catchmentData.getAddressLevel1()).build());
+        testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithNoAccess).setIndividual(noAccessToSubjectType).build());
 
         // Sync attributes tx entities
-        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
-        ProgramEnrolment enrolmentHasMatchingObs = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(hasMatchingObs).build());
-        Individual obsNotMatching = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 2").getUuid())).build());
-        ProgramEnrolment enrolmentObsNotMatching = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(obsNotMatching).build());
-        Individual obsNotPresent = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).build());
-        ProgramEnrolment enrolmentObsNotPresent = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_SyncAttributes).setIndividual(obsNotPresent).build());
+        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build());
+        ProgramEnrolment enrolmentHasMatchingObs = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(hasMatchingObs).build());
+        Individual obsNotMatching = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 2").getUuid())).build());
+        ProgramEnrolment enrolmentObsNotMatching = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(obsNotMatching).build());
+        Individual obsNotPresent = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentObsNotPresent = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(obsNotPresent).build());
 
         // Direct assignment tx entities
-        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
-        ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(assigned).build());
-        Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
-        ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(p_DirectAssignment).setIndividual(notAssigned).build());
+        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForDirectAssignment).setIndividual(assigned).build());
+        Individual notAssigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentNotAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForDirectAssignment).setIndividual(notAssigned).build());
 
-        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(testOrganisationData.getUser()).build());
+        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(organisationData.getUser()).build());
 
-        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
-        userRepository.save(new UserBuilder(testOrganisationData.getUser()).withCatchment(testCatchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
+        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(subjectTypeWithSyncAttributeBasedSync.getUuid()).setSyncConcept1(conceptForAttributeBasedSync.getUuid()).setSyncConcept1Values(Collections.singletonList(conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build();
+        userRepository.save(new UserBuilder(organisationData.getUser()).withCatchment(catchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
 
-        setUser(testOrganisationData.getUser().getUsername());
+        setUser(organisationData.getUser().getUsername());
 
         List syncDetails = getSyncDetails();
 
         // Check catchment based sync strategy
-        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_NoAccess.getUuid())));
-        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_CatchmentBasedSync.getUuid())));
-        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.GroupSubject.name(), st_group_CatchmentBasedSync.getUuid())));
-        List<Individual> subjects = getSubjects(st_CatchmentBasedSync);
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithNoAccess.getUuid())));
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithCatchmentBasedSync.getUuid())));
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.GroupSubject.name(), groupSubjectTypeForCatchmentBasedSync.getUuid())));
+        List<Individual> subjects = getSubjects(subjectTypeWithCatchmentBasedSync);
         assertTrue(hasEntity(inTheCatchment, subjects));
         assertFalse(hasEntity(outsideCatchment, subjects));
-        List<ProgramEnrolment> enrolments = getEnrolments(p_CatchmentBasedSync);
+        List<ProgramEnrolment> enrolments = getEnrolments(programWithCatchmentBasedSync);
         assertTrue(hasEntity(enrolmentInTheCatchment, enrolments));
         assertFalse(hasEntity(enrolmentOutsideCatchment, enrolments));
-        List<GroupSubject> groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
+        List<GroupSubject> groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInCatchment, groupSubjects));
 
         // Check for no access
-        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), p_NoAccess.getUuid())));
-        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), p_CatchmentBasedSync.getUuid())));
+        assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), programWithNoAccess.getUuid())));
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.ProgramEnrolment.name(), programWithCatchmentBasedSync.getUuid())));
 
         // CHECK FOR SYNC ATTRIBUTES BASED SYNC STRATEGY
-        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_SyncAttributes.getUuid())));
-        subjects = getSubjects(st_SyncAttributes);
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithSyncAttributeBasedSync.getUuid())));
+        subjects = getSubjects(subjectTypeWithSyncAttributeBasedSync);
         assertTrue(hasEntity(hasMatchingObs, subjects));
         assertFalse(hasEntity(obsNotMatching, subjects));
         assertFalse(hasEntity(obsNotPresent, subjects));
-        enrolments = getEnrolments(p_SyncAttributes);
+        enrolments = getEnrolments(programForSyncAttributeBasedSync);
         assertTrue(hasEntity(enrolmentHasMatchingObs, enrolments));
         assertFalse(hasEntity(enrolmentObsNotMatching, enrolments));
         assertFalse(hasEntity(enrolmentObsNotPresent, enrolments));
+
         // Group Subject
-        Individual groupHasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_SyncAttributes).withLocation(testCatchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept, concept.getAnswerConcept("Answer 1").getUuid())).build());
-        GroupSubject groupSubjectInObsMatching = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForSyncAttribute).withMember(hasMatchingObs).withGroup(groupHasMatchingObs).build());
-        userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(st_group_SyncAttributes.getUuid()).setSyncConcept1(concept.getUuid()).setSyncConcept1Values(Collections.singletonList(concept.getAnswerConcept("Answer 1").getUuid())).build();
-        User user = userRepository.save(new UserBuilder(testOrganisationData.getUser()).withSubjectTypeSyncSettings(userSyncSettings).build());
+        Individual groupHasMatchingObs = testSubjectService.save(
+                new SubjectBuilder()
+                        .withMandatoryFieldsForNewEntity()
+                        .withSubjectType(groupSubjectTypeWithSyncAttributeBasedSync)
+                        .withLocation(catchmentData.getAddressLevel1())
+                        .withObservations(ObservationCollectionBuilder
+                                .withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid()))
+                        .build());
+        GroupSubject groupSubjectInObsMatching = testGroupSubjectService.save(
+                new TestGroupSubjectBuilder()
+                        .withGroupRole(groupRoleForGroupSubjectTypeWithSyncAttributeBasedSync)
+                        .withMember(hasMatchingObs)
+                        .withGroup(groupHasMatchingObs)
+                        .build());
+        userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(groupSubjectTypeWithSyncAttributeBasedSync.getUuid()).setSyncConcept1(conceptForAttributeBasedSync.getUuid()).setSyncConcept1Values(Collections.singletonList(conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build();
+        User user = userRepository.save(new UserBuilder(organisationData.getUser()).withSubjectTypeSyncSettings(userSyncSettings).build());
         setUser(user.getUsername());
-        groupSubjects = getGroupSubjects(st_group_SyncAttributes);
+        groupSubjects = getGroupSubjects(groupSubjectTypeWithSyncAttributeBasedSync);
         assertTrue(hasEntity(groupSubjectInObsMatching, groupSubjects));
 
         // CHECK FOR DIRECT ASSIGNMENT BASED SYNC STRATEGY
-        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), st_DirectAssignment.getUuid())));
-        subjects = getSubjects(st_DirectAssignment);
+        assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeForDirectAssignment.getUuid())));
+        subjects = getSubjects(subjectTypeForDirectAssignment);
         assertTrue(hasEntity(assigned, subjects));
         assertFalse(hasEntity(notAssigned, subjects));
-        enrolments = getEnrolments(p_DirectAssignment);
+        enrolments = getEnrolments(programForDirectAssignment);
         assertTrue(hasEntity(enrolmentAssigned, enrolments));
         assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
 
         // Standalone Subject
-        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(testOrganisationData.getUser()).build());
+        UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(organisationData.getUser()).build());
         Thread.sleep(1);
         Individual assignedNow = notAssigned;
-        subjects = getSubjects(st_DirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
+        subjects = getSubjects(subjectTypeForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
         assertTrue(hasEntity(assignedNow, subjects));
         ProgramEnrolment enrolmentAssignedNow = enrolmentNotAssigned;
-        enrolments = getEnrolments(p_DirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
+        enrolments = getEnrolments(programForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
         assertTrue(hasEntity(enrolmentAssignedNow, enrolments));
         // Group Subject
-        Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(st_group_DirectAssignment).withLocation(testCatchmentData.getAddressLevel1()).build());
-        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForCatchment).withMember(assigned).withGroup(assignedGroupSubject).build());
-        userSubjectAssignmentService.assignSubjects(testOrganisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
-        groupSubjects = getGroupSubjects(st_group_CatchmentBasedSync);
+        Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
+        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithCatchmentBasedSync).withMember(assigned).withGroup(assignedGroupSubject).build());
+        userSubjectAssignmentService.assignSubjects(organisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
+        groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
+    }
+
+    @Test
+    public void syncShouldSyncEverythingBeforeNow() throws Exception {
+        setUser(organisationData.getUser().getUsername());
+
+        // Catchment tx entities
+        Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentInTheCatchment = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programWithCatchmentBasedSync).setIndividual(inTheCatchment).build());
+        Individual groupInCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
+        GroupSubject groupSubjectInCatchment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithCatchmentBasedSync).withMember(inTheCatchment).withGroup(groupInCatchment).build());
+
+        // Sync attributes tx entities
+        Individual hasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build());
+        ProgramEnrolment enrolmentHasMatchingObs = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForSyncAttributeBasedSync).setIndividual(hasMatchingObs).build());
+
+        // Direct assignment tx entities
+        Individual assigned = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
+        ProgramEnrolment enrolmentAssigned = testProgramEnrolmentService.save(new ProgramEnrolmentBuilder().withMandatoryFieldsForNewEntity().setProgram(programForDirectAssignment).setIndividual(assigned).build());
+
+        userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(assigned).withUser(organisationData.getUser()).build());
+
+        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(subjectTypeWithSyncAttributeBasedSync.getUuid()).setSyncConcept1(conceptForAttributeBasedSync.getUuid()).setSyncConcept1Values(Collections.singletonList(conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build();
+        userRepository.save(new UserBuilder(organisationData.getUser()).withCatchment(catchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
+
+        setUser(organisationData.getUser().getUsername());
+
+        // Check catchment based sync strategy
+        List<Individual> subjects = getSubjects(subjectTypeWithCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(inTheCatchment, subjects));
+        List<ProgramEnrolment> enrolments = getEnrolments(programWithCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(enrolmentInTheCatchment, enrolments));
+        List<GroupSubject> groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(groupSubjectInCatchment, groupSubjects));
+
+        subjects = getSubjects(subjectTypeWithSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(hasMatchingObs, subjects));
+
+        enrolments = getEnrolments(programForSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(enrolmentHasMatchingObs, enrolments));
+
+        // Group Subject
+        Individual groupHasMatchingObs = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeWithSyncAttributeBasedSync).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(conceptForAttributeBasedSync, conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build());
+        GroupSubject groupSubjectInObsMatching = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithSyncAttributeBasedSync).withMember(hasMatchingObs).withGroup(groupHasMatchingObs).build());
+        userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(subjectTypeWithSyncAttributeBasedSync.getUuid()).setSyncConcept1(conceptForAttributeBasedSync.getUuid()).setSyncConcept1Values(Collections.singletonList(conceptForAttributeBasedSync.getAnswerConcept("Answer 1").getUuid())).build();
+        User user = userRepository.save(new UserBuilder(organisationData.getUser()).withSubjectTypeSyncSettings(userSyncSettings).build());
+        setUser(user.getUsername());
+        groupSubjects = getGroupSubjects(groupSubjectTypeWithSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(groupSubjectInObsMatching, groupSubjects));
+
+        // CHECK FOR DIRECT ASSIGNMENT BASED SYNC STRATEGY
+        subjects = getSubjects(subjectTypeForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(assigned, subjects));
+        enrolments = getEnrolments(programForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        assertFalse(hasEntity(enrolmentAssigned, enrolments));
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {
@@ -217,30 +359,42 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         return ((JsonObject) response.getBody()).getList("syncDetails");
     }
 
-    private List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime) {
-        PagedResources<Resource<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(lastModifiedDateTime, DateTime.now(), subjectType.getUuid(), PageRequest.of(0, 10));
-        return individuals.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
-    }
-
     private List<Individual> getSubjects(SubjectType subjectType) {
         return this.getSubjects(subjectType, DateTime.now().minusDays(1));
     }
 
-    private List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime) throws Exception {
-        PagedResources<Resource<ProgramEnrolment>> enrolments = programEnrolmentController.getProgramEnrolmentsByOperatingIndividualScope(lastModifiedDateTime, DateTime.now(), program.getUuid(), PageRequest.of(0, 10));
-        return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+    private List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime) {
+        return getSubjects(subjectType, lastModifiedDateTime, DateTime.now());
+    }
+
+    private List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
+        PagedResources<Resource<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
+        return individuals.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
     }
 
     private List<ProgramEnrolment> getEnrolments(Program program) throws Exception {
         return this.getEnrolments(program, DateTime.now().minusDays(1));
     }
 
-    private List<GroupSubject> getGroupSubjects(SubjectType groupSubjectType) {
-        return this.getGroupSubjects(DateTime.now().minusDays(1), groupSubjectType);
+    private List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime) throws Exception {
+        return getEnrolments(program, lastModifiedDateTime, DateTime.now());
     }
 
-    private List<GroupSubject> getGroupSubjects(DateTime lastModifiedDateTime, SubjectType groupSubjectType) {
-        PagedResources<Resource<GroupSubject>> enrolments = groupSubjectController.getGroupSubjectsByOperatingIndividualScope(lastModifiedDateTime, DateTime.now(),
+    private List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime, DateTime now) throws Exception {
+        PagedResources<Resource<ProgramEnrolment>> enrolments = programEnrolmentController.getProgramEnrolmentsByOperatingIndividualScope(lastModifiedDateTime, now, program.getUuid(), PageRequest.of(0, 10));
+        return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+    }
+
+    private List<GroupSubject> getGroupSubjects(SubjectType groupSubjectType) {
+        return this.getGroupSubjects(groupSubjectType, DateTime.now().minusDays(1));
+    }
+
+    private List<GroupSubject> getGroupSubjects(SubjectType groupSubjectType, DateTime lastModifiedDateTime) {
+        return getGroupSubjects(groupSubjectType, lastModifiedDateTime, DateTime.now());
+    }
+
+    private List<GroupSubject> getGroupSubjects(SubjectType groupSubjectType, DateTime lastModifiedDateTime, DateTime now) {
+        PagedResources<Resource<GroupSubject>> enrolments = groupSubjectController.getGroupSubjectsByOperatingIndividualScope(lastModifiedDateTime, now,
                 groupSubjectType.getUuid(),
                 PageRequest.of(0, 10));
         return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
