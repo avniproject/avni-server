@@ -12,6 +12,7 @@ import org.avni.server.domain.factory.txn.TestGroupSubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.request.UserSubjectAssignmentContract;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -50,19 +51,32 @@ public class UserSubjectAssignmentServiceTest {
     @Mock
     private AddressLevelService addressLevelService;
 
-    @Test
-    public void assigningSubjectShouldAssignMemberSubjects() throws ValidationException {
+    private UserSubjectAssignmentService userSubjectAssignmentService;
+    private UserSubjectAssignmentContract userSubjectAssignmentContract;
+    private Organisation organisation;
+    private AddressLevelType addressLevelType;
+    private AddressLevel addressLevelWithinCatchment;
+    private AddressLevel addressLevelOutsideCatchment;
+    private Catchment catchment;
+
+
+    @Before
+    public void initialize() {
         initMocks(this);
 
-        UserSubjectAssignmentService userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, avniMetaDataRuleService, addressLevelService);
-        UserSubjectAssignmentContract userSubjectAssignmentContract = new UserSubjectAssignmentContract();
+        userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, avniMetaDataRuleService, addressLevelService);
+        userSubjectAssignmentContract = new UserSubjectAssignmentContract();
         userSubjectAssignmentContract.setSubjectIds(Collections.singletonList(1l));
         userSubjectAssignmentContract.setUserId(1l);
-        Organisation organisation = new TestOrganisationBuilder().setId(1l).withMandatoryFields().build();
-        AddressLevelType addressLevelType = new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build();
-        AddressLevel addressLevelWithinCatchment = new AddressLevelBuilder().id(1l).withDefaultValuesForNewEntity().type(addressLevelType).build();
-        AddressLevel addressLevelOutsideCatchment = new AddressLevelBuilder().id(2l).withDefaultValuesForNewEntity().type(addressLevelType).build();
-        Catchment catchment = new TestCatchmentBuilder().withDefaultValuesForNewEntity().withAddressLevels(addressLevelWithinCatchment).build();
+        organisation = new TestOrganisationBuilder().setId(1l).withMandatoryFields().build();
+        addressLevelType = new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build();
+        addressLevelWithinCatchment = new AddressLevelBuilder().id(1l).withDefaultValuesForNewEntity().type(addressLevelType).build();
+        addressLevelOutsideCatchment = new AddressLevelBuilder().id(2l).withDefaultValuesForNewEntity().type(addressLevelType).build();
+        catchment = new TestCatchmentBuilder().withDefaultValuesForNewEntity().withAddressLevels(addressLevelWithinCatchment).build();
+    }
+
+    @Test
+    public void assigningSubjectShouldAssignMemberSubjects() throws ValidationException {
 
         Individual group = new SubjectBuilder().setId(1).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(true).build()).build();
         when(individualRepository.findAllById(any())).thenReturn(Collections.singletonList(group));
@@ -83,17 +97,6 @@ public class UserSubjectAssignmentServiceTest {
 
     @Test(expected = ValidationException.class)
     public void assigningSubjectOutsideUserCatchmentShouldFail() throws ValidationException {
-        initMocks(this);
-
-        UserSubjectAssignmentService userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, avniMetaDataRuleService, addressLevelService);
-        UserSubjectAssignmentContract userSubjectAssignmentContract = new UserSubjectAssignmentContract();
-        userSubjectAssignmentContract.setSubjectIds(Collections.singletonList(1l));
-        userSubjectAssignmentContract.setUserId(1l);
-        Organisation organisation = new TestOrganisationBuilder().setId(1l).withMandatoryFields().build();
-        AddressLevelType addressLevelType = new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build();
-        AddressLevel addressLevelWithinCatchment = new AddressLevelBuilder().id(1l).withDefaultValuesForNewEntity().type(addressLevelType).build();
-        AddressLevel addressLevelOutsideCatchment = new AddressLevelBuilder().id(2l).withDefaultValuesForNewEntity().type(addressLevelType).build();
-        Catchment catchment = new TestCatchmentBuilder().withDefaultValuesForNewEntity().withAddressLevels(addressLevelWithinCatchment).build();
 
         Individual group = new SubjectBuilder().setId(1).withLocation(addressLevelOutsideCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(true).build()).build();
         when(individualRepository.findAllById(any())).thenReturn(Collections.singletonList(group));
@@ -109,17 +112,6 @@ public class UserSubjectAssignmentServiceTest {
 
     @Test(expected = ValidationException.class)
     public void assigningGrpSubjectInsideCatchmentWithMemberSubjectOutsideUserCatchmentShouldFail() throws ValidationException {
-        initMocks(this);
-
-        UserSubjectAssignmentService userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, avniMetaDataRuleService, addressLevelService);
-        UserSubjectAssignmentContract userSubjectAssignmentContract = new UserSubjectAssignmentContract();
-        userSubjectAssignmentContract.setSubjectIds(Collections.singletonList(1l));
-        userSubjectAssignmentContract.setUserId(1l);
-        Organisation organisation = new TestOrganisationBuilder().setId(1l).withMandatoryFields().build();
-        AddressLevelType addressLevelType = new AddressLevelTypeBuilder().withDefaultValuesForNewEntity().build();
-        AddressLevel addressLevelWithinCatchment = new AddressLevelBuilder().id(1l).withDefaultValuesForNewEntity().type(addressLevelType).build();
-        AddressLevel addressLevelOutsideCatchment = new AddressLevelBuilder().id(2l).withDefaultValuesForNewEntity().type(addressLevelType).build();
-        Catchment catchment = new TestCatchmentBuilder().withDefaultValuesForNewEntity().withAddressLevels(addressLevelWithinCatchment).build();
 
         Individual group = new SubjectBuilder().setId(1).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(true).build()).build();
         when(individualRepository.findAllById(any())).thenReturn(Collections.singletonList(group));
