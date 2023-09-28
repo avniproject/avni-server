@@ -138,7 +138,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return assignSubjects(user, subjectList, userSubjectAssignmentRequest.isVoided());
     }
 
-    public List<UserSubjectAssignment> assignSubjects(User user, List<Individual> subjectList, boolean isVoided) throws ValidationException {
+    public List<UserSubjectAssignment> assignSubjects(User user, List<Individual> subjectList, boolean assignmentVoided) throws ValidationException {
         List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         Map<SubjectType, List<Individual>> subjectTypeListMap = subjectList.stream().collect(groupingBy(Individual::getSubjectType));
         for (Map.Entry<SubjectType, List<Individual>> subjectTypeList : subjectTypeListMap.entrySet()) {
@@ -149,15 +149,15 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                 if (!avniMetaDataRuleService.isDirectAssignmentAllowedFor(subject.getSubjectType())) {
                     throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
                 }
-                checkIfSubjectLiesWithinUserCatchment(subject, addressLevels);
-                createUpdateAssignment(isVoided, userSubjectAssignmentList, user, subject, addressLevels);
+                checkIfSubjectLiesWithinUserCatchment(assignmentVoided, subject, addressLevels);
+                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject, addressLevels);
             }
         }
         return this.saveAll(userSubjectAssignmentList);
     }
 
-    private void checkIfSubjectLiesWithinUserCatchment(Individual subject, List<Long> addressLevels) throws ValidationException {
-        if(!addressLevels.contains(subject.getAddressLevel().getId())) {
+    private void checkIfSubjectLiesWithinUserCatchment(boolean assignmentVoided, Individual subject, List<Long> addressLevels) throws ValidationException {
+        if(!assignmentVoided && !addressLevels.contains(subject.getAddressLevel().getId())) {
             throw new ValidationException("Assigment of subject(s) cannot be done because they are outside the User's Catchment");
         }
     }
@@ -185,7 +185,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         if (subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
             for (GroupSubject groupSubject : groupSubjects) {
-                checkIfSubjectLiesWithinUserCatchment(groupSubject.getMemberSubject(), addressLevels);
+                checkIfSubjectLiesWithinUserCatchment(assignmentVoided, groupSubject.getMemberSubject(), addressLevels);
                 createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject(), addressLevels);
             }
         }
