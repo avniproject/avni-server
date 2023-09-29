@@ -16,10 +16,14 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
 
     default Specification<SubjectMigration> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<SubjectMigration> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+            List<Predicate> andPredicates = new ArrayList<>();
             SubjectType subjectType = syncParameters.getSubjectType();
             Join<SubjectMigration, Individual> individualJoin = root.join("individual", JoinType.LEFT);
-            predicates.add(cb.equal(individualJoin.get("subjectType").get("id"), syncParameters.getTypeId()));
+            andPredicates.add(cb.equal(individualJoin.get("subjectType").get("id"), syncParameters.getTypeId()));
+            addSyncAttributeConceptPredicate(cb, andPredicates, root, syncParameters, "newSyncConcept1Value", "newSyncConcept2Value");
+            addSyncAttributeConceptPredicate(cb, andPredicates, root, syncParameters, "oldSyncConcept1Value", "oldSyncConcept2Value");
+
+            List<Predicate> addressLevelPredicates = new ArrayList<>();
             if (subjectType.isShouldSyncByLocation()) {
                 List<Long> addressLevels = syncParameters.getAddressLevels();
                 if (addressLevels.size() > 0) {
@@ -29,15 +33,15 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
                         inClause1.value(id);
                         inClause2.value(id);
                     }
-                    predicates.add(inClause1);
-                    predicates.add(inClause2);
+                    addressLevelPredicates.add(inClause1);
+                    addressLevelPredicates.add(inClause2);
                 } else {
-                    predicates.add(cb.equal(root.get("id"), cb.literal(0)));
+                    addressLevelPredicates.add(cb.equal(root.get("id"), cb.literal(0)));
                 }
             }
-            addSyncAttributeConceptPredicate(cb, predicates, root, syncParameters, "newSyncConcept1Value", "newSyncConcept2Value");
-            addSyncAttributeConceptPredicate(cb, predicates, root, syncParameters, "oldSyncConcept1Value", "oldSyncConcept2Value");
-            return cb.or(predicates.toArray(new Predicate[0]));
+            Predicate addressLevelPredicate = cb.or(addressLevelPredicates.toArray(new Predicate[0]));
+            andPredicates.add(addressLevelPredicate);
+            return cb.and(andPredicates.toArray(new Predicate[0]));
         };
     }
 
