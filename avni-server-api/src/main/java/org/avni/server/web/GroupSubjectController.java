@@ -6,6 +6,7 @@ import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.GroupSubjectService;
 import org.avni.server.service.IndividualService;
@@ -95,7 +96,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     @RequestMapping(value = "/groupSubjects", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void save(@RequestBody GroupSubjectContract request) {
+    public void save(@RequestBody GroupSubjectContract request) throws ValidationException {
         Individual groupSubject = individualRepository.findByUuid(request.getGroupSubjectUUID());
         Individual memberSubject = individualRepository.findByUuid(request.getMemberSubjectUUID());
         GroupRole groupRole = groupRoleRepository.findByUuid(request.getGroupRoleUUID());

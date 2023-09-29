@@ -67,8 +67,12 @@ public class ResetSyncService {
     }
 
     public void recordSyncAttributeValueChangeForUser(User savedUser, UserContract userContract, JsonObject newSyncSettings) {
+        recordSyncAttributeValueChangeForUser(savedUser, userContract.getCatchmentId(), newSyncSettings);
+    }
+
+    public void recordSyncAttributeValueChangeForUser(User savedUser, Long newCatchmentId, JsonObject newSyncSettings) {
         Long savedCatchmentId = savedUser.getCatchmentId().orElse(null);
-        if (isChanged(savedCatchmentId, userContract.getCatchmentId())) {
+        if (isChanged(savedCatchmentId, newCatchmentId)) {
             ResetSync resetSync = buildNewResetSync();
             resetSync.setUser(savedUser);
             resetSyncRepository.save(resetSync);

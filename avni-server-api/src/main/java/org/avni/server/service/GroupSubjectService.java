@@ -3,23 +3,26 @@ package org.avni.server.service;
 import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.UserSubjectAssignmentRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
-
     private final GroupSubjectRepository groupSubjectRepository;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
 
     @Autowired
-    public GroupSubjectService(GroupSubjectRepository groupSubjectRepository, SubjectTypeRepository subjectTypeRepository) {
+    public GroupSubjectService(GroupSubjectRepository groupSubjectRepository, SubjectTypeRepository subjectTypeRepository, UserSubjectAssignmentRepository userSubjectAssignmentRepository) {
         this.groupSubjectRepository = groupSubjectRepository;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
     }
 
     @Override
@@ -34,9 +37,27 @@ public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
         return groupSubjectRepository;
     }
 
-    public GroupSubject save(GroupSubject groupSubject) {
+    public GroupSubject save(GroupSubject groupSubject) throws ValidationException {
         this.addSyncAttributes(groupSubject);
+        assignMemberToTheAssigneeOfGroup(groupSubject);
         return groupSubjectRepository.save(groupSubject);
+    }
+
+    private void assignMemberToTheAssigneeOfGroup(GroupSubject groupSubject) {
+        if (groupSubject.getGroupSubject().getSubjectType().isDirectlyAssignable()) {
+            List<UserSubjectAssignment> groupAssignments = userSubjectAssignmentRepository.findAllBySubjectAndIsVoidedFalse(groupSubject.getGroupSubject());
+            List<UserSubjectAssignment> memberAssignments = userSubjectAssignmentRepository.findAllBySubject(groupSubject.getMemberSubject());
+            for (UserSubjectAssignment groupAssignment : groupAssignments) {
+                User userAssignedToGroup = groupAssignment.getUser();
+                UserSubjectAssignment memberAssignment = memberAssignments.stream().filter(x -> x.getUser().equals(userAssignedToGroup)).findFirst().orElse(null);
+                if (memberAssignment == null) {
+                    memberAssignment = UserSubjectAssignment.createNew(userAssignedToGroup, groupSubject.getMemberSubject());
+                } else {
+                    memberAssignment.setVoided(false);
+                }
+                userSubjectAssignmentRepository.save(memberAssignment);
+            }
+        }
     }
 
     private void addSyncAttributes(GroupSubject groupSubject) {

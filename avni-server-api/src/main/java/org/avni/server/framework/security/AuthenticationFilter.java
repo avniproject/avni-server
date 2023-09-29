@@ -58,7 +58,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
 
             AuthTokenManager authTokenManager = AuthTokenManager.getInstance();
             boolean isProtected = isProtected(request);
-            if (isProtected && ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
+            if (ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, String.format("%s is blacklisted for the implementation", request.getServletPath()));
             } else if (isProtected) {
                 String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
@@ -71,6 +71,10 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
                 long end = System.currentTimeMillis();
                 logger.info(String.format("%s %s?%s User: %s Organisation: %s Time: %s ms", method, requestURI, queryString, userContext.getUserName(), userContext.getOrganisationName(), (end - start)));
             } else {
+                String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
+                authTokenManager.setAuthCookie(request, response, derivedAuthToken);
+                if (!idpType.equals(IdpType.none))
+                    authService.tryAuthenticateByToken(derivedAuthToken, organisationUUID);
                 chain.doFilter(request, response);
             }
         } catch (AvniNoUserSessionException noUserSessionException) {

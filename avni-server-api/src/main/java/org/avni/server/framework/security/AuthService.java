@@ -58,6 +58,14 @@ public class AuthService {
         return userContext;
     }
 
+    public UserContext tryAuthenticateByToken(String authToken, String organisationUUID) {
+        try {
+            return this.authenticateByToken(authToken, organisationUUID);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
     public UserContext authenticateByUserId(Long userId, String organisationUUID) {
         becomeSuperUser();
         Optional<User> user = userRepository.findById(userId);

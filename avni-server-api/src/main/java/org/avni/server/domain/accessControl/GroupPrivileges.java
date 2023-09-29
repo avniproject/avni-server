@@ -4,6 +4,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class GroupPrivileges {
@@ -13,6 +14,11 @@ public class GroupPrivileges {
     public GroupPrivileges(boolean hasAllPrivileges, List<GroupPrivilege> privileges) {
         this.hasAllPrivileges = hasAllPrivileges;
         this.privileges = privileges;
+    }
+
+    public GroupPrivileges(boolean hasAllPrivileges, GroupPrivilege ... privileges) {
+        this.hasAllPrivileges = hasAllPrivileges;
+        this.privileges = Arrays.asList(privileges);
     }
 
     public GroupPrivileges() {

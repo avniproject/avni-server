@@ -16,11 +16,11 @@ public interface ScopeAwareService<T extends CHSEntity> {
     default boolean isChangedBySubjectTypeRegistrationLocationType(User user, DateTime lastModifiedDateTime, Long typeId, SubjectType subjectType, SyncEntityName syncEntityName) {
         AddressLevelService addressLevelService = ApplicationContextProvider.getContext().getBean(AddressLevelService.class);
         List<Long> addressIds = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
-        return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, null, typeId, null, null, addressIds, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, DateTime.now(), typeId, null, null, addressIds, subjectType, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 
     default boolean isChangedByCatchment(User user, DateTime lastModifiedDateTime, SyncEntityName syncEntityName) {
-        return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, null, null, null, null, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
+        return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, DateTime.now(), null, null, null, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 
     OperatingIndividualScopeAwareRepository<T> repository();
