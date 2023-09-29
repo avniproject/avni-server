@@ -20,10 +20,19 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
             SubjectType subjectType = syncParameters.getSubjectType();
             Join<SubjectMigration, Individual> individualJoin = root.join("individual", JoinType.LEFT);
             andPredicates.add(cb.equal(individualJoin.get("subjectType").get("id"), syncParameters.getTypeId()));
-            addSyncAttributeConceptPredicate(cb, andPredicates, root, syncParameters, "newSyncConcept1Value", "newSyncConcept2Value");
-            addSyncAttributeConceptPredicate(cb, andPredicates, root, syncParameters, "oldSyncConcept1Value", "oldSyncConcept2Value");
 
-            List<Predicate> addressLevelPredicates = new ArrayList<>();
+            List<Predicate> orPredicates = new ArrayList<>();
+
+            List<Predicate> newConceptPredicates = new ArrayList<>();
+            addSyncAttributeConceptPredicate(cb, newConceptPredicates, root, syncParameters, "newSyncConcept1Value", "newSyncConcept2Value");
+            Predicate newConceptPredicate = cb.or(newConceptPredicates.toArray(new Predicate[0]));
+            orPredicates.add(newConceptPredicate);
+
+            List<Predicate> oldConceptPredicates = new ArrayList<>();
+            addSyncAttributeConceptPredicate(cb, oldConceptPredicates, root, syncParameters, "oldSyncConcept1Value", "oldSyncConcept2Value");
+            Predicate oldConceptPredicate = cb.or(oldConceptPredicates.toArray(new Predicate[0]));
+            orPredicates.add(oldConceptPredicate);
+
             if (subjectType.isShouldSyncByLocation()) {
                 List<Long> addressLevels = syncParameters.getAddressLevels();
                 if (addressLevels.size() > 0) {
@@ -33,14 +42,15 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
                         inClause1.value(id);
                         inClause2.value(id);
                     }
-                    addressLevelPredicates.add(inClause1);
-                    addressLevelPredicates.add(inClause2);
+                    orPredicates.add(inClause1);
+                    orPredicates.add(inClause2);
                 } else {
-                    addressLevelPredicates.add(cb.equal(root.get("id"), cb.literal(0)));
+                    orPredicates.add(cb.equal(root.get("id"), cb.literal(0)));
                 }
             }
-            Predicate addressLevelPredicate = cb.or(addressLevelPredicates.toArray(new Predicate[0]));
-            andPredicates.add(addressLevelPredicate);
+            Predicate orPredicate = cb.or(orPredicates.toArray(new Predicate[0]));
+
+            andPredicates.add(orPredicate);
             return cb.and(andPredicates.toArray(new Predicate[0]));
         };
     }
