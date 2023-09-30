@@ -46,7 +46,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigrations/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<SubjectMigration>> getEncountersByCatchmentAndLastModifiedAsSlice(
+    public SlicedResources<Resource<SubjectMigration>> getMigrationsByCatchmentAndLastModifiedAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -60,7 +60,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigrations", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<SubjectMigration>> getEncountersByCatchmentAndLastModified(
+    public PagedResources<Resource<SubjectMigration>> getMigrationsByCatchmentAndLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
