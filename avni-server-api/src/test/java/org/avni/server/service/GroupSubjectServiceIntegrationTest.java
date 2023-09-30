@@ -56,7 +56,7 @@ public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegr
         Individual groupNotDirectlyAssignable = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withLocation(testCatchmentData.getAddressLevel1()).withSubjectType(memberSubjectTypeButNotDirectlyAssignable).build());
 
         User user1 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
-        User user2 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
+        User user3 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user3@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
 
         userSubjectAssignmentService.assignSubjects(user1, Collections.singletonList(group), false);
         testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleInvolvingDirectAssignment).withMember(directlyAssignableMember).withGroup(group).build());

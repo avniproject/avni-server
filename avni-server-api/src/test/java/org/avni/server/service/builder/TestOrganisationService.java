@@ -21,8 +21,12 @@ public class TestOrganisationService {
 
     public void createOrganisation(Organisation organisation, User adminUser) {
         organisationRepository.save(organisation);
-        adminUser.setOrganisationId(organisation.getId());
-        userRepository.save(adminUser);
+        createUser(organisation, adminUser);
         implementationRepository.createDBUser(organisation);
+    }
+
+    public void createUser(Organisation organisation, User user) {
+        user.setOrganisationId(organisation.getId());
+        userRepository.save(user);
     }
 }
