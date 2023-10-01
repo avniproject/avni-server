@@ -60,7 +60,7 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
     default Predicate getSyncConceptPredicate(Root<SubjectMigration> root, CriteriaBuilder cb, SubjectType subjectType, JsonObject syncSettings, String newSyncConceptName, String oldSyncConceptName) {
         List<String> syncConceptValues = JsonObjectUtil.getSyncAttributeValuesBySubjectTypeUUID(syncSettings, subjectType.getUuid(), User.SyncSettingKeys.syncAttribute1);
         if (syncConceptValues.size() == 0) {
-            return cb.isTrue(cb.literal(true));
+            return cb.isTrue(cb.literal(false));
         } else {
             List<Predicate> predicateList = new ArrayList<>();
             CriteriaBuilder.In<Object> newSyncConceptValue = cb.in(root.get(newSyncConceptName));
