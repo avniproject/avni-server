@@ -9,6 +9,7 @@ import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
+import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,5 +49,9 @@ public class TestSubjectTypeService {
     public SubjectType createWithDefaults(SubjectType subjectType) {
         Form form = new TestFormBuilder().withDefaultFieldsForNewEntity().build();
         return this.createWithDefaults(subjectType, form);
+    }
+
+    public SubjectType updateSubjectType(SubjectType subjectType) {
+        return subjectTypeRepository.save(subjectType);
     }
 }
