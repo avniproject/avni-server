@@ -24,12 +24,12 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
             JsonObject syncSettings = syncParameters.getSyncSettings();
             boolean syncConceptUsable = subjectType.isSyncRegistrationConcept1Usable() != null && subjectType.isSyncRegistrationConcept1Usable();
             if (syncConceptUsable) {
-                Predicate predicate = getSyncConceptPredicate(root, cb, subjectType, syncSettings, "newSyncConcept1Value", "oldSyncConcept1Value");
+                Predicate predicate = getSyncConceptPredicate(root, cb, subjectType, syncSettings, "newSyncConcept1Value", "oldSyncConcept1Value", User.SyncSettingKeys.syncAttribute1);
                 andPredicates.add(predicate);
             }
             syncConceptUsable = subjectType.isSyncRegistrationConcept2Usable() != null && subjectType.isSyncRegistrationConcept2Usable();
             if (syncConceptUsable) {
-                Predicate predicate = getSyncConceptPredicate(root, cb, subjectType, syncSettings, "newSyncConcept2Value", "oldSyncConcept2Value");
+                Predicate predicate = getSyncConceptPredicate(root, cb, subjectType, syncSettings, "newSyncConcept2Value", "oldSyncConcept2Value", User.SyncSettingKeys.syncAttribute2);
                 andPredicates.add(predicate);
             }
 
@@ -57,8 +57,8 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
         };
     }
 
-    default Predicate getSyncConceptPredicate(Root<SubjectMigration> root, CriteriaBuilder cb, SubjectType subjectType, JsonObject syncSettings, String newSyncConceptName, String oldSyncConceptName) {
-        List<String> syncConceptValues = JsonObjectUtil.getSyncAttributeValuesBySubjectTypeUUID(syncSettings, subjectType.getUuid(), User.SyncSettingKeys.syncAttribute1);
+    default Predicate getSyncConceptPredicate(Root<SubjectMigration> root, CriteriaBuilder cb, SubjectType subjectType, JsonObject syncSettings, String newSyncConceptName, String oldSyncConceptName, User.SyncSettingKeys syncAttribute) {
+        List<String> syncConceptValues = JsonObjectUtil.getSyncAttributeValuesBySubjectTypeUUID(syncSettings, subjectType.getUuid(), syncAttribute);
         if (syncConceptValues.size() == 0) {
             return cb.isTrue(cb.literal(false));
         } else {
