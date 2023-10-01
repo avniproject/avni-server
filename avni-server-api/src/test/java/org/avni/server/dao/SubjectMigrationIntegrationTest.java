@@ -131,10 +131,12 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         UserSyncSettings userSyncSettingsWithTwoConcepts = new TestUserSyncSettingsBuilder()
                 .setSubjectTypeUUID(subjectType.getUuid())
                 .setSyncConcept1(concept1.getUuid())
+                .setSyncConcept2(concept2.getUuid())
                 .setSyncConcept1Values(Collections.singletonList(concept1.getAnswerConcept("Answer 11").getUuid()))
                 .setSyncConcept2Values(Collections.singletonList(concept2.getAnswerConcept("Answer 21").getUuid()))
                 .build();
-        userRepository.save(new UserBuilder(userRepository.findOne(organisationData.getUser().getId())).withSubjectTypeSyncSettings(userSyncSettingsWithTwoConcepts).build());
+        User user = userRepository.save(new UserBuilder(userRepository.findOne(organisationData.getUser().getId())).withSubjectTypeSyncSettings(userSyncSettingsWithTwoConcepts).build());
+        setUser(user);
 
         // Subject with two concept attributes, first attribute migrated
         Individual s4 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 11")).addObservation(concept2, concept2.getAnswerConcept("Answer 21")).build()).build());
@@ -153,6 +155,19 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         subjectMigrationService.markSubjectMigrationIfRequired(s6.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 12")).addObservation(concept2, concept2.getAnswerConcept("Answer 22")).build());
         assertTrue(getSyncDetails().contains(EntitySyncStatusContract.createForComparison(SyncEntityName.SubjectMigration.name(), subjectType.getUuid())));
         assertEquals(6, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
+
+        // User without sync attributes setup will not get any migration as that is more performance optimised. Setting
+        UserSyncSettings userSyncSettingsWithNoConcepts = new TestUserSyncSettingsBuilder()
+                .setSubjectTypeUUID(subjectType.getUuid())
+                .setSyncConcept1(null)
+                .setSyncConcept1Values(Collections.emptyList())
+                .setSyncConcept2(null)
+                .setSyncConcept2Values(Collections.emptyList())
+                .build();
+        user = userRepository.save(new UserBuilder(userRepository.findOne(organisationData.getUser().getId())).withSubjectTypeSyncSettings(userSyncSettingsWithNoConcepts).build());
+        setUser(user);
+        assertEquals(0, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
+        assertFalse(getSyncDetails().contains(EntitySyncStatusContract.createForComparison(SyncEntityName.SubjectMigration.name(), subjectType.getUuid())));
     }
 
     @Test
