@@ -107,9 +107,6 @@ public class IndividualController extends AbstractController<Individual> impleme
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse save(@RequestBody IndividualRequest individualRequest) {
         logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
-        ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());
-        addObservationsFromDecisions(observations, individualRequest.getDecisions());
-        this.markSubjectMigrationIfRequired(individualRequest, observations);
 
         Individual individual = createIndividual(individualRequest);
 
