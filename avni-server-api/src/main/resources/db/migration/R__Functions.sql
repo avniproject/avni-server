@@ -160,7 +160,6 @@ $$
 BEGIN
     execute 'set role ' || in_db_owner || ';';
     execute 'drop schema if exists ' || in_impl_schema || ' cascade;';
-    execute 'delete from entity_sync_status where db_user = ''' || in_db_user || ''';';
     execute 'delete from entity_sync_status where schema_name = ''' || in_impl_schema || ''';';
     execute 'delete from index_metadata where table_metadata_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
     execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
@@ -177,7 +176,6 @@ $$
 BEGIN
     EXECUTE 'set role openchs;';
     execute 'drop schema ' || in_impl_schema || ' cascade;';
-    execute 'delete from entity_sync_status where db_user = ''' || in_db_user || ''';';
     execute 'delete from entity_sync_status where schema_name = ''' || in_impl_schema || ''';';
     execute 'delete from index_metadata where table_metadata_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
     execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
