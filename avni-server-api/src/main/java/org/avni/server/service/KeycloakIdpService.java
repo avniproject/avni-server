@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.apache.tomcat.jni.Time;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
@@ -13,6 +14,7 @@ import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.idm.UserSessionRepresentation;
 import org.passay.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -137,6 +140,16 @@ public class KeycloakIdpService extends IdpServiceImpl {
     @Override
     public boolean exists(User user) {
         return !realmResource.users().search(user.getUsername(), true).isEmpty();
+    }
+
+    @Override
+    public long getLastLoginTime(User user) {
+        List<UserSessionRepresentation> userSessions = realmResource.users().get(getUser(user).getId()).getUserSessions();
+        if(userSessions.size() > 1) {
+            Optional<UserSessionRepresentation> earliestSession = userSessions.stream().min((left, right) -> Math.toIntExact(left.getStart() - right.getStart()));
+            return earliestSession.map(UserSessionRepresentation::getStart).orElse(-1L);
+        }
+        return userSessions.get(0).getStart();
     }
 
     private CredentialRepresentation getCredentialRepresentation(String password) {

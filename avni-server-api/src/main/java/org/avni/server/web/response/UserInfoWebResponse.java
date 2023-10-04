@@ -8,6 +8,7 @@ import org.avni.server.web.request.UserInfoContract;
 import java.util.List;
 
 public class UserInfoWebResponse extends UserInfoContract {
+    private long lastSessionTime;
     private boolean hasAllPrivileges;
     private List<UserPrivilegeWebResponse> privileges;
     private boolean isAdmin;
@@ -30,10 +31,11 @@ public class UserInfoWebResponse extends UserInfoContract {
         return response;
     }
 
-    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges) {
+    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges, long lastSessionTime) {
         super(username, orgName, orgId, usernameSuffix, settings, name, catchmentName, syncSettings);
         this.privileges = privileges;
         this.hasAllPrivileges = hasAllPrivileges;
+        this.lastSessionTime = lastSessionTime;
     }
 
     public List<UserPrivilegeWebResponse> getPrivileges() {
@@ -46,5 +48,13 @@ public class UserInfoWebResponse extends UserInfoContract {
 
     public boolean getIsAdmin() {
         return isAdmin;
+    }
+
+    public long getLastSessionTime() {
+        return lastSessionTime;
+    }
+
+    public void setLastSessionTime(long lastSessionTime) {
+        this.lastSessionTime = lastSessionTime;
     }
 }

@@ -46,4 +46,9 @@ public class NoopIdpService implements IdpService {
     public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) {
         return this.createUser(user, organisationConfig);
     }
+
+    @Override
+    public long getLastLoginTime(User user) {
+        return -1L;
+    }
 }

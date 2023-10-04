@@ -124,6 +124,11 @@ public class CognitoIdpService extends IdpServiceImpl {
         }
     }
 
+    @Override
+    public long getLastLoginTime(User user) {
+        return -1L;
+    }
+
     private AWSStaticCredentialsProvider getCredentialsProvider() {
         return new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey));
     }

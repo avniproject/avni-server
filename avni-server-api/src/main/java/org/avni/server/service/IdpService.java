@@ -21,4 +21,6 @@ public interface IdpService {
     boolean exists(User user);
 
     UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) throws IDPException;
+
+    long getLastLoginTime(User user);
 }
