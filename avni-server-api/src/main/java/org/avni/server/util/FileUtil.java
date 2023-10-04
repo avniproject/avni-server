@@ -12,7 +12,7 @@ public class FileUtil {
         return ObjectMapperSingleton.getObjectMapper().readTree(FileUtil.class.getResource(file)).toString();
     }
 
-    public static String readJsonFileFromFileSystem(String file) throws IOException {
+    public static String readStringOfFileOnFileSystem(String file) throws IOException {
         if (!StringUtils.hasLength(file)) return null;
 
         byte[] encoded = Files.readAllBytes(Paths.get(file));

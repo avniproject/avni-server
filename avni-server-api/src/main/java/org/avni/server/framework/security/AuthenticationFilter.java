@@ -43,7 +43,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
         this.defaultUserName = defaultUserName;
         this.errorBodyBuilder = errorBodyBuilder;
 
-        String content = FileUtil.readJsonFileFromFileSystem(avniBlacklistedUrlsFile);
+        String content = FileUtil.readStringOfFileOnFileSystem(avniBlacklistedUrlsFile);
         blacklistedUrls = ObjectMapperSingleton.getObjectMapper().readValue(content == null ? "[]" : content, new TypeReference<List<String>>() {
         });
     }

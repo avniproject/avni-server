@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+
 @RestController
 public class JWKSController {
     private final AvniKeycloakConfig avniKeycloakConfig;
@@ -18,7 +20,15 @@ public class JWKSController {
     // https://www.javadoc.io/doc/com.nimbusds/nimbus-jose-jwt/2.21/com/nimbusds/jose/jwk/RSAKey.html
     @GetMapping("/jwks/publicKey")
     public JsonObject getAvniAsOAuthClientPublicKey() {
-        JsonObject rsaKey = new JsonObject().with("kty", "RSA").with("e", "AQAB").with("alg", "RS256").with("kid", avniKeycloakConfig.getPublicKeyId());
-        return rsaKey;
+        ArrayList<JsonObject> keys = new ArrayList<>();
+        JsonObject publicKey = new JsonObject()
+                .with("kty", "RSA")
+                .with("e", "AQAB")
+                .with("use", "enc")
+                .with("alg", "RSA-OAEP-256")
+                .with("kid", avniKeycloakConfig.getPublicKeyId())
+                .with("n", avniKeycloakConfig.getPublicKey());
+        keys.add(publicKey);
+        return new JsonObject().with("keys", keys);
     }
 }

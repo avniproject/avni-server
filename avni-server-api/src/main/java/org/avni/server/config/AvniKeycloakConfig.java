@@ -1,10 +1,17 @@
 package org.avni.server.config;
 
+import org.avni.server.util.FileUtil;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+
 @Component
 public class AvniKeycloakConfig {
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(AvniKeycloakConfig.class);
+
     @Value("${avni.keycloak.verify.token.audience}")
     private String verifyTokenAudience;
 
@@ -31,6 +38,17 @@ public class AvniKeycloakConfig {
 
     @Value("${avni.keycloak.avni.publicKeyId}")
     private String publicKeyId;
+
+    private String publicKey;
+
+    @PostConstruct
+    public void postInit() {
+        try {
+            publicKey = FileUtil.readStringOfFileOnFileSystem("avniJWKSPublicKey");
+        } catch (IOException e) {
+            logger.info(String.format("No avni keycloak public key for token encryption found. %s", e.getMessage()));
+        }
+    }
 
     public String getVerifyTokenAudience() {
         return verifyTokenAudience;
@@ -66,5 +84,9 @@ public class AvniKeycloakConfig {
 
     public String getPublicKeyId() {
         return publicKeyId;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
     }
 }
