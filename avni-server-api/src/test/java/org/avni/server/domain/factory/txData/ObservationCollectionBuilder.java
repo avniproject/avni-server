@@ -10,6 +10,16 @@ public class ObservationCollectionBuilder {
         return observationCollection;
     }
 
+    public ObservationCollectionBuilder addObservation(Concept concept, Concept value) {
+        addObservation(concept.getUuid(), value.getUuid());
+        return this;
+    }
+
+    public ObservationCollectionBuilder addObservation(Concept concept, Object value) {
+        addObservation(concept.getUuid(), value);
+        return this;
+    }
+
     public ObservationCollectionBuilder addObservation(String conceptUUID, Object value) {
         observationCollection.put(conceptUUID, value);
         return this;

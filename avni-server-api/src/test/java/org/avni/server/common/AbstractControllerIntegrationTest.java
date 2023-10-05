@@ -3,6 +3,9 @@ package org.avni.server.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.TestWebContextService;
 import org.junit.After;
@@ -12,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,6 +25,8 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertTrue;
 
@@ -83,5 +90,9 @@ public abstract class AbstractControllerIntegrationTest {
 
     public void setUser(String name) {
         testWebContextService.setUser(name);
+    }
+
+    public void setUser(User user) {
+        this.setUser(user.getUsername());
     }
 }

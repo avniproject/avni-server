@@ -57,19 +57,19 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
         Individual groupNotDirectlyAssignable = individualService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withLocation(testCatchmentData.getAddressLevel1()).withSubjectType(memberSubjectTypeButNotDirectlyAssignable).build());
         testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleWithoutDirectAssignment).withMember(directlyAssignableMember1).withGroup(groupNotDirectlyAssignable).build());
         User user1 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user1@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
-        User user2 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
+        User user3 = userRepository.save(new UserBuilder().withCatchment(testCatchmentData.getCatchment()).withDefaultValuesForNewEntity().userName("user3@example").withAuditUser(testOrganisationData.getUser()).organisationId(testOrganisationData.getOrganisationId()).build());
 
         userSubjectAssignmentService.assignSubjects(createContract(user1, group1, false));
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubject(user1, group1));
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubject(user1, directlyAssignableMember1));
 
         try {
-            userSubjectAssignmentService.assignSubjects(createContract(user2, directlyAssignableMember1, false));
+            userSubjectAssignmentService.assignSubjects(createContract(user3, directlyAssignableMember1, false));
             fail();
         } catch (ValidationException ignored) {
         }
 
-        userSubjectAssignmentService.assignSubjects(createContract(user2, group1, false));
+        userSubjectAssignmentService.assignSubjects(createContract(user3, group1, false));
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubject(user1, group1));
         assertNotNull(userSubjectAssignmentRepository.findByUserAndSubject(user1, directlyAssignableMember1));
     }

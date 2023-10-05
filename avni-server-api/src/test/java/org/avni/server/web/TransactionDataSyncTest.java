@@ -64,8 +64,6 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestProgramService testProgramService;
     @Autowired
     private TestGroupSubjectService testGroupSubjectService;
-    @Autowired
-    private TestOrganisationSetupService testOrganisationSetupService;
 
     @Autowired
     private TestDataSetupService testDataSetupService;
@@ -88,7 +86,6 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private SubjectType subjectTypeForDirectAssignment;
     private SubjectType groupSubjectTypeForDirectAssignment;
     private Program programForDirectAssignment;
-    private GroupRole groupRoleForGroupSybjectTypeWithDirectAssignment;
 
     @Before
     public void setup() {
@@ -172,7 +169,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         groupSubjectTypeForDirectAssignment = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).setGroup(true).build());
         programForDirectAssignment = testProgramService.addProgram(new ProgramBuilder().withName("subjectTypeForDirectAssignment").build(), subjectTypeForDirectAssignment);
 
-        groupRoleForGroupSybjectTypeWithDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(groupSubjectTypeForDirectAssignment).withMemberSubjectType(subjectTypeForDirectAssignment).build());
+        groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(groupSubjectTypeForDirectAssignment).withMemberSubjectType(subjectTypeForDirectAssignment).build());
 
         testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectTypeWithCatchmentBasedSync, subjectTypeForDirectAssignment, subjectTypeWithSyncAttributeBasedSync, groupSubjectTypeWithSyncAttributeBasedSync, groupSubjectTypeForCatchmentBasedSync, groupSubjectTypeForDirectAssignment);
         testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), subjectTypeWithCatchmentBasedSync, programWithCatchmentBasedSync);
