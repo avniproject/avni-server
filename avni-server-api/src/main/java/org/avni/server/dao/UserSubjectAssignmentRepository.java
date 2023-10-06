@@ -11,13 +11,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "userSubjectAssignment", path = "userSubjectAssignment", exported = false)
 public interface UserSubjectAssignmentRepository extends ReferenceDataRepository<UserSubjectAssignment> {
-
-    Optional<UserSubjectAssignment> findUserSubjectAssignmentByUserAndSubject(User user, Individual subject);
+    UserSubjectAssignment findByUserAndSubjectAndIsVoidedFalse(User user, Individual subject);
+    UserSubjectAssignment findByUserAndSubject(User user, Individual subject);
+    List<UserSubjectAssignment> findAllBySubjectAndIsVoidedFalse(Individual subject);
+    List<UserSubjectAssignment> findAllBySubject(Individual subject);
 
     List<UserSubjectAssignment> findUserSubjectAssignmentBySubject_IdIn(List<Long> subjectIds);
 
@@ -46,5 +47,4 @@ public interface UserSubjectAssignmentRepository extends ReferenceDataRepository
     }
 
     List<UserSubjectAssignment> findByOrganisationId(Long organisationId);
-
 }

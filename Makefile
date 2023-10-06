@@ -2,6 +2,7 @@
 # Objects: db, schema, server, package, env (code environment)
 # Actions: clean, build, deploy, test
 include makefiles/staging.mk
+include makefiles/prerelease.mk
 include makefiles/util.mk
 include makefiles/externalDB.mk
 
@@ -21,7 +22,8 @@ define _deploy_schema
 	flyway -validateOnMigrate=false -user=openchs -password=password -url=jdbc:postgresql://localhost:5432/$1 -schemas=public -locations=filesystem:./avni-server-api/src/main/resources/db/migration/ -table=schema_version migrate
 endef
 
-su:=$(shell id -un)
+SU ?= $(shell id -un)
+su:=$(SU)
 DB=openchs
 dbServer=localhost
 dbPort=5432
@@ -42,20 +44,20 @@ _drop_roles:
 	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c 'drop role organisation_user';
 
 _clean_db:
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$(database)' AND pid <> pg_backend_pid()"
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c 'drop database $(database)';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$(database)' AND pid <> pg_backend_pid()"
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres -c 'drop database $(database)';
 
 _build_db:
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c "create user openchs with password 'password' createrole";
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres -c 'create database $(database) with owner openchs';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d $(database) -c 'create extension if not exists "uuid-ossp"';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d $(database) -c 'create extension if not exists "ltree"';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d $(database) -c 'create extension if not exists "hstore"';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'grant demo to openchs';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'create role openchs_impl';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'grant openchs_impl to openchs';
-	-psql -h $(dbServer) -p $(dbPort) -U $(su) -d postgres  -c 'create role organisation_user createrole admin openchs_impl';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres -c "create user openchs with password 'password' createrole";
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres -c 'create database $(database) with owner openchs';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d $(database) -c 'create extension if not exists "uuid-ossp"';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d $(database) -c 'create extension if not exists "ltree"';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d $(database) -c 'create extension if not exists "hstore"';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'grant demo to openchs';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'create role openchs_impl';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'grant openchs_impl to openchs';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'create role organisation_user createrole admin openchs_impl';
 # </postgres>
 
 # <db>

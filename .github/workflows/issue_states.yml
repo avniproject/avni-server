@@ -20,4 +20,4 @@ jobs:
           owner: avniproject
           project_number: 2
           closed_statuses: Done
-          open_statuses: New Issues,Triaged,Focus Items,Hold,In Analysis,Analysis Complete,Ready,QA Failed,In Progress,Code Review Ready,In Code Review,Code Review with Comments,QA Ready,In QA
+          open_statuses: New Issues,Triaged,Focus Items,Hold,In Analysis,In Analysis Review,Ready,QA Failed,In Progress,Code Review Ready,In Code Review,Code Review with Comments,QA Ready,In QA

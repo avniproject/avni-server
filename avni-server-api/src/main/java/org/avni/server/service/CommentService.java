@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CommentService implements ScopeAwareService {
+public class CommentService implements ScopeAwareService<Comment> {
 
     private final CommentRepository commentRepository;
     private final IndividualRepository individualRepository;
@@ -65,7 +65,7 @@ public class CommentService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<Comment> repository() {
         return commentRepository;
     }
 }

@@ -131,7 +131,7 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request) throws IOException {
+    public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request) throws IOException, ValidationException {
         accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, request.getSubjectType());
         Individual subject = loadSubject(id, request.getExternalId());
         return updateSubjectAndSave(request, subject);

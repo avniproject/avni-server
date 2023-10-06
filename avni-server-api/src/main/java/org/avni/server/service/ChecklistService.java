@@ -14,13 +14,13 @@ import javax.transaction.Transactional;
 import java.util.Set;
 
 @Component
-public class ChecklistService implements ScopeAwareService {
-    private ChecklistRepository checklistRepository;
-    private ChecklistItemRepository checklistItemRepository;
+public class ChecklistService implements ScopeAwareService<Checklist> {
+    private final ChecklistRepository checklistRepository;
+    private final ChecklistItemRepository checklistItemRepository;
     private final ChecklistDetailRepository checklistDetailRepository;
 
     @Autowired
-    public ChecklistService(ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistDetailRepository checklistDetailRepository) {
+    public ChecklistService(ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, ChecklistDetailRepository checklistDetailRepository) {
         this.checklistRepository = checklistRepository;
         this.checklistItemRepository = checklistItemRepository;
         this.checklistDetailRepository = checklistDetailRepository;
@@ -51,7 +51,7 @@ public class ChecklistService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<Checklist> repository() {
         return checklistRepository;
     }
 }

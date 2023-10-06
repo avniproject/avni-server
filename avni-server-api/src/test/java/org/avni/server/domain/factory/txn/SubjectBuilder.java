@@ -18,6 +18,11 @@ public class SubjectBuilder {
         return this;
     }
 
+    public SubjectBuilder setId(int id) {
+        individual.setId((long) id);
+        return this;
+    }
+
     public SubjectBuilder addEnrolment(ProgramEnrolment programEnrolment) {
         individual.addEnrolment(programEnrolment);
         return this;
@@ -56,6 +61,6 @@ public class SubjectBuilder {
 
     public SubjectBuilder withMandatoryFieldsForNewEntity() {
         String s = UUID.randomUUID().toString();
-        return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now());
+        return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now()).withObservations(new ObservationCollection());
     }
 }

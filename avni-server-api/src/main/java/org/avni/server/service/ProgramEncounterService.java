@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-public class ProgramEncounterService implements ScopeAwareService {
+public class ProgramEncounterService implements ScopeAwareService<ProgramEncounter> {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ProgramEncounterService.class);
     @Autowired
     Bugsnag bugsnag;
@@ -111,7 +111,7 @@ public class ProgramEncounterService implements ScopeAwareService {
             ProgramEncounter programEncounter = createEmptyProgramEncounter(programEnrolment, operationalEncounterType);
             allScheduleEncountersByType = Arrays.asList(programEncounter);
         }
-        allScheduleEncountersByType.stream().forEach(programEncounter -> {
+        allScheduleEncountersByType.forEach(programEncounter -> {
             updateProgramEncounterWithVisitSchedule(programEncounter, visitSchedule);
             programEncounter.setProgramEnrolment(programEnrolment);
             this.save(programEncounter);
@@ -205,7 +205,7 @@ public class ProgramEncounterService implements ScopeAwareService {
     }
 
     @Override
-    public OperatingIndividualScopeAwareRepository repository() {
+    public OperatingIndividualScopeAwareRepository<ProgramEncounter> repository() {
         return programEncounterRepository;
     }
 

@@ -10,7 +10,15 @@ import java.util.Set;
 import java.util.UUID;
 
 public class SubjectTypeBuilder {
-    private final SubjectType subjectType = new SubjectType();
+    private SubjectType subjectType;
+
+    public SubjectTypeBuilder() {
+        subjectType = new SubjectType();
+    }
+
+    public SubjectTypeBuilder(SubjectType subjectType) {
+        this.subjectType = subjectType;
+    }
 
     public SubjectTypeBuilder setUuid(String uuid) {
         subjectType.setUuid(uuid);
@@ -24,7 +32,7 @@ public class SubjectTypeBuilder {
 
     public SubjectTypeBuilder setMandatoryFieldsForNewEntity() {
         String s = UUID.randomUUID().toString();
-        return setName(s).setUuid(s).setShouldSyncByLocation(true).setType(Subject.Individual);
+        return setName(s).setUuid(s).setShouldSyncByLocation(true).setType(Subject.Individual).setActive(true);
     }
 
     public SubjectTypeBuilder setType(Subject type) {
