@@ -6,7 +6,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 
 @Component
 public class AvniKeycloakConfig {
@@ -40,13 +51,30 @@ public class AvniKeycloakConfig {
     private String publicKeyId;
 
     private String publicKey;
+    private PrivateKey privateKey;
 
     @PostConstruct
     public void postInit() {
         try {
-            publicKey = FileUtil.readStringOfFileOnFileSystem("avniJWKSPublicKey");
+            String avniJWKSPublicKeyFile = "avniJWKSPublicKey";
+            if (new File(avniJWKSPublicKeyFile).exists()) {
+                publicKey = FileUtil.readStringOfFileOnFileSystem(avniJWKSPublicKeyFile);
+            }
         } catch (IOException e) {
-            logger.info(String.format("No avni keycloak public key for token encryption found. %s", e.getMessage()));
+            logger.error("Couldn't read public key provided", e);
+        }
+        try {
+            String avniJWKSPrivateKeyFile = "avniJWKSPrivateKey";
+            File privKeyFile = new File("avniJWKSPrivateKey");
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(privKeyFile));
+            byte[] privKeyBytes = new byte[(int) privKeyFile.length()];
+            bis.read(privKeyBytes);
+            bis.close();
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            KeySpec ks = new PKCS8EncodedKeySpec(privKeyBytes);
+            privateKey = keyFactory.generatePrivate(ks);
+        } catch (IOException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+            logger.error("Couldn't read private key provided", e);
         }
     }
 
@@ -88,5 +116,9 @@ public class AvniKeycloakConfig {
 
     public String getPublicKey() {
         return publicKey;
+    }
+
+    public PrivateKey getPrivateKey() {
+        return privateKey;
     }
 }

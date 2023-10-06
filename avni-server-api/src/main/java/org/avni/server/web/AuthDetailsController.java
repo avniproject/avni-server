@@ -3,13 +3,12 @@ package org.avni.server.web;
 import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.config.CognitoConfig;
 import org.avni.server.config.IdpType;
+import org.avni.server.framework.security.AuthTokenManager;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class AuthDetailsController {

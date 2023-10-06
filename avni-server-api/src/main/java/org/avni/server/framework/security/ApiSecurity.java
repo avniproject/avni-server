@@ -1,5 +1,6 @@
 package org.avni.server.framework.security;
 
+import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.config.IdpType;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,11 +38,13 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     @Value("${csp.allowed.hosts}")
     private String cspAllowedHosts;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final AvniKeycloakConfig avniKeycloakConfig;
 
     @Autowired
-    public ApiSecurity(AuthService authService, ErrorBodyBuilder errorBodyBuilder) {
+    public ApiSecurity(AuthService authService, ErrorBodyBuilder errorBodyBuilder, AvniKeycloakConfig avniKeycloakConfig) {
         this.authService = authService;
         this.errorBodyBuilder = errorBodyBuilder;
+        this.avniKeycloakConfig = avniKeycloakConfig;
     }
 
     @Override
@@ -73,7 +76,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()
                 .and()
-                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName, avniBlacklistedUrlsFile, errorBodyBuilder))
+                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName, avniBlacklistedUrlsFile, errorBodyBuilder, avniKeycloakConfig))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }

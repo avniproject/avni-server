@@ -86,6 +86,7 @@ dependencies {
     runtime("org.springframework.boot:spring-boot-properties-migrator")
     implementation 'org.apache.tika:tika-core:2.7.0'
     compile 'org.owasp.encoder:encoder:1.2.3'
+    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '7.9'
 }
 
 bootRun {

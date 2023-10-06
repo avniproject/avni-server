@@ -24,7 +24,8 @@ public class ResourceProtectionStatus {
             "/service-worker.js",
             "/ping",
             "/web/media",
-            "/jwks/publicKey"
+            "/jwks/publicKey",
+            "/jwks/decryptIdToken"
     );
 
     public static boolean isProtected(HttpServletRequest request) {

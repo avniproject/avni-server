@@ -2,6 +2,7 @@ package org.avni.server.framework.security;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.avni.server.config.AvniKeycloakConfig;
 import org.avni.server.config.IdpType;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.accessControl.AvniAccessException;
@@ -35,13 +36,15 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     private final IdpType idpType;
     private final List<String> blacklistedUrls;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final AvniKeycloakConfig avniKeycloakConfig;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder) throws IOException {
+    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder, AvniKeycloakConfig avniKeycloakConfig) throws IOException {
         super(authenticationManager);
         this.authService = authService;
         this.idpType = idpType;
         this.defaultUserName = defaultUserName;
         this.errorBodyBuilder = errorBodyBuilder;
+        this.avniKeycloakConfig = avniKeycloakConfig;
 
         String content = FileUtil.readStringOfFileOnFileSystem(avniBlacklistedUrlsFile);
         blacklistedUrls = ObjectMapperSingleton.getObjectMapper().readValue(content == null ? "[]" : content, new TypeReference<List<String>>() {
@@ -64,7 +67,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
             if (ResourceProtectionStatus.isPresentIn(request, blacklistedUrls)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, String.format("%s is blacklisted for the implementation", request.getServletPath()));
             } else if (isProtected) {
-                String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
+                String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString, avniKeycloakConfig.getPrivateKey());
                 UserContext userContext = idpType.equals(IdpType.none)
                         ? authService.authenticateByUserName(StringUtils.isEmpty(username) ? defaultUserName : username, organisationUUID)
                         : authService.authenticateByToken(derivedAuthToken, organisationUUID);
@@ -74,7 +77,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
                 long end = System.currentTimeMillis();
                 logger.info(String.format("%s %s?%s User: %s Organisation: %s Time: %s ms", method, requestURI, queryString, userContext.getUserName(), userContext.getOrganisationName(), (end - start)));
             } else {
-                String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
+                String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString, avniKeycloakConfig.getPrivateKey());
                 authTokenManager.setAuthCookie(request, response, derivedAuthToken);
                 if (!idpType.equals(IdpType.none))
                     authService.tryAuthenticateByToken(derivedAuthToken, organisationUUID);
