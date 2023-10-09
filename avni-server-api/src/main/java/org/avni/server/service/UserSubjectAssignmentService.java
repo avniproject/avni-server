@@ -150,7 +150,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                     throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
                 }
                 checkIfSubjectLiesWithinUserCatchment(assignmentVoided, subject, addressLevels);
-                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject, addressLevels);
+                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject);
             }
         }
         return this.saveAll(userSubjectAssignmentList);
@@ -176,7 +176,8 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         return userSubjectAssignment;
     }
 
-    private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject, List<Long> addressLevels) throws ValidationException {
+    private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList,
+                                        User user, Individual subject) {
         UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubject(user, subject);
         if (userSubjectAssignment == null) {
             userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
@@ -185,8 +186,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         if (subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
             for (GroupSubject groupSubject : groupSubjects) {
-                checkIfSubjectLiesWithinUserCatchment(assignmentVoided, groupSubject.getMemberSubject(), addressLevels);
-                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject(), addressLevels);
+                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject());
             }
         }
         userSubjectAssignmentList.add(userSubjectAssignment);
