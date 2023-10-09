@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -10,6 +11,8 @@ import java.util.Set;
 @Entity
 @Table(name = "catchment")
 @BatchSize(size = 100)
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Catchment extends OrganisationAwareEntity {
 
     @Column
