@@ -34,17 +34,23 @@ public class TestDataSetupService {
 
     public TestOrganisationData setupOrganisation() {
         Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
-        User user = new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
+        User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
+        User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
         Organisation organisation = new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build();
-        testOrganisationService.createOrganisation(organisation, user);
-        userRepository.save(new UserBuilder(user).withAuditUser(user).build());
-        testWebContextService.setUser(user.getUsername());
+        testOrganisationService.createOrganisation(organisation, user1);
+        testOrganisationService.createUser(organisation, user2);
+        userRepository.save(new UserBuilder(user1).withAuditUser(user1).build());
+        userRepository.save(new UserBuilder(user2).withAuditUser(user1).build());
+        testWebContextService.setUser(user1.getUsername());
 
         organisationConfigRepository.save(new TestOrganisationConfigBuilder().withMandatoryFields().withOrganisationId(organisation.getId()).build());
 
         groupRepository.save(group);
-        userGroupRepository.save(new TestUserGroupBuilder().withGroup(group).withUser(user).build());
-        return new TestOrganisationData(user, group, organisation);
+        userGroupRepository.save(new TestUserGroupBuilder().withGroup(group).withUser(user1).build());
+        userGroupRepository.save(new TestUserGroupBuilder().withGroup(group).withUser(user2).build());
+        TestOrganisationData testOrganisationData = new TestOrganisationData(user1, group, organisation);
+        testOrganisationData.setUser2(user2);
+        return testOrganisationData;
     }
 
     public TestCatchmentData setupACatchment() {
@@ -57,10 +63,10 @@ public class TestDataSetupService {
     }
 
     public static class TestCatchmentData {
-        private AddressLevelType addressLevelType;
-        private AddressLevel addressLevel1;
-        private AddressLevel addressLevel2;
-        private Catchment catchment;
+        private final AddressLevelType addressLevelType;
+        private final AddressLevel addressLevel1;
+        private final AddressLevel addressLevel2;
+        private final Catchment catchment;
 
         public TestCatchmentData(AddressLevelType addressLevelType, AddressLevel addressLevel1, AddressLevel addressLevel2, Catchment catchment) {
             this.addressLevelType = addressLevelType;
@@ -88,6 +94,7 @@ public class TestDataSetupService {
 
     public static class TestOrganisationData {
         private final User user;
+        private User user2;
         private final Group group;
         private final Organisation organisation;
 
@@ -107,6 +114,14 @@ public class TestDataSetupService {
 
         public long getOrganisationId() {
             return organisation.getId();
+        }
+
+        public void setUser2(User user2) {
+            this.user2 = user2;
+        }
+
+        public User getUser2() {
+            return user2;
         }
     }
 }

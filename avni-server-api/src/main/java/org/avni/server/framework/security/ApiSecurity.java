@@ -38,6 +38,9 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
     private String cspAllowedHosts;
     private final ErrorBodyBuilder errorBodyBuilder;
 
+    @Value("${csp.enabled}")
+    private boolean cspEnabled;
+
     @Autowired
     public ApiSecurity(AuthService authService, ErrorBodyBuilder errorBodyBuilder) {
         this.authService = authService;
@@ -53,13 +56,17 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
          * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
          * https://developer.mozilla.org/en-US/docs/Glossary/Fetch_directive
          */
-        String policyDirectives = "default-src 'self' ; connect-src 'self' " + cspAllowedHosts + ";";
-        policyDirectives += "img-src 'self' " + cspAllowedHosts + " data: ;";
-        policyDirectives += "style-src 'self' 'unsafe-inline'; object-src 'none';";
-        policyDirectives += "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
-        policyDirectives += " 'sha256-5As4+3YpY62+l38PsxCEkjB1R4YtyktBtRScTJ3fyLU=' ";
-        policyDirectives += " 'sha256-MDtIDJhP1FMu16GoPm7X/I7sEECznvKCwlPRG8uDDDc=' ;";
-        http.headers().xssProtection().and().contentSecurityPolicy(policyDirectives);
+        if (cspEnabled) {
+            String policyDirectives = "default-src 'self' ; connect-src 'self' " + cspAllowedHosts + ";";
+            policyDirectives += "img-src 'self' " + cspAllowedHosts + " data: ;";
+            policyDirectives += "style-src 'self' 'unsafe-inline'; object-src 'none';";
+            policyDirectives += "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+            policyDirectives += " 'sha256-5As4+3YpY62+l38PsxCEkjB1R4YtyktBtRScTJ3fyLU=' ";
+            policyDirectives += " 'sha256-MDtIDJhP1FMu16GoPm7X/I7sEECznvKCwlPRG8uDDDc=' ;";
+            http.headers().xssProtection().and().contentSecurityPolicy(policyDirectives);
+        } else {
+            http.headers().xssProtection();
+        }
 
         CsrfConfigurer<HttpSecurity> csrf = http.headers().frameOptions().sameOrigin().and().csrf();
         HttpSecurity httpSecurity;

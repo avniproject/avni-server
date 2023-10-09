@@ -8,7 +8,6 @@ import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxyHelper;
 import org.joda.time.DateTime;
 import org.avni.server.web.validation.ValidationException;
-import org.owasp.encoder.Encode;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -122,7 +121,7 @@ public class User {
     public void setUsername(String username) { this.username = username; }
 
     public String getName() {
-        return Encode.forHtml(name);
+        return name;
     }
 
     public void setName(String name) {

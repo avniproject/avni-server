@@ -58,6 +58,11 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         return subjectType != null && isChangedBySubjectTypeRegistrationLocationType(user, lastModifiedDateTime, subjectType.getId(), subjectType, SyncEntityName.SubjectMigration);
     }
 
+     /* Setting of old and new sync concept value conditionally based on oldObsValueForSyncConcept and newObsValueForSyncConcept being different creates a problem.
+     This means that new and old values are set to null when address is changed but obs values haven't changed. Now these entries get picked by anyone who has the same address but may not have same sync concept values in user settings.
+     This can be fixed by picking up actual obs value from individual and putting in old and new values where-ever it is null. Once this optimisation is done we can remove adding of "is null" condition as predicate in subject migration strategy for sync attributes.
+     This problem is illustrated in this test - org.avni.server.dao.SubjectMigrationIntegrationTest.migrations_created_by_one_user_is_returned_for_another_user_even_when_concept_attributes_dont_match
+     At this moment the performance of this seems small as other filters help in reducing the number of records. Functionally this is not an issue because mobile app does the checks before applying subject migration. */
     @Transactional
     public void markSubjectMigrationIfRequired(String individualUuid, AddressLevel newAddressLevel, ObservationCollection newObservations) {
         Individual individual = individualRepository.findByUuid(individualUuid);

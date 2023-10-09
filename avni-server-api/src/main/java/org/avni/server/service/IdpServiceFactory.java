@@ -46,6 +46,16 @@ public class IdpServiceFactory {
         this.organisationConfigService = organisationConfigService;
     }
 
+    public IdpService getIdpService() {
+        if (idpType.equals(IdpType.none))
+            return new NoopIdpService();
+
+        if (cognitoIdpService != null)
+            return cognitoIdpService;
+
+        return keycloakIdpService;
+    }
+
     public IdpService getIdpService(Organisation organisation) {
         OrganisationConfig.Settings settings = getSettings(organisation);
 

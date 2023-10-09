@@ -55,13 +55,13 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
     List<UserWebProjection> findAllByOrganisationIdAndIsVoidedFalse(Long organisationId);
 
     @Query(value = "SELECT u FROM User u left join u.accountAdmin as aa " +
-            "where u.isVoided = false and " +
-            "(((:organisationIds) is not null and u.organisationId in (:organisationIds) and u.isOrgAdmin = true) or aa.account.id in (:accountIds)) " +
+            "where u.isVoided = false " +
+            "and (aa.account.id in (:accountIds)) " +
             "and (:username is null or u.username like %:username%) " +
             "and (:name is null or u.name like %:name%) " +
             "and (:email is null or u.email like %:email%) " +
             "and (:phoneNumber is null or u.phoneNumber like %:phoneNumber%)")
-    Page<User> findAccountAndOrgAdmins(String username, String name, String email, String phoneNumber, List<Long> accountIds, List<Long> organisationIds, Pageable pageable);
+    Page<User> findAccountAndOrgAdmins(String username, String name, String email, String phoneNumber, List<Long> accountIds, Pageable pageable);
 
     @Query(value = "SELECT u FROM User u left join u.accountAdmin as aa " +
             "where u.id=:id and u.isVoided = false and " +

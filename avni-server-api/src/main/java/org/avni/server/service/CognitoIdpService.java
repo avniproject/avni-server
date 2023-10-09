@@ -57,19 +57,28 @@ public class CognitoIdpService extends IdpServiceImpl {
     @Override
     public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
         AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, getDefaultPassword(user));
-        return createCognitoUser(createUserRequest, user, organisationConfig);
+        return createCognitoUser(createUserRequest, user, organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin));
     }
 
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
+        return createUserWithPassword(user, password, organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin));
+    }
+
+    private UserCreateStatus createUserWithPassword(User user, String password, Optional<Object> doNotRequirePasswordChangeOnFirstLogin) {
         boolean isTmpPassword = S.isEmpty(password);
         AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, isTmpPassword ? getDefaultPassword(user) : password);
-        UserCreateStatus userCreateStatus = createCognitoUser(createUserRequest, user, organisationConfig);
+        UserCreateStatus userCreateStatus = createCognitoUser(createUserRequest, user, doNotRequirePasswordChangeOnFirstLogin);
         if (!isTmpPassword) {
             boolean passwordResetDone = resetPassword(user, password);
             userCreateStatus.setNonDefaultPasswordSet(passwordResetDone);
         }
         return userCreateStatus;
+    }
+
+    @Override
+    public UserCreateStatus createSuperAdminWithPassword(User user, String password) {
+        return this.createUserWithPassword(user, password, Optional.of(true));
     }
 
     @Override
@@ -158,7 +167,7 @@ public class CognitoIdpService extends IdpServiceImpl {
                 .withTemporaryPassword(password);
     }
 
-    private UserCreateStatus createCognitoUser(AdminCreateUserRequest createUserRequest, User user, OrganisationConfig organisationConfig) {
+    private UserCreateStatus createCognitoUser(AdminCreateUserRequest createUserRequest, User user, Optional<Object> doNotRequirePasswordChangeOnFirstLogin) {
         logger.info(String.format("Initiating CREATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
         UserCreateStatus userCreateStatus = new UserCreateStatus();
         AdminCreateUserResult createUserResult;
@@ -171,8 +180,7 @@ public class CognitoIdpService extends IdpServiceImpl {
             userCreateStatus.setIdpUserCreated(false);
         }
 
-        Optional<Object> configValueOptional = organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin);
-        if (configValueOptional.isPresent() && configValueOptional.get().equals(true)) {
+        if (doNotRequirePasswordChangeOnFirstLogin.isPresent() && doNotRequirePasswordChangeOnFirstLogin.get().equals(true)) {
             AdminSetUserPasswordRequest updateUserRequest = new AdminSetUserPasswordRequest()
                     .withUserPoolId(userPoolId)
                     .withUsername(user.getUsername())

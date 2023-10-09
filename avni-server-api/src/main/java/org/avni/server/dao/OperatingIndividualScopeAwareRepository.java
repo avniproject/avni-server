@@ -123,12 +123,8 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
 
                 Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
                 Path<Date> lastModifiedDateTimePath = userSubjectAssignmentJoin.get("lastModifiedDateTime");
-                if (syncParameters.getNow() == null) {
-                    predicates.add(cb.greaterThanOrEqualTo(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime)));
-                } else {
-                    Date now = syncParameters.getNow().toDate();
-                    predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime), cb.literal(now)));
-                }
+                Date now = syncParameters.getNow().toDate();
+                predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime), cb.literal(now)));
 
                 query.orderBy(cb.asc(lastModifiedDateTimePath), cb.asc(userSubjectAssignmentJoin.get("id")));
             }

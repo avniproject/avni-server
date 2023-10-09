@@ -13,6 +13,11 @@ public class TestOrganisationBuilder {
         return withUuid(placeholder).withDbUser(placeholder).withName(placeholder).withSchemaName(placeholder);
     }
 
+    public TestOrganisationBuilder setId(long id) {
+        organisation.setId(id);
+        return this;
+    }
+
     public TestOrganisationBuilder withSchemaName(String schemaName) {
         organisation.setSchemaName(schemaName);
     	return this;
