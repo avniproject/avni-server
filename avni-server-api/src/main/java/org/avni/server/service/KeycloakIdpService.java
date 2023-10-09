@@ -63,13 +63,22 @@ public class KeycloakIdpService extends IdpServiceImpl {
     }
 
     @Override
-    public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) throws IDPException{
+    public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
         createUserWithPassword(user, defaultPassword(user), null);
         return null;
     }
 
     @Override
-    public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) throws IDPException {
+    public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
+        return this.createSuperAdminWithPassword(user, password);
+    }
+
+    @Override
+    public UserCreateStatus createSuperAdminWithPassword(User user, String password) {
+        return this.createUserWithPassword(user, password);
+    }
+
+    private UserCreateStatus createUserWithPassword(User user, String password) {
         logger.info(String.format("Initiating create keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
 
         UserRepresentation newUser = getUserRepresentation(user);

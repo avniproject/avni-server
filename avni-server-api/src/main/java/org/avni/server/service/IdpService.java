@@ -18,6 +18,8 @@ public interface IdpService {
 
     UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) throws IDPException;
 
+    UserCreateStatus createSuperAdminWithPassword(User user, String password) throws IDPException;
+
     boolean exists(User user);
 
     UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) throws IDPException;
