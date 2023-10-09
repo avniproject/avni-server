@@ -347,7 +347,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {
-        return entities.stream().anyMatch(individual -> individual.getUuid().equals(entity.getUuid()));
+        return entities.stream().anyMatch(x -> x.getUuid().equals(entity.getUuid()));
     }
 
     private List getSyncDetails() {

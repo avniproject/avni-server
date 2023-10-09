@@ -2,6 +2,8 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.UserContext;
+import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +16,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -105,19 +108,30 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
         ) > 0;
     }
 
+    @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update program_enrolment enl set " +
             "address_id = :addressId, " +
             "sync_concept_1_value = :syncAttribute1Value, " +
-            "sync_concept_2_value = :syncAttribute2Value " +
+            "sync_concept_2_value = :syncAttribute2Value, " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "where enl.individual_id = :individualId", nativeQuery = true)
-    void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value);
+    void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value, Date lastModifiedDateTime, Long lastModifiedById);
+
+    default void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value) {
+        this.updateSyncAttributesForIndividual(individualId, addressId, syncAttribute1Value, syncAttribute2Value, new Date(), UserContextHolder.getUserId());
+    }
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update program_enrolment enl set " +
             "sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
-            "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text) " +
+            "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "from individual i " +
             "where enl.individual_id = i.id and i.subject_type_id = :subjectTypeId", nativeQuery = true)
-    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2);
+    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Date lastModifiedDateTime, Long lastModifiedById);
+
+    default void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2) {
+        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, new Date(), UserContextHolder.getUserId());
+    }
 }

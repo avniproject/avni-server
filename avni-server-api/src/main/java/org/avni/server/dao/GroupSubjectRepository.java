@@ -132,21 +132,36 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     @Query(value = "update group_subject gs set " +
             "group_subject_address_id = :addressId, " +
             "group_subject_sync_concept_1_value = :syncAttribute1Value, " +
-            "group_subject_sync_concept_2_value = :syncAttribute2Value " +
+            "group_subject_sync_concept_2_value = :syncAttribute2Value, " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "where gs.group_subject_id = :individualId", nativeQuery = true)
-    void updateSyncAttributesForGroupSubject(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value);
+    void updateSyncAttributesForGroupSubject(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value, Date lastModifiedDateTime, Long lastModifiedById);
+
+    default void updateSyncAttributesForGroupSubject(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value) {
+        this.updateSyncAttributesForGroupSubject(individualId, addressId, syncAttribute1Value, syncAttribute2Value, new Date(), UserContextHolder.getUserId());
+    }
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update group_subject gs set " +
-            "member_subject_address_id = :addressId " +
+            "member_subject_address_id = :addressId, " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "where gs.member_subject_id = :individualId", nativeQuery = true)
-    void updateSyncAttributesForMemberSubject(Long individualId, Long addressId);
+    void updateSyncAttributesForMemberSubject(Long individualId, Long addressId, Date lastModifiedDateTime, Long lastModifiedById);
+
+    default void updateSyncAttributesForMemberSubject(Long individualId, Long addressId) {
+        this.updateSyncAttributesForMemberSubject(individualId, addressId, new Date(), UserContextHolder.getUserId());
+    }
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update group_subject gs set " +
             "group_subject_sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
-            "group_subject_sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text) " +
+            "group_subject_sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "from individual i " +
             "where gs.group_subject_id = i.id and i.subject_type_id = :subjectTypeId", nativeQuery = true)
-    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2);
+    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Date lastModifiedDateTime, Long lastModifiedById);
+
+    default void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2) {
+        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, new Date(), UserContextHolder.getUserId());
+    }
 }

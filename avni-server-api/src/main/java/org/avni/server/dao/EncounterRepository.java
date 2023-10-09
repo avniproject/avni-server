@@ -4,6 +4,7 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Individual;
+import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -144,17 +145,23 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
     @Query(value = "update encounter e set " +
             "address_id = :addressId, " +
             "sync_concept_1_value = :syncAttribute1Value, " +
-            "sync_concept_2_value = :syncAttribute2Value " +
+            "sync_concept_2_value = :syncAttribute2Value, " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "where e.individual_id = :individualId", nativeQuery = true)
-    void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value);
+    void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value, Date lastModifiedDateTime, Long lastModifiedById);
+    default void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value) {
+        this.updateSyncAttributesForIndividual(individualId, addressId, syncAttribute1Value, syncAttribute2Value, new Date(), UserContextHolder.getUserId());
+    }
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update encounter e set " +
             "sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
-            "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text) " +
+            "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
+            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
             "from individual i " +
             "where e.individual_id = i.id and i.subject_type_id = :subjectTypeId", nativeQuery = true)
-    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2);
-
+    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Date lastModifiedDateTime, Long lastModifiedById);
+    default void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2) {
+        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, new Date(), UserContextHolder.getUserId());
+    }
 }
-
