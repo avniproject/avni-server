@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
@@ -79,4 +80,12 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
     }
 
     List<IndividualRelationship> findByIndividualaAndIndividualBAndIsVoidedFalse(Individual individualA, Individual individualB);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = "update individual_relationship ir set last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById" +
+            " where ir.individual_a_id = :individualId or ir.individual_b_id = :individualId", nativeQuery = true)
+    void setChangedForSync(Long individualId, Date lastModifiedDateTime, Long lastModifiedById);
+    default void setChangedForSync(Individual individual) {
+        this.setChangedForSync(individual.getId(), new Date(), UserContextHolder.getUserId());
+    }
 }
