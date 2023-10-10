@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
+import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
@@ -25,6 +26,9 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     private final ProgramEncounterRepository programEncounterRepository;
     private final GroupSubjectRepository groupSubjectRepository;
     private final AddressLevelService addressLevelService;
+    private final ChecklistRepository checklistRepository;
+    private final ChecklistItemRepository checklistItemRepository;
+    private final IndividualRelationshipRepository individualRelationshipRepository;
 
     @Autowired
     public SubjectMigrationService(EntityApprovalStatusRepository entityApprovalStatusRepository,
@@ -34,7 +38,10 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
                                    EncounterRepository encounterRepository,
                                    ProgramEnrolmentRepository programEnrolmentRepository,
                                    ProgramEncounterRepository programEncounterRepository,
-                                   GroupSubjectRepository groupSubjectRepository, AddressLevelService addressLevelService) {
+                                   GroupSubjectRepository groupSubjectRepository, AddressLevelService addressLevelService,
+                                   ChecklistRepository checklistRepository,
+                                   ChecklistItemRepository checklistItemRepository,
+                                   IndividualRelationshipRepository individualRelationshipRepository) {
         this.entityApprovalStatusRepository = entityApprovalStatusRepository;
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -44,6 +51,9 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         this.programEncounterRepository = programEncounterRepository;
         this.groupSubjectRepository = groupSubjectRepository;
         this.addressLevelService = addressLevelService;
+        this.checklistRepository = checklistRepository;
+        this.checklistItemRepository = checklistItemRepository;
+        this.individualRelationshipRepository = individualRelationshipRepository;
     }
 
     @Override
@@ -102,6 +112,9 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
             groupSubjectRepository.updateSyncAttributesForGroupSubject(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
             entityApprovalStatusRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
             groupSubjectRepository.updateSyncAttributesForMemberSubject(individual.getId(), newAddressLevel.getId());
+            checklistItemRepository.setChangedForSync(individual);
+            checklistRepository.setChangedForSync(individual);
+            individualRelationshipRepository.setChangedForSync(individual);
         }
     }
 }
