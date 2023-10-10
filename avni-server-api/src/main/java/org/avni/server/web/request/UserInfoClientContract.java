@@ -7,6 +7,7 @@ import java.util.List;
 
 @Relation(collectionRelation = "userInfo")
 public class UserInfoClientContract extends UserInfoContract {
+    private long lastSessionTime;
     private List<GroupPrivilegeContract> privileges;
     private String[] roles;
 
@@ -25,5 +26,13 @@ public class UserInfoClientContract extends UserInfoContract {
 
     public void setPrivileges(List<GroupPrivilegeContract> privileges) {
         this.privileges = privileges;
+    }
+
+    public long getLastSessionTime() {
+        return lastSessionTime;
+    }
+
+    public void setLastSessionTime(long lastSessionTime) {
+        this.lastSessionTime = lastSessionTime;
     }
 }

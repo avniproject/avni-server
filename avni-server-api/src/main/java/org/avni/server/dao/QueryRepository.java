@@ -3,6 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.domain.CustomQuery;
 import org.avni.server.web.request.CustomQueryRequest;
 import org.avni.server.web.response.CustomQueryResponse;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.flywaydb.core.internal.util.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,12 +20,18 @@ import java.util.Map;
 public class QueryRepository {
     private final NamedParameterJdbcTemplate externalQueryJdbcTemplate;
     private final CustomQueryRepository customQueryRepository;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public QueryRepository(@Qualifier("externalQueryJdbcTemplate") NamedParameterJdbcTemplate externalQueryJdbcTemplate,
-                           CustomQueryRepository customQueryRepository) {
+                           CustomQueryRepository customQueryRepository, ErrorBodyBuilder errorBodyBuilder) {
         this.externalQueryJdbcTemplate = externalQueryJdbcTemplate;
         this.customQueryRepository = customQueryRepository;
+        this.errorBodyBuilder = errorBodyBuilder;
+    }
+
+    QueryRepository(NamedParameterJdbcTemplate externalQueryJdbcTemplate, CustomQueryRepository customQueryRepository) {
+        this(externalQueryJdbcTemplate, customQueryRepository, ErrorBodyBuilder.createForTest());
     }
 
     public ResponseEntity<?> runQuery(CustomQueryRequest customQueryRequest) {
@@ -40,9 +47,9 @@ public class QueryRepository {
             if (errorMessage.equals("ERROR: canceling statement due to user request")) {
                 errorMessage = "Query took more time to return the result";
             }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format("Error while executing the query message : \"%s\"", errorMessage));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(String.format("Error while executing the query message : \"%s\"", errorMessage)));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(String.format("Encountered some error while executing the query message %s", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(String.format("Encountered some error while executing the query message %s", e.getMessage())));
         }
     }
 }

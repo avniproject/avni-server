@@ -181,18 +181,10 @@ workflows:
           - test
     - STAGING_approve:
         type: approval
-        filters:
-          branches:
-            only:
-              - master
         requires:
           - build
     - STAGING_deploy:
         context: non-prod-deploy
-        filters:
-          branches:
-            only:
-              - master
         requires:
           - STAGING_approve
     - UAT_approve:

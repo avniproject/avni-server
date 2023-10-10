@@ -29,6 +29,9 @@ public class AvniKeycloakConfig {
     @Value("${keycloak.realm}")
     private String realm;
 
+    @Value("${avni.keycloak.avni.publicKeyId}")
+    private String publicKeyId;
+
     public String getVerifyTokenAudience() {
         return verifyTokenAudience;
     }
@@ -59,5 +62,9 @@ public class AvniKeycloakConfig {
 
     public String getClient() {
         return client;
+    }
+
+    public String getPublicKeyId() {
+        return publicKeyId;
     }
 }

@@ -78,6 +78,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.6'
     implementation 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.12.6'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.12.6'
+    implementation 'org.hibernate:hibernate-ehcache:5.2.14.Final'
+    implementation 'javax.cache:cache-api:1.1.1'
     dev "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
     testCompile "org.mockito:mockito-core:2.23.4"
     testCompile 'org.powermock:powermock-core:2.0.9'

@@ -56,7 +56,7 @@ public class ConceptControllerIntegrationTest extends AbstractControllerIntegrat
             post(json);
             assertThat(false);
         } catch (AssertionError e) {
-            assertThat(e.getMessage()).isEqualTo("Answer concept not found for UUID:781aa33a-2bb0-45ed-b00e-d344186d9824");
+            assertThat(e.getMessage().contains("Answer concept not found for UUID:781aa33a-2bb0-45ed-b00e-d344186d9824")).isEqualTo(true);
         }
     }
 

@@ -1,15 +1,16 @@
 package org.avni.server.service;
 
-import com.bugsnag.Bugsnag;
-
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.AbstractMap.SimpleEntry;
 
+import com.amazonaws.HttpMethod;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
+import org.avni.server.common.EnhancedValidationDTO;
 import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
@@ -17,6 +18,7 @@ import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.observation.PhoneNumber;
+import org.avni.server.util.BugsnagReporter;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.ObservationRequest;
@@ -38,22 +40,24 @@ import static org.avni.messaging.domain.Constants.PHONE_NUMBER_PATTERN;
 public class EnhancedValidationService {
     private final FormMappingService formMappingService;
     private final OrganisationConfigService organisationConfigService;
-    private final Bugsnag bugsnag;
+    private final BugsnagReporter bugsnagReporter;
     private final ConceptRepository conceptRepository;
     private final SubjectTypeRepository subjectTypeRepository;
     private final IndividualRepository individualRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final Logger logger;
     private final ObjectMapper objectMapper;
+    private final S3Service s3Service;
 
-    public EnhancedValidationService(FormMappingService formMappingService, OrganisationConfigService organisationConfigService, Bugsnag bugsnag, ConceptRepository conceptRepository, SubjectTypeRepository subjectTypeRepository, IndividualRepository individualRepository, AddressLevelTypeRepository addressLevelTypeRepository) {
+    public EnhancedValidationService(FormMappingService formMappingService, OrganisationConfigService organisationConfigService, BugsnagReporter bugsnagReporter, ConceptRepository conceptRepository, SubjectTypeRepository subjectTypeRepository, IndividualRepository individualRepository, AddressLevelTypeRepository addressLevelTypeRepository, S3Service s3Service) {
         this.formMappingService = formMappingService;
         this.organisationConfigService = organisationConfigService;
-        this.bugsnag = bugsnag;
+        this.bugsnagReporter = bugsnagReporter;
         this.conceptRepository = conceptRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.individualRepository = individualRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.s3Service = s3Service;
         this.logger = LoggerFactory.getLogger(this.getClass());
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
@@ -69,12 +73,12 @@ public class EnhancedValidationService {
             .collect(Collectors.toList());
 
         if (!nonMatchingConceptUuids.isEmpty()) {
-            String errorMessage = String.format("Invalid concept uuids/names %s found for Form uuid: %s", String.join(", ", nonMatchingConceptUuids), formMapping.getFormUuid());
+            String errorMessage = String.format("Invalid concept uuids/names %s found for Form uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids), formMapping.getFormUuid(), formMapping.getFormName());
             return handleValidationFailure(errorMessage);
         }
 
         String allErrors = observationRequests.stream()
-            .map(observationRequest -> new SimpleEntry<>(conceptRepository.findByUuid(observationRequest.getConceptUUID()), observationRequest.getValue()))
+            .map(observationRequest -> new EnhancedValidationDTO(conceptRepository.findByUuid(observationRequest.getConceptUUID()), entityConceptMap.get(observationRequest.getConceptUUID()), observationRequest.getValue()))
             .map(this::validate)
             .filter(Objects::nonNull)
             .collect(Collectors.joining("\n"));
@@ -85,9 +89,8 @@ public class EnhancedValidationService {
     }
 
     public ValidationResult handleValidationFailure(String errorMessage) {
-        logger.error(String.format("ValidationError: %s", errorMessage));
         ValidationException validationException = new ValidationException(errorMessage);
-        bugsnag.notify(validationException);
+        bugsnagReporter.logAndReportToBugsnag(validationException);
         if (organisationConfigService.isFailOnValidationErrorEnabled()) {
             throw validationException;
         } else {
@@ -127,24 +130,23 @@ public class EnhancedValidationService {
             .collect(Collectors.toList()) : new ArrayList<>();
     }
 
-    private String validate(SimpleEntry<Concept, Object> obsReqAsMap) {
-        Concept question = obsReqAsMap.getKey();
-        Object value = obsReqAsMap.getValue();
+    private String validate(EnhancedValidationDTO enhancedValidationDTO) {
+        Object value = enhancedValidationDTO.getValue();
         if (value instanceof Collection<?>) {
             List<String> errorMessages = new ArrayList<>();
             ((Collection<Object>) value).forEach(vl -> {
-                String validationResult = validateAnswer(question, vl);
+                String validationResult = validateAnswer(enhancedValidationDTO.getConcept(), enhancedValidationDTO.getFormElement(), vl);
                 if (validationResult != null) errorMessages.add(validationResult);
             });
             if (errorMessages.isEmpty()) return null;
 
             return String.join("\n", errorMessages);
         } else {
-            return validateAnswer(question, value);
+            return validateAnswer(enhancedValidationDTO.getConcept(), enhancedValidationDTO.getFormElement(), value);
         }
     }
 
-    private String validateAnswer(Concept question, Object value) {
+    private String validateAnswer(Concept question, FormElement formElement, Object value) {
         if (value == null || (value instanceof String && ((String) value).trim().equals(""))) return null;
         switch (ConceptDataType.valueOf(question.getDataType())) {
             case Coded:
@@ -162,6 +164,11 @@ public class EnhancedValidationService {
             case Text:
                 try {
                     String text = (String) value;
+                    if (formElement.getValidFormat() != null) {
+                        if (!text.matches(formElement.getValidFormat().getRegex())) {
+                            return formatErrorMessage(question, value);
+                        }
+                    }
                 } catch (ClassCastException classCastException) {
                     return formatErrorMessage(question, value);
                 }
@@ -208,11 +215,10 @@ public class EnhancedValidationService {
                         .flatMap(Collection::stream)
                         .map(AddressLevel::getUuid)
                         .collect(Collectors.toList())
-                        .contains((String) value)) {
+                        .contains(value)) {
                         return formatErrorMessage(question, value);
                     }
-                }
-                catch (ClassCastException classCastException) {
+                } catch (ClassCastException classCastException) {
                     return formatErrorMessage(question, value);
                 }
                 return null;
@@ -222,7 +228,18 @@ public class EnhancedValidationService {
                     if (!phoneNumber.getPhoneNumber().matches(PHONE_NUMBER_PATTERN)) {
                         return formatErrorMessage(question, value);
                     }
-                } catch (ClassCastException classCastException) {
+                } catch (ClassCastException | IllegalArgumentException e) {
+                    return formatErrorMessage(question, value);
+                }
+                return null;
+            case Image:
+                try {
+                    URL dummyUrl = s3Service.generateMediaUploadUrl("dummy.jpg", HttpMethod.PUT);
+                    URL imageUrl = new URL(value.toString());
+                    if (!Objects.equals(dummyUrl.getProtocol(), imageUrl.getProtocol()) || !Objects.equals(dummyUrl.getHost(), imageUrl.getHost())) {
+                        return formatErrorMessage(question, value);
+                    }
+                } catch (MalformedURLException malformedURLException) {
                     return formatErrorMessage(question, value);
                 }
                 return null;

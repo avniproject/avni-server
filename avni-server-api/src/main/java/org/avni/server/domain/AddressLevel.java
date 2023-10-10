@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Type;
 import org.avni.server.application.projections.BaseProjection;
@@ -22,6 +23,8 @@ import java.util.stream.Collectors;
         "parentLocationMappings", "type", "catchments", "virtualCatchments",
         "parent", "subLocations"
 })
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class AddressLevel extends OrganisationAwareEntity {
     @Column
     @NotNull

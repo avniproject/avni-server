@@ -231,7 +231,6 @@ public class ConceptService implements NonScopeAwareService {
             } catch (AnswerConceptNotFoundException answerConceptNotFoundException) {
                 throw new ValidationException(answerConceptNotFoundException.getMessage());
             }
-
         }
     }
 

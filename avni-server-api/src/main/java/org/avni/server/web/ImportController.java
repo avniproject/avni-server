@@ -12,6 +12,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobParametersInvalidException;
@@ -50,6 +51,7 @@ public class ImportController {
     private final LocationService locationService;
     private final FormElementRepository formElementRepository;
     private final AccessControlService accessControlService;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public ImportController(JobService jobService,
@@ -58,7 +60,7 @@ public class ImportController {
                             S3Service s3Service,
                             IndividualService individualService,
                             LocationService locationService,
-                            FormElementRepository formElementRepository, AccessControlService accessControlService) {
+                            FormElementRepository formElementRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
         this.jobService = jobService;
         this.bulkUploadS3Service = bulkUploadS3Service;
         this.importService = importService;
@@ -67,6 +69,7 @@ public class ImportController {
         this.locationService = locationService;
         this.formElementRepository = formElementRepository;
         this.accessControlService = accessControlService;
+        this.errorBodyBuilder = errorBodyBuilder;
         logger = LoggerFactory.getLogger(getClass());
     }
 
@@ -100,16 +103,16 @@ public class ImportController {
             jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode);
         } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
             logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         } catch (IOException e) {
             logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Unable to process file. %s", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(format("Unable to process file. %s", e.getMessage())));
         } catch (Exception e) {
             logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             if (!type.equals("metadataZip")) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("%s does not appear to be a valid .csv file.", file.getOriginalFilename()));
             }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Unable to process file. %s", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(format("Unable to process file. %s", e.getMessage())));
         }
         return ResponseEntity.ok(true);
     }

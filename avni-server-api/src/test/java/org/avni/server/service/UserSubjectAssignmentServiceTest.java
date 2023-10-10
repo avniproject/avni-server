@@ -110,8 +110,8 @@ public class UserSubjectAssignmentServiceTest {
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
     }
 
-    @Test(expected = ValidationException.class)
-    public void assigningGrpSubjectInsideCatchmentWithMemberSubjectOutsideUserCatchmentShouldFail() throws ValidationException {
+    @Test
+    public void assigningGrpSubjectInsideCatchmentWithMemberSubjectOutsideUserCatchmentShouldSucceed() throws ValidationException {
 
         Individual group = new SubjectBuilder().setId(1).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(true).build()).build();
         when(individualRepository.findAllById(any())).thenReturn(Collections.singletonList(group));
@@ -123,6 +123,10 @@ public class UserSubjectAssignmentServiceTest {
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
+        verify(userSubjectAssignmentRepository, times(2)).save(userSubjectAssignmentCaptor.capture());
+        List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getAllValues();
+        assertEquals(usa.get(0).getUser().getId().longValue(), 1l);
+        assertEquals(usa.get(1).getUser().getId().longValue(), 1l);
     }
 
     @Test

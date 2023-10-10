@@ -50,7 +50,6 @@ public class UserController {
     private final AccountAdminRepository accountAdminRepository;
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
-    private final OrganisationConfigService organisationConfigService;
 
     @Value("${avni.userPhoneNumberPattern}")
     private String MOBILE_NUMBER_PATTERN;
@@ -76,7 +75,6 @@ public class UserController {
         this.accountAdminRepository = accountAdminRepository;
         this.resetSyncService = resetSyncService;
         this.subjectTypeRepository = subjectTypeRepository;
-        this.organisationConfigService = organisationConfigService;
         this.accessControlService = accessControlService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
@@ -100,9 +98,7 @@ public class UserController {
             user.setUsername(userContract.getUsername());
             user = setUserAttributes(user, userContract);
 
-            Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-            OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
-            idpServiceFactory.getIdpService(organisation).createUserWithPassword(user, userContract.getPassword(), organisationConfig);
+            idpServiceFactory.getIdpService().createSuperAdminWithPassword(user, userContract.getPassword());
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             userService.addToDefaultUserGroup(user);
@@ -304,9 +300,7 @@ public class UserController {
         accessControlService.checkIsAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Long> userAccountIds = getOwnedAccountIds(user);
-        List<Long> organisationIds = getOwnedOrganisationIds(user);
-        List<Long> queryParam = organisationIds.isEmpty() ? null : organisationIds;
-        Page<UserContract> userContracts = userRepository.findAccountAndOrgAdmins(username, name, email, phoneNumber, userAccountIds, queryParam, pageable)
+        Page<UserContract> userContracts = userRepository.findAccountAndOrgAdmins(username, name, email, phoneNumber, userAccountIds, pageable)
                 .map(UserContract::fromEntity);
         userContracts.forEach(this::setAccountIds);
         return userContracts;

@@ -5,6 +5,7 @@ import org.apache.commons.collections.ListUtils;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public enum SyncEntityName {
     ResetSync,
@@ -49,5 +50,9 @@ public enum SyncEntityName {
 
     public boolean nameEquals(String otherName) {
         return this.name().equals(otherName);
+    }
+
+    public static boolean existsAsEnum(String str) {
+        return Stream.of(SyncEntityName.values()).anyMatch(v -> v.name().equals(str));
     }
 }

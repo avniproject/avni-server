@@ -15,6 +15,7 @@ import org.avni.server.util.S;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
 import org.avni.server.web.request.syncAttribute.ConceptSyncAttributeContract;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,14 +45,16 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     private final ProjectionFactory projectionFactory;
     private final ConceptAnswerRepository conceptAnswerRepository;
     private final AccessControlService accessControlService;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
-    public ConceptController(ConceptRepository conceptRepository, ConceptService conceptService, ProjectionFactory projectionFactory, ConceptAnswerRepository conceptAnswerRepository, AccessControlService accessControlService) {
+    public ConceptController(ConceptRepository conceptRepository, ConceptService conceptService, ProjectionFactory projectionFactory, ConceptAnswerRepository conceptAnswerRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
         this.projectionFactory = projectionFactory;
         this.conceptAnswerRepository = conceptAnswerRepository;
         this.accessControlService = accessControlService;
+        this.errorBodyBuilder = errorBodyBuilder;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -132,7 +135,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
             conceptRepository.save(existingConcept);
         } catch (Exception e) {
             logger.error(format("Error deleting concept: %s", conceptUUID), e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return new ResponseEntity<>(HttpStatus.OK);
     }

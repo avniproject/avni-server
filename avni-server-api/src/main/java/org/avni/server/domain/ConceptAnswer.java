@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.avni.server.application.projections.BaseProjection;
@@ -15,6 +16,8 @@ import java.util.Objects;
 @Entity
 @Table(name = "concept_answer")
 @BatchSize(size = 100)
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ConceptAnswer extends OrganisationAwareEntity {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,11 +1,13 @@
 package org.avni.server.web;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.rest.RestControllerErrorResponse;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.BugsnagReporter;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
@@ -26,9 +28,10 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class ErrorInterceptors extends ResponseEntityExceptionHandler {
-    private BugsnagReporter bugsnagReporter;
+    private final BugsnagReporter bugsnagReporter;
+    private final ErrorBodyBuilder errorBodyBuilder;
 
-    class ApiError {
+    static class ApiError {
         private String field;
         private String message;
 
@@ -55,8 +58,9 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     }
 
     @Autowired
-    public ErrorInterceptors(BugsnagReporter bugsnagReporter) {
+    public ErrorInterceptors(BugsnagReporter bugsnagReporter, ErrorBodyBuilder errorBodyBuilder) {
         this.bugsnagReporter = bugsnagReporter;
+        this.errorBodyBuilder = errorBodyBuilder;
     }
 
     @Override
@@ -74,30 +78,30 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     private ResponseEntity <RestControllerErrorResponse> error(final Exception exception, final HttpStatus httpStatus) {
         bugsnagReporter.logAndReportToBugsnag(exception);
         final String message = Optional.ofNullable(exception.getMessage()).orElse(exception.getClass().getSimpleName());
-        return new ResponseEntity(new RestControllerErrorResponse(message), httpStatus);
+        return new ResponseEntity(new RestControllerErrorResponse(errorBodyBuilder.getErrorBody(message)), httpStatus);
     }
 
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity unknownException(Exception e) {
         if (e instanceof BadRequestError) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorBody(e));
         } else if (e instanceof ResourceNotFoundException) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBodyBuilder.getErrorMessageBody(e));
         } else if (e instanceof AvniNoUserSessionException) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBodyBuilder.getErrorMessageBody(e));
         } else if (e instanceof AvniAccessException) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } else if (e instanceof InvalidFormatException || e instanceof HttpMessageConversionException) {
             return error(e, HttpStatus.BAD_REQUEST);
         } else {
             bugsnagReporter.logAndReportToBugsnag(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }
 
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
         bugsnagReporter.logAndReportToBugsnag(ex);
-        return super.handleExceptionInternal(ex, body, headers, status, request);
+        return super.handleExceptionInternal(ex, errorBodyBuilder.getErrorBody(body), headers, status, request);
     }
 }

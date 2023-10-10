@@ -27,6 +27,11 @@ public class UserContextHolder {
         return context != null ? context.getUser() : null;
     }
 
+    public static Long getUserId() {
+        User user = getUser();
+        return user == null ? null : user.getId();
+    }
+
     public static Organisation getOrganisation() {
         UserContext context = getUserContext();
         return context != null ? context.getOrganisation() : null;

@@ -389,6 +389,11 @@ public class SyncController {
         String entityName = entitySyncStatusContract.getEntityName();
         DateTime loadedSince = entitySyncStatusContract.getLoadedSince();
         if (scopeAwareEAS) nonScopeAwareServiceMap.remove(EntityApprovalStatus);
+
+        if (!SyncEntityName.existsAsEnum(entityName)) {
+            return false;
+        }
+
         SyncEntityName syncEntityName = valueOf(entityName);
         ScopeAwareService scopeAwareService = this.scopeAwareServiceMap.get(syncEntityName);
         NonScopeAwareService nonScopeAwareService = this.nonScopeAwareServiceMap.get(syncEntityName);

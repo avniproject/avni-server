@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxyHelper;
 import org.joda.time.DateTime;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 @Entity
 @Table(name = "users")
 @BatchSize(size = 100)
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class User {
     public static final String DEFAULT_SUPER_ADMIN = "5fed2907-df3a-4867-aef5-c87f4c78a31a";
 

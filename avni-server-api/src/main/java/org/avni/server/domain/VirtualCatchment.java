@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -9,6 +10,8 @@ import java.util.Objects;
 @Entity
 @Table(name = "virtual_catchment_address_mapping_table")
 @BatchSize(size = 100)
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class VirtualCatchment {
     @Id
     @Column

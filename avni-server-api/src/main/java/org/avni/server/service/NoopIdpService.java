@@ -38,6 +38,11 @@ public class NoopIdpService implements IdpService {
     }
 
     @Override
+    public UserCreateStatus createSuperAdminWithPassword(User user, String password) throws IDPException {
+        return createUser(user, null);
+    }
+
+    @Override
     public boolean exists(User user) {
         return true;
     }
@@ -45,5 +50,10 @@ public class NoopIdpService implements IdpService {
     @Override
     public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) {
         return this.createUser(user, organisationConfig);
+    }
+
+    @Override
+    public long getLastLoginTime(User user) {
+        return -1L;
     }
 }

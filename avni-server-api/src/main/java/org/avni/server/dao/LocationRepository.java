@@ -5,15 +5,18 @@ import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.QueryHint;
 import javax.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.Date;
@@ -130,6 +133,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     }
 
     @Query("select a from AddressLevel a where a.uuid =:id or a.legacyId = :id")
+    @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
     AddressLevel findByLegacyIdOrUuid(String id);
 
     @Query(value = "select al.*\n" +

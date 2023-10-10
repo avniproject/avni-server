@@ -8,7 +8,6 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.importer.batch.sync.attributes.SyncAttributesJobListener;
 import org.avni.server.service.CatchmentService;
 import org.avni.server.service.ResetSyncService;
 import org.avni.server.service.S3Service;
@@ -16,6 +15,7 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.CatchmentContract;
 import org.avni.server.web.request.CatchmentsContract;
+import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -43,6 +42,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     private final ResetSyncService resetSyncService;
     private final AccessControlService accessControlService;
     private static final Logger logger = LoggerFactory.getLogger(CatchmentController.class);
+    private final ErrorBodyBuilder errorBodyBuilder;
 
 
     @Autowired
@@ -50,13 +50,19 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
                                LocationRepository locationRepository,
                                CatchmentService catchmentService,
                                S3Service s3Service,
-                               ResetSyncService resetSyncService, AccessControlService accessControlService) {
+                               ResetSyncService resetSyncService, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
         this.catchmentRepository = catchmentRepository;
         this.locationRepository = locationRepository;
         this.catchmentService = catchmentService;
         this.s3Service = s3Service;
         this.resetSyncService = resetSyncService;
         this.accessControlService = accessControlService;
+        this.errorBodyBuilder = errorBodyBuilder;
+    }
+
+    CatchmentController(CatchmentRepository catchmentRepository, LocationRepository locationRepository, CatchmentService catchmentService, S3Service s3Service, ResetSyncService resetSyncService, AccessControlService accessControlService) {
+        this(catchmentRepository, locationRepository, catchmentService, s3Service, resetSyncService, accessControlService,
+                ErrorBodyBuilder.createForTest());
     }
 
     @GetMapping(value = "catchment")
@@ -155,7 +161,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
             catchmentService.saveAllCatchments(catchmentsContract, organisation);
         } catch (BuilderException e) {
             logger.error("Error saving catchments", e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
         return ResponseEntity.ok(null);
     }

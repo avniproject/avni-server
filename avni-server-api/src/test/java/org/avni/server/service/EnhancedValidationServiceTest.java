@@ -6,6 +6,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.validation.ValidationException;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +22,7 @@ public class EnhancedValidationServiceTest {
     @Mock
     private OrganisationConfigService organisationConfigService;
     @Mock
-    private Bugsnag bugsnag;
+    private BugsnagReporter bugsnagReporter;
     @Mock
     private ConceptRepository conceptRepository;
     @Mock
@@ -30,13 +31,15 @@ public class EnhancedValidationServiceTest {
     private IndividualRepository individualRepository;
     @Mock
     private AddressLevelTypeRepository addressLevelTypeRepository;
+    @Mock
+    private S3Service s3Service;
 
     private EnhancedValidationService enhancedValidationService;
 
     @Before
     public void setup() {
         initMocks(this);
-        enhancedValidationService = new EnhancedValidationService(formMappingService, organisationConfigService, bugsnag, conceptRepository, subjectTypeRepository, individualRepository, addressLevelTypeRepository);
+        enhancedValidationService = new EnhancedValidationService(formMappingService, organisationConfigService, bugsnagReporter, conceptRepository, subjectTypeRepository, individualRepository, addressLevelTypeRepository, s3Service);
     }
 
     @Test(expected = ValidationException.class)
