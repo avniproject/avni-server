@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Service("KeycloakIdpService")
 @ConditionalOnExpression("'${avni.idp.type}'=='keycloak' or '${avni.idp.type}'=='both'")
@@ -46,6 +47,13 @@ public class KeycloakIdpService extends IdpServiceImpl {
     @Autowired
     public KeycloakIdpService(SpringProfiles springProfiles, AdapterConfig adapterConfig) {
         super(springProfiles);
+        this.adapterConfig = adapterConfig;
+    }
+
+    //Testing only
+    public KeycloakIdpService(RealmResource realmResource, AdapterConfig adapterConfig) {
+        super(null);
+        this.realmResource = realmResource;
         this.adapterConfig = adapterConfig;
     }
 
@@ -138,7 +146,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
     private static String tryReadResponse(BadRequestException ex) {
         String reason;
         try {
-            HashMap<String,Object> result = ObjectMapperSingleton.getObjectMapper().readValue((ByteArrayInputStream) ex.getResponse().getEntity(), HashMap.class);
+            HashMap<String, Object> result = ObjectMapperSingleton.getObjectMapper().readValue((ByteArrayInputStream) ex.getResponse().getEntity(), HashMap.class);
             reason = (String) result.getOrDefault("error_description", "Key error_description not found in response");
         } catch (IOException e) {
             reason = "Error parsing keycloak response message: " + e.getMessage();
@@ -154,11 +162,12 @@ public class KeycloakIdpService extends IdpServiceImpl {
     @Override
     public long getLastLoginTime(User user) {
         List<UserSessionRepresentation> userSessions = realmResource.users().get(getUser(user).getId()).getUserSessions();
-        if(userSessions.size() > 1) {
-            Optional<UserSessionRepresentation> earliestSession = userSessions.stream().min((left, right) -> Math.toIntExact(left.getStart() - right.getStart()));
-            return earliestSession.map(UserSessionRepresentation::getStart).orElse(-1L);
-        }
-        return -1L;
+        return userSessions.stream()
+                .map(UserSessionRepresentation::getStart)
+                .sorted((o1, o2) -> (int) (o2 - o1))
+                .skip(1)
+                .findFirst()
+                .orElse(-1L);
     }
 
     private CredentialRepresentation getCredentialRepresentation(String password) {
@@ -206,7 +215,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
                 .orElseThrow(EntityNotFoundException::new);
     }
 
-    public String defaultPassword(User user){
+    public String defaultPassword(User user) {
         //Sample policy: length(8) and specialChars(1) and upperCase(1) and lowerCase(1) and digits(1) and notUsername(undefined) and notEmail(undefined)
         CharacterData asciiSpecialCharacters = new CharacterData() {
             @Override
