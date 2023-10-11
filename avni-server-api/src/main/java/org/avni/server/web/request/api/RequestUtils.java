@@ -35,11 +35,11 @@ public class RequestUtils {
         String conceptDataType = concept.getDataType();
         Object entryValue = entry.getValue();
 
-        Object obsValue = null;
         if (entryValue != null) {
-            obsValue = getObsValue(conceptRepository, conceptDataType, entryValue);
+            observations.put(conceptUUID, getObsValue(conceptRepository, conceptDataType, entryValue));
+        } else {
+            observations.remove(conceptUUID);
         }
-        observations.put(conceptUUID, obsValue);
     }
 
     private static Object getObsValue(ConceptRepository conceptRepository, String conceptDataType, Object newValue) {
