@@ -25,12 +25,21 @@ with duplicate_subject_migrations as (select sm1.id   as duplicate_row_id,
                                                where non_duplicate_row_id not in
                                                      (select duplicate_row_id from duplicate_subject_migrations)),
      non_dupe_history_updates as (
-       update subject_migration set manual_update_history = append_manual_update_history(manual_update_history,
-                                                                                         'duplicate row with id ' ||
-                                                                                         fdsm.duplicate_row_id ||
-                                                                                         ' and uuid ' ||
-                                                                                         fdsm.duplicate_row_uuid ||
-                                                                                         ' deleted for avniproject/avni-server#618')
+       update subject_migration set manual_update_history = case when manual_update_history is null
+         then concat(to_char(current_timestamp, 'DD/MM/YYYY hh:mm:ss'), ' - ', 'duplicate row with id ' ||
+                                                                               fdsm.duplicate_row_id ||
+                                                                               ' and uuid ' ||
+                                                                               fdsm.duplicate_row_uuid ||
+                                                                               ' deleted for avniproject/avni-server#618')
+         else
+           concat(to_char(current_timestamp, 'DD/MM/YYYY hh:mm:ss'), ' - ', 'duplicate row with id ' ||
+                                                                            fdsm.duplicate_row_id ||
+                                                                            ' and uuid ' ||
+                                                                            fdsm.duplicate_row_uuid ||
+                                                                            ' deleted for avniproject/avni-server#618' ||
+                                                                            '; ' ||
+                                                                            manual_update_history)
+         end
          from filtered_duplicate_subject_migrations fdsm
          where id = fdsm.non_duplicate_row_id)
 delete
