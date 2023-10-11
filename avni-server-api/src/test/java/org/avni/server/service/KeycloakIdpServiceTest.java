@@ -50,12 +50,16 @@ public class KeycloakIdpServiceTest {
         KeycloakIdpService keycloakIdpService = new KeycloakIdpService(realmResource, null);
 
         when(userResource.getUserSessions()).thenReturn(Arrays.asList(session1, session2, session3, session4));
-        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(session2.getStart());
+        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(session2.getStart())
+                .as("When multiple sessions are present, pick the latest minus 1");
 
         when(userResource.getUserSessions()).thenReturn(Collections.singletonList(session1));
-        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(-1L);
+        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(-1L)
+                .as("When only one session is present, there is no previous session, so return -1L");
+
 
         when(userResource.getUserSessions()).thenReturn(Collections.emptyList());
-        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(-1L);
+        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(-1L)
+                .as("Do not fail if no sessions are returned");
     }
 }
