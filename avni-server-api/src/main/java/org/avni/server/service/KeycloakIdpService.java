@@ -158,7 +158,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
             Optional<UserSessionRepresentation> earliestSession = userSessions.stream().min((left, right) -> Math.toIntExact(left.getStart() - right.getStart()));
             return earliestSession.map(UserSessionRepresentation::getStart).orElse(-1L);
         }
-        return userSessions.get(0).getStart();
+        return -1L;
     }
 
     private CredentialRepresentation getCredentialRepresentation(String password) {
