@@ -7,6 +7,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
+import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.AddressLevelTypeContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +94,13 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
         if (addressLevelTypeWithSameName != null && addressLevelTypeWithSameName.getUuid() != addressLevelType.getUuid())
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Location Type with name %s already exists", contract.getName())));
 
+        if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(contract.getName(), ValidationUtil.COMMON_INVALID_CHARS_PATTERN)) {
+            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Invalid Location Type name %s", contract.getName())));
+        }
         addressLevelType.setName(contract.getName());
+        if (ValidationUtil.checkNull(contract.getLevel())) {
+            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Invalid Location Type level %s", contract.getLevel())));
+        }
         addressLevelType.setLevel(contract.getLevel());
         Set<AddressLevel> addressLevels = addressLevelType.getAddressLevels();
         addressLevels.forEach(addressLevel -> addressLevel.updateAudit());
