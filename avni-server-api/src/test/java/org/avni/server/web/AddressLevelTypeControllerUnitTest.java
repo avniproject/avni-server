@@ -70,6 +70,7 @@ public class AddressLevelTypeControllerUnitTest {
         AddressLevelTypeContract updateAddressLevelType = new AddressLevelTypeContract();
         updateAddressLevelType.setUuid(FOO_UUID);
         updateAddressLevelType.setName("tada");
+        updateAddressLevelType.setLevel(1D);
 
         ResponseEntity responseEntity = addressLevelTypeController.updateAddressLevelType(1L, updateAddressLevelType);
         assertThat(responseEntity.getStatusCodeValue(), is(equalTo(201)));
