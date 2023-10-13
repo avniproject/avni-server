@@ -18,6 +18,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
+import org.avni.server.web.validation.ValidationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -50,10 +51,6 @@ public class EnhancedValidationServiceQuestionGroupsTest {
     private AddressLevelTypeRepository addressLevelTypeRepository;
     @Mock
     private S3Service s3Service;
-    @Mock
-    private ConceptService conceptService;
-    @Mock
-    private DocumentationService documentationService;
 
     private EnhancedValidationService enhancedValidationService;
     private List<ObservationRequest> observationRequests;
@@ -62,6 +59,8 @@ public class EnhancedValidationServiceQuestionGroupsTest {
     private FormMapping formMapping;
     private SubjectType subjectType;
     private LinkedHashMap<String, FormElement> entityConceptMap;
+    private LinkedHashMap<String, FormElement> entityConceptMapForQG1;
+    private LinkedHashMap<String, FormElement> entityConceptMapForQG2;
 
     private Concept groupConcept1;
     private Concept groupConcept1Concept1;
@@ -86,27 +85,28 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         formMapping = new FormMappingBuilder().withForm(form).withSubjectType(subjectType).withUuid("f6cfd71c-1324-44eb-8579-f66a98e1d57f").build();
 
         entityConceptMap = new LinkedHashMap<>();
+        entityConceptMapForQG1 = new LinkedHashMap<>();
+        entityConceptMapForQG2 = new LinkedHashMap<>();
+
         groupConcept1 = new ConceptBuilder().withName("GC1").withUuid("gc1").withId(1).withDataType(ConceptDataType.QuestionGroup).build();
         groupConcept1Concept1 = new ConceptBuilder().withName("GC1-C1").withId(2).withUuid("gc1-c1").withDataType(ConceptDataType.Text).build();
         groupConcept2 = new ConceptBuilder().withName("GC2").withId(3).withDataType(ConceptDataType.QuestionGroup).withUuid("gc2").build();
         groupConcept2Concept1 = new ConceptBuilder().withId(4).withName("GC2-C1").withUuid("gc2-c1").withDataType(ConceptDataType.Text).build();
-        groupFormElement1 = new TestFormElementBuilder().withConcept(groupConcept1).withId(1).withRepeatable(true).build();
-        formElement1_1 = new TestFormElementBuilder().withQuestionGroupElement(groupFormElement1).withId(2).withConcept(groupConcept1Concept1).build();
-        groupFormElement2 = new TestFormElementBuilder().withId(3).withConcept(groupConcept2).withRepeatable(false).build();
-        formElement2_1 = new TestFormElementBuilder().withId(4).withQuestionGroupElement(groupFormElement2).withConcept(groupConcept2Concept1).build();
+        groupFormElement1 = new TestFormElementBuilder().withUuid("groupConcept1").withConcept(groupConcept1).withId(1).withRepeatable(true).build();
+        formElement1_1 = new TestFormElementBuilder().withUuid("groupConcept1Concept1").withQuestionGroupElement(groupFormElement1).withId(2).withConcept(groupConcept1Concept1).build();
+        groupFormElement2 = new TestFormElementBuilder().withUuid("groupConcept2").withId(3).withConcept(groupConcept2).withRepeatable(false).build();
+        formElement2_1 = new TestFormElementBuilder().withUuid("groupConcept2Concept1").withId(4).withQuestionGroupElement(groupFormElement2).withConcept(groupConcept2Concept1).build();
         formElementGroup = new TestFormElementGroupBuilder().addFormElement(groupFormElement1, formElement1_1, groupFormElement2, formElement2_1).build();
         questionGroupForm = new TestFormBuilder().addFormElementGroup(formElementGroup).build();
-    }
 
-
-    @Test
-    public void shouldReturnValidationFailureForInValidNonRepeatableQuestionGroupConcept() {
         when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
 
         when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(questionGroupForm).build());
         when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
+        when(formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(eq(groupFormElement1), any(), eq(true))).thenReturn(entityConceptMapForQG1);
+        when(formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(eq(groupFormElement2), any(), eq(true))).thenReturn(entityConceptMapForQG2);
 
         when(conceptRepository.findByName(groupConcept1.getName())).thenReturn(groupConcept1);
         when(conceptRepository.findByName(groupConcept1Concept1.getName())).thenReturn(groupConcept1Concept1);
@@ -123,6 +123,13 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         entityConceptMap.put(groupConcept2.getUuid(), groupFormElement2);
         entityConceptMap.put(groupConcept2Concept1.getUuid(), formElement2_1);
 
+        entityConceptMapForQG1.put(groupConcept1Concept1.getUuid(), formElement1_1);
+        entityConceptMapForQG2.put(groupConcept2Concept1.getUuid(), formElement2_1);
+    }
+
+
+    @Test
+    public void shouldReturnValidationSuccessForValidQuestionGroupObservations() {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
@@ -136,6 +143,37 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         observationRequestNonRepeatableQG.setValue(ImmutableMap.of(groupConcept2Concept1.getUuid(), "ghi789"));
 
         observationRequests = Arrays.asList(observationRequestRepeatableQG, observationRequestNonRepeatableQG);
+
+        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+        assertTrue(validationResult.isSuccess());
+    }
+
+    @Test(expected = ValidationException.class)
+    public void shouldReturnValidationFailureForInValidConceptsForFormWithinQuestionGroupConcept() {
+        ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
+        observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
+        observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
+        List<ImmutableMap<String, String>> immutableMaps = Arrays.asList(ImmutableMap.of("invalid-uuid1", "abc123"),
+                ImmutableMap.of(groupConcept1Concept1.getUuid(), "def456"));
+        observationRequestRepeatableQG.setValue(immutableMaps);
+
+
+        observationRequests = Arrays.asList(observationRequestRepeatableQG);
+
+        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+        assertTrue(validationResult.isSuccess());
+    }
+
+    @Test(expected = ValidationException.class)
+    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinQuestionGroupConcept() {
+        ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
+        observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
+        observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
+        List<ImmutableMap<String, String>> immutableMaps = Arrays.asList(ImmutableMap.of(groupConcept2Concept1.getUuid(), "abc123"),
+                ImmutableMap.of(groupConcept1Concept1.getUuid(), "def456"));
+        observationRequestRepeatableQG.setValue(immutableMaps);
+
+        observationRequests = Arrays.asList(observationRequestRepeatableQG);
 
         ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
         assertTrue(validationResult.isSuccess());
