@@ -26,6 +26,14 @@ public class ValidationResult {
     }
 
     public boolean isFailure() {
-        return this.validationResultType == ValidationResultType.Failure;
+        return hasType(ValidationResultType.Failure);
+    }
+
+    public boolean isSuccess() {
+        return hasType(ValidationResultType.Success);
+    }
+
+    public boolean hasType(ValidationResultType validationResultType) {
+        return this.validationResultType == validationResultType;
     }
 }

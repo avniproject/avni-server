@@ -253,6 +253,10 @@ public class Concept extends OrganisationAwareEntity {
         return ConceptDataType.Coded.toString().equals(this.dataType);
     }
 
+    public Boolean isQuestionGroup() {
+        return ConceptDataType.QuestionGroup.toString().equals(this.dataType);
+    }
+
     @JsonIgnore
     public String getViewColumnName() {
         if (isViewColumnNameTruncated()) {
