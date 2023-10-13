@@ -204,27 +204,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                                  List<AddressLevelType> locationTypes,
                                  List<String> errorMsgs) {
         try {
-            AddressLevel addressLevel;
-            AddressLevelType lowestAddressLevelType = locationTypes.get(locationTypes.size() - 1);
-
-            String lowestInputAddressLevel = row.get(lowestAddressLevelType.getName());
-            if (lowestInputAddressLevel == null)
-                throw new Exception(String.format("Missing '%s'", lowestAddressLevelType.getName()));
-
-            List<LocationProjection> locationsOfLowestAddressLevelType = locationRepository.findNonVoidedLocationsByTypeId(lowestAddressLevelType.getId());
-            Supplier<Stream<LocationProjection>> addressMatches = () ->
-                    locationsOfLowestAddressLevelType.stream()
-                            .filter(location ->
-                                    location.getTitle().toLowerCase().equals(lowestInputAddressLevel.toLowerCase()));
-
-            if (addressMatches.get().count() > 1) {
-                // filter by lineage if more than one location with same name present
-                addressLevel = getAddressLevelByLineage(row, locationTypes);
-            } else {
-                // exactly 1 or no match
-                LocationProjection locationProjection = addressMatches.get().findFirst().orElseThrow(() -> new Exception("'Address' not found"));
-                addressLevel = locationRepository.findByUuid(locationProjection.getUuid());
-            }
+            AddressLevel addressLevel = getAddressLevelByLineage(row, locationTypes);
             individual.setAddressLevel(addressLevel);
         } catch (Exception ex) {
             errorMsgs.add(ex.getMessage());
@@ -246,6 +226,6 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         String lineage = String.join(", ", inputLocations);
 
         return locationRepository.findByTitleLineageIgnoreCase(lineage)
-                .orElseThrow(() -> new Exception("'Address' not found"));
+                .orElseThrow(() -> new Exception("'Address' not found: " + lineage));
     }
 }
