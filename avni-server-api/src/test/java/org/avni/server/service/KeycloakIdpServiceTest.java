@@ -9,6 +9,8 @@ import org.keycloak.events.EventType;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.ServerErrorException;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -92,6 +94,23 @@ public class KeycloakIdpServiceTest {
                 .thenReturn(Collections.emptyList());
         assertThat(keycloakIdpService.getLastLoginTime(user))
                 .as("Do not fail if no sessions are returned")
+                .isEqualTo(-1L);
+
+        when(realmResource
+                .getEvents(
+                        Collections.singletonList(EventType.LOGIN.name()),
+                        null, USER_KEYCLOAK_UUID,
+                        null,
+                        null,
+                        null,
+                        FIRST_EVENT_INDEX,
+                        EXPECTED_NUMBER_OF_EVENTS_TO_FETCH)).thenThrow(ForbiddenException.class, ServerErrorException.class);
+        assertThat(keycloakIdpService.getLastLoginTime(user))
+                .as("Do not fail keycloak events request fails due to client error")
+                .isEqualTo(-1L);
+
+        assertThat(keycloakIdpService.getLastLoginTime(user))
+                .as("Do not fail keycloak events request fails due to server error")
                 .isEqualTo(-1L);
     }
 

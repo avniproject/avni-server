@@ -25,6 +25,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityNotFoundException;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -162,23 +164,30 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public long getLastLoginTime(User user) {
-        List<EventRepresentation> userLoginEvents = realmResource.getEvents(
-                Collections.singletonList(EventType.LOGIN.name()),
-                null,
-                getUser(user).getId(),
-                null,
-                null,
-                null,
-                LOGIN_EVENT_OFFSET,
-                NUMBER_OF_LOGIN_EVENTS_TO_FETCH);
-        EventRepresentation lastLoginEvent = userLoginEvents
-                .stream()
-                .sorted((l, r) -> (int) (r.getTime() - l.getTime())) //sort latest to oldest
-                .skip(1) //exclude the latest(current) login
-                .findFirst()
-                .orElse(DUMMY_LOGIN_EVENT);
+        String userKeycloakUUID;
+        try {
+            userKeycloakUUID = getUser(user).getId();
+            List<EventRepresentation> userLoginEvents = realmResource.getEvents(
+                    Collections.singletonList(EventType.LOGIN.name()),
+                    null,
+                    userKeycloakUUID,
+                    null,
+                    null,
+                    null,
+                    LOGIN_EVENT_OFFSET,
+                    NUMBER_OF_LOGIN_EVENTS_TO_FETCH);
+            EventRepresentation lastLoginEvent = userLoginEvents
+                    .stream()
+                    .sorted((l, r) -> (int) (r.getTime() - l.getTime())) //sort latest to oldest
+                    .skip(1) //exclude the latest(current) login
+                    .findFirst()
+                    .orElse(DUMMY_LOGIN_EVENT);
 
-        return lastLoginEvent.getTime();
+            return lastLoginEvent.getTime();
+        } catch (ClientErrorException | ServerErrorException ex) {
+            logger.error(String.format("Error fetching login events for user %s", user.getUsername()), ex);
+        }
+        return -1;
     }
 
     private CredentialRepresentation getCredentialRepresentation(String password) {
