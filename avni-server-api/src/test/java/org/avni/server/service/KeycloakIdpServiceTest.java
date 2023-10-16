@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.events.EventType;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
@@ -16,10 +17,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class KeycloakIdpServiceTest {
-
-    public static final String LOGIN = "LOGIN";
+    
     public static final String USER_KEYCLOAK_UUID = "user-keycloak-uuid";
     public static final String USERNAME = "user";
+    public static final int EXPECTED_NUMBER_OF_EVENTS_TO_FETCH = 5;
+    public static final int FIRST_EVENT_INDEX = 0;
 
     @Test
     public void getLastLoginTimeShouldRetrieveTheLastSession() {
@@ -42,18 +44,35 @@ public class KeycloakIdpServiceTest {
         eventRepresentation3 = getLoginEventRepresentation(3);
         eventRepresentation4 = getLoginEventRepresentation(4);
 
-        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100)).thenReturn(Arrays.asList(eventRepresentation1, eventRepresentation2, eventRepresentation3, eventRepresentation4));
-
-
         KeycloakIdpService keycloakIdpService = new KeycloakIdpService(realmResource, null);
 
-        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100))
-                .thenReturn(Arrays.asList(eventRepresentation1, eventRepresentation2, eventRepresentation3, eventRepresentation4));
+        when(realmResource
+                .getEvents(
+                        Collections.singletonList(EventType.LOGIN.name()),
+                        null, USER_KEYCLOAK_UUID,
+                        null,
+                        null,
+                        null,
+                        FIRST_EVENT_INDEX,
+                        EXPECTED_NUMBER_OF_EVENTS_TO_FETCH))
+                .thenReturn(Arrays.asList(
+                                eventRepresentation1,
+                                eventRepresentation2,
+                                eventRepresentation3,
+                                eventRepresentation4));
         assertThat(keycloakIdpService.getLastLoginTime(user))
                 .as("When multiple sessions are present, pick the latest minus 1")
                 .isEqualTo(eventRepresentation2.getTime());
 
-        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100)).
+        when(realmResource
+                .getEvents(
+                    Collections.singletonList(EventType.LOGIN.name()),
+                    null, USER_KEYCLOAK_UUID,
+                    null,
+                    null,
+                    null,
+                    FIRST_EVENT_INDEX,
+                    EXPECTED_NUMBER_OF_EVENTS_TO_FETCH)).
                 thenReturn(Collections.singletonList(eventRepresentation1));
         assertThat(keycloakIdpService.getLastLoginTime(user))
                 .as("When only one session is present, there is no previous session, so return -1L")
@@ -61,7 +80,15 @@ public class KeycloakIdpServiceTest {
 
 
 
-        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100))
+        when(realmResource
+                .getEvents(
+                    Collections.singletonList(EventType.LOGIN.name()),
+                    null, USER_KEYCLOAK_UUID,
+                    null,
+                    null,
+                    null,
+                    FIRST_EVENT_INDEX,
+                    EXPECTED_NUMBER_OF_EVENTS_TO_FETCH))
                 .thenReturn(Collections.emptyList());
         assertThat(keycloakIdpService.getLastLoginTime(user))
                 .as("Do not fail if no sessions are returned")
@@ -72,7 +99,7 @@ public class KeycloakIdpServiceTest {
         EventRepresentation eventRepresentation;
         eventRepresentation = new EventRepresentation();
         eventRepresentation.setUserId(KeycloakIdpServiceTest.USER_KEYCLOAK_UUID);
-        eventRepresentation.setType(LOGIN);
+        eventRepresentation.setType(EventType.LOGIN.name());
         eventRepresentation.setTime(DateTime.now().minusHours(hours).getMillis());
         return eventRepresentation;
     }

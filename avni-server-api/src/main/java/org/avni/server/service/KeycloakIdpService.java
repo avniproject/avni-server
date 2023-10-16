@@ -9,6 +9,7 @@ import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.events.EventType;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.EventRepresentation;
@@ -33,9 +34,11 @@ import java.util.*;
 @ConditionalOnExpression("'${avni.idp.type}'=='keycloak' or '${avni.idp.type}'=='both'")
 public class KeycloakIdpService extends IdpServiceImpl {
     public static final String KEYCLOAK_ADMIN_API_CLIENT_ID = "admin-api";
+    public static final EventRepresentation DUMMY_LOGIN_EVENT = new EventRepresentation();
 
     private static final Logger logger = LoggerFactory.getLogger(KeycloakIdpService.class);
-
+    public static final int NUMBER_OF_LOGIN_EVENTS_TO_FETCH = 5;
+    public static final int LOGIN_EVENT_OFFSET = 0;
     private final AdapterConfig adapterConfig;
 
     private RealmResource realmResource;
@@ -44,6 +47,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
     public KeycloakIdpService(SpringProfiles springProfiles, AdapterConfig adapterConfig) {
         super(springProfiles);
         this.adapterConfig = adapterConfig;
+        DUMMY_LOGIN_EVENT.setTime(-1L);
     }
 
     //Testing only
@@ -51,6 +55,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
         super(null);
         this.realmResource = realmResource;
         this.adapterConfig = adapterConfig;
+        DUMMY_LOGIN_EVENT.setTime(-1L);
     }
 
     @PostConstruct
@@ -157,15 +162,21 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public long getLastLoginTime(User user) {
-        List<EventRepresentation> userLoginEvents = realmResource.getEvents(Arrays.asList("LOGIN"), null, getUser(user).getId(), null, null, null, 0, 100);
-        EventRepresentation dummyEvent = new EventRepresentation();
-        dummyEvent.setTime(-1L);
+        List<EventRepresentation> userLoginEvents = realmResource.getEvents(
+                Collections.singletonList(EventType.LOGIN.name()),
+                null,
+                getUser(user).getId(),
+                null,
+                null,
+                null,
+                LOGIN_EVENT_OFFSET,
+                NUMBER_OF_LOGIN_EVENTS_TO_FETCH);
         EventRepresentation lastLoginEvent = userLoginEvents
                 .stream()
                 .sorted((l, r) -> (int) (r.getTime() - l.getTime())) //sort latest to oldest
-                .skip(1)
+                .skip(1) //exclude the latest(current) login
                 .findFirst()
-                .orElse(dummyEvent);
+                .orElse(DUMMY_LOGIN_EVENT);
 
         return lastLoginEvent.getTime();
     }
