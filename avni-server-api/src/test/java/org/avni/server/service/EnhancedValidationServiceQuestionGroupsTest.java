@@ -169,6 +169,7 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
+        //groupConcept2Concept1 is Invalid within groupConcept1
         List<ImmutableMap<String, String>> immutableMaps = Arrays.asList(ImmutableMap.of(groupConcept2Concept1.getUuid(), "abc123"),
                 ImmutableMap.of(groupConcept1Concept1.getUuid(), "def456"));
         observationRequestRepeatableQG.setValue(immutableMaps);
