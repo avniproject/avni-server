@@ -4,10 +4,9 @@ import org.avni.server.domain.User;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.keycloak.representations.idm.UserSessionRepresentation;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,48 +17,63 @@ import static org.mockito.Mockito.when;
 
 public class KeycloakIdpServiceTest {
 
+    public static final String LOGIN = "LOGIN";
+    public static final String USER_KEYCLOAK_UUID = "user-keycloak-uuid";
+    public static final String USERNAME = "user";
+
     @Test
     public void getLastLoginTimeShouldRetrieveTheLastSession() {
         User user = new User();
-        user.setId(1L);
-        user.setUsername("user");
+        user.setUsername(USERNAME);
 
         RealmResource realmResource = mock(RealmResource.class);
         UsersResource usersResource = mock(UsersResource.class);
-        UserResource userResource = mock(UserResource.class);
 
         UserRepresentation userRepresentation = new UserRepresentation();
-        userRepresentation.setId("1");
-        when(usersResource.search("user", true)).thenReturn(Arrays.asList(userRepresentation));
+        userRepresentation.setId(USER_KEYCLOAK_UUID);
+        user.setName(USERNAME);
 
         when(realmResource.users()).thenReturn(usersResource);
-        when(usersResource.get("1")).thenReturn(userResource);
+        when(usersResource.search(USERNAME, true)).thenReturn(Collections.singletonList(userRepresentation));
 
-        UserSessionRepresentation session1 = new UserSessionRepresentation();
-        session1.setStart(DateTime.now().minusHours(1).getMillis());
+        EventRepresentation eventRepresentation1, eventRepresentation2, eventRepresentation3, eventRepresentation4;
+        eventRepresentation1 = getLoginEventRepresentation(1);
+        eventRepresentation2 = getLoginEventRepresentation(2);
+        eventRepresentation3 = getLoginEventRepresentation(3);
+        eventRepresentation4 = getLoginEventRepresentation(4);
 
-        UserSessionRepresentation session2 = new UserSessionRepresentation();
-        session2.setStart(DateTime.now().minusHours(2).getMillis());
+        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100)).thenReturn(Arrays.asList(eventRepresentation1, eventRepresentation2, eventRepresentation3, eventRepresentation4));
 
-        UserSessionRepresentation session3 = new UserSessionRepresentation();
-        session3.setStart(DateTime.now().minusHours(3).getMillis());
-
-        UserSessionRepresentation session4 = new UserSessionRepresentation();
-        session4.setStart(DateTime.now().minusHours(4).getMillis());
 
         KeycloakIdpService keycloakIdpService = new KeycloakIdpService(realmResource, null);
 
-        when(userResource.getUserSessions()).thenReturn(Arrays.asList(session1, session2, session3, session4));
-        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(session2.getStart())
-                .as("When multiple sessions are present, pick the latest minus 1");
+        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100))
+                .thenReturn(Arrays.asList(eventRepresentation1, eventRepresentation2, eventRepresentation3, eventRepresentation4));
+        assertThat(keycloakIdpService.getLastLoginTime(user))
+                .as("When multiple sessions are present, pick the latest minus 1")
+                .isEqualTo(eventRepresentation2.getTime());
 
-        when(userResource.getUserSessions()).thenReturn(Collections.singletonList(session1));
-        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(-1L)
-                .as("When only one session is present, there is no previous session, so return -1L");
+        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100)).
+                thenReturn(Collections.singletonList(eventRepresentation1));
+        assertThat(keycloakIdpService.getLastLoginTime(user))
+                .as("When only one session is present, there is no previous session, so return -1L")
+                .isEqualTo(-1L);
 
 
-        when(userResource.getUserSessions()).thenReturn(Collections.emptyList());
-        assertThat(keycloakIdpService.getLastLoginTime(user)).isEqualTo(-1L)
-                .as("Do not fail if no sessions are returned");
+
+        when(realmResource.getEvents(Collections.singletonList(LOGIN), null, USER_KEYCLOAK_UUID, null, null, null, 0, 100))
+                .thenReturn(Collections.emptyList());
+        assertThat(keycloakIdpService.getLastLoginTime(user))
+                .as("Do not fail if no sessions are returned")
+                .isEqualTo(-1L);
+    }
+
+    private static EventRepresentation getLoginEventRepresentation(int hours) {
+        EventRepresentation eventRepresentation;
+        eventRepresentation = new EventRepresentation();
+        eventRepresentation.setUserId(KeycloakIdpServiceTest.USER_KEYCLOAK_UUID);
+        eventRepresentation.setType(LOGIN);
+        eventRepresentation.setTime(DateTime.now().minusHours(hours).getMillis());
+        return eventRepresentation;
     }
 }

@@ -1,6 +1,5 @@
 package org.avni.server.service;
 
-import org.apache.tomcat.jni.Time;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
@@ -12,9 +11,9 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
-import org.keycloak.representations.idm.UserSessionRepresentation;
 import org.passay.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,10 +27,7 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 @Service("KeycloakIdpService")
 @ConditionalOnExpression("'${avni.idp.type}'=='keycloak' or '${avni.idp.type}'=='both'")
@@ -161,13 +157,17 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public long getLastLoginTime(User user) {
-        List<UserSessionRepresentation> userSessions = realmResource.users().get(getUser(user).getId()).getUserSessions();
-        return userSessions.stream()
-                .map(UserSessionRepresentation::getStart)
-                .sorted((o1, o2) -> (int) (o2 - o1))
+        List<EventRepresentation> userLoginEvents = realmResource.getEvents(Arrays.asList("LOGIN"), null, getUser(user).getId(), null, null, null, 0, 100);
+        EventRepresentation dummyEvent = new EventRepresentation();
+        dummyEvent.setTime(-1L);
+        EventRepresentation lastLoginEvent = userLoginEvents
+                .stream()
+                .sorted((l, r) -> (int) (r.getTime() - l.getTime())) //sort latest to oldest
                 .skip(1)
                 .findFirst()
-                .orElse(-1L);
+                .orElse(dummyEvent);
+
+        return lastLoginEvent.getTime();
     }
 
     private CredentialRepresentation getCredentialRepresentation(String password) {
