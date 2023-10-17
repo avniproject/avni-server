@@ -211,7 +211,7 @@ public class FormMappingService implements NonScopeAwareService {
                 formElements = includeVoidedFormElements ? formMapping.getForm().getAllFormElements()
                         : formMapping.getForm().getApplicableFormElements();
             }
-            formElements = formElements.stream().filter(fe -> fe.isPartOfRepeatableQuestionGroup()
+            formElements = formElements.stream().filter(fe -> (fe.isPartOfRepeatableQuestionGroup() || fe.isQuestionGroupElement())
                     && fe.getGroup().getUuid().equals(questionGroupFormElement.getUuid())).collect(Collectors.toList());
         }
         return formElements.stream().collect(Collectors.toMap(f -> f.getConcept().getUuid(), f -> f, (a, b) -> b, LinkedHashMap::new));

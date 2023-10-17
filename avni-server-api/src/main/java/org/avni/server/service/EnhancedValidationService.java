@@ -297,8 +297,8 @@ public class EnhancedValidationService {
                 .collect(Collectors.toList());
 
         if (!nonMatchingConceptUuids.isEmpty()) {
-            return String.format("Invalid concept uuids/names %s found for questionGroupFormElement uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids),
-                    questionGroupFormElement.getUuid(), questionGroupFormElement.getName());
+            return String.format("Invalid concept uuids/names %s found for questionGroupConcept uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids),
+                    questionGroupFormElement.getConcept().getUuid(), questionGroupFormElement.getName());
         }
 
         return validateConceptValuesAreOfRequiredType(observationRequests, entityConceptMap, formMapping);
