@@ -284,9 +284,8 @@ public class EnhancedValidationService {
             if (errorMessages.isEmpty()) return null;
             return String.join("\n", errorMessages);
         } else {
-            validateChildObservation(formElement, (Map<String, Object>) qGroupValue, formMapping);
+            return validateChildObservation(formElement, (Map<String, Object>) qGroupValue, formMapping);
         }
-        return null;
     }
 
     private String validateChildObservation(FormElement questionGroupFormElement, Map<String, Object> qGroupValueInstance, FormMapping formMapping) {

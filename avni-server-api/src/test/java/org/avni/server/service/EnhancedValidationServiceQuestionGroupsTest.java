@@ -149,7 +149,7 @@ public class EnhancedValidationServiceQuestionGroupsTest {
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForInValidConceptsForFormWithinQuestionGroupConcept() {
+    public void shouldReturnValidationFailureForInValidConceptsForFormWithinRepeatableQuestionGroupConcept() {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
@@ -165,7 +165,21 @@ public class EnhancedValidationServiceQuestionGroupsTest {
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinQuestionGroupConcept() {
+    public void shouldReturnValidationFailureForInValidConceptsForFormWithinNonRepeatableQuestionGroupConcept() {
+        ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
+        observationRequestRepeatableQG.setConceptUUID(groupConcept2.getUuid());
+        observationRequestRepeatableQG.setConceptName(groupConcept2.getName());
+        observationRequestRepeatableQG.setValue(ImmutableMap.of("invalid-uuid1", "abc123",
+                groupConcept2Concept1.getUuid(), "def456"));
+
+        observationRequests = Arrays.asList(observationRequestRepeatableQG);
+
+        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+        assertTrue(validationResult.isSuccess());
+    }
+
+    @Test(expected = ValidationException.class)
+    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinRepeatableQuestionGroupConcept() {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
@@ -175,6 +189,21 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         observationRequestRepeatableQG.setValue(immutableMaps);
 
         observationRequests = Arrays.asList(observationRequestRepeatableQG);
+
+        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+        assertTrue(validationResult.isSuccess());
+    }
+
+    @Test(expected = ValidationException.class)
+    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinNonRepeatableQuestionGroupConcept() {
+        ObservationRequest observationRequestNonRepeatableQG = new ObservationRequest();
+        observationRequestNonRepeatableQG.setConceptUUID(groupConcept2.getUuid());
+        observationRequestNonRepeatableQG.setConceptName(groupConcept2.getName());
+        //groupConcept1Concept1 is Invalid within groupConcept2
+        observationRequestNonRepeatableQG.setValue(ImmutableMap.of(groupConcept1Concept1.getUuid(), "abc123",
+                groupConcept2Concept1.getUuid(), "ghi789"));
+
+        observationRequests = Arrays.asList(observationRequestNonRepeatableQG);
 
         ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
         assertTrue(validationResult.isSuccess());
