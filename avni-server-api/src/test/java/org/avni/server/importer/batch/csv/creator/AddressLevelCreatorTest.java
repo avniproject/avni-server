@@ -44,7 +44,7 @@ public class AddressLevelCreatorTest {
         AddressLevel addressLevel = new AddressLevelCreator(locationRepository).findAddressLevel(row, asList(parent, child));
         assertThat(addressLevel).isEqualTo(gp1AddressLevel);
 
-        verify(locationRepository).findByTitleAndType(eq("GP1"), eq(child), any());
+        verify(locationRepository).findByTitleAndType(eq("gp1"), eq(child), any());
     }
 
 
