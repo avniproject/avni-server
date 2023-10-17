@@ -48,17 +48,13 @@ public class AddressLevelCreatorTest {
     }
 
 
-    @Test (expected = Exception.class)
-    public void shouldThrowExceptionIfNoAddressFound() throws Exception{
+    @Test(expected = Exception.class)
+    public void shouldThrowExceptionIfNoAddressFound() throws Exception {
         Row row = new Row(new String[]{"GP"}, new String[]{"non-existentAddress"});
         AddressLevel gp1AddressLevel = new AddressLevelBuilder().title("gp1").type(child).build();
 
         when(locationRepository.findByTitleAndType(eq("gp1"), eq(child), any())).thenReturn(Collections.singletonList(gp1AddressLevel));
-
-        AddressLevel addressLevel = new AddressLevelCreator(locationRepository).findAddressLevel(row, asList(parent, child));
-        assertThat(addressLevel).isEqualTo(gp1AddressLevel);
-
-        verify(locationRepository).findByTitleAndType(eq("GP1"), eq(child), any());
+        new AddressLevelCreator(locationRepository).findAddressLevel(row, asList(parent, child));
     }
 
     @Test
