@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -55,7 +56,7 @@ public class ZipJobBatchConfiguration {
     }
 
     @Bean
-    public Step importZipStep(ZipErrorFileWriterListener zipErrorFileWriterListener, ItemReader<BundleFile> zipItemReader, BundleZipFileImporter bundleZipFileImporter) {
+    public Step importZipStep(ZipErrorFileWriterListener zipErrorFileWriterListener, ItemReader<BundleFile> zipItemReader, BundleZipFileImporter bundleZipFileImporter, PlatformTransactionManager platformTransactionManager) {
         return stepBuilderFactory.get("importZipStep")
                 .<BundleFile, BundleFile>chunk(1)
                 .reader(zipItemReader)
@@ -67,6 +68,7 @@ public class ZipJobBatchConfiguration {
                 .noSkip(FlatFileFormatException.class)
                 .skipPolicy((error, count) -> true)
                 .listener(zipErrorFileWriterListener)
+                .transactionManager(platformTransactionManager)
                 .build();
     }
 }
