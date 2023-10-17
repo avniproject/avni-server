@@ -5,7 +5,6 @@ import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -251,4 +250,6 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "         where uuid = :uuid)",
             nativeQuery = true)
     List<LocationProjection> getParents(String uuid);
+
+    List<AddressLevel> findByTitleAndType(String title, AddressLevelType lowestAddressLevelType, Pageable pageable);
 }

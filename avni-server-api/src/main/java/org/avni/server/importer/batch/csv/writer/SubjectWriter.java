@@ -3,7 +3,6 @@ package org.avni.server.importer.batch.csv.writer;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
-import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.IndividualRepository;
@@ -27,8 +26,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 
 @Component
@@ -45,10 +42,10 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final VisitCreator visitCreator;
     private final DecisionCreator decisionCreator;
     private final ObservationCreator observationCreator;
-    private EntityApprovalStatusService entityApprovalStatusService;
     private final IndividualService individualService;
     private final S3Service s3Service;
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
+    private AddressLevelCreator addressLevelCreator;
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
@@ -58,23 +55,21 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                          IndividualRepository individualRepository,
                          GenderRepository genderRepository,
                          SubjectTypeCreator subjectTypeCreator,
-                         EntityApprovalStatusService entityApprovalStatusService,
                          FormMappingRepository formMappingRepository,
                          ObservationService observationService,
                          RuleServerInvoker ruleServerInvoker,
                          VisitCreator visitCreator,
                          DecisionCreator decisionCreator,
                          ObservationCreator observationCreator, IndividualService individualService, EntityApprovalStatusWriter entityApprovalStatusWriter,
-                         AddressLevelService addressLevelService,
                          S3Service s3Service,
-                         OrganisationConfigService organisationConfigService) {
+                         OrganisationConfigService organisationConfigService,
+                         AddressLevelCreator addressLevelCreator) {
         super(organisationConfigService);
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
         this.individualRepository = individualRepository;
         this.genderRepository = genderRepository;
         this.subjectTypeCreator = subjectTypeCreator;
-        this.entityApprovalStatusService = entityApprovalStatusService;
         this.formMappingRepository = formMappingRepository;
         this.observationService = observationService;
         this.ruleServerInvoker = ruleServerInvoker;
@@ -83,6 +78,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.observationCreator = observationCreator;
         this.individualService = individualService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
+        this.addressLevelCreator = addressLevelCreator;
         this.locationCreator = new LocationCreator();
         this.s3Service = s3Service;
     }
@@ -111,7 +107,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             individual.setDateOfBirthVerified(row.getBool(SubjectHeaders.dobVerified));
             setRegistrationDate(individual, row, allErrorMsgs);
             individual.setRegistrationLocation(locationCreator.getLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
-            setAddressLevel(individual, row, locationTypes, allErrorMsgs);
+            individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, locationTypes));
             if (individual.getSubjectType().getType().equals(Subject.Person)) setGender(individual, row);
             FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
             individual.setVoided(false);
@@ -197,35 +193,5 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         } catch (Exception ex) {
             throw new Exception(String.format("Invalid '%s'", SubjectHeaders.gender));
         }
-    }
-
-    private void setAddressLevel(Individual individual,
-                                 Row row,
-                                 List<AddressLevelType> locationTypes,
-                                 List<String> errorMsgs) {
-        try {
-            AddressLevel addressLevel = getAddressLevelByLineage(row, locationTypes);
-            individual.setAddressLevel(addressLevel);
-        } catch (Exception ex) {
-            errorMsgs.add(ex.getMessage());
-        }
-    }
-
-    private AddressLevel getAddressLevelByLineage(Row row,
-                                                  List<AddressLevelType> locationTypes) throws Exception {
-        List<String> inputLocations = new ArrayList<>();
-        for (AddressLevelType addressLevelType : locationTypes) {
-            String _location = row.get(addressLevelType.getName());
-            if (_location != null)
-                inputLocations.add(_location);
-        }
-
-        if (inputLocations.size() == 0)
-            throw new Exception("Invalid address");
-
-        String lineage = String.join(", ", inputLocations);
-
-        return locationRepository.findByTitleLineageIgnoreCase(lineage)
-                .orElseThrow(() -> new Exception("'Address' not found: " + lineage));
     }
 }

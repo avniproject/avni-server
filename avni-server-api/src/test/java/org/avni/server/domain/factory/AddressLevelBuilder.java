@@ -22,6 +22,11 @@ public class AddressLevelBuilder {
         return this;
     }
 
+    public AddressLevelBuilder parent(AddressLevel parent) {
+        entity.setParent(parent);
+        return this;
+    }
+
     public AddressLevelBuilder id(long id) {
         entity.setId(id);
         return this;
