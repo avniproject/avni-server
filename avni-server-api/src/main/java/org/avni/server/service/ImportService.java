@@ -54,24 +54,32 @@ public class ImportService {
         Stream<FormMapping> programEnrolmentForms = formMappings.stream().filter(formMapping -> formMapping.getForm().getFormType() == FormType.ProgramEnrolment);
         programEnrolmentForms.forEach(formMapping -> {
             String subjectTypeName = formMapping.getSubjectType().getName();
-            String programName = formMapping.getProgram().getName();
+            Program program = formMapping.getProgram();
+            if (program == null) return; // not defined correctly
+
+            String programName = program.getName();
             uploadTypes.put(String.format("ProgramEnrolment---%s---%s", programName, subjectTypeName), new FormMappingInfo(String.format("%s enrolment", programName), formMapping.isEnableApproval()));
         });
 
-        Stream<FormMapping> programEncounterForms = formMappings.stream().filter(formMapping -> formMapping.getForm().getFormType() == FormType.ProgramEncounter);
+        Stream<FormMapping> programEncounterForms = formMappings.stream().filter(formMapping -> FormType.ProgramEncounter.equals(formMapping.getForm().getFormType()));
         programEncounterForms.forEach(formMapping -> {
             String subjectTypeName = formMapping.getSubjectType().getName();
-            String encounterType = formMapping.getEncounterType().getName();
+            EncounterType encounterType = formMapping.getEncounterType();
+            if (encounterType == null) return;  // not defined correctly
+
             String formName = formMapping.getFormName();
-            uploadTypes.put(String.format("ProgramEncounter---%s---%s", encounterType, subjectTypeName), new FormMappingInfo(String.format("%s", formName), formMapping.isEnableApproval()));
+            uploadTypes.put(String.format("ProgramEncounter---%s---%s", encounterType.getName(), subjectTypeName), new FormMappingInfo(String.format("%s", formName), formMapping.isEnableApproval()));
         });
 
         Stream<FormMapping> encounterForms = formMappings.stream().filter(formMapping -> formMapping.getForm().getFormType() == FormType.Encounter);
         encounterForms.forEach(formMapping -> {
             String subjectTypeName = formMapping.getSubjectType().getName();
-            String encounterType = formMapping.getEncounterType().getName();
+            EncounterType encounterType = formMapping.getEncounterType();
+            if (encounterType == null) return; // not defined correctly
+
+            String encounterTypeName = encounterType.getName();
             String formName = formMapping.getFormName();
-            uploadTypes.put(String.format("Encounter---%s---%s", encounterType, subjectTypeName), new FormMappingInfo(String.format("%s", formName), formMapping.isEnableApproval()));
+            uploadTypes.put(String.format("Encounter---%s---%s", encounterTypeName, subjectTypeName), new FormMappingInfo(String.format("%s", formName), formMapping.isEnableApproval()));
         });
 
         Stream<SubjectType.SubjectTypeProjection> groupSubjectTypes = subjectTypeRepository.findAllOperational().stream().filter(SubjectType.SubjectTypeProjection::isGroup);

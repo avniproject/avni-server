@@ -12,9 +12,8 @@ import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.NonScopeAwareService;
 import org.avni.server.web.request.GroupPrivilegeContractWeb;
-import org.springframework.stereotype.Service;
-
 import org.joda.time.DateTime;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,14 +151,14 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     }
 
 
-    public void uploadPrivileges(GroupPrivilegeContractWeb request, Organisation organisation) {
+    public void savePrivileges(GroupPrivilegeContractWeb request, Organisation organisation) {
         GroupPrivilege groupPrivilege = groupPrivilegeRepository.findByUuid(request.getUuid());
         if (groupPrivilege == null) {
             groupPrivilege = new GroupPrivilege();
         }
         groupPrivilege.setUuid(request.getUuid());
         groupPrivilege.setPrivilege(privilegeRepository.findByUuid(request.getPrivilegeUUID()));
-        groupPrivilege.setGroup(getCorrespondingGroup(request, organisation));
+        groupPrivilege.setGroup(getGroup(request, organisation));
         groupPrivilege.setSubjectType(subjectTypeRepository.findByUuid(request.getSubjectTypeUUID()));
         groupPrivilege.setProgram(programRepository.findByUuid(request.getProgramUUID()));
         groupPrivilege.setEncounterType(encounterTypeRepository.findByUuid(request.getEncounterTypeUUID()));
@@ -169,7 +168,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         groupPrivilegeRepository.save(groupPrivilege);
     }
 
-    private Group getCorrespondingGroup(GroupPrivilegeContractWeb request, Organisation organisation) {
+    private Group getGroup(GroupPrivilegeContractWeb request, Organisation organisation) {
         if (request.isNotEveryoneGroup()) {
             return groupRepository.findByUuid(request.getGroupUUID());
         } else {

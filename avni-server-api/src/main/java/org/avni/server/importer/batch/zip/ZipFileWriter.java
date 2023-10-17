@@ -338,7 +338,7 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
             case "groupPrivilege.json":
                 GroupPrivilegeContractWeb[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeContractWeb[].class);
                 for (GroupPrivilegeContractWeb groupPrivilegeContract : groupPrivilegeContracts) {
-                    groupPrivilegeService.uploadPrivileges(groupPrivilegeContract, organisation);
+                    groupPrivilegeService.savePrivileges(groupPrivilegeContract, organisation);
                 }
                 break;
             case "video.json":
