@@ -25,4 +25,12 @@ public class BundleFile {
     public void setContent(byte[] content) {
         this.content = content;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "name='" + name + '\'' +
+                "size='" + content.length + '\'' +
+                '}';
+    }
 }

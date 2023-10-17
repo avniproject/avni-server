@@ -48,8 +48,8 @@ import static java.lang.String.format;
 
 @Component
 @JobScope
-public class ZipFileWriter implements ItemWriter<BundleFile> {
-    private static final Logger logger = LoggerFactory.getLogger(ZipFileWriter.class);
+public class BundleZipFileImporter implements ItemWriter<BundleFile> {
+    private static final Logger logger = LoggerFactory.getLogger(BundleZipFileImporter.class);
 
     private static final String SUBJECT_ICON_DIRECTORY = "subjectTypeIcons";
     private final AuthService authService;
@@ -120,33 +120,33 @@ public class ZipFileWriter implements ItemWriter<BundleFile> {
 
 
     @Autowired
-    public ZipFileWriter(AuthService authService,
-                         ConceptService conceptService,
-                         FormService formService,
-                         LocationService locationService,
-                         CatchmentService catchmentService,
-                         SubjectTypeService subjectTypeService,
-                         ProgramService programService,
-                         EncounterTypeService encounterTypeService,
-                         FormMappingService formMappingService,
-                         OrganisationConfigService organisationConfigService,
-                         IndividualRelationService individualRelationService,
-                         IndividualRelationshipTypeService individualRelationshipTypeService,
-                         ChecklistDetailService checklistDetailService,
-                         IdentifierSourceService identifierSourceService,
-                         GroupsService groupsService,
-                         GroupRoleService groupRoleService,
-                         SubjectTypeRepository subjectTypeRepository,
-                         GroupPrivilegeService groupPrivilegeService,
-                         VideoService videoService,
-                         CardService cardService,
-                         DashboardService dashboardService, @Qualifier("BatchS3Service") S3Service s3Service,
-                         DocumentationService documentationService,
-                         TaskTypeService taskTypeService,
-                         TaskStatusService taskStatusService,
-                         MenuItemService menuItemService,
-                         EntityTypeRetrieverService entityTypeRetrieverService,
-                         MessagingService messagingService) {
+    public BundleZipFileImporter(AuthService authService,
+                                 ConceptService conceptService,
+                                 FormService formService,
+                                 LocationService locationService,
+                                 CatchmentService catchmentService,
+                                 SubjectTypeService subjectTypeService,
+                                 ProgramService programService,
+                                 EncounterTypeService encounterTypeService,
+                                 FormMappingService formMappingService,
+                                 OrganisationConfigService organisationConfigService,
+                                 IndividualRelationService individualRelationService,
+                                 IndividualRelationshipTypeService individualRelationshipTypeService,
+                                 ChecklistDetailService checklistDetailService,
+                                 IdentifierSourceService identifierSourceService,
+                                 GroupsService groupsService,
+                                 GroupRoleService groupRoleService,
+                                 SubjectTypeRepository subjectTypeRepository,
+                                 GroupPrivilegeService groupPrivilegeService,
+                                 VideoService videoService,
+                                 CardService cardService,
+                                 DashboardService dashboardService, @Qualifier("BatchS3Service") S3Service s3Service,
+                                 DocumentationService documentationService,
+                                 TaskTypeService taskTypeService,
+                                 TaskStatusService taskStatusService,
+                                 MenuItemService menuItemService,
+                                 EntityTypeRetrieverService entityTypeRetrieverService,
+                                 MessagingService messagingService) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;

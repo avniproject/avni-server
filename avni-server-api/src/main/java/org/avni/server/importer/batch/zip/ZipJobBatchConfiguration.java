@@ -55,11 +55,11 @@ public class ZipJobBatchConfiguration {
     }
 
     @Bean
-    public Step importZipStep(ZipErrorFileWriterListener zipErrorFileWriterListener, ItemReader<BundleFile> zipItemReader, ZipFileWriter zipFileWriter) {
+    public Step importZipStep(ZipErrorFileWriterListener zipErrorFileWriterListener, ItemReader<BundleFile> zipItemReader, BundleZipFileImporter bundleZipFileImporter) {
         return stepBuilderFactory.get("importZipStep")
-                .<BundleFile, BundleFile>chunk(100)
+                .<BundleFile, BundleFile>chunk(1)
                 .reader(zipItemReader)
-                .writer(zipFileWriter)
+                .writer(bundleZipFileImporter)
                 .faultTolerant()
                 .skip(Exception.class)
                 .noSkip(FileNotFoundException.class)
