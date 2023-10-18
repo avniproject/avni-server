@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
@@ -35,7 +36,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "programEnrolment")
     private Set<ProgramEncounter> programEncounters;
 
-    @Column
+    @Column(name = ColumnNames.EnrolmentDateTime)
     @NotNull
     private DateTime enrolmentDateTime;
 
@@ -47,7 +48,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @JoinColumn(name = "program_outcome_id")
     private ProgramOutcome programOutcome;
 
-    @Column
+    @Column(name = ColumnNames.ProgramExitDateTime)
     private DateTime programExitDateTime;
 
     @Type(type= "org.avni.server.geo.PointType")

@@ -338,7 +338,7 @@ public class ObservationService {
     }
 
     private static final String maxNumberOfRepeatableItemsQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null";
-    private static final String maxNumberOfRepeatableItemsWithDateFilterQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null and (encounter_date_time between :fromDate and :toDate)";
+    private static final String maxNumberOfRepeatableItemsWithDateFilterQuery = "select max(json_array_length((%s->>'%s')::json)) from %s where %s->>'%s' is not null and (%s between :fromDate and :toDate)";
 
     static class CountMapper implements RowMapper<Integer> {
         @Override
@@ -360,8 +360,13 @@ public class ObservationService {
 
             repeatableQuestionGroupElements.forEach(formElement -> {
                 boolean dateFilterApplicable = fromDate != null;
-                String chosenQuery = dateFilterApplicable ? maxNumberOfRepeatableItemsWithDateFilterQuery : maxNumberOfRepeatableItemsQuery;
-                String query = String.format(chosenQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
+                String query;
+                if (dateFilterApplicable) {
+                    query = String.format(maxNumberOfRepeatableItemsWithDateFilterQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid(), ColumnNames.getOccurrenceDateTimeColumn(form.getFormType()));
+                } else {
+                    query = String.format(maxNumberOfRepeatableItemsQuery, obsColumn, formElement.getConcept().getUuid(), tableName, obsColumn, formElement.getConcept().getUuid());
+                }
+
                 if (formElement.isRepeatable()) {
                     HashMap<String, Object> paramMap = new HashMap<>();
                     if (dateFilterApplicable) {

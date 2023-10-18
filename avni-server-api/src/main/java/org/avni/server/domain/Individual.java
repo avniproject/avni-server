@@ -57,6 +57,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     private Set<GroupSubject> memberGroupSubjects  = new HashSet<>();
 
     @NotNull
+    @Column(name = ColumnNames.RegistrationDate)
     private LocalDate registrationDate;
 
     @ManyToOne(fetch = FetchType.LAZY)

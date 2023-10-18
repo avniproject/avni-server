@@ -26,14 +26,14 @@ public class AbstractEncounter extends SyncAttributeEntity {
     @Column
     private DateTime maxVisitDateTime;
 
-    @Column
+    @Column(name = ColumnNames.EncounterDateTime)
     private DateTime encounterDateTime;
 
     @Column(name = ColumnNames.EncounterObservations)
     @Type(type = "observations")
     private ObservationCollection observations;
 
-    @Column
+    @Column(name = ColumnNames.EncounterCancelDateTime)
     private DateTime cancelDateTime;
 
     @Column(name = ColumnNames.EncounterCancelObservations)
