@@ -11,11 +11,13 @@ import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.NonScopeAwareService;
+import org.avni.server.util.CollectionUtil;
 import org.avni.server.web.request.GroupPrivilegeContractWeb;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -150,29 +152,39 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         return allGroupPrivileges;
     }
 
+    public void savePrivileges(GroupPrivilegeContractWeb[] requests, Organisation organisation) {
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findAll();
+        List<Privilege> privileges = privilegeRepository.findAll();
+        List<SubjectType> subjectTypes = subjectTypeRepository.findAll();
+        List<Program> programs = programRepository.findAll();
+        List<EncounterType> encounterTypes = encounterTypeRepository.findAll();
+        List<ChecklistDetail> checklistDetails = checklistDetailRepository.findAll();
+        List<Group> groups = groupRepository.findAll();
 
-    public void savePrivileges(GroupPrivilegeContractWeb request, Organisation organisation) {
-        GroupPrivilege groupPrivilege = groupPrivilegeRepository.findByUuid(request.getUuid());
-        if (groupPrivilege == null) {
-            groupPrivilege = new GroupPrivilege();
-        }
-        groupPrivilege.setUuid(request.getUuid());
-        groupPrivilege.setPrivilege(privilegeRepository.findByUuid(request.getPrivilegeUUID()));
-        groupPrivilege.setGroup(getGroup(request, organisation));
-        groupPrivilege.setSubjectType(subjectTypeRepository.findByUuid(request.getSubjectTypeUUID()));
-        groupPrivilege.setProgram(programRepository.findByUuid(request.getProgramUUID()));
-        groupPrivilege.setEncounterType(encounterTypeRepository.findByUuid(request.getEncounterTypeUUID()));
-        groupPrivilege.setProgramEncounterType(encounterTypeRepository.findByUuid(request.getProgramEncounterTypeUUID()));
-        groupPrivilege.setChecklistDetail(checklistDetailRepository.findByUuid(request.getChecklistDetailUUID()));
-        groupPrivilege.setAllow(request.isAllow());
-        groupPrivilegeRepository.save(groupPrivilege);
+        Arrays.stream(requests).forEach(request -> {
+            GroupPrivilege groupPrivilege = CollectionUtil.findByUuid(groupPrivileges, request.getUuid());
+            if (groupPrivilege == null) {
+                groupPrivilege = new GroupPrivilege();
+                groupPrivilege.setUuid(request.getUuid());
+            }
+            groupPrivilege.setPrivilege(CollectionUtil.findByUuid(privileges, request.getPrivilegeUUID()));
+            groupPrivilege.setSubjectType(CollectionUtil.findByUuid(subjectTypes, request.getSubjectTypeUUID()));
+            groupPrivilege.setProgram(CollectionUtil.findByUuid(programs, request.getProgramUUID()));
+            groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getEncounterTypeUUID()));
+            groupPrivilege.setProgramEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getProgramEncounterTypeUUID()));
+            groupPrivilege.setChecklistDetail(CollectionUtil.findByUuid(checklistDetails, request.getChecklistDetailUUID()));
+
+            groupPrivilege.setGroup(getGroup(request, organisation, groups));
+            groupPrivilege.setAllow(request.isAllow());
+            groupPrivilegeRepository.save(groupPrivilege);
+        });
     }
 
-    private Group getGroup(GroupPrivilegeContractWeb request, Organisation organisation) {
+    private Group getGroup(GroupPrivilegeContractWeb request, Organisation organisation, List<Group> groups) {
         if (request.isNotEveryoneGroup()) {
-            return groupRepository.findByUuid(request.getGroupUUID());
+            return CollectionUtil.findByUuid(groups, request.getGroupUUID());
         } else {
-            return groupRepository.findByNameAndOrganisationId(Group.Everyone, organisation.getId());
+            return groups.stream().filter(x -> Group.Everyone.equals(x.getName())).findFirst().orElse(null);
         }
     }
 

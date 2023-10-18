@@ -337,9 +337,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "groupPrivilege.json":
                 GroupPrivilegeContractWeb[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeContractWeb[].class);
-                for (GroupPrivilegeContractWeb groupPrivilegeContract : groupPrivilegeContracts) {
-                    groupPrivilegeService.savePrivileges(groupPrivilegeContract, organisation);
-                }
+                groupPrivilegeService.savePrivileges(groupPrivilegeContracts, organisation);
                 break;
             case "video.json":
                 VideoContract[] videoContracts = convertString(fileData, VideoContract[].class);

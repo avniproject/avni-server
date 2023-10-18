@@ -3,6 +3,7 @@ package org.avni.server.domain.accessControl;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.PrivilegeEntityType;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
@@ -10,16 +11,7 @@ import org.joda.time.DateTime;
 @Entity
 @Table(name = "privilege")
 @BatchSize(size = 100)
-public class Privilege {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
-    @Id
-    private Long id;
-
-    @Column
-    @NotNull
-    private String uuid;
-
+public class Privilege extends CHSBaseEntity {
     @Column
     @NotNull
     private String name;
@@ -37,29 +29,10 @@ public class Privilege {
     private PrivilegeEntityType entityType;
 
     @Column
-    private boolean isVoided;
-
-    @Column
     private DateTime createdDateTime;
 
     @Column
     private DateTime lastModifiedDateTime;
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
-    }
-
-    public boolean isVoided() {
-        return isVoided;
-    }
-
-    public void setVoided(boolean voided) {
-        isVoided = voided;
-    }
 
     public DateTime getCreatedDateTime() {
         return createdDateTime;
@@ -75,14 +48,6 @@ public class Privilege {
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
