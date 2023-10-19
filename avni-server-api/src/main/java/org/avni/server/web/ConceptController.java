@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import com.google.common.html.HtmlEscapers;
 import org.avni.server.dao.ConceptAnswerRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
@@ -27,8 +28,11 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.HtmlUtils;
 
 import javax.transaction.Transactional;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -74,7 +78,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     @GetMapping(value = "/web/concept")
     @ResponseBody
     public ResponseEntity<ConceptProjection> getOneForWebByName(@RequestParam String name) {
-        Concept concept = conceptRepository.findByName(name);
+        Concept concept = conceptRepository.findByName(HtmlUtils.htmlUnescape(name));
         if (concept == null)
             return ResponseEntity.notFound().build();
         return ResponseEntity.ok(projectionFactory.createProjection(ConceptProjection.class, concept));
