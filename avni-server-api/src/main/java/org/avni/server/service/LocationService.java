@@ -11,11 +11,13 @@ import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
+import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.AddressLevelTypeContract;
 import org.avni.server.web.request.LocationContract;
 import org.avni.server.web.request.LocationEditContract;
 import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.webapp.search.LocationSearchRequest;
+import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -222,7 +224,13 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         }
         if (contract.getUuid() == null)
             addressLevelType.setUuid(UUID.randomUUID().toString());
+        if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(contract.getName(), ValidationUtil.COMMON_INVALID_CHARS_PATTERN)) {
+            throw new ValidationException(String.format("Invalid Location Type name %s", contract.getName()));
+        }
         addressLevelType.setName(contract.getName());
+        if (ValidationUtil.checkNull(contract.getLevel())) {
+            throw new ValidationException(String.format("Invalid Location Type level %s", contract.getLevel()));
+        }
         addressLevelType.setLevel(contract.getLevel());
         addressLevelType.setVoided(contract.isVoided());
         AddressLevelType parent = null;

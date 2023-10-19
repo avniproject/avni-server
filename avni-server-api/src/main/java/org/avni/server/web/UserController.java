@@ -10,6 +10,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.ValidationUtil;
 import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.request.ChangePasswordRequest;
 import org.avni.server.web.request.ResetPasswordRequest;
@@ -34,6 +35,7 @@ import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RepositoryRestController
@@ -53,6 +55,7 @@ public class UserController {
 
     @Value("${avni.userPhoneNumberPattern}")
     private String MOBILE_NUMBER_PATTERN;
+    private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
     private final AccessControlService accessControlService;
 
     @Autowired
@@ -154,6 +157,14 @@ public class UserController {
         return EmailValidator.getInstance().isValid(email);
     }
 
+    private Boolean isUserNameInvalid(String userName) {
+        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(userName, ValidationUtil.COMMON_INVALID_CHARS_PATTERN);
+    }
+
+    private Boolean isNameInvalid(String name) {
+        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
+    }
+
     private Boolean phoneNumberIsValid(String phoneNumber) {
         return phoneNumber.matches(MOBILE_NUMBER_PATTERN);
     }
@@ -166,6 +177,14 @@ public class UserController {
         if (!phoneNumberIsValid(userContract.getPhoneNumber()))
             throw new ValidationException(String.format("Invalid phone number %s", userContract.getPhoneNumber()));
         user.setPhoneNumber(userContract.getPhoneNumber());
+
+        if (isUserNameInvalid(userContract.getUsername())) {
+            throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
+        }
+
+        if (isNameInvalid(userContract.getName())) {
+            throw new ValidationException(String.format("Invalid name %s", userContract.getName()));
+        }
 
         user.setName(userContract.getName());
         if(userContract.getCatchmentId()!=null) {

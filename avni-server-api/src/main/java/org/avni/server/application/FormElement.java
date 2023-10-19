@@ -241,8 +241,11 @@ public class FormElement extends OrganisationAwareEntity {
     }
 
     public boolean isPartOfRepeatableQuestionGroup() {
-        boolean isPartOfGroupQuestion = getGroup() != null;
-        return isPartOfGroupQuestion && getGroup().isRepeatable();
+        return isPartOfQuestionGroup() && getGroup().isRepeatable();
+    }
+
+    public boolean isPartOfQuestionGroup() {
+        return getGroup() != null;
     }
 
     public boolean isQuestionGroupElement() {

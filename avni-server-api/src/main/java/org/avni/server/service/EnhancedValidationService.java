@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +39,7 @@ import static org.avni.messaging.domain.Constants.PHONE_NUMBER_PATTERN;
 @Service("EnhancedValidationService")
 @ConditionalOnProperty(value = "avni.enhancedValidation.enabled", havingValue = "true")
 public class EnhancedValidationService {
+    public static final boolean INCLUDE_VOIDED_FORM_ELEMENTS = true;
     private final FormMappingService formMappingService;
     private final OrganisationConfigService organisationConfigService;
     private final BugsnagReporter bugsnagReporter;
@@ -63,29 +65,39 @@ public class EnhancedValidationService {
     }
 
     public ValidationResult validateObservationsAndDecisionsAgainstFormMapping(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) {
-        LinkedHashMap<String, FormElement> entityConceptMap = formMappingService.getEntityConceptMap(formMapping, true);
-        List<String> conceptUuids = getObservationConceptUuidsFromRequest(observationRequests);
+        LinkedHashMap<String, FormElement> entityConceptMap = formMappingService.getEntityConceptMap(formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
 
+        String errorMessage = checkForInvalidConceptUUIDAndNames(observationRequests, decisions, formMapping, entityConceptMap);
+        if (StringUtils.hasText(errorMessage)) return handleValidationFailure(errorMessage);
+
+        errorMessage = validateConceptValuesAreOfRequiredType(observationRequests, entityConceptMap, formMapping);
+        if (StringUtils.hasText(errorMessage)) return handleValidationFailure(errorMessage);
+
+        return ValidationResult.Success;
+    }
+
+    private String checkForInvalidConceptUUIDAndNames(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping, LinkedHashMap<String, FormElement> entityConceptMap) {
+        List<String> conceptUuids = getObservationConceptUuidsFromRequest(observationRequests);
         conceptUuids.addAll(getDecisionConceptUuidsFromRequest(decisions));
+
         List<String> nonMatchingConceptUuids = conceptUuids
             .stream()
             .filter(conceptUuid -> !entityConceptMap.containsKey(conceptUuid))
             .collect(Collectors.toList());
 
         if (!nonMatchingConceptUuids.isEmpty()) {
-            String errorMessage = String.format("Invalid concept uuids/names %s found for Form uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids), formMapping.getFormUuid(), formMapping.getFormName());
-            return handleValidationFailure(errorMessage);
+            return String.format("Invalid concept uuids/names %s found for Form uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids), formMapping.getFormUuid(), formMapping.getFormName());
         }
+        return null;
+    }
 
-        String allErrors = observationRequests.stream()
-            .map(observationRequest -> new EnhancedValidationDTO(conceptRepository.findByUuid(observationRequest.getConceptUUID()), entityConceptMap.get(observationRequest.getConceptUUID()), observationRequest.getValue()))
-            .map(this::validate)
-            .filter(Objects::nonNull)
-            .collect(Collectors.joining("\n"));
-
-        if (!allErrors.trim().equals("")) return handleValidationFailure(allErrors);
-
-        return ValidationResult.Success;
+    private String validateConceptValuesAreOfRequiredType(List<ObservationRequest> observationRequests, LinkedHashMap<String, FormElement> entityConceptMap, FormMapping formMapping) {
+        return observationRequests.stream()
+                .map(observationRequest -> new EnhancedValidationDTO(conceptRepository.findByUuid(observationRequest.getConceptUUID()),
+                        entityConceptMap.get(observationRequest.getConceptUUID()), observationRequest.getValue()))
+                .map(enhancedValidationDTO -> validate(enhancedValidationDTO, formMapping))
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining("\n"));
     }
 
     public ValidationResult handleValidationFailure(String errorMessage) {
@@ -130,9 +142,12 @@ public class EnhancedValidationService {
             .collect(Collectors.toList()) : new ArrayList<>();
     }
 
-    private String validate(EnhancedValidationDTO enhancedValidationDTO) {
+    private String validate(EnhancedValidationDTO enhancedValidationDTO, FormMapping formMapping) {
         Object value = enhancedValidationDTO.getValue();
-        if (value instanceof Collection<?>) {
+        if (enhancedValidationDTO.getConcept().isQuestionGroup()) {
+            return validateQuestionGroupConcept(enhancedValidationDTO.getConcept(), enhancedValidationDTO.getFormElement(),
+                    value, formMapping);
+        } else if (value instanceof Collection<?>) {
             List<String> errorMessages = new ArrayList<>();
             ((Collection<Object>) value).forEach(vl -> {
                 String validationResult = validateAnswer(enhancedValidationDTO.getConcept(), enhancedValidationDTO.getFormElement(), vl);
@@ -246,6 +261,54 @@ public class EnhancedValidationService {
             default:
                 return null;
         }
+    }
+
+    public String validateQuestionGroupConcept(Concept question, FormElement formElement, Object qGroupValue, FormMapping formMapping) {
+        if(qGroupValue == null) {
+            return String.format("Null value specified for question group concept name: %s, uuid:%s", question.getName(), question.getUuid());
+        } else if(formElement.isRepeatable() && !(qGroupValue instanceof Collection<?>)) {
+            return String.format("Non-repeatable qGroupValue specified for Repeatable question group concept name: %s, uuid:%s", question.getName(), question.getUuid());
+        } else if(!formElement.isRepeatable() && qGroupValue instanceof Collection<?>) {
+            return String.format("Repeatable qGroupValue specified for Non-Repeatable question group concept name: %s, uuid:%s", question.getName(), question.getUuid());
+        }
+        return splitQuestionGroupValueIfRequiredAndThenValidate(formElement, qGroupValue, formMapping);
+    }
+
+    private String splitQuestionGroupValueIfRequiredAndThenValidate(FormElement formElement, Object qGroupValue, FormMapping formMapping) {
+        if (qGroupValue instanceof Collection<?>) {
+            List<String> errorMessages = new ArrayList<>();
+            ((Collection<Object>) qGroupValue).forEach(qGroupValueInstance -> {
+                String validationResult = validateChildObservation(formElement, (Map<String, Object>) qGroupValueInstance, formMapping);
+                if (validationResult != null) errorMessages.add(validationResult);
+            });
+            if (errorMessages.isEmpty()) return null;
+            return String.join("\n", errorMessages);
+        } else {
+            return validateChildObservation(formElement, (Map<String, Object>) qGroupValue, formMapping);
+        }
+    }
+
+    private String validateChildObservation(FormElement questionGroupFormElement, Map<String, Object> qGroupValueInstance, FormMapping formMapping) {
+        LinkedHashMap<String, FormElement> entityConceptMap = formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(questionGroupFormElement, formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
+        List<ObservationRequest> observationRequests = qGroupValueInstance.entrySet().stream().map(this::createObservationRequest).collect(Collectors.toList());
+        List<String> nonMatchingConceptUuids = getObservationConceptUuidsFromRequest(observationRequests)
+                .stream()
+                .filter(conceptUuid -> !entityConceptMap.containsKey(conceptUuid))
+                .collect(Collectors.toList());
+
+        if (!nonMatchingConceptUuids.isEmpty()) {
+            return String.format("Invalid concept uuids/names %s found for questionGroupConcept uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids),
+                    questionGroupFormElement.getConcept().getUuid(), questionGroupFormElement.getName());
+        }
+
+        return validateConceptValuesAreOfRequiredType(observationRequests, entityConceptMap, formMapping);
+    }
+
+    private ObservationRequest createObservationRequest(Map.Entry<String, Object> stringObjectEntry) {
+        ObservationRequest observationRequest = new ObservationRequest();
+        observationRequest.setConceptUUID(stringObjectEntry.getKey());
+        observationRequest.setValue(stringObjectEntry.getValue());
+        return observationRequest;
     }
 
     private String formatErrorMessage(Concept question, Object value) {

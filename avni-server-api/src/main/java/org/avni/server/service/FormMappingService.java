@@ -203,6 +203,19 @@ public class FormMappingService implements NonScopeAwareService {
         return formElements.stream().collect(Collectors.toMap(f -> f.getConcept().getUuid(), f -> f, (a, b) -> b, LinkedHashMap::new));
     }
 
+    public LinkedHashMap<String, FormElement> getEntityConceptMapForSpecificQuestionGroupFormElement(FormElement questionGroupFormElement,
+                                                                                                     FormMapping formMapping, boolean includeVoidedFormElements) {
+        List<FormElement> formElements = new ArrayList<>();
+        if (questionGroupFormElement != null && StringUtils.hasText(questionGroupFormElement.getUuid())) {
+            if (formMapping != null) {
+                formElements = includeVoidedFormElements ? formMapping.getForm().getAllFormElements()
+                        : formMapping.getForm().getApplicableFormElements();
+            }
+            formElements = formElements.stream().filter(fe -> fe.isPartOfQuestionGroup() && fe.getGroup().getUuid().equals(questionGroupFormElement.getUuid())).collect(Collectors.toList());
+        }
+        return formElements.stream().collect(Collectors.toMap(f -> f.getConcept().getUuid(), f -> f, (a, b) -> b, LinkedHashMap::new));
+    }
+
     private List<FormElement> getDecisionFormElements(FormMapping formMapping) {
         Set<Concept> decisionConcepts = formMapping == null ? Collections.emptySet() : formMapping.getForm().getDecisionConcepts();
         return decisionConcepts.stream().map(concept -> {

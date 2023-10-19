@@ -34,7 +34,7 @@ public class LimitHostNamesFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } else {
             String msg = "Request rejected due to invalid host";
-            logger.warn(msg);
+            logger.warn(String.format("%s: %s", msg, request.getServerName()));
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
         }
     }
