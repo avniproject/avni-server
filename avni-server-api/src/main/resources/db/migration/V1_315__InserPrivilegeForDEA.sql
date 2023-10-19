@@ -1,7 +1,7 @@
 -- Introduce 'ViewEditEntitiesOnDataEntryApp' privilege
 insert into privilege (uuid, name, description, entity_type, type, created_date_time, last_modified_date_time)
 VALUES (uuid_generate_v4(), 'View Or Edit Entities On DataEntry App',
-        'Perform CRUD on Transactional data in DataEntry App', 'TransactionDataOnDataEntryApp',
+        'Perform CRUD on Transactional data in DataEntry App', 'DataEntryApp',
         'ViewEditEntitiesOnDataEntryApp', current_timestamp, current_timestamp);
 
 
@@ -26,5 +26,5 @@ select uuid_generate_v4(),
        true
 from privilege
          join groups on has_all_privileges = false and organisation_id <> 1
-where privilege.entity_type in ('TransactionDataOnDataEntryApp');
+where privilege.entity_type in ('DataEntryApp');
 
