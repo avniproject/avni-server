@@ -50,6 +50,7 @@ public class ExportBatchConfiguration {
     private final SubjectTypeRepository subjectTypeRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final ProgramRepository programRepository;
+    private final int longitudinalExportV2Limit;
 
     @Autowired
     public ExportBatchConfiguration(JobBuilderFactory jobBuilderFactory,
@@ -63,7 +64,9 @@ public class ExportBatchConfiguration {
                                     SubjectTypeRepository subjectTypeRepository,
                                     EncounterTypeRepository encounterTypeRepository,
                                     ProgramRepository programRepository,
-                                    EntityManager entityManager) {
+                                    EntityManager entityManager,
+                                    @Value("${avni.longitudinal.export.v2.limit}") int longitudinalExportV2Limit
+    ) {
         this.jobBuilderFactory = jobBuilderFactory;
         this.stepBuilderFactory = stepBuilderFactory;
         this.programEnrolmentRepository = programEnrolmentRepository;
@@ -76,6 +79,7 @@ public class ExportBatchConfiguration {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programRepository = programRepository;
         this.entityManager = entityManager;
+        this.longitudinalExportV2Limit = longitudinalExportV2Limit;
     }
 
     @Bean
@@ -123,9 +127,14 @@ public class ExportBatchConfiguration {
         List<Long> selectedAddressIds = getLocations(addressLevelIds);
         List<Long> addressParam = selectedAddressIds.isEmpty() ? null : selectedAddressIds;
         Stream stream = getRegistrationStream(exportOutput.getUuid(), addressParam, subjectFilters.getDate().getFrom().toLocalDate(), subjectFilters.getDate().getTo().toLocalDate(), subjectFilters.includeVoided());
-        LongitudinalExportTasklet encounterTasklet = new LongitudinalExportV2TaskletImpl(CHUNK_SIZE, entityManager, exportV2CSVFieldExtractor, exportV2Processor, exportS3Service, uuid, stream);
+        Stream alteredStream = truncateStream(stream);
+        LongitudinalExportTasklet encounterTasklet = new LongitudinalExportV2TaskletImpl(CHUNK_SIZE, entityManager, exportV2CSVFieldExtractor, exportV2Processor, exportS3Service, uuid, alteredStream);
         listener.setItemReaderCleaner(encounterTasklet);
         return encounterTasklet;
+    }
+
+    private Stream truncateStream(Stream stream) {
+        return stream.limit(longitudinalExportV2Limit); //Truncate stream
     }
 
     @Bean
