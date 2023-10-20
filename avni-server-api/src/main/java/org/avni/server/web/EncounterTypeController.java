@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.application.Form;
+import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
@@ -167,15 +168,11 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
                 FormType.IndividualEncounterCancellation : FormType.ProgramEncounterCancellation;
 
         Form encounterForm = formService.getOrCreateForm(request.getProgramEncounterFormUuid(), String.format("%s Encounter", encounterType.getName()), encounterFormType);
-        formMappingService.saveFormMapping(
-                new FormMappingParameterObject(request.getSubjectTypeUuid(), request.getProgramUuid(), encounterType.getUuid()),
-                new FormMappingParameterObject(null, null, encounterType.getUuid()),
+        formMappingService.saveFormMapping(new FormMappingParameterObject(request.getSubjectTypeUuid(), request.getProgramUuid(), encounterType.getUuid()),
                 encounterForm, request.isPerformEncounterApprovalEnabled());
 
         Form cancellationForm = formService.getOrCreateForm(request.getProgramEncounterCancelFormUuid(), String.format("%s Encounter Cancellation", encounterType.getName()), cancellationFormType);
-        formMappingService.saveFormMapping(
-                new FormMappingParameterObject(request.getSubjectTypeUuid(), request.getProgramUuid(), encounterType.getUuid()),
-                new FormMappingParameterObject(null, null, encounterType.getUuid()),
+        formMappingService.saveFormMapping(new FormMappingParameterObject(request.getSubjectTypeUuid(), request.getProgramUuid(), encounterType.getUuid()),
                 cancellationForm, request.isCancelEncounterApprovalEnabled());
     }
 

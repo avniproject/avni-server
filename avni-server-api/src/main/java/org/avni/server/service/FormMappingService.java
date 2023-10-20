@@ -50,32 +50,13 @@ public class FormMappingService implements NonScopeAwareService {
     }
 
     public void saveFormMapping(FormMappingParameterObject parametersForNewMapping,
-                                FormMappingParameterObject mappingsToVoid,
                                 Form form, boolean enableApproval) {
-        voidExistingFormMappings(mappingsToVoid, form);
-
-        saveMatchingFormMappings(parametersForNewMapping, form, enableApproval);
-    }
-
-    public void voidExistingFormMappings(FormMappingParameterObject mappingsToVoid, Form form) {
-        FormType formType = form != null ? form.getFormType() : null;
-        List<FormMapping> formMappingsToVoid = formMappingRepository.findRequiredFormMappings(
-                mappingsToVoid.subjectTypeUuid,
-                mappingsToVoid.programUuid,
-                mappingsToVoid.encounterTypeUuid,
-                formType
-        );
-
-        formMappingsToVoid.forEach(formMapping -> formMapping.setVoided(true));
-        formMappingsToVoid.forEach(formMappingRepository::save);
-    }
-
-    private void saveMatchingFormMappings(FormMappingParameterObject parametersForNewMapping, Form form, boolean enableApproval) {
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(
                 parametersForNewMapping.subjectTypeUuid,
                 parametersForNewMapping.programUuid,
                 parametersForNewMapping.encounterTypeUuid,
                 form.getFormType());
+
         if (formMapping == null) {
             formMapping = new FormMapping();
             formMapping.assignUUID();
@@ -88,11 +69,23 @@ public class FormMappingService implements NonScopeAwareService {
         setEncounterTypeIfRequired(formMapping, form.getFormType(), parametersForNewMapping.encounterTypeUuid);
         formMapping.setForm(form);
 
-        formMappingRepository.save(formMapping);
+        formMappingRepository.saveFormMapping(formMapping);
+    }
+
+    public void voidExistingFormMappings(FormMappingParameterObject mappingsToVoid, Form form) {
+        FormType formType = form != null ? form.getFormType() : null;
+        List<FormMapping> formMappingsToVoid = formMappingRepository.findRequiredFormMappings(
+                mappingsToVoid.subjectTypeUuid,
+                mappingsToVoid.programUuid,
+                mappingsToVoid.encounterTypeUuid,
+                formType
+        );
+
+        formMappingsToVoid.forEach(formMapping -> formMapping.setVoided(true));
+        formMappingsToVoid.forEach(formMappingRepository::saveFormMapping);
     }
 
     public void createOrUpdateFormMapping(FormMappingContract formMappingRequest) {
-
         if (formMappingRequest.getFormUUID() == null) {
             throw new RuntimeException("FormMappingRequest without form uuid! " + formMappingRequest);
         }
@@ -130,7 +123,7 @@ public class FormMappingService implements NonScopeAwareService {
 
         formMapping.setVoided(formMappingRequest.isVoided());
         formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
-        formMappingRepository.save(formMapping);
+        formMappingRepository.saveFormMapping(formMapping);
     }
 
     public void createOrUpdateEmptyFormMapping(FormMappingContract formMappingRequest) {
@@ -168,7 +161,7 @@ public class FormMappingService implements NonScopeAwareService {
 
         formMapping.setVoided(formMappingRequest.getIsVoided());
         formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
-        formMappingRepository.save(formMapping);
+        formMappingRepository.saveFormMapping(formMapping);
     }
 
     private void setEncounterTypeIfRequired(FormMapping formMapping, FormType formType, String encounterTypeUuid) {
@@ -264,7 +257,7 @@ public class FormMappingService implements NonScopeAwareService {
     }
 
     public FormMapping find(SubjectType subjectType) {
-        return formMappingRepository.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndIsVoidedFalse(subjectType);
+        return formMappingRepository.getRegistrationFormMapping(subjectType);
     }
 
     public FormMapping findForSubject(String subjectTypeUUID) {

@@ -1,6 +1,7 @@
 package org.avni.server.service.builder;
 
 import org.avni.server.application.Form;
+import org.avni.server.application.FormMapping;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -9,7 +10,6 @@ import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
-import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,17 +36,20 @@ public class TestSubjectTypeService {
         operationalSubjectTypeRepository.save(operationalSubjectType);
     }
 
-    public SubjectType createWithDefaults(SubjectType subjectType, Form form) {
+    public FormMapping createWithDefaults(SubjectType subjectType, Form form) {
         OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
         operationalSubjectType.setName(subjectType.getName());
 
         this.create(operationalSubjectType, subjectType);
         formRepository.save(form);
-        formMappingRepository.save(new FormMappingBuilder().withForm(form).withSubjectType(subjectType).build());
-        return subjectType;
+        return formMappingRepository.saveFormMapping(new FormMappingBuilder().withForm(form).withSubjectType(subjectType).build());
     }
 
     public SubjectType createWithDefaults(SubjectType subjectType) {
+        return this.createWithDefaultsAndGetFormMapping(subjectType).getSubjectType();
+    }
+
+    public FormMapping createWithDefaultsAndGetFormMapping(SubjectType subjectType) {
         Form form = new TestFormBuilder().withDefaultFieldsForNewEntity().build();
         return this.createWithDefaults(subjectType, form);
     }
