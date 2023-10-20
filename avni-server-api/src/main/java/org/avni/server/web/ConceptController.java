@@ -1,6 +1,5 @@
 package org.avni.server.web;
 
-import com.google.common.html.HtmlEscapers;
 import org.avni.server.dao.ConceptAnswerRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
@@ -31,8 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.HtmlUtils;
 
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
