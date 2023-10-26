@@ -741,3 +741,34 @@ where (
 select query from report_card
 where query like ('%eligiblePrograms%');
 -- END
+
+
+-- Find out source of a rule failure. Assume you know the rule uuid and the organisation db user
+select 'Subject Type (subject summary, program eligibility check etc)' as rule_category,
+       st.name                                                         as name,
+       null                                                            as form_element_group_name,
+       null                                                            as form_element_name
+from subject_type st
+where uuid = '{rule_uuid}'
+union all
+select 'Form element rule', f.name as name, feg.name as form_element_group_name, fe.name as form_element_name
+from form_element fe
+         inner join form_element_group feg on fe.form_element_group_id = feg.id
+         inner join form f on feg.form_id = f.id
+where fe.uuid = '{rule_uuid}'
+union all
+select 'Program (summary/eligibility etc)' as rule_category,
+       null                                as name,
+       null                                as form_element_group_name,
+       null                                as form_element_name
+from program
+where uuid = '{rule_uuid}'
+union all
+select 'Form Rule (decision, visit scheduling, validation, checklists, task schedule)' as rule_category,
+       f.name                                                                          as name,
+       null                                                                            as form_element_group_name,
+       null                                                                            as form_element_name
+from form f
+where f.uuid = '{rule_uuid}';
+
+-- END
