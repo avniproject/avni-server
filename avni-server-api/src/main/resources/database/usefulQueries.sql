@@ -758,7 +758,7 @@ from form_element fe
 where fe.uuid = '{rule_uuid}'
 union all
 select 'Program (summary/eligibility etc)' as rule_category,
-       null                                as name,
+       name                                as name,
        null                                as form_element_group_name,
        null                                as form_element_name
 from program
