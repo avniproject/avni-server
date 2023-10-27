@@ -8,10 +8,13 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.importer.batch.csv.ErrorFileWriterListener;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.FormMappingContract;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,7 @@ public class FormMappingService implements NonScopeAwareService {
     private final FormRepository formRepository;
     private final TaskTypeRepository taskTypeRepository;
     private final AccessControlService accessControlService;
+    private static final Logger logger = LoggerFactory.getLogger(FormMappingService.class);
 
     @Autowired
     public FormMappingService(FormMappingRepository formMappingRepository,

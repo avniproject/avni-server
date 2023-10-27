@@ -236,4 +236,10 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
         formMapping.ensureVersion();
         return this.save(formMapping);
     }
+
+    List<FormMapping> findAllByOrganisationIdAndImplVersion(Long organisationId, int implVersion);
+    @Override
+    default List<FormMapping> findAllByOrganisationId(Long organisationId) {
+        return this.findAllByOrganisationIdAndImplVersion(organisationId, FormMapping.IMPL_VERSION);
+    }
 }

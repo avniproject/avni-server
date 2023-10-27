@@ -21,7 +21,7 @@ public class ErrorFileWriterListener {
 
     private final BulkUploadS3Service bulkUploadS3Service;
     private static final Logger logger = LoggerFactory.getLogger(ErrorFileWriterListener.class);
-    private BugsnagReporter bugsnagReporter;
+    private final BugsnagReporter bugsnagReporter;
     @Value("#{jobParameters['uuid']}")
     private String uuid;
 
