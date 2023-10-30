@@ -101,7 +101,6 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
                 FormType.ProgramEnrolment);
         formMappingService.saveFormMapping(
                 new FormMappingParameterObject(request.getSubjectTypeUuid(), program.getUuid(), null),
-                new FormMappingParameterObject(null, program.getUuid(), null),
                 enrolmentForm, request.isEnrolmentApprovalEnabled());
 
         Form exitForm = formService.getOrCreateForm(request.getProgramExitFormUuid(),
@@ -109,7 +108,6 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
                 FormType.ProgramExit);
         formMappingService.saveFormMapping(
                 new FormMappingParameterObject(request.getSubjectTypeUuid(), program.getUuid(), null),
-                new FormMappingParameterObject(null, program.getUuid(), null),
                 exitForm, request.isExitApprovalEnabled());
     }
 

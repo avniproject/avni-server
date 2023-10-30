@@ -139,7 +139,6 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
 
         formMappingService.saveFormMapping(
                 new FormMappingParameterObject(subjectType.getUuid(), null, null),
-                new FormMappingParameterObject(subjectType.getUuid(), null, null),
                 formService.getOrCreateForm(request.getRegistrationFormUuid(),
                         String.format("%s Registration", subjectType.getName()),
                         FormType.IndividualProfile), request.isEnableRegistrationApproval());
@@ -221,7 +220,6 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         operationalSubjectTypeRepository.save(operationalSubjectType);
 
         formMappingService.saveFormMapping(
-                new FormMappingParameterObject(subjectType.getUuid(), null, null),
                 new FormMappingParameterObject(subjectType.getUuid(), null, null),
                 formService.getOrCreateForm(request.getRegistrationFormUuid(),
                         String.format("%s Registration", subjectType.getName()), FormType.IndividualProfile), request.isEnableRegistrationApproval());

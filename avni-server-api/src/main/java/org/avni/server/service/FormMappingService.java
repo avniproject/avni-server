@@ -8,10 +8,13 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.importer.batch.csv.ErrorFileWriterListener;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.FormMappingContract;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,7 @@ public class FormMappingService implements NonScopeAwareService {
     private final FormRepository formRepository;
     private final TaskTypeRepository taskTypeRepository;
     private final AccessControlService accessControlService;
+    private static final Logger logger = LoggerFactory.getLogger(FormMappingService.class);
 
     @Autowired
     public FormMappingService(FormMappingRepository formMappingRepository,
@@ -50,32 +54,13 @@ public class FormMappingService implements NonScopeAwareService {
     }
 
     public void saveFormMapping(FormMappingParameterObject parametersForNewMapping,
-                                FormMappingParameterObject mappingsToVoid,
                                 Form form, boolean enableApproval) {
-        voidExistingFormMappings(mappingsToVoid, form);
-
-        saveMatchingFormMappings(parametersForNewMapping, form, enableApproval);
-    }
-
-    public void voidExistingFormMappings(FormMappingParameterObject mappingsToVoid, Form form) {
-        FormType formType = form != null ? form.getFormType() : null;
-        List<FormMapping> formMappingsToVoid = formMappingRepository.findRequiredFormMappings(
-                mappingsToVoid.subjectTypeUuid,
-                mappingsToVoid.programUuid,
-                mappingsToVoid.encounterTypeUuid,
-                formType
-        );
-
-        formMappingsToVoid.forEach(formMapping -> formMapping.setVoided(true));
-        formMappingsToVoid.forEach(formMappingRepository::save);
-    }
-
-    private void saveMatchingFormMappings(FormMappingParameterObject parametersForNewMapping, Form form, boolean enableApproval) {
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(
                 parametersForNewMapping.subjectTypeUuid,
                 parametersForNewMapping.programUuid,
                 parametersForNewMapping.encounterTypeUuid,
                 form.getFormType());
+
         if (formMapping == null) {
             formMapping = new FormMapping();
             formMapping.assignUUID();
@@ -88,11 +73,23 @@ public class FormMappingService implements NonScopeAwareService {
         setEncounterTypeIfRequired(formMapping, form.getFormType(), parametersForNewMapping.encounterTypeUuid);
         formMapping.setForm(form);
 
-        formMappingRepository.save(formMapping);
+        formMappingRepository.saveFormMapping(formMapping);
+    }
+
+    public void voidExistingFormMappings(FormMappingParameterObject mappingsToVoid, Form form) {
+        FormType formType = form != null ? form.getFormType() : null;
+        List<FormMapping> formMappingsToVoid = formMappingRepository.findRequiredFormMappings(
+                mappingsToVoid.subjectTypeUuid,
+                mappingsToVoid.programUuid,
+                mappingsToVoid.encounterTypeUuid,
+                formType
+        );
+
+        formMappingsToVoid.forEach(formMapping -> formMapping.setVoided(true));
+        formMappingsToVoid.forEach(formMappingRepository::saveFormMapping);
     }
 
     public void createOrUpdateFormMapping(FormMappingContract formMappingRequest) {
-
         if (formMappingRequest.getFormUUID() == null) {
             throw new RuntimeException("FormMappingRequest without form uuid! " + formMappingRequest);
         }
@@ -130,7 +127,7 @@ public class FormMappingService implements NonScopeAwareService {
 
         formMapping.setVoided(formMappingRequest.isVoided());
         formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
-        formMappingRepository.save(formMapping);
+        formMappingRepository.saveFormMapping(formMapping);
     }
 
     public void createOrUpdateEmptyFormMapping(FormMappingContract formMappingRequest) {
@@ -168,7 +165,7 @@ public class FormMappingService implements NonScopeAwareService {
 
         formMapping.setVoided(formMappingRequest.getIsVoided());
         formMapping.setEnableApproval(formMappingRequest.getEnableApproval());
-        formMappingRepository.save(formMapping);
+        formMappingRepository.saveFormMapping(formMapping);
     }
 
     private void setEncounterTypeIfRequired(FormMapping formMapping, FormType formType, String encounterTypeUuid) {
@@ -264,7 +261,7 @@ public class FormMappingService implements NonScopeAwareService {
     }
 
     public FormMapping find(SubjectType subjectType) {
-        return formMappingRepository.findBySubjectTypeAndProgramNullAndEncounterTypeNullAndIsVoidedFalse(subjectType);
+        return formMappingRepository.getRegistrationFormMapping(subjectType);
     }
 
     public FormMapping findForSubject(String subjectTypeUUID) {

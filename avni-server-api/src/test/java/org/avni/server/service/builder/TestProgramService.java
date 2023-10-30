@@ -1,6 +1,7 @@
 package org.avni.server.service.builder;
 
 import org.avni.server.application.Form;
+import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.OperationalProgramRepository;
 import org.avni.server.dao.ProgramRepository;
@@ -32,6 +33,10 @@ public class TestProgramService {
     }
 
     public Program addProgram(Program program, SubjectType subjectType) {
+        return this.addProgramAndGetFormMapping(program, subjectType).getProgram();
+    }
+
+    public FormMapping addProgramAndGetFormMapping(Program program, SubjectType subjectType) {
         Form form = new TestFormBuilder().withDefaultFieldsForNewEntity().withFormType(FormType.ProgramEnrolment).build();
         OperationalProgram operationalProgram = new OperationalProgram();
         operationalProgram.setName(subjectType.getName());
@@ -40,7 +45,12 @@ public class TestProgramService {
         programRepository.save(program);
         operationalProgramRepository.save(operationalProgram);
         formRepository.save(form);
-        formMappingRepository.save(new FormMappingBuilder().withForm(form).withProgram(program).withSubjectType(subjectType).build());
-        return program;
+        return formMappingRepository.saveFormMapping(new FormMappingBuilder().withForm(form).withProgram(program).withSubjectType(subjectType).build());
+    }
+
+    public FormMapping addProgramExitMapping(Program program, SubjectType subjectType) {
+        Form form = new TestFormBuilder().withDefaultFieldsForNewEntity().withFormType(FormType.ProgramExit).build();
+        formRepository.save(form);
+        return formMappingRepository.saveFormMapping(new FormMappingBuilder().withForm(form).withProgram(program).withSubjectType(subjectType).build());
     }
 }

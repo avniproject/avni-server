@@ -16,6 +16,8 @@ import javax.persistence.*;
 @Table(name = "form_mapping")
 @JsonIgnoreProperties({"form", "program", "encounterType", "subjectType"})
 public class FormMapping extends OrganisationAwareEntity {
+    public static final int IMPL_VERSION = 1;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "form_id")
     private Form form;
@@ -37,6 +39,9 @@ public class FormMapping extends OrganisationAwareEntity {
     private TaskType taskType;
 
     private boolean enableApproval;
+
+    @Column
+    private int implVersion;
 
     public Form getForm() {
         return form;
@@ -123,6 +128,10 @@ public class FormMapping extends OrganisationAwareEntity {
 
     public String getTaskTypeUuid() {
         return taskType == null ? null : taskType.getUuid();
+    }
+
+    public void ensureVersion() {
+        implVersion = IMPL_VERSION;
     }
 
     @Projection(name = "FormMappingProjection", types = {FormMapping.class})
