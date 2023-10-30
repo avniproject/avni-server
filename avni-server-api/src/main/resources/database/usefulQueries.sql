@@ -535,6 +535,7 @@ select * from
     (select bje.job_execution_id execution_id,
             bje.status status,
             bje.exit_code exit_code,
+            bji.job_name  "Type of Job",
             bje.create_time create_time,
             bje.start_time start_time,
             bje.end_time end_time,
@@ -556,8 +557,10 @@ select * from
      from batch_job_execution bje
               left outer join  batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
               left outer join batch_step_execution bse on bje.job_execution_id = bse.job_execution_id
-     group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time
+              left join batch_job_instance bji on bji.job_instance_id = bje.job_instance_id
+     group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time, bji.job_name
      order by bje.create_time desc) jobs;
+
 
 -- Commands to show status of Started and Pending Background jobs that were triggered today:
 
@@ -565,6 +568,7 @@ select users.username, jobs.* from
     (select bje.job_execution_id execution_id,
             bje.status status,
             bje.exit_code exit_code,
+            bji.job_name  "Type of Job",
             bje.create_time create_time,
             bje.start_time start_time,
             bje.end_time end_time,
@@ -586,7 +590,8 @@ select users.username, jobs.* from
      from batch_job_execution bje
               left outer join  batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
               left outer join batch_step_execution bse on bje.job_execution_id = bse.job_execution_id
-     group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time
+              left join batch_job_instance bji on bji.job_instance_id = bje.job_instance_id
+     group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time, bji.job_name
      order by bje.create_time desc) jobs
         join users on users.id = jobs.userId
 where status in ('STARTING', 'STARTED')
