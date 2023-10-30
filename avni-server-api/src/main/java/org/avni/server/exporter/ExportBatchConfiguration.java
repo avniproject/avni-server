@@ -51,6 +51,7 @@ public class ExportBatchConfiguration {
     private final EncounterTypeRepository encounterTypeRepository;
     private final ProgramRepository programRepository;
     private final int longitudinalExportV2Limit;
+    private final int legacyLongitudinalExportLimit;
 
     @Autowired
     public ExportBatchConfiguration(JobBuilderFactory jobBuilderFactory,
@@ -65,7 +66,8 @@ public class ExportBatchConfiguration {
                                     EncounterTypeRepository encounterTypeRepository,
                                     ProgramRepository programRepository,
                                     EntityManager entityManager,
-                                    @Value("${avni.longitudinal.export.v2.limit}") int longitudinalExportV2Limit
+                                    @Value("${avni.longitudinal.export.v2.limit}") int longitudinalExportV2Limit,
+                                    @Value("${avni.legacy.longitudinal.export.limit}") int legacyLongitudinalExportLimit
     ) {
         this.jobBuilderFactory = jobBuilderFactory;
         this.stepBuilderFactory = stepBuilderFactory;
@@ -80,6 +82,7 @@ public class ExportBatchConfiguration {
         this.programRepository = programRepository;
         this.entityManager = entityManager;
         this.longitudinalExportV2Limit = longitudinalExportV2Limit;
+        this.legacyLongitudinalExportLimit = legacyLongitudinalExportLimit;
     }
 
     @Bean
@@ -193,7 +196,8 @@ public class ExportBatchConfiguration {
                 throw new RuntimeException(format("Unknown report type: '%s'", reportType));
         }
 
-        LongitudinalExportTasklet encounterTasklet = new LongitudinalExportTaskletImpl(CHUNK_SIZE, entityManager, exportCSVFieldExtractor, exportProcessor, exportS3Service, uuid, stream);
+        Stream alteredStream = stream.limit(this.legacyLongitudinalExportLimit);
+        LongitudinalExportTasklet encounterTasklet = new LongitudinalExportTaskletImpl(CHUNK_SIZE, entityManager, exportCSVFieldExtractor, exportProcessor, exportS3Service, uuid, alteredStream);
         listener.setItemReaderCleaner(encounterTasklet);
         return encounterTasklet;
     }
