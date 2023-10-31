@@ -1,12 +1,10 @@
 package org.avni.server.dao;
 
 import org.avni.server.application.projections.WebSearchResultProjection;
-import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.IndividualWebProjection;
+import org.avni.server.util.S;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.data.domain.Page;
@@ -152,10 +150,10 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     @Query(value = "select firstname,lastname,fullname,id,uuid,title_lineage,subject_type_name,gender_name,date_of_birth,enrolments,total_elements from web_search_function(:jsonSearch, :dbUser)", nativeQuery = true)
     List<WebSearchResultProjection> getWebSearchResults(String jsonSearch, String dbUser);
 
-    default Specification<Individual> findBySubjectTypeSpec(String subjectType) {
+    default Specification<Individual> findBySubjectTypeSpec(String subjectTypeName) {
         Specification<Individual> spec = (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             Join<Individual, SubjectType> subjectTypeJoin = root.join("subjectType", JoinType.LEFT);
-            return cb.and(cb.equal(subjectTypeJoin.get("name"), subjectType));
+            return cb.and(cb.equal(subjectTypeJoin.get("name"), subjectTypeName));
         };
         return spec;
     }
@@ -165,17 +163,15 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
                 addressIds.isEmpty() ? null : root.get("addressLevel").get("id").in(addressIds);
     }
 
-    default Page<Individual> findByConcepts(Date lastModifiedDateTime, Date now, Map<Concept, String> concepts, List<Long> addressIds, Pageable pageable) {
-        return findAll(lastModifiedBetween(lastModifiedDateTime, now)
-                .and(withConceptValues(concepts, "observations"))
-                .and(findInLocationSpec(addressIds)), pageable);
-    }
-
-    default Page<Individual> findByConceptsAndSubjectType(Date lastModifiedDateTime, Date now, Map<Concept, String> concepts, String subjectType, List<Long> addressIds, Pageable pageable) {
-        return findAll(lastModifiedBetween(lastModifiedDateTime, now)
-                .and(withConceptValues(concepts, "observations"))
-                .and(findBySubjectTypeSpec(subjectType))
-                .and(findInLocationSpec(addressIds)), pageable);
+    default Page<Individual> findSubjects(IndividualSearchParams individualSearchParams, Pageable pageable) {
+        Specification specification = withConceptValues(individualSearchParams.getObservations(), "observations");
+        if (individualSearchParams.getLastModifiedDateTime() != null)
+            specification = specification.and(lastModifiedBetween(CHSEntity.toDate(individualSearchParams.getLastModifiedDateTime()), CHSEntity.toDate(individualSearchParams.getNow())));
+        if (!individualSearchParams.getAllLocationIds().isEmpty())
+            specification = specification.and(findInLocationSpec(individualSearchParams.getAllLocationIds()));
+        if (!S.isEmpty((individualSearchParams.getSubjectTypeName())))
+            specification = specification.and(findBySubjectTypeSpec(individualSearchParams.getSubjectTypeName()));
+        return findAll(specification, pageable);
     }
 
     List<Individual> findAllByAddressLevelAndSubjectTypeAndIsVoidedFalse(AddressLevel addressLevel, SubjectType subjectType);

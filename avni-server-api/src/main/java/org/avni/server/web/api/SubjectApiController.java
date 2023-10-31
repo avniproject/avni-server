@@ -71,24 +71,20 @@ public class SubjectApiController {
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponsePage getSubjects(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-                                    @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-                                    @RequestParam(value = "subjectType", required = false) String subjectType,
+    public ResponsePage getSubjects(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+                                    @RequestParam(value = "now", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+                                    @RequestParam(value = "subjectTypeName", required = false) String subjectTypeName,
                                     @RequestParam(value = "concepts", required = false) String concepts,
                                     @RequestParam(value = "locationIds", required = false) List<String> locationUUIDs,
                                     Pageable pageable) {
         Page<Individual> subjects;
-        boolean subjectTypeRequested = S.isEmpty(subjectType);
         List<Long> allLocationIds = locationService.getAllWithChildrenForUUIDs(locationUUIDs);
-        Map<Concept, String> conceptsMap = conceptService.readConceptsFromJsonObject(concepts);
-        subjects = subjectTypeRequested ?
-                individualRepository.findByConcepts(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), conceptsMap, allLocationIds, pageable) :
-                individualRepository.findByConceptsAndSubjectType(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), conceptsMap, subjectType, allLocationIds, pageable);
+        Map<Concept, String> observations = conceptService.readConceptsFromJsonObject(concepts);
+        IndividualSearchParams individualSearchParams = new IndividualSearchParams(lastModifiedDateTime, now, subjectTypeName, observations, allLocationIds);
+        subjects = individualRepository.findSubjects(individualSearchParams, pageable);
         List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(subjects.getContent());
         ArrayList<SubjectResponse> subjectResponses = new ArrayList<>();
-        subjects.forEach(subject -> {
-            subjectResponses.add(SubjectResponse.fromSubject(subject, subjectTypeRequested, conceptRepository, conceptService, findGroupAffiliation(subject, groupsOfAllMemberSubjects), s3Service));
-        });
+        subjects.forEach(subject -> subjectResponses.add(SubjectResponse.fromSubject(subject, !S.isEmpty(subjectTypeName), conceptRepository, conceptService, findGroupAffiliation(subject, groupsOfAllMemberSubjects), s3Service)));
         accessControlService.checkSubjectPrivileges(PrivilegeType.ViewSubject, subjects.getContent());
         return new ResponsePage(subjectResponses, subjects.getNumberOfElements(), subjects.getTotalPages(), subjects.getSize());
     }

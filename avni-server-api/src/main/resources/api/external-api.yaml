@@ -36,7 +36,7 @@ paths:
           explode: true
           schema:
             type: string
-        - name: subjectType
+        - name: subjectTypeName
           in: query
           description: subject type
           required: false

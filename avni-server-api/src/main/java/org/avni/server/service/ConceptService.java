@@ -329,6 +329,7 @@ public class ConceptService implements NonScopeAwareService {
             }
             return jsonMap;
         } catch (IOException e) {
+            logger.error("Bad Request", e);
             throw new BadRequestError("Bad Request: concepts parameter is not a valid json object");
         }
     }
