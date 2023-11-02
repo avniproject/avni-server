@@ -776,4 +776,13 @@ select 'Form Rule (decision, visit scheduling, validation, checklists, task sche
 from form f
 where f.uuid = '{rule_uuid}';
 
+-- Find out the size of user's(belonging to a particular user group) catchment based on the no of individuals
+select users.username, count(*)
+from individual
+         join public.virtual_catchment_address_mapping_table cam on cam.addresslevel_id = individual.address_id
+         join public.users on users.catchment_id = cam.catchment_id and users.is_voided = false
+         join public.user_group gp on  users.id = gp.user_id and group_id=681 and gp.is_voided = false
+group by 1
+order by 2 desc;
+
 -- END
