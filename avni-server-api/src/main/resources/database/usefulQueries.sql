@@ -786,3 +786,22 @@ group by 1
 order by 2 desc;
 
 -- END
+
+-- Find details of first time sync (Remember: THIS IS NOT EXHAUSTIVE)
+-- This assumes that if you have a form element to sync, it means it is your first time sync
+-- If the first time sync fails in between, this query will not catch them since we are also looking for a successful sync.
+set role <org_name>;
+
+select u.name,
+       u.username,
+       st.sync_start_time started_at,
+       round(extract(epoch from (st.sync_end_time - st.sync_start_time))/60) as minutes
+from public.sync_telemetry st
+         cross join lateral jsonb_array_elements(entity_status -> 'pull') as j
+         inner join users u on st.user_id = u.id
+where j ->> 'entity' = 'FormElement'
+  and (j ->> 'done')::numeric >= 1
+  and st.sync_source = 'manual'
+  and st.sync_status = 'complete'
+order by sync_start_time desc
+limit 10;
