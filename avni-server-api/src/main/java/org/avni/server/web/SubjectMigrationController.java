@@ -118,7 +118,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
                 SubjectType subjectType = subjectTypeRepository.findOne(subjectTypeId);
                 logger.info(String.format("Migrating for subject type: %s, for source address: %s", subjectType.getName(), sourceAddressLevel.getTitle()));
                 accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, subjectType.getUuid());
-                List<Individual> subjects = individualRepository.findAllByAddressLevelAndSubjectTypeAndIsVoidedFalse(sourceAddressLevel, subjectType);
+                List<Individual> subjects = individualRepository.findAllByAddressLevelAndSubjectType(sourceAddressLevel, subjectType);
                 subjectMigrationService.changeSubjectsAddressLevel(subjects, destAddressLevel);
             });
         }
