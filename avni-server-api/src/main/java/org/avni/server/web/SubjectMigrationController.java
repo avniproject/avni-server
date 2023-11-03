@@ -110,7 +110,6 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
             String source = destinationAddressEntry.getKey();
             String dest = destinationAddressEntry.getValue();
 
-
             AddressLevel sourceAddressLevel = locationRepository.findByTitleAndTypeAndIsVoidedFalse(source, sourceType);
             AddressLevel destAddressLevel = locationRepository.findByTitleAndTypeAndIsVoidedFalse(dest, destType);
 
