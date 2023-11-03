@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -116,6 +117,16 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
             checklistRepository.setChangedForSync(individual);
             individualRelationshipRepository.setChangedForSync(individual);
         }
+    }
+
+    @Transactional
+    public void changeSubjectsAddressLevel(List<Individual> subjects, AddressLevel destAddressLevel) {
+        logger.info("Changing addresses of: " + subjects.size());
+        subjects.forEach(individual -> {
+            this.markSubjectMigrationIfRequired(individual.getUuid(), destAddressLevel, new ObservationCollection());
+            individual.setAddressLevel(destAddressLevel);
+            individualRepository.save(individual);
+        });
     }
 }
 

@@ -252,4 +252,5 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     List<LocationProjection> getParents(String uuid);
 
     List<AddressLevel> findByTitleAndType(String title, AddressLevelType lowestAddressLevelType, Pageable pageable);
+    AddressLevel findByTitleAndTypeAndIsVoidedFalse(String title, AddressLevelType addressLevelType);
 }
