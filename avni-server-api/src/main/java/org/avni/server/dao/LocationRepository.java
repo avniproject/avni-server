@@ -251,4 +251,6 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "         where uuid = :uuid)",
             nativeQuery = true)
     List<LocationProjection> getParents(String uuid);
+
+    AddressLevel findByTitleAndTypeAndIsVoidedFalse(String title, AddressLevelType addressLevelType);
 }
