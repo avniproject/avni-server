@@ -75,7 +75,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
      This problem is illustrated in this test - org.avni.server.dao.SubjectMigrationIntegrationTest.migrations_created_by_one_user_is_returned_for_another_user_even_when_concept_attributes_dont_match
      At this moment the performance of this seems small as other filters help in reducing the number of records. Functionally this is not an issue because mobile app does the checks before applying subject migration. */
     @Transactional
-    public void markSubjectMigrationIfRequired(String individualUuid, AddressLevel newAddressLevel, ObservationCollection newObservations) {
+    public void markSubjectMigrationIfRequired(String individualUuid, AddressLevel newAddressLevel, ObservationCollection newObservations, boolean executingInBulk) {
         Individual individual = individualRepository.findByUuid(individualUuid);
         if (individual == null || newAddressLevel == null) {
             return;
@@ -110,9 +110,11 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
             encounterRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
             programEnrolmentRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
             programEncounterRepository.updateSyncAttributes(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
-            groupSubjectRepository.updateSyncAttributesForGroupSubject(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
+            if (!executingInBulk) {
+                groupSubjectRepository.updateSyncAttributesForGroupSubject(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
+                groupSubjectRepository.updateSyncAttributesForMemberSubject(individual.getId(), newAddressLevel.getId());
+            }
             entityApprovalStatusRepository.updateSyncAttributesForIndividual(individual.getId(), newAddressLevel.getId(), newObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept2);
-            groupSubjectRepository.updateSyncAttributesForMemberSubject(individual.getId(), newAddressLevel.getId());
             checklistItemRepository.setChangedForSync(individual);
             checklistRepository.setChangedForSync(individual);
             individualRelationshipRepository.setChangedForSync(individual);
@@ -123,7 +125,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     public void changeSubjectsAddressLevel(List<Individual> subjects, AddressLevel destAddressLevel) {
         logger.info("Changing addresses of: " + subjects.size());
         subjects.forEach(individual -> {
-            this.markSubjectMigrationIfRequired(individual.getUuid(), destAddressLevel, individual.getObservations());
+            this.markSubjectMigrationIfRequired(individual.getUuid(), destAddressLevel, individual.getObservations(), true);
             individual.setAddressLevel(destAddressLevel);
             individualRepository.save(individual);
         });

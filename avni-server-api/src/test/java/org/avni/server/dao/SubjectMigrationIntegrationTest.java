@@ -105,7 +105,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         // Subject with one concept attribute, location migrated
         ObservationCollection observations = ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid());
         Individual s1 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(observations).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s1.getUuid(), catchmentData.getAddressLevel2(), observations);
+        subjectMigrationService.markSubjectMigrationIfRequired(s1.getUuid(), catchmentData.getAddressLevel2(), observations, false);
         List syncDetails = getSyncDetails();
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.SubjectMigration.name(), subjectType.getUuid())));
         assertEquals(1, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
@@ -113,7 +113,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
 
         // Subject with one concept attribute, attribute migrated
         Individual s3 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s3.getUuid(), catchmentData.getAddressLevel1(), ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 12").getUuid()));
+        subjectMigrationService.markSubjectMigrationIfRequired(s3.getUuid(), catchmentData.getAddressLevel1(), ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 12").getUuid()), false);
         assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), s3));
         assertEquals(2, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
 
@@ -121,7 +121,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         observations = ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 12").getUuid());
         ObservationCollection newObservations = ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 13").getUuid());
         Individual s7 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(observations).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s7.getUuid(), catchmentData.getAddressLevel1(), newObservations);
+        subjectMigrationService.markSubjectMigrationIfRequired(s7.getUuid(), catchmentData.getAddressLevel1(), newObservations, false);
         assertFalse(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), s7));
         assertEquals(2, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
 
@@ -140,23 +140,23 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         // Subject with two concept attributes, location migrated
         observations = new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 12")).addObservation(concept2, concept2.getAnswerConcept("Answer 22")).build();
         Individual s2 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(observations).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s2.getUuid(), catchmentData.getAddressLevel2(), observations);
+        subjectMigrationService.markSubjectMigrationIfRequired(s2.getUuid(), catchmentData.getAddressLevel2(), observations, false);
         assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), s2));
 
         // Subject with two concept attributes, first attribute migrated
         Individual s4 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 11")).addObservation(concept2, concept2.getAnswerConcept("Answer 21")).build()).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s4.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 12")).addObservation(concept2, concept2.getAnswerConcept("Answer 21")).build());
+        subjectMigrationService.markSubjectMigrationIfRequired(s4.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 12")).addObservation(concept2, concept2.getAnswerConcept("Answer 21")).build(), false);
         assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), s4));
 
         // Subject with two concept attributes, second attribute migrated
         Individual s5 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 11")).addObservation(concept2, concept2.getAnswerConcept("Answer 21")).build()).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s5.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 11")).addObservation(concept2, concept2.getAnswerConcept("Answer 22")).build());
+        subjectMigrationService.markSubjectMigrationIfRequired(s5.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 11")).addObservation(concept2, concept2.getAnswerConcept("Answer 22")).build(), false);
         boolean hasMigrationFor = hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), s5);
         assertTrue(hasMigrationFor);
 
         // Subject with two concept attributes, both attributes migrated
         Individual s6 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 11")).addObservation(concept2, concept2.getAnswerConcept("Answer 21")).build()).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s6.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 12")).addObservation(concept2, concept2.getAnswerConcept("Answer 22")).build());
+        subjectMigrationService.markSubjectMigrationIfRequired(s6.getUuid(), catchmentData.getAddressLevel1(), new ObservationCollectionBuilder().addObservation(concept1, concept1.getAnswerConcept("Answer 12")).addObservation(concept2, concept2.getAnswerConcept("Answer 22")).build(), false);
         assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), s6));
 
         // User without sync attributes setup will not get any migration as that is more performance optimised. Setting
@@ -178,7 +178,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         ObservationCollection observations = ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid());
         ObservationCollection newObservations = ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid());
         Individual s = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(observations).build());
-        subjectMigrationService.markSubjectMigrationIfRequired(s.getUuid(), catchmentData.getAddressLevel2(), newObservations);
+        subjectMigrationService.markSubjectMigrationIfRequired(s.getUuid(), catchmentData.getAddressLevel2(), newObservations, false);
         assertTrue(getSyncDetails().contains(EntitySyncStatusContract.createForComparison(SyncEntityName.SubjectMigration.name(), subjectType.getUuid())));
         assertEquals(1, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
 

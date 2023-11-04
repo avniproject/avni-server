@@ -99,7 +99,6 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    @Transactional
     public void migrate(@RequestBody SubjectMigrationRequest subjectMigrationRequest) {
         Map<String, String> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
 
