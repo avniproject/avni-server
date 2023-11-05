@@ -9,16 +9,3 @@ services:
     env_file:
       - .env
     restart: always
-  database_build:
-    container_name: database_init
-    restart: on-failure
-    build:
-      context: ..
-    image: postgres:12
-    volumes:
-      - ../avni-server-api/src/main/resources/build_db.sql:/opt/scripts/build_db.sql
-    environment:
-      - PGPASSWORD=password
-    env_file:
-      - .env
-    command: [ "psql", "-h", "$OPENCHS_DATABASE_HOST", "-p", "5432", "-v", "OPENCHS_DATABASE=$OPENCHS_DATABASE", "-v", "OPENCHS_DATABASE_PASSWORD=$OPENCHS_DATABASE_PASSWORD", "-v", "OPENCHS_DATABASE_USER=$OPENCHS_DATABASE_USER","-U", "postgres","-f", "/opt/scripts/build_db.sql" ]
