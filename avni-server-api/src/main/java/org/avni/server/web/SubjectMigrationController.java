@@ -100,17 +100,14 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     @RequestMapping(value = "/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void migrate(@RequestBody SubjectMigrationRequest subjectMigrationRequest) {
-        Map<String, String> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
+        Map<Long, Long> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
 
-        AddressLevelType sourceType = addressLevelTypeRepository.findOne(subjectMigrationRequest.getSourceAddressTypeId());
-        AddressLevelType destType = addressLevelTypeRepository.findOne(subjectMigrationRequest.getDestAddressTypeId());
+        for (Map.Entry<Long, Long> destinationAddressEntry : destinationAddresses.entrySet()) {
+            Long source = destinationAddressEntry.getKey();
+            Long dest = destinationAddressEntry.getValue();
 
-        for (Map.Entry<String, String> destinationAddressEntry : destinationAddresses.entrySet()) {
-            String source = destinationAddressEntry.getKey();
-            String dest = destinationAddressEntry.getValue();
-
-            AddressLevel sourceAddressLevel = locationRepository.findByTitleAndTypeAndIsVoidedFalse(source, sourceType);
-            AddressLevel destAddressLevel = locationRepository.findByTitleAndTypeAndIsVoidedFalse(dest, destType);
+            AddressLevel sourceAddressLevel = locationRepository.findOne(source);
+            AddressLevel destAddressLevel = locationRepository.findOne(dest);
 
             subjectMigrationRequest.getSubjectTypeIds().forEach(subjectTypeId -> {
                 SubjectType subjectType = subjectTypeRepository.findOne(subjectTypeId);

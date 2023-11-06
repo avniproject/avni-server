@@ -4,26 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public class SubjectMigrationRequest {
-    private Map<String, String> destinationAddresses;
-    private long sourceAddressTypeId;
-    private long destAddressTypeId;
+    private Map<Long, Long> destinationAddresses;
     private List<Long> subjectTypeIds;
-
-    public long getSourceAddressTypeId() {
-        return sourceAddressTypeId;
-    }
-
-    public void setSourceAddressTypeId(long sourceAddressTypeId) {
-        this.sourceAddressTypeId = sourceAddressTypeId;
-    }
-
-    public long getDestAddressTypeId() {
-        return destAddressTypeId;
-    }
-
-    public void setDestAddressTypeId(long destAddressTypeId) {
-        this.destAddressTypeId = destAddressTypeId;
-    }
 
     public List<Long> getSubjectTypeIds() {
         return subjectTypeIds;
@@ -33,11 +15,11 @@ public class SubjectMigrationRequest {
         this.subjectTypeIds = subjectTypeIds;
     }
 
-    public Map<String, String> getDestinationAddresses() {
+    public Map<Long, Long> getDestinationAddresses() {
         return destinationAddresses;
     }
 
-    public void setDestinationAddresses(Map<String, String> destinationAddresses) {
+    public void setDestinationAddresses(Map<Long, Long> destinationAddresses) {
         this.destinationAddresses = destinationAddresses;
     }
 }
