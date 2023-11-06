@@ -123,7 +123,6 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
 
     @Transactional
     public void changeSubjectsAddressLevel(List<Individual> subjects, AddressLevel destAddressLevel) {
-        logger.info("Changing addresses of: " + subjects.size());
         subjects.forEach(individual -> {
             this.markSubjectMigrationIfRequired(individual.getUuid(), destAddressLevel, individual.getObservations(), true);
             individual.setAddressLevel(destAddressLevel);
