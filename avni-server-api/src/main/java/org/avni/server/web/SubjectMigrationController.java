@@ -100,11 +100,11 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     @RequestMapping(value = "/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void migrate(@RequestBody SubjectMigrationRequest subjectMigrationRequest) {
-        Map<Long, Long> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
+        Map<String, String> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
 
-        for (Map.Entry<Long, Long> destinationAddressEntry : destinationAddresses.entrySet()) {
-            Long source = destinationAddressEntry.getKey();
-            Long dest = destinationAddressEntry.getValue();
+        for (Map.Entry<String, String> destinationAddressEntry : destinationAddresses.entrySet()) {
+            Long source = Long.parseLong(destinationAddressEntry.getKey());
+            Long dest = Long.parseLong(destinationAddressEntry.getValue());
 
             AddressLevel sourceAddressLevel = locationRepository.findOne(source);
             AddressLevel destAddressLevel = locationRepository.findOne(dest);

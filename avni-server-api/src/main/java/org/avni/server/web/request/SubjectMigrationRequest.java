@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SubjectMigrationRequest {
-    private Map<Long, Long> destinationAddresses;
+    private Map<String, String> destinationAddresses;
     private List<Long> subjectTypeIds;
 
     public List<Long> getSubjectTypeIds() {
@@ -15,11 +15,11 @@ public class SubjectMigrationRequest {
         this.subjectTypeIds = subjectTypeIds;
     }
 
-    public Map<Long, Long> getDestinationAddresses() {
+    public Map<String, String> getDestinationAddresses() {
         return destinationAddresses;
     }
 
-    public void setDestinationAddresses(Map<Long, Long> destinationAddresses) {
+    public void setDestinationAddresses(Map<String, String> destinationAddresses) {
         this.destinationAddresses = destinationAddresses;
     }
 }
