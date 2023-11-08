@@ -42,6 +42,7 @@ import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.jpa.domain.Specifications.where;
@@ -292,6 +293,26 @@ public class IndividualController extends AbstractController<Individual> impleme
     @ResponseBody
     public Page<SubjectSearchContract> findByIds(@Param("ids") Long[] ids, Pageable pageable) {
         return this.individualRepository.findByIdIn(ids, pageable).map(SubjectSearchContract::fromSubject);
+    }
+
+    @GetMapping(value = "/web/individual/byMetadata")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @ResponseBody
+    public ResponseEntity<IndividualWebProjection> findByMetadata(
+            @Param(value = "subjectTypeName") String subjectTypeName,
+            @Param(value = "programName") String programName,
+            @Param(value = "encounterTypeName") String encounterTypeName,
+            @RequestParam(value = "entityId") String entityId) {
+        try{
+            Individual individual = this.individualService.findByMetadata(subjectTypeName, programName, encounterTypeName, Long.parseLong(entityId));
+            if(individual == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            IndividualWebProjection individualWebProjection = this.projectionFactory.createProjection(IndividualWebProjection.class, individual);
+            return ResponseEntity.ok(individualWebProjection);
+        }catch(NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @Override

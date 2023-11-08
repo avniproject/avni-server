@@ -45,19 +45,25 @@ public class IndividualService implements ScopeAwareService<Individual> {
     private final ConceptRepository conceptRepository;
     private final GroupRoleRepository groupRoleRepository;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final EncounterRepository encounterRepository;
+    private final ProgramEncounterRepository programEncounterRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final AddressLevelService addressLevelService;
     private final ConceptService conceptService;
     private final ObjectMapper objectMapper;
     private final AccessControlService accessControlService;
 
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
         this.conceptRepository = conceptRepository;
         this.groupRoleRepository = groupRoleRepository;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.encounterRepository = encounterRepository;
+        this.programEncounterRepository = programEncounterRepository;
+        this.programEnrolmentRepository = programEnrolmentRepository;
         this.addressLevelService = addressLevelService;
         this.conceptService = conceptService;
         this.accessControlService = accessControlService;
@@ -70,6 +76,20 @@ public class IndividualService implements ScopeAwareService<Individual> {
 
     public Individual findById(Long id) {
         return individualRepository.findEntity(id);
+    }
+
+    public Individual findByMetadata(String subjectTypeName, String programName, String encounterTypeName, long entityId) {
+        Individual individual = null;
+        if(subjectTypeName != null && programName == null && encounterTypeName == null) {
+            individual = individualRepository.findById(entityId).get();
+        } else if(programName == null && encounterTypeName != null) {
+            individual = encounterRepository.findById(entityId).get().getIndividual();
+        } else if(programName != null && encounterTypeName == null) {
+            individual = programEnrolmentRepository.findById(entityId).get().getIndividual();
+        } else if(programName != null && encounterTypeName != null) {
+            individual = programEncounterRepository.findById(entityId).get().getIndividual();
+        }
+        return individual;
     }
 
     public IndividualContract getSubjectEncounters(String individualUuid) {
