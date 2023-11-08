@@ -79,6 +79,17 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return organisationConfig;
     }
 
+    public OrganisationConfig createDefaultOrganisationConfig(Organisation organisation) {
+        OrganisationConfig organisationConfig = new OrganisationConfig();
+        organisationConfig.assignUUID();
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("languages", new String[]{"en"});
+        JsonObject jsonObject = new JsonObject(settings);
+        organisationConfig.setSettings(jsonObject);
+        organisationConfig.setOrganisationId(organisation.getId());
+        return organisationConfigRepository.save(organisationConfig);
+    }
+
     public OrganisationConfig getOrganisationConfig(Organisation organisation) {
         return organisationConfigRepository.findByOrganisationId(organisation.getId());
     }

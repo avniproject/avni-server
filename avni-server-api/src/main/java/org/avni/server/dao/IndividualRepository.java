@@ -175,6 +175,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     }
 
     List<Individual> findAllByAddressLevelAndSubjectTypeAndIsVoidedFalse(AddressLevel addressLevel, SubjectType subjectType);
+    List<Individual> findAllByAddressLevelAndSubjectType(AddressLevel addressLevel, SubjectType subjectType);
 
     List<IndividualWebProjection> findAllByUuidIn(List<String> uuids);
 

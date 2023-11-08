@@ -51,7 +51,7 @@ public interface ChecklistItemRepository extends TransactionalDataRepository<Che
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update checklist_item ci set last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById" +
-            " from program_enrolment pe, checklist c where c.id = ci.checklist_id and pe.id = c.program_enrolment_id and pe.id = :individualId", nativeQuery = true)
+            " from program_enrolment pe, checklist c where c.id = ci.checklist_id and pe.id = c.program_enrolment_id and pe.individual_id = :individualId", nativeQuery = true)
     void setChangedForSync(Long individualId, Date lastModifiedDateTime, Long lastModifiedById);
     default void setChangedForSync(Individual individual) {
         this.setChangedForSync(individual.getId(), new Date(), UserContextHolder.getUserId());

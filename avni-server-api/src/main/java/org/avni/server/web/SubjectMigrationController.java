@@ -1,12 +1,14 @@
 package org.avni.server.web;
 
-import org.avni.server.dao.SubjectMigrationRepository;
-import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
-import org.avni.server.domain.SubjectMigration;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.ScopeBasedSyncService;
+import org.avni.server.service.SubjectMigrationService;
 import org.avni.server.service.UserService;
+import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.web.request.SubjectMigrationRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -20,12 +22,12 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 public class SubjectMigrationController extends AbstractController<SubjectMigration> implements RestControllerResourceProcessor<SubjectMigration>{
@@ -34,10 +36,20 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     private final UserService userService;
     private final Logger logger;
     private final ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService;
+    private final SubjectMigrationService subjectMigrationService;
+    private final IndividualRepository individualRepository;
+    private final LocationRepository locationRepository;
+    private final AccessControlService accessControlService;
+    private final AddressLevelTypeRepository addressLevelTypeRepository;
 
     @Autowired
-    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService) {
+    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, AddressLevelTypeRepository addressLevelTypeRepository) {
         this.scopeBasedSyncService = scopeBasedSyncService;
+        this.subjectMigrationService = subjectMigrationService;
+        this.individualRepository = individualRepository;
+        this.locationRepository = locationRepository;
+        this.accessControlService = accessControlService;
+        this.addressLevelTypeRepository = addressLevelTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -83,5 +95,27 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         if (content.getNewAddressLevel() != null)
             resource.add(new Link(content.getNewAddressLevel().getUuid(), "newAddressLevelUUID"));
         return resource;
+    }
+
+    @RequestMapping(value = "/subjectMigration/bulk", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public void migrate(@RequestBody SubjectMigrationRequest subjectMigrationRequest) {
+        Map<String, String> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
+
+        for (Map.Entry<String, String> destinationAddressEntry : destinationAddresses.entrySet()) {
+            Long source = Long.parseLong(destinationAddressEntry.getKey());
+            Long dest = Long.parseLong(destinationAddressEntry.getValue());
+
+            AddressLevel sourceAddressLevel = locationRepository.findOne(source);
+            AddressLevel destAddressLevel = locationRepository.findOne(dest);
+
+            subjectMigrationRequest.getSubjectTypeIds().forEach(subjectTypeId -> {
+                SubjectType subjectType = subjectTypeRepository.findOne(subjectTypeId);
+                accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, subjectType.getUuid());
+                List<Individual> subjects = individualRepository.findAllByAddressLevelAndSubjectType(sourceAddressLevel, subjectType);
+                logger.info(String.format("Migrating for subject type: %s, for source address: %s, to destination address: %s, containing %d subjects", subjectType.getName(), source, dest, subjects.size()));
+                subjectMigrationService.changeSubjectsAddressLevel(subjects, destAddressLevel);
+            });
+        }
     }
 }

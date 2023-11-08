@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.OrganisationContract;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,20 +24,20 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     private final OrganisationRepository organisationRepository;
     private final AccountRepository accountRepository;
     private final GenderRepository genderRepository;
-    private final OrganisationConfigRepository organisationConfigRepository;
     private final GroupRepository groupRepository;
     private final ImplementationRepository implementationRepository;
     private final AccessControlService accessControlService;
+    private final OrganisationConfigService organisationConfigService;
 
     @Autowired
-    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, GenderRepository genderRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService) {
+    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, GenderRepository genderRepository, GroupRepository groupRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
         this.organisationRepository = organisationRepository;
         this.accountRepository = accountRepository;
         this.genderRepository = genderRepository;
-        this.organisationConfigRepository = organisationConfigRepository;
         this.groupRepository = groupRepository;
         this.implementationRepository = implementationRepository;
         this.accessControlService = accessControlService;
+        this.organisationConfigService = organisationConfigService;
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.POST)
@@ -60,20 +61,9 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         createDefaultGenders(org);
         addDefaultGroup(org.getId(), Group.Everyone);
         addDefaultGroup(org.getId(), Group.Administrators);
-        createDefaultOrgConfig(org);
+        organisationConfigService.createDefaultOrganisationConfig(org);
 
         return new ResponseEntity<>(org, HttpStatus.CREATED);
-    }
-
-    private void createDefaultOrgConfig(Organisation org) {
-        OrganisationConfig organisationConfig = new OrganisationConfig();
-        organisationConfig.assignUUID();
-        Map<String, Object> settings = new HashMap<>();
-        settings.put("languages", new String[]{"en"});
-        JsonObject jsonObject = new JsonObject(settings);
-        organisationConfig.setSettings(jsonObject);
-        organisationConfig.setOrganisationId(org.getId());
-        organisationConfigRepository.save(organisationConfig);
     }
 
     private void createDefaultGenders(Organisation org) {
@@ -90,7 +80,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         genderRepository.save(gender);
     }
 
-    private void addDefaultGroup(Long organisationId, String groupType){
+    private void addDefaultGroup(Long organisationId, String groupType) {
         Group group = new Group();
         group.setName(groupType);
         group.setOrganisationId(organisationId);
