@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
+import static org.avni.server.util.AvniFiles.APP_ZIP;
 import static org.avni.server.util.AvniFiles.validateFileName;
 
 public class AvniFilesTest {
@@ -25,7 +26,7 @@ public class AvniFilesTest {
 
     @Test
     public void validateMimeTypeShouldUnderstandZipFiles() throws IOException {
-        AvniFiles.validateMimeType(readFile("sample-files/compressed.zip", "application/zip"), "application/zip");
+        AvniFiles.validateMimeType(readFile("sample-files/compressed.zip", AvniFiles.APP_ZIP), AvniFiles.APP_ZIP);
     }
 
     @Test (expected = BadRequestError.class)
@@ -50,7 +51,7 @@ public class AvniFilesTest {
 
     @Test (expected = BadRequestError.class)
     public void validateMimeTypeShouldFailForNonZipFilesProvided() throws IOException {
-        AvniFiles.validateMimeType(readFile("sample-files/document.pdf", "application/pdf"), "application/zip");
+        AvniFiles.validateMimeType(readFile("sample-files/document.pdf", "application/pdf"), APP_ZIP);
     }
 
     @Test

@@ -17,23 +17,25 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static java.lang.String.format;
 
 public class AvniFiles {
+    public static final String APP_ZIP = "application/zip";
+    public static final String APP_X_ZIP_COMPRESSED = "application/x-zip-compressed";
 
     private static final Logger logger = LoggerFactory.getLogger(AvniFiles.class.getName());
     private static final Map<String, String> fileExtensionMap;
+
     static {
         fileExtensionMap = new HashMap<>();
-        fileExtensionMap.put("application/zip","zip");
-        fileExtensionMap.put("text/csv","csv");
+        fileExtensionMap.put(APP_ZIP, "zip");
+        fileExtensionMap.put(APP_X_ZIP_COMPRESSED, "zip");
+        fileExtensionMap.put("text/csv", "csv");
     }
 
     /**
@@ -121,8 +123,9 @@ public class AvniFiles {
     /**
      * Sources:
      * https://stackoverflow.com/a/12164026
-     *
+     * <p>
      * Gets image dimensions for given file
+     *
      * @param imgFile image file
      * @return dimensions of image
      * @throws IOException if the file is not a known image
@@ -147,11 +150,13 @@ public class AvniFiles {
         throw new IOException("Not a known image file: " + imgFile.getAbsolutePath());
     }
 
-    public static void validateFile(MultipartFile file, String expectedMimeType) throws IOException {
-        String fileExtension = fileExtensionMap.getOrDefault(expectedMimeType, "");
+    public static void validateFile(MultipartFile file, List<String> expectedMimeTypes) throws IOException {
+        for (String s : expectedMimeTypes) {
+            String fileExtension = fileExtensionMap.getOrDefault(s, "");
 
-        validateFileName(file.getOriginalFilename(), fileExtension);
-        validateMimeType(file, expectedMimeType);
+            validateFileName(file.getOriginalFilename(), fileExtension);
+            validateMimeType(file, s);
+        }
     }
 
     public static void validateFileName(String fileName, String extension) {
