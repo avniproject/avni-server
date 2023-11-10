@@ -233,6 +233,8 @@ workflows:
         requires:
           - test     
     - build_docker_image:
+        context:
+          - dockerhub
         requires:
           - build
         filters:
