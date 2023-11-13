@@ -2,6 +2,7 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.framework.security.UserContextHolder;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.domain.Page;
@@ -19,11 +20,14 @@ import java.util.stream.Collectors;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "concept", path = "concept")
 public interface ConceptRepository extends ReferenceDataRepository<Concept>, FindByLastModifiedDateTime<Concept> {
-
+    @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
+    @Query("select c from Concept c where c.name = ?1 and c.organisationId = ?2")
+    Concept findByNameAndOrganisationId(String name, Long organisationId);
 
     @Override
-    @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
-    Concept findByName(String name);
+    default Concept findByName(String name) {
+        return this.findByNameAndOrganisationId(name, UserContextHolder.getUserContext().getOrganisationId());
+    }
 
     Page<Concept> findByIsVoidedFalseAndNameIgnoreCaseContaining(String name, Pageable pageable);
     List<Concept> findAllByDataType(String dataType);
@@ -33,9 +37,14 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     List<Concept> findByIsVoidedFalseAndActiveTrueAndNameIgnoreCaseContains(String name);
     List<Concept> findByIsVoidedFalseAndActiveTrueAndDataTypeAndNameIgnoreCaseContains(String dataType, String name);
 
-    @Override
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
-    Concept findByUuid(String uuid);
+    @Query("select c from Concept c where c.uuid = ?1 and c.organisationId = ?2")
+    Concept findByUuidAndOrganisationId(String uuid, Long organisationId);
+
+    @Override
+    default Concept findByUuid(String uuid) {
+        return this.findByUuidAndOrganisationId(uuid, UserContextHolder.getUserContext().getOrganisationId());
+    }
 
     @Query("select c from Concept c where c.isVoided = false")
     Page<Concept> getAllNonVoidedConcepts(Pageable pageable);
