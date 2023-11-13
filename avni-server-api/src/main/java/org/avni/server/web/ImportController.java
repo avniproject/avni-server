@@ -95,7 +95,7 @@ public class ImportController {
                                   @RequestParam String locationUploadMode) throws IOException {
 
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-        validateFile(file, type.equals("metadataZip") ? Arrays.asList(APP_ZIP, APP_X_ZIP_COMPRESSED) : Collections.singletonList("text/csv"));
+        validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
 
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();

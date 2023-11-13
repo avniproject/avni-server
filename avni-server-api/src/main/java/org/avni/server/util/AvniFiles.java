@@ -38,6 +38,8 @@ public class AvniFiles {
         fileExtensionMap.put("text/csv", "csv");
     }
 
+    public static final List<String> ZipFiles = Arrays.asList(APP_ZIP, APP_X_ZIP_COMPRESSED);
+
     /**
      * Sources:
      * http://stackoverflow.com/q/9354747
@@ -151,12 +153,10 @@ public class AvniFiles {
     }
 
     public static void validateFile(MultipartFile file, List<String> expectedMimeTypes) throws IOException {
-        for (String s : expectedMimeTypes) {
-            String fileExtension = fileExtensionMap.getOrDefault(s, "");
+        String fileExtension = fileExtensionMap.getOrDefault(expectedMimeTypes.get(0), "");
+        validateFileName(file.getOriginalFilename(), fileExtension);
 
-            validateFileName(file.getOriginalFilename(), fileExtension);
-            validateMimeType(file, s);
-        }
+        validateMimeTypes(file, expectedMimeTypes);
     }
 
     public static void validateFileName(String fileName, String extension) {
@@ -164,11 +164,17 @@ public class AvniFiles {
         assertTrue(fileName.endsWith("." + extension), format("Expected file extension: %s, Got %s", extension, fileName.split("[.]")[1]));
     }
 
-    public static void validateMimeType(MultipartFile file, String expectedMimeType) throws IOException {
-        assertTrue(expectedMimeType.equals(file.getContentType()), format("Expected content type: %s, Got, %s", expectedMimeType, file.getContentType()));
+    static void validateMimeType(MultipartFile file, String expectedMimeType) throws IOException {
+        AvniFiles.validateMimeTypes(file, Collections.singletonList(expectedMimeType));
+    }
 
+    static void validateMimeTypes(MultipartFile file, List<String> expectedMimeTypes) throws IOException {
+        String expectedMimeTypeString = String.join(",", expectedMimeTypes);
+        boolean contentTypeMatch = expectedMimeTypes.stream().anyMatch(mimeType -> mimeType.equals(file.getContentType()));
+        assertTrue(contentTypeMatch, format("Expected content type: %s, Got, %s", expectedMimeTypeString, file.getContentType()));
         String actualMimeType = detectMimeType(file);
-        assertTrue(expectedMimeType.equals(actualMimeType), format("Expected mimetype: %s, Got, %s", expectedMimeType, actualMimeType));
+        boolean mimeTypeMatch = expectedMimeTypes.stream().anyMatch(mimeType -> mimeType.equals(actualMimeType));
+        assertTrue(mimeTypeMatch, format("Expected mimetype: %s, Got, %s", expectedMimeTypeString, actualMimeType));
     }
 
     public static File convertMultiPartToFile(MultipartFile file, String ext) throws IOException {
