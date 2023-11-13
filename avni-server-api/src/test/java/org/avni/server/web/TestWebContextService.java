@@ -30,13 +30,17 @@ public class TestWebContextService {
     private OrganisationRepository organisationRepository;
 
     public void setUser(String name) {
-        setUserNameHeader(name);
-
         User user = userRepository.findByUsername(name);
+        this.setUser(user);
+    }
+
+    public void setUser(User user) {
+        setUserNameHeader(user.getUsername());
         UserContext userContext = new UserContext();
-        userContext.setOrganisation(organisationRepository.findOne(user.getOrganisationId()));
         userContext.setUser(user);
         UserContextHolder.create(userContext);
+
+        userContext.setOrganisation(organisationRepository.findOne(user.getOrganisationId()));
         SimpleGrantedAuthority[] authorities = Stream.of(USER_AUTHORITY)
                 .filter(authority -> userContext.getRoles().contains(authority.getAuthority()))
                 .toArray(SimpleGrantedAuthority[]::new);

@@ -32,10 +32,10 @@ public class TestDataSetupService {
     @Autowired
     private TestCatchmentService testCatchmentService;
 
-    public TestOrganisationData setupOrganisation() {
+    public TestOrganisationData setupOrganisation(String orgSuffix) {
         Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
-        User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
-        User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName("user2@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
+        User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
+        User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user2@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
         Organisation organisation = new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user1);
         testOrganisationService.createUser(organisation, user2);
@@ -51,6 +51,10 @@ public class TestDataSetupService {
         TestOrganisationData testOrganisationData = new TestOrganisationData(user1, group, organisation);
         testOrganisationData.setUser2(user2);
         return testOrganisationData;
+    }
+
+    public TestOrganisationData setupOrganisation() {
+        return this.setupOrganisation("example");
     }
 
     public TestCatchmentData setupACatchment() {

@@ -7,6 +7,8 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.sql.Connection;
@@ -15,6 +17,7 @@ import java.sql.Statement;
 
 
 public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
+    private static final Logger logger = LoggerFactory.getLogger(TomcatContainerCustomizer.class);
 
     @Override
     public void reset(ConnectionPool connectionPool, PooledConnection pooledConnection) {
@@ -36,6 +39,7 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
             statement.execute("set role \"" + dbUser + "\";");
             statement.execute("set application_name to \"" + dbUser + "\";");
             statement.close();
+//            logger.info(String.format("DBUSER: %s", dbUser));
         } catch (SQLException exp) {
             throw new RuntimeException(exp);
         }
@@ -48,6 +52,7 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
             Statement statement = ((Connection) proxy).createStatement();
             statement.execute("RESET ROLE");
             statement.close();
+//            logger.info(String.format("ROLE RESET"));
         }
 
         return super.invoke(proxy, method, args);
