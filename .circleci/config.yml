@@ -170,11 +170,12 @@ jobs:
 
   build_docker_image:
     docker:
-      - image: docker:latest
+      - image: docker:git
     resource_class: medium
     working_directory: ~/avni-server
     steps:
       - checkout
+      
       - attach_workspace:
           at: ~/artifacts
 
