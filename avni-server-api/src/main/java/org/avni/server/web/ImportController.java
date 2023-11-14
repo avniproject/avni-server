@@ -33,11 +33,13 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.UUID;
 
 import static java.lang.String.format;
-import static org.avni.server.util.AvniFiles.validateFile;
+import static org.avni.server.util.AvniFiles.*;
 import static org.springframework.http.MediaType.*;
 
 @RestController
@@ -93,7 +95,7 @@ public class ImportController {
                                   @RequestParam String locationUploadMode) throws IOException {
 
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-        validateFile(file, type.equals("metadataZip") ? "application/zip" : "text/csv");
+        validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
 
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();
