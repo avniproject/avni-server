@@ -60,6 +60,11 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
         ruleFailureTelemetry.setStacktrace(request.getStacktrace());
         ruleFailureTelemetry.setRuleUuid(request.getRuleUuid());
         ruleFailureTelemetry.setErrorDateTime(request.getErrorDateTime());
+        ruleFailureTelemetry.setSourceType(request.getSourceType());
+        ruleFailureTelemetry.setSourceId(request.getSourceId());
+        ruleFailureTelemetry.setEntityType(request.getEntityType());
+        ruleFailureTelemetry.setEntityId(request.getEntityId());
+        ruleFailureTelemetry.setAppType(request.getAppType());
         ruleFailureTelemetry.setClosed(request.getClosed());
         ruleFailureTelemetryRepository.save(ruleFailureTelemetry);
     }
@@ -85,7 +90,7 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
         List<RuleFailureTelemetry> ruleFailureTelemetries = ruleFailureTelemetryRepository.findAllById(ids);
         ruleFailureTelemetries.forEach(ruleFailureTelemetry -> {
             ruleFailureTelemetry.setClosed(isClosed);
-            ruleFailureTelemetry.setCloseDateTime(isClosed ? DateTime.now() : null);
+            ruleFailureTelemetry.setClosedDateTime(isClosed ? DateTime.now() : null);
         });
         ruleFailureTelemetryRepository.saveAll(ruleFailureTelemetries);
         return new ResponseEntity<>(ruleFailureTelemetries, HttpStatus.CREATED);

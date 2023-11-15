@@ -1,6 +1,9 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.avni.server.domain.enums.ruleFailure.AppType;
+import org.avni.server.domain.enums.ruleFailure.EntityType;
+import org.avni.server.domain.enums.ruleFailure.SourceType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -37,6 +40,24 @@ public class RuleFailureTelemetry {
     private String ruleUuid;
 
     @Column
+    @Enumerated(EnumType.STRING)
+    private SourceType sourceType;
+
+    @Column
+    private String sourceId;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private EntityType entityType;
+
+    @Column
+    private String entityId;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private AppType appType;
+
+    @Column
     private String individualUuid;
 
     @Column
@@ -46,13 +67,14 @@ public class RuleFailureTelemetry {
     private String stacktrace;
 
     @Column
-    private DateTime closeDateTime;
+    private DateTime closedDateTime;
 
     @Column
     private DateTime errorDateTime;
 
     @Column
     private Boolean isClosed;
+
     @Column
     private Long organisationId;
 
@@ -157,6 +179,46 @@ public class RuleFailureTelemetry {
         this.ruleUuid = ruleUuid;
     }
 
+    public SourceType getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(SourceType sourceType) {
+        this.sourceType = sourceType;
+    }
+
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    public void setSourceId(String sourceId) {
+        this.sourceId = sourceId;
+    }
+
+    public EntityType getEntityType() {
+        return entityType;
+    }
+
+    public void setEntityType(EntityType entityType) {
+        this.entityType = entityType;
+    }
+
+    public String getEntityId() {
+        return entityId;
+    }
+
+    public void setEntityId(String entityId) {
+        this.entityId = entityId;
+    }
+
+    public AppType getAppType() {
+        return appType;
+    }
+
+    public void setAppType(AppType appType) {
+        this.appType = appType;
+    }
+
     public String getIndividualUuid() {
         return individualUuid;
     }
@@ -181,12 +243,12 @@ public class RuleFailureTelemetry {
         this.stacktrace = stacktrace;
     }
 
-    public DateTime getCloseDateTime() {
-        return closeDateTime;
+    public DateTime getClosedDateTime() {
+        return closedDateTime;
     }
 
-    public void setCloseDateTime(DateTime closeDateTime) {
-        this.closeDateTime = closeDateTime;
+    public void setClosedDateTime(DateTime closedDateTime) {
+        this.closedDateTime = closedDateTime;
     }
 
     public DateTime getErrorDateTime() {
