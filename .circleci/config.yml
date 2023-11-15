@@ -224,7 +224,7 @@ jobs:
 
   NEW_STAGING_deploy:
     docker:
-      - image: cimg/deploy
+      - image: cimg/deploy:2023.09
     working_directory: ~/
     steps:
       - deploy_as_service:
