@@ -91,7 +91,8 @@ public class SubjectTypeContractWeb {
         contract.setSyncRegistrationConcept2Usable(subjectType.isSyncRegistrationConcept2Usable());
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setSubjectTypeId(subjectType.getId());
-        contract.setEnableRegistrationApproval(formMapping.isEnableApproval());
+        if (formMapping != null)
+            contract.setEnableRegistrationApproval(formMapping.isEnableApproval());
 
         return contract;
     }

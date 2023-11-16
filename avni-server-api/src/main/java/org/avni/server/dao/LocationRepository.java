@@ -5,6 +5,7 @@ import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
+import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -131,9 +132,13 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
         return this.findByParentAndTitleIgnoreCaseAndIsVoidedFalse(parent, title);
     }
 
-    @Query("select a from AddressLevel a where a.uuid =:id or a.legacyId = :id")
+    @Query("select a from AddressLevel a where (a.uuid =?1 or a.legacyId = ?1) and a.organisationId = ?2")
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
-    AddressLevel findByLegacyIdOrUuid(String id);
+    AddressLevel findByLegacyIdOrUuidAndOrgId(String id, Long organisationId);
+
+    default AddressLevel findByLegacyIdOrUuid(String id) {
+        return this.findByLegacyIdOrUuidAndOrgId(id, UserContextHolder.getUserContext().getOrganisationId());
+    }
 
     @Query(value = "select al.*\n" +
             "from address_level al\n" +
