@@ -53,14 +53,6 @@ commands:
 
       - run: sudo apt-get install make openssl
 
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt-get -y -qq update
-            sudo apt-get -y -qq install python3-pip
-            sudo pip3 install awscli --upgrade
-#            sudo pip3 install ansible
-
       - run: curl -L https://github.com/avniproject/avni-infra/archive/master.zip >> ~/infra.zip
 
       - run: |
