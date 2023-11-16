@@ -207,15 +207,15 @@ jobs:
               docker buildx build --platform linux/amd64,linux/arm64 --tag "$DOCKER_USERNAME/avni-server:${SHORT_CIRCLE_SHA}" --push -f Dockerfile .
             fi
   
-  STAGING_deploy:
-    docker:
-    - image: circleci/openjdk:8-jdk
-    working_directory: ~/
-    steps:
-    - deploy:
-        hostname: "ssh.staging.openchs.org"
+#  STAGING_deploy:
+#    docker:
+#    - image: circleci/openjdk:8-jdk
+#    working_directory: ~/
+#    steps:
+#    - deploy:
+#        hostname: "ssh.staging.openchs.org"
 
-  NEW_STAGING_deploy:
+  STAGING_deploy:
     docker:
       - image: cimg/deploy:2023.09
     working_directory: ~/
@@ -288,14 +288,14 @@ workflows:
         context: non-prod-deploy
         requires:
           - STAGING_approve
-    - NEW_STAGING_approve:
-        type: approval
-        requires:
-          - build
-    - NEW_STAGING_deploy:
-        context: non-prod-deploy
-        requires:
-          - NEW_STAGING_approve
+#    - NEW_STAGING_approve:
+#        type: approval
+#        requires:
+#          - build
+#    - NEW_STAGING_deploy:
+#        context: non-prod-deploy
+#        requires:
+#          - NEW_STAGING_approve
     - UAT_approve:
         type: approval
         requires:
