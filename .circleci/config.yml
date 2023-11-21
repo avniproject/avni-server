@@ -247,6 +247,14 @@ jobs:
       - deploy:
           hostname: "ssh.perf.avniproject.org"
 
+  NEW_PROD_deploy:
+    docker:
+      - image: cimg/deploy:2023.09
+    working_directory: ~/
+    steps:
+      - deploy_as_service:
+          env: "prod"
+
   PROD_deploy:
     docker:
       - image: circleci/openjdk:8-jdk
@@ -320,6 +328,14 @@ workflows:
         context: prod-deploy
         requires:
           - PROD_approve
+    - NEW_PROD_approve:
+        type: approval
+        requires:
+          - build
+    - NEW_PROD_deploy:
+        context: prod-deploy
+        requires:
+          - NEW_PROD_approve
 notify:
   webhooks:
   - url: https://webhooks.gitter.im/e/0fdffde721194986f2a0
