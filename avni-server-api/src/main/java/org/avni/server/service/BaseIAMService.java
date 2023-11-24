@@ -13,6 +13,7 @@ import com.auth0.jwt.interfaces.Verification;
 import com.google.common.base.Strings;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
+import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -65,6 +66,10 @@ public abstract class BaseIAMService implements IAMAuthService {
             logger.error("Could not get public key for key specified in jwt token " + token, e);
             throw new RuntimeException(e);
         }
+        catch (JWTDecodeException e) {
+            logger.error("Could not decode token " + token, e);
+            throw new AvniNoUserSessionException(e);
+        }
 
         try {
             RSAPublicKey publicKey = (RSAPublicKey) jwk.getPublicKey();
@@ -83,7 +88,7 @@ public abstract class BaseIAMService implements IAMAuthService {
             throw new RuntimeException(e);
         } catch (JWTDecodeException e) {
             logger.error("Could not decode token " + token, e);
-            throw new RuntimeException(e);
+            throw new AvniNoUserSessionException(e);
         } catch (TokenExpiredException tokenExpiredException) {
             logger.error("Token expired: " + token);
             throw tokenExpiredException;
