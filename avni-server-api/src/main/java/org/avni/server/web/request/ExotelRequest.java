@@ -56,6 +56,7 @@ public class ExotelRequest {
         exotelRequestMap.add("To", to);
         exotelRequestMap.add("CallerId", callerId);
         exotelRequestMap.add("CallType", callType);
+        exotelRequestMap.add("Record", "true");
 
         return exotelRequestMap;
     }
@@ -67,6 +68,7 @@ public class ExotelRequest {
                 ", to='" + to + '\'' +
                 ", callerId='" + callerId + '\'' +
                 ", callType='" + callType + '\'' +
+                ", record='true'" +
                 '}';
     }
 }
