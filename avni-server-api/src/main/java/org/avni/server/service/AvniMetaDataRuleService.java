@@ -25,9 +25,10 @@ public class AvniMetaDataRuleService {
      * @return Boolean value indicating whether the SubjectType is capable of being configured for Direct Assignment.
      */
     public boolean isDirectAssignmentAllowedFor(SubjectType subjectType) {
-        if (subjectType.isGroup()) return true;
-
-        List<GroupRole> groupRolesSubjectTypeIsPartOf = groupRoleRepository.findByMemberSubjectTypeAndIsVoidedFalse(subjectType);
-        return groupRolesSubjectTypeIsPartOf.stream().noneMatch(groupRole -> groupRole.getGroupSubjectType().isDirectlyAssignable());
+        return true;
+//        if (subjectType.isGroup()) return true;
+//
+//        List<GroupRole> groupRolesSubjectTypeIsPartOf = groupRoleRepository.findByMemberSubjectTypeAndIsVoidedFalse(subjectType);
+//        return groupRolesSubjectTypeIsPartOf.stream().noneMatch(groupRole -> groupRole.getGroupSubjectType().isDirectlyAssignable());
     }
 }

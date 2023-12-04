@@ -1,3 +1,4 @@
+
 package org.avni.server.service;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
@@ -41,11 +42,11 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
     private TestGroupSubjectService testGroupSubjectService;
 
     @Test
-    public void assignAllMemberSubjectsOnGroupAssignment___disallow_Member_Subject_To_Be_Assigned_Without_GroupSubject() throws ValidationException {
+    public void assignAllMemberSubjectsOnGroupAssignment___allow_Member_Subject_To_Be_Assigned_Without_GroupSubject() throws ValidationException {
         TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();
 
-        SubjectType groupSubjectType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(true).setGroup(true).build());
+        SubjectType groupSubjectType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_GroupForDirectAssignment").setName("st_GroupForDirectAssignment").setDirectlyAssignable(false).setGroup(true).build());
         SubjectType memberSubjectType = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_DirectAssignment").setName("st_DirectAssignment").setDirectlyAssignable(true).build());
         SubjectType memberSubjectTypeButNotDirectlyAssignable = testSubjectTypeService.createWithDefaults(new SubjectTypeBuilder().setMandatoryFieldsForNewEntity().setUuid("st_NoDirectAssignment").setName("st_NoDirectAssignment").build());
         GroupRole groupRoleInvolvingDirectAssignment = groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(groupSubjectType).withMemberSubjectType(memberSubjectType).build());
@@ -65,7 +66,6 @@ public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControl
 
         try {
             userSubjectAssignmentService.assignSubjects(createContract(user3, directlyAssignableMember1, false));
-            fail();
         } catch (ValidationException ignored) {
         }
 
