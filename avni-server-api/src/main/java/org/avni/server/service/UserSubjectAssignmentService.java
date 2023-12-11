@@ -147,19 +147,25 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             List<Individual> listOfSubjects = subjectTypeList.getValue();
             List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
             for (Individual subject : listOfSubjects) {
-                try {
-                    checkIfSubjectLiesWithinUserCatchment(assignmentVoided, subject, addressLevels);
-                    checkIfSubjectIsPartOfGroupAssignedToUser(assignmentVoided, user, subject);
-                    createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject);
-                } catch (Exception ve) {
-                    errors.add(ve.getMessage());
-                }
+                validateAndCreateUpdateUserSubjectAssignment(assignmentVoided, user, subject, userSubjectAssignmentList, addressLevels, errors);
             }
         }
         if(errors.isEmpty()) {
             return this.saveAll(userSubjectAssignmentList);
         } else {
             throw new ValidationException("Errors: \n"+ String.join(";\n", errors));
+        }
+    }
+
+    private void validateAndCreateUpdateUserSubjectAssignment(boolean assignmentVoided, User user, Individual subject,
+                                                              List<UserSubjectAssignment> userSubjectAssignmentList,
+                                                              List<Long> addressLevels, List<String> errors) {
+        try {
+            checkIfSubjectLiesWithinUserCatchment(assignmentVoided, subject, addressLevels);
+            checkIfSubjectIsPartOfGroupAssignedToUser(assignmentVoided, user, subject);
+            createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject);
+        } catch (Exception ve) {
+            errors.add(ve.getMessage());
         }
     }
 
@@ -212,7 +218,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         if (!assignmentVoided && subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
             for (GroupSubject groupSubject : groupSubjects) {
-                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject());
+                createUpdateAssignment(false, userSubjectAssignmentList, user, groupSubject.getMemberSubject());
             }
         }
     }
