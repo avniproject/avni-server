@@ -84,7 +84,6 @@ public class UserSubjectAssignmentServiceTest {
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
         when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
-        when(avniMetaDataRuleService.isDirectAssignmentAllowedFor(any())).thenReturn(true);
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
 
@@ -104,7 +103,6 @@ public class UserSubjectAssignmentServiceTest {
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
         when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
-        when(avniMetaDataRuleService.isDirectAssignmentAllowedFor(any())).thenReturn(true);
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
@@ -119,7 +117,6 @@ public class UserSubjectAssignmentServiceTest {
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelOutsideCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
         when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
-        when(avniMetaDataRuleService.isDirectAssignmentAllowedFor(any())).thenReturn(true);
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
@@ -139,13 +136,11 @@ public class UserSubjectAssignmentServiceTest {
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelOutsideCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
         when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
-        when(avniMetaDataRuleService.isDirectAssignmentAllowedFor(any())).thenReturn(true);
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
-        verify(userSubjectAssignmentRepository, times(2)).save(userSubjectAssignmentCaptor.capture());
+        verify(userSubjectAssignmentRepository, times(1)).save(userSubjectAssignmentCaptor.capture());
         List<UserSubjectAssignment> usa = userSubjectAssignmentCaptor.getAllValues();
         assertEquals(usa.get(0).getUser().getId().longValue(), 1l);
-        assertEquals(usa.get(1).getUser().getId().longValue(), 1l);
     }
 }

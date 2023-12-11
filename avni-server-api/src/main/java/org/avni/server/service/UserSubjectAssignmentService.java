@@ -139,6 +139,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     }
 
     public List<UserSubjectAssignment> assignSubjects(User user, List<Individual> subjectList, boolean assignmentVoided) throws ValidationException {
+        List<String> errors = new ArrayList<>();
         List<UserSubjectAssignment> userSubjectAssignmentList = new ArrayList<>();
         Map<SubjectType, List<Individual>> subjectTypeListMap = subjectList.stream().collect(groupingBy(Individual::getSubjectType));
         for (Map.Entry<SubjectType, List<Individual>> subjectTypeList : subjectTypeListMap.entrySet()) {
@@ -146,19 +147,39 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             List<Individual> listOfSubjects = subjectTypeList.getValue();
             List<Long> addressLevels = addressLevelService.getAllRegistrationAddressIdsBySubjectType(user.getCatchment(), subjectType);
             for (Individual subject : listOfSubjects) {
-                if (!avniMetaDataRuleService.isDirectAssignmentAllowedFor(subject.getSubjectType())) {
-                    throw new ValidationException("Assigment of this subject cannot be done because it is of subject type that is part of another group");
+                try {
+                    checkIfSubjectLiesWithinUserCatchment(assignmentVoided, subject, addressLevels);
+                    checkIfSubjectIsPartOfGroupAssignedToUser(assignmentVoided, user, subject);
+                    createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject);
+                } catch (Exception ve) {
+                    errors.add(ve.getMessage());
                 }
-                checkIfSubjectLiesWithinUserCatchment(assignmentVoided, subject, addressLevels);
-                createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, subject);
             }
         }
-        return this.saveAll(userSubjectAssignmentList);
+        if(errors.isEmpty()) {
+            return this.saveAll(userSubjectAssignmentList);
+        } else {
+            throw new ValidationException("Errors: \n"+ String.join(";\n", errors));
+        }
+    }
+
+    private void checkIfSubjectIsPartOfGroupAssignedToUser(boolean assignmentVoided, User user, Individual subject) throws ValidationException {
+        if (assignmentVoided && !subject.getSubjectType().isGroup()) {
+            List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByMemberSubjectAndIsVoidedFalse(subject);
+            for (GroupSubject groupSubject : groupSubjects) {
+                UserSubjectAssignment userGroupSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user, groupSubject.getGroupSubject());
+                if(userGroupSubjectAssignment != null && !groupSubject.getGroupSubject().isVoided()) {
+                    throw new ValidationException(String.format("Individual (%s) cant be unassigned from the user (%s), since group (%s) that the member (%s) belongs to, is assigned to the user (%s)",
+                            subject.getFullName(), user.getUsername(), groupSubject.getGroupSubject().getFullName(), subject.getFullName(), user.getUsername()));
+                }
+            }
+
+        }
     }
 
     private void checkIfSubjectLiesWithinUserCatchment(boolean assignmentVoided, Individual subject, List<Long> addressLevels) throws ValidationException {
         if(!assignmentVoided && !addressLevels.contains(subject.getAddressLevel().getId())) {
-            throw new ValidationException("Assigment of subject(s) cannot be done because they are outside the User's Catchment");
+            throw new ValidationException(String.format("Assigment of Individual (%s) cannot be done because it is outside the User's Catchment", subject.getFullName()));
         }
     }
 
