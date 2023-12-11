@@ -50,6 +50,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     GroupSubject findByGroupSubjectAndGroupRoleAndIsVoidedFalse(Individual groupSubject, GroupRole headOfHousehold);
 
     List<GroupSubject> findAllByGroupSubjectAndIsVoidedFalse(Individual groupSubject);
+    List<GroupSubject> findAllByMemberSubjectAndIsVoidedFalse(Individual memberSubject);
 
     List<GroupSubject> findAllByMemberSubjectAndGroupRoleIsVoidedFalseAndIsVoidedFalse(Individual memberSubject);
 
@@ -164,4 +165,5 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     default void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2) {
         this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, new Date(), UserContextHolder.getUserId());
     }
+
 }
