@@ -183,13 +183,17 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
         }
         userSubjectAssignment.setVoided(assignmentVoided);
-        if (subject.getSubjectType().isGroup()) {
+        onlyIfAssignGroupThenAssignMembersAlsoToUser(assignmentVoided, userSubjectAssignmentList, user, subject);
+        userSubjectAssignmentList.add(userSubjectAssignment);
+    }
+
+    private void onlyIfAssignGroupThenAssignMembersAlsoToUser(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList, User user, Individual subject) {
+        if (!assignmentVoided && subject.getSubjectType().isGroup()) {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(subject);
             for (GroupSubject groupSubject : groupSubjects) {
                 createUpdateAssignment(assignmentVoided, userSubjectAssignmentList, user, groupSubject.getMemberSubject());
             }
         }
-        userSubjectAssignmentList.add(userSubjectAssignment);
     }
 
     private void updateAuditForUserSubjectAssignment(UserSubjectAssignment userSubjectAssignment) {
