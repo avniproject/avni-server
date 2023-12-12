@@ -7,10 +7,10 @@ import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.RuleExecutionException;
-import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,6 +127,7 @@ public class MessagingService {
                     "failed with message " + e.getMessage() + ".Will retry again after sometime.");
             bugsnag.notify(e);
         } catch (Exception e) {
+            messageRequest = messageRequestService.markFailed(messageRequest, MessageDeliveryStatus.Failed);
             logger.error("Could not send message for message request id: " + messageRequest.getId(), e);
             bugsnag.notify(e);
         }
@@ -135,9 +136,9 @@ public class MessagingService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void sendMessages() {
-        logger.info("Sending messages for organisation " + UserContextHolder.getOrganisation().getName());
-        Stream<MessageRequest> requests = messageRequestQueueRepository.findDueMessageRequests();
+    public void sendMessages(Duration duration) {
+//        logger.info("Sending messages for organisation " + UserContextHolder.getOrganisation().getName());
+        Stream<MessageRequest> requests = messageRequestQueueRepository.findDueMessageRequests(duration);
         requests.forEach(this::sendMessage);
     }
 

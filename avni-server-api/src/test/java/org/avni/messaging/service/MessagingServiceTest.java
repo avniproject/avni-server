@@ -12,6 +12,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.junit.Before;
@@ -63,12 +64,15 @@ public class MessagingServiceTest {
     @Captor
     ArgumentCaptor<MessageRequest> messageRequest;
 
+    private String scheduledSinceDays;
+
     @Before
     public void setup() {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
                 messageRequestService, messageRequestQueueRepository,
                 manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null);
+        scheduledSinceDays = "4";
     }
 
     @Test
@@ -178,11 +182,12 @@ public class MessagingServiceTest {
         UserContext context = new UserContext();
         context.setOrganisation(new Organisation());
         UserContextHolder.create(context);
+        Duration scheduledSince = Duration.standardDays(Long.parseLong(scheduledSinceDays));
 
-        when(messageRequestQueueRepository.findDueMessageRequests()).thenReturn(Stream.<MessageRequest>builder().add(request).build());
+        when(messageRequestQueueRepository.findDueMessageRequests(scheduledSince)).thenReturn(Stream.<MessageRequest>builder().add(request).build());
         when(messageRequestService.markComplete(request)).thenReturn(request);
 
-        messagingService.sendMessages();
+        messagingService.sendMessages(scheduledSince);
 
         verify(individualMessagingService).sendAutomatedMessage(request);
     }

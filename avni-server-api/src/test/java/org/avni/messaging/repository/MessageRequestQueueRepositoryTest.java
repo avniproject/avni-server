@@ -2,6 +2,7 @@ package org.avni.messaging.repository;
 
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.joda.time.Duration;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -20,7 +21,7 @@ public class MessageRequestQueueRepositoryTest extends AbstractControllerIntegra
     @Test
     @Transactional
     public void shouldRetrieveUndeliveredMessageRequests() {
-        Stream<MessageRequest> unsentMessages = messageRequestQueueRepository.findDueMessageRequests();
+        Stream<MessageRequest> unsentMessages = messageRequestQueueRepository.findDueMessageRequests(Duration.standardDays(4));
         assertThat(unsentMessages.findFirst().get().getUuid()).isEqualTo("75925823-109f-41a5-89e3-9c719c88155d");
     }
 }

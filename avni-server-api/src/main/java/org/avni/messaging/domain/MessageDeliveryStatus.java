@@ -4,5 +4,6 @@ public enum MessageDeliveryStatus {
     NotSent,
     NotSentNoPhoneNumberInAvni,
     PartiallySent,
-    Sent
+    Sent,
+    Failed
 }
