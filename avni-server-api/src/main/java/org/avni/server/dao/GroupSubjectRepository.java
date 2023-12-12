@@ -42,10 +42,11 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
 
     GroupSubject findByGroupSubjectAndMemberSubject(Individual groupSubject, Individual memberSubject);
 
-    @Query("select gs from Individual i " +
-            "join GroupSubject gs on i = gs.memberSubject or i = gs.groupSubject " +
-            "where i = :groupSubject")
-    List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Individual groupSubject);
+    @Query("select gs from GroupSubject gs " +
+            "join gs.groupSubject g " +
+            "join gs.memberSubject m " +
+            "where g = :individual or m = :individual " )
+    List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Individual individual);
 
     GroupSubject findByGroupSubjectAndGroupRoleAndIsVoidedFalse(Individual groupSubject, GroupRole headOfHousehold);
 

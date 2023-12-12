@@ -151,7 +151,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             }
         }
         if(errors.isEmpty()) {
-            return this.saveAll(userSubjectAssignmentList);
+            return this.saveAll(userSubjectAssignmentList, assignmentVoided);
         } else {
             throw new ValidationException("Errors: \n"+ String.join(";\n", errors));
         }
@@ -189,18 +189,18 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         }
     }
 
-    private List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList) throws ValidationException {
+    private List<UserSubjectAssignment> saveAll(List<UserSubjectAssignment> userSubjectAssignmentList, boolean assignmentVoided) throws ValidationException {
         List<UserSubjectAssignment> savedUSA = new ArrayList<>();
         for (UserSubjectAssignment userSubjectAssignment : userSubjectAssignmentList) {
+            userSubjectAssignment.setVoided(assignmentVoided);
             savedUSA.add(save(userSubjectAssignment));
         }
         return savedUSA;
     }
 
     public UserSubjectAssignment save(UserSubjectAssignment userSubjectAssignment) throws ValidationException {
-        userSubjectAssignmentRepository.save(userSubjectAssignment);
         updateAuditForUserSubjectAssignment(userSubjectAssignment);
-        return userSubjectAssignment;
+        return userSubjectAssignmentRepository.save(userSubjectAssignment);
     }
 
     private void createUpdateAssignment(boolean assignmentVoided, List<UserSubjectAssignment> userSubjectAssignmentList,
@@ -209,7 +209,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         if (userSubjectAssignment == null) {
             userSubjectAssignment = UserSubjectAssignment.createNew(user, subject);
         }
-        userSubjectAssignment.setVoided(assignmentVoided);
         onlyIfAssignGroupThenAssignMembersAlsoToUser(assignmentVoided, userSubjectAssignmentList, user, subject);
         userSubjectAssignmentList.add(userSubjectAssignment);
     }
@@ -237,7 +236,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         individual.getEncounters()
                 .forEach(CHSEntity::updateAudit);
 
-        GroupPrivileges groupPrivileges = privilegeService.getGroupPrivileges(user);
+        GroupPrivileges groupPrivileges = privilegeService.getGroupPrivileges();
         checklistService.findChecklistsByIndividual(individual)
                 .stream()
                 .filter(groupPrivileges::hasViewPrivilege)

@@ -108,7 +108,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
 
     public UserInfoContract getUserInfoObject(Organisation organisation, User user) {
         String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
-        List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getExplicitGroupPrivileges(user).getPrivileges();
         List<GroupPrivilegeContract> groupPrivilegeContractList = groupPrivileges.stream()
                 .map(GroupPrivilegeContract::fromEntity)
                 .distinct()
