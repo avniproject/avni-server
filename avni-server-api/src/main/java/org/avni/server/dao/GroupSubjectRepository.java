@@ -96,13 +96,10 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
                 List<Long> addressLevels = syncParameters.getAddressLevels();
                 if (addressLevels.size() > 0) {
                     CriteriaBuilder.In<Long> inClause1 = cb.in(root.get("groupSubjectAddressId"));
-                    CriteriaBuilder.In<Long> inClause2 = cb.in(root.get("memberSubjectAddressId"));
                     for (Long id : addressLevels) {
                         inClause1.value(id);
-                        inClause2.value(id);
                     }
                     predicates.add(inClause1);
-                    predicates.add(inClause2);
                 } else {
                     predicates.add(cb.equal(root.get("id"), cb.literal(0)));
                 }
