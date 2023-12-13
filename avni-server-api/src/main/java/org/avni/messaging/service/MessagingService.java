@@ -7,6 +7,7 @@ import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.RuleExecutionException;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
@@ -137,7 +138,7 @@ public class MessagingService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendMessages(Duration duration) {
-//        logger.info("Sending messages for organisation " + UserContextHolder.getOrganisation().getName());
+        logger.info("Sending messages for organisation " + UserContextHolder.getOrganisation().getName());
         Stream<MessageRequest> requests = messageRequestQueueRepository.findDueMessageRequests(duration);
         requests.forEach(this::sendMessage);
     }
