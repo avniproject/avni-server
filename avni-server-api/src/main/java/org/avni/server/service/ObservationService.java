@@ -63,6 +63,9 @@ public class ObservationService {
                     } else {
                         concept = conceptRepository.findByUuid(observationRequest.getConceptUUID());
                     }
+                    if (concept == null) {
+                        throw new NullPointerException(String.format("Concept with uuid=%s/name=%s not found", observationRequest.getConceptUUID(), observationRequest.getConceptName()));
+                    }
                     return new SimpleEntry<>(concept, observationRequest.getValue());
                 })
                 .filter(obsReqAsMap -> null != obsReqAsMap.getKey()
