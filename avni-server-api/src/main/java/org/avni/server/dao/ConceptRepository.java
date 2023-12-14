@@ -23,12 +23,22 @@ import java.util.stream.Collectors;
 @RepositoryRestResource(collectionResourceRel = "concept", path = "concept")
 public interface ConceptRepository extends ReferenceDataRepository<Concept>, FindByLastModifiedDateTime<Concept> {
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
-    @Query("select c from Concept c where c.name = ?1 and c.organisationId = ?2")
-    Concept findByNameAndOrganisationId(String name, Long organisationId);
+    @Query("select c from Concept c where c.name = ?1 and c.organisationId IN ?2")
+    Concept findByNameAndOrganisationId(String name, List<Long> organisationIds);
+
+    default List<Long> buildOrganisationIdList() {
+        List<Long> organisationIds = new ArrayList<>();
+        UserContext userContext = UserContextHolder.getUserContext();
+        organisationIds.add(userContext.getOrganisationId());
+        if (userContext.getOrganisation().getParentOrganisationId() != null) {
+            organisationIds.add(userContext.getOrganisation().getParentOrganisationId());
+        }
+        return organisationIds;
+    }
 
     @Override
     default Concept findByName(String name) {
-        return this.findByNameAndOrganisationId(name, UserContextHolder.getUserContext().getOrganisationId());
+        return this.findByNameAndOrganisationId(name, buildOrganisationIdList());
     }
 
     Page<Concept> findByIsVoidedFalseAndNameIgnoreCaseContaining(String name, Pageable pageable);
@@ -45,13 +55,7 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
 
     @Override
     default Concept findByUuid(String uuid) {
-        List<Long> organisationIds = new ArrayList<>();
-        UserContext userContext = UserContextHolder.getUserContext();
-        organisationIds.add(userContext.getOrganisationId());
-        if (userContext.getOrganisation().getParentOrganisationId() != null) {
-            organisationIds.add(userContext.getOrganisation().getParentOrganisationId());
-        }
-        return this.findByUuidAndOrganisationId(uuid, organisationIds);
+        return this.findByUuidAndOrganisationId(uuid, buildOrganisationIdList());
     }
 
     @Query("select c from Concept c where c.isVoided = false")
