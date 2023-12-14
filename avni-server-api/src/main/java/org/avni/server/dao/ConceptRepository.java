@@ -2,6 +2,7 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -13,6 +14,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.QueryHint;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,12 +40,18 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     List<Concept> findByIsVoidedFalseAndActiveTrueAndDataTypeAndNameIgnoreCaseContains(String dataType, String name);
 
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
-    @Query("select c from Concept c where c.uuid = ?1 and c.organisationId = ?2")
-    Concept findByUuidAndOrganisationId(String uuid, Long organisationId);
+    @Query("select c from Concept c where c.uuid = ?1 and c.organisationId IN ?2")
+    Concept findByUuidAndOrganisationId(String uuid, List<Long> organisationIds);
 
     @Override
     default Concept findByUuid(String uuid) {
-        return this.findByUuidAndOrganisationId(uuid, UserContextHolder.getUserContext().getOrganisationId());
+        List<Long> organisationIds = new ArrayList<>();
+        UserContext userContext = UserContextHolder.getUserContext();
+        organisationIds.add(userContext.getOrganisationId());
+        if (userContext.getOrganisation().getParentOrganisationId() != null) {
+            organisationIds.add(userContext.getOrganisation().getParentOrganisationId());
+        }
+        return this.findByUuidAndOrganisationId(uuid, organisationIds);
     }
 
     @Query("select c from Concept c where c.isVoided = false")
