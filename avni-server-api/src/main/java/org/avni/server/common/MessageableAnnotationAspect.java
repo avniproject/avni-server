@@ -8,6 +8,8 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.domain.MessageableEntity;
+import org.avni.server.domain.RuleExecutionException;
+import org.avni.server.domain.User;
 import org.avni.server.service.OrganisationConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +44,12 @@ public class MessageableAnnotationAspect {
         try {
             EntityType entityType = ((MethodSignature) joinPoint.getSignature()).getMethod().getAnnotation(Messageable.class).value();
 
-            if (entity.isVoided()) {
-                messagingService.onEntityDelete(entity.getEntityId(), entityType, entity.getIndividual().getId());
-            } else {
-                messagingService.onEntitySave(entity.getEntityId(), entity.getEntityTypeId(), entityType, entity.getIndividual().getId(), entity.getCreatedBy().getId());
+            if (EntityType.isCHSEntityType(entityType)) {
+                handleCHSEntityTypeInvocations(entity, entityType);
+            }
+
+            if (EntityType.User.equals(entityType)) {
+                handleUserEntityTypeInvocations(entity, entityType);
             }
 
             return entity;
@@ -53,6 +57,19 @@ public class MessageableAnnotationAspect {
             bugsnag.notify(e);
             logger.error("Could not save/delete message request for entity " + entity.getEntityId() + " with type id " + entity.getEntityTypeId(), e);
             return entity;
+        }
+    }
+
+    private void handleUserEntityTypeInvocations(MessageableEntity entity, EntityType entityType) throws RuleExecutionException {
+        messagingService.onUserEntitySave((User) entity.getEntity(), entity.getCreatedBy());
+    }
+
+
+    private void handleCHSEntityTypeInvocations(MessageableEntity entity, EntityType entityType) throws RuleExecutionException {
+        if (entity.isVoided()) {
+            messagingService.onEntityDelete(entity.getEntityId(), entityType, entity.getIndividual().getId());
+        } else {
+            messagingService.onEntitySave(entity.getEntityId(), entity.getEntityTypeId(), entityType, entity.getIndividual().getId(), entity.getCreatedBy().getId());
         }
     }
 }

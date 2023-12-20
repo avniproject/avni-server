@@ -1,9 +1,20 @@
 package org.avni.server.service;
 
-public class UserCreateStatus {
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.MessageableEntity;
+import org.avni.server.domain.User;
+
+public class UserCreateStatus implements MessageableEntity {
+    private User newUser;
+    private User createdBy;
     private boolean idpUserCreated;
     private boolean defaultPasswordPermanent;
     private boolean nonDefaultPasswordSet;
+
+    public UserCreateStatus(User newUser, User createdBy) {
+        this.newUser = newUser;
+        this.createdBy = createdBy;
+    }
 
     public void setIdpUserCreated(boolean idpUserCreated) {
         this.idpUserCreated = idpUserCreated;
@@ -27,5 +38,35 @@ public class UserCreateStatus {
 
     public void setNonDefaultPasswordSet(boolean nonDefaultPasswordSet) {
         this.nonDefaultPasswordSet = nonDefaultPasswordSet;
+    }
+
+    @Override
+    public Long getEntityTypeId() {
+        return null;
+    }
+
+    @Override
+    public Long getEntityId() {
+        return newUser.getId();
+    }
+
+    @Override
+    public Individual getIndividual() {
+        return null;
+    }
+
+    @Override
+    public Object getEntity() {
+        return newUser;
+    }
+
+    @Override
+    public User getCreatedBy() {
+        return createdBy;
+    }
+
+    @Override
+    public boolean isVoided() {
+        return false;
     }
 }

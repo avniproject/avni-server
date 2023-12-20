@@ -7,6 +7,10 @@ public interface MessageableEntity {
 
     public Individual getIndividual();
 
+    public default Object getEntity() {
+        return this;
+    }
+
     public User getCreatedBy();
 
     public boolean isVoided();

@@ -6,9 +6,12 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
 import com.amazonaws.services.cognitoidp.model.*;
+import org.avni.messaging.domain.EntityType;
+import org.avni.server.common.Messageable;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +57,7 @@ public class CognitoIdpService extends IdpServiceImpl {
         logger.info("Initialized CognitoIDP client");
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
         AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, getDefaultPassword(user));
@@ -169,7 +173,7 @@ public class CognitoIdpService extends IdpServiceImpl {
 
     private UserCreateStatus createCognitoUser(AdminCreateUserRequest createUserRequest, User user, Optional<Object> doNotRequirePasswordChangeOnFirstLogin) {
         logger.info(String.format("Initiating CREATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
-        UserCreateStatus userCreateStatus = new UserCreateStatus();
+        UserCreateStatus userCreateStatus = new UserCreateStatus(user, UserContextHolder.getUser());
         AdminCreateUserResult createUserResult;
         try {
             createUserResult = cognitoClient.adminCreateUser(createUserRequest);

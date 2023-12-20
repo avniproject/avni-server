@@ -7,6 +7,7 @@ import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.RuleExecutionException;
+import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
@@ -104,6 +105,19 @@ public class MessagingService {
 
         if (entityType.equals(EntityType.Subject)) {
             messageReceiverService.voidMessageReceiver(receiverId);
+        }
+    }
+
+    public void onUserEntitySave(User newUser, User createdBy) throws RuleExecutionException {
+        List<MessageRule> messageRules = messageRuleRepository.findAllByReceiverTypeAndEntityTypeAndIsVoidedFalse(ReceiverType.User, EntityType.User);
+
+        for (MessageRule messageRule : messageRules) {
+            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, newUser.getId());
+            ScheduleRuleResponseEntity scheduleRuleResponse = ruleService.executeScheduleRuleForEntityTypeUser(newUser, messageRule.getScheduleRule());
+            Boolean shouldSend = scheduleRuleResponse.getShouldSend();
+            if (shouldSend == null || shouldSend) {
+                messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, newUser.getId(), scheduleRuleResponse.getScheduledDateTime());
+            }
         }
     }
 

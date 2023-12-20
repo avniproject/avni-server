@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
+import org.avni.messaging.domain.EntityType;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.web.external.RuleServiceClient;
@@ -216,6 +217,17 @@ public class RuleService implements NonScopeAwareService {
     public ScheduleRuleResponseEntity executeScheduleRule(String entityType, Long entityId, String scheduleRule) throws RuleExecutionException {
         CHSEntity entity = entityRetrieverService.getEntity(entityType, entityId);
         RuleServerEntityContract contract = ruleServiceEntityContractBuilder.toContract(entityType, entity);
+        MessageRequestEntity ruleRequest = new MessageRequestEntity(contract, scheduleRule, entityType);
+        BaseRuleRequest baseRuleRequest = new BaseRuleRequest();
+        baseRuleRequest.setRuleType(entityType);
+        baseRuleRequest.setFormUuid(entity.getUuid());
+        RuleFailureLog ruleFailureLog = ruleValidationService.generateRuleFailureLog(baseRuleRequest, "Web", "Rules : messageSchedule", String.valueOf(entity.getUuid()));
+        return createHttpHeaderAndSendRequest("/api/messagingRule", ruleRequest, ruleFailureLog, ScheduleRuleResponseEntity.class);
+    }
+
+    public ScheduleRuleResponseEntity executeScheduleRuleForEntityTypeUser(User entity, String scheduleRule) throws RuleExecutionException {
+        String entityType = EntityType.User.name();
+        RuleServerEntityContract contract = UserContract.fromUser(entity);
         MessageRequestEntity ruleRequest = new MessageRequestEntity(contract, scheduleRule, entityType);
         BaseRuleRequest baseRuleRequest = new BaseRuleRequest();
         baseRuleRequest.setRuleType(entityType);

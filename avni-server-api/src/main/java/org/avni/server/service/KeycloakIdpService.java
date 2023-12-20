@@ -1,8 +1,11 @@
 package org.avni.server.service;
 
+import org.avni.messaging.domain.EntityType;
+import org.avni.server.common.Messageable;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.jboss.resteasy.client.jaxrs.internal.ResteasyClientBuilderImpl;
 import org.keycloak.OAuth2Constants;
@@ -11,10 +14,7 @@ import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.events.EventType;
 import org.keycloak.representations.adapters.config.AdapterConfig;
-import org.keycloak.representations.idm.CredentialRepresentation;
-import org.keycloak.representations.idm.EventRepresentation;
-import org.keycloak.representations.idm.RealmRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
+import org.keycloak.representations.idm.*;
 import org.passay.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,15 +76,15 @@ public class KeycloakIdpService extends IdpServiceImpl {
         logger.info("Initialized keycloak client");
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
-        createUserWithPassword(user, defaultPassword(user), null);
-        return null;
+        return this.createUserWithPassword(user, defaultPassword(user));
     }
 
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
-        return this.createSuperAdminWithPassword(user, password);
+        return this.createUserWithPassword(user, password);
     }
 
     @Override
@@ -94,11 +94,21 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     private UserCreateStatus createUserWithPassword(User user, String password) {
         logger.info(String.format("Initiating create keycloak-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
-
+        UserCreateStatus userCreateStatus = new UserCreateStatus(user, UserContextHolder.getUser());
+        userCreateStatus.setDefaultPasswordPermanent(true);
         UserRepresentation newUser = getUserRepresentation(user);
-        realmResource.users().create(newUser);
-        logger.info(String.format("created keycloak-user | username '%s'", user.getUsername()));
-        return null;
+        try {
+            Response response = realmResource.users().create(newUser);
+            logger.info(String.format("created keycloak-user |  Status: %d | Status Info: %s | username '%s' ",
+                response.getStatus(), response.getStatusInfo(), user.getUsername()));
+            Response.Status.Family family = response.getStatusInfo().getFamily();
+            userCreateStatus.setIdpUserCreated(family.equals(Response.Status.Family.INFORMATIONAL)
+                    || family.equals(Response.Status.Family.SUCCESSFUL));
+        } catch (Exception exception) {
+            logger.error(String.format("Failed to create keycloak-user | username '%s' ", user.getUsername()));
+            userCreateStatus.setIdpUserCreated(false);
+        }
+        return userCreateStatus;
     }
 
     @Override

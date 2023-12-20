@@ -1,12 +1,17 @@
 package org.avni.server.service;
 
+import org.avni.messaging.domain.EntityType;
+import org.avni.server.common.Messageable;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
+import org.avni.server.framework.security.UserContextHolder;
 
 public class NoopIdpService implements IdpService {
+
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
-        UserCreateStatus userCreateStatus = new UserCreateStatus();
+        UserCreateStatus userCreateStatus = new UserCreateStatus(user, UserContextHolder.getUser());
         userCreateStatus.setIdpUserCreated(true);
         return userCreateStatus;
     }
