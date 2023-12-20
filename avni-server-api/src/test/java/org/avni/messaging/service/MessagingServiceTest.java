@@ -7,6 +7,7 @@ import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.RuleExecutionException;
+import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.RuleService;
@@ -190,5 +191,41 @@ public class MessagingServiceTest {
         messagingService.sendMessages(scheduledSince);
 
         verify(individualMessagingService).sendAutomatedMessage(request);
+    }
+
+    @Test
+    public void shouldSaveMessageRequestIfMessageRuleConfiguredOnSaveOfUserEntityType() throws RuleExecutionException {
+        MessageRule messageRule = mock(MessageRule.class);
+        ArrayList<MessageRule> messageRuleList = new ArrayList<MessageRule>() {
+            {
+                add(messageRule);
+            }
+        };
+
+        Long userId = 890L;
+        when(messageRuleRepository.findAllByReceiverTypeAndEntityTypeAndIsVoidedFalse(ReceiverType.User, EntityType.User)).thenReturn(messageRuleList);
+
+        MessageReceiver messageReceiver = mock(MessageReceiver.class);
+        when(messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId)).thenReturn(messageReceiver);
+        Long messageReceiverId = 890L;
+        when(messageReceiver.getId()).thenReturn(messageReceiverId);
+
+        String scheduleRule = "function(params, imports) { return {'scheduledDateTime': '2013-02-04 10:35:24'; }}";
+        when(messageRule.getScheduleRule()).thenReturn(scheduleRule);
+        Long messageRuleId = 123L;
+        when(messageRule.getId()).thenReturn(messageRuleId);
+        when(messageRule.getEntityType()).thenReturn(EntityType.User);
+        when(messageRule.getReceiverType()).thenReturn(ReceiverType.User);
+
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+        DateTime scheduledDateTime = formatter.parseDateTime("2013-02-04 10:35:24");
+        ScheduleRuleResponseEntity scheduleRuleResponseEntity = new ScheduleRuleResponseEntity();
+        scheduleRuleResponseEntity.setScheduledDateTime(scheduledDateTime);
+        when(ruleService.executeScheduleRuleForEntityTypeUser(userId, scheduleRule)).thenReturn(scheduleRuleResponseEntity);
+
+        messagingService.onUserEntitySave(userId, new User());
+        verify(messageReceiverService).saveReceiverIfRequired(eq(ReceiverType.User), eq(userId));
+        verify(ruleService).executeScheduleRuleForEntityTypeUser(eq(userId), eq(scheduleRule));
+        verify(messageRequestService).createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, userId, scheduledDateTime);
     }
 }
