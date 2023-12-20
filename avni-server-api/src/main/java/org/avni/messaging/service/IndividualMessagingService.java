@@ -10,6 +10,7 @@ import org.avni.server.service.IndividualService;
 import org.avni.server.service.RuleService;
 import org.avni.server.service.UserService;
 import org.avni.server.util.A;
+import org.avni.server.web.request.rules.response.MessageRuleResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,8 +46,14 @@ public class IndividualMessagingService {
     public void sendAutomatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
-        String[] response = ruleService.executeMessageRule(messageRule.getEntityType().name(), messageRequest.getEntityId(), messageRule.getMessageRule());
-        ensureExternalIdPresenceAndSendMessage(messageReceiver, messageRule.getMessageTemplateId(), response);
+        String entityType = messageRule.getEntityType().name();
+        MessageRuleResponseEntity messageRuleResponseEntity = null;
+        if(EntityType.isCHSEntityType(messageRule.getEntityType())) {
+            messageRuleResponseEntity = ruleService.executeMessageRule(entityType, messageRequest.getEntityId(), messageRule.getMessageRule());
+        } else {
+            messageRuleResponseEntity = ruleService.executeMessageRuleForEntityTypeUser(messageRequest.getEntityId(), messageRule.getMessageRule());
+        }
+        ensureExternalIdPresenceAndSendMessage(messageReceiver, messageRule.getMessageTemplateId(), messageRuleResponseEntity.getParameters());
     }
 
     public void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException {
