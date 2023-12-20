@@ -835,3 +835,5 @@ limit 100;
 pg_dump --dbname=openchs --username=openchs --role=<org_role> --file=/Users/test/prod-orgname.sql --enable-row-security --verbose --schema=public --host=localhost --port=6015 --exclude-table-data=audit --exclude-table-data='public.sync_telemetry' --exclude-table-data='rule_failure_log' --exclude-table-data='scheduled_job_run' --exclude-table-data='qrtz_*' --exclude-table-data='batch_*' openchs
 
 --
+-- Apply dump to db
+psql -U openchs --host=localhost --port=6015 -d openchs -f /Users/test/target-dump-update.sql
