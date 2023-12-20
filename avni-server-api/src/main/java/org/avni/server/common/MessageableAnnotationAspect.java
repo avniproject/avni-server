@@ -9,7 +9,6 @@ import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.domain.MessageableEntity;
 import org.avni.server.domain.RuleExecutionException;
-import org.avni.server.domain.User;
 import org.avni.server.service.OrganisationConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,7 @@ public class MessageableAnnotationAspect {
     }
 
     private void handleUserEntityTypeInvocations(MessageableEntity entity, EntityType entityType) throws RuleExecutionException {
-        messagingService.onUserEntitySave((User) entity.getEntity(), entity.getCreatedBy());
+        messagingService.onUserEntitySave(entity.getEntityId(), entity.getCreatedBy());
     }
 
 

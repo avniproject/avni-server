@@ -108,15 +108,15 @@ public class MessagingService {
         }
     }
 
-    public void onUserEntitySave(User newUser, User createdBy) throws RuleExecutionException {
+    public void onUserEntitySave(Long userId, User createdBy) throws RuleExecutionException {
         List<MessageRule> messageRules = messageRuleRepository.findAllByReceiverTypeAndEntityTypeAndIsVoidedFalse(ReceiverType.User, EntityType.User);
 
         for (MessageRule messageRule : messageRules) {
-            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, newUser.getId());
-            ScheduleRuleResponseEntity scheduleRuleResponse = ruleService.executeScheduleRuleForEntityTypeUser(newUser, messageRule.getScheduleRule());
+            MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(ReceiverType.User, userId);
+            ScheduleRuleResponseEntity scheduleRuleResponse = ruleService.executeScheduleRuleForEntityTypeUser(userId, messageRule.getScheduleRule());
             Boolean shouldSend = scheduleRuleResponse.getShouldSend();
             if (shouldSend == null || shouldSend) {
-                messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, newUser.getId(), scheduleRuleResponse.getScheduledDateTime());
+                messageRequestService.createOrUpdateAutomatedMessageRequest(messageRule, messageReceiver, userId, scheduleRuleResponse.getScheduledDateTime());
             }
         }
     }

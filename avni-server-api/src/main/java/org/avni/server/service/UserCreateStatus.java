@@ -56,11 +56,6 @@ public class UserCreateStatus implements MessageableEntity {
     }
 
     @Override
-    public Object getEntity() {
-        return newUser;
-    }
-
-    @Override
     public User getCreatedBy() {
         return createdBy;
     }

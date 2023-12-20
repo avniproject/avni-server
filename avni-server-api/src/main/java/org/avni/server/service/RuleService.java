@@ -240,10 +240,11 @@ public class RuleService implements NonScopeAwareService {
         return (MessageRuleResponseEntity) getBaseRuleResponseEntity(entityType, messageRule, rulesMessage, responseType, contract, entity.getUuid());
     }
 
-    public ScheduleRuleResponseEntity executeScheduleRuleForEntityTypeUser(User entity, String scheduleRule) throws RuleExecutionException {
+    public ScheduleRuleResponseEntity executeScheduleRuleForEntityTypeUser(Long entityId, String scheduleRule) throws RuleExecutionException {
         String entityType = EntityType.User.name();
         String rulesMessage = RULES_MESSAGE_SCHEDULE;
         Class<ScheduleRuleResponseEntity> responseType = ScheduleRuleResponseEntity.class;
+        User entity = userRepository.getOne(entityId);
         RuleServerEntityContract contract = UserContract.fromUser(entity);
         return (ScheduleRuleResponseEntity) getBaseRuleResponseEntity(entityType, scheduleRule, rulesMessage, responseType, contract, entity.getUuid());
     }
