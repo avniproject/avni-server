@@ -2,6 +2,7 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.hibernate.annotations.Cache;
@@ -27,13 +28,20 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     Concept findByNameAndOrganisationId(String name, List<Long> organisationIds);
 
     default List<Long> buildOrganisationIdList() {
+        OrganisationRepository organisationRepository = RepositoryProvider.getOrganisationRepository();
         List<Long> organisationIds = new ArrayList<>();
         UserContext userContext = UserContextHolder.getUserContext();
         organisationIds.add(userContext.getOrganisationId());
-        if (userContext.getOrganisation().getParentOrganisationId() != null) {
-            organisationIds.add(userContext.getOrganisation().getParentOrganisationId());
-        }
+        addOrganisation(organisationIds, userContext.getOrganisation(), organisationRepository);
         return organisationIds;
+    }
+
+    default void addOrganisation(List<Long> organisationIds, Organisation organisation, OrganisationRepository organisationRepository) {
+        if (organisation.getParentOrganisationId() != null) {
+            organisationIds.add(organisation.getParentOrganisationId());
+            Organisation parentOrganisation = organisationRepository.findOne(organisation.getParentOrganisationId());
+            addOrganisation(organisationIds, parentOrganisation, organisationRepository);
+        }
     }
 
     @Override
