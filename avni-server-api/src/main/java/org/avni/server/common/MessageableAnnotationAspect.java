@@ -47,7 +47,8 @@ public class MessageableAnnotationAspect {
                 handleCHSEntityTypeInvocations(entity, entityType);
             }
 
-            if (EntityType.User.equals(entityType)) {
+            if (entity != null /* entity is null when we attempt to create a pre-existing user during bulk upload*/
+                    && EntityType.User.equals(entityType)) {
                 handleUserEntityTypeInvocations(entity, entityType);
             }
 
