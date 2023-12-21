@@ -64,6 +64,7 @@ public class CognitoIdpService extends IdpServiceImpl {
         return createCognitoUser(createUserRequest, user, organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin));
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
         return createUserWithPassword(user, password, organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin));
@@ -80,6 +81,7 @@ public class CognitoIdpService extends IdpServiceImpl {
         return userCreateStatus;
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createSuperAdminWithPassword(User user, String password) {
         return this.createUserWithPassword(user, password, Optional.of(true));

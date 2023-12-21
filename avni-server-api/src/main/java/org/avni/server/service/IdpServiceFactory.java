@@ -22,6 +22,9 @@ public class IdpServiceFactory {
     private KeycloakIdpService keycloakIdpService;
 
     @Autowired(required = false)
+    private NoopIdpService noopIdpService;
+
+    @Autowired(required = false)
     private CognitoAuthServiceImpl cognitoAuthService;
 
     @Autowired(required = false)
@@ -48,7 +51,7 @@ public class IdpServiceFactory {
 
     public IdpService getIdpService() {
         if (idpType.equals(IdpType.none))
-            return new NoopIdpService();
+            return noopIdpService;
 
         if (cognitoIdpService != null)
             return cognitoIdpService;
@@ -63,7 +66,7 @@ public class IdpServiceFactory {
             return keycloakIdpService;
 
         if (idpType.equals(IdpType.none))
-            return new NoopIdpService();
+            return noopIdpService;
 
         return cognitoIdpService;
     }

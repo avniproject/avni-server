@@ -65,6 +65,7 @@ public class RuleService implements NonScopeAwareService {
     private final IndividualService individualService;
     private final RuleServiceEntityContractBuilder ruleServiceEntityContractBuilder;
     private final UserRepository userRepository;
+    private final OrganisationRepository organisationRepository;
 
     @Autowired
     public RuleService(RuleDependencyRepository ruleDependencyRepository,
@@ -80,7 +81,7 @@ public class RuleService implements NonScopeAwareService {
                        RuleFailureLogRepository ruleFailureLogRepository,
                        ObservationService observationService,
                        IndividualContractBuilderServices contractBuilderServices,
-                       EntityRetrieverService entityRetrieverService, IndividualService individualService, RuleServiceEntityContractBuilder ruleServiceEntityContractBuilder, UserRepository userRepository) {
+                       EntityRetrieverService entityRetrieverService, IndividualService individualService, RuleServiceEntityContractBuilder ruleServiceEntityContractBuilder, UserRepository userRepository, OrganisationRepository organisationRepository) {
         this.ruleFailureLogRepository = ruleFailureLogRepository;
         this.observationService = observationService;
         this.contractBuilderServices = contractBuilderServices;
@@ -88,6 +89,7 @@ public class RuleService implements NonScopeAwareService {
         this.individualService = individualService;
         this.ruleServiceEntityContractBuilder = ruleServiceEntityContractBuilder;
         this.userRepository = userRepository;
+        this.organisationRepository = organisationRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.ruleDependencyRepository = ruleDependencyRepository;
         this.ruleRepository = ruleRepository;
@@ -245,7 +247,8 @@ public class RuleService implements NonScopeAwareService {
         String rulesMessage = RULES_MESSAGE_SCHEDULE;
         Class<ScheduleRuleResponseEntity> responseType = ScheduleRuleResponseEntity.class;
         User entity = userRepository.getOne(entityId);
-        RuleServerEntityContract contract = UserContract.fromUser(entity);
+        Organisation organisation = organisationRepository.findOne(entity.getOrganisationId());
+        RuleServerEntityContract contract = UserContract.fromUser(entity, organisation);
         return (ScheduleRuleResponseEntity) getBaseRuleResponseEntity(entityType, scheduleRule, rulesMessage, responseType, contract, entity.getUuid());
     }
 
@@ -254,7 +257,8 @@ public class RuleService implements NonScopeAwareService {
         String rulesMessage = RULES_MESSAGE_EXECUTE;
         Class<MessageRuleResponseEntity> responseType = MessageRuleResponseEntity.class;
         User entity = userRepository.getOne(entityId);
-        RuleServerEntityContract contract = UserContract.fromUser(entity);
+        Organisation organisation = organisationRepository.findOne(entity.getOrganisationId());
+        RuleServerEntityContract contract = UserContract.fromUser(entity, organisation);
         return (MessageRuleResponseEntity) getBaseRuleResponseEntity(entityType, messageRule, rulesMessage, responseType, contract, entity.getUuid());
     }
 

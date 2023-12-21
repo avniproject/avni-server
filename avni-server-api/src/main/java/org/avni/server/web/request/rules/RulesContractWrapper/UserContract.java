@@ -1,6 +1,7 @@
 package org.avni.server.web.request.rules.RulesContractWrapper;
 
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 
 import java.util.List;
@@ -10,20 +11,20 @@ public class UserContract implements RuleServerEntityContract {
     private String uuid;
     private String name;
     private String username;
-    private Long organisationId;
+    private String organisationName;
     private JsonObject settings;
     private JsonObject syncSettings;
     private List<Long> groupIds;
     private List<String> userGroupNames;
 
-    public static UserContract fromUser(User user) {
+    public static UserContract fromUser(User user, Organisation organisation) {
         UserContract userContract = new UserContract();
         userContract.setUuid(user.getUuid());
         userContract.setName(user.getName());
         userContract.setUsername(user.getUsername());
         userContract.setSettings(user.getSettings());
         userContract.setSyncSettings(user.getSyncSettings());
-        userContract.setOrganisationId(user.getOrganisationId());
+        userContract.setOrganisationName(organisation.getName());
         userContract.setGroupIds(user.getUserGroups().stream()
                 .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
         userContract.setUserGroupNames(user.getUserGroups().stream()
@@ -47,12 +48,12 @@ public class UserContract implements RuleServerEntityContract {
         this.username = username;
     }
 
-    public Long getOrganisationId() {
-        return organisationId;
+    public String getOrganisationName() {
+        return organisationName;
     }
 
-    public void setOrganisationId(Long organisationId) {
-        this.organisationId = organisationId;
+    public void setOrganisationName(String organisationName) {
+        this.organisationName = organisationName;
     }
 
     public JsonObject getSettings() {

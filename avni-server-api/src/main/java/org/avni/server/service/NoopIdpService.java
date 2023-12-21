@@ -5,7 +5,9 @@ import org.avni.server.common.Messageable;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.springframework.stereotype.Service;
 
+@Service
 public class NoopIdpService implements IdpService {
 
     @Messageable(EntityType.User)
@@ -37,14 +39,16 @@ public class NoopIdpService implements IdpService {
         return true;
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
         return this.createUser(user, organisationConfig);
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createSuperAdminWithPassword(User user, String password) throws IDPException {
-        return createUser(user, null);
+        return this.createUser(user, null);
     }
 
     @Override
@@ -52,6 +56,7 @@ public class NoopIdpService implements IdpService {
         return true;
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) {
         return this.createUser(user, organisationConfig);

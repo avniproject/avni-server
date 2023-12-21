@@ -82,11 +82,13 @@ public class KeycloakIdpService extends IdpServiceImpl {
         return this.createUserWithPassword(user, defaultPassword(user));
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
         return this.createUserWithPassword(user, password);
     }
 
+    @Messageable(EntityType.User)
     @Override
     public UserCreateStatus createSuperAdminWithPassword(User user, String password) {
         return this.createUserWithPassword(user, password);
