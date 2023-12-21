@@ -83,7 +83,7 @@ public class UserSubjectAssignmentServiceTest {
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).withCatchment(catchment).withDefaultValuesForNewEntity().userName("user1@example").organisationId(organisation.getId()).build());
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
-        when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
+        when(groupPrivilegeService.getGroupPrivileges()).thenReturn(new GroupPrivileges(false));
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
 
@@ -102,7 +102,7 @@ public class UserSubjectAssignmentServiceTest {
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).withCatchment(catchment).withDefaultValuesForNewEntity().userName("user1@example").organisationId(organisation.getId()).build());
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelWithinCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
-        when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
+        when(groupPrivilegeService.getGroupPrivileges()).thenReturn(new GroupPrivileges(false));
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
@@ -116,7 +116,7 @@ public class UserSubjectAssignmentServiceTest {
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).withCatchment(catchment).withDefaultValuesForNewEntity().userName("user1@example").organisationId(organisation.getId()).build());
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelOutsideCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
-        when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
+        when(groupPrivilegeService.getGroupPrivileges()).thenReturn(new GroupPrivileges(false));
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);
@@ -135,7 +135,7 @@ public class UserSubjectAssignmentServiceTest {
         when(userRepository.findOne(1l)).thenReturn(new UserBuilder().setId(1).withCatchment(catchment).withDefaultValuesForNewEntity().userName("user1@example").organisationId(organisation.getId()).build());
         when(groupSubjectRepository.findAllByGroupSubjectAndIsVoidedFalse(group)).thenReturn(Collections.singletonList(new TestGroupSubjectBuilder().setId(1l).withGroup(group)
                 .withMember(new SubjectBuilder().setId(2).withLocation(addressLevelOutsideCatchment).withSubjectType(new SubjectTypeBuilder().setGroup(false).build()).setId(2).build()).build()));
-        when(groupPrivilegeService.getGroupPrivileges(any())).thenReturn(new GroupPrivileges(false));
+        when(groupPrivilegeService.getGroupPrivileges()).thenReturn(new GroupPrivileges(false));
         when(addressLevelService.getAllRegistrationAddressIdsBySubjectType(any(), any())).thenReturn(catchment.getAddressLevels().stream().map(AddressLevel::getId).collect(Collectors.toList()));
 
         userSubjectAssignmentService.assignSubjects(userSubjectAssignmentContract);

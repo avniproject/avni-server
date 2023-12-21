@@ -46,7 +46,7 @@ public class UserInfoWebController {
             return UserInfoWebResponse.createForAdminUser(groupPrivilegeResponses, contextOrganisation, user);
         }
 
-        List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getGroupPrivileges(user).getPrivileges();
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeService.getExplicitGroupPrivileges(user).getPrivileges();
         String usernameSuffix = contextOrganisation.getEffectiveUsernameSuffix();
         String catchmentName = user.getCatchment() == null ? null : user.getCatchment().getName();
         long lastSessionTime = idpServiceFactory.getIdpService(contextOrganisation).getLastLoginTime(user);

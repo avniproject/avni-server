@@ -42,10 +42,11 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
 
     GroupSubject findByGroupSubjectAndMemberSubject(Individual groupSubject, Individual memberSubject);
 
-    @Query("select gs from Individual i " +
-            "join GroupSubject gs on i = gs.memberSubject or i = gs.groupSubject " +
-            "where i = :groupSubject")
-    List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Individual groupSubject);
+    @Query("select gs from GroupSubject gs " +
+            "join gs.groupSubject g " +
+            "join gs.memberSubject m " +
+            "where g = :individual or m = :individual " )
+    List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Individual individual);
 
     GroupSubject findByGroupSubjectAndGroupRoleAndIsVoidedFalse(Individual groupSubject, GroupRole headOfHousehold);
 
@@ -95,13 +96,10 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
                 List<Long> addressLevels = syncParameters.getAddressLevels();
                 if (addressLevels.size() > 0) {
                     CriteriaBuilder.In<Long> inClause1 = cb.in(root.get("groupSubjectAddressId"));
-                    CriteriaBuilder.In<Long> inClause2 = cb.in(root.get("memberSubjectAddressId"));
                     for (Long id : addressLevels) {
                         inClause1.value(id);
-                        inClause2.value(id);
                     }
                     predicates.add(inClause1);
-                    predicates.add(inClause2);
                 } else {
                     predicates.add(cb.equal(root.get("id"), cb.literal(0)));
                 }
