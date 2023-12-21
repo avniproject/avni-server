@@ -101,13 +101,13 @@ public class UserController {
             user.setUsername(userContract.getUsername());
             user = setUserAttributes(user, userContract);
 
-            idpServiceFactory.getIdpService().createSuperAdminWithPassword(user, userContract.getPassword());
-            userService.save(user);
-            accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
-            userService.addToDefaultUserGroup(user);
-            userService.associateUserToGroups(user, userContract.getGroupIds());
-            logger.info(String.format("Saved new user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
+            User savedUser = userService.save(user);
+            idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
+            accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
+            userService.addToDefaultUserGroup(savedUser);
+            userService.associateUserToGroups(savedUser, userContract.getGroupIds());
+            logger.info(String.format("Saved new user '%s', UUID '%s'", userContract.getUsername(), savedUser.getUuid()));
+            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
         } catch (ValidationException | UsernameExistsException ex) {
             return WebResponseUtil.createBadRequestResponse(ex, logger);
         } catch (AWSCognitoIdentityProviderException | IDPException ex) {

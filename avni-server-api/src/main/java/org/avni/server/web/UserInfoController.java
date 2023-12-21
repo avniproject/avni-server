@@ -160,7 +160,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             user.setEmail(userContract.getEmail());
             user.setAuditInfo(userService.getCurrentUser());
             User savedUser = userService.save(user);
-            if (newUser) userService.addToDefaultUserGroup(user);
+            if (newUser) userService.addToDefaultUserGroup(savedUser);
             logger.info(String.format("Saved User with UUID %s", userContract.getUuid()));
             OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfigByOrgId(organisationId);
             try {
