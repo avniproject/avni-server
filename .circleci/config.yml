@@ -41,6 +41,35 @@ commands:
           sudo rm -rf /tmp/avni-server.rpm
           EOF
 
+  deploy_as_service:
+    description: Deployment of avni-server as a systemd service
+    parameters:
+      env:
+        type: string
+        default: "staging"
+    steps:
+      - attach_workspace:
+          at: ~/artifacts
+
+      - run: sudo apt-get install make openssl
+
+      - run: curl -L https://github.com/avniproject/avni-infra/archive/master.zip >> ~/infra.zip
+
+      - run: |
+          cd ~/
+          unzip infra.zip
+          mv avni-infra-master avni-infra
+          rm -rf infra.zip
+
+      - run: echo $ANSIBLE_VAULT_PASS > ~/.vault-pass.txt
+
+      - run: |
+          pwd
+          cd ~/avni-infra/configure
+          VAULT_PASSWORD_FILE=~/.vault-pass.txt app_zip_path=~/artifacts/ make deploy-avni-server-<< parameters.env >>
+
+      - run: rm ~/.vault-pass.txt
+
 jobs:
   test:
     docker:
@@ -131,13 +160,60 @@ jobs:
     - store_artifacts:
         path: ~/artifacts
 
+  build_docker_image:
+    docker:
+      - image: docker:git
+    resource_class: medium
+    working_directory: ~/avni-server
+    steps:
+      - checkout
+      
+      - attach_workspace:
+          at: ~/artifacts
+
+      - setup_remote_docker
+
+      - run: mkdir -p ~/avni-server/avni-server-api/build/libs/
+
+      - run: cp ~/artifacts/avni-server-*.jar ~/avni-server/avni-server-api/build/libs/
+
+      - run:
+          name: Determine Docker Tags
+          command: |
+            if [ "$CIRCLE_BRANCH" == "master" ]; then
+              DOCKER_TAG="latest"
+            elif [ -n "$CIRCLE_TAG" ]; then
+              DOCKER_TAG="$CIRCLE_TAG"
+            else
+              echo "No valid tag found. Exiting."
+              exit 1
+            fi
+            echo "export DOCKER_TAG=$DOCKER_TAG" >> $BASH_ENV
+          shell: /bin/sh
+
+      - run:
+          name: Authenticate with Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Build Multi-Platform Docker Image
+          command: |
+            source $BASH_ENV
+            docker buildx create --use
+            docker buildx build --platform linux/amd64,linux/arm64 --tag "$DOCKER_USERNAME/avni-server:${DOCKER_TAG}" --push -f Dockerfile .
+            if [ "$CIRCLE_BRANCH" == "master" ]; then
+              SHORT_CIRCLE_SHA=$(echo "$CIRCLE_SHA1" | cut -c1-6)
+              docker buildx build --platform linux/amd64,linux/arm64 --tag "$DOCKER_USERNAME/avni-server:${SHORT_CIRCLE_SHA}" --push -f Dockerfile .
+            fi
+
   STAGING_deploy:
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: cimg/deploy:2023.09
     working_directory: ~/
     steps:
-    - deploy:
-        hostname: "ssh.staging.openchs.org"
+      - deploy_as_service:
+          env: "staging"
 
   UAT_deploy:
     docker:
@@ -147,13 +223,21 @@ jobs:
     - deploy:
         hostname: "ssh.uat.openchs.org"
 
+#  PRERELEASE_deploy:
+#    docker:
+#    - image: circleci/openjdk:8-jdk
+#    working_directory: ~/
+#    steps:
+#    - deploy:
+#        hostname: "ssh.prerelease.openchs.org"
+
   PRERELEASE_deploy:
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: cimg/deploy:2023.09
     working_directory: ~/
     steps:
-    - deploy:
-        hostname: "ssh.prerelease.openchs.org"
+      - deploy_as_service:
+          env: "prerelease"
 
   PERF_deploy:
     docker:
@@ -163,6 +247,14 @@ jobs:
       - deploy:
           hostname: "ssh.perf.avniproject.org"
 
+  NEW_PROD_deploy:
+    docker:
+      - image: cimg/deploy:2023.09
+    working_directory: ~/
+    steps:
+      - deploy_as_service:
+          env: "prod"
+
   PROD_deploy:
     docker:
       - image: circleci/openjdk:8-jdk
@@ -170,15 +262,32 @@ jobs:
     steps:
       - deploy:
           hostname: "ssh.prod.avniproject.org"
+          
+tags_filter: &tags_filter
+  filters:
+    tags:
+      only: /.*/
 
 workflows:
   version: 2
   test_and_build_and_deploy:
     jobs:
-    - test
+    - test:
+        <<: *tags_filter
     - build:
+        <<: *tags_filter
         requires:
-          - test
+          - test     
+    - build_docker_image:
+        context:
+          - dockerhub
+        requires:
+          - build
+        filters:
+          tags:
+            only: /.*/
+          branches:
+            only: master
     - STAGING_approve:
         type: approval
         requires:
@@ -219,6 +328,14 @@ workflows:
         context: prod-deploy
         requires:
           - PROD_approve
+    - NEW_PROD_approve:
+        type: approval
+        requires:
+          - build
+    - NEW_PROD_deploy:
+        context: prod-deploy
+        requires:
+          - NEW_PROD_approve
 notify:
   webhooks:
   - url: https://webhooks.gitter.im/e/0fdffde721194986f2a0

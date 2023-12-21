@@ -48,3 +48,11 @@ ifndef user
 else
 	-psql -U $(su) -d avni_staging_released -c "select create_db_user('$(user)', 'password')"
 endif
+
+run_dump_only:
+ifndef dumpFile
+	@echo "Provde the dumpFile variable"
+	exit 1
+else
+	psql -U openchs -d avni_org < $(dumpFile)
+endif

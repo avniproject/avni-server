@@ -3,8 +3,6 @@ package org.avni.server.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.Individual;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.TestWebContextService;
@@ -15,18 +13,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertTrue;
 
@@ -56,8 +52,12 @@ public abstract class AbstractControllerIntegrationTest {
 
     protected static ObjectMapper mapper = new ObjectMapper();
 
+    @PersistenceContext
+    private EntityManager em;
+
     @Before
     public void setUp() throws Exception {
+        em.getEntityManagerFactory().getCache().evictAll();
         this.base = new URL("http://localhost:" + port + "/");
         UserContextHolder.clear();
         template.getRestTemplate().setInterceptors(new ArrayList<>());
@@ -70,6 +70,7 @@ public abstract class AbstractControllerIntegrationTest {
         UserContextHolder.clear();
         template.getRestTemplate().setInterceptors(new ArrayList<>());
         testWebContextService.setRoles();
+        em.getEntityManagerFactory().getCache().evictAll();
     }
 
     protected void post(String path, Object json) {
@@ -93,6 +94,6 @@ public abstract class AbstractControllerIntegrationTest {
     }
 
     public void setUser(User user) {
-        this.setUser(user.getUsername());
+        testWebContextService.setUser(user);
     }
 }
