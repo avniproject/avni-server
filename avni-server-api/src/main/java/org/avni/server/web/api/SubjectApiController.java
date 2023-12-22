@@ -73,7 +73,7 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponsePage getSubjects(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                     @RequestParam(value = "now", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-                                    @RequestParam(value = "subjectTypeName", required = false) String subjectTypeName,
+                                    @RequestParam(value = "subjectType", required = false) String subjectTypeName,
                                     @RequestParam(value = "concepts", required = false) String concepts,
                                     @RequestParam(value = "locationIds", required = false) List<String> locationUUIDs,
                                     Pageable pageable) {
