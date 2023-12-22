@@ -27,10 +27,6 @@ public class RuleFailureTelemetry {
     @Id
     private Long id;
 
-    @Column
-    @NotNull
-    private String uuid;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
     @JoinColumn(name = "user_id")
@@ -153,14 +149,6 @@ public class RuleFailureTelemetry {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public User getUser() {
