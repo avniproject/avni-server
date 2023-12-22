@@ -3,6 +3,8 @@ ifndef dumpFile
 	@echo "Provde the dumpFile variable"
 	exit 1
 else
+	sed -i '' 's/from form/from public.form/g' "$(dumpFile)"
+	sed -i '' 's/inner join form/inner join public.form/g' "$(dumpFile)"
 	make _clean_db _build_db database=avni_org
 	psql -U openchs -d avni_org < $(dumpFile)
 endif
