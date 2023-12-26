@@ -44,6 +44,10 @@ public enum ConceptDataType {
         return primitiveTypes.contains(ConceptDataType.valueOf(dataType));
     }
 
+    public static boolean isPrimitiveType(ConceptDataType dataType) {
+        return primitiveTypes.contains(dataType);
+    }
+
     public static boolean matches(ConceptDataType conceptDataType, String dataType) {
         return conceptDataType.toString().equals(dataType);
     }

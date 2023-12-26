@@ -14,9 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.Locale;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,9 +43,12 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
     private Concept numericConcept;
     private Concept textConcept;
     private Concept locationConcept;
+    private Concept dateConcept;
 
     @Before
     public void setUp() throws Exception {
+        TimeZone.setDefault(TimeZone.getTimeZone("IST"));
+
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
         catchmentData = testDataSetupService.setupACatchment();
         subjectType = testSubjectTypeService.createWithDefaults(
@@ -60,12 +62,14 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
         numericConcept = testConceptService.createConcept("Numeric", ConceptDataType.Numeric);
         textConcept = testConceptService.createConcept("Text", ConceptDataType.Text);
         locationConcept = testConceptService.createConcept("Location", ConceptDataType.Location);
+        dateConcept = testConceptService.createConcept("Date", ConceptDataType.Date);
         ObservationCollection observationCollection = new ObservationCollectionBuilder()
                 .addObservation(singleCodedConcept, singleCodedConcept.getAnswerConcept("singleCoded1"))
                 .addMultiCodedObservation(multiCodedConcept, multiCodedConcept.getAnswerConcept("multiCoded1"), multiCodedConcept.getAnswerConcept("multiCoded2"))
                 .addObservation(numericConcept, 10)
                 .addObservation(textConcept, "Hello world")
                 .addObservation(locationConcept, catchmentData.getAddressLevel1().getUuid())
+                .addObservation(dateConcept, "2000-10-31T18:30:00.000+00:00")
                 .build();
         testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
         Individual subject = new SubjectBuilder()
@@ -99,6 +103,8 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
 
         Map<String, String> location = (Map<String, String>) observations.get("Location");
         assertThat(location.get(catchmentData.getAddressLevel1().getTypeString())).isEqualTo(catchmentData.getAddressLevel1().getTitle());
+
+        assertThat(observations.get("Date")).isEqualTo("2000-11-01");
     }
 
     @Test
