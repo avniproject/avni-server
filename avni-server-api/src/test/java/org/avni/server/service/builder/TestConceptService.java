@@ -28,4 +28,9 @@ public class TestConceptService {
         });
         return conceptRepository.save(concept);
     }
+
+    public Concept createConcept(String conceptName, ConceptDataType conceptDataType) {
+        Concept concept = new ConceptBuilder().withName(conceptName).withDataType(conceptDataType).build();
+        return conceptRepository.save(concept);
+    }
 }
