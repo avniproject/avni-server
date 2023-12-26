@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import antlr.StringUtils;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
@@ -18,6 +19,7 @@ import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
 import org.avni.server.web.request.rules.response.KeyValueResponse;
+import org.omg.PortableInterceptor.ObjectReferenceTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -63,6 +65,7 @@ public class ObservationService {
                     } else {
                         concept = conceptRepository.findByUuid(observationRequest.getConceptUUID());
                     }
+                    validateTimeFieldValue(observationRequest.getValue(), concept);
                     return new SimpleEntry<>(concept, observationRequest.getValue());
                 })
                 .filter(obsReqAsMap -> null != obsReqAsMap.getKey()
@@ -70,6 +73,15 @@ public class ObservationService {
                 .collect(Collectors
                         .toConcurrentMap((it -> it.getKey().getUuid()), SimpleEntry::getValue, (oldVal, newVal) -> newVal));
         return new ObservationCollection(completedObservationRequests);
+    }
+
+    public static void validateTimeFieldValue(Object obsValue, Concept concept) {
+        if (concept != null &&
+                ConceptDataType.Time.name().equals(concept.getDataType()) &&
+                obsValue instanceof String &&
+                ((String) obsValue).trim().length() > 5) {
+            throw new RuntimeException(String.format("Time field %s with non-time like value: %s. Please contact support.", concept.getName(), obsValue));
+        }
     }
 
     public ValidationResult validateObservationsAndDecisions(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) {

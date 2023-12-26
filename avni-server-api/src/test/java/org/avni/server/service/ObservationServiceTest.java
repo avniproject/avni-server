@@ -130,4 +130,18 @@ public class ObservationServiceTest {
         assertEquals(2, maxNumberOfObservationSets.get(groupFormElement1).intValue());
         assertEquals(null, maxNumberOfObservationSets.get(groupFormElement2));
     }
+
+    @Test
+    public void validateTimeFieldValue() {
+        Concept concept = new ConceptBuilder().withDataType(ConceptDataType.Time).build();
+        ObservationService.validateTimeFieldValue(null, concept);
+        ObservationService.validateTimeFieldValue("", concept);
+        ObservationService.validateTimeFieldValue("20:10", concept);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void validateInvalidTimeFieldValue() {
+        Concept concept = new ConceptBuilder().withDataType(ConceptDataType.Time).build();
+        ObservationService.validateTimeFieldValue("dfdsfsdf", concept);
+    }
 }
