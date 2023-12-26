@@ -10,10 +10,7 @@ import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.util.BadRequestError;
-import org.avni.server.util.O;
-import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.util.S;
+import org.avni.server.util.*;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
@@ -22,6 +19,7 @@ import org.avni.server.web.response.ConceptNameUuidAndDatatype;
 import org.avni.server.web.response.Response;
 import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
+import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -192,7 +190,7 @@ public class ConceptService implements NonScopeAwareService {
     private void addToMigrationIfRequired(ConceptContract conceptRequest) {
         Concept concept = conceptRepository.findByUuid(conceptRequest.getUuid());
         boolean isNa = conceptRequest.getDataType() == null || conceptRequest.getDataType().equals(ConceptDataType.NA.name());
-        if ( isNa && concept != null && !concept.getName().equals(conceptRequest.getName())) {
+        if (isNa && concept != null && !concept.getName().equals(conceptRequest.getName())) {
             List<ConceptAnswer> conceptAnswers = conceptAnswerRepository.findByAnswerConcept(concept);
             List<AnswerConceptMigration> answerConceptMigrations = conceptAnswers.stream().map(ca -> {
                 AnswerConceptMigration answerConceptMigration = new AnswerConceptMigration();
@@ -252,13 +250,25 @@ public class ConceptService implements NonScopeAwareService {
     /**
      * Important: Not to be used in any Internal API calls
      */
-    public Object getObservationValue(Map<String, ConceptNameUuidAndDatatype> conceptMap, Object value) {
+    public Object getObservationValue(ConceptNameUuidAndDatatype concept, Map<String, ConceptNameUuidAndDatatype> conceptMap, Object value) {
+        if (concept.getConceptDataType().equals(ConceptDataType.Date)) {
+            return DateTimeUtil.toDateString((String) value);
+        }
+
+        if (Arrays.asList(ConceptDataType.Audio, ConceptDataType.Id, ConceptDataType.Encounter, ConceptDataType.DateTime,
+                        ConceptDataType.Duration, ConceptDataType.File, ConceptDataType.GroupAffiliation, ConceptDataType.Image,
+                        ConceptDataType.NA, ConceptDataType.Notes, ConceptDataType.Numeric, ConceptDataType.PhoneNumber,
+                        ConceptDataType.Subject, ConceptDataType.Text, ConceptDataType.Time, ConceptDataType.Video)
+                .contains(concept.getConceptDataType())) {
+            return value;
+        }
+
         if (value instanceof ArrayList) {
             List<Object> elements = (List<Object>) value;
             return elements.stream().map(element -> {
-                if (element != null && element instanceof String) {
+                if (element != null && element instanceof String) { // Multicoded concept
                     return getNameWithDefaultValue(matchingConcept(conceptMap, element), element);
-                } else if( element != null && element instanceof HashMap) {
+                } else if (element != null && element instanceof HashMap) { // Repeatable question group
                     LinkedHashMap<String, Object> observationResponse = new LinkedHashMap<>();
                     Response.mapObservations(conceptRepository, this, observationResponse,
                             new ObservationCollection((HashMap<String, Object>) element));
@@ -267,13 +277,19 @@ public class ConceptService implements NonScopeAwareService {
                     return getNameWithDefaultValue(matchingConcept(conceptMap, element), element);
                 }
             }).toArray();
-        } else if( value instanceof ObservationCollection) {
+        }
+
+        if (concept.getConceptDataType().equals(ConceptDataType.QuestionGroup)) {
             LinkedHashMap<String, Object> observationResponse = new LinkedHashMap<>();
             Response.mapObservations(conceptRepository, this, observationResponse, (ObservationCollection) value);
             return observationResponse;
-        } else {
-            return getNameWithDefaultValue(matchingConcept(conceptMap, value), checkAndReturnLocationAddress(value));
         }
+
+        if (concept.getConceptDataType().equals(ConceptDataType.Location)) {
+            return checkAndReturnLocationAddress(value);
+        }
+
+        return getNameWithDefaultValue(matchingConcept(conceptMap, value), value);
     }
 
     private ConceptNameUuidAndDatatype matchingConcept(Map<String, ConceptNameUuidAndDatatype> conceptMap, Object element) {
@@ -281,14 +297,14 @@ public class ConceptService implements NonScopeAwareService {
     }
 
     private Object getNameWithDefaultValue(ConceptNameUuidAndDatatype value, Object defaultValue) {
-        return value == null? defaultValue: value.getName();
+        return value == null ? defaultValue : value.getName();
     }
 
     private Object checkAndReturnLocationAddress(Object value) {
-        if(value != null && value instanceof String) {
+        if (value != null && value instanceof String) {
             LinkedHashMap<String, String> location = new LinkedHashMap<>();
             AddressLevel addressLevel = locationRepository.findByLegacyIdOrUuid((String) value);
-            if(addressLevel == null) {
+            if (addressLevel == null) {
                 return value;
             }
             while (addressLevel != null) {

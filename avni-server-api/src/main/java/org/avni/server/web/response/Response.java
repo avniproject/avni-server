@@ -32,7 +32,7 @@ public class Response {
         }
         List<ConceptNameUuidAndDatatype> conceptMaps = conceptRepository.findAllConceptsInObs(stringObservations);
         Map<String, ConceptNameUuidAndDatatype> conceptMap = conceptMaps.stream().collect(Collectors.toMap(s -> s.getUuid(), s -> s));
-        obs.forEach((key, value) -> observationsResponse.put(conceptMap.get(key).getName(), conceptService.getObservationValue(conceptMap, value)));
+        obs.forEach((key, value) -> observationsResponse.put(conceptMap.get(key).getName(), conceptService.getObservationValue(conceptMap.get(key), conceptMap, value)));
     }
 
     static void putObservations(ConceptRepository conceptRepository, ConceptService conceptService, Map<String, Object> parentMap, LinkedHashMap<String, Object> observationsResponse, ObservationCollection observations) {

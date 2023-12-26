@@ -14,8 +14,7 @@ import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -81,7 +80,7 @@ public class ResponseUnitTest {
         ConceptNameUuidAndDatatype conceptMap2 = new ConceptNameUuidAndDatatype(answerConceptUuid, answerValue, ConceptDataType.NA);
         List<ConceptNameUuidAndDatatype> conceptMapList = Arrays.asList(conceptMap1, conceptMap2);
         when(conceptRepository.findAllConceptsInObs(anyString())).thenReturn(conceptMapList);
-        when(conceptService.getObservationValue(anyMap(), anyString())).thenReturn(answerValue);
+        when(conceptService.getObservationValue(any(), anyMap(), anyString())).thenReturn(answerValue);
         Response.putObservations(conceptRepository, conceptService, parentMap, observationsResponse, observations);
         LinkedHashMap<String, Object> result = (LinkedHashMap<String, Object>) parentMap.get("observations");
 

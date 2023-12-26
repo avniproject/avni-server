@@ -2,6 +2,7 @@ package org.avni.server.util;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.joda.time.LocalDate;
 
 import java.util.Calendar;
@@ -31,5 +32,9 @@ public class DateTimeUtil {
             return null;
         }
         return LocalDate.parse((String) localDateString);
+    }
+
+    public static String toDateString(String dateStringWithTimezone) {
+        return Instant.parse(dateStringWithTimezone).toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd");
     }
 }
