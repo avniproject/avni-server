@@ -18,6 +18,7 @@ import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
 import org.avni.server.web.request.application.FormUsageContract;
+import org.avni.server.web.response.ConceptNameUuidAndDatatype;
 import org.avni.server.web.response.Response;
 import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
@@ -251,19 +252,19 @@ public class ConceptService implements NonScopeAwareService {
     /**
      * Important: Not to be used in any Internal API calls
      */
-    public Object getObservationValue(Map<String, String> conceptMap, Object value) {
+    public Object getObservationValue(Map<String, ConceptNameUuidAndDatatype> conceptMap, Object value) {
         if (value instanceof ArrayList) {
             List<Object> elements = (List<Object>) value;
             return elements.stream().map(element -> {
                 if (element != null && element instanceof String) {
-                    return conceptMap.getOrDefault(element, (String) element);
+                    return getNameWithDefaultValue(matchingConcept(conceptMap, element), element);
                 } else if( element != null && element instanceof HashMap) {
                     LinkedHashMap<String, Object> observationResponse = new LinkedHashMap<>();
                     Response.mapObservations(conceptRepository, this, observationResponse,
                             new ObservationCollection((HashMap<String, Object>) element));
                     return observationResponse;
                 } else {
-                    return conceptMap.getOrDefault(element, element.toString());
+                    return getNameWithDefaultValue(matchingConcept(conceptMap, element), element);
                 }
             }).toArray();
         } else if( value instanceof ObservationCollection) {
@@ -271,9 +272,16 @@ public class ConceptService implements NonScopeAwareService {
             Response.mapObservations(conceptRepository, this, observationResponse, (ObservationCollection) value);
             return observationResponse;
         } else {
-            String conceptName = conceptMap.get(value);
-            return conceptName == null ? checkAndReturnLocationAddress(value) : conceptName;
+            return getNameWithDefaultValue(matchingConcept(conceptMap, value), checkAndReturnLocationAddress(value));
         }
+    }
+
+    private ConceptNameUuidAndDatatype matchingConcept(Map<String, ConceptNameUuidAndDatatype> conceptMap, Object element) {
+        return conceptMap.get(element);
+    }
+
+    private Object getNameWithDefaultValue(ConceptNameUuidAndDatatype value, Object defaultValue) {
+        return value == null? defaultValue: value.getName();
     }
 
     private Object checkAndReturnLocationAddress(Object value) {

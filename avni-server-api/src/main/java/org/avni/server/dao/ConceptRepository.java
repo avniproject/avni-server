@@ -5,6 +5,7 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.web.response.ConceptNameUuidAndDatatype;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.domain.Page;
@@ -74,7 +75,7 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     List<Concept> getAllConceptByUuidIn(List<String> uuid);
     List<Concept> getAllConceptByNameIn(List<String> names);
 
-    @Query(value = "SELECT DISTINCT c.uuid, c.name\n" +
+    @Query(value = "SELECT DISTINCT c.uuid, c.name, c.data_type\n" +
             "            FROM concept c\n" +
             "                     INNER JOIN (\n" +
             "                SELECT unnest(ARRAY [to_jsonb(key), value]) conecpt_uuid\n" +
@@ -82,6 +83,13 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
             "            ) obs ON obs.conecpt_uuid @> to_jsonb(c.uuid)", nativeQuery = true)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     List<Map<String, String>> getConceptUuidToNameMapList(String observations);
+
+    default List<ConceptNameUuidAndDatatype> findAllConceptsInObs(String observations) {
+        return getConceptUuidToNameMapList(observations)
+                .stream()
+                .map(resultMap -> new ConceptNameUuidAndDatatype(resultMap.get("uuid"), resultMap.get("name"), ConceptDataType.valueOf(resultMap.get("data_type"))))
+                .collect(Collectors.toList());
+    }
 
     Page<Concept> findAllByUuidIn(String [] uuids, Pageable pageable);
     List<Concept> findAllByUuidInAndDataTypeIn(String[] uuids, String[] dataTypes);
