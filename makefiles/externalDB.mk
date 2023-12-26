@@ -51,10 +51,46 @@ else
 	-psql -U $(su) -d avni_staging_released -c "select create_db_user('$(user)', 'password')"
 endif
 
-run_dump_only:
+run-dump-only:
 ifndef dumpFile
 	@echo "Provde the dumpFile variable"
 	exit 1
 else
 	psql -U openchs -d avni_org < $(dumpFile)
 endif
+
+tunnel-db:
+ifndef host
+	@echo "Provde the host variable"
+	exit 1
+endif
+ifndef dbServer
+	@echo "Provde the hostName variable"
+	exit 1
+endif
+	ssh $(host) -L 5433:$(dbServer):5432
+
+tunnel-prerelease-db:
+	make tunnel-db host=avni-prerelease dbServer=prereleasedb.avniproject.org
+tunnel-prod-db:
+	make tunnel-db host=avni-prod dbServer=serverdb.read.openchs.org
+tunnel-lfe-prod-db:
+	make tunnel-db host=avni-lfe-prod dbServer=prod-db2.cdsbgtdqfjhs.ap-south-1.rds.amazonaws.com
+
+dump-org-data:
+ifndef dbRole
+	@echo "Provde the dbRole variable"
+	exit 1
+endif
+	pg_dump -h localhost -p 5433 \
+		--dbname=openchs \
+		--username=openchs \
+		--role=$(dbRole) \
+		--file=/Users/vsingh/projects/avni/avni-db-dumps/prod-$(dbRole).sql \
+		--enable-row-security --verbose --schema=public --host=localhost \
+		--exclude-table-data=audit \
+		--exclude-table-data='public.sync_telemetry' \
+		--exclude-table-data='rule_failure_log' \
+		--exclude-table-data='scheduled_job_run' \
+		--exclude-table-data='qrtz_*' \
+		--exclude-table-data='batch_*'
