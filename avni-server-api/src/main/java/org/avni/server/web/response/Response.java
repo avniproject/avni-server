@@ -30,9 +30,9 @@ public class Response {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(String.format("Error while processing observation %s", obs.toString()));
         }
-        List<Map<String, String>> conceptMaps = conceptRepository.getConceptUuidToNameMapList(stringObservations);
-        Map<String, String> conceptMap = conceptMaps.stream().collect(Collectors.toMap(s -> s.get("uuid"), s -> s.get("name")));
-        obs.forEach((key, value) -> observationsResponse.put(conceptMap.get(key), conceptService.getObservationValue(conceptMap, value)));
+        List<ConceptNameUuidAndDatatype> conceptMaps = conceptRepository.findAllConceptsInObs(stringObservations);
+        Map<String, ConceptNameUuidAndDatatype> conceptMap = conceptMaps.stream().collect(Collectors.toMap(s -> s.getUuid(), s -> s));
+        obs.forEach((key, value) -> observationsResponse.put(conceptMap.get(key).getName(), conceptService.getObservationValue(conceptMap, value)));
     }
 
     static void putObservations(ConceptRepository conceptRepository, ConceptService conceptService, Map<String, Object> parentMap, LinkedHashMap<String, Object> observationsResponse, ObservationCollection observations) {

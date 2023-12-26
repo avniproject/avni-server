@@ -1,6 +1,6 @@
 package org.avni.server.web.response;
 
-import org.avni.server.web.response.Response;
+import org.avni.server.domain.ConceptDataType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -77,16 +77,10 @@ public class ResponseUnitTest {
         answers.add(conceptAnswer);
         questionConcept.setConceptAnswers(answers);
         observations.put(questionConceptUuid, answerConceptUuid);
-        List<Map<String, String>> conceptMapList = new ArrayList<>();
-        Map<String, String> conceptMap1 = new HashMap<>();
-        conceptMap1.put("name",questionConceptName);
-        conceptMap1.put("uuid",questionConceptUuid);
-        Map<String, String> conceptMap2 = new HashMap<>();
-        conceptMap2.put("name",answerValue);
-        conceptMap2.put("uuid",answerConceptUuid);
-        conceptMapList.add(conceptMap1);
-        conceptMapList.add(conceptMap2);
-        when(conceptRepository.getConceptUuidToNameMapList(anyString())).thenReturn(conceptMapList);
+        ConceptNameUuidAndDatatype conceptMap1 = new ConceptNameUuidAndDatatype(questionConceptUuid, questionConceptName, ConceptDataType.Coded);
+        ConceptNameUuidAndDatatype conceptMap2 = new ConceptNameUuidAndDatatype(answerConceptUuid, answerValue, ConceptDataType.NA);
+        List<ConceptNameUuidAndDatatype> conceptMapList = Arrays.asList(conceptMap1, conceptMap2);
+        when(conceptRepository.findAllConceptsInObs(anyString())).thenReturn(conceptMapList);
         when(conceptService.getObservationValue(anyMap(), anyString())).thenReturn(answerValue);
         Response.putObservations(conceptRepository, conceptService, parentMap, observationsResponse, observations);
         LinkedHashMap<String, Object> result = (LinkedHashMap<String, Object>) parentMap.get("observations");
