@@ -78,12 +78,17 @@ public class MessageRuleContract {
 
         messageRule.setName(messageRuleContract.getName());
         messageRule.setUuid(messageRuleContract.getUuid());
-        CHSEntity entityType = entityTypeRetrieverService.getEntityType(messageRuleContract.getEntityType(), messageRuleContract.getEntityTypeUuid());
-        messageRule.setEntityTypeId(entityType.getId());
-        messageRule.setEntityType(EntityType.valueOf(messageRuleContract.getEntityType()));
+        String entityTypeString = StringUtils.capitalize(messageRuleContract.getEntityType());
+        EntityType entityType = EntityType.valueOf(entityTypeString);
+        Long entityTypeId = -1l;
+        if(EntityType.isCHSEntityType(entityType)) {
+            entityTypeId = entityTypeRetrieverService.getEntityType(entityTypeString, messageRuleContract.getEntityTypeUuid()).getId();
+        }
+        messageRule.setEntityTypeId(entityTypeId);
+        messageRule.setEntityType(entityType);
         messageRule.setScheduleRule(messageRuleContract.getScheduleRule());
         messageRule.setMessageRule(messageRuleContract.getMessageRule());
-        messageRule.setReceiverType(ReceiverType.valueOf(messageRuleContract.getReceiverType()));
+        messageRule.setReceiverType(ReceiverType.valueOf(StringUtils.capitalize(messageRuleContract.getReceiverType())));
         messageRule.setMessageTemplateId(messageRuleContract.getMessageTemplateId());
         messageRule.setVoided(messageRuleContract.getVoided());
         return messageRule;
