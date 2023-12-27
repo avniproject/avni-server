@@ -11,6 +11,7 @@ import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.*;
+import org.avni.server.web.api.ApiRequestContextHolder;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
@@ -252,7 +253,7 @@ public class ConceptService implements NonScopeAwareService {
      */
     public Object getObservationValue(ConceptNameUuidAndDatatype concept, Map<String, ConceptNameUuidAndDatatype> conceptMap, Object value) {
         if (concept.getConceptDataType().equals(ConceptDataType.Date)) {
-            return DateTimeUtil.toDateString((String) value);
+            return ApiRequestContextHolder.isVersionGreaterThan(1)?  DateTimeUtil.toDateString((String) value): value;
         }
 
         if (Arrays.asList(ConceptDataType.Audio, ConceptDataType.Id, ConceptDataType.Encounter, ConceptDataType.DateTime,

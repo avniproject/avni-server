@@ -14,8 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.*;
-import java.util.Locale;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TimeZone;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,6 +49,7 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
     @Before
     public void setUp() throws Exception {
         TimeZone.setDefault(TimeZone.getTimeZone("IST"));
+        ApiRequestContextHolder.create(new ApiRequestContext("2"));
 
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
         catchmentData = testDataSetupService.setupACatchment();
@@ -105,6 +107,24 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
         assertThat(location.get(catchmentData.getAddressLevel1().getTypeString())).isEqualTo(catchmentData.getAddressLevel1().getTitle());
 
         assertThat(observations.get("Date")).isEqualTo("2000-11-01");
+    }
+
+    @Test
+    public void shouldGetDateTimeForDateStyleObservationsForOldVersions() {
+        ApiRequestContextHolder.create(new ApiRequestContext("1"));
+
+        ResponsePage subjects = subjectApiController.getSubjects(DateTime.now().minusDays(1),
+                DateTime.now().plusDays(1),
+                subjectType.getName(),
+                String.format("{\"%s\": \"%s\"}", singleCodedConcept.getName(), singleCodedConcept.getAnswerConcept("singleCoded1").getUuid()),
+                Collections.singletonList(catchmentData.getAddressLevel1().getUuid()),
+                PageRequest.of(0, 10));
+        assertEquals(1, subjects.getContent().size());
+
+        Map subject = (Map) subjects.getContent().get(0);
+        Map observations = (Map) subject.get("observations");
+
+        assertThat(observations.get("Date")).isEqualTo("2000-10-31T18:30:00.000+00:00");
     }
 
     @Test
