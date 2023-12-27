@@ -4,6 +4,7 @@ import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.domain.MessageRule;
 import org.avni.messaging.domain.ReceiverType;
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.User;
 import org.avni.server.service.EntityTypeRetrieverService;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
@@ -33,7 +34,7 @@ public class MessageRuleContract {
     }
 
     public MessageRuleContract(MessageRule messageRule, EntityTypeRetrieverService entityTypeRetrieverService) {
-        if(entityTypeRetrieverService != null ) {
+        if(entityTypeRetrieverService != null && EntityType.isCHSEntityType(messageRule.getEntityType())) {
             CHSEntity entity = entityTypeRetrieverService.getEntityType(messageRule.getEntityType().toString(), messageRule.getEntityTypeId());
             setEntityTypeUuid(entity.getUuid());
         }
