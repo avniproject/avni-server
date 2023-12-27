@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,22 @@ public class EntityTypeRetrieverService {
             case "Encounter":
             case "ProgramEncounter":
                 return encounterTypeRepository;
+            default:
+                throw new IllegalArgumentException("Unknown entityType " + entityType);
+        }
+    }
+
+    public PrivilegeType findPrivilegeType(String entityType) {
+        switch (entityType) {
+            case "Subject":
+                return PrivilegeType.EditSubjectType;
+            case "ProgramEnrolment":
+                return PrivilegeType.EditProgram;
+            case "Encounter":
+            case "ProgramEncounter":
+                return PrivilegeType.EditEncounterType;
+            case "User":
+                return PrivilegeType.EditOrganisationConfiguration;
             default:
                 throw new IllegalArgumentException("Unknown entityType " + entityType);
         }
