@@ -22,7 +22,7 @@ public class IdentifierUserAssignmentTest {
         new IdentifierUserAssignmentBuilder().setIdentifierSource(pooledIdSource).setIdentifierStart("Foo-100").setIdentifierEnd("Foo-200").build().validate();
 
         User user = new UserBuilder().withDefaultValuesForNewEntity().setSettings(new JsonObject().with(UserSettings.ID_PREFIX, "Foo-")).build();
-        new IdentifierUserAssignmentBuilder().setIdentifierSource(userBasedIdSource).setIdentifierStart("100").setIdentifierEnd("200").setAssignedTo(user).build().validate();
+        new IdentifierUserAssignmentBuilder().setIdentifierSource(userBasedIdSource).setIdentifierStart("Foo-100").setIdentifierEnd("Foo-200").setAssignedTo(user).build().validate();
     }
 
     @Test(expected = ValidationException.class)
@@ -34,5 +34,22 @@ public class IdentifierUserAssignmentTest {
     public void startIsGreaterThanEnd_UserBased() throws ValidationException {
         User user = new UserBuilder().withDefaultValuesForNewEntity().setSettings(new JsonObject().with(UserSettings.ID_PREFIX, "Foo-")).build();
         new IdentifierUserAssignmentBuilder().setIdentifierSource(userBasedIdSource).setIdentifierStart("200").setIdentifierEnd("100").setAssignedTo(user).build().validate();
+    }
+
+    @Test(expected = ValidationException.class)
+    public void startAndEndDontStartWithPrefix() throws ValidationException {
+//        new IdentifierUserAssignmentBuilder().setIdentifierSource(pooledIdSource).setIdentifierStart("100").setIdentifierEnd("200").build().validate();
+        new IdentifierUserAssignmentBuilder().setIdentifierSource(pooledIdSource).setIdentifierStart("Foo-100").setIdentifierEnd("200").build().validate();
+        new IdentifierUserAssignmentBuilder().setIdentifierSource(pooledIdSource).setIdentifierStart("100").setIdentifierEnd("Foo-200").build().validate();
+    }
+
+    @Test(expected = ValidationException.class)
+    public void startDoesntStartWithPrefix() throws ValidationException {
+        new IdentifierUserAssignmentBuilder().setIdentifierSource(pooledIdSource).setIdentifierStart("100").setIdentifierEnd("Foo-200").build().validate();
+    }
+
+    @Test(expected = ValidationException.class)
+    public void endDoesntStartWithPrefix() throws ValidationException {
+        new IdentifierUserAssignmentBuilder().setIdentifierSource(pooledIdSource).setIdentifierStart("Foo-100").setIdentifierEnd("200").build().validate();
     }
 }

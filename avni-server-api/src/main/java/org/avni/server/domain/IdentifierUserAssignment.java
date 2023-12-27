@@ -78,6 +78,9 @@ public class IdentifierUserAssignment extends OrganisationAwareEntity {
 
         if (identifierSource.getType().equals(IdentifierGeneratorType.userBasedIdentifierGenerator) && assignedTo.getUserSettings().getIdPrefix() == null)
             throw new ValidationException("Id prefix is not assigned to the user");
+
+        if (!(identifierStart.startsWith(prefix) && identifierEnd.startsWith(prefix)))
+            throw new ValidationException("Both Identifier Start and End should match the prefix " + prefix);
     }
 
     @Override
