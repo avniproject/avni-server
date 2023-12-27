@@ -8,6 +8,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.TimeZone;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,7 +48,8 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
 
     @Before
     public void setUp() throws Exception {
-        TimeZone.setDefault(TimeZone.getTimeZone("IST"));
+        DateTimeZone.setDefault(DateTimeZone.forOffsetHoursMinutes(5, 30));
+
         ApiRequestContextHolder.create(new ApiRequestContext("2"));
 
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
