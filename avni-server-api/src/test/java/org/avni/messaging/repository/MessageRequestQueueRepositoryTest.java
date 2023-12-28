@@ -24,4 +24,11 @@ public class MessageRequestQueueRepositoryTest extends AbstractControllerIntegra
         Stream<MessageRequest> unsentMessages = messageRequestQueueRepository.findDueMessageRequests(Duration.standardDays(4));
         assertThat(unsentMessages.findFirst().get().getUuid()).isEqualTo("75925823-109f-41a5-89e3-9c719c88155d");
     }
+
+    @Test
+    @Transactional
+    public void shouldNotRetrieveMessagesThatAreOlder() {
+        Stream<MessageRequest> unsentMessages = messageRequestQueueRepository.findDueMessageRequests(Duration.standardHours(-1)); //Future date
+        assertThat(unsentMessages.count()).isEqualTo(0);
+    }
 }
