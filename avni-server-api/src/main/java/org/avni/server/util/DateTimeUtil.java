@@ -9,6 +9,9 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 public class DateTimeUtil {
+
+    public static final DateTimeZone IST = DateTimeZone.forOffsetHoursMinutes(5, 30);
+
     public static Calendar getCalendarTime(DateTime dateTime, String timeZone) {
         if (dateTime == null) return null;
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(timeZone));
@@ -35,6 +38,8 @@ public class DateTimeUtil {
     }
 
     public static String toDateString(String dateStringWithTimezone) {
-        return Instant.parse(dateStringWithTimezone).toDateTime(DateTimeZone.getDefault()).toString("yyyy-MM-dd");
+        return Instant.parse(dateStringWithTimezone)
+                .toDateTime(IST)
+                .toString("yyyy-MM-dd");
     }
 }
