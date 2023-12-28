@@ -70,6 +70,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: "successful, a page of subjects"
@@ -104,6 +112,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -134,6 +150,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -168,6 +192,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -205,6 +237,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -230,6 +270,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -283,6 +331,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: "successful, a page of program enrolments"
@@ -317,6 +373,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -347,6 +411,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -384,6 +456,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -409,6 +489,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -463,6 +551,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: "successful, a page of program encounters"
@@ -497,6 +593,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -527,6 +631,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -564,6 +676,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -589,6 +709,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -652,6 +780,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: "successful, a page of subject encounters"
@@ -686,6 +822,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -716,6 +860,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -750,6 +902,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -787,6 +947,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: successful
@@ -812,6 +980,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
@@ -867,6 +1043,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       responses:
         "200":
           description: "successful, a page of group subject"
@@ -890,6 +1074,14 @@ paths:
           schema:
             type: string
             description: token provided by cognito
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
       requestBody:
         content:
           application/json:
