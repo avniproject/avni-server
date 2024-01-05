@@ -76,6 +76,15 @@ tunnel-prod-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.read.openchs.org
 tunnel-lfe-prod-db:
 	make tunnel-db host=avni-lfe-prod dbServer=prod-db2.cdsbgtdqfjhs.ap-south-1.rds.amazonaws.com
+tunnel-staging-db:
+	make tunnel-db host=avni-staging dbServer=stagingdb.openchs.org
+
+dump-org-data-prerelease:
+	make dump-org-data dbRole=$(dbRole) prefix=prerelease
+dump-org-data-prod:
+	make dump-org-data dbRole=$(dbRole) prefix=prod
+dump-org-data-staging:
+	make dump-org-data dbRole=$(dbRole) prefix=staging
 
 dump-org-data:
 ifndef dbRole
@@ -86,11 +95,15 @@ endif
 		--dbname=openchs \
 		--username=openchs \
 		--role=$(dbRole) \
-		--file=/Users/vsingh/projects/avni/avni-db-dumps/prod-$(dbRole).sql \
+		--file=~/projects/avni/avni-db-dumps/$(prefix)-$(dbRole).sql \
 		--enable-row-security --verbose --schema=public --host=localhost \
 		--exclude-table-data=audit \
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
 		--exclude-table-data='scheduled_job_run' \
 		--exclude-table-data='qrtz_*' \
-		--exclude-table-data='batch_*'
+		--exclude-table-data='batch_*' \
+		--exclude-table-data='public.individual_copy' \
+		--exclude-table-data='public.program_enrolment_copy' \
+		--exclude-table-data='public.encounter_copy' \
+		--exclude-table-data='public.program_encounter_copy'
