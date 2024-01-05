@@ -9,6 +9,10 @@ import java.util.UUID;
 public class SubjectBuilder {
     private final Individual individual = new Individual();
 
+    public SubjectBuilder() {
+        this.withUUID(UUID.randomUUID().toString());
+    }
+
     public Individual build() {
         return individual;
     }

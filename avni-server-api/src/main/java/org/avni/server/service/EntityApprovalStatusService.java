@@ -19,9 +19,9 @@ import static org.avni.server.domain.EntityApprovalStatus.EntityType.*;
 
 @Service
 public class EntityApprovalStatusService implements NonScopeAwareService {
-    private EntityApprovalStatusRepository entityApprovalStatusRepository;
-    private ApprovalStatusRepository approvalStatusRepository;
-    private Map<EntityApprovalStatus.EntityType, TransactionalDataRepository> typeMap = new HashMap<>();
+    private final EntityApprovalStatusRepository entityApprovalStatusRepository;
+    private final ApprovalStatusRepository approvalStatusRepository;
+    private final Map<EntityApprovalStatus.EntityType, TransactionalDataRepository> typeMap = new HashMap<>();
 
     @Autowired
     public EntityApprovalStatusService(EntityApprovalStatusRepository entityApprovalStatusRepository, ApprovalStatusRepository approvalStatusRepository, IndividualRepository individualRepository, EncounterRepository encounterRepository, ChecklistItemRepository checklistItemRepository, ProgramEncounterRepository programEncounterRepository, ProgramEnrolmentRepository programEnrolmentRepository) {
@@ -58,7 +58,7 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
 
         CHSEntity chsEntity = this.typeMap.get(entityType).findByUuid(request.getEntityUuid());
         updateIndividualAndSyncAttributes(chsEntity, entityApprovalStatus, entityType);
-        return entityApprovalStatusRepository.save(entityApprovalStatus);
+        return entityApprovalStatusRepository.saveEAS(entityApprovalStatus);
     }
 
     public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid, FormMapping formMapping) {
@@ -87,7 +87,7 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         entityApprovalStatus.setAutoApproved(false);
         CHSEntity chsEntity = this.typeMap.get(entityType).findEntity(entityId);
         updateIndividualAndSyncAttributes(chsEntity, entityApprovalStatus, entityType);
-        entityApprovalStatusRepository.save(entityApprovalStatus);
+        entityApprovalStatusRepository.saveEAS(entityApprovalStatus);
     }
 
     private void updateIndividualAndSyncAttributes(CHSEntity entity, EntityApprovalStatus entityApprovalStatus, EntityApprovalStatus.EntityType entityType) {
@@ -168,5 +168,4 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return entityApprovalStatusRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
     }
-
 }
