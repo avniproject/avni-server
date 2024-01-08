@@ -95,7 +95,7 @@ endif
 		--dbname=openchs \
 		--username=openchs \
 		--role=$(dbRole) \
-		--file=~/projects/avni/avni-db-dumps/$(prefix)-$(dbRole).sql \
+		--file=$(HOME)/projects/avni/avni-db-dumps/$(prefix)-$(dbRole).sql \
 		--enable-row-security --verbose --schema=public --host=localhost \
 		--exclude-table-data=audit \
 		--exclude-table-data='public.sync_telemetry' \

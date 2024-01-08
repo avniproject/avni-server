@@ -5,6 +5,7 @@ include makefiles/staging.mk
 include makefiles/prerelease.mk
 include makefiles/util.mk
 include makefiles/externalDB.mk
+include makefiles/prod.mk
 
 help:
 	@IFS=$$'\n' ; \
