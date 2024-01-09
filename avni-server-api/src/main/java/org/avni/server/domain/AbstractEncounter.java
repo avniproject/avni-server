@@ -2,9 +2,9 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.avni.server.common.dbSchema.ColumnNames;
+import org.avni.server.geo.Point;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.avni.server.geo.Point;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -54,6 +54,10 @@ public class AbstractEncounter extends SyncAttributeEntity {
     @Column(name = "address_id")
     private Long addressId;
 
+    @JoinColumn(name = "filled_by_id")
+    @ManyToOne(targetEntity = User.class, fetch = FetchType.LAZY)
+    private User filledBy;
+
     public EncounterType getEncounterType() {
         return encounterType;
     }
@@ -65,7 +69,10 @@ public class AbstractEncounter extends SyncAttributeEntity {
         return encounterDateTime;
     }
 
-    public void setEncounterDateTime(DateTime encounterDateTime) {
+    public void setEncounterDateTime(DateTime encounterDateTime, User currentUser) {
+        if (this.encounterDateTime == null && encounterDateTime != null) {
+            this.filledBy = currentUser;
+        }
         this.encounterDateTime = encounterDateTime;
     }
 
@@ -185,4 +192,12 @@ public class AbstractEncounter extends SyncAttributeEntity {
         this.addressId = addressId;
     }
 
+    @JsonIgnore
+    public User getFilledBy() {
+        return filledBy;
+    }
+
+    public void setFilledBy(User filledBy) {
+        this.filledBy = filledBy;
+    }
 }

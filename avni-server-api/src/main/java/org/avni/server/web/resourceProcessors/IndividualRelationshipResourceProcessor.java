@@ -4,7 +4,7 @@ import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 
-public class IndividualRelationshipResourceProcessor implements ResourceProcessor<IndividualRelationship>{
+public class IndividualRelationshipResourceProcessor extends ResourceProcessor<IndividualRelationship>{
     @Override
     public Resource<IndividualRelationship> process(Resource<IndividualRelationship> resource) {
         IndividualRelationship individualRelationship = resource.getContent();
@@ -12,6 +12,7 @@ public class IndividualRelationshipResourceProcessor implements ResourceProcesso
         resource.add(new Link(individualRelationship.getRelationship().getUuid(), "relationshipTypeUUID"));
         resource.add(new Link(individualRelationship.getIndividuala().getUuid(), "individualAUUID"));
         resource.add(new Link(individualRelationship.getIndividualB().getUuid(), "individualBUUID"));
+        addAuditFields(individualRelationship, resource);
         return resource;
     }
 }

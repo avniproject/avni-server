@@ -42,7 +42,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final EncounterRepository encounterRepository;
     private final ObservationService observationService;
     private final UserService userService;
-    private Bugsnag bugsnag;
+    private final Bugsnag bugsnag;
     private final EncounterService encounterService;
     private final ScopeBasedSyncService<Encounter> scopeBasedSyncService;
     private final FormMappingService formMappingService;
@@ -136,7 +136,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (encounter.isCompleted() && request.isPlanned())
             return null;
 
-        encounter.setEncounterDateTime(request.getEncounterDateTime());
+        encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
         encounter.setIndividual(individual);
         encounter.setEncounterType(encounterType);
         encounter.setObservations(observationService.createObservations(request.getObservations()));

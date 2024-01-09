@@ -52,12 +52,13 @@ public class EncounterService implements ScopeAwareService<Encounter> {
     private final EncounterSearchRepository encounterSearchRepository;
     private final FormMappingService formMappingService;
     private final AccessControlService accessControlService;
-    private ConceptRepository conceptRepository;
-    private MediaObservationService mediaObservationService;
+    private final ConceptRepository conceptRepository;
+    private final MediaObservationService mediaObservationService;
+    private final UserService userService;
 
     @Autowired
     public EncounterService(EncounterRepository encounterRepository, ObservationService observationService, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterSearchRepository encounterSearchRepository, AccessControlService accessControlService
-            , FormMappingService formMappingService, ConceptRepository conceptRepository, MediaObservationService mediaObservationService) {
+            , FormMappingService formMappingService, ConceptRepository conceptRepository, MediaObservationService mediaObservationService, UserService userService) {
         this.encounterRepository = encounterRepository;
         this.observationService = observationService;
         this.individualRepository = individualRepository;
@@ -67,6 +68,7 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         this.accessControlService = accessControlService;
         this.conceptRepository = conceptRepository;
         this.mediaObservationService = mediaObservationService;
+        this.userService = userService;
     }
 
     public EncounterContract getEncounterByUuid(String uuid) {
@@ -160,7 +162,6 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         Encounter encounter = new Encounter();
         encounter.setEncounterType(encounterType);
         encounter.setIndividual(individual);
-        encounter.setEncounterDateTime(null);
         encounter.setUuid(UUID.randomUUID().toString());
         encounter.setVoided(false);
         encounter.setObservations(new ObservationCollection());
@@ -231,7 +232,7 @@ public class EncounterService implements ScopeAwareService<Encounter> {
             encounter.setCancelLocation(Point.fromMap((Map<String, Double>) request.get(CANCEL_LOCATION)));
 
         if (request.containsKey(ENCOUNTER_DATE_TIME))
-            encounter.setEncounterDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(ENCOUNTER_DATE_TIME)));
+            encounter.setEncounterDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(ENCOUNTER_DATE_TIME)), userService.getCurrentUser());
 
         if (request.containsKey(EARLIEST_SCHEDULED_DATE))
             encounter.setEarliestVisitDateTime(DateTimeUtil.parseNullableDateTime((String) request.get(EARLIEST_SCHEDULED_DATE)));

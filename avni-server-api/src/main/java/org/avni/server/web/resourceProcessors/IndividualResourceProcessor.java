@@ -4,8 +4,7 @@ import org.avni.server.domain.Individual;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 
-public class IndividualResourceProcessor implements ResourceProcessor<Individual>{
-
+public class IndividualResourceProcessor extends ResourceProcessor<Individual> {
     @Override
     public Resource<Individual> process(Resource<Individual> resource) {
         Individual individual = resource.getContent();
@@ -16,9 +15,8 @@ public class IndividualResourceProcessor implements ResourceProcessor<Individual
         if (individual.getGender() != null) {
             resource.add(new Link(individual.getGender().getUuid(), "genderUUID"));
         }
-        if (individual.getSubjectType() != null) {
-            resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
-        }
+        resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
+        addAuditFields(individual, resource);
         return resource;
     }
 }

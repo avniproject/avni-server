@@ -10,6 +10,7 @@ import org.avni.server.geo.Point;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.MediaObservationService;
+import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.api.ApiEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
@@ -48,9 +49,10 @@ public class GeneralEncounterApiController {
     private final EncounterService encounterService;
     private final MediaObservationService mediaObservationService;
     private final AccessControlService accessControlService;
+    private final UserService userService;
 
     @Autowired
-    public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
+    public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService, UserService userService) {
         this.conceptService = conceptService;
         this.encounterRepository = encounterRepository;
         this.conceptRepository = conceptRepository;
@@ -59,6 +61,7 @@ public class GeneralEncounterApiController {
         this.encounterService = encounterService;
         this.mediaObservationService = mediaObservationService;
         this.accessControlService = accessControlService;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/api/encounters", method = RequestMethod.GET)
@@ -193,7 +196,7 @@ public class GeneralEncounterApiController {
         encounter.setEncounterType(encounterType);
         encounter.setEncounterLocation(request.getEncounterLocation());
         encounter.setCancelLocation(request.getCancelLocation());
-        encounter.setEncounterDateTime(request.getEncounterDateTime());
+        encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
         encounter.setEarliestVisitDateTime(request.getEarliestScheduledDate());
         encounter.setMaxVisitDateTime(request.getMaxScheduledDate());
         encounter.setCancelDateTime(request.getCancelDateTime());

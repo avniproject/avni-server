@@ -4,8 +4,7 @@ import org.avni.server.domain.GroupSubject;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 
-public class GroupSubjectResourceProcessor implements ResourceProcessor<GroupSubject>{
-
+public class GroupSubjectResourceProcessor extends ResourceProcessor<GroupSubject>{
     @Override
     public Resource<GroupSubject> process(Resource<GroupSubject> resource) {
         GroupSubject groupSubject = resource.getContent();
@@ -13,5 +12,6 @@ public class GroupSubjectResourceProcessor implements ResourceProcessor<GroupSub
         resource.add(new Link(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));
         resource.add(new Link(groupSubject.getMemberSubject().getUuid(), "memberSubjectUUID"));
         resource.add(new Link(groupSubject.getGroupRole().getUuid(), "groupRoleUUID"));
+        addAuditFields(groupSubject, resource);
         return resource;
     }}

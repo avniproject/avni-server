@@ -4,13 +4,14 @@ import org.avni.server.domain.ProgramEncounter;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 
-public class ProgramEncounterResourceProcessor implements ResourceProcessor<ProgramEncounter>{
+public class ProgramEncounterResourceProcessor extends ResourceProcessor<ProgramEncounter> {
     @Override
     public Resource<ProgramEncounter> process(Resource<ProgramEncounter> resource) {
         ProgramEncounter programEncounter = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(programEncounter.getEncounterType().getUuid(), "encounterTypeUUID"));
         resource.add(new Link(programEncounter.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        addAuditFields(programEncounter, resource);
         return resource;
     }
 }

@@ -8,6 +8,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.ProgramEncounterService;
+import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.api.ApiProgramEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
@@ -41,9 +42,10 @@ public class ProgramEncounterApiController {
     private final ProgramEncounterService programEncounterService;
     private final MediaObservationService mediaObservationService;
     private final AccessControlService accessControlService;
+    private final UserService userService;
 
     @Autowired
-    public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
+    public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService, UserService userService) {
         this.programEncounterRepository = programEncounterRepository;
         this.conceptRepository = conceptRepository;
         this.conceptService = conceptService;
@@ -52,6 +54,7 @@ public class ProgramEncounterApiController {
         this.programEncounterService = programEncounterService;
         this.mediaObservationService = mediaObservationService;
         this.accessControlService = accessControlService;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/api/programEncounters", method = RequestMethod.GET)
@@ -177,7 +180,7 @@ public class ProgramEncounterApiController {
         encounter.setEncounterType(encounterType);
         encounter.setEncounterLocation(request.getEncounterLocation());
         encounter.setCancelLocation(request.getCancelLocation());
-        encounter.setEncounterDateTime(request.getEncounterDateTime());
+        encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
         encounter.setEarliestVisitDateTime(request.getEarliestScheduledDate());
         encounter.setMaxVisitDateTime(request.getMaxScheduledDate());
         encounter.setCancelDateTime(request.getCancelDateTime());

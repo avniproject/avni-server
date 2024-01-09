@@ -4,6 +4,7 @@ import org.avni.server.domain.AbstractEncounter;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.importer.batch.csv.writer.header.CommonEncounterHeaders;
 import org.avni.server.importer.batch.model.Row;
+import org.avni.server.service.UserService;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -14,18 +15,18 @@ import java.util.List;
 @Component
 public class BasicEncounterCreator {
     private final LocationCreator locationCreator;
-    private DateCreator dateCreator;
-    private EncounterTypeCreator encounterTypeCreator;
+    private final EncounterTypeCreator encounterTypeCreator;
+    private final UserService userService;
 
     @Autowired
-    public BasicEncounterCreator(EncounterTypeCreator encounterTypeCreator) {
+    public BasicEncounterCreator(EncounterTypeCreator encounterTypeCreator, UserService userService) {
         this.encounterTypeCreator = encounterTypeCreator;
+        this.userService = userService;
         this.locationCreator = new LocationCreator();
-        this.dateCreator = new DateCreator();
     }
 
     public AbstractEncounter updateEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs) throws Exception {
-
+        DateCreator dateCreator = new DateCreator();
         LocalDate earliestVisitDate = dateCreator.getDate(
                 row,
                 CommonEncounterHeaders.earliestVisitDate,
@@ -46,7 +47,7 @@ public class BasicEncounterCreator {
                 CommonEncounterHeaders.visitDate,
                 allErrorMsgs, String.format("%s is mandatory", CommonEncounterHeaders.visitDate
                 ));
-        if (visitDate != null) basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay());
+        if (visitDate != null) basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
 
         basicEncounter.setEncounterLocation(locationCreator.getLocation(row, CommonEncounterHeaders.encounterLocation, allErrorMsgs));
         basicEncounter.setCancelLocation(locationCreator.getLocation(row, CommonEncounterHeaders.cancelLocation, allErrorMsgs));

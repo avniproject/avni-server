@@ -1,13 +1,9 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.GroupRepository;
-import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.*;
-
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
 import org.avni.server.web.validation.ValidationException;
@@ -20,21 +16,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
 
 @Service
 public class UserService implements NonScopeAwareService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
-    private final OrganisationRepository organisationRepository;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, OrganisationRepository organisationRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
         this.userRepository = userRepository;
-        this.organisationRepository = organisationRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
     }
