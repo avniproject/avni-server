@@ -19,7 +19,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -63,11 +63,8 @@ public class EntityApprovalStatusRepositoryIntegrationTest extends AbstractContr
                 .setStatusDateTime(new DateTime())
                 .setEntityId(subject.getId())
                 .setIndividual(subject).build();
-        try {
-            entityApprovalStatusRepository.saveEAS(entityApprovalStatus2);
-            fail();
-        } catch (RuntimeException re) {
-        }
+
+        assertNull(entityApprovalStatusRepository.saveEAS(entityApprovalStatus2));
     }
 
     @Test
@@ -79,7 +76,7 @@ public class EntityApprovalStatusRepositoryIntegrationTest extends AbstractContr
                 .setStatusDateTime(new DateTime())
                 .setEntityId(subject.getId())
                 .setIndividual(subject).build();
-        entityApprovalStatusRepository.saveEAS(entityApprovalStatus2);
+        assertNotNull(entityApprovalStatusRepository.saveEAS(entityApprovalStatus2));
 
         EntityApprovalStatus entityApprovalStatus3 = new EntityApprovalStatusBuilder()
                 .setEntityType(EntityApprovalStatus.EntityType.Subject)
@@ -87,6 +84,6 @@ public class EntityApprovalStatusRepositoryIntegrationTest extends AbstractContr
                 .setStatusDateTime(new DateTime())
                 .setEntityId(subject.getId())
                 .setIndividual(subject).build();
-        entityApprovalStatusRepository.saveEAS(entityApprovalStatus3);
+        assertNotNull(entityApprovalStatusRepository.saveEAS(entityApprovalStatus3));
     }
 }

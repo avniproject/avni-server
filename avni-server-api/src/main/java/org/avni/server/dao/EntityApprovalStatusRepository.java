@@ -80,8 +80,11 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
 
     default EntityApprovalStatus saveEAS(EntityApprovalStatus entityToSave) {
         EntityApprovalStatus latestEAS = this.findFirstByEntityIdAndEntityTypeAndIsVoidedFalseOrderByStatusDateTimeDesc(entityToSave.getEntityId(), entityToSave.getEntityType());
-        if (latestEAS != null && latestEAS.getApprovalStatus().getStatus().equals(entityToSave.getApprovalStatus().getStatus()))
-            throw new RuntimeException(String.format("The latest approval for this entity has the same latest status. %s %s %s", entityToSave.getEntityType(), entityToSave.getEntityId(), entityToSave.getApprovalStatus().getStatus()));
+        if (latestEAS != null && latestEAS.getApprovalStatus().getStatus().equals(entityToSave.getApprovalStatus().getStatus())) {
+            return null;
+            // check the number clients on version < 6.1 before uncommenting
+//            throw new RuntimeException(String.format("The latest approval for this entity has the same latest status. %s %s %s", entityToSave.getEntityType(), entityToSave.getEntityId(), entityToSave.getApprovalStatus().getStatus()));
+        }
         return this.save(entityToSave);
     }
 }

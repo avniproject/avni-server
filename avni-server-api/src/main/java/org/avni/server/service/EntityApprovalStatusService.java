@@ -34,7 +34,7 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
         this.typeMap.put(ProgramEnrolment, programEnrolmentRepository);
     }
 
-    public EntityApprovalStatus save(EntityApprovalStatusRequest request) {
+    public void save(EntityApprovalStatusRequest request) {
         EntityApprovalStatus entityApprovalStatus = entityApprovalStatusRepository.findByUuid(request.getUuid());
         if (entityApprovalStatus == null) {
             entityApprovalStatus = new EntityApprovalStatus();
@@ -58,7 +58,7 @@ public class EntityApprovalStatusService implements NonScopeAwareService {
 
         CHSEntity chsEntity = this.typeMap.get(entityType).findByUuid(request.getEntityUuid());
         updateIndividualAndSyncAttributes(chsEntity, entityApprovalStatus, entityType);
-        return entityApprovalStatusRepository.saveEAS(entityApprovalStatus);
+        entityApprovalStatusRepository.saveEAS(entityApprovalStatus);
     }
 
     public void createStatus(EntityApprovalStatus.EntityType entityType, Long entityId, ApprovalStatus.Status status, String entityTypeUuid, FormMapping formMapping) {
