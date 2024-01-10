@@ -10,10 +10,11 @@ import java.util.Set;
 import java.util.UUID;
 
 public class SubjectTypeBuilder {
-    private SubjectType subjectType;
+    private final SubjectType subjectType;
 
     public SubjectTypeBuilder() {
         subjectType = new SubjectType();
+        this.setUuid(UUID.randomUUID().toString());
     }
 
     public SubjectTypeBuilder(SubjectType subjectType) {
