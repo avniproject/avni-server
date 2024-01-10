@@ -39,3 +39,6 @@ ifndef orgMedia
 	exit 1
 endif
 	open "https://s3.console.aws.amazon.com/s3/buckets/staging-user-media?region=ap-south-1&prefix=$(orgMedia)/&showversions=false"
+
+open-cognito-staging:
+	open https://ap-south-1.console.aws.amazon.com/cognito/v2/idp/user-pools/ap-south-1_hWEOvjZUH/users?region=ap-south-1
