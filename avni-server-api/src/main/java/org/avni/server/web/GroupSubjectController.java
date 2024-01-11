@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class GroupSubjectController extends AbstractController<GroupSubject> implements RestControllerResourceProcessor<GroupSubject> {
 
@@ -163,6 +165,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
         resource.add(new Link(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));
         resource.add(new Link(groupSubject.getMemberSubject().getUuid(), "memberSubjectUUID"));
         resource.add(new Link(groupSubject.getGroupRole().getUuid(), "groupRoleUUID"));
+        addAuditFields(groupSubject, resource);
         return resource;
     }
 

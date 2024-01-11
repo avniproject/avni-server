@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class TaskController extends AbstractController<Task> implements RestControllerResourceProcessor<Task> {
 
@@ -81,6 +83,7 @@ public class TaskController extends AbstractController<Task> implements RestCont
         if (task.getSubject() != null) {
             resource.add(new Link(task.getSubject().getUuid(), "subjectUUID"));
         }
+        addAuditFields(task, resource);
         return resource;
     }
 }

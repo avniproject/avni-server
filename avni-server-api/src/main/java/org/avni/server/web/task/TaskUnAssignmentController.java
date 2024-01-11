@@ -25,16 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.transaction.Transactional;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class TaskUnAssignmentController extends AbstractController<TaskUnAssignment> implements RestControllerResourceProcessor<TaskUnAssignment> {
-
     private final TaskUnAssignmentRepository taskUnAssignmentRepository;
-    private final AccessControlService accessControlService;
 
     @Autowired
-    public TaskUnAssignmentController(TaskUnAssignmentRepository taskUnAssignmentRepository, AccessControlService accessControlService) {
+    public TaskUnAssignmentController(TaskUnAssignmentRepository taskUnAssignmentRepository) {
         this.taskUnAssignmentRepository = taskUnAssignmentRepository;
-        this.accessControlService = accessControlService;
     }
 
     @RequestMapping(value = "/taskUnAssignments", method = RequestMethod.GET)
@@ -61,6 +60,7 @@ public class TaskUnAssignmentController extends AbstractController<TaskUnAssignm
     public Resource<TaskUnAssignment> process(Resource<TaskUnAssignment> resource) {
         TaskUnAssignment taskUnAssignment = resource.getContent();
         resource.add(new Link(taskUnAssignment.getTask().getUuid(), "taskUUID"));
+        addAuditFields(taskUnAssignment, resource);
         return resource;
     }
 }

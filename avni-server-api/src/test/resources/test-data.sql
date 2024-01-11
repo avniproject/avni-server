@@ -88,12 +88,12 @@ ON CONFLICT (uuid) DO NOTHING;
 insert into subject_type(id, uuid, name, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES (1, '9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3', 'Individual', 1, 1, 1, now(), now());
 
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin)
-VALUES (1, 'admin', '5fed2907-df3a-4867-aef5-c87f4c78a31a', 1, 'None', false);
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin)
-VALUES (2, 'demo-admin', '0e53a72c-a109-49f2-918c-9599b266a585', 2, 'None', true);
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin)
-VALUES (3, 'a-demo-admin', 'd84df3cf-cdb4-4309-ad91-e0402f6e326a', 3, 'None', true);
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)
+VALUES (1, 'admin', '5fed2907-df3a-4867-aef5-c87f4c78a31a', 1, 'None', false, 'admin');
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)
+VALUES (2, 'demo-admin', '0e53a72c-a109-49f2-918c-9599b266a585', 2, 'None', true, 'demo-admin');
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)
+VALUES (3, 'a-demo-admin', 'd84df3cf-cdb4-4309-ad91-e0402f6e326a', 3, 'None', true, 'a-demo-admin');
 
 INSERT INTO catchment (id, name, uuid, version, organisation_id, type, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES
@@ -101,11 +101,11 @@ VALUES
 
 INSERT INTO catchment (id, name, uuid, version, organisation_id, type, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES  (2, 'CatchmentY', 'b95cf900-6740-4696-95a1-219db2a8bdcb', 0, 2, 'TypeY', 1, 1, now(), now());
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id)
-VALUES (4, 'demo-user', 'f10b5e79-30ef-45ce-a1f5-f1a5101d7c7f', 2, 'ByCatchment', false, 2);
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id, name)
+VALUES (4, 'demo-user', 'f10b5e79-30ef-45ce-a1f5-f1a5101d7c7f', 2, 'ByCatchment', false, 2, 'demo-user');
 
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id)
-VALUES (5, 'demo-user-2', '55ef8e34-d1a3-44c9-b750-a791b09bb369', 2, 'ByCatchment', false, 1);
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id, name)
+VALUES (5, 'demo-user-2', '55ef8e34-d1a3-44c9-b750-a791b09bb369', 2, 'ByCatchment', false, 1, 'demo-user-2');
 
 INSERT INTO gender (id, name, uuid, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES (1, 'Female', 'ad7d1d14-54fd-45a2-86b7-ea329b744484', 1, 1, 1, 1, now(), now());
@@ -119,8 +119,8 @@ values (1, uuid_generate_v4(), 'All Privileges Group', false, 1, 2, true, 1, 1, 
 insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 select uuid_generate_v4(), id, 1, false, 1, 2, 1, 1, now(), now() from users;
 
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id)
-VALUES (6, 'user-no-access', '07a9641b-e848-4efb-96a4-aea35ddb7ef0', 2, 'ByCatchment', false, 1);
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id, name)
+VALUES (6, 'user-no-access', '07a9641b-e848-4efb-96a4-aea35ddb7ef0', 2, 'ByCatchment', false, 1, 'user-no-access');
 insert into groups (id, uuid, name, is_voided, version, organisation_id, has_all_privileges, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 values (2, uuid_generate_v4(), 'No Access', false, 1, 2, false, 1, 1, now(), now());
 insert into user_group (uuid, user_id, group_id, is_voided, version, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
