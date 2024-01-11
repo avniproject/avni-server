@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class CommentController extends AbstractController<Comment> implements RestControllerResourceProcessor<Comment> {
 
@@ -151,6 +153,7 @@ public class CommentController extends AbstractController<Comment> implements Re
         if (commentThread != null) {
             resource.add(new Link(commentThread.getUuid(), "commentThreadUUID"));
         }
+        addAuditFields(comment, resource);
         return resource;
     }
 

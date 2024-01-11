@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.Collections;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class ProgramEncounterController implements RestControllerResourceProcessor<ProgramEncounter> {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
@@ -161,6 +163,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         resource.removeLinks();
         resource.add(new Link(programEncounter.getEncounterType().getUuid(), "encounterTypeUUID"));
         resource.add(new Link(programEncounter.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        addAuditFields(programEncounter, resource);
         return resource;
     }
 }

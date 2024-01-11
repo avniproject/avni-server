@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class SubjectMigrationController extends AbstractController<SubjectMigration> implements RestControllerResourceProcessor<SubjectMigration>{
     private final SubjectMigrationRepository subjectMigrationRepository;
@@ -94,6 +96,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
             resource.add(new Link(content.getOldAddressLevel().getUuid(), "oldAddressLevelUUID"));
         if (content.getNewAddressLevel() != null)
             resource.add(new Link(content.getNewAddressLevel().getUuid(), "newAddressLevelUUID"));
+        addAuditFields(content, resource);
         return resource;
     }
 

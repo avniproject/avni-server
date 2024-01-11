@@ -12,7 +12,6 @@ public class IndividualRelationshipResourceProcessor extends ResourceProcessor<I
         resource.add(new Link(individualRelationship.getRelationship().getUuid(), "relationshipTypeUUID"));
         resource.add(new Link(individualRelationship.getIndividuala().getUuid(), "individualAUUID"));
         resource.add(new Link(individualRelationship.getIndividualB().getUuid(), "individualBUUID"));
-        addAuditFields(individualRelationship, resource);
         return resource;
     }
 }

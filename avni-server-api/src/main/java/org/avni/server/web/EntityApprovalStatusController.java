@@ -2,7 +2,10 @@ package org.avni.server.web;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
-import org.avni.server.dao.*;
+import org.avni.server.dao.EncounterTypeRepository;
+import org.avni.server.dao.EntityApprovalStatusRepository;
+import org.avni.server.dao.ProgramRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.service.EntityApprovalStatusService;
@@ -14,18 +17,20 @@ import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.Collections;
+
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
 @RestController
 public class EntityApprovalStatusController implements RestControllerResourceProcessor<EntityApprovalStatus> {
@@ -101,6 +106,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
         resource.removeLinks();
         resource.add(new Link(entityApprovalStatusService.getEntityUuid(entityApprovalStatus), "entityUUID"));
         resource.add(new Link(entityApprovalStatus.getApprovalStatus().getUuid(), "approvalStatusUUID"));
+        addAuditFields(entityApprovalStatus, resource);
         return resource;
     }
 

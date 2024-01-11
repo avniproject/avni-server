@@ -11,7 +11,6 @@ public class ProgramEnrolmentResourceProcessor extends ResourceProcessor<Program
         resource.removeLinks();
         resource.add(new Link(programEnrolment.getProgram().getUuid(), "programUUID"));
         resource.add(new Link(programEnrolment.getIndividual().getUuid(), "individualUUID"));
-        addAuditFields(programEnrolment, resource);
         return resource;
     }
 }

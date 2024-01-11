@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 @Transactional
 public class IdentifierAssignmentController extends AbstractController<IdentifierAssignment> implements RestControllerResourceProcessor<IdentifierAssignment> {
@@ -114,6 +116,7 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
             resource.add(new Link(identifierAssignment.getIndividual().getUuid(), "individualUUID"));
         }
         resource.add(new Link(identifierAssignment.getIdentifierSource().getUuid(), "identifierSourceUUID"));
+        addAuditFields(identifierAssignment, resource);
         return resource;
     }
 }

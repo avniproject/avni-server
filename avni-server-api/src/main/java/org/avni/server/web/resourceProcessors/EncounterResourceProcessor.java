@@ -11,7 +11,6 @@ public class EncounterResourceProcessor extends ResourceProcessor<Encounter>{
         resource.removeLinks();
         resource.add(new Link(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
         resource.add(new Link(encounter.getIndividual().getUuid(), "individualUUID"));
-        addAuditFields(encounter, resource);
         return resource;
     }
 }

@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class UserSubjectAssignmentController extends AbstractController<UserSubjectAssignment> implements RestControllerResourceProcessor<UserSubjectAssignment> {
     private static final Logger logger = LoggerFactory.getLogger(UserSubjectAssignmentController.class);
@@ -93,6 +95,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
         UserSubjectAssignment userSubjectAssignment = resource.getContent();
         resource.removeLinks();
         resource.add(new Link(userSubjectAssignment.getSubject().getUuid(), "subjectUUID"));
+        addAuditFields(userSubjectAssignment, resource);
         return resource;
     }
 }

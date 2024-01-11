@@ -36,6 +36,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.Collections;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment> {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
@@ -171,6 +173,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         if (programEnrolment.getProgramOutcome() != null) {
             resource.add(new Link(programEnrolment.getProgramOutcome().getUuid(), "programOutcomeUUID"));
         }
+        addAuditFields(programEnrolment, resource);
         return resource;
     }
 

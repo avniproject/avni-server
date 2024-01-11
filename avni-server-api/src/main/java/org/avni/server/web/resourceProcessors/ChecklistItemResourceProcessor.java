@@ -11,7 +11,6 @@ public class ChecklistItemResourceProcessor extends ResourceProcessor<ChecklistI
         resource.removeLinks();
         resource.add(new Link(checklistItem.getChecklist().getUuid(), "checklistUUID"));
         resource.add(new Link(checklistItem.getChecklistItemDetail().getUuid(), "checklistItemDetailUUID"));
-        addAuditFields(checklistItem, resource);
         return resource;
     }
 }

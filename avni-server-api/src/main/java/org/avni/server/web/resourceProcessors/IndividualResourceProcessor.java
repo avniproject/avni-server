@@ -16,7 +16,6 @@ public class IndividualResourceProcessor extends ResourceProcessor<Individual> {
             resource.add(new Link(individual.getGender().getUuid(), "genderUUID"));
         }
         resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
-        addAuditFields(individual, resource);
         return resource;
     }
 }

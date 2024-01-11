@@ -12,6 +12,5 @@ public class GroupSubjectResourceProcessor extends ResourceProcessor<GroupSubjec
         resource.add(new Link(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));
         resource.add(new Link(groupSubject.getMemberSubject().getUuid(), "memberSubjectUUID"));
         resource.add(new Link(groupSubject.getGroupRole().getUuid(), "groupRoleUUID"));
-        addAuditFields(groupSubject, resource);
         return resource;
     }}

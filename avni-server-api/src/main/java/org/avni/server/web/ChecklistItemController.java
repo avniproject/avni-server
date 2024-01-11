@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.Collections;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class ChecklistItemController extends AbstractController<ChecklistItem> implements RestControllerResourceProcessor<ChecklistItem> {
     private final ObservationService observationService;
@@ -117,6 +119,7 @@ public class ChecklistItemController extends AbstractController<ChecklistItem> i
         if (checklistItem.getChecklistItemDetail() != null) {
             resource.add(new Link(checklistItem.getChecklistItemDetail().getUuid(), "checklistItemDetailUUID"));
         }
+        addAuditFields(checklistItem, resource);
         return resource;
     }
 

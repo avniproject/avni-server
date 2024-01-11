@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.Collections;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter> {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IndividualController.class);
@@ -242,6 +244,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         resource.removeLinks();
         resource.add(new Link(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
         resource.add(new Link(encounter.getIndividual().getUuid(), "individualUUID"));
+        addAuditFields(encounter, resource);
         return resource;
     }
 

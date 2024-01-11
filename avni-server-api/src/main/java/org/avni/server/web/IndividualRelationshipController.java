@@ -32,6 +32,8 @@ import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
 public class IndividualRelationshipController extends AbstractController<IndividualRelationship> implements RestControllerResourceProcessor<IndividualRelationship> {
     private final IndividualRepository individualRepository;
@@ -124,6 +126,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
         resource.add(new Link(individualRelationship.getRelationship().getUuid(), "relationshipTypeUUID"));
         resource.add(new Link(individualRelationship.getIndividuala().getUuid(), "individualAUUID"));
         resource.add(new Link(individualRelationship.getIndividualB().getUuid(), "individualBUUID"));
+        addAuditFields(individualRelationship, resource);
         return resource;
     }
 

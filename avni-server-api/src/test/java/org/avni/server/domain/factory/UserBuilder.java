@@ -56,6 +56,7 @@ public class UserBuilder {
         String placeholder = UUID.randomUUID().toString();
         user.setCreatedDateTime(DateTime.now());
         user.setLastModifiedDateTime(DateTime.now());
+        user.setName(placeholder);
         return userName(placeholder).phoneNumber(placeholder.substring(0, 10)).withUuid(placeholder).withOperatingIndividualScope(OperatingIndividualScope.None);
     }
 

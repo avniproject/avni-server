@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 import static org.springframework.data.jpa.domain.Specifications.where;
 
 @RestController
@@ -328,6 +329,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         if (individual.getSubjectType() != null) {
             resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
         }
+        addAuditFields(individual, resource);
         return resource;
     }
 

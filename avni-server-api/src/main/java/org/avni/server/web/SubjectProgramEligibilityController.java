@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.util.Collections;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 
 @RestController
 public class SubjectProgramEligibilityController extends AbstractController<SubjectProgramEligibility> implements RestControllerResourceProcessor<SubjectProgramEligibility> {
@@ -115,6 +117,7 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
         resource.removeLinks();
         resource.add(new Link(subjectProgramEligibility.getSubject().getUuid(), "subjectUUID"));
         resource.add(new Link(subjectProgramEligibility.getProgram().getUuid(), "programUUID"));
+        addAuditFields(subjectProgramEligibility, resource);
         return resource;
     }
 
