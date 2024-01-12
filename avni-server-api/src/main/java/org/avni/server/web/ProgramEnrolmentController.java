@@ -37,6 +37,7 @@ import javax.transaction.Transactional;
 import java.util.Collections;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addUserFields;
 
 @RestController
 public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment> {
@@ -48,11 +49,10 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     private final ProgramRepository programRepository;
     private final ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService;
     private final FormMappingService formMappingService;
-    private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
 
     @Autowired
-    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService) {
+    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
         this.projectionFactory = projectionFactory;
@@ -60,7 +60,6 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         this.programRepository = programRepository;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
-        this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
     }
 
@@ -176,5 +175,4 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         addAuditFields(programEnrolment, resource);
         return resource;
     }
-
 }

@@ -35,6 +35,7 @@ import javax.transaction.Transactional;
 import java.util.Collections;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addUserFields;
 
 @RestController
 public class EncounterController extends AbstractController<Encounter> implements RestControllerResourceProcessor<Encounter> {
@@ -245,7 +246,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         resource.add(new Link(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
         resource.add(new Link(encounter.getIndividual().getUuid(), "individualUUID"));
         addAuditFields(encounter, resource);
+        addUserFields(encounter.getFilledBy(), resource, "filledBy");
         return resource;
     }
-
 }

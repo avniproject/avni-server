@@ -9,6 +9,7 @@ public class UserInfoContract {
     protected UserInfoContract() {
     }
 
+    private String userUUID;
     private String username;
     private String organisationName;
     private Long organisationId;
@@ -102,5 +103,13 @@ public class UserInfoContract {
 
     public void setSyncSettings(JsonObject syncSettings) {
         this.syncSettings = syncSettings;
+    }
+
+    public String getUserUUID() {
+        return userUUID;
+    }
+
+    public void setUserUUID(String userUUID) {
+        this.userUUID = userUUID;
     }
 }

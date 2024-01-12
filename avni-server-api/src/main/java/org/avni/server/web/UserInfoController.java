@@ -113,7 +113,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
                 .map(GroupPrivilegeContract::fromEntity)
                 .distinct()
                 .collect(Collectors.toList());
-        return new UserInfoClientContract(user.getUsername(),
+        UserInfoClientContract userInfoClientContract = new UserInfoClientContract(user.getUsername(),
                 organisation.getName(),
                 organisation.getId(),
                 organisation.getEffectiveUsernameSuffix(),
@@ -123,6 +123,8 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
                 catchmentName,
                 user.getSyncSettings(),
                 groupPrivilegeContractList);
+        userInfoClientContract.setUserUUID(user.getUuid());
+        return userInfoClientContract;
     }
 
     @RequestMapping(value = "/me", method = RequestMethod.POST)
