@@ -84,12 +84,7 @@ commands:
       availability-zone:
         type: string
         default: ap-south-1a
-      role-arn:
-        type: string
-        default: "arn:aws:iam::730335671779:role/avni_circleci_instance_connect"
     steps:
-      - aws-cli/setup:
-          role-arn: << parameters.role-arn >>
       - run: rm -rf /tmp/temp_rsa_key*
       - run: ssh-keygen -b 2048 -t rsa -f /tmp/temp_rsa_key -q -N ""
       - run: eval `ssh-agent -s`
@@ -283,6 +278,9 @@ jobs:
       - image: cimg/deploy:2023.09
     working_directory: ~/
     steps:
+      - aws-cli/setup:
+          role_arn: "arn:aws:iam::730335671779:role/avni_circleci_instance_connect"
+          region: "ap-south-1"
       - setup-rwb-server-access:
           instance-id: "i-00b50ac6e8413fdca"
           availability-zone: "ap-south-1b"
