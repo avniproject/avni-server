@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  aws-cli: circleci/aws-cli@4.1.1
+
 commands:
   deploy:
     description: Deployment of server
@@ -70,6 +73,34 @@ commands:
 
       - run: rm ~/.vault-pass.txt
 
+  setup-rwb-server-access:
+    description: Generate and copy temporary keys to server
+    parameters:
+      instance-id:
+        type: string
+      os-user:
+        type: string
+        default: ubuntu
+      availability-zone:
+        type: string
+        default: ap-south-1a
+      role-arn:
+        type: string
+        default: "arn:aws:iam::730335671779:role/avni_circleci_instance_connect"
+    steps:
+      - aws-cli/setup:
+          role-arn: << parameters.role-arn >>
+      - run: rm -rf /tmp/temp_rsa_key*
+      - run: ssh-keygen -b 2048 -t rsa -f /tmp/temp_rsa_key -q -N ""
+      - run: eval `ssh-agent -s`
+      - run: ssh-add /tmp/temp_rsa_key
+      - run: aws ec2-instance-connect send-ssh-public-key \
+              --instance-id << parameters.instance-id >> \
+              --availability-zone << parameters.availability-zone >> \
+              --instance-os-user << parameters.os-user >> \
+              --no-paginate \
+              --ssh-public-key file:///tmp/temp_rsa_key.pub \
+              --output text | head -1
 jobs:
   test:
     docker:
@@ -246,7 +277,29 @@ jobs:
     steps:
       - deploy_as_service:
           env: "prod"
-          
+
+  RWB_STAGING_deploy:
+    docker:
+      - image: cimg/deploy:2023.09
+    working_directory: ~/
+    steps:
+      - setup-rwb-server-access:
+          instance-id: "i-00b50ac6e8413fdca"
+          availability-zone: "ap-south-1b"
+      - deploy_as_service:
+          env: "rwb-staging"
+
+  RWB_PROD_deploy:
+    docker:
+      - image: cimg/deploy:2023.09
+    working_directory: ~/
+    steps:
+      - setup-rwb-server-access:
+          instance-id: "i-015a3839bfe137346"
+          availability-zone: "ap-south-1a"
+      - deploy_as_service:
+          env: "rwb-staging"
+
 tags_filter: &tags_filter
   filters:
     tags:
@@ -312,6 +365,26 @@ workflows:
         context: prod-deploy
         requires:
           - PROD_approve
+    - RWB_STAGING_approve:
+        type: approval
+        requires:
+          - build
+    - RWB_STAGING_deploy:
+        context:
+          - RWB_AWS_OIDC
+          - non-prod-deploy
+        requires:
+          - RWB_STAGING_approve
+    - RWB_PROD_approve:
+        type: approval
+        requires:
+          - build
+    - RWB_PROD_deploy:
+        context:
+          - RWB_AWS_OIDC
+          - prod-deploy
+        requires:
+          - RWB_PROD_approve
 
 notify:
   webhooks:
