@@ -287,6 +287,9 @@ jobs:
       - image: cimg/deploy:2023.09
     working_directory: ~/
     steps:
+      - aws-cli/setup:
+          role_arn: "arn:aws:iam::730335671779:role/avni_circleci_instance_connect"
+          region: "ap-south-1"
       - setup-server-access:
           instance-id: "i-015a3839bfe137346"
           availability-zone: "ap-south-1a"
