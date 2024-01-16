@@ -73,7 +73,7 @@ commands:
 
       - run: rm ~/.vault-pass.txt
 
-  setup-server-access:
+  setup_server_access:
     description: Generate and copy temporary keys to server
     parameters:
       instance-id:
@@ -276,7 +276,7 @@ jobs:
       - aws-cli/setup:
           role_arn: "arn:aws:iam::730335671779:role/avni_circleci_instance_connect"
           region: "ap-south-1"
-      - setup-server-access:
+      - setup_server_access:
           instance-id: "i-00b50ac6e8413fdca"
           availability-zone: "ap-south-1b"
       - deploy_as_service:
@@ -290,11 +290,11 @@ jobs:
       - aws-cli/setup:
           role_arn: "arn:aws:iam::730335671779:role/avni_circleci_instance_connect"
           region: "ap-south-1"
-      - setup-server-access:
+      - setup_server_access:
           instance-id: "i-015a3839bfe137346"
           availability-zone: "ap-south-1a"
       - deploy_as_service:
-          env: "rwb-staging"
+          env: "rwb-prod"
 
 tags_filter: &tags_filter
   filters:
