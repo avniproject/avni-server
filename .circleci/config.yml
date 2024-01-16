@@ -90,13 +90,7 @@ commands:
       - run: eval `ssh-agent -s`
       - run: ssh-add /tmp/temp_rsa_key
       - run: |
-          aws ec2-instance-connect send-ssh-public-key \\
-              --instance-id << parameters.instance-id >> \\
-              --availability-zone << parameters.availability-zone >> \\
-              --instance-os-user << parameters.os-user >> \\
-              --no-paginate \\
-              --ssh-public-key file:///tmp/temp_rsa_key.pub \\
-              --output text | head -1
+          aws ec2-instance-connect send-ssh-public-key --instance-id << parameters.instance-id >> --availability-zone << parameters.availability-zone >> --instance-os-user << parameters.os-user >> --no-paginate --ssh-public-key file:///tmp/temp_rsa_key.pub --output text | head -1
 jobs:
   test:
     docker:
