@@ -3,6 +3,7 @@ package org.avni.server.service.builder;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,5 +24,9 @@ public class TestProgramEnrolmentService {
         programEnrolment.setAddressId(individual.getAddressLevel().getId());
         programEnrolmentRepository.save(programEnrolment);
         return programEnrolment;
+    }
+
+    public ProgramEnrolment reload(ProgramEnrolment enrolment) {
+        return programEnrolmentRepository.findEntity(enrolment.getId());
     }
 }

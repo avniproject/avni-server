@@ -4,12 +4,15 @@ import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SubjectTreeItemRepository;
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.TransactionalDataRepository;
+import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.program.SubjectProgramEligibility;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -59,8 +62,13 @@ public interface SubjectProgramEligibilityRepository extends TransactionalDataRe
         ) > 0;
     }
 
-    @Override
-    default void voidSubjectsAt(Long addressId) {
+    @Modifying
+    @Query(value = "update subject_program_eligibility e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "from individual i" +
+            " where i.address_id = :addressId and i.id = e.subject_id and e.is_voided = false", nativeQuery = true)
+    void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+    default void voidSubjectItemsAt(AddressLevel address) {
+        this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
 }
 

@@ -1,9 +1,6 @@
 package org.avni.server.dao;
 
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.EncounterType;
-import org.avni.server.domain.ProgramEncounter;
-import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
@@ -177,7 +174,12 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
         }
     }
 
-    @Override
-    default void voidSubjectsAt(Long addressId) {
+    @Modifying
+    @Query(value = "update program_encounter e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "from individual i, program_enrolment pe" +
+            " where i.id = pe.individual_id and i.address_id = :addressId and i.id = pe.individual_id and e.is_voided = false", nativeQuery = true)
+    void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+    default void voidSubjectItemsAt(AddressLevel address) {
+        this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
 }

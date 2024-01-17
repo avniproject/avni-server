@@ -17,7 +17,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.*;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -206,6 +205,10 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         return individual;
     }
 
-    @Query(value = "update individual i set is_voided = true, last_modified_date_time = , last_modified_by_id =  where i.address_id = :addressId", nativeQuery = true)
-    void voidSubjectsAt(Long addressId);
+    @Modifying
+    @Query(value = "update individual i set is_voided = true, last_modified_date_time = (current_timestamp + i.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById where i.address_id = :addressId and i.is_voided = false", nativeQuery = true)
+    void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+    default void voidSubjectItemsAt(AddressLevel address) {
+        this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
+    }
 }

@@ -182,11 +182,18 @@ public class SubjectApiController {
     @DeleteMapping(value = "/api/subjectTree")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
-    public ResponseEntity<DeleteSubjectsResponse> deleteSubjectTree(@RequestBody DeleteSubjectCriteria deleteSubjectCriteria) {
-        deleteSubjectCriteria.getAddressIds().forEach(addressId -> {
-//            individualService.voidSubjectsTree(addressId);
-        });
-        return null;
+    public DeleteSubjectsResponse deleteSubjectTree(@RequestBody DeleteSubjectCriteria deleteSubjectCriteria) {
+        DeleteSubjectsResponse deleteSubjectsResponse = new DeleteSubjectsResponse();
+        for (Long addressId : deleteSubjectCriteria.getAddressIds()) {
+            AddressLevel addressLevel = locationRepository.findById(addressId).orElseGet(null);
+            if (addressLevel == null)
+                deleteSubjectsResponse.addNotFoundAddress(addressId);
+            else {
+                deleteSubjectsResponse.addCompletedAddress(addressLevel);
+                individualService.voidSubjectsTree(addressLevel);
+            }
+        }
+        return deleteSubjectsResponse;
     }
 
     private void updateSubjectDetails(Individual subject, ApiSubjectRequest request) throws ValidationException {

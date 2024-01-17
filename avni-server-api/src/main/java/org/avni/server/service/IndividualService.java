@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -463,9 +464,10 @@ public class IndividualService implements ScopeAwareService<Individual> {
             : Optional.empty();
     }
 
-    public void voidSubjectsTree(Long addressId) {
+    @Transactional
+    public void voidSubjectsTree(AddressLevel address) {
         subjectTreeItemRepositories.forEach(subjectTreeItemRepository -> {
-            subjectTreeItemRepository.voidSubjectsAt(addressId);
+            subjectTreeItemRepository.voidSubjectItemsAt(address);
         });
     }
 }

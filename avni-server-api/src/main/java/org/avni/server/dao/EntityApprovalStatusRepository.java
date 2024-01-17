@@ -1,6 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.domain.Page;
@@ -88,7 +89,12 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
         return this.save(entityToSave);
     }
 
-    @Override
-    default void voidSubjectsAt(Long addressId) {
+    @Modifying
+    @Query(value = "update entity_approval_status e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "from individual i" +
+            " where i.address_id = :addressId and i.id = e.individual_id and e.is_voided = false", nativeQuery = true)
+    void voidSubjectsAt(Long addressId, Long lastModifiedById);
+    default void voidSubjectItemsAt(AddressLevel address) {
+        this.voidSubjectsAt(address.getId(), UserContextHolder.getUserId());
     }
 }

@@ -1,20 +1,18 @@
 package org.avni.server.dao;
 
+import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
-import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,7 +99,7 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
     }
 
     @Override
-    default boolean isEntityChanged(SyncParameters syncParameters){
+    default boolean isEntityChanged(SyncParameters syncParameters) {
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncTypeIdSpecification(syncParameters.getTypeId()))
                 .and(syncStrategySpecification(syncParameters))
@@ -135,7 +133,12 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
         this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, UserContextHolder.getUserId());
     }
 
-    @Override
-    default void voidSubjectsAt(Long addressId) {
+    @Modifying
+    @Query(value = "update program_enrolment e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "from individual i" +
+            " where i.address_id = :addressId and i.id = e.individual_id and e.is_voided = false", nativeQuery = true)
+    void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+    default void voidSubjectItemsAt(AddressLevel address) {
+        this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
 }

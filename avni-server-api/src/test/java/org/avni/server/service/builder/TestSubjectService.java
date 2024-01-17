@@ -21,4 +21,8 @@ public class TestSubjectService {
         individualRepository.save(individual);
         return individual;
     }
+
+    public Individual reload(Individual subject) {
+        return individualRepository.findEntity(subject.getId());
+    }
 }

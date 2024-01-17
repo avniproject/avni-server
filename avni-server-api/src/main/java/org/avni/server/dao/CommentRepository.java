@@ -1,8 +1,12 @@
 package org.avni.server.dao;
 
+import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.Individual;
+import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -33,7 +37,12 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
         ) > 0;
     }
 
-    @Override
-    default void voidSubjectsAt(Long addressId) {
+    @Modifying
+    @Query(value = "update comment e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+            "from individual i" +
+            " where i.address_id = :addressId and i.id = e.subject_id and e.is_voided = false", nativeQuery = true)
+    void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
+    default void voidSubjectItemsAt(AddressLevel address) {
+        this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
     }
 }
