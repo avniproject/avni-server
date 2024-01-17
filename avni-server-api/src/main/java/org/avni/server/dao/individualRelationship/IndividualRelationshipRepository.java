@@ -1,9 +1,6 @@
 package org.avni.server.dao.individualRelationship;
 
-import org.avni.server.dao.FindByLastModifiedDateTime;
-import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
-import org.avni.server.dao.SyncParameters;
-import org.avni.server.dao.TransactionalDataRepository;
+import org.avni.server.dao.*;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
@@ -28,7 +25,7 @@ import static org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil.joinUs
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "individualRelationship", path = "individualRelationship", exported = false)
-public interface IndividualRelationshipRepository extends TransactionalDataRepository<IndividualRelationship>, FindByLastModifiedDateTime<IndividualRelationship>, OperatingIndividualScopeAwareRepository<IndividualRelationship> {
+public interface IndividualRelationshipRepository extends TransactionalDataRepository<IndividualRelationship>, FindByLastModifiedDateTime<IndividualRelationship>, OperatingIndividualScopeAwareRepository<IndividualRelationship>, SubjectTreeItemRepository {
     Page<IndividualRelationship> findByIndividualaAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
@@ -82,10 +79,14 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
     List<IndividualRelationship> findByIndividualaAndIndividualBAndIsVoidedFalse(Individual individualA, Individual individualB);
 
     @Modifying(clearAutomatically = true)
-    @Query(value = "update individual_relationship ir set last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById" +
+    @Query(value = "update individual_relationship ir set last_modified_date_time = (current_timestamp + id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById" +
             " where ir.individual_a_id = :individualId or ir.individual_b_id = :individualId", nativeQuery = true)
-    void setChangedForSync(Long individualId, Date lastModifiedDateTime, Long lastModifiedById);
+    void setChangedForSync(Long individualId, Long lastModifiedById);
     default void setChangedForSync(Individual individual) {
-        this.setChangedForSync(individual.getId(), new Date(), UserContextHolder.getUserId());
+        this.setChangedForSync(individual.getId(), UserContextHolder.getUserId());
+    }
+
+    @Override
+    default void voidSubjectsAt(Long addressId) {
     }
 }

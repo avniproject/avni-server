@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public interface SubjectMigrationRepository extends TransactionalDataRepository<SubjectMigration>, OperatingIndividualScopeAwareRepository<SubjectMigration> {
+public interface SubjectMigrationRepository extends TransactionalDataRepository<SubjectMigration>, OperatingIndividualScopeAwareRepository<SubjectMigration>, SubjectTreeItemRepository {
     default Specification<SubjectMigration> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<SubjectMigration> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> andPredicates = new ArrayList<>();
@@ -83,5 +83,9 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
         ) > 0;
+    }
+
+    @Override
+    default void voidSubjectsAt(Long addressId) {
     }
 }

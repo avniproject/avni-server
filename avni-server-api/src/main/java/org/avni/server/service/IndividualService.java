@@ -3,9 +3,14 @@ package org.avni.server.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.domain.EntityType;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
-import org.avni.server.application.*;
+import org.avni.server.application.FormElement;
+import org.avni.server.application.FormElementType;
+import org.avni.server.application.KeyType;
+import org.avni.server.application.Subject;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
+import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
+import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -25,15 +30,12 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 import javax.persistence.EntityNotFoundException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
 
 
 @Service
@@ -53,8 +55,10 @@ public class IndividualService implements ScopeAwareService<Individual> {
     private final ObjectMapper objectMapper;
     private final AccessControlService accessControlService;
 
+    private final List<SubjectTreeItemRepository> subjectTreeItemRepositories;
+
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -68,6 +72,8 @@ public class IndividualService implements ScopeAwareService<Individual> {
         this.conceptService = conceptService;
         this.accessControlService = accessControlService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
+
+        subjectTreeItemRepositories = Arrays.asList(individualRepository, encounterRepository, programEnrolmentRepository, programEncounterRepository, checklistItemRepository, checklistRepository, entityApprovalStatusRepository, subjectProgramEligibilityRepository, subjectMigrationRepository, individualRelationshipRepository, commentRepository, groupSubjectRepository);
     }
 
     public Individual findByUuid(String uuid) {
@@ -434,7 +440,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
     }
 
     public Individual getIndividual(String subjectId) {
-        Individual individual = null;
+        Individual individual;
         if (RequestUtils.isValidUUID(subjectId)) {
             individual = individualRepository.findByUuid(subjectId);
         } else {
@@ -457,7 +463,9 @@ public class IndividualService implements ScopeAwareService<Individual> {
             : Optional.empty();
     }
 
-    public IndividualRepository getIndividualRepository() {
-        return individualRepository;
+    public void voidSubjectsTree(Long addressId) {
+        subjectTreeItemRepositories.forEach(subjectTreeItemRepository -> {
+            subjectTreeItemRepository.voidSubjectsAt(addressId);
+        });
     }
 }

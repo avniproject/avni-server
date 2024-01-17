@@ -34,7 +34,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
     private final ChecklistRepository checklistRepository;
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final UserService userService;
-    private ScopeBasedSyncService<Checklist> scopeBasedSyncService;
+    private final ScopeBasedSyncService<Checklist> scopeBasedSyncService;
 
     @Autowired
     public ChecklistController(ChecklistRepository checklistRepository,

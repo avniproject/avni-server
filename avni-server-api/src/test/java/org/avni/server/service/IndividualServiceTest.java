@@ -32,7 +32,7 @@ public class IndividualServiceTest {
     public void setUp() throws Exception {
         initMocks(this);
         individualService = new IndividualService(individualRepository,
-                null, null, null, null, null, encounterRepository, programEncounterRepository, null, null, null, programEnrolmentRepository);
+                null, null, null, null, null, encounterRepository, programEncounterRepository, null, null, null, programEnrolmentRepository, null, null, null, null, null, null, null);
     }
 
     @Test

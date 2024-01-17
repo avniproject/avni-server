@@ -1,6 +1,7 @@
 package org.avni.server.dao.program;
 
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
+import org.avni.server.dao.SubjectTreeItemRepository;
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.TransactionalDataRepository;
 import org.avni.server.domain.Individual;
@@ -20,7 +21,7 @@ import static org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil.joinUs
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "subjectProgramEligibility", path = "subjectProgramEligibility", exported = false)
-public interface SubjectProgramEligibilityRepository extends TransactionalDataRepository<SubjectProgramEligibility>, OperatingIndividualScopeAwareRepository<SubjectProgramEligibility> {
+public interface SubjectProgramEligibilityRepository extends TransactionalDataRepository<SubjectProgramEligibility>, OperatingIndividualScopeAwareRepository<SubjectProgramEligibility>, SubjectTreeItemRepository {
 
     default Specification<SubjectProgramEligibility> syncStrategySpecification(SyncParameters syncParameters) {
         return (Root<SubjectProgramEligibility> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
@@ -56,6 +57,10 @@ public interface SubjectProgramEligibilityRepository extends TransactionalDataRe
         return count(syncEntityChangedAuditSpecification(syncParameters)
                 .and(syncStrategySpecification(syncParameters))
         ) > 0;
+    }
+
+    @Override
+    default void voidSubjectsAt(Long addressId) {
     }
 }
 

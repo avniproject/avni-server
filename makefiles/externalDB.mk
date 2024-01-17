@@ -1,3 +1,11 @@
+restore-dump-only:
+ifndef dumpFile
+	@echo "Provde the dumpFile variable"
+	exit 1
+else
+	psql -U openchs -d avni_org < $(dumpFile)
+endif
+
 restore-org-dump:
 ifndef dumpFile
 	@echo "Provde the dumpFile variable"
@@ -6,7 +14,7 @@ else
 	sed -i '' 's/from form/from public.form/g' "$(dumpFile)"
 	sed -i '' 's/inner join form/inner join public.form/g' "$(dumpFile)"
 	make _clean_db _build_db database=avni_org
-	psql -U openchs -d avni_org < $(dumpFile)
+	make restore-dump-only dumpFile=$(dumpFile)
 endif
 
 restore-staging-dump:
@@ -72,8 +80,10 @@ endif
 
 tunnel-prerelease-db:
 	make tunnel-db host=avni-prerelease dbServer=prereleasedb.avniproject.org
-tunnel-prod-db:
+tunnel-prod-read-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.read.openchs.org
+tunnel-prod-db:
+	make tunnel-db host=avni-prod dbServer=serverdb.openchs.org
 tunnel-lfe-prod-db:
 	make tunnel-db host=avni-lfe-prod dbServer=prod-db2.cdsbgtdqfjhs.ap-south-1.rds.amazonaws.com
 tunnel-staging-db:

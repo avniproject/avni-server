@@ -9,9 +9,11 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.api.ApiSubjectRequest;
+import org.avni.server.web.request.api.DeleteSubjectCriteria;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.ResponsePage;
 import org.avni.server.web.response.SubjectResponse;
+import org.avni.server.web.response.api.DeleteSubjectsResponse;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,6 +177,16 @@ public class SubjectApiController {
         subject = individualService.voidSubject(subject);
         return new ResponseEntity<>(SubjectResponse.fromSubject(subject,
                 true, conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/api/subjectTree")
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @ResponseBody
+    public ResponseEntity<DeleteSubjectsResponse> deleteSubjectTree(@RequestBody DeleteSubjectCriteria deleteSubjectCriteria) {
+        deleteSubjectCriteria.getAddressIds().forEach(addressId -> {
+//            individualService.voidSubjectsTree(addressId);
+        });
+        return null;
     }
 
     private void updateSubjectDetails(Individual subject, ApiSubjectRequest request) throws ValidationException {

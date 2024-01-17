@@ -19,14 +19,12 @@ import org.springframework.util.StringUtils;
 import javax.persistence.criteria.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "individual", path = "individual", exported = false)
-public interface IndividualRepository extends TransactionalDataRepository<Individual>, OperatingIndividualScopeAwareRepository<Individual> {
-
+public interface IndividualRepository extends TransactionalDataRepository<Individual>, OperatingIndividualScopeAwareRepository<Individual>, SubjectTreeItemRepository {
     @Override
     default Specification<Individual> syncTypeIdSpecification(Long typeId) {
         return (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
@@ -183,12 +181,12 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     @Query(value = "update individual i set " +
             "sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
             "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
-            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
+            "last_modified_date_time = (current_timestamp + i.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
             "where i.subject_type_id = :subjectTypeId", nativeQuery = true)
-    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Date lastModifiedDateTime, Long lastModifiedById);
+    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Long lastModifiedById);
 
     default void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2) {
-        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, new Date(), UserContextHolder.getUserId());
+        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, UserContextHolder.getUserId());
     }
 
     boolean existsByAddressLevelIdIn(List<Long> addressIds);
@@ -207,4 +205,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         }
         return individual;
     }
+
+    @Query(value = "update individual i set is_voided = true, last_modified_date_time = , last_modified_by_id =  where i.address_id = :addressId", nativeQuery = true)
+    void voidSubjectsAt(Long addressId);
 }

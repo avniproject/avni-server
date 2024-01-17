@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "encounter", path = "encounter", exported = false)
-public interface EncounterRepository extends TransactionalDataRepository<Encounter>, OperatingIndividualScopeAwareRepository<Encounter> {
+public interface EncounterRepository extends TransactionalDataRepository<Encounter>, OperatingIndividualScopeAwareRepository<Encounter>, SubjectTreeItemRepository {
     Page<Encounter> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             Date lastModifiedDateTime, Date now, Pageable pageable);
 
@@ -146,22 +146,26 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
             "address_id = :addressId, " +
             "sync_concept_1_value = :syncAttribute1Value, " +
             "sync_concept_2_value = :syncAttribute2Value, " +
-            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
+            "last_modified_date_time = (current_timestamp + id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
             "where e.individual_id = :individualId", nativeQuery = true)
-    void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value, Date lastModifiedDateTime, Long lastModifiedById);
+    void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value, Long lastModifiedById);
     default void updateSyncAttributesForIndividual(Long individualId, Long addressId, String syncAttribute1Value, String syncAttribute2Value) {
-        this.updateSyncAttributesForIndividual(individualId, addressId, syncAttribute1Value, syncAttribute2Value, new Date(), UserContextHolder.getUserId());
+        this.updateSyncAttributesForIndividual(individualId, addressId, syncAttribute1Value, syncAttribute2Value, UserContextHolder.getUserId());
     }
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update encounter e set " +
             "sync_concept_1_value = CAST((i.observations ->> CAST(:syncAttribute1 as text)) as text), " +
             "sync_concept_2_value = CAST((i.observations ->> CAST(:syncAttribute2 as text)) as text), " +
-            "last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById " +
+            "last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
             "from individual i " +
             "where e.individual_id = i.id and i.subject_type_id = :subjectTypeId", nativeQuery = true)
-    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Date lastModifiedDateTime, Long lastModifiedById);
+    void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2, Long lastModifiedById);
     default void updateConceptSyncAttributesForSubjectType(Long subjectTypeId, String syncAttribute1, String syncAttribute2) {
-        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, new Date(), UserContextHolder.getUserId());
+        this.updateConceptSyncAttributesForSubjectType(subjectTypeId, syncAttribute1, syncAttribute2, UserContextHolder.getUserId());
+    }
+
+    @Override
+    default void voidSubjectsAt(Long addressId) {
     }
 }

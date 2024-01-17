@@ -22,7 +22,7 @@ import java.util.Set;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "txNewChecklistEntity", path = "txNewChecklistEntity", exported = false)
-public interface ChecklistRepository extends TransactionalDataRepository<Checklist>, OperatingIndividualScopeAwareRepository<Checklist> {
+public interface ChecklistRepository extends TransactionalDataRepository<Checklist>, OperatingIndividualScopeAwareRepository<Checklist>, SubjectTreeItemRepository {
 
     Page<Checklist> findByProgramEnrolmentIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
@@ -53,10 +53,14 @@ public interface ChecklistRepository extends TransactionalDataRepository<Checkli
     }
 
     @Modifying(clearAutomatically = true)
-    @Query(value = "update checklist c set last_modified_date_time = :lastModifiedDateTime, last_modified_by_id = :lastModifiedById" +
+    @Query(value = "update checklist c set last_modified_date_time = (current_timestamp + c.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById" +
             " from program_enrolment pe where pe.id = c.program_enrolment_id and pe.individual_id = :individualId", nativeQuery = true)
-    void setChangedForSync(Long individualId, Date lastModifiedDateTime, Long lastModifiedById);
+    void setChangedForSync(Long individualId, Long lastModifiedById);
     default void setChangedForSync(Individual individual) {
-        this.setChangedForSync(individual.getId(), new Date(), UserContextHolder.getUserId());
+        this.setChangedForSync(individual.getId(), UserContextHolder.getUserId());
+    }
+
+    @Override
+    default void voidSubjectsAt(Long addressId) {
     }
 }

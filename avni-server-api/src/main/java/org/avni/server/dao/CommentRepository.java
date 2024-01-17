@@ -12,7 +12,7 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "comment", path = "comment", exported = false)
-public interface CommentRepository extends TransactionalDataRepository<Comment>, FindByLastModifiedDateTime<Comment>, OperatingIndividualScopeAwareRepository<Comment> {
+public interface CommentRepository extends TransactionalDataRepository<Comment>, FindByLastModifiedDateTime<Comment>, OperatingIndividualScopeAwareRepository<Comment>, SubjectTreeItemRepository {
 
     List<Comment> findByIsVoidedFalseAndCommentThreadIdOrderByLastModifiedDateTimeAscIdAsc(Long threadId);
 
@@ -33,4 +33,7 @@ public interface CommentRepository extends TransactionalDataRepository<Comment>,
         ) > 0;
     }
 
+    @Override
+    default void voidSubjectsAt(Long addressId) {
+    }
 }

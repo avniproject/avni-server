@@ -22,7 +22,6 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -42,16 +41,14 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     private final IndividualRepository individualRepository;
     private final LocationRepository locationRepository;
     private final AccessControlService accessControlService;
-    private final AddressLevelTypeRepository addressLevelTypeRepository;
 
     @Autowired
-    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, AddressLevelTypeRepository addressLevelTypeRepository) {
+    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService) {
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.accessControlService = accessControlService;
-        this.addressLevelTypeRepository = addressLevelTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
