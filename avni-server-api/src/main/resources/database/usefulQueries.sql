@@ -829,6 +829,16 @@ where j ->> 'entity' = 'StandardReportCardType'
 order by sync_start_time desc
 limit 100;
 
+-- Sample sql command to show observation field value for individuals
+SELECT id, uuid, observations->'2978117c-a297-4171-99c6-23c1234ca0f8'
+from individual where organisation_id = 12345;
+
+-- Sample sql command to update observation field value for individual
+update individual
+set observations = observations || '{"2978117c-a297-4171-99c6-23c1234ca0f8":"new value"}'::jsonb,
+    last_modified_date_time = now()
+where id = 1234567;
+
 --
 -- Take dump of org data
 
