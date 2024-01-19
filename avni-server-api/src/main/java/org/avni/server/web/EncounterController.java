@@ -15,6 +15,7 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EncounterRequest;
 import org.avni.server.web.request.PointRequest;
+import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.Collections;
+import java.util.List;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addUserFields;
@@ -86,7 +88,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     private void checkForSchedulingCompleteConstraintViolation(EncounterRequest request) {
         if ((request.getEarliestVisitDateTime() != null || request.getMaxVisitDateTime() != null)
-                && (request.getEarliestVisitDateTime() == null || request.getMaxVisitDateTime() == null)
+            && (request.getEarliestVisitDateTime() == null || request.getMaxVisitDateTime() == null)
         ) {
             //violating constraint so notify bugsnag
             bugsnag.notify(new Exception(String.format("ProgramEncounter violating scheduling constraint uuid %s earliest %s max %s", request.getUuid(), request.getEarliestVisitDateTime(), request.getMaxVisitDateTime())));
@@ -158,11 +160,17 @@ public class EncounterController extends AbstractController<Encounter> implement
 
         if (decisions != null) {
             ObservationCollection observationsFromDecisions = observationService
-                    .createObservationsFromDecisions(decisions.getEncounterDecisions());
+                .createObservationsFromDecisions(decisions.getEncounterDecisions());
             if (decisions.isCancel()) {
                 encounter.getCancelObservations().putAll(observationsFromDecisions);
             } else {
                 encounter.getObservations().putAll(observationsFromDecisions);
+            }
+
+            List<Decision> registrationDecisions = decisions.getRegistrationDecisions();
+            if (registrationDecisions != null) {
+                ObservationCollection registrationObservations = observationService.createObservationsFromDecisions(registrationDecisions);
+                encounter.getIndividual().addObservations(registrationObservations);
             }
         }
         this.encounterService.save(encounter);
@@ -176,29 +184,29 @@ public class EncounterController extends AbstractController<Encounter> implement
     @RequestMapping(value = "/encounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<Encounter>> getEncountersByCatchmentAndLastModified(
-            @RequestParam("catchmentId") long catchmentId,
-            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-            Pageable pageable) {
+        @RequestParam("catchmentId") long catchmentId,
+        @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+        @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+        Pageable pageable) {
         return wrap(encounterRepository.findByIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(catchmentId, CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
 
     @RequestMapping(value = "/encounter/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<Encounter>> getEncountersByLastModified(
-            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-            Pageable pageable) {
+        @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+        @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+        Pageable pageable) {
         return wrap(encounterRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
     }
 
     @RequestMapping(value = "/encounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public SlicedResources<Resource<Encounter>> getEncountersByOperatingIndividualScopeAsSlice(
-            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-            @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
-            Pageable pageable) throws Exception {
+        @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+        @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+        @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
+        Pageable pageable) throws Exception {
         if (encounterTypeUuid.isEmpty()) return wrap(new SliceImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
         if (encounterType == null) return wrap(new SliceImpl<>(Collections.emptyList()));
@@ -211,10 +219,10 @@ public class EncounterController extends AbstractController<Encounter> implement
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public PagedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
-            @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-            @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
-            Pageable pageable) throws Exception {
+        @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+        @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+        @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
+        Pageable pageable) throws Exception {
         if (encounterTypeUuid.isEmpty()) return wrap(new PageImpl<>(Collections.emptyList()));
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUuid);
         if (encounterType == null) return wrap(new PageImpl<>(Collections.emptyList()));

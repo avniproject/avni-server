@@ -12,6 +12,7 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.ChecklistContract;
+import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -88,11 +89,11 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
             throw new IllegalArgumentException(String.format("ProgramEnrolment not found with UUID '%s'", programEnrolmentUUID));
         }
         return programEnrolment.getProgramEncounters().stream()
-                .filter(programEncounter ->
-                        programEncounter.getEncounterType().getName().equals(encounterTypeName)
-                                && programEncounter.dateFallsWithIn(encounterDateTime))
-                .findAny()
-                .orElse(null);
+            .filter(programEncounter ->
+                programEncounter.getEncounterType().getName().equals(encounterTypeName)
+                    && programEncounter.dateFallsWithIn(encounterDateTime))
+            .findAny()
+            .orElse(null);
     }
 
     public EnrolmentContract constructEnrolments(String uuid) {
@@ -106,8 +107,8 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         enrolmentContract.setSubjectUuid(programEnrolment.getIndividual().getUuid());
         enrolmentContract.setVoided(programEnrolment.isVoided());
         Set<ProgramEncounterContract> programEncounters = programEnrolment.nonVoidedEncounters()
-                .map(programEncounterService::constructProgramEncounters)
-                .collect(Collectors.toSet());
+            .map(programEncounterService::constructProgramEncounters)
+            .collect(Collectors.toSet());
         enrolmentContract.setProgramEncounters(programEncounters);
         List<ObservationContract> observationContractsList = observationService.constructObservations(programEnrolment.getObservations());
         enrolmentContract.setObservations(observationContractsList);
@@ -117,29 +118,29 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         return enrolmentContract;
     }
 
-    public Page<ProgramEncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable){
+    public Page<ProgramEncounterContract> getAllCompletedEncounters(String uuid, String encounterTypeUuids, DateTime encounterDateTime, DateTime earliestVisitDateTime, Pageable pageable) {
         Page<ProgramEncounterContract> programEncountersContract;
         List<String> encounterTypeIdList = new ArrayList<>();
-        if(encounterTypeUuids != null) {
+        if (encounterTypeUuids != null) {
             encounterTypeIdList = Arrays.asList(encounterTypeUuids.split(","));
         }
         List<String> accessibleEncounterTypeUUIDs = encounterTypeIdList.stream().filter(accessControlService::hasProgramEncounterPrivilege).collect(Collectors.toList());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
         Specification<ProgramEncounter> completedEncounterSpecification = where(programEncounterRepository.withNotNullEncounterDateTime())
-                .or(programEncounterRepository.withNotNullCancelDateTime())
-                .and(programEncounterRepository.withVoidedFalse());
+            .or(programEncounterRepository.withNotNullCancelDateTime())
+            .and(programEncounterRepository.withVoidedFalse());
         programEncountersContract = programEncounterRepository.findAll(
-                where(programEncounterRepository.withProgramEncounterId(programEnrolment.getId()))
-                        .and(programEncounterRepository.withProgramEncounterTypeIdUuids(accessibleEncounterTypeUUIDs))
-                        .and(programEncounterRepository.withProgramEncounterEarliestVisitDateTime(earliestVisitDateTime))
-                        .and(programEncounterRepository.withProgramEncounterDateTime(encounterDateTime))
-                        .and(completedEncounterSpecification)
-                ,pageable).map(programEncounterService::constructProgramEncounters);
+            where(programEncounterRepository.withProgramEncounterId(programEnrolment.getId()))
+                .and(programEncounterRepository.withProgramEncounterTypeIdUuids(accessibleEncounterTypeUUIDs))
+                .and(programEncounterRepository.withProgramEncounterEarliestVisitDateTime(earliestVisitDateTime))
+                .and(programEncounterRepository.withProgramEncounterDateTime(encounterDateTime))
+                .and(completedEncounterSpecification)
+            , pageable).map(programEncounterService::constructProgramEncounters);
         return programEncountersContract;
     }
 
     @Messageable(EntityType.ProgramEnrolment)
-    public ProgramEnrolment programEnrolmentSave(ProgramEnrolmentRequest request){
+    public ProgramEnrolment programEnrolmentSave(ProgramEnrolmentRequest request) {
         logger.info(String.format("Saving programEnrolment with uuid %s", request.getUuid()));
         Program program;
         if (request.getProgramUUID() == null) {
@@ -150,7 +151,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         Decisions decisions = request.getDecisions();
         observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEnrolmentDecisions() : null, formMappingService.find(program, FormType.ProgramEnrolment));
         ProgramOutcome programOutcome = programOutcomeRepository.findByUuid(request.getProgramOutcomeUUID());
-        ProgramEnrolment programEnrolment = EntityHelper.newOrExistingEntity(programEnrolmentRepository,request, new ProgramEnrolment());
+        ProgramEnrolment programEnrolment = EntityHelper.newOrExistingEntity(programEnrolmentRepository, request, new ProgramEnrolment());
         programEnrolment.setProgram(program);
         programEnrolment.setProgramOutcome(programOutcome);
         programEnrolment.setEnrolmentDateTime(request.getEnrolmentDateTime());
@@ -164,17 +165,24 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
         programEnrolment.setProgramExitObservations(observationService.createObservations(request.getProgramExitObservations()));
 
-        if(decisions != null) {
+        Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
+
+        if (decisions != null) {
             ObservationCollection observationsFromDecisions = observationService
-                    .createObservationsFromDecisions(decisions.getEnrolmentDecisions());
-            if(decisions.isExit()) {
+                .createObservationsFromDecisions(decisions.getEnrolmentDecisions());
+            if (decisions.isExit()) {
                 programEnrolment.getProgramExitObservations().putAll(observationsFromDecisions);
             } else {
                 programEnrolment.getObservations().putAll(observationsFromDecisions);
             }
+
+            List<Decision> registrationDecisions = decisions.getRegistrationDecisions();
+            if (registrationDecisions != null) {
+                ObservationCollection registrationObservations = observationService.createObservationsFromDecisions(registrationDecisions);
+                individual.addObservations(registrationObservations);
+            }
         }
 
-        Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
         programEnrolment.setIndividual(individual);
         this.addSyncAttributes(programEnrolment);
         if (programEnrolment.isNew()) {
@@ -188,7 +196,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         }
         if (request.getChecklists() != null && request.getChecklists().size() > 0) {
             request.getChecklists()
-                    .forEach(checklist -> saveChecklist(checklist, request.getUuid()));
+                .forEach(checklist -> saveChecklist(checklist, request.getUuid()));
         }
 
         logger.info(String.format("Saved programEnrolment with uuid %s", request.getUuid()));
@@ -198,7 +206,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     @Messageable(EntityType.ProgramEnrolment)
     public ProgramEnrolment save(ProgramEnrolment programEnrolment) {
         this.addSyncAttributes(programEnrolment);
-       return programEnrolmentRepository.save(programEnrolment);
+        return programEnrolmentRepository.save(programEnrolment);
     }
 
     private void addSyncAttributes(ProgramEnrolment enrolment) {
@@ -211,7 +219,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
 
     private void saveIdentifierAssignments(ProgramEnrolment programEnrolment, ProgramEnrolmentRequest programEnrolmentRequest) {
         List<String> identifierAssignmentUuids = programEnrolmentRequest.getIdentifierAssignmentUuids();
-        if(identifierAssignmentUuids != null) {
+        if (identifierAssignmentUuids != null) {
             identifierAssignmentUuids.forEach(uuid -> {
                 IdentifierAssignment identifierAssignment = identifierAssignmentRepository.findByUuid(uuid);
                 identifierAssignment.setProgramEnrolment(programEnrolment);
@@ -220,7 +228,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         }
     }
 
-    private Checklist saveChecklist(ChecklistContract checklistContract, String programEnrolmentUUID){
+    private Checklist saveChecklist(ChecklistContract checklistContract, String programEnrolmentUUID) {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(programEnrolmentUUID);
         Checklist existingChecklist = checklistRepository.findByProgramEnrolmentId(programEnrolment.getId());
         if (existingChecklist != null) {
@@ -283,7 +291,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     }
 
     public FormMapping getFormMapping(ProgramEnrolment programEnrolment) {
-        FormType formType = programEnrolment.isExited() ?  FormType.ProgramExit : FormType.ProgramEnrolment;
-        return formMappingService.findBy(programEnrolment.getIndividual().getSubjectType(),programEnrolment.getProgram(), null , formType);
+        FormType formType = programEnrolment.isExited() ? FormType.ProgramExit : FormType.ProgramEnrolment;
+        return formMappingService.findBy(programEnrolment.getIndividual().getSubjectType(), programEnrolment.getProgram(), null, formType);
     }
 }
