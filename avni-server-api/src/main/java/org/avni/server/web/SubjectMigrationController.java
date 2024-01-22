@@ -97,7 +97,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         return resource;
     }
 
-    @RequestMapping(value = "/subjectMigration/bulk", method = RequestMethod.POST)
+    @RequestMapping(value = "/api/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void migrate(@RequestBody SubjectMigrationRequest subjectMigrationRequest) {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);

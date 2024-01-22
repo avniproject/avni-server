@@ -10,12 +10,10 @@ info:
     url: https://opensource.org/licenses/AGPL-3.0
   version: 1.0.0
 servers:
-  - url: https://virtserver.swaggerhub.com/samanvay/avni-external/1.0.0
-    description: SwaggerHub API Auto Mocking
   - url: https://app.avniproject.org/
-    description: Avni production server
+    description: Samanvay hosted production server (example)
   - url: https://staging.avniproject.org/
-    description: Avni staging server
+    description: Samanvay hosted staging server (example)
 tags:
   - name: Subject
 paths:
@@ -69,7 +67,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -111,7 +109,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -149,7 +147,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -191,7 +189,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -236,7 +234,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -269,7 +267,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -330,7 +328,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -372,7 +370,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -410,7 +408,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -455,7 +453,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -488,7 +486,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -550,7 +548,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -592,7 +590,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -630,7 +628,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -675,7 +673,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -708,7 +706,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -779,7 +777,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -821,7 +819,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -859,7 +857,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -901,7 +899,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -946,7 +944,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -979,7 +977,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -1042,7 +1040,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -1073,7 +1071,7 @@ paths:
           explode: false
           schema:
             type: string
-            description: token provided by cognito
+            description: token provided by cognito/keycloak
         - name: version
           in: query
           description: "Version of the API to be called"
@@ -1095,6 +1093,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/inline_response_200_4'
+  /api/subjectMigration/bulk:
+    post:
+      tags:
+        - Subject, Subject Migration, Program Encounter, Program Enrolment, Encounter, Group Subject
+      summary: Migrate subjects and its descendant data (like encounter etc) from one location to another, belonging to specified subject types. If you have a lot of addresses then the request may timeout, but the server will continue to process the API. Each source to destination mapping for each subject type, will be done in its own transaction. So for the example request given there will be 6 transactions (3 address mapping multiplied by 2 subject types).
+      parameters:
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkSubjectMigrationBody'
+            example: >
+              {
+                  "destinationAddresses": {
+                      "330785": "330856",
+                      "334657": "335043",
+                      "331106": "331466"
+                  },
+                  "subjectTypeIds": [
+                      672,
+                      671
+                  ]
+              }
+        required: true
+      responses:
+        "200":
+          description: successful
+  /api/subjectTree:
+    delete:
+      tags:
+        - Subject, Subject Migration, Program Encounter, Program Enrolment, Encounter, Group Subject
+      summary: Void Subjects and its descendants that match the criteria provided. It currently supports taking id of locations. All subject and descendants belonging to that location will get voided.
+      parameters:
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidSubjectCriteriaBody'
+            example: >
+              {
+                "addressIds": [20, 30]
+              }
+        required: true
+      responses:
+        "200":
+          description: successful
 components:
   schemas:
     Subject:
@@ -1587,6 +1663,21 @@ components:
         Subject External ID:
           type: string
           description: The ID of the calling system for the subject for which this task is to be done
+    BulkSubjectMigrationBody:
+      type: object
+      properties:
+        destinationAddresses:
+          type: object
+          description: "as key value pairs. key is string and value is of type string. key is source address id and value is destination address id"
+        subjectTypeIds:
+          type: array
+          description: "array of numeric values. each item in array is the id of subject type"
+    VoidSubjectCriteriaBody:
+      type: object
+      properties:
+        addressIds:
+          type: array
+          description: "id of locations"
     inline_response_200:
       properties:
         content:
