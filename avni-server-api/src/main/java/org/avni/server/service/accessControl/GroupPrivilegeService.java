@@ -140,7 +140,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
             }
         });
 
-        privilegeList.stream().filter(privilege -> PrivilegeEntityType.NotMappingViaForms.contains(privilege.getEntityType()))
+        privilegeList.stream().filter(privilege -> PrivilegeEntityType.NotMappedViaForms.contains(privilege.getEntityType()))
                 .forEach(nonFormMappedPrivilege -> {
                     GroupPrivilege groupPrivilege = new GroupPrivilege();
                     groupPrivilege.setGroup(group);

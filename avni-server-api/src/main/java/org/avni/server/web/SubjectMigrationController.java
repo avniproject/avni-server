@@ -100,6 +100,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     @RequestMapping(value = "/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void migrate(@RequestBody SubjectMigrationRequest subjectMigrationRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         Map<String, String> destinationAddresses = subjectMigrationRequest.getDestinationAddresses();
 
         for (Map.Entry<String, String> destinationAddressEntry : destinationAddresses.entrySet()) {

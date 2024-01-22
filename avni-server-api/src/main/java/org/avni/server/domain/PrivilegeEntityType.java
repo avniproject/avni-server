@@ -12,8 +12,8 @@ public enum PrivilegeEntityType {
     Task,
     NonTransaction,
     Messaging,
-    Analytics,
+    BulkAccess,
     DataEntryApp;
 
-    public static List<PrivilegeEntityType> NotMappingViaForms = Arrays.asList(NonTransaction, Analytics, Task, Messaging, DataEntryApp);
+    public static final List<PrivilegeEntityType> NotMappedViaForms = Arrays.asList(NonTransaction, BulkAccess, Task, Messaging, DataEntryApp);
 }

@@ -183,6 +183,7 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public DeleteSubjectsResponse deleteSubjectTree(@RequestBody DeleteSubjectCriteria deleteSubjectCriteria) {
+        accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         DeleteSubjectsResponse deleteSubjectsResponse = new DeleteSubjectsResponse();
         for (Long addressId : deleteSubjectCriteria.getAddressIds()) {
             AddressLevel addressLevel = locationRepository.findById(addressId).orElseGet(null);
