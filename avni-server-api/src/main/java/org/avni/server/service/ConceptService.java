@@ -280,7 +280,7 @@ public class ConceptService implements NonScopeAwareService {
             }).toArray();
         }
 
-        if (concept.getConceptDataType().equals(ConceptDataType.QuestionGroup)) {
+        if (value instanceof ObservationCollection) {
             LinkedHashMap<String, Object> observationResponse = new LinkedHashMap<>();
             Response.mapObservations(conceptRepository, this, observationResponse, (ObservationCollection) value);
             return observationResponse;
