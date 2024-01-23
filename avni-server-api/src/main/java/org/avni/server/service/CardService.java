@@ -79,6 +79,12 @@ public class CardService implements NonScopeAwareService {
         } else {
             card.setStandardReportCardType(null);
         }
+        card.setNested(cardContract.isNested());
+        if (cardContract.getCount() < Card.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS || cardContract.getCount() > Card.INT_CONSTANT_MAX_COUNT_OF_CARDS) {
+            throw new BadRequestError(String.format("Nested ReportCard count should have minmum value of %d and maximum value of %d",
+                    Card.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, Card.INT_CONSTANT_MAX_COUNT_OF_CARDS));
+        }
+        card.setCountOfCards(cardContract.getCount());
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {

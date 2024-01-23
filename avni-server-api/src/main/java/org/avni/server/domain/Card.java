@@ -13,6 +13,8 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties({"standardReportCardType"})
 public class Card extends OrganisationAwareEntity {
 
+    public static final int INT_CONSTANT_DEFAULT_COUNT_OF_CARDS = 1;
+    public static final int INT_CONSTANT_MAX_COUNT_OF_CARDS = 9;
     @NotNull
     private String name;
 
@@ -21,6 +23,10 @@ public class Card extends OrganisationAwareEntity {
     private String description;
 
     private String colour;
+
+    private boolean nested = false;
+
+    private int countOfCards = INT_CONSTANT_DEFAULT_COUNT_OF_CARDS;
 
     @Column(name = "icon_file_s3_key")
     private String iconFileS3Key;
@@ -61,12 +67,37 @@ public class Card extends OrganisationAwareEntity {
         this.colour = colour;
     }
 
+    public boolean isNested() {
+        return getStandardReportCardType() == null && nested;
+    }
+
+    public void setNested(boolean nested) {
+        this.nested = getStandardReportCardType() == null && nested;
+    }
+
+    public int getCountOfCards() {
+        return isNested() ? this.countOfCards : INT_CONSTANT_DEFAULT_COUNT_OF_CARDS;
+    }
+
+    public void setCountOfCards(int countOfCards) {
+        this.countOfCards = isNested() ? countOfCards : INT_CONSTANT_DEFAULT_COUNT_OF_CARDS;
+    }
+
     public StandardReportCardType getStandardReportCardType() {
         return standardReportCardType;
     }
 
     public void setStandardReportCardType(StandardReportCardType standardReportCardType) {
+        Boolean reportCardTypeChangedFromQueryToStandard = (this.standardReportCardType == null && standardReportCardType != null);
         this.standardReportCardType = standardReportCardType;
+        resetNestedCardInfoOnlyApplicableForQueryReportCardType(reportCardTypeChangedFromQueryToStandard);
+    }
+
+    private void resetNestedCardInfoOnlyApplicableForQueryReportCardType(Boolean reportCardTypeChangedFromQueryToStandard) {
+        if (reportCardTypeChangedFromQueryToStandard) {
+            this.setNested(false);
+            this.setCountOfCards(INT_CONSTANT_DEFAULT_COUNT_OF_CARDS);
+        }
     }
 
     public Long getStandardReportCardTypeId() {

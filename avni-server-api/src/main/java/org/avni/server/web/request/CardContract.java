@@ -11,6 +11,8 @@ public class CardContract extends CHSRequest {
     private Double displayOrder;
     private Long standardReportCardTypeId;
     private String iconFileS3Key;
+    private boolean nested;
+    private int count;
 
     public static CardContract fromEntity(Card card) {
         CardContract cardContract = new CardContract();
@@ -23,6 +25,8 @@ public class CardContract extends CHSRequest {
         cardContract.setColor(card.getColour());
         cardContract.setStandardReportCardTypeId(card.getStandardReportCardTypeId());
         cardContract.setIconFileS3Key(card.getIconFileS3Key());
+        cardContract.setNested(card.isNested());
+        cardContract.setCount(card.getCountOfCards());
         return cardContract;
     }
 
@@ -86,5 +90,21 @@ public class CardContract extends CHSRequest {
 
     public void setIconFileS3Key(String iconFileS3Key) {
         this.iconFileS3Key = iconFileS3Key;
+    }
+
+    public boolean isNested() {
+        return nested;
+    }
+
+    public void setNested(boolean nested) {
+        this.nested = nested;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 }
