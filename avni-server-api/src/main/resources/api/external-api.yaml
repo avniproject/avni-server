@@ -1672,12 +1672,16 @@ components:
         subjectTypeIds:
           type: array
           description: "array of numeric values. each item in array is the id of subject type"
+          items:
+            type: number
     VoidSubjectCriteriaBody:
       type: object
       properties:
         addressIds:
           type: array
           description: "id of locations"
+          items:
+            type: number
     inline_response_200:
       properties:
         content:
