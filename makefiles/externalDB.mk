@@ -88,6 +88,8 @@ tunnel-lfe-prod-db:
 	make tunnel-db host=avni-lfe-prod dbServer=prod-db2.cdsbgtdqfjhs.ap-south-1.rds.amazonaws.com
 tunnel-staging-db:
 	make tunnel-db host=avni-staging dbServer=stagingdb.openchs.org
+tunnel-rwb-prod:
+	make tunnel-db host=rwb-prod dbServer=serverdb.rwb.avniproject.org
 
 dump-org-data-prerelease:
 	make dump-org-data dbRole=$(dbRole) prefix=prerelease

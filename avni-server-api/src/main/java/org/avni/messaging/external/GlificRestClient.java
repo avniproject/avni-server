@@ -27,12 +27,12 @@ public class GlificRestClient {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final RestTemplate restTemplate;
 
-    private final ExternalSystemConfigRepository organisationConfigRepository;
+    private final ExternalSystemConfigRepository externalSystemConfigRepository;
 
     @Autowired
-    public GlificRestClient(RestTemplateBuilder builder, ExternalSystemConfigRepository organisationConfigRepository) {
+    public GlificRestClient(RestTemplateBuilder builder, ExternalSystemConfigRepository externalSystemConfigRepository) {
         this.restTemplate = builder.build();
-        this.organisationConfigRepository = organisationConfigRepository;
+        this.externalSystemConfigRepository = externalSystemConfigRepository;
     }
 
     public GlificAuth authenticate() {
@@ -81,7 +81,7 @@ public class GlificRestClient {
     }
 
     private GlificSystemConfig getSystemConfig() {
-        ExternalSystemConfig externalSystemConfig = organisationConfigRepository.findBySystemName(SystemName.Glific);
+        ExternalSystemConfig externalSystemConfig = externalSystemConfigRepository.findBySystemName(SystemName.Glific);
         Assert.notNull(externalSystemConfig, "External system config not set up for organisation");
 
         return new GlificSystemConfig(externalSystemConfig);
