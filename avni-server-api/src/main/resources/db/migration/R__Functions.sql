@@ -302,9 +302,3 @@ BEGIN
   END;
 END $$
   STABLE;
-
-create or replace function single_select_coded(obs jsonb, concept_name text)
-  returns varchar
-AS 'select single_select_coded($1->>concept_uuid($2));'
-  LANGUAGE sql
-  STABLE;
