@@ -249,3 +249,62 @@ BEGIN
     RETURN 'ALL ACCOUNT PERMISSIONS REVOKED FROM ' || quote_ident(rolename);
 END;
 $body$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION multi_select_coded(obs JSONB)
+  RETURNS VARCHAR LANGUAGE plpgsql
+AS $$
+DECLARE result VARCHAR;
+BEGIN
+  BEGIN
+    IF JSONB_TYPEOF(obs) = 'array'
+    THEN
+      SELECT STRING_AGG(C.NAME, ' ,') FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) AS OB (UUID)
+                                             JOIN CONCEPT C ON C.UUID = OB.UUID
+      INTO RESULT;
+    ELSE
+      SELECT SINGLE_SELECT_CODED(obs) INTO RESULT;
+    END IF;
+    RETURN RESULT;
+  EXCEPTION WHEN OTHERS
+    THEN
+      RAISE NOTICE 'Failed while processing multi_select_coded(''%'')', obs :: TEXT;
+      RAISE NOTICE '% %', SQLERRM, SQLSTATE;
+  END;
+END $$;
+
+CREATE OR REPLACE FUNCTION single_select_coded(obs TEXT)
+  RETURNS VARCHAR LANGUAGE plpgsql
+AS $$
+DECLARE result VARCHAR;
+BEGIN
+  BEGIN
+    SELECT name FROM concept WHERE uuid = obs
+    INTO result;
+    RETURN result;
+  END;
+END $$
+  STABLE;
+
+CREATE OR REPLACE FUNCTION single_select_coded(obs JSONB)
+  RETURNS VARCHAR LANGUAGE plpgsql
+AS $$
+DECLARE result VARCHAR;
+BEGIN
+  BEGIN
+    IF JSONB_TYPEOF(obs) = 'array'
+    THEN
+      SELECT name FROM concept WHERE (obs->>0) = uuid INTO result;
+    ELSEIF JSONB_TYPEOF(obs) = 'string'
+    THEN
+      select name from concept where (array_to_json(array[obs])->>0) = uuid into result;
+    END IF;
+    RETURN result;
+  END;
+END $$
+  STABLE;
+
+create or replace function single_select_coded(obs jsonb, concept_name text)
+  returns varchar
+AS 'select single_select_coded($1->>concept_uuid($2));'
+  LANGUAGE sql
+  STABLE;
