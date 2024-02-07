@@ -38,6 +38,16 @@ public class EncounterTypesIntegrationTest extends AbstractControllerIntegration
     }
 
     @Test
+    public void shouldEncodeWithHtml() throws IOException {
+        Object json = getJSON("/ref/encounterTypes/encounterTypesWithRequiredEncoding.json");
+        post(json);
+
+        EncounterType encounterType = encounterTypeRepository.findByUuid("5f6fb89b-01a7-46f8-8a00-25acaac62618");
+        assertThat(encounterType).isNotNull();
+        assertThat(encounterType.getName()).isEqualTo("&lt;alert&gt;abc&lt;/alert&gt;");
+    }
+
+    @Test
     public void shouldVoidAEncounterType() throws IOException {
         Object json = getJSON("/ref/encounterTypes/voidableEncounterType.json");
         post(json);
