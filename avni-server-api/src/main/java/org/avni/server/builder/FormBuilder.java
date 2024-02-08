@@ -28,6 +28,11 @@ public class FormBuilder extends BaseBuilder<Form, FormBuilder> {
         return this;
     }
 
+    public FormBuilder withEditFormRule(String editFormRule) {
+        this.get().setEditFormRule(editFormRule);
+        return this;
+    }
+
     public FormBuilder withVisitScheduleRule(String visitScheduleRule) {
         this.get().setVisitScheduleRule(visitScheduleRule);
         return this;

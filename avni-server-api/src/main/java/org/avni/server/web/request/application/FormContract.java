@@ -32,6 +32,7 @@ public class FormContract extends ReferenceDataContract {
     private String programName;
     private List<String> encounterTypes;
     private String decisionRule;
+    private String editFormRule;
     private String visitScheduleRule;
     private String taskScheduleRule;
     private String validationRule;
@@ -141,6 +142,7 @@ public class FormContract extends ReferenceDataContract {
         formContract.setUuid(form.getUuid());
         formContract.setVoided(form.isVoided());
         formContract.setDecisionRule(form.getDecisionRule());
+        formContract.setEditFormRule(form.getEditFormRule());
         formContract.setVisitScheduleRule(form.getVisitScheduleRule());
         formContract.setValidationRule(form.getValidationRule());
         formContract.setChecklistsRule(form.getChecklistsRule());
@@ -288,5 +290,13 @@ public class FormContract extends ReferenceDataContract {
 
     public void setTaskScheduleDeclarativeRule(DeclarativeRule taskScheduleDeclarativeRule) {
         this.taskScheduleDeclarativeRule = taskScheduleDeclarativeRule;
+    }
+
+    public String getEditFormRule() {
+        return editFormRule;
+    }
+
+    public void setEditFormRule(String editFormRule) {
+        this.editFormRule = editFormRule;
     }
 }

@@ -28,6 +28,9 @@ public class Form extends OrganisationAwareEntity {
     @Column(name = "decision_rule")
     private String decisionRule;
 
+    @Column(name = "edit_form_rule")
+    private String editFormRule;
+
     @Column(name = "visit_schedule_rule")
     private String visitScheduleRule;
 
@@ -223,5 +226,13 @@ public class Form extends OrganisationAwareEntity {
                 .map(FormElementGroup::getFormElements)
                 .flatMap(Collection::stream)
                 .filter(formElement -> formElement.getConcept().getDataType().equals(conceptDataType.name())).collect(Collectors.toList());
+    }
+
+    public String getEditFormRule() {
+        return editFormRule;
+    }
+
+    public void setEditFormRule(String editFormRule) {
+        this.editFormRule = editFormRule;
     }
 }

@@ -37,6 +37,7 @@ public class FormService implements NonScopeAwareService {
                 .withType(formRequest.getFormType())
                 .withUUID(formRequest.getUuid())
                 .withFormElementGroups(formRequest.getFormElementGroups())
+                .withEditFormRule(formRequest.getEditFormRule())
                 .withDecisionRule(formRequest.getDecisionRule())
                 .withVisitScheduleRule(formRequest.getVisitScheduleRule())
                 .withTaskScheduleRule(formRequest.getTaskScheduleRule())
