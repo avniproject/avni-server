@@ -1,6 +1,3 @@
-tunnel_prerelease_db:
-	ssh avni-prerelease -L 6015:prereleasedb.openchs.org:5432
-
 open-user-media-prerelease:
 ifndef orgMedia
 	@echo "Provde the orgMedia variable with org media prefix"
