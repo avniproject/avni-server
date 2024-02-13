@@ -391,6 +391,15 @@ CREATE OR REPLACE VIEW lock_monitor AS(
 -- To show locks and blocking PIDs
 SELECT * from lock_monitor;
 
+-- Show process details for blocking pid
+select * from pg_stat_activity where pid = '#<blocking_pid>#';
+
+-- Terminate a process
+select pg_terminate_backend('#<blocking_pid>#');
+
+-- Show process details for pid
+select * from pg_stat_activity;
+
 -- See number of DB Connections
 
 select max_conn,used,res_for_super,max_conn-used-res_for_super res_for_normal
