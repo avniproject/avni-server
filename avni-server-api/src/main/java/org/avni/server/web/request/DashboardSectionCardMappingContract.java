@@ -14,6 +14,7 @@ public class DashboardSectionCardMappingContract extends CHSRequest {
         contract.setDashboardSectionUUID(mapping.getDashboardSection().getUuid());
         contract.setReportCardUUID(mapping.getCard().getUuid());
         contract.setDisplayOrder(mapping.getDisplayOrder());
+        contract.setVoided(mapping.isVoided());
         return contract;
     }
 
