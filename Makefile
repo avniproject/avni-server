@@ -7,6 +7,7 @@ include makefiles/util.mk
 include makefiles/externalDB.mk
 include makefiles/prod.mk
 include makefiles/api-test-data.mk
+include makefiles/lfe.mk
 
 help:
 	@IFS=$$'\n' ; \
