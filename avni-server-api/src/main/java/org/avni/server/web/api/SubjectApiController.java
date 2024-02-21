@@ -186,7 +186,7 @@ public class SubjectApiController {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         DeleteSubjectsResponse deleteSubjectsResponse = new DeleteSubjectsResponse();
         for (Long addressId : deleteSubjectCriteria.getAddressIds()) {
-            AddressLevel addressLevel = locationRepository.findById(addressId).orElseGet(null);
+            AddressLevel addressLevel = locationRepository.findEntity(addressId);
             if (addressLevel == null)
                 deleteSubjectsResponse.addNotFoundAddress(addressId);
             else {

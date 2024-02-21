@@ -88,7 +88,7 @@ public interface IndividualRelationshipRepository extends TransactionalDataRepos
     }
 
     @Modifying
-    @Query(value = "update individual_relationship e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+    @Query(value = "update individual_relationship e set is_voided = true, last_modified_date_time = (current_timestamp + random() * 5000 * (interval '1 millisecond')), last_modified_by_id = :lastModifiedById " +
             " from individual i" +
             " where i.address_id = :addressId and (i.id = e.individual_a_id or i.id = e.individual_b_id) and e.is_voided = false", nativeQuery = true)
     void voidSubjectItemsAt(Long addressId, Long lastModifiedById);

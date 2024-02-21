@@ -206,7 +206,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     }
 
     @Modifying
-    @Query(value = "update individual i set is_voided = true, last_modified_date_time = (current_timestamp + i.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById where i.address_id = :addressId and i.is_voided = false", nativeQuery = true)
+    @Query(value = "update individual i set is_voided = true, last_modified_date_time = (current_timestamp + random() * 5000 * (interval '1 millisecond')), last_modified_by_id = :lastModifiedById where i.address_id = :addressId and i.is_voided = false", nativeQuery = true)
     void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
     default void voidSubjectItemsAt(AddressLevel address) {
         this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());

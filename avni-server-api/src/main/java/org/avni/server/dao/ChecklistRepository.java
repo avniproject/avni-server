@@ -58,9 +58,9 @@ public interface ChecklistRepository extends TransactionalDataRepository<Checkli
     }
 
     @Modifying
-    @Query(value = "update checklist e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
-            "from individual i, program_enrolment pe" +
-            " where i.id = pe.individual_id and i.address_id = :addressId and i.id = pe.individual_id and e.is_voided = false", nativeQuery = true)
+    @Query(value = "update checklist e set is_voided = true, last_modified_date_time = (current_timestamp + random() * 5000 * (interval '1 millisecond')), last_modified_by_id = :lastModifiedById " +
+            "from individual i, program_enrolment enrolment" +
+            " where i.id = enrolment.individual_id and i.address_id = :addressId and enrolment.id = e.program_enrolment_id and e.is_voided = false", nativeQuery = true)
     void voidSubjectItemsAt(Long addressId, Long lastModifiedById);
     default void voidSubjectItemsAt(AddressLevel address) {
         this.voidSubjectItemsAt(address.getId(), UserContextHolder.getUserId());
