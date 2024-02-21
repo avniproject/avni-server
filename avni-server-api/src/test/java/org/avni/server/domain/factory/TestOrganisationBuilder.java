@@ -10,7 +10,7 @@ public class TestOrganisationBuilder {
 
     public TestOrganisationBuilder withMandatoryFields() {
         String placeholder = UUID.randomUUID().toString();
-        return withUuid(placeholder).withDbUser(placeholder).withName(placeholder).withSchemaName(placeholder);
+        return withUuid(placeholder).withDbUser("testDbUser").withName(placeholder).withSchemaName(placeholder);
     }
 
     public TestOrganisationBuilder setId(long id) {

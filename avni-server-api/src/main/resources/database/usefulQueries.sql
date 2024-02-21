@@ -391,6 +391,15 @@ CREATE OR REPLACE VIEW lock_monitor AS(
 -- To show locks and blocking PIDs
 SELECT * from lock_monitor;
 
+-- Show process details for blocking pid
+select * from pg_stat_activity where pid = '#<blocking_pid>#';
+
+-- Terminate a process
+select pg_terminate_backend('#<blocking_pid>#');
+
+-- Show process details for pid
+select * from pg_stat_activity;
+
 -- See number of DB Connections
 
 select max_conn,used,res_for_super,max_conn-used-res_for_super res_for_normal
@@ -847,3 +856,8 @@ pg_dump --dbname=openchs --username=openchs --role=<org_role> --file=/Users/test
 --
 -- Apply dump to db
 psql -U openchs --host=localhost --port=6015 -d openchs -f /Users/test/target-dump-update.sql
+
+-- to drop roles. check the oid value
+select 'drop role "' || a.rolname || '";' FROM pg_roles a
+WHERE pg_has_role('openchs', a.oid, 'member') AND a.rolname <> 'openchs' and a.oid > 1443729
+order by a.oid;
