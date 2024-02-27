@@ -188,10 +188,7 @@ public class AvniFiles {
         for (CSVRecord csvRecord : records) {
             Stream<String> record = Arrays.stream(csvRecord.values()).map(s -> {
                 if (s.startsWith("=") || s.startsWith("-") || s.startsWith("+") || s.startsWith("@")) {
-                    return format("\"\t%s\"",s);
-                }
-                if (s.startsWith("\"=") || s.startsWith("\"-") || s.startsWith("\"+") || s.startsWith("\"@")) {
-                    return "\"\t" + s.substring(1);
+                    return format("\t%s",s);
                 }
                 return s;
             });
