@@ -117,7 +117,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     private void markSubjectMigrationIfRequired(IndividualRequest individualRequest, ObservationCollection newObservations) {
-        subjectMigrationService.markSubjectMigrationIfRequired(individualRequest.getUuid(), getAddressLevel(individualRequest), newObservations, false);
+        subjectMigrationService.markSubjectMigrationIfRequired(individualRequest.getUuid(), null, getAddressLevel(individualRequest), null, newObservations, false);
     }
 
     private void addObservationsFromDecisions(ObservationCollection observations, Decisions decisions) {
