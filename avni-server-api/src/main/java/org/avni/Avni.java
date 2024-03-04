@@ -226,21 +226,6 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<ProgramOrganisationConfig>> programOrganisationConfig() {
-        return new ResourceProcessor<Resource<ProgramOrganisationConfig>>() {
-            @Override
-            public Resource<ProgramOrganisationConfig> process(Resource<ProgramOrganisationConfig> resource) {
-                ProgramOrganisationConfig content = resource.getContent();
-                resource.removeLinks();
-                resource.add(new Link(content.getProgram().getUuid(), "programUUID"));
-                String conceptUUIDs = content.getAtRiskConcepts().stream().map(CHSEntity::getUuid).collect(Collectors.joining(","));
-                resource.add(new Link(conceptUUIDs, "conceptUUIDs"));
-                return resource;
-            }
-        };
-    }
-
-    @Bean
     public ResourceProcessor<Resource<ConceptAnswer>> conceptAnswerProcessor() {
         return new ResourceProcessor<Resource<ConceptAnswer>>() {
             @Override

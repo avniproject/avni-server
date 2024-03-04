@@ -61,7 +61,6 @@ public class SyncController {
     private final IndividualRelationGenderMappingService individualRelationGenderMappingService;
     private final IndividualRelationshipTypeService individualRelationshipTypeService;
     private final ConceptService conceptService;
-    private final ProgramConfigService programConfigService;
     private final VideoService videoService;
     private final SubjectTypeService subjectTypeService;
     private final ChecklistItemDetailService checklistItemDetailService;
@@ -118,7 +117,7 @@ public class SyncController {
                           GenderService genderService, IndividualRelationService individualRelationService,
                           IndividualRelationGenderMappingService individualRelationGenderMappingService,
                           IndividualRelationshipTypeService individualRelationshipTypeService, ConceptService conceptService,
-                          ProgramConfigService programConfigService, VideoService videoService,
+                          VideoService videoService,
                           SubjectTypeService subjectTypeService, ChecklistItemDetailService checklistItemDetailService,
                           FormElementGroupService formElementGroupService, FormElementService formElementService,
                           ConceptAnswerService conceptAnswerService, IdentifierSourceService identifierSourceService,
@@ -162,7 +161,6 @@ public class SyncController {
         this.individualRelationGenderMappingService = individualRelationGenderMappingService;
         this.individualRelationshipTypeService = individualRelationshipTypeService;
         this.conceptService = conceptService;
-        this.programConfigService = programConfigService;
         this.videoService = videoService;
         this.subjectTypeService = subjectTypeService;
         this.checklistItemDetailService = checklistItemDetailService;
@@ -248,7 +246,6 @@ public class SyncController {
         nonScopeAwareServiceMap.put(IndividualRelationGenderMapping, individualRelationGenderMappingService);
         nonScopeAwareServiceMap.put(IndividualRelationshipType, individualRelationshipTypeService);
         nonScopeAwareServiceMap.put(Concept, conceptService);
-        nonScopeAwareServiceMap.put(ProgramConfig, programConfigService);
         nonScopeAwareServiceMap.put(Video, videoService);
         nonScopeAwareServiceMap.put(SubjectType, subjectTypeService);
         nonScopeAwareServiceMap.put(ChecklistItemDetail, checklistItemDetailService);
