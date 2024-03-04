@@ -56,7 +56,6 @@ public class SyncController {
     private final FormMappingService formMappingService;
     private final EncounterTypeService encounterTypeService;
     private final ProgramService programService;
-    private final ProgramOutcomeService programOutcomeService;
     private final GenderService genderService;
     private final IndividualRelationService individualRelationService;
     private final IndividualRelationGenderMappingService individualRelationGenderMappingService;
@@ -115,7 +114,7 @@ public class SyncController {
                           LocationMappingService locationMappingService, IdentifierAssignmentService identifierAssignmentService, ChecklistDetailService checklistDetailService,
                           RuleService ruleService, RuleDependencyService ruleDependencyService, FormService formService,
                           FormMappingService formMappingService, EncounterTypeService encounterTypeService,
-                          ProgramService programService, ProgramOutcomeService programOutcomeService,
+                          ProgramService programService,
                           GenderService genderService, IndividualRelationService individualRelationService,
                           IndividualRelationGenderMappingService individualRelationGenderMappingService,
                           IndividualRelationshipTypeService individualRelationshipTypeService, ConceptService conceptService,
@@ -158,7 +157,6 @@ public class SyncController {
         this.formMappingService = formMappingService;
         this.encounterTypeService = encounterTypeService;
         this.programService = programService;
-        this.programOutcomeService = programOutcomeService;
         this.genderService = genderService;
         this.individualRelationService = individualRelationService;
         this.individualRelationGenderMappingService = individualRelationGenderMappingService;
@@ -245,7 +243,6 @@ public class SyncController {
         nonScopeAwareServiceMap.put(FormMapping, formMappingService);
         nonScopeAwareServiceMap.put(EncounterType, encounterTypeService);
         nonScopeAwareServiceMap.put(Program, programService);
-        nonScopeAwareServiceMap.put(ProgramOutcome, programOutcomeService);
         nonScopeAwareServiceMap.put(Gender, genderService);
         nonScopeAwareServiceMap.put(IndividualRelation, individualRelationService);
         nonScopeAwareServiceMap.put(IndividualRelationGenderMapping, individualRelationGenderMappingService);

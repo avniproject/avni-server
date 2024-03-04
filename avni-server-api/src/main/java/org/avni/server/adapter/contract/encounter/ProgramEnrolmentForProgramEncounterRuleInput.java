@@ -25,10 +25,6 @@ public class ProgramEnrolmentForProgramEncounterRuleInput {
         return programEnrolment.getEnrolmentDateTime();
     }
 
-    public ProgramOutcome getProgramOutcome() {
-        return programEnrolment.getProgramOutcome();
-    }
-
     public DateTime getProgramExitDateTime() {
         return programEnrolment.getProgramExitDateTime();
     }
