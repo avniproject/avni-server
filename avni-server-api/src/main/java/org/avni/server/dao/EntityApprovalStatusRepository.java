@@ -90,7 +90,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     }
 
     @Modifying
-    @Query(value = "update entity_approval_status e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+    @Query(value = "update entity_approval_status e set is_voided = true, last_modified_date_time = (current_timestamp + random() * 5000 * (interval '1 millisecond')), last_modified_by_id = :lastModifiedById " +
             "from individual i" +
             " where i.address_id = :addressId and i.id = e.individual_id and e.is_voided = false", nativeQuery = true)
     void voidSubjectsAt(Long addressId, Long lastModifiedById);

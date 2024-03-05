@@ -40,7 +40,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     private final IndividualRelationshipService individualRelationshipService;
     private final GroupSubjectRepository groupSubjectRepository;
     private final GroupPrivilegeService privilegeService;
-    private final AvniMetaDataRuleService avniMetaDataRuleService;
     private final AddressLevelService addressLevelService;
 
     @Autowired
@@ -51,7 +50,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                                         ChecklistService checklistService, ChecklistItemService checklistItemService,
                                         IndividualRelationshipService individualRelationshipService,
                                         GroupSubjectRepository groupSubjectRepository, GroupPrivilegeService privilegeService,
-                                        AvniMetaDataRuleService avniMetaDataRuleService, AddressLevelService addressLevelService) {
+                                        AddressLevelService addressLevelService) {
         this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -65,7 +64,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         this.individualRelationshipService = individualRelationshipService;
         this.groupSubjectRepository = groupSubjectRepository;
         this.privilegeService = privilegeService;
-        this.avniMetaDataRuleService = avniMetaDataRuleService;
         this.addressLevelService = addressLevelService;
     }
 
@@ -126,7 +124,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
 
         BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
 
-        LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
+        LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<>();
         recordsMap.put("totalElements", totalCount);
         recordsMap.put("listOfRecords", searchResults);
         return recordsMap;
@@ -150,10 +148,10 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                 validateAndCreateUpdateUserSubjectAssignment(assignmentVoided, user, subject, userSubjectAssignmentList, addressLevels, errors);
             }
         }
-        if(errors.isEmpty()) {
+        if (errors.isEmpty()) {
             return this.saveAll(userSubjectAssignmentList, assignmentVoided);
         } else {
-            throw new ValidationException("Errors: \n"+ String.join(";\n", errors));
+            throw new ValidationException("Errors: \n" + String.join(";\n", errors));
         }
     }
 
@@ -174,7 +172,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             List<GroupSubject> groupSubjects = groupSubjectRepository.findAllByMemberSubjectAndIsVoidedFalse(subject);
             for (GroupSubject groupSubject : groupSubjects) {
                 UserSubjectAssignment userGroupSubjectAssignment = userSubjectAssignmentRepository.findByUserAndSubjectAndIsVoidedFalse(user, groupSubject.getGroupSubject());
-                if(userGroupSubjectAssignment != null && !groupSubject.getGroupSubject().isVoided()) {
+                if (userGroupSubjectAssignment != null && !groupSubject.getGroupSubject().isVoided()) {
                     throw new ValidationException(String.format("Individual (%s) cant be unassigned from the user (%s), since group (%s) that the member (%s) belongs to, is assigned to the user (%s)",
                             subject.getFullName(), user.getUsername(), groupSubject.getGroupSubject().getFullName(), subject.getFullName(), user.getUsername()));
                 }
@@ -184,7 +182,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
     }
 
     private void checkIfSubjectLiesWithinUserCatchment(boolean assignmentVoided, Individual subject, List<Long> addressLevels) throws ValidationException {
-        if(!assignmentVoided && !addressLevels.contains(subject.getAddressLevel().getId())) {
+        if (!assignmentVoided && !addressLevels.contains(subject.getAddressLevel().getId())) {
             throw new ValidationException(String.format("Assigment of Individual (%s) cannot be done because it is outside the User's Catchment", subject.getFullName()));
         }
     }
@@ -224,10 +222,10 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
 
     private void updateAuditForUserSubjectAssignment(UserSubjectAssignment userSubjectAssignment) {
         userSubjectAssignment.updateAudit();
-        triggerSyncForSubjectAndItsChildrenForUser(userSubjectAssignment.getSubject(), userSubjectAssignment.getUser());
+        triggerSyncForSubjectAndItsChildrenForUser(userSubjectAssignment.getSubject());
     }
 
-    private void triggerSyncForSubjectAndItsChildrenForUser(Individual individual, User user) {
+    private void triggerSyncForSubjectAndItsChildrenForUser(Individual individual) {
         individual.updateAudit();
         individual.getProgramEnrolments()
                 .forEach(CHSEntity::updateAudit);

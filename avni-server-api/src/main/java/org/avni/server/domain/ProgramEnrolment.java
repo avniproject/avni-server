@@ -44,10 +44,6 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @Type(type = "observations")
     private ObservationCollection observations;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_outcome_id")
-    private ProgramOutcome programOutcome;
-
     @Column(name = ColumnNames.ProgramExitDateTime)
     private DateTime programExitDateTime;
 
@@ -139,14 +135,6 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     public void setObservations(ObservationCollection observations) {
         this.observations = observations;
-    }
-
-    public ProgramOutcome getProgramOutcome() {
-        return programOutcome;
-    }
-
-    public void setProgramOutcome(ProgramOutcome programOutcome) {
-        this.programOutcome = programOutcome;
     }
 
     public DateTime getProgramExitDateTime() {

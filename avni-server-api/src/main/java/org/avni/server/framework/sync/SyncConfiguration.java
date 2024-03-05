@@ -59,7 +59,6 @@ public class SyncConfiguration extends WebMvcConfigurerAdapter {
             "operationalProgram",
             "program",
             "programConfig",
-            "programOutcome",
             "ruleDependency",
             "checklistDetail",
             "checklistItemDetail",

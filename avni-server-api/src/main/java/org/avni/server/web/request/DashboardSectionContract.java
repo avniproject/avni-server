@@ -40,7 +40,6 @@ public class DashboardSectionContract extends CHSRequest {
 
     private static void setCards(DashboardSectionContract contract, DashboardSection ds) {
         List<CardContract> list = ds.getDashboardSectionCardMappings().stream()
-                .filter(c -> !c.isVoided())
                 .map(CardContract::fromMapping)
                 .collect(Collectors.toList());
         contract.setCards(list);

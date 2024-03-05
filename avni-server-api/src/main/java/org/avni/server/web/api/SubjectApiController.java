@@ -186,7 +186,7 @@ public class SubjectApiController {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         DeleteSubjectsResponse deleteSubjectsResponse = new DeleteSubjectsResponse();
         for (Long addressId : deleteSubjectCriteria.getAddressIds()) {
-            AddressLevel addressLevel = locationRepository.findById(addressId).orElseGet(null);
+            AddressLevel addressLevel = locationRepository.findEntity(addressId);
             if (addressLevel == null)
                 deleteSubjectsResponse.addNotFoundAddress(addressId);
             else {
@@ -213,7 +213,7 @@ public class SubjectApiController {
         subject.setRegistrationDate(request.getRegistrationDate());
         ObservationCollection observations = RequestUtils.createObservations(request.getObservations(), conceptRepository);
         AddressLevel newAddressLevel = addressLevel.orElse(null);
-        subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), newAddressLevel, observations, false);
+        subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), null, newAddressLevel, null, observations, false);
         subject.setAddressLevel(newAddressLevel);
         if (subjectType.isPerson()) {
             subject.setDateOfBirth(request.getDateOfBirth());
@@ -288,7 +288,7 @@ public class SubjectApiController {
             Optional<AddressLevel> addressLevel = locationRepository.findByTitleLineageIgnoreCase(locationTitleLineage);
             AddressLevel newAddressLevel = addressLevel.orElseThrow(() -> new IllegalArgumentException(String.format("Address '%s' not found", locationTitleLineage)));
             subject.setAddressLevel(newAddressLevel);
-            subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), newAddressLevel, subject.getObservations(), false);
+            subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), null, newAddressLevel, null, subject.getObservations(), false);
         }
 
         if (subject.getSubjectType().isPerson()) {

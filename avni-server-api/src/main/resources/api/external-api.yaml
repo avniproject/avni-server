@@ -1140,7 +1140,7 @@ paths:
     delete:
       tags:
         - Subject, Subject Migration, Program Encounter, Program Enrolment, Encounter, Group Subject
-      summary: Void Subjects and its descendants that match the criteria provided. It currently supports taking id of locations. All subject and descendants belonging to that location will get voided.
+      summary: Void Subjects and its descendants that match the criteria provided. It currently supports taking id of locations. All subject and descendants belonging to that location will get voided. This API should not be used to update more than 10,000 records of each entity type.
       parameters:
         - name: auth-token
           in: header

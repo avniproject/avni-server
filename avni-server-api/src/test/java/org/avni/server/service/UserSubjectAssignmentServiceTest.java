@@ -64,7 +64,7 @@ public class UserSubjectAssignmentServiceTest {
     public void initialize() {
         initMocks(this);
 
-        userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, avniMetaDataRuleService, addressLevelService);
+        userSubjectAssignmentService = new UserSubjectAssignmentService(userSubjectAssignmentRepository, userRepository, null, null, null, null, null, individualRepository, checklistService, checklistItemService, individualRelationshipService, groupSubjectRepository, groupPrivilegeService, addressLevelService);
         userSubjectAssignmentContract = new UserSubjectAssignmentContract();
         userSubjectAssignmentContract.setSubjectIds(Collections.singletonList(1l));
         userSubjectAssignmentContract.setUserId(1l);

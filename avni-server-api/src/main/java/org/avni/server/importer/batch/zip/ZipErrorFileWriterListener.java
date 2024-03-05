@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.zip;
 
 import org.avni.server.importer.batch.model.BundleFile;
 import org.avni.server.service.BulkUploadS3Service;
+import org.avni.server.util.ExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.annotation.*;
@@ -54,9 +55,7 @@ public class ZipErrorFileWriterListener {
 
     public void writeError(BundleFile bundleFile, Throwable t) {
         try {
-            String stackTrace = Stream.of(t.getStackTrace())
-                    .map(StackTraceElement::toString)
-                    .collect(Collectors.joining("\n"));
+            String stackTrace = ExceptionUtil.getFullStackTrace(t);
             FileWriter fileWriter = new FileWriter(bulkUploadS3Service.getLocalErrorFile(uuid), true);
             fileWriter.append(bundleFile.getName());
             fileWriter.append(",\"");

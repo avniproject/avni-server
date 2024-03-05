@@ -10,7 +10,6 @@ DELETE FROM subject_migration;
 DELETE FROM individual;
 DELETE FROM program;
 DELETE FROM encounter_type;
-DELETE FROM program_outcome;
 DELETE FROM concept_answer;
 DELETE FROM answer_concept_migration;
 DELETE FROM concept;
@@ -47,7 +46,6 @@ ALTER SEQUENCE program_enrolment_id_seq RESTART WITH 1;
 ALTER SEQUENCE individual_id_seq RESTART WITH 1;
 ALTER SEQUENCE program_id_seq RESTART WITH 1;
 ALTER SEQUENCE encounter_type_id_seq RESTART WITH 1;
-ALTER SEQUENCE program_outcome_id_seq RESTART WITH 1;
 ALTER SEQUENCE concept_answer_id_seq RESTART WITH 1;
 ALTER SEQUENCE concept_id_seq RESTART WITH 1;
 ALTER SEQUENCE gender_id_seq RESTART WITH 1;
@@ -377,8 +375,6 @@ SELECT setval('program_id_seq', COALESCE((SELECT MAX(id) + 1
                                           FROM program), 1), FALSE);
 SELECT setval('encounter_type_id_seq', COALESCE((SELECT MAX(id) + 1
                                                  FROM encounter_type), 1), FALSE);
-SELECT setval('program_outcome_id_seq', COALESCE((SELECT MAX(id) + 1
-                                                  FROM program_outcome), 1), FALSE);
 SELECT setval('concept_answer_id_seq', COALESCE((SELECT MAX(id) + 1
                                                  FROM concept_answer), 1), FALSE);
 SELECT setval('concept_id_seq', COALESCE((SELECT MAX(id) + 1

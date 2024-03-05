@@ -34,7 +34,6 @@ public class DashboardMapper {
     private void setSections(DashboardResponse dashboardContract, Dashboard dashboard) {
         List<DashboardSectionContract> list = dashboard.getDashboardSections()
                 .stream()
-                .filter(it -> !it.isVoided())
                 .map(DashboardSectionContract::fromEntity)
                 .collect(Collectors.toList());
         dashboardContract.setSections(list);
@@ -43,7 +42,6 @@ public class DashboardMapper {
     private void setFilters(DashboardResponse dashboardContract, Dashboard dashboard) {
         List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
                 .stream()
-                .filter(it -> !it.isVoided())
                 .map(dashboardFilterMapper::fromEntity)
                 .collect(Collectors.toList());
         dashboardContract.setFilters(list);

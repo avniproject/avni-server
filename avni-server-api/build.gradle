@@ -88,6 +88,7 @@ dependencies {
     runtime("org.springframework.boot:spring-boot-properties-migrator")
     implementation 'org.apache.tika:tika-core:2.7.0'
     compile 'org.owasp.encoder:encoder:1.2.3'
+    implementation 'org.apache.commons:commons-csv:1.10.0'
 }
 
 bootRun {

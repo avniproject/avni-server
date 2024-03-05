@@ -11,38 +11,38 @@ commands:
         type: string
         default: "ssh.staging.openchs.org"
     steps:
-    - attach_workspace:
-        at: ~/artifacts
+      - attach_workspace:
+          at: ~/artifacts
 
-    - run: sudo apt-get install make openssl
+      - run: sudo apt-get install make openssl
 
-    - run:
-        name: Install dependencies
-        command: |
-          sudo apt-get -y -qq update
-          sudo apt-get -y -qq install python3-pip
-          sudo pip3 install awscli --upgrade
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get -y -qq update
+            sudo apt-get -y -qq install python3-pip
+            sudo pip3 install awscli --upgrade
 
-    - run:
-        name: Copy build to server
-        command: |
-          scp -o StrictHostKeyChecking=no ~/artifacts/avni-server-*.noarch.rpm ec2-user@<< parameters.hostname >>:/tmp/avni-server.rpm
+      - run:
+          name: Copy build to server
+          command: |
+            scp -o StrictHostKeyChecking=no ~/artifacts/avni-server-*.noarch.rpm ec2-user@<< parameters.hostname >>:/tmp/avni-server.rpm
 
-    - run:
-        name: Deploy server
-        command: |
-          ssh -o StrictHostKeyChecking=no ec2-user@<< parameters.hostname >> \<< EOF
-          sudo service openchs stop 2>&1 >/dev/null
-          sleep 5
-          sudo yum clean all 2>&1 >/dev/null
-          sudo rm -rf /var/cache/yum 2>&1 >/dev/null
-          sudo yum -y updateinfo 2>&1 >/dev/null
-          sudo yum -y remove avni-server openchs-server java-1.7.0-openjdk 2>&1 >/dev/null
-          sudo yum -y install /tmp/avni-server.rpm 2>&1 >/dev/null
-          sudo service openchs start 2>&1 >/dev/null
-          sleep 20
-          sudo rm -rf /tmp/avni-server.rpm
-          EOF
+      - run:
+          name: Deploy server
+          command: |
+            ssh -o StrictHostKeyChecking=no ec2-user@<< parameters.hostname >> \<< EOF
+            sudo service openchs stop 2>&1 >/dev/null
+            sleep 5
+            sudo yum clean all 2>&1 >/dev/null
+            sudo rm -rf /var/cache/yum 2>&1 >/dev/null
+            sudo yum -y updateinfo 2>&1 >/dev/null
+            sudo yum -y remove avni-server openchs-server java-1.7.0-openjdk 2>&1 >/dev/null
+            sudo yum -y install /tmp/avni-server.rpm 2>&1 >/dev/null
+            sudo service openchs start 2>&1 >/dev/null
+            sleep 20
+            sudo rm -rf /tmp/avni-server.rpm
+            EOF
 
   deploy_as_service:
     description: Deployment of avni-server as a systemd service
@@ -94,13 +94,13 @@ commands:
 jobs:
   test:
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8-jdk
 
-    - image: circleci/postgres:12.7
-      environment:
-      - POSTGRES_USER: openchs
-      - POSTGRES_DB: openchs_test
-      - POSTGRES_PASSWORD: password
+      - image: circleci/postgres:12.7
+        environment:
+          - POSTGRES_USER: openchs
+          - POSTGRES_DB: openchs_test
+          - POSTGRES_PASSWORD: password
 
     working_directory: ~/avni-server
 
@@ -108,29 +108,29 @@ jobs:
       MAVEN_OPTS: -Xmx3200m
 
     steps:
-    - checkout
+      - checkout
 
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
-        - v1-dependencies-
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
+            - v1-dependencies-
 
-    - run: sudo apt-get update
+      - run: sudo apt-get update
 
-    - run: sudo apt-get install make postgresql-client
+      - run: sudo apt-get install make postgresql-client
 
-    - run: make ci-test
+      - run: make ci-test
 
-    - save_cache:
-        paths:
-        - ~/.m2
-        - ~/.gradle
-        - ~/avni-server/.gradle
-        key: v1-dependencies--{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/.gradle
+            - ~/avni-server/.gradle
+          key: v1-dependencies--{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
 
-    - store_artifacts:
-        path: avni-server-api/build/reports/tests/test
-        destination: testReports
+      - store_artifacts:
+          path: avni-server-api/build/reports/tests/test
+          destination: testReports
   build:
     docker:
       - image: circleci/openjdk:8-jdk
@@ -142,44 +142,44 @@ jobs:
       MAVEN_OPTS: -Xmx3200m
 
     steps:
-    - checkout
+      - checkout
 
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
-        - v1-dependencies-
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
+            - v1-dependencies-
 
-    - run: sudo apt-get install make openssl
+      - run: sudo apt-get install make openssl
 
-    - run: make upload-rpm
+      - run: make upload-rpm
 
-    - save_cache:
-        paths:
-        - ~/.m2
-        - ~/.gradle
-        - ~/avni-server/.gradle
-        key: v1-dependencies--{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
+      - save_cache:
+          paths:
+            - ~/.m2
+            - ~/.gradle
+            - ~/avni-server/.gradle
+          key: v1-dependencies--{{ checksum "build.gradle" }}-{{ checksum "avni-server-api/build.gradle" }}
 
-    - run: mkdir -p ~/artifacts;
+      - run: mkdir -p ~/artifacts;
 
-    - run: cp minor_version ~/artifacts/minor_version;
+      - run: cp minor_version ~/artifacts/minor_version;
 
-    - run: cp major_version ~/artifacts/major_version;
+      - run: cp major_version ~/artifacts/major_version;
 
-    - run: cp ~/avni-server/avni-server-api/build/distributions/avni-server-*.noarch.rpm ~/artifacts/;
+      - run: cp ~/avni-server/avni-server-api/build/distributions/avni-server-*.noarch.rpm ~/artifacts/;
 
-    - run: cp ~/avni-server/avni-server-api/build/libs/avni-server-*.jar ~/artifacts/;
+      - run: cp ~/avni-server/avni-server-api/build/libs/avni-server-*.jar ~/artifacts/;
 
-    - persist_to_workspace:
-        root: ~/artifacts
-        paths:
-        - minor_version
-        - major_version
-        - avni-server-*.noarch.rpm
-        - avni-server-*.jar
+      - persist_to_workspace:
+          root: ~/artifacts
+          paths:
+            - minor_version
+            - major_version
+            - avni-server-*.noarch.rpm
+            - avni-server-*.jar
 
-    - store_artifacts:
-        path: ~/artifacts
+      - store_artifacts:
+          path: ~/artifacts
 
   build_docker_image:
     docker:
@@ -188,7 +188,7 @@ jobs:
     working_directory: ~/avni-server
     steps:
       - checkout
-      
+
       - attach_workspace:
           at: ~/artifacts
 
@@ -238,11 +238,11 @@ jobs:
 
   UAT_deploy:
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8-jdk
     working_directory: ~/
     steps:
-    - deploy:
-        hostname: "ssh.uat.openchs.org"
+      - deploy:
+          hostname: "ssh.uat.openchs.org"
 
   PRERELEASE_deploy:
     docker:
@@ -384,5 +384,4 @@ workflows:
 
 notify:
   webhooks:
-  - url: https://webhooks.gitter.im/e/0fdffde721194986f2a0
-
+    - url: https://webhooks.gitter.im/e/0fdffde721194986f2a0

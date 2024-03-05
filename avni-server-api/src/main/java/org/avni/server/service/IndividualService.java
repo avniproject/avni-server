@@ -25,6 +25,8 @@ import org.avni.server.util.S;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.api.RequestUtils;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -57,9 +59,10 @@ public class IndividualService implements ScopeAwareService<Individual> {
     private final AccessControlService accessControlService;
 
     private final List<SubjectTreeItemRepository> subjectTreeItemRepositories;
+    private static final Logger logger = LoggerFactory.getLogger(IndividualService.class);
 
     @Autowired
-    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository) {
+    public IndividualService(IndividualRepository individualRepository, ObservationService observationService, GroupSubjectRepository groupSubjectRepository, ConceptRepository conceptRepository, GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository, EncounterRepository encounterRepository, ProgramEncounterRepository programEncounterRepository, AddressLevelService addressLevelService, ConceptService conceptService, AccessControlService accessControlService, ProgramEnrolmentRepository programEnrolmentRepository, ChecklistRepository checklistRepository, ChecklistItemRepository checklistItemRepository, SubjectMigrationRepository subjectMigrationRepository, IndividualRelationshipRepository individualRelationshipRepository, CommentRepository commentRepository, EntityApprovalStatusRepository entityApprovalStatusRepository, SubjectProgramEligibilityRepository subjectProgramEligibilityRepository, CommentThreadRepository commentThreadRepository) {
         this.individualRepository = individualRepository;
         this.observationService = observationService;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -74,7 +77,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         this.accessControlService = accessControlService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
 
-        subjectTreeItemRepositories = Arrays.asList(individualRepository, encounterRepository, programEnrolmentRepository, programEncounterRepository, checklistItemRepository, checklistRepository, entityApprovalStatusRepository, subjectProgramEligibilityRepository, subjectMigrationRepository, individualRelationshipRepository, commentRepository, groupSubjectRepository);
+        subjectTreeItemRepositories = Arrays.asList(individualRepository, encounterRepository, programEnrolmentRepository, programEncounterRepository, checklistItemRepository, checklistRepository, entityApprovalStatusRepository, subjectProgramEligibilityRepository, subjectMigrationRepository, individualRelationshipRepository, commentRepository, groupSubjectRepository, commentThreadRepository);
     }
 
     public Individual findByUuid(String uuid) {
@@ -467,6 +470,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
     @Transactional
     public void voidSubjectsTree(AddressLevel address) {
         subjectTreeItemRepositories.forEach(subjectTreeItemRepository -> {
+            logger.info(String.format("Voiding subject tree item for address {%d, %s}", address.getId(), address.getTitle()));
             subjectTreeItemRepository.voidSubjectItemsAt(address);
         });
     }

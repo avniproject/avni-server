@@ -43,10 +43,11 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     GroupSubject findByGroupSubjectAndMemberSubject(Individual groupSubject, Individual memberSubject);
 
     @Query("select gs from GroupSubject gs " +
-            "join gs.groupSubject g " +
-            "join gs.memberSubject m " +
-            "where g = :individual or m = :individual " )
-    List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Individual individual);
+            "where gs.memberSubject.id = :individualId or gs.groupSubject.id = :individualId " )
+    List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Long individualId);
+    default List<GroupSubject> findAllByGroupSubjectOrMemberSubject(Individual individual) {
+        return this.findAllByGroupSubjectOrMemberSubject(individual.getId());
+    }
 
     GroupSubject findByGroupSubjectAndGroupRoleAndIsVoidedFalse(Individual groupSubject, GroupRole headOfHousehold);
 
@@ -165,7 +166,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     }
 
     @Modifying
-    @Query(value = "update group_subject e set is_voided = true, last_modified_date_time = (current_timestamp + e.id * (interval '1 millisecond')/1000), last_modified_by_id = :lastModifiedById " +
+    @Query(value = "update group_subject e set is_voided = true, last_modified_date_time = (current_timestamp + random() * 5000 * (interval '1 millisecond')), last_modified_by_id = :lastModifiedById " +
             "from individual i" +
             " where i.address_id = :addressId and (i.id = e.group_subject_id or i.id = e.member_subject_id) and e.is_voided = false", nativeQuery = true)
     void voidSubjectItemsAt(Long addressId, Long lastModifiedById);

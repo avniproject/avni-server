@@ -93,10 +93,32 @@ tunnel-rwb-prod:
 
 dump-org-data-prerelease:
 	make dump-org-data dbRole=$(dbRole) prefix=prerelease
+dump-org-data-prerelease-with-copy:
+	make dump-org-data-with-copy dbRole=$(dbRole) prefix=prerelease
 dump-org-data-prod:
 	make dump-org-data dbRole=$(dbRole) prefix=prod
+dump-org-data-prod-with-copy:
+	make dump-org-data-with-copy dbRole=$(dbRole) prefix=prod
 dump-org-data-staging:
 	make dump-org-data dbRole=$(dbRole) prefix=staging
+
+dump-org-data-with-copy:
+ifndef dbRole
+	@echo "Provde the dbRole variable"
+	exit 1
+endif
+	pg_dump -h localhost -p 5433 \
+		--dbname=openchs \
+		--username=openchs \
+		--role=$(dbRole) \
+		--file=$(HOME)/projects/avni/avni-db-dumps/$(prefix)-$(dbRole).sql \
+		--enable-row-security --verbose --schema=public --host=localhost \
+		--exclude-table-data=audit \
+		--exclude-table-data='public.sync_telemetry' \
+		--exclude-table-data='rule_failure_log' \
+		--exclude-table-data='scheduled_job_run' \
+		--exclude-table-data='qrtz_*' \
+		--exclude-table-data='batch_*' \
 
 dump-org-data:
 ifndef dbRole
@@ -115,7 +137,13 @@ endif
 		--exclude-table-data='scheduled_job_run' \
 		--exclude-table-data='qrtz_*' \
 		--exclude-table-data='batch_*' \
-		--exclude-table-data='public.individual_copy' \
-		--exclude-table-data='public.program_enrolment_copy' \
-		--exclude-table-data='public.encounter_copy' \
-		--exclude-table-data='public.program_encounter_copy'
+		--exclude-table='public.individual_copy' \
+		--exclude-table='public.program_enrolment_copy' \
+		--exclude-table='public.encounter_copy' \
+		--exclude-table='public.program_encounter_copy' \
+		--exclude-table='public.individual_copy_ck' \
+		--exclude-table='public.program_enrolment_ck' \
+		--exclude-table='public.encounter_ck' \
+		--exclude-table='public.program_encounter_ck' \
+		--exclude-table='public.individual_copy_ihmp' \
+		--exclude-table='public.program_enrolment_ihmp'

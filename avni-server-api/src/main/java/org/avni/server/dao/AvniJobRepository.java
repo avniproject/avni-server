@@ -80,6 +80,7 @@ public class AvniJobRepository {
                 "where i.job_name = 'syncAttributesJob'\n" +
                 "  and key_name = 'subjectTypeId'\n" +
                 "  and long_val = :subjectTypeId\n" +
+                "  and start_time is not null\n" +
                 "order by start_time desc\n" +
                 "limit 1;";
         Map<String, Object> params = new HashMap<>();

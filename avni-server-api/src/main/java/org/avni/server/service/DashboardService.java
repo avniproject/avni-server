@@ -70,16 +70,16 @@ public class DashboardService implements NonScopeAwareService {
             section.setVoided(sectionContract.isVoided());
             DashboardSection savedSection = dashboardSectionRepository.save(section);
 
-            for (DashboardSectionCardMappingContract cardMappingContract : sectionContract.getDashboardSectionCardMappings()) {
-                DashboardSectionCardMapping mapping = dashboardSectionCardMappingRepository.findByUuid(cardMappingContract.getUuid());
+            for (DashboardSectionCardMappingContract sectionCardMappingContract : sectionContract.getDashboardSectionCardMappings()) {
+                DashboardSectionCardMapping mapping = dashboardSectionCardMappingRepository.findByUuid(sectionCardMappingContract.getUuid());
                 if (mapping == null) {
                     mapping = new DashboardSectionCardMapping();
-                    mapping.setUuid(cardMappingContract.getUuid());
+                    mapping.setUuid(sectionCardMappingContract.getUuid());
                 }
                 mapping.setDashboardSection(savedSection);
-                mapping.setCard(cardRepository.findByUuid(cardMappingContract.getReportCardUUID()));
-                mapping.setDisplayOrder(cardMappingContract.getDisplayOrder());
-                mapping.setVoided(cardMappingContract.isVoided());
+                mapping.setCard(cardRepository.findByUuid(sectionCardMappingContract.getReportCardUUID()));
+                mapping.setDisplayOrder(sectionCardMappingContract.getDisplayOrder());
+                mapping.setVoided(sectionCardMappingContract.isVoided());
                 dashboardSectionCardMappingRepository.save(mapping);
             }
         }

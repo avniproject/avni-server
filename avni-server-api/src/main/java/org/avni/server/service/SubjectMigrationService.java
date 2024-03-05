@@ -75,7 +75,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
      This problem is illustrated in this test - org.avni.server.dao.SubjectMigrationIntegrationTest.migrations_created_by_one_user_is_returned_for_another_user_even_when_concept_attributes_dont_match
      At this moment the performance of this seems small as other filters help in reducing the number of records. Functionally this is not an issue because mobile app does the checks before applying subject migration. */
     @Transactional
-    public void markSubjectMigrationIfRequired(String individualUuid, AddressLevel newAddressLevel, ObservationCollection newObservations, boolean executingInBulk) {
+    public void markSubjectMigrationIfRequired(String individualUuid, AddressLevel oldAddressLevel, AddressLevel newAddressLevel, ObservationCollection oldObservations, ObservationCollection newObservations, boolean executingInBulk) {
         Individual individual = individualRepository.findByUuid(individualUuid);
         if (individual == null || newAddressLevel == null) {
             return;
@@ -83,12 +83,13 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         SubjectType subjectType = individual.getSubjectType();
         String syncConcept1 = subjectType.getSyncRegistrationConcept1();
         String syncConcept2 = subjectType.getSyncRegistrationConcept2();
-        ObservationCollection oldObservations = individual.getObservations();
+        if (oldObservations == null) oldObservations = individual.getObservations();
         String oldObsSingleStringValueSyncConcept1 = oldObservations.getObjectAsSingleStringValue(syncConcept1);
         String newObsSingleStringValueSyncConcept1 = newObservations.getObjectAsSingleStringValue(syncConcept1);
         String oldObsSingleStringValueSyncConcept2 = oldObservations.getObjectAsSingleStringValue(syncConcept2);
         String newObsSingleStringValueSyncConcept2 = newObservations.getObjectAsSingleStringValue(syncConcept2);
-        if (!Objects.equals(individual.getAddressLevel().getId(), newAddressLevel.getId()) ||
+        if (oldAddressLevel == null) oldAddressLevel = individual.getAddressLevel();
+        if (!Objects.equals(oldAddressLevel.getId(), newAddressLevel.getId()) ||
                 !Objects.equals(oldObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept1) ||
                 !Objects.equals(oldObsSingleStringValueSyncConcept2, newObsSingleStringValueSyncConcept2)) {
             logger.info(String.format("Migrating subject with UUID %s from %s to %s", individualUuid, addressLevelService.getTitleLineage(individual.getAddressLevel()), addressLevelService.getTitleLineage(newAddressLevel)));
@@ -96,7 +97,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
             subjectMigration.assignUUID();
             subjectMigration.setIndividual(individual);
             subjectMigration.setSubjectType(individual.getSubjectType());
-            subjectMigration.setOldAddressLevel(individual.getAddressLevel());
+            subjectMigration.setOldAddressLevel(oldAddressLevel);
             subjectMigration.setNewAddressLevel(newAddressLevel);
             if (!Objects.equals(oldObsSingleStringValueSyncConcept1, newObsSingleStringValueSyncConcept1)) {
                 subjectMigration.setOldSyncConcept1Value(oldObsSingleStringValueSyncConcept1);
@@ -124,7 +125,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     @Transactional
     public void changeSubjectsAddressLevel(List<Individual> subjects, AddressLevel destAddressLevel) {
         subjects.forEach(individual -> {
-            this.markSubjectMigrationIfRequired(individual.getUuid(), destAddressLevel, individual.getObservations(), true);
+            this.markSubjectMigrationIfRequired(individual.getUuid(), null, destAddressLevel, null, individual.getObservations(), true);
             individual.setAddressLevel(destAddressLevel);
             individualRepository.save(individual);
         });

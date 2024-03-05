@@ -272,6 +272,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         formContract.setCreatedDateTime(form.getCreatedDateTime());
         formContract.setModifiedDateTime(form.getLastModifiedDateTime());
         formContract.setDecisionRule(form.getDecisionRule());
+        formContract.setEditFormRule(form.getEditFormRule());
         formContract.setVisitScheduleRule(form.getVisitScheduleRule());
         formContract.setTaskScheduleRule(form.getTaskScheduleRule());
         formContract.setValidationRule(form.getValidationRule());

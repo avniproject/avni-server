@@ -1,5 +1,6 @@
 package org.avni.server.util;
 
+import org.apache.commons.csv.*;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -177,9 +179,33 @@ public class AvniFiles {
         assertTrue(mimeTypeMatch, format("Expected mimetype: %s, Got, %s", expectedMimeTypeString, actualMimeType));
     }
 
+    private static File cleanCsv(File unverifiedFile) throws IOException {
+        CSVFormat csvFormat = CSVFormat.Builder.create().setQuoteMode(QuoteMode.ALL_NON_NULL).build();
+        CSVParser records = csvFormat.parse(new FileReader(unverifiedFile));
+        File outputCsv = File.createTempFile(UUID.randomUUID().toString(), ".csv");
+
+        CSVPrinter printer = new CSVPrinter(new FileWriter(outputCsv), csvFormat);
+        for (CSVRecord csvRecord : records) {
+            Stream<String> record = Arrays.stream(csvRecord.values()).map(s -> {
+                if (s.startsWith("=") || s.startsWith("-") || s.startsWith("+") || s.startsWith("@")) {
+                    return format("\t%s",s);
+                }
+                return s;
+            });
+            printer.printRecord(record);
+        }
+        printer.close();
+
+        return outputCsv;
+    }
+
+    private static boolean isCsv(String extension) {
+        return extension.equals(".csv");
+    }
+
     public static File convertMultiPartToFile(MultipartFile file, String ext) throws IOException {
-        File tempFile = File.createTempFile(UUID.randomUUID().toString(), ext);
-        return getFile(file, tempFile);
+        File tempFile = getFile(file, File.createTempFile(UUID.randomUUID().toString(), ext));
+        return isCsv(ext) ? cleanCsv(tempFile) : tempFile;
     }
 
     public static File convertMultiPartToZip(MultipartFile file) throws IOException {
