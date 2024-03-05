@@ -535,6 +535,17 @@ public class OrganisationService {
         addFileToZip(zos, "messageRule.json", messagingService.findAll().stream().map(messageRule -> new MessageRuleContract(messageRule, entityTypeRetrieverService)).collect(Collectors.toList()));
     }
 
+    public void addTranslations(Long orgId, ZipOutputStream zos) throws IOException {
+        List<Translation> translations = translationRepository.findAllByOrganisationId(orgId);
+        if (translations.isEmpty()) {
+            return;
+        }
+        addDirectoryToZip(zos, "translations");
+        for (Translation translation : translations) {
+            addFileToZip(zos, String.format("translations/%s.json", translation.getLanguage()), translation.getTranslationJson());
+        }
+    }
+
     private void addFileToZip(ZipOutputStream zos, String fileName, File file) throws IOException {
         ZipEntry entry = new ZipEntry(fileName);
         zos.putNextEntry(entry);
