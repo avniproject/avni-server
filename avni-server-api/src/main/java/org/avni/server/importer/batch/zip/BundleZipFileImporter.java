@@ -8,18 +8,21 @@ import org.avni.server.application.menu.MenuItem;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.Locale;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFile;
+import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.importer.batch.model.BundleZip;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
-import org.avni.server.web.request.*;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
@@ -39,9 +42,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -82,6 +83,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final MenuItemService menuItemService;
     private final EntityTypeRetrieverService entityTypeRetrieverService;
     private final MessagingService messagingService;
+    private final RuleDependencyService ruleDependencyService;
+    private final TranslationService translationService;
+    private final RuleService ruleService;
+
     @Value("#{jobParameters['userId']}")
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
@@ -100,7 +105,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("operationalEncounterTypes.json");
         add("documentations.json");
         add("concepts.json");
-        add("forms");
+        add(BundleFolder.FORMS.getFolderName());
         add("formMappings.json");
         add("individualRelation.json");
         add("relationshipType.json");
@@ -116,6 +121,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("taskStatus.json");
         add("menuItem.json");
         add("messageRule.json");
+        add(BundleFolder.TRANSLATIONS.getFolderName());
+        add("ruleDependency.json");
+        add(BundleFolder.OLD_RULES.getFolderName());
     }};
 
 
@@ -146,7 +154,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  TaskStatusService taskStatusService,
                                  MenuItemService menuItemService,
                                  EntityTypeRetrieverService entityTypeRetrieverService,
-                                 MessagingService messagingService) {
+                                 MessagingService messagingService,
+                                 RuleDependencyService ruleDependencyService,
+                                 TranslationService translationService,
+                                 RuleService ruleService) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -175,6 +186,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.menuItemService = menuItemService;
         this.entityTypeRetrieverService = entityTypeRetrieverService;
         this.messagingService = messagingService;
+        this.ruleDependencyService = ruleDependencyService;
+        this.translationService = translationService;
+        this.ruleService = ruleService;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -186,15 +200,12 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     @Override
     public void write(List<? extends BundleFile> bundleFiles) throws Exception {
         BundleZip bundleZip = new BundleZip(bundleFiles.stream().collect(Collectors.toMap(BundleFile::getName, BundleFile::getContent)));
-        List<String> forms = bundleZip.getForms();
         for (String filename : fileSequence) {
-            if (filename.equals("forms")) {
-                for (String form : forms) deployFile("form", form, bundleFiles);
+            Optional<BundleFolder> fromFileName = BundleFolder.getFromFileName(filename);
+            if(fromFileName.isPresent()) {
+                deployFolder(fromFileName.get(), bundleFiles, bundleZip);
             } else {
-                byte[] fileData = bundleZip.getFile(filename);
-                if (fileData != null) {
-                    deployFile(filename, new String(fileData, StandardCharsets.UTF_8), bundleFiles);
-                }
+                deployFileIfDataExists(bundleFiles, bundleZip, filename);
             }
         }
         List<String> extensions = bundleZip.getExtensionNames();
@@ -210,6 +221,20 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         String subjectTypeUUID = fileName[0];
         String extension = fileName[1];
         return this.s3Service.uploadByteArray(subjectTypeUUID, extension, "icons", bundleFile.getContent());
+    }
+
+    private void deployFileIfDataExists(List<? extends BundleFile> bundleFiles, BundleZip bundleZip, String filename) throws IOException, FormBuilderException {
+        byte[] fileData = bundleZip.getFile(filename);
+        if (fileData != null) {
+            deployFile(filename, new String(fileData, StandardCharsets.UTF_8), bundleFiles);
+        }
+    }
+
+    private void deployFolder(BundleFolder bundleFolder, List<? extends BundleFile> bundleFiles, BundleZip bundleZip) throws IOException, FormBuilderException {
+        Map<String, String> files = bundleZip.getFileNameAndDataInFolder(bundleFolder.getFolderName());
+        for (Map.Entry fileEntry : files.entrySet()) {
+            deployFile(bundleFolder, fileEntry, bundleFiles);
+        }
     }
 
     private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
@@ -285,11 +310,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             case "concepts.json":
                 ConceptContract[] conceptContracts = convertString(fileData, ConceptContract[].class);
                 conceptService.saveOrUpdateConcepts(Arrays.asList(conceptContracts));
-                break;
-            case "form":
-                FormContract formContract = convertString(fileData, FormContract.class);
-                formContract.validate();
-                formService.saveForm(formContract);
                 break;
             case "formMappings.json":
                 FormMappingContract[] formMappingContracts = convertString(fileData, FormMappingContract[].class);
@@ -383,6 +403,33 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                     messageRule = MessageRuleContract.toModel(messageRuleContract, messageRule, entityTypeRetrieverService);
                     messagingService.saveRule(messageRule);
                 }
+                break;
+            case "ruleDependency.json":
+                RuleDependencyRequest ruleDependencyRequest = convertString(fileData, RuleDependencyRequest.class);
+                ruleDependencyService.uploadRuleDependency(ruleDependencyRequest, organisation);
+                break;
+        }
+    }
+
+    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, String> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
+        logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData);
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        switch (bundleFolder) {
+            case FORMS:
+                FormContract formContract = convertString(fileData.getValue(), FormContract.class);
+                formContract.validate();
+                formService.saveForm(formContract);
+                break;
+            case TRANSLATIONS:
+                TranslationContract translationContract = new TranslationContract();
+                translationContract.setLanguage(Locale.valueOf(fileData.getKey()));
+                translationContract.setTranslationJson(convertString(fileData.getValue(), JsonObject.class));
+                translationService.uploadTranslations(translationContract, organisation);
+                break;
+            case OLD_RULES:
+                RuleRequest ruleRequest = convertString(fileData.getValue(), RuleRequest.class);
+                ruleService.createOrUpdate(ruleRequest);
+                break;
         }
     }
 
