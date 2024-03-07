@@ -1,5 +1,6 @@
 package org.avni.server.web.request;
 
+import org.avni.server.domain.Rule;
 import org.avni.server.domain.RuledEntity;
 import org.avni.server.domain.RuledEntityType;
 
@@ -29,6 +30,21 @@ public class RuleRequest {
             entity.setType(entityType);
         }
         return entity;
+    }
+
+    public static RuleRequest fromRule(Rule rule) {
+        RuleRequest ruleRequest = new RuleRequest();
+        ruleRequest.ruleDependencyUUID = rule.getRuleDependency().getUuid();
+        ruleRequest.entity = rule.getEntity();
+        ruleRequest.entityUUID = rule.getEntity().getUuid();
+        ruleRequest.entityType = rule.getEntity().getType().name();
+        ruleRequest.type = rule.getType().name();
+        ruleRequest.executionOrder = rule.getExecutionOrder();
+        ruleRequest.data = rule.getData();
+        ruleRequest.name = rule.getName();
+        ruleRequest.uuid = rule.getUuid();
+        ruleRequest.fnName = rule.getFnName();
+        return ruleRequest;
     }
 
     public void setEntity(RuledEntity entity) {

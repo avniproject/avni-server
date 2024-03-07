@@ -119,6 +119,8 @@ public class OrganisationService {
     private final TaskTypeService taskTypeService;
     private final TaskStatusService taskStatusService;
     private final EntityTypeRetrieverService entityTypeRetrieverService;
+    private final RuleDependencyRepository ruleDependencyRepository;
+    private final RuleRepository ruleRepository;
     private final Logger logger;
 
     @Autowired
@@ -185,7 +187,9 @@ public class OrganisationService {
                                DocumentationService documentationService,
                                TaskTypeService taskTypeService,
                                TaskStatusService taskStatusService,
-                               EntityTypeRetrieverService entityTypeRetrieverService) {
+                               EntityTypeRetrieverService entityTypeRetrieverService,
+                               RuleDependencyRepository ruleDependencyRepository,
+                               RuleRepository ruleRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -251,6 +255,8 @@ public class OrganisationService {
         this.taskTypeService = taskTypeService;
         this.taskStatusService = taskStatusService;
         this.entityTypeRetrieverService = entityTypeRetrieverService;
+        this.ruleDependencyRepository = ruleDependencyRepository;
+        this.ruleRepository = ruleRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -543,6 +549,25 @@ public class OrganisationService {
         addDirectoryToZip(zos, "translations");
         for (Translation translation : translations) {
             addFileToZip(zos, String.format("translations/%s.json", translation.getLanguage()), translation.getTranslationJson());
+        }
+    }
+
+    public void addOldRuleDependency(Long orgId, ZipOutputStream zos) throws IOException {
+        RuleDependency ruleDependency = ruleDependencyRepository.findByOrganisationId(orgId);
+        if (ruleDependency == null) {
+            return;
+        }
+        addFileToZip(zos, "ruleDependency.json", RuleDependencyRequest.fromRuleDependency(ruleDependency));
+    }
+
+    public void addOldRules(Long orgId, ZipOutputStream zos) throws IOException {
+        List<Rule> rulesFromDB = ruleRepository.findByOrganisationId(orgId);
+        if (rulesFromDB.isEmpty()) {
+            return;
+        }
+        addDirectoryToZip(zos, "oldRules");
+        for (Rule rule : rulesFromDB) {
+            addFileToZip(zos, String.format("oldRules/%s.json", rule.getUuid()), RuleRequest.fromRule(rule));
         }
     }
 
