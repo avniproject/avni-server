@@ -50,7 +50,7 @@ import static java.lang.String.format;
 public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private static final Logger logger = LoggerFactory.getLogger(BundleZipFileImporter.class);
 
-    private static final char STRING_EXTENSION = '.';
+    private static final char SEPARATOR_FOR_EXTENSION = '.';
     private final AuthService authService;
     private final EncounterTypeService encounterTypeService;
     private final FormMappingService formMappingService;
@@ -419,7 +419,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case TRANSLATIONS:
                 TranslationContract translationContract = new TranslationContract();
-                String language = fileData.getKey().substring(0, fileData.getKey().indexOf(STRING_EXTENSION));
+                String language = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 translationContract.setLanguage(Locale.valueOf(language));
                 translationContract.setTranslationJson(convertString(fileData.getValue(), JsonObject.class));
                 translationService.uploadTranslations(translationContract, organisation);
@@ -430,14 +430,14 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case SUBJECT_TYPE_ICONS:
                 String stS3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
-                String subjectTypeUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(STRING_EXTENSION));
+                String subjectTypeUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
                 subjectType.setIconFileS3Key(stS3ObjectKey);
                 subjectTypeRepository.save(subjectType);
                 break;
             case REPORT_CARD_ICONS:
                 String cs3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
-                String reportCardUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(STRING_EXTENSION));
+                String reportCardUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
                 Card card = cardRepository.findByUuid(reportCardUUID);
                 card.setIconFileS3Key(cs3ObjectKey);
                 cardRepository.save(card);
