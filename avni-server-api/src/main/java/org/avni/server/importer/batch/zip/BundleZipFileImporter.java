@@ -428,7 +428,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case OLD_RULES:
                 RuleRequest ruleRequest = convertString(fileData.getValue(), RuleRequest.class);
-                ruleService.createOrUpdate(ruleRequest);
+                ruleService.createOrUpdate(ruleRequest, organisation);
                 break;
         }
     }
