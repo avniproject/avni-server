@@ -29,7 +29,7 @@ public class BundleZipTest {
         BundleZip bundleZip = new BundleZip(bundleEntries);
         Map<String, byte[]> forms = bundleZip.getFileNameAndDataInFolder(BundleFolder.FORMS.getFolderName());
         assertEquals(1, forms.size());
-        assertEquals(8, forms.get("st1").length);
+        assertEquals(8, forms.get("st1.json").length);
     }
 
     @Test
