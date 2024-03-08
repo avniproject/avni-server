@@ -487,7 +487,7 @@ public class OrganisationService {
         }
     }
 
-    public void addIcons(ZipOutputStream zos) throws IOException {
+    public void addSubjectTypeIcons(ZipOutputStream zos) throws IOException {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAllByIconFileS3KeyNotNull();
         if (subjectTypes.size() > 0) {
             addDirectoryToZip(zos, "subjectTypeIcons");
@@ -496,6 +496,18 @@ public class OrganisationService {
             InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
             String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
             addIconToZip(zos, String.format("subjectTypeIcons/%s.%s", subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
+        }
+    }
+
+    public void addReportCardIcons(ZipOutputStream zos) throws IOException {
+        List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull();
+        if (cards.size() > 0) {
+            addDirectoryToZip(zos, "reportCardIcons");
+        }
+        for (Card reportCard : cards) {
+            InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
+            String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
+            addIconToZip(zos, String.format("reportCardIcons/%s.%s", reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 public class BundleZip extends HashMap<String, byte[]> {
     public static final String STRING_FOLDER_PATH_SEPARATOR = "/";
-    public static final char STRING_EXTENSION = '.';
 
     public BundleZip(Map<? extends String, ? extends byte[]> m) {
         super(m);
@@ -21,13 +20,11 @@ public class BundleZip extends HashMap<String, byte[]> {
         return this.get(matchingKey);
     }
 
-    public Map<String, String> getFileNameAndDataInFolder(String folder) {
-        Map<String, String> map = new HashMap<>();
-        //TODO refactor map put to be more readable
+    public Map<String, byte[]> getFileNameAndDataInFolder(String folder) {
+        Map<String, byte[]> map = new HashMap<>();
         this.entrySet().stream().filter(x -> x.getKey().contains(folder+STRING_FOLDER_PATH_SEPARATOR))
-                .forEach(x -> map.put(x.getKey().substring(x.getKey().lastIndexOf(STRING_FOLDER_PATH_SEPARATOR)+1,
-                                x.getKey().lastIndexOf(STRING_EXTENSION)),
-                        new String(x.getValue(), StandardCharsets.UTF_8)));
+                .forEach(x -> map.put(x.getKey().substring(x.getKey().lastIndexOf(STRING_FOLDER_PATH_SEPARATOR)+1),
+                        x.getValue()));
         return map;
     }
 

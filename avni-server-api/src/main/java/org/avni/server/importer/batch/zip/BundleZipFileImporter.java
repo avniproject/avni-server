@@ -7,12 +7,10 @@ import org.avni.messaging.service.MessagingService;
 import org.avni.server.application.menu.MenuItem;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
+import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.OrganisationConfig;
-import org.avni.server.domain.SubjectType;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFile;
@@ -52,7 +50,7 @@ import static java.lang.String.format;
 public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private static final Logger logger = LoggerFactory.getLogger(BundleZipFileImporter.class);
 
-    private static final String SUBJECT_ICON_DIRECTORY = "subjectTypeIcons";
+    private static final char STRING_EXTENSION = '.';
     private final AuthService authService;
     private final EncounterTypeService encounterTypeService;
     private final FormMappingService formMappingService;
@@ -72,6 +70,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final GroupsService groupsService;
     private final GroupRoleService groupRoleService;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final CardRepository cardRepository;
     private final GroupPrivilegeService groupPrivilegeService;
     private final VideoService videoService;
     private final CardService cardService;
@@ -124,6 +123,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add(BundleFolder.TRANSLATIONS.getFolderName());
         add("ruleDependency.json");
         add(BundleFolder.OLD_RULES.getFolderName());
+        add(BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
+        add(BundleFolder.REPORT_CARD_ICONS.getFolderName());
     }};
 
 
@@ -145,6 +146,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  GroupsService groupsService,
                                  GroupRoleService groupRoleService,
                                  SubjectTypeRepository subjectTypeRepository,
+                                 CardRepository cardRepository,
                                  GroupPrivilegeService groupPrivilegeService,
                                  VideoService videoService,
                                  CardService cardService,
@@ -175,6 +177,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.groupsService = groupsService;
         this.groupRoleService = groupRoleService;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.cardRepository = cardRepository;
         this.groupPrivilegeService = groupPrivilegeService;
         this.videoService = videoService;
         this.cardService = cardService;
@@ -214,13 +217,13 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private String uploadIcon(BundleFile bundleFile) throws IOException {
-        String completePath = bundleFile.getName();
-        logger.info("uploading icon {}", completePath);
-        String[] fileName = completePath.replace(format("%s/", SUBJECT_ICON_DIRECTORY), "").split("\\.");
-        String subjectTypeUUID = fileName[0];
-        String extension = fileName[1];
-        return this.s3Service.uploadByteArray(subjectTypeUUID, extension, "icons", bundleFile.getContent());
+    private String uploadIcon(String iconFileName, byte[] iconFileData) throws IOException {
+        String bucketName = "icons";
+        logger.info("uploading icon {}", iconFileName);
+        String[] splitFileName = iconFileName.split("\\.");
+        String entityUUID = splitFileName[0];
+        String extension = splitFileName[1];
+        return s3Service.uploadByteArray(entityUUID, extension, bucketName, iconFileData);
     }
 
     private void deployFileIfDataExists(List<? extends BundleFile> bundleFiles, BundleZip bundleZip, String filename) throws IOException, FormBuilderException {
@@ -231,7 +234,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     private void deployFolder(BundleFolder bundleFolder, List<? extends BundleFile> bundleFiles, BundleZip bundleZip) throws IOException, FormBuilderException {
-        Map<String, String> files = bundleZip.getFileNameAndDataInFolder(bundleFolder.getFolderName());
+        Map<String, byte[]> files = bundleZip.getFileNameAndDataInFolder(bundleFolder.getFolderName());
         for (Map.Entry fileEntry : files.entrySet()) {
             deployFile(bundleFolder, fileEntry, bundleFiles);
         }
@@ -262,12 +265,6 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             case "subjectTypes.json":
                 SubjectTypeContract[] subjectTypeContracts = convertString(fileData, SubjectTypeContract[].class);
                 for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
-                    String iconFileName = format("%s/%s", SUBJECT_ICON_DIRECTORY, subjectTypeContract.getUuid());
-                    BundleFile iconFile = bundleFiles.stream().filter(f -> f.getName().contains(iconFileName)).findFirst().orElse(null);
-                    if (iconFile != null) {
-                        String s3ObjectKey = uploadIcon(iconFile);
-                        subjectTypeContract.setIconFileS3Key(s3ObjectKey);
-                    }
                     subjectTypeService.saveSubjectType(subjectTypeContract);
                 }
                 break;
@@ -411,8 +408,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, String> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
-        logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData);
+    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
+        logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData.getKey());
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (bundleFolder) {
             case FORMS:
@@ -422,7 +419,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case TRANSLATIONS:
                 TranslationContract translationContract = new TranslationContract();
-                translationContract.setLanguage(Locale.valueOf(fileData.getKey()));
+                String language = fileData.getKey().substring(0, fileData.getKey().indexOf(STRING_EXTENSION));
+                translationContract.setLanguage(Locale.valueOf(language));
                 translationContract.setTranslationJson(convertString(fileData.getValue(), JsonObject.class));
                 translationService.uploadTranslations(translationContract, organisation);
                 break;
@@ -430,12 +428,30 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 RuleRequest ruleRequest = convertString(fileData.getValue(), RuleRequest.class);
                 ruleService.createOrUpdate(ruleRequest, organisation);
                 break;
+            case SUBJECT_TYPE_ICONS:
+                String stS3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
+                String subjectTypeUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(STRING_EXTENSION));
+                SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+                subjectType.setIconFileS3Key(stS3ObjectKey);
+                subjectTypeRepository.save(subjectType);
+                break;
+            case REPORT_CARD_ICONS:
+                String cs3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
+                String reportCardUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(STRING_EXTENSION));
+                Card card = cardRepository.findByUuid(reportCardUUID);
+                card.setIconFileS3Key(cs3ObjectKey);
+                cardRepository.save(card);
+                break;
         }
     }
 
     public void deployFile(String filePath, byte[] contents) throws IOException {
         if (filePath.contains(OrganisationConfig.Extension.EXTENSION_DIR))
             s3Service.uploadInOrganisation(filePath, contents);
+    }
+
+    private <T> T convertString(byte[] data, Class<T> convertTo) throws IOException {
+        return convertString(new String(data, StandardCharsets.UTF_8),convertTo);
     }
 
     private <T> T convertString(String data, Class<T> convertTo) throws IOException {

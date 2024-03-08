@@ -6,7 +6,9 @@ import java.util.Optional;
 public enum BundleFolder {
     FORMS("forms", "form"),
     TRANSLATIONS("translations", "translation"),
-    OLD_RULES("oldRules", "oldRule");
+    OLD_RULES("oldRules", "oldRule"),
+    SUBJECT_TYPE_ICONS("subjectTypeIcons", "subjectTypeIcon"),
+    REPORT_CARD_ICONS("reportCardIcons", "reportCardIcon");
 
     String folderName;
     String modifiedFileName;

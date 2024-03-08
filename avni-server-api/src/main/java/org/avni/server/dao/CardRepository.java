@@ -15,4 +15,6 @@ public interface CardRepository extends ReferenceDataRepository<Card>, FindByLas
     @Query("select c.name from Card c where c.isVoided = false")
     List<String> getAllNames();
 
+    List<Card> findAllByIconFileS3KeyNotNull();
+
 }

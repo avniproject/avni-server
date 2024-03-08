@@ -27,9 +27,9 @@ public class BundleZipTest {
         bundleEntries.put("someParentFolder/programs.json", new byte[1]);
         bundleEntries.put("someParentFolder/forms/st1.json", new byte[8]);
         BundleZip bundleZip = new BundleZip(bundleEntries);
-        Map<String, String> forms = bundleZip.getFileNameAndDataInFolder(BundleFolder.FORMS.getFolderName());
+        Map<String, byte[]> forms = bundleZip.getFileNameAndDataInFolder(BundleFolder.FORMS.getFolderName());
         assertEquals(1, forms.size());
-        assertEquals(8, forms.get("st1").length());
+        assertEquals(8, forms.get("st1").length);
     }
 
     @Test
