@@ -18,6 +18,7 @@ public class RuleDependencyService implements NonScopeAwareService {
         RuleDependency ruleDependency =  ruleDependencyRepository.findByOrganisationId(organisation.getId());
         if (ruleDependency == null) {
             ruleDependency = new RuleDependency();
+            ruleDependency.assignUUIDIfRequired();
         }
         ruleDependency.setCode(ruleDependencyRequest.getCode());
         ruleDependency.setChecksum(ruleDependencyRequest.getHash());
