@@ -109,4 +109,6 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
     public boolean isVoided() {
         return subjectType.isVoided() || super.isVoided();
     }
+
+    public JsonObject getSettings() { return subjectType.getSettings(); }
 }

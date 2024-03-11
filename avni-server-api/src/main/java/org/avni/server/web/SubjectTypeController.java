@@ -13,16 +13,15 @@ import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.GroupRoleContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.web.request.webapp.SubjectTypeContractWeb;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
-import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.util.ReactAdminUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -170,6 +168,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         subjectType.setSyncRegistrationConcept1(request.getSyncRegistrationConcept1());
         subjectType.setSyncRegistrationConcept2(request.getSyncRegistrationConcept2());
         subjectType.setNameHelpText(request.getNameHelpText());
+        subjectType.setSettings(request.getSettings() != null ? request.getSettings() : subjectTypeService.getDefaultSettings());
         SubjectType savedSubjectType = subjectTypeRepository.save(subjectType);
         if (Subject.Household.toString().equals(request.getType())) {
             subjectType.setGroup(true);

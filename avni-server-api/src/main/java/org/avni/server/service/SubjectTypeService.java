@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.application.Subject;
+import org.avni.server.application.SubjectTypeSettingKey;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -85,6 +86,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setSyncRegistrationConcept2(subjectTypeRequest.getSyncRegistrationConcept2());
         subjectType.setSyncRegistrationConcept2Usable(subjectTypeRequest.getSyncRegistrationConcept2Usable());
         subjectType.setNameHelpText(subjectTypeRequest.getNameHelpText());
+        subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
         subjectTypeRepository.save(subjectType);
     }
 
@@ -195,5 +197,12 @@ public class SubjectTypeService implements NonScopeAwareService {
                 filter(Objects::nonNull).
                 map(sa -> String.format("%s->%s", subjectTypeWithSyncAttribute.getName(),conceptService.get(sa).getName())).
                 collect(Collectors.toList());
+    }
+
+    public JsonObject getDefaultSettings() {
+        JsonObject defaultSettings = new JsonObject();
+        defaultSettings.put(String.valueOf(SubjectTypeSettingKey.displayPlannedEncounters), true);
+        defaultSettings.put(String.valueOf(SubjectTypeSettingKey.displayRegistrationDetails), true);
+        return defaultSettings;
     }
 }

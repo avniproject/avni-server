@@ -56,6 +56,11 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
     @Column(name = "icon_file_s3_key")
     private String iconFileS3Key;
 
+    //  Check keys in SubjectTypeSettingKeys
+    @Column
+    @Type(type = "jsonObject")
+    private JsonObject settings;
+
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "regex",
@@ -355,6 +360,14 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         this.programEligibilityCheckDeclarativeRule = programEligibilityCheckDeclarativeRule;
     }
 
+    public JsonObject getSettings() {
+        return settings;
+    }
+
+    public void setSettings(JsonObject settings) {
+        this.settings = settings;
+    }
+
     @Projection(name = "SubjectTypeProjection", types = {SubjectType.class})
     public interface SubjectTypeProjection extends BaseProjection {
         String getName();
@@ -384,6 +397,8 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         Format getValidLastNameFormat();
 
         List<GroupRole.GroupRoleProjection> getGroupRoles();
+
+        JsonObject getSettings();
     }
 
     @Override
