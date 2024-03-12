@@ -17,6 +17,7 @@ import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
 import org.avni.server.domain.*;
+import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
@@ -490,24 +491,24 @@ public class OrganisationService {
     public void addSubjectTypeIcons(ZipOutputStream zos) throws IOException {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAllByIconFileS3KeyNotNull();
         if (subjectTypes.size() > 0) {
-            addDirectoryToZip(zos, "subjectTypeIcons");
+            addDirectoryToZip(zos, BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         }
         for (SubjectType subjectType : subjectTypes) {
             InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
             String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("subjectTypeIcons/%s.%s", subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.SUBJECT_TYPE_ICONS.getFolderName(), subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
     public void addReportCardIcons(ZipOutputStream zos) throws IOException {
         List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull();
         if (cards.size() > 0) {
-            addDirectoryToZip(zos, "reportCardIcons");
+            addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
         for (Card reportCard : cards) {
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("reportCardIcons/%s.%s", reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
