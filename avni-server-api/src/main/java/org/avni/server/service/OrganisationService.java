@@ -119,6 +119,8 @@ public class OrganisationService {
     private final TaskTypeService taskTypeService;
     private final TaskStatusService taskStatusService;
     private final EntityTypeRetrieverService entityTypeRetrieverService;
+    private final RuleDependencyRepository ruleDependencyRepository;
+    private final RuleRepository ruleRepository;
     private final Logger logger;
 
     @Autowired
@@ -185,7 +187,9 @@ public class OrganisationService {
                                DocumentationService documentationService,
                                TaskTypeService taskTypeService,
                                TaskStatusService taskStatusService,
-                               EntityTypeRetrieverService entityTypeRetrieverService) {
+                               EntityTypeRetrieverService entityTypeRetrieverService,
+                               RuleDependencyRepository ruleDependencyRepository,
+                               RuleRepository ruleRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -251,6 +255,8 @@ public class OrganisationService {
         this.taskTypeService = taskTypeService;
         this.taskStatusService = taskStatusService;
         this.entityTypeRetrieverService = entityTypeRetrieverService;
+        this.ruleDependencyRepository = ruleDependencyRepository;
+        this.ruleRepository = ruleRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -481,7 +487,7 @@ public class OrganisationService {
         }
     }
 
-    public void addIcons(ZipOutputStream zos) throws IOException {
+    public void addSubjectTypeIcons(ZipOutputStream zos) throws IOException {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAllByIconFileS3KeyNotNull();
         if (subjectTypes.size() > 0) {
             addDirectoryToZip(zos, "subjectTypeIcons");
@@ -490,6 +496,18 @@ public class OrganisationService {
             InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
             String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
             addIconToZip(zos, String.format("subjectTypeIcons/%s.%s", subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
+        }
+    }
+
+    public void addReportCardIcons(ZipOutputStream zos) throws IOException {
+        List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull();
+        if (cards.size() > 0) {
+            addDirectoryToZip(zos, "reportCardIcons");
+        }
+        for (Card reportCard : cards) {
+            InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
+            String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
+            addIconToZip(zos, String.format("reportCardIcons/%s.%s", reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -533,6 +551,36 @@ public class OrganisationService {
     }
     public void addMessageRules(ZipOutputStream zos) throws IOException {
         addFileToZip(zos, "messageRule.json", messagingService.findAll().stream().map(messageRule -> new MessageRuleContract(messageRule, entityTypeRetrieverService)).collect(Collectors.toList()));
+    }
+
+    public void addTranslations(Long orgId, ZipOutputStream zos) throws IOException {
+        List<Translation> translations = translationRepository.findAllByOrganisationId(orgId);
+        if (translations.isEmpty()) {
+            return;
+        }
+        addDirectoryToZip(zos, "translations");
+        for (Translation translation : translations) {
+            addFileToZip(zos, String.format("translations/%s.json", translation.getLanguage()), translation.getTranslationJson());
+        }
+    }
+
+    public void addOldRuleDependency(Long orgId, ZipOutputStream zos) throws IOException {
+        RuleDependency ruleDependency = ruleDependencyRepository.findByOrganisationId(orgId);
+        if (ruleDependency == null) {
+            return;
+        }
+        addFileToZip(zos, "ruleDependency.json", RuleDependencyRequest.fromRuleDependency(ruleDependency));
+    }
+
+    public void addOldRules(Long orgId, ZipOutputStream zos) throws IOException {
+        List<Rule> rulesFromDB = ruleRepository.findByOrganisationId(orgId);
+        if (rulesFromDB.isEmpty()) {
+            return;
+        }
+        addDirectoryToZip(zos, "oldRules");
+        for (Rule rule : rulesFromDB) {
+            addFileToZip(zos, String.format("oldRules/%s.json", rule.getUuid()), RuleRequest.fromRule(rule));
+        }
     }
 
     private void addFileToZip(ZipOutputStream zos, String fileName, File file) throws IOException {

@@ -2,6 +2,7 @@ package org.avni.server.web.request.webapp;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.Format;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.FormatContract;
@@ -53,6 +54,7 @@ public class SubjectTypeContractWeb {
     private Boolean isSyncRegistrationConcept2Usable;
     private String nameHelpText;
     private Long subjectTypeId;
+    private JsonObject settings;
 
     public static SubjectTypeContractWeb fromOperationalSubjectType(OperationalSubjectType operationalSubjectType, FormMapping formMapping) {
         SubjectTypeContractWeb contract = new SubjectTypeContractWeb();
@@ -91,6 +93,7 @@ public class SubjectTypeContractWeb {
         contract.setSyncRegistrationConcept2Usable(subjectType.isSyncRegistrationConcept2Usable());
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setSubjectTypeId(subjectType.getId());
+        contract.setSettings(subjectType.getSettings());
         if (formMapping != null)
             contract.setEnableRegistrationApproval(formMapping.isEnableApproval());
 
@@ -391,5 +394,13 @@ public class SubjectTypeContractWeb {
 
     public void setEnableRegistrationApproval(boolean enableRegistrationApproval) {
         this.enableRegistrationApproval = enableRegistrationApproval;
+    }
+
+    public JsonObject getSettings() {
+        return settings;
+    }
+
+    public void setSettings(JsonObject settings) {
+        this.settings = settings;
     }
 }

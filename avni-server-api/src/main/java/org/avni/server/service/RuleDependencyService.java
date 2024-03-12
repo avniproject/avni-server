@@ -2,15 +2,28 @@ package org.avni.server.service;
 
 import org.avni.server.dao.RuleDependencyRepository;
 import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.Organisation;
+import org.avni.server.domain.RuleDependency;
+import org.avni.server.web.request.RuleDependencyRequest;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import org.joda.time.DateTime;
 
 @Service
 public class RuleDependencyService implements NonScopeAwareService {
 
     private final RuleDependencyRepository ruleDependencyRepository;
+
+    public void uploadRuleDependency(RuleDependencyRequest ruleDependencyRequest, Organisation organisation) {
+        RuleDependency ruleDependency =  ruleDependencyRepository.findByOrganisationId(organisation.getId());
+        if (ruleDependency == null) {
+            ruleDependency = new RuleDependency();
+            ruleDependency.assignUUIDIfRequired();
+        }
+        ruleDependency.setCode(ruleDependencyRequest.getCode());
+        ruleDependency.setChecksum(ruleDependencyRequest.getHash());
+        ruleDependencyRepository.save(ruleDependency);
+    }
 
     @Autowired
     public RuleDependencyService(RuleDependencyRepository ruleDependencyRepository) {

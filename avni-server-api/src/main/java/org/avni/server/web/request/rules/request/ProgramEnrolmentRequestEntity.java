@@ -15,8 +15,6 @@ public class ProgramEnrolmentRequestEntity {
 
     private DateTime programExitDateTime;
 
-    private String programOutcomeUUID;
-
     private String individualUUID;
 
     private List<ObservationRequestEntity> observations;
@@ -61,14 +59,6 @@ public class ProgramEnrolmentRequestEntity {
 
     public void setProgramExitDateTime(DateTime programExitDateTime) {
         this.programExitDateTime = programExitDateTime;
-    }
-
-    public String getProgramOutcomeUUID() {
-        return programOutcomeUUID;
-    }
-
-    public void setProgramOutcomeUUID(String programOutcomeUUID) {
-        this.programOutcomeUUID = programOutcomeUUID;
     }
 
     public String getIndividualUUID() {

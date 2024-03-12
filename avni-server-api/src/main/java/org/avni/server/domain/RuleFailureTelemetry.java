@@ -12,6 +12,7 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -21,6 +22,7 @@ import java.util.Date;
 @Entity
 @Table(name = "rule_failure_telemetry")
 @BatchSize(size = 100)
+@EntityListeners({AuditingEntityListener.class})
 public class RuleFailureTelemetry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
@@ -103,36 +105,16 @@ public class RuleFailureTelemetry {
         return createdBy;
     }
 
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
     public DateTime getCreatedDateTime() {
         return new DateTime(createdDateTime);
-    }
-
-    public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime == null ? null : createdDateTime.toDate();
     }
 
     public User getLastModifiedBy() {
         return lastModifiedBy;
     }
 
-    public void setLastModifiedBy(User lastModifiedBy) {
-        this.lastModifiedBy = lastModifiedBy;
-    }
-
     public DateTime getLastModifiedDateTime() {
         return new DateTime(lastModifiedDateTime);
-    }
-
-    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime == null ? null : lastModifiedDateTime.toDate();
-    }
-
-    public void updateLastModifiedDateTime() {
-        this.setLastModifiedDateTime(DateTime.now());
     }
 
     public int getVersion() {

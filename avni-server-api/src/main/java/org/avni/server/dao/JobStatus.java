@@ -1,8 +1,5 @@
 package org.avni.server.dao;
 
-import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.ExitStatus;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;

@@ -42,7 +42,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     private final ProgramRepository programRepository;
     private final ObservationService observationService;
     private final IndividualRepository individualRepository;
-    private final ProgramOutcomeRepository programOutcomeRepository;
     private final ChecklistDetailRepository checklistDetailRepository;
     private final ChecklistItemDetailRepository checklistItemDetailRepository;
     private final ChecklistRepository checklistRepository;
@@ -58,7 +57,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
                                    ProgramRepository programRepository,
                                    ObservationService observationService,
                                    IndividualRepository individualRepository,
-                                   ProgramOutcomeRepository programOutcomeRepository,
                                    ChecklistDetailRepository checklistDetailRepository,
                                    ChecklistItemDetailRepository checklistItemDetailRepository,
                                    ChecklistRepository checklistRepository,
@@ -72,7 +70,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         this.programRepository = programRepository;
         this.observationService = observationService;
         this.individualRepository = individualRepository;
-        this.programOutcomeRepository = programOutcomeRepository;
         this.checklistDetailRepository = checklistDetailRepository;
         this.checklistItemDetailRepository = checklistItemDetailRepository;
         this.checklistRepository = checklistRepository;
@@ -150,10 +147,8 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         }
         Decisions decisions = request.getDecisions();
         observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEnrolmentDecisions() : null, formMappingService.find(program, FormType.ProgramEnrolment));
-        ProgramOutcome programOutcome = programOutcomeRepository.findByUuid(request.getProgramOutcomeUUID());
         ProgramEnrolment programEnrolment = EntityHelper.newOrExistingEntity(programEnrolmentRepository, request, new ProgramEnrolment());
         programEnrolment.setProgram(program);
-        programEnrolment.setProgramOutcome(programOutcome);
         programEnrolment.setEnrolmentDateTime(request.getEnrolmentDateTime());
         programEnrolment.setProgramExitDateTime(request.getProgramExitDateTime());
         PointRequest enrolmentLocation = request.getEnrolmentLocation();

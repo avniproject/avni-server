@@ -109,7 +109,7 @@ public class SyncDetailsService {
             }
         });
         addToSyncableItems(syncableItems, Arrays.asList(SyncEntityName.IdentifierAssignment, SyncEntityName.ChecklistDetail, SyncEntityName.Rule, SyncEntityName.RuleDependency,
-                SyncEntityName.Form, SyncEntityName.FormMapping, SyncEntityName.EncounterType, SyncEntityName.Program, SyncEntityName.ProgramOutcome, SyncEntityName.Gender,
+                SyncEntityName.Form, SyncEntityName.FormMapping, SyncEntityName.EncounterType, SyncEntityName.Program, SyncEntityName.Gender,
                 SyncEntityName.IndividualRelation, SyncEntityName.IndividualRelationGenderMapping, SyncEntityName.IndividualRelationshipType, SyncEntityName.Concept, SyncEntityName.ProgramConfig, SyncEntityName.Video,
                 SyncEntityName.SubjectType, SyncEntityName.ChecklistItemDetail, SyncEntityName.FormElementGroup, SyncEntityName.FormElement, SyncEntityName.ConceptAnswer,
                 SyncEntityName.IdentifierSource, SyncEntityName.OrganisationConfig, SyncEntityName.PlatformTranslation, SyncEntityName.Translation, SyncEntityName.Groups,

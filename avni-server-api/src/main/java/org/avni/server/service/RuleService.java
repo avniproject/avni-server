@@ -131,9 +131,8 @@ public class RuleService implements NonScopeAwareService {
     }
 
     @Transactional
-    public Rule createOrUpdate(RuleRequest ruleRequest) {
-        String ruleDependencyUUID = ruleRequest.getRuleDependencyUUID();
-        RuleDependency ruleDependency = ruleDependencyRepository.findByUuid(ruleDependencyUUID);
+    public Rule createOrUpdate(RuleRequest ruleRequest, Organisation organisation) {
+        RuleDependency ruleDependency = ruleDependencyRepository.findByOrganisationId(organisation.getId());
         String ruleUUID = ruleRequest.getUuid();
         Rule rule = ruleRepository.findByUuid(ruleUUID);
         if (rule == null) rule = new Rule();
@@ -152,9 +151,10 @@ public class RuleService implements NonScopeAwareService {
 
     @Transactional
     public void createOrUpdate(List<RuleRequest> rules) {
-        List<Rule> rulesFromDB = ruleRepository.findByOrganisationId(UserContextHolder.getUserContext().getOrganisation().getId());
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        List<Rule> rulesFromDB = ruleRepository.findByOrganisationId(organisation.getId());
         List<String> newRuleUUIDs = rules.stream()
-                .map(this::createOrUpdate)
+                .map(rule -> createOrUpdate(rule, organisation))
                 .map(Rule::getUuid)
                 .collect(Collectors.toList());
 

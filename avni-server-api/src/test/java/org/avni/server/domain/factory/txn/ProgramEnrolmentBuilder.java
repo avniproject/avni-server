@@ -51,11 +51,6 @@ public class ProgramEnrolmentBuilder {
         return this;
     }
 
-    public ProgramEnrolmentBuilder setProgramOutcome(ProgramOutcome programOutcome) {
-        programEnrolment.setProgramOutcome(programOutcome);
-        return this;
-    }
-
     public ProgramEnrolmentBuilder setProgramExitDateTime(DateTime programExitDateTime) {
         programEnrolment.setProgramExitDateTime(programExitDateTime);
         return this;

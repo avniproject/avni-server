@@ -9,7 +9,6 @@ public class CommonProgramEnrolmentRequest extends CHSRequest {
     private String program;
     private String individualUUID;
     private DateTime enrolmentDateTime;
-    private String programOutcomeUUID;
     private DateTime programExitDateTime;
     private PointRequest enrolmentLocation;
     private PointRequest exitLocation;
@@ -36,14 +35,6 @@ public class CommonProgramEnrolmentRequest extends CHSRequest {
 
     public void setEnrolmentDateTime(DateTime enrolmentDateTime) {
         this.enrolmentDateTime = enrolmentDateTime;
-    }
-
-    public String getProgramOutcomeUUID() {
-        return programOutcomeUUID;
-    }
-
-    public void setProgramOutcomeUUID(String programOutcomeUUID) {
-        this.programOutcomeUUID = programOutcomeUUID;
     }
 
     public DateTime getProgramExitDateTime() {

@@ -28,12 +28,16 @@ public class VideoService implements NonScopeAwareService {
     }
 
     public Video saveVideo(VideoContract videoContract) {
-        Video video;
+        Video video = new Video();
         if (videoContract.getUuid() == null) {
-            video = new Video();
             video.assignUUID();
         } else {
-            video = videoRepository.findByUuid(videoContract.getUuid());
+            Video videoByUuid = videoRepository.findByUuid(videoContract.getUuid());
+            if(videoByUuid == null) {
+                video.setUuid(videoContract.getUuid());
+            } else {
+                video = videoByUuid;
+            }
         }
         return videoRepository.save(populateVideo(videoContract, video));
     }

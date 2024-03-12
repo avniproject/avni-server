@@ -187,7 +187,7 @@ public class AvniFiles {
         CSVPrinter printer = new CSVPrinter(new FileWriter(outputCsv), csvFormat);
         for (CSVRecord csvRecord : records) {
             Stream<String> record = Arrays.stream(csvRecord.values()).map(s -> {
-                if (s.startsWith("=") || s.startsWith("-") || s.startsWith("+") || s.startsWith("@")) {
+                if (s != null && (s.startsWith("=") || s.startsWith("-") || s.startsWith("+") || s.startsWith("@"))) {
                     return format("\t%s",s);
                 }
                 return s;

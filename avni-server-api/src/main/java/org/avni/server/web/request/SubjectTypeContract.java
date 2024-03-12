@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.avni.server.application.Format;
 import org.avni.server.domain.DeclarativeRule;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SubjectType;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -51,6 +52,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
     @JsonProperty(value = "syncRegistrationConcept2Usable")
     private Boolean isSyncRegistrationConcept2Usable;
     private String nameHelpText;
+    private JsonObject settings;
 
     public static SubjectTypeContract fromSubjectType(SubjectType subjectType) {
         SubjectTypeContract contract = new SubjectTypeContract();
@@ -80,6 +82,7 @@ public class SubjectTypeContract extends ReferenceDataContract {
         contract.setSyncRegistrationConcept2Usable(subjectType.isSyncRegistrationConcept2Usable());
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setIconFileS3Key(subjectType.getIconFileS3Key());
+        contract.setSettings(subjectType.getSettings());
         return contract;
     }
 
@@ -265,5 +268,13 @@ public class SubjectTypeContract extends ReferenceDataContract {
 
     public void setProgramEligibilityCheckDeclarativeRule(DeclarativeRule programEligibilityCheckDeclarativeRule) {
         this.programEligibilityCheckDeclarativeRule = programEligibilityCheckDeclarativeRule;
+    }
+
+    public JsonObject getSettings() {
+        return settings;
+    }
+
+    public void setSettings(JsonObject settings) {
+        this.settings = settings;
     }
 }

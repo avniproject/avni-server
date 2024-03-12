@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -26,9 +27,10 @@ public class BundleZipTest {
         bundleEntries.put("someParentFolder/programs.json", new byte[1]);
         bundleEntries.put("someParentFolder/forms/st1.json", new byte[8]);
         BundleZip bundleZip = new BundleZip(bundleEntries);
-        List<String> forms = bundleZip.getForms();
+        Map<String, byte[]> forms = bundleZip.getFileNameAndDataInFolder(BundleFolder.FORMS.getFolderName());
         assertEquals(1, forms.size());
-        assertEquals(8, forms.get(0).length());
+        assertTrue(forms.keySet().contains("st1.json"));
+        assertEquals(8, forms.get("st1.json").length);
     }
 
     @Test

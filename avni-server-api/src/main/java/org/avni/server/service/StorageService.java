@@ -357,10 +357,10 @@ public abstract class StorageService implements S3Service {
     public String uploadByteArray(String fileName, String extension, String objectPath, byte[] content) throws IOException {
         String mediaDirectory = getOrgDirectoryName();
         String objectKey = format("%s/%s/%s.%s", mediaDirectory, objectPath, fileName, extension);
-        return uploadByteArray(fileName, extension, content, objectKey);
+        return uploadByteArrayUsingObjectKey(fileName, extension, content, objectKey);
     }
 
-    public String uploadByteArray(String fileName, String extension, byte[] content, String objectKey) throws IOException {
+    public String uploadByteArrayUsingObjectKey(String fileName, String extension, byte[] content, String objectKey) throws IOException {
         File tempFile = File.createTempFile(fileName, extension);
         FileOutputStream fos = new FileOutputStream(tempFile);
         fos.write(content);
@@ -372,7 +372,7 @@ public abstract class StorageService implements S3Service {
     public String uploadInOrganisation(String filePath, byte[] content) throws IOException {
         String mediaDirectory = getOrgDirectoryName();
         String objectKey = format("%s/%s", mediaDirectory, filePath);
-        return uploadByteArray(filePath, "", content, objectKey);
+        return uploadByteArrayUsingObjectKey(filePath, "", content, objectKey);
     }
 
     @Override

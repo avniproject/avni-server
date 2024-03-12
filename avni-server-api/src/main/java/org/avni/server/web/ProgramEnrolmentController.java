@@ -169,9 +169,6 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         resource.removeLinks();
         resource.add(new Link(programEnrolment.getProgram().getUuid(), "programUUID"));
         resource.add(new Link(programEnrolment.getIndividual().getUuid(), "individualUUID"));
-        if (programEnrolment.getProgramOutcome() != null) {
-            resource.add(new Link(programEnrolment.getProgramOutcome().getUuid(), "programOutcomeUUID"));
-        }
         addAuditFields(programEnrolment, resource);
         return resource;
     }

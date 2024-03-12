@@ -83,8 +83,9 @@ public class RuleController {
     @RequestMapping(value = "/rule", method = RequestMethod.POST)
     public ResponseEntity<?> saveRule(@RequestBody RuleRequest ruleRequest) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        logger.info(String.format("Creating rules for: %s", UserContextHolder.getUserContext().getOrganisation().getName()));
-        ruleService.createOrUpdate(ruleRequest);
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        logger.info(String.format("Creating rules for: %s", organisation.getName()));
+        ruleService.createOrUpdate(ruleRequest, organisation);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

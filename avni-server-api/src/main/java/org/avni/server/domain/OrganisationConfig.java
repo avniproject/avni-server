@@ -10,9 +10,7 @@ import org.hibernate.annotations.Type;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
@@ -92,6 +90,16 @@ public class OrganisationConfig extends OrganisationAwareEntity {
             if (value instanceof Boolean)
                 return Boolean.parseBoolean(value.toString());
             return false;
+        }
+
+        public Set<String> getSupportedLanguages() {
+            if(settings.get("languages") == null
+                    || !(settings.get("languages") instanceof Collection)
+                    || ((Collection) settings.get("languages")).size() == 0) {
+                return Collections.emptySet();
+            }
+            List<String> allSupportedLanguages = (List<String>) settings.get("languages");
+            return new HashSet<>(allSupportedLanguages);
         }
     }
 

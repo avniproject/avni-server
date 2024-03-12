@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -20,11 +19,9 @@ import java.util.List;
 
 @RestController
 public class DocumentationController extends AbstractController<Documentation> implements RestControllerResourceProcessor<Documentation> {
-
     private final DocumentationRepository documentationRepository;
     private final DocumentationService documentationService;
     private final AccessControlService accessControlService;
-
 
     @Autowired
     public DocumentationController(DocumentationRepository documentationRepository, DocumentationService documentationService, AccessControlService accessControlService) {

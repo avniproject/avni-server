@@ -5,6 +5,7 @@ import org.avni.server.dao.PlatformTranslationRepository;
 import org.avni.server.dao.TranslationRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.web.request.TranslationContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,19 @@ public class TranslationService implements NonScopeAwareService {
     public TranslationService(TranslationRepository translationRepository, PlatformTranslationRepository platformTranslationRepository) {
         this.translationRepository = translationRepository;
         this.platformTranslationRepository = platformTranslationRepository;
+    }
+
+    public void uploadTranslations(TranslationContract translationContract, Organisation organisation) {
+        Translation translation =  translationRepository.findByOrganisationIdAndLanguage(organisation.getId(),
+                translationContract.getLanguage());
+        if (translation == null) {
+            translation = new Translation();
+        }
+        translation.setLanguage(translationContract.getLanguage());
+        translation.setTranslationJson(translationContract.getTranslationJson());
+        translation.assignUUIDIfRequired();
+        translation.updateAudit();
+        translationRepository.save(translation);
     }
 
     public Map<String, Map<String, JsonObject>> createTransactionAndPlatformTransaction(String locale, OrganisationConfig organisationConfig) {
