@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 @RestController
 public class GroupDashboardController {
-
     private final GroupDashboardRepository groupDashboardRepository;
     private final GroupDashboardService groupDashboardService;
     private final DashboardRepository dashboardRepository;

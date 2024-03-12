@@ -39,14 +39,21 @@ public class GroupDashboardService implements NonScopeAwareService {
         groupDashboard.setDashboard(dashboardRepository.findOne(contract.getDashboardId()));
         groupDashboard.setGroup(groupRepository.findOne(contract.getGroupId()));
         groupDashboard.setPrimaryDashboard(contract.isPrimaryDashboard());
+        groupDashboard.setSecondaryDashboard(contract.isSecondaryDashboard());
         groupDashboard = groupDashboardRepository.save(groupDashboard);
+
+        List<GroupDashboard> otherGroupDashboards = groupDashboardRepository.findByGroup_IdAndIdNotAndIsVoidedFalse(contract.getGroupId(), groupDashboard.getId());
         if (contract.isPrimaryDashboard()) {
-            List<GroupDashboard> nonPrimaryDashboards = groupDashboardRepository.findByGroup_IdAndIdNotAndIsVoidedFalse(contract.getGroupId(), groupDashboard.getId());
-            for (GroupDashboard nonPrimaryDashboard : nonPrimaryDashboards) {
+            for (GroupDashboard nonPrimaryDashboard : otherGroupDashboards) {
                 nonPrimaryDashboard.setPrimaryDashboard(false);
             }
-            groupDashboardRepository.saveAll(nonPrimaryDashboards);
         }
+        if (contract.isSecondaryDashboard()) {
+            for (GroupDashboard nonPrimaryDashboard : otherGroupDashboards) {
+                nonPrimaryDashboard.setSecondaryDashboard(false);
+            }
+        }
+        groupDashboardRepository.saveAll(otherGroupDashboards);
         return groupDashboard;
     }
 

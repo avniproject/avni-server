@@ -1,14 +1,12 @@
 package org.avni.server.web.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.avni.server.domain.GroupDashboard;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class GroupDashboardContract extends CHSRequest {
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-    private boolean isPrimaryDashboard = false;
-    private Long dashboardId;
-    private Long groupId;
+    private boolean isPrimaryDashboard;
+    private boolean isSecondaryDashboard;
+    private long dashboardId;
+    private long groupId;
     private String dashboardName;
     private String dashboardDescription;
 
@@ -16,40 +14,20 @@ public class GroupDashboardContract extends CHSRequest {
         return isPrimaryDashboard;
     }
 
-    public void setPrimaryDashboard(boolean primaryDashboard) {
-        isPrimaryDashboard = primaryDashboard;
+    public boolean isSecondaryDashboard() {
+        return isSecondaryDashboard;
     }
 
-    public void setPrimaryDashboard(Boolean primaryDashboard) {
-        isPrimaryDashboard = primaryDashboard;
-    }
-
-    public Long getDashboardId() {
+    public long getDashboardId() {
         return dashboardId;
     }
 
-    public void setDashboardId(Long dashboardId) {
-        this.dashboardId = dashboardId;
-    }
-
-    public Long getGroupId() {
+    public long getGroupId() {
         return groupId;
-    }
-
-    public void setGroupId(Long groupId) {
-        this.groupId = groupId;
-    }
-
-    public void setDashboardName(String dashboardName) {
-        this.dashboardName = dashboardName;
     }
 
     public String getDashboardName() {
         return dashboardName;
-    }
-
-    public void setDashboardDescription(String dashboardDescription) {
-        this.dashboardDescription = dashboardDescription;
     }
 
     public String getDashboardDescription() {
@@ -61,11 +39,12 @@ public class GroupDashboardContract extends CHSRequest {
         groupDashboardContract.setId(groupDashboard.getId());
         groupDashboardContract.setUuid(groupDashboard.getUuid());
         groupDashboardContract.setVoided(groupDashboard.isVoided());
-        groupDashboardContract.setPrimaryDashboard(groupDashboard.isPrimaryDashboard());
-        groupDashboardContract.setGroupId(groupDashboard.getGroup().getId());
-        groupDashboardContract.setDashboardId(groupDashboard.getDashboard().getId());
-        groupDashboardContract.setDashboardName(groupDashboard.getDashboard().getName());
-        groupDashboardContract.setDashboardDescription(groupDashboard.getDashboard().getDescription());
+        groupDashboardContract.isPrimaryDashboard = groupDashboard.isPrimaryDashboard();
+        groupDashboardContract.isSecondaryDashboard = groupDashboard.isSecondaryDashboard();
+        groupDashboardContract.groupId = groupDashboard.getGroup().getId();
+        groupDashboardContract.dashboardId = groupDashboard.getDashboard().getId();
+        groupDashboardContract.dashboardName = groupDashboard.getDashboard().getName();
+        groupDashboardContract.dashboardDescription = groupDashboard.getDashboard().getDescription();
         return groupDashboardContract;
     }
 }
