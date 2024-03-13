@@ -1,8 +1,6 @@
 package org.avni.server.web;
 
-import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.GroupDashboardRepository;
-import org.avni.server.dao.GroupRepository;
 import org.avni.server.domain.GroupDashboard;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.PrivilegeType;

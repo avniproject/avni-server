@@ -22,6 +22,7 @@ import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
+import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
@@ -697,8 +698,8 @@ public class OrganisationService {
     }
 
     public void addGroupDashboardJson(ZipOutputStream zos) throws IOException {
-        List<GroupDashboardContract> groupDashboards = groupDashboardRepository.findAll().stream()
-                .map(GroupDashboardContract::fromEntityForExternal).collect(Collectors.toList());
+        List<GroupDashboardBundleContract> groupDashboards = groupDashboardRepository.findAll().stream()
+                .map(GroupDashboardBundleContract::fromEntity).collect(Collectors.toList());
         if (!groupDashboards.isEmpty()) {
             addFileToZip(zos, "groupDashboards.json", groupDashboards);
         }

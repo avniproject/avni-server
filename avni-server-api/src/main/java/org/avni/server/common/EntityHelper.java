@@ -27,4 +27,8 @@ public class EntityHelper<T extends CHSEntity> {
         }
         return t;
     }
+
+    public static <T extends CHSEntity> T newOrExistingEntity(CHSRepository<T> chsRepository, String uuid, T chsEntity) {
+        return EntityHelper.newOrExistingEntity(chsRepository, uuid, null, chsEntity);
+    }
 }

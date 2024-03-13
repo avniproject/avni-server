@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @Service
 public class GroupsService implements NonScopeAwareService {
-
     private final GroupRepository groupRepository;
 
     @Autowired

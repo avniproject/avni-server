@@ -20,6 +20,7 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
@@ -360,8 +361,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 groupPrivilegeService.savePrivileges(groupPrivilegeContracts, organisation);
                 break;
             case "groupDashboards.json":
-                GroupDashboardContract[] groupDashboardContracts = convertString(fileData, GroupDashboardContract[].class);
-                groupDashboardService.save(Arrays.asList(groupDashboardContracts));
+                GroupDashboardBundleContract[] contracts = convertString(fileData, GroupDashboardBundleContract[].class);
+                groupDashboardService.saveFromBundle(Arrays.asList(contracts));
                 break;
             case "video.json":
                 VideoContract[] videoContracts = convertString(fileData, VideoContract[].class);
