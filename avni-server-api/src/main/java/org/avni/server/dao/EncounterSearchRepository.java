@@ -39,7 +39,7 @@ public class EncounterSearchRepository {
     }
 
     private void setRoleBackToUser() {
-        Query setRoleBackToWhatever = entityManager.createNativeQuery("set role " + UserContextHolder.getOrganisation().getDbUser());
+        Query setRoleBackToWhatever = entityManager.createNativeQuery("set role \"" + UserContextHolder.getOrganisation().getDbUser() + "\"");
         setRoleBackToWhatever.executeUpdate();
     }
 
