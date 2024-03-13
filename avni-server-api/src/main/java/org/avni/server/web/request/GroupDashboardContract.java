@@ -18,6 +18,30 @@ public class GroupDashboardContract extends CHSRequest {
         return isSecondaryDashboard;
     }
 
+    public void setPrimaryDashboard(boolean primaryDashboard) {
+        isPrimaryDashboard = primaryDashboard;
+    }
+
+    public void setSecondaryDashboard(boolean secondaryDashboard) {
+        isSecondaryDashboard = secondaryDashboard;
+    }
+
+    public void setDashboardId(long dashboardId) {
+        this.dashboardId = dashboardId;
+    }
+
+    public void setGroupId(long groupId) {
+        this.groupId = groupId;
+    }
+
+    public void setDashboardName(String dashboardName) {
+        this.dashboardName = dashboardName;
+    }
+
+    public void setDashboardDescription(String dashboardDescription) {
+        this.dashboardDescription = dashboardDescription;
+    }
+
     public long getDashboardId() {
         return dashboardId;
     }

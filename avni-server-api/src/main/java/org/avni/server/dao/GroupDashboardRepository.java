@@ -19,7 +19,7 @@ public interface GroupDashboardRepository extends ReferenceDataRepository<GroupD
         throw new UnsupportedOperationException("No field 'name' in GroupDashboard");
     }
 
-    List<GroupDashboard> findByGroup_IdAndIsVoidedFalse(Long groupId);
+    List<GroupDashboard> findByGroup_IdAndIsVoidedFalseOrderByDashboardName(Long groupId);
 
     List<GroupDashboard> findByGroup_IdAndIdNotAndIsVoidedFalse(Long groupId, Long Id);
 }

@@ -13,7 +13,6 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupDashboardContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -105,7 +104,7 @@ public class GroupDashboardController {
 
     @RequestMapping(value = "/groups/{id}/dashboards", method = RequestMethod.GET)
     public List<GroupDashboardContract> getDashboardsByGroupId(@PathVariable("id") Long id) {
-        return groupDashboardRepository.findByGroup_IdAndIsVoidedFalse(id).stream()
+        return groupDashboardRepository.findByGroup_IdAndIsVoidedFalseOrderByDashboardName(id).stream()
                 .map(GroupDashboardContract::fromEntity)
                 .collect(Collectors.toList());
     }
