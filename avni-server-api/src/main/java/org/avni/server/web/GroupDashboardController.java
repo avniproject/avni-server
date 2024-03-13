@@ -3,11 +3,9 @@ package org.avni.server.web;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.GroupDashboardRepository;
 import org.avni.server.dao.GroupRepository;
-import org.avni.server.domain.Dashboard;
-import org.avni.server.domain.Group;
 import org.avni.server.domain.GroupDashboard;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.GroupDashboardService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupDashboardContract;
@@ -16,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,17 +22,13 @@ import java.util.stream.Collectors;
 public class GroupDashboardController {
     private final GroupDashboardRepository groupDashboardRepository;
     private final GroupDashboardService groupDashboardService;
-    private final DashboardRepository dashboardRepository;
-    private final GroupRepository groupRepository;
     private final AccessControlService accessControlService;
 
     @Autowired
     public GroupDashboardController(GroupDashboardRepository groupDashboardRepository,
-                                    GroupDashboardService groupDashboardService, DashboardRepository dashboardRepository, GroupRepository groupRepository, AccessControlService accessControlService) {
+                                    GroupDashboardService groupDashboardService, AccessControlService accessControlService) {
         this.groupDashboardRepository = groupDashboardRepository;
         this.groupDashboardService = groupDashboardService;
-        this.dashboardRepository = dashboardRepository;
-        this.groupRepository = groupRepository;
         this.accessControlService = accessControlService;
     }
 
@@ -58,26 +51,14 @@ public class GroupDashboardController {
     @PostMapping(value = "/web/groupDashboard")
     @ResponseBody
     @Transactional
-    public ResponseEntity addUsersToGroup(@RequestBody List<GroupDashboardContract> request) {
+    public ResponseEntity saveGroupDashboards(@RequestBody List<GroupDashboardContract> request) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
-        List<GroupDashboard> groupDashboards = new ArrayList<>();
-
-        for (GroupDashboardContract contract : request) {
-            Dashboard dashboard = dashboardRepository.findOne(contract.getDashboardId());
-            Group group = groupRepository.findOne(contract.getGroupId());
-            if (dashboard == null || group == null) {
-                return ResponseEntity.badRequest().body(String.format("Invalid dashboard id %d or group id %d", contract.getDashboardId(), contract.getGroupId()));
-            }
-
-            GroupDashboard groupDashboard = new GroupDashboard();
-            groupDashboard.setDashboard(dashboard);
-            groupDashboard.setGroup(group);
-            groupDashboard.assignUUID();
-            groupDashboard.setOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
-            groupDashboards.add(groupDashboard);
+        try {
+            List<GroupDashboard> groupDashboards = groupDashboardService.save(request);
+            return ResponseEntity.ok(groupDashboardRepository.saveAll(groupDashboards));
+        } catch (ValidationException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        return ResponseEntity.ok(groupDashboardRepository.saveAll(groupDashboards));
     }
 
     @PutMapping(value = "/web/groupDashboard/{id}")

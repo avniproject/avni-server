@@ -66,6 +66,7 @@ public class ImplementationController implements RestControllerResourceProcessor
             organisationService.addGroupsJson(zos);
             organisationService.addGroupRoleJson(zos);
             organisationService.addGroupPrivilegeJson(zos);
+            organisationService.addGroupDashboardJson(zos);
             organisationService.addVideoJson(zos);
             organisationService.addReportCards(zos);
             organisationService.addReportDashboard(zos);

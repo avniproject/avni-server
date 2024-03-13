@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -506,6 +507,7 @@ public class OrganisationService {
             addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
         for (Card reportCard : cards) {
+            if (StringUtils.isEmpty(reportCard.getIconFileS3Key())) continue;
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
             addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
@@ -691,6 +693,14 @@ public class OrganisationService {
             s3Service.deleteOrgMedia(deleteMetadata);
         } catch (Exception e) {
             logger.info("Error while deleting the media files, skipping.");
+        }
+    }
+
+    public void addGroupDashboardJson(ZipOutputStream zos) throws IOException {
+        List<GroupDashboardContract> groupDashboards = groupDashboardRepository.findAll().stream()
+                .map(GroupDashboardContract::fromEntityForExternal).collect(Collectors.toList());
+        if (!groupDashboards.isEmpty()) {
+            addFileToZip(zos, "groupDashboards.json", groupDashboards);
         }
     }
 }

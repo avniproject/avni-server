@@ -3,14 +3,19 @@ package org.avni.server.service;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.GroupDashboardRepository;
 import org.avni.server.dao.GroupRepository;
+import org.avni.server.domain.Dashboard;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.GroupDashboard;
+import org.avni.server.domain.ValidationException;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.GroupDashboardContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class GroupDashboardService implements NonScopeAwareService {
@@ -25,14 +30,26 @@ public class GroupDashboardService implements NonScopeAwareService {
         this.groupRepository = groupRepository;
     }
 
-    public GroupDashboard save(GroupDashboardContract contract) {
-        GroupDashboard groupDashboard = groupDashboardRepository.findByUuid(contract.getUuid());
-        if (groupDashboard == null) {
-            groupDashboard = new GroupDashboard();
+    public List<GroupDashboard> save(List<GroupDashboardContract> request) throws ValidationException {
+        List<GroupDashboard> groupDashboards = new ArrayList<>();
+        for (GroupDashboardContract contract : request) {
+            Dashboard dashboard = dashboardRepository.findOne(contract.getDashboardId());
+            Group group = groupRepository.findOne(contract.getGroupId());
+            if (dashboard == null || group == null) {
+                throw new ValidationException(String.format("Invalid dashboard id %d or group id %d", contract.getDashboardId(), contract.getGroupId()));
+            }
+
+            GroupDashboard groupDashboard = new GroupDashboard();
+            groupDashboard.setDashboard(dashboard);
+            groupDashboard.setGroup(group);
+            if (StringUtils.isEmpty(contract.getUuid()))
+                groupDashboard.assignUUID();
+            else
+                groupDashboard.setUuid(contract.getUuid());
+            groupDashboard.setOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
+            groupDashboards.add(groupDashboard);
         }
-        contract.setUuid(UUID.randomUUID().toString());
-        groupDashboard.setUuid(contract.getUuid());
-        return buildAndSave(contract, groupDashboard);
+        return groupDashboards;
     }
 
     private GroupDashboard buildAndSave(GroupDashboardContract contract, GroupDashboard groupDashboard) {

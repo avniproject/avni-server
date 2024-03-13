@@ -61,6 +61,11 @@ public class GroupDashboardContract extends CHSRequest {
     public static GroupDashboardContract fromEntity(GroupDashboard groupDashboard) {
         GroupDashboardContract groupDashboardContract = new GroupDashboardContract();
         groupDashboardContract.setId(groupDashboard.getId());
+        populateCommonFields(groupDashboard, groupDashboardContract);
+        return groupDashboardContract;
+    }
+
+    private static void populateCommonFields(GroupDashboard groupDashboard, GroupDashboardContract groupDashboardContract) {
         groupDashboardContract.setUuid(groupDashboard.getUuid());
         groupDashboardContract.setVoided(groupDashboard.isVoided());
         groupDashboardContract.isPrimaryDashboard = groupDashboard.isPrimaryDashboard();
@@ -69,6 +74,11 @@ public class GroupDashboardContract extends CHSRequest {
         groupDashboardContract.dashboardId = groupDashboard.getDashboard().getId();
         groupDashboardContract.dashboardName = groupDashboard.getDashboard().getName();
         groupDashboardContract.dashboardDescription = groupDashboard.getDashboard().getDescription();
+    }
+
+    public static GroupDashboardContract fromEntityForExternal(GroupDashboard groupDashboard) {
+        GroupDashboardContract groupDashboardContract = new GroupDashboardContract();
+        populateCommonFields(groupDashboard, groupDashboardContract);
         return groupDashboardContract;
     }
 }
