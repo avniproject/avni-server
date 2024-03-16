@@ -7,6 +7,7 @@ import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.service.*;
@@ -363,8 +364,10 @@ public class IndividualController extends AbstractController<Individual> impleme
 
         // Temporary fix to
         if ((individualRequest.getObservations() == null || individualRequest.getObservations().isEmpty()) && individual.getObservations() != null && !individual.getObservations().isEmpty()) {
-            bugsnag.notify(new Exception(String.format("Individual Observations not all allowed to be made empty. UUID: %s, ", individualRequest.getUuid())));
-            individual.setLastModifiedDateTime(new DateTime());
+            String errorMessage = String.format("Individual Observations not all allowed to be made empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), individualRequest.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+            individual.updateAudit();
         } else {
             individual.setObservations(observations);
         }

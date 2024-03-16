@@ -8,6 +8,7 @@ import org.avni.server.common.EntityHelper;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
@@ -169,15 +170,19 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
 
         // Temporary fix to
         if ((request.getObservations() == null || request.getObservations().isEmpty()) && programEnrolment.getObservations() != null && !programEnrolment.getObservations().isEmpty()) {
-            bugsnag.notify(new Exception(String.format("ProgramEnrolment Observations not all allowed to be made empty. UUID: %s, ", request.getUuid())));
-            programEnrolment.setLastModifiedDateTime(new DateTime());
+            String errorMessage = String.format("ProgramEnrolment Observations not all allowed to be made empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+            programEnrolment.updateAudit();
         } else {
             programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
         }
 
         if ((request.getProgramExitObservations() == null || request.getProgramExitObservations().isEmpty()) && !programEnrolment.getProgramExitObservations().isEmpty()) {
-            bugsnag.notify(new Exception(String.format("ProgramEnrolment Exit Observations not all allowed to be made empty. UUID: %s, ", request.getUuid())));
-            programEnrolment.setLastModifiedDateTime(new DateTime());
+            String errorMessage = String.format("ProgramEnrolment Exit Observations not all allowed to be made empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+            programEnrolment.updateAudit();
         } else {
             programEnrolment.setProgramExitObservations(observationService.createObservations(request.getProgramExitObservations()));
         }
