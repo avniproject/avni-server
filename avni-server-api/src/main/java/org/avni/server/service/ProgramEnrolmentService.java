@@ -162,7 +162,14 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         PointRequest exitLocation = request.getExitLocation();
         if (exitLocation != null)
             programEnrolment.setExitLocation(new Point(exitLocation.getX(), exitLocation.getY()));
-        programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
+
+        // Temporary fix to
+        if (request.getObservations().isEmpty() && !programEnrolment.getObservations().isEmpty()) {
+            programEnrolment.setLastModifiedDateTime(new DateTime());
+        } else {
+            programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
+        }
+
         programEnrolment.setProgramExitObservations(observationService.createObservations(request.getProgramExitObservations()));
 
         Individual individual = individualRepository.findByUuid(request.getIndividualUUID());

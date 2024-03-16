@@ -357,7 +357,13 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.markSubjectMigrationIfRequired(individualRequest, observations);
 
         Individual individual = createIndividualWithoutObservations(individualRequest);
-        individual.setObservations(observations);
+
+        // Temporary fix to
+        if (individualRequest.getObservations().isEmpty() && !observations.isEmpty()) {
+            individual.setLastModifiedDateTime(new DateTime());
+        } else {
+            individual.setObservations(observations);
+        }
 
         Individual savedIndividual = individualService.save(individual);
         saveVisitSchedules(individualRequest);
