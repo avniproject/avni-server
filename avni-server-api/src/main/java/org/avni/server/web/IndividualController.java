@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import com.bugsnag.Bugsnag;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
@@ -69,6 +70,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final FormMappingService formMappingService;
+    private final Bugsnag bugsnag;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -83,7 +85,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
                                 IndividualConstructionService individualConstructionService,
-                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService) {
+                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService, Bugsnag bugsnag) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -101,6 +103,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
         this.formMappingService = formMappingService;
+        this.bugsnag = bugsnag;
     }
 
     // used in offline mode hence no access check
@@ -359,7 +362,8 @@ public class IndividualController extends AbstractController<Individual> impleme
         Individual individual = createIndividualWithoutObservations(individualRequest);
 
         // Temporary fix to
-        if (individualRequest.getObservations().isEmpty() && !observations.isEmpty()) {
+        if (individualRequest.getObservations().isEmpty() && individual.getObservations() != null && !individual.getObservations().isEmpty()) {
+            bugsnag.notify(new Exception(String.format("Individual Observations not all allowed to be made empty. UUID: %s, ", individualRequest.getUuid())));
             individual.setLastModifiedDateTime(new DateTime());
         } else {
             individual.setObservations(observations);

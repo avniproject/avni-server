@@ -159,6 +159,14 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         encounter.setMaxVisitDateTime(request.getMaxVisitDateTime());
         encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
+
+        if (request.getObservations().isEmpty() && encounter.getObservations() != null && !encounter.getObservations().isEmpty()) {
+            bugsnag.notify(new Exception(String.format("ProgramEncounter Observations is getting empty. UUID: %s, ", request.getUuid())));
+        }
+        if (request.getCancelObservations().isEmpty() && encounter.getCancelObservations() != null && !encounter.getCancelObservations().isEmpty()) {
+            bugsnag.notify(new Exception(String.format("ProgramEncounter Cancel Observations is getting empty. UUID: %s, ", request.getUuid())));
+        }
+
         PointRequest encounterLocation = request.getEncounterLocation();
         if (encounterLocation != null)
             encounter.setEncounterLocation(new Point(encounterLocation.getX(), encounterLocation.getY()));

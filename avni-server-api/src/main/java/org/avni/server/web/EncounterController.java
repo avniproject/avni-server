@@ -173,6 +173,14 @@ public class EncounterController extends AbstractController<Encounter> implement
                 encounter.getIndividual().addObservations(registrationObservations);
             }
         }
+
+        if (request.getObservations().isEmpty() && encounter.getObservations() != null && !encounter.getObservations().isEmpty()) {
+            bugsnag.notify(new Exception(String.format("Encounter Observations is getting empty. UUID: %s, ", request.getUuid())));
+        }
+        if (request.getCancelObservations().isEmpty() && encounter.getCancelObservations() != null && !encounter.getCancelObservations().isEmpty()) {
+            bugsnag.notify(new Exception(String.format("Encounter Cancel Observations is getting empty. UUID: %s, ", request.getUuid())));
+        }
+
         this.encounterService.save(encounter);
 
         if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
