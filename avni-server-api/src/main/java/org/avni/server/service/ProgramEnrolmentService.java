@@ -178,7 +178,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
             programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
         }
 
-        if ((request.getProgramExitObservations() == null || request.getProgramExitObservations().isEmpty()) && !programEnrolment.getProgramExitObservations().isEmpty()) {
+        if ((request.getProgramExitObservations() == null || request.getProgramExitObservations().isEmpty()) && programEnrolment.getProgramExitObservations() != null && !programEnrolment.getProgramExitObservations().isEmpty()) {
             String errorMessage = String.format("ProgramEnrolment Exit Observations not all allowed to be made empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
             bugsnag.notify(new Exception(errorMessage));
             logger.error(errorMessage);
