@@ -168,14 +168,14 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
             programEnrolment.setExitLocation(new Point(exitLocation.getX(), exitLocation.getY()));
 
         // Temporary fix to
-        if (request.getObservations().isEmpty() && programEnrolment.getObservations() != null && !programEnrolment.getObservations().isEmpty()) {
+        if ((request.getObservations() == null || request.getObservations().isEmpty()) && programEnrolment.getObservations() != null && !programEnrolment.getObservations().isEmpty()) {
             bugsnag.notify(new Exception(String.format("ProgramEnrolment Observations not all allowed to be made empty. UUID: %s, ", request.getUuid())));
             programEnrolment.setLastModifiedDateTime(new DateTime());
         } else {
             programEnrolment.setObservations(observationService.createObservations(request.getObservations()));
         }
 
-        if (request.getProgramExitObservations().isEmpty() && !programEnrolment.getProgramExitObservations().isEmpty()) {
+        if ((request.getProgramExitObservations() == null || request.getProgramExitObservations().isEmpty()) && !programEnrolment.getProgramExitObservations().isEmpty()) {
             bugsnag.notify(new Exception(String.format("ProgramEnrolment Exit Observations not all allowed to be made empty. UUID: %s, ", request.getUuid())));
             programEnrolment.setLastModifiedDateTime(new DateTime());
         } else {

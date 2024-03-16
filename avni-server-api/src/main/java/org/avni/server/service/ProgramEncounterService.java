@@ -160,10 +160,10 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
 
-        if (request.getObservations().isEmpty() && encounter.getObservations() != null && !encounter.getObservations().isEmpty()) {
+        if ((request.getObservations() == null || request.getObservations().isEmpty()) && encounter.getObservations() != null && !encounter.getObservations().isEmpty()) {
             bugsnag.notify(new Exception(String.format("ProgramEncounter Observations is getting empty. UUID: %s, ", request.getUuid())));
         }
-        if (request.getCancelObservations().isEmpty() && encounter.getCancelObservations() != null && !encounter.getCancelObservations().isEmpty()) {
+        if ((request.getCancelObservations() == null || request.getCancelObservations().isEmpty()) && encounter.getCancelObservations() != null && !encounter.getCancelObservations().isEmpty()) {
             bugsnag.notify(new Exception(String.format("ProgramEncounter Cancel Observations is getting empty. UUID: %s, ", request.getUuid())));
         }
 

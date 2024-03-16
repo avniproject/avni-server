@@ -362,7 +362,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         Individual individual = createIndividualWithoutObservations(individualRequest);
 
         // Temporary fix to
-        if (individualRequest.getObservations().isEmpty() && individual.getObservations() != null && !individual.getObservations().isEmpty()) {
+        if ((individualRequest.getObservations() == null || individualRequest.getObservations().isEmpty()) && individual.getObservations() != null && !individual.getObservations().isEmpty()) {
             bugsnag.notify(new Exception(String.format("Individual Observations not all allowed to be made empty. UUID: %s, ", individualRequest.getUuid())));
             individual.setLastModifiedDateTime(new DateTime());
         } else {
