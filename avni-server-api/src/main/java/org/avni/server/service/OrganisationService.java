@@ -500,7 +500,8 @@ public class OrganisationService {
     }
 
     public void addReportCardIcons(ZipOutputStream zos) throws IOException {
-        List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull();
+        List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
+            .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
         if (cards.size() > 0) {
             addDirectoryToZip(zos, "reportCardIcons");
         }
