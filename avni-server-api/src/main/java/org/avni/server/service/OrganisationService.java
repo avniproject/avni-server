@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.io.IOUtils;
 import org.avni.messaging.contract.MessageRuleContract;
+import org.avni.messaging.repository.MessageReceiverRepository;
+import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
@@ -16,6 +18,8 @@ import org.avni.server.dao.individualRelationship.IndividualRelationGenderMappin
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
+import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
+import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.*;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -36,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -121,6 +126,11 @@ public class OrganisationService {
     private final EntityTypeRetrieverService entityTypeRetrieverService;
     private final RuleDependencyRepository ruleDependencyRepository;
     private final RuleRepository ruleRepository;
+    private final UserSubjectAssignmentRepository userSubjectAssignmentRepository;
+    private final SubjectProgramEligibilityRepository subjectProgramEligibilityRepository;
+    private final TaskRepository taskRepository;
+    private final MessageRequestQueueRepository messageRequestQueueRepository;
+    private final MessageReceiverRepository messageReceiverRepository;
     private final Logger logger;
 
     @Autowired
@@ -189,7 +199,12 @@ public class OrganisationService {
                                TaskStatusService taskStatusService,
                                EntityTypeRetrieverService entityTypeRetrieverService,
                                RuleDependencyRepository ruleDependencyRepository,
-                               RuleRepository ruleRepository) {
+                               RuleRepository ruleRepository,
+                               UserSubjectAssignmentRepository userSubjectAssignmentRepository,
+                               SubjectProgramEligibilityRepository subjectProgramEligibilityRepository,
+                               TaskRepository taskRepository,
+                               MessageRequestQueueRepository messageRequestQueueRepository,
+                               MessageReceiverRepository messageReceiverRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -257,6 +272,11 @@ public class OrganisationService {
         this.entityTypeRetrieverService = entityTypeRetrieverService;
         this.ruleDependencyRepository = ruleDependencyRepository;
         this.ruleRepository = ruleRepository;
+        this.userSubjectAssignmentRepository = userSubjectAssignmentRepository;
+        this.subjectProgramEligibilityRepository = subjectProgramEligibilityRepository;
+        this.taskRepository = taskRepository;
+        this.messageRequestQueueRepository = messageRequestQueueRepository;
+        this.messageReceiverRepository = messageReceiverRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -621,25 +641,34 @@ public class OrganisationService {
 
     public void deleteTransactionalData() {
         JpaRepository[] transactionalRepositories = {
-                newsRepository,
-                commentRepository,
-                commentThreadRepository,
-                entityApprovalStatusRepository,
-                ruleFailureTelemetryRepository,
-                identifierAssignmentRepository,
-                syncTelemetryRepository,
-                videoTelemetricRepository,
-                groupSubjectRepository,
-                individualRelationshipRepository,
-                checklistItemRepository,
-                checklistRepository,
-                programEncounterRepository,
-                programEnrolmentRepository,
-                encounterRepository,
-                subjectMigrationRepository,
-                individualRepository
+            newsRepository,
+            commentRepository,
+            commentThreadRepository,
+            entityApprovalStatusRepository,
+            ruleFailureTelemetryRepository,
+            identifierAssignmentRepository,
+            syncTelemetryRepository,
+            videoTelemetricRepository,
+            groupSubjectRepository,
+            individualRelationshipRepository,
+            checklistItemRepository,
+            checklistRepository,
+            programEncounterRepository,
+            programEnrolmentRepository,
+            encounterRepository,
+            subjectMigrationRepository,
+            userSubjectAssignmentRepository,
+            subjectProgramEligibilityRepository,
+            taskRepository,
+            individualRepository
         };
 
+        CrudRepository[] txCrudRepositories = {
+            messageReceiverRepository,
+            messageRequestQueueRepository,
+        };
+
+        Arrays.asList(txCrudRepositories).forEach(this::deleteAll);
         Arrays.asList(transactionalRepositories).forEach(this::deleteAll);
     }
 
@@ -685,7 +714,9 @@ public class OrganisationService {
     private void deleteAll(JpaRepository repository) {
         repository.deleteAllInBatch();
     }
-
+    private void deleteAll(CrudRepository repository) {
+        repository.deleteAll();
+    }
     public void deleteMediaContent(boolean deleteMetadata) {
         try {
             s3Service.deleteOrgMedia(deleteMetadata);
