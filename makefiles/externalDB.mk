@@ -146,4 +146,6 @@ endif
 		--exclude-table='public.encounter_ck' \
 		--exclude-table='public.program_encounter_ck' \
 		--exclude-table='public.individual_copy_ihmp' \
-		--exclude-table='public.program_enrolment_ihmp'
+		--exclude-table='public.program_enrolment_ihmp' \
+		--exclude-table-data='public.individual_02_24' \
+		--exclude-table-data='public.program_enrolment_02_24'
