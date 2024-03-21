@@ -7,6 +7,8 @@ public class GroupDashboardBundleContract extends BaseBundleContract {
     private boolean isSecondaryDashboard;
     private String dashboardUUID;
     private String groupUUID;
+    private String groupName;
+    private boolean isGroupOneOfTheDefaultGroups;
     private String dashboardName;
     private String dashboardDescription;
 
@@ -17,6 +19,8 @@ public class GroupDashboardBundleContract extends BaseBundleContract {
         contract.isPrimaryDashboard = groupDashboard.isPrimaryDashboard();
         contract.isSecondaryDashboard = groupDashboard.isSecondaryDashboard();
         contract.groupUUID = groupDashboard.getGroup().getUuid();
+        contract.groupName = groupDashboard.getGroup().getName();
+        contract.isGroupOneOfTheDefaultGroups = groupDashboard.getGroup().isOneOfTheDefaultGroups();
         contract.dashboardUUID = groupDashboard.getDashboard().getUuid();
         contract.dashboardName = groupDashboard.getDashboard().getName();
         contract.dashboardDescription = groupDashboard.getDashboard().getDescription();
@@ -69,5 +73,21 @@ public class GroupDashboardBundleContract extends BaseBundleContract {
 
     public void setDashboardDescription(String dashboardDescription) {
         this.dashboardDescription = dashboardDescription;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public boolean isGroupOneOfTheDefaultGroups() {
+        return isGroupOneOfTheDefaultGroups;
+    }
+
+    public void setGroupIsOneOfTheDefaultGroups(boolean oneOfTheDefaultGroups) {
+        isGroupOneOfTheDefaultGroups = oneOfTheDefaultGroups;
     }
 }

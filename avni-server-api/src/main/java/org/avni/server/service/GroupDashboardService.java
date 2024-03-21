@@ -14,6 +14,7 @@ import org.avni.server.web.request.GroupDashboardContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,12 +52,22 @@ public class GroupDashboardService implements NonScopeAwareService {
     public void saveFromBundle(List<GroupDashboardBundleContract> request) {
         List<GroupDashboard> groupDashboards = new ArrayList<>();
         for (GroupDashboardBundleContract contract : request) {
+            Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
             GroupDashboard groupDashboard = EntityHelper.newOrExistingEntity(groupDashboardRepository, contract.getUuid(), null, new GroupDashboard());
-            Group group = groupRepository.findByUuid(contract.getGroupUUID());
+            Group group = null;
+            if(contract.isGroupOneOfTheDefaultGroups() && !StringUtils.isEmpty(contract.getGroupName())) {
+                group = groupRepository.findByNameAndOrganisationId(contract.getGroupName(), organisationId);
+            } else {
+                group = groupRepository.findByUuid(contract.getGroupUUID());
+            }
+            if(group == null) {
+                throw new RuntimeException("Unable to process import of Group Dashboards, due to missing mandatory details."
+                        + "\nPlease download a newer version of the bundle from the source organisation and try uploading again.");
+            }
             Dashboard dashboard = dashboardRepository.findByUuid(contract.getDashboardUUID());
             groupDashboard.setDashboard(dashboard);
             groupDashboard.setGroup(group);
-            groupDashboard.setOrganisationId(UserContextHolder.getUserContext().getOrganisationId());
+            groupDashboard.setOrganisationId(organisationId);
             groupDashboards.add(groupDashboard);
         }
         groupDashboardRepository.saveAll(groupDashboards);
