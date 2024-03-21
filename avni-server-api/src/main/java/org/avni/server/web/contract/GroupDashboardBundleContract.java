@@ -87,7 +87,7 @@ public class GroupDashboardBundleContract extends BaseBundleContract {
         return isGroupOneOfTheDefaultGroups;
     }
 
-    public void setGroupIsOneOfTheDefaultGroups(boolean oneOfTheDefaultGroups) {
-        isGroupOneOfTheDefaultGroups = oneOfTheDefaultGroups;
+    public void setGroupOneOfTheDefaultGroups(boolean isGroupOneOfTheDefaultGroups) {
+        this.isGroupOneOfTheDefaultGroups = isGroupOneOfTheDefaultGroups;
     }
 }
