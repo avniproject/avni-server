@@ -36,4 +36,10 @@ public class UserContextHolder {
         UserContext context = getUserContext();
         return context != null ? context.getOrganisation() : null;
     }
+
+    public static String getUserName() {
+        User user = UserContextHolder.getUser();
+        if (user == null) return null;
+        return user.getUsername();
+    }
 }

@@ -6,17 +6,20 @@ import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.ConceptService;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.ProgramEncounterService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.S;
+import org.avni.server.util.TimeTakenLogger;
 import org.avni.server.web.request.api.ApiProgramEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
-import org.avni.server.service.ConceptService;
-import org.avni.server.util.S;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,6 +46,7 @@ public class ProgramEncounterApiController {
     private final MediaObservationService mediaObservationService;
     private final AccessControlService accessControlService;
     private final UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(ProgramEncounterApiController.class);
 
     @Autowired
     public ProgramEncounterApiController(ProgramEncounterRepository programEncounterRepository, ConceptRepository conceptRepository, ConceptService conceptService, ProgramEnrolmentRepository programEnrolmentRepository, EncounterTypeRepository encounterTypeRepository, ProgramEncounterService programEncounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService, UserService userService) {
@@ -65,7 +69,9 @@ public class ProgramEncounterApiController {
                                       @RequestParam(value = "concepts", required = false) String concepts,
                                       @RequestParam(value = "programEnrolmentId", required = false) String programEnrolmentUuid,
                                       Pageable pageable) {
+        TimeTakenLogger timeTakenLogger = new TimeTakenLogger("Search program encounters", logger);
         Page<ProgramEncounter> programEncounters = programEncounterRepository.search(createSearchParams(lastModifiedDateTime, now, encounterType, concepts, programEnrolmentUuid), pageable);
+        timeTakenLogger.logInfo();
 
         ArrayList<EncounterResponse> programEncounterResponses = new ArrayList<>();
         programEncounters.forEach(programEncounter -> {
@@ -174,7 +180,7 @@ public class ProgramEncounterApiController {
         if (encounterType == null) {
             throw new IllegalArgumentException(String.format("Encounter type not found with name '%s'", request.getEncounterType()));
         }
-        if(StringUtils.hasLength(request.getExternalId())) {
+        if (StringUtils.hasLength(request.getExternalId())) {
             encounter.setLegacyId(request.getExternalId().trim());
         }
         encounter.setEncounterType(encounterType);
