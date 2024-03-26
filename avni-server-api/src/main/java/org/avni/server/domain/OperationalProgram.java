@@ -49,9 +49,16 @@ public class OperationalProgram extends OrganisationAwareEntity {
         return program.getName();
     }
 
+    @Override
     public DateTime getLastModifiedDateTime() {
-        return getProgram().getLastModifiedDateTime().isAfter(super.getLastModifiedDateTime()) ? getProgram().getLastModifiedDateTime() : super.getLastModifiedDateTime();
+        return getLastModified(getProgram()).getLastModifiedDateTime();
     }
+
+    @Override
+    public User getLastModifiedBy() {
+        return getLastModified(getProgram()).getLastModifiedBy();
+    }
+
 
     public void setProgramSubjectLabel(String programSubjectLabel) {
         this.programSubjectLabel = programSubjectLabel;

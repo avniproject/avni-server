@@ -1,9 +1,9 @@
 package org.avni.server.domain;
 
-import org.hibernate.annotations.BatchSize;
-import org.joda.time.DateTime;
 import org.avni.server.application.Format;
 import org.avni.server.application.Subject;
+import org.hibernate.annotations.BatchSize;
+import org.joda.time.DateTime;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -96,15 +96,14 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
     }
     public Format getValidMiddleNameFormat() { return subjectType.getValidMiddleNameFormat();}
 
+    @Override
     public DateTime getLastModifiedDateTime() {
-        return getSubjectType().getLastModifiedDateTime().isAfter(super.getLastModifiedDateTime()) ?
-                getSubjectType().getLastModifiedDateTime() : super.getLastModifiedDateTime();
+        return getLastModified(getSubjectType()).getLastModifiedDateTime();
     }
 
     @Override
     public User getLastModifiedBy() {
-        return getSubjectType().getLastModifiedDateTime().isAfter(super.getLastModifiedDateTime()) ?
-                getSubjectType().getLastModifiedBy() : super.getLastModifiedBy();
+        return getLastModified(getSubjectType()).getLastModifiedBy();
     }
 
     public boolean isDirectlyAssignable() {
