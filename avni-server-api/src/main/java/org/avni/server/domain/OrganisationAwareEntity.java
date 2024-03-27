@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
@@ -15,4 +16,10 @@ public class OrganisationAwareEntity extends CHSEntity {
     public void setOrganisationId(Long organisationId) {
         this.organisationId = organisationId;
     }
+
+    @JsonIgnore
+    public Auditable getLastModified(Auditable auditable) {
+        return super.getLastModifiedDateTime().isAfter(auditable.getLastModifiedDateTime()) ? this : auditable;
+    }
+
 }
