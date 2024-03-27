@@ -82,6 +82,8 @@ tunnel-prerelease-db:
 	make tunnel-db host=avni-prerelease dbServer=prereleasedb.avniproject.org
 tunnel-prod-read-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.read.openchs.org
+tunnel-metabase:
+	make tunnel-db host=avni-metabase dbServer=reportingdb.cnwnxgm8rsnb.ap-south-1.rds.amazonaws.com
 tunnel-prod-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.openchs.org
 tunnel-lfe-prod-db:
@@ -146,4 +148,31 @@ endif
 		--exclude-table='public.encounter_ck' \
 		--exclude-table='public.program_encounter_ck' \
 		--exclude-table='public.individual_copy_ihmp' \
-		--exclude-table='public.program_enrolment_ihmp'
+		--exclude-table='public.program_enrolment_ihmp' \
+		--exclude-table='public.individual_02_24' \
+		--exclude-table='public.program_enrolment_02_24' \
+		--exclude-table='public.program_encounter_02_24' \
+		--exclude-table='public.encounter_02_24'
+
+dump-metabase-prod:
+	pg_dump -h localhost -p 5433 \
+		--dbname=reportingdb \
+		--username=reporting_user \
+		--file=$(HOME)/projects/avni/avni-db-dumps/avni-metabase.sql \
+		--verbose --schema=public --host=localhost \
+		--exclude-table='public.query_execution' \
+		--exclude-table='public.view_log'
+
+restore-metabase-dump:
+ifndef dumpFile
+	@echo "Provde the dumpFile variable"
+	exit 1
+else
+	make _clean_db database=avni_metabase
+	-psql -p $(dbPort) -U ${su} -d postgres -c "create user reporting_user with password 'password' createrole";
+	-psql -p $(dbPort) -U ${su} -d postgres -c 'create database avni_metabase with owner reporting_user';
+	-psql -p $(dbPort) -U ${su} -d avni_metabase -c 'create extension if not exists "uuid-ossp"';
+	-psql -p $(dbPort) -U ${su} -d avni_metabase -c 'create extension if not exists "ltree"';
+	-psql -p $(dbPort) -U ${su} -d avni_metabase -c 'create extension if not exists "hstore"';
+	psql -U reporting_user -d avni_metabase < $(dumpFile)
+endif
