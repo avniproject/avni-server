@@ -20,6 +20,7 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
@@ -85,6 +86,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final RuleDependencyService ruleDependencyService;
     private final TranslationService translationService;
     private final RuleService ruleService;
+    private final GroupDashboardService groupDashboardService;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -113,6 +115,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("groups.json");
         add("groupRole.json");
         add("groupPrivilege.json");
+        add("groupDashboards.json");
         add("video.json");
         add("reportCard.json");
         add("reportDashboard.json");
@@ -159,7 +162,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  MessagingService messagingService,
                                  RuleDependencyService ruleDependencyService,
                                  TranslationService translationService,
-                                 RuleService ruleService) {
+                                 RuleService ruleService, GroupDashboardService groupDashboardService) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -192,6 +195,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.ruleDependencyService = ruleDependencyService;
         this.translationService = translationService;
         this.ruleService = ruleService;
+        this.groupDashboardService = groupDashboardService;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -226,7 +230,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         return s3Service.uploadByteArray(entityUUID, extension, bucketName, iconFileData);
     }
 
-    private void deployFileIfDataExists(List<? extends BundleFile> bundleFiles, BundleZip bundleZip, String filename) throws IOException, FormBuilderException {
+    private void deployFileIfDataExists(List<? extends BundleFile> bundleFiles, BundleZip bundleZip, String filename) throws IOException, FormBuilderException, ValidationException {
         byte[] fileData = bundleZip.getFile(filename);
         if (fileData != null) {
             deployFile(filename, new String(fileData, StandardCharsets.UTF_8), bundleFiles);
@@ -240,7 +244,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
+    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException, ValidationException {
         logger.info("processing file {}", fileName);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (fileName) {
@@ -355,6 +359,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             case "groupPrivilege.json":
                 GroupPrivilegeContractWeb[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeContractWeb[].class);
                 groupPrivilegeService.savePrivileges(groupPrivilegeContracts, organisation);
+                break;
+            case "groupDashboards.json":
+                GroupDashboardBundleContract[] contracts = convertString(fileData, GroupDashboardBundleContract[].class);
+                groupDashboardService.saveFromBundle(Arrays.asList(contracts));
                 break;
             case "video.json":
                 VideoContract[] videoContracts = convertString(fileData, VideoContract[].class);

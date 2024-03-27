@@ -22,10 +22,10 @@ public enum FormType {
     Location,
     Task;
 
-    static FormType[] performEncounterTypes = {Encounter, ProgramEncounter};
-    static FormType[] cancelEncounterTypes = {IndividualEncounterCancellation, ProgramEncounterCancellation};
-    static FormType[] linkedToEncounterType = {Encounter, ProgramEncounter, ProgramEncounterCancellation, IndividualEncounterCancellation};
-    static FormType[] linkedToProgram = {ProgramEncounter, ProgramExit, ProgramEnrolment, ProgramEncounterCancellation};
+    static final FormType[] performEncounterTypes = {Encounter, ProgramEncounter};
+    static final FormType[] cancelEncounterTypes = {IndividualEncounterCancellation, ProgramEncounterCancellation};
+    static final FormType[] linkedToEncounterType = {Encounter, ProgramEncounter, ProgramEncounterCancellation, IndividualEncounterCancellation};
+    static final FormType[] linkedToProgram = {ProgramEncounter, ProgramExit, ProgramEnrolment, ProgramEncounterCancellation};
 
     private static final Map<FormType, PrivilegeType> PrivilegeTypes = new HashMap<FormType, PrivilegeType>() {{
         put(BeneficiaryIdentification, PrivilegeType.EditSubjectType);
@@ -38,15 +38,11 @@ public enum FormType {
         put(ProgramEncounterCancellation, PrivilegeType.EditEncounterType);
         put(Encounter, PrivilegeType.EditEncounterType);
         put(IndividualEncounterCancellation, PrivilegeType.EditEncounterType);
-        put(ChecklistItem, PrivilegeType.EditChecklist);
+        put(ChecklistItem, PrivilegeType.EditChecklistConfiguration);
         put(IndividualRelationship, PrivilegeType.EditSubject);
         put(Location, PrivilegeType.EditLocationType);
         put(Task, PrivilegeType.EditTaskType);
     }};
-
-    public static PrivilegeType getPrivilegeType(String formTypeName) {
-        return FormType.getPrivilegeType(FormType.valueOf(formTypeName));
-    }
 
     public static PrivilegeType getPrivilegeType(FormType formType) {
         return PrivilegeTypes.get(formType);
@@ -66,13 +62,5 @@ public enum FormType {
 
     public boolean isLinkedToProgram() {
         return this.isIn(linkedToProgram);
-    }
-
-    public boolean isPerformEncounterType() {
-        return this.isIn(performEncounterTypes);
-    }
-
-    public boolean isCancelEncounterType() {
-        return this.isIn(cancelEncounterTypes);
     }
 }

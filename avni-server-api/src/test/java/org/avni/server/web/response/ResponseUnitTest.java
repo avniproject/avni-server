@@ -54,37 +54,4 @@ public class ResponseUnitTest {
         assertThat(observations.size(), is(1));
         assertThat(observations.get("First Name"), is("Test"));
     }
-
-    @Test()
-    public void shouldAddObservationsWhenPassedObsAreNotEmpty() {
-        String questionConceptName = "ABC";
-        String answerValue = "XYZ";
-        LinkedHashMap<String, Object> parentMap = new LinkedHashMap<>();
-        LinkedHashMap<String, Object> observationsResponse = new LinkedHashMap<>();
-        observationsResponse.put("First Name", "Test");
-        ObservationCollection observations = new ObservationCollection();
-        String questionConceptUuid = "55f3e0cc-a9bc-45d6-a42c-a4fd3d90465f";
-        String answerConceptUuid = "a33da2f8-7329-4e2a-8c27-046ee4082524";
-        Concept questionConcept = new Concept();
-        questionConcept.setName(questionConceptName);
-        Concept answerConcept = new Concept();
-        answerConcept.setUuid(answerConceptUuid);
-        answerConcept.setName(answerValue);
-        ConceptAnswer conceptAnswer = new ConceptAnswer();
-        conceptAnswer.setConcept(answerConcept);
-        Set<ConceptAnswer> answers = new HashSet<>();
-        answers.add(conceptAnswer);
-        questionConcept.setConceptAnswers(answers);
-        observations.put(questionConceptUuid, answerConceptUuid);
-        ConceptNameUuidAndDatatype conceptMap1 = new ConceptNameUuidAndDatatype(questionConceptUuid, questionConceptName, ConceptDataType.Coded);
-        ConceptNameUuidAndDatatype conceptMap2 = new ConceptNameUuidAndDatatype(answerConceptUuid, answerValue, ConceptDataType.NA);
-        List<ConceptNameUuidAndDatatype> conceptMapList = Arrays.asList(conceptMap1, conceptMap2);
-        when(conceptRepository.findAllConceptsInObs(anyString())).thenReturn(conceptMapList);
-        when(conceptService.getObservationValue(any(), anyMap(), anyString())).thenReturn(answerValue);
-        Response.putObservations(conceptRepository, conceptService, parentMap, observationsResponse, observations);
-        LinkedHashMap<String, Object> result = (LinkedHashMap<String, Object>) parentMap.get("observations");
-
-        assertThat(result.get("First Name"), is("Test"));
-        assertThat(result.get(questionConceptName), is(answerValue));
-    }
 }

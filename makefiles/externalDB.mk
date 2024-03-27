@@ -150,9 +150,7 @@ endif
 		--exclude-table='public.individual_copy_ihmp' \
 		--exclude-table='public.program_enrolment_ihmp' \
 		--exclude-table='public.individual_02_24' \
-		--exclude-table='public.program_enrolment_02_24' \
-		--exclude-table='public.program_encounter_02_24' \
-		--exclude-table='public.encounter_02_24'
+		--exclude-table='public.program_enrolment_02_24'
 
 dump-metabase-prod:
 	pg_dump -h localhost -p 5433 \

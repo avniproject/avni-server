@@ -2,9 +2,7 @@ package org.avni.server.web.response;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.dao.ConceptRepository;
-import org.avni.server.domain.CHSBaseEntity;
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.*;
 import org.avni.server.service.ConceptService;
 import org.avni.server.util.ObjectMapperSingleton;
 
@@ -24,15 +22,10 @@ public class Response {
 
     public static void mapObservations(ConceptRepository conceptRepository, ConceptService conceptService, Map<String, Object> observationsResponse, ObservationCollection observations) {
         ObservationCollection obs = Optional.ofNullable(observations).orElse(new ObservationCollection());
-        String stringObservations;
-        try {
-            stringObservations = ObjectMapperSingleton.getObjectMapper().writeValueAsString(obs);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(String.format("Error while processing observation %s", obs.toString()));
-        }
-        List<ConceptNameUuidAndDatatype> conceptMaps = conceptRepository.findAllConceptsInObs(stringObservations);
-        Map<String, ConceptNameUuidAndDatatype> conceptMap = conceptMaps.stream().collect(Collectors.toMap(s -> s.getUuid(), s -> s));
-        obs.forEach((key, value) -> observationsResponse.put(conceptMap.get(key).getName(), conceptService.getObservationValue(conceptMap.get(key), conceptMap, value)));
+        obs.forEach((key, value) -> {
+            Concept concept = conceptRepository.findByUuid(key);
+            observationsResponse.put(concept.getName(), conceptService.getObservationValue(concept, value));
+        });
     }
 
     static void putObservations(ConceptRepository conceptRepository, ConceptService conceptService, Map<String, Object> parentMap, LinkedHashMap<String, Object> observationsResponse, ObservationCollection observations) {

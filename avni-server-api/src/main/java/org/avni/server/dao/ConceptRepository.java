@@ -73,23 +73,6 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     @Query("select c.name from Concept c where c.isVoided = false")
     List<String> getAllNames();
     List<Concept> getAllConceptByUuidIn(List<String> uuid);
-    List<Concept> getAllConceptByNameIn(List<String> names);
-
-    @Query(value = "SELECT DISTINCT c.uuid, c.name, c.data_type\n" +
-            "            FROM concept c\n" +
-            "                     INNER JOIN (\n" +
-            "                SELECT unnest(ARRAY [to_jsonb(key), value]) conecpt_uuid\n" +
-            "                FROM jsonb_each(cast( :observations as jsonb))\n" +
-            "            ) obs ON obs.conecpt_uuid @> to_jsonb(c.uuid)", nativeQuery = true)
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    List<Map<String, String>> getConceptUuidToNameMapList(String observations);
-
-    default List<ConceptNameUuidAndDatatype> findAllConceptsInObs(String observations) {
-        return getConceptUuidToNameMapList(observations)
-                .stream()
-                .map(resultMap -> new ConceptNameUuidAndDatatype(resultMap.get("uuid"), resultMap.get("name"), ConceptDataType.valueOf(resultMap.get("data_type"))))
-                .collect(Collectors.toList());
-    }
 
     Page<Concept> findAllByUuidIn(String [] uuids, Pageable pageable);
     List<Concept> findAllByUuidInAndDataTypeIn(String[] uuids, String[] dataTypes);

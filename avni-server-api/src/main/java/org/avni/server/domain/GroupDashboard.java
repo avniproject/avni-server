@@ -1,6 +1,5 @@
 package org.avni.server.domain;
 
-
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
@@ -9,9 +8,11 @@ import javax.validation.constraints.NotNull;
 @Entity
 @BatchSize(size = 100)
 public class GroupDashboard extends  OrganisationAwareEntity {
-
     @Column
     private boolean isPrimaryDashboard;
+
+    @Column
+    private boolean isSecondaryDashboard;
 
     @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
@@ -49,5 +50,13 @@ public class GroupDashboard extends  OrganisationAwareEntity {
 
     public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
+    }
+
+    public boolean isSecondaryDashboard() {
+        return isSecondaryDashboard;
+    }
+
+    public void setSecondaryDashboard(boolean secondaryDashboard) {
+        isSecondaryDashboard = secondaryDashboard;
     }
 }

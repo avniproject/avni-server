@@ -1,5 +1,6 @@
 package org.avni.server.web.response;
 
+import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 
 public class ConceptNameUuidAndDatatype {
@@ -11,6 +12,10 @@ public class ConceptNameUuidAndDatatype {
         this.uuid = uuid;
         this.name = name;
         this.conceptDataType = conceptDataType;
+    }
+
+    public ConceptNameUuidAndDatatype(Concept concept) {
+        this(concept.getUuid(), concept.getName(), ConceptDataType.valueOf(concept.getDataType()));
     }
 
     public String getUuid() {

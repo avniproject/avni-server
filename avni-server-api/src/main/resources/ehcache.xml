@@ -10,34 +10,31 @@
     <diskStore path="user.home/.ehcache"/>
     <cache name="org.avni.server.domain.Concept" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory" listenFor="all"/>
     </cache>
     <cache name="org.avni.server.domain.ConceptAnswer" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory" listenFor="all"/>
     </cache>
     <cache name="org.avni.server.domain.User" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory" listenFor="all"/>
     </cache>
     <cache name="org.avni.server.domain.AddressLevel" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory" listenFor="all"/>
     </cache>
     <cache name="org.avni.server.domain.VirtualCatchment" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
     </cache>
     <cache name="org.avni.server.domain.Catchment" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
     </cache>
     <cache name="org.avni.server.domain.Concept.conceptAnswers" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory" listenFor="all"/>
     </cache>
     <defaultCache maxEntriesLocalHeap="0" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
     </defaultCache>
 </ehcache>

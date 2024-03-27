@@ -1,14 +1,12 @@
 package org.avni.server.web.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.avni.server.domain.GroupDashboard;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class GroupDashboardContract extends CHSRequest {
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-    private boolean isPrimaryDashboard = false;
-    private Long dashboardId;
-    private Long groupId;
+    private boolean isPrimaryDashboard;
+    private boolean isSecondaryDashboard;
+    private long dashboardId;
+    private long groupId;
     private String dashboardName;
     private String dashboardDescription;
 
@@ -16,27 +14,23 @@ public class GroupDashboardContract extends CHSRequest {
         return isPrimaryDashboard;
     }
 
+    public boolean isSecondaryDashboard() {
+        return isSecondaryDashboard;
+    }
+
     public void setPrimaryDashboard(boolean primaryDashboard) {
         isPrimaryDashboard = primaryDashboard;
     }
 
-    public void setPrimaryDashboard(Boolean primaryDashboard) {
-        isPrimaryDashboard = primaryDashboard;
+    public void setSecondaryDashboard(boolean secondaryDashboard) {
+        isSecondaryDashboard = secondaryDashboard;
     }
 
-    public Long getDashboardId() {
-        return dashboardId;
-    }
-
-    public void setDashboardId(Long dashboardId) {
+    public void setDashboardId(long dashboardId) {
         this.dashboardId = dashboardId;
     }
 
-    public Long getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(Long groupId) {
+    public void setGroupId(long groupId) {
         this.groupId = groupId;
     }
 
@@ -44,12 +38,20 @@ public class GroupDashboardContract extends CHSRequest {
         this.dashboardName = dashboardName;
     }
 
-    public String getDashboardName() {
-        return dashboardName;
-    }
-
     public void setDashboardDescription(String dashboardDescription) {
         this.dashboardDescription = dashboardDescription;
+    }
+
+    public long getDashboardId() {
+        return dashboardId;
+    }
+
+    public long getGroupId() {
+        return groupId;
+    }
+
+    public String getDashboardName() {
+        return dashboardName;
     }
 
     public String getDashboardDescription() {
@@ -59,13 +61,24 @@ public class GroupDashboardContract extends CHSRequest {
     public static GroupDashboardContract fromEntity(GroupDashboard groupDashboard) {
         GroupDashboardContract groupDashboardContract = new GroupDashboardContract();
         groupDashboardContract.setId(groupDashboard.getId());
+        populateCommonFields(groupDashboard, groupDashboardContract);
+        return groupDashboardContract;
+    }
+
+    private static void populateCommonFields(GroupDashboard groupDashboard, GroupDashboardContract groupDashboardContract) {
         groupDashboardContract.setUuid(groupDashboard.getUuid());
         groupDashboardContract.setVoided(groupDashboard.isVoided());
-        groupDashboardContract.setPrimaryDashboard(groupDashboard.isPrimaryDashboard());
-        groupDashboardContract.setGroupId(groupDashboard.getGroup().getId());
-        groupDashboardContract.setDashboardId(groupDashboard.getDashboard().getId());
-        groupDashboardContract.setDashboardName(groupDashboard.getDashboard().getName());
-        groupDashboardContract.setDashboardDescription(groupDashboard.getDashboard().getDescription());
+        groupDashboardContract.isPrimaryDashboard = groupDashboard.isPrimaryDashboard();
+        groupDashboardContract.isSecondaryDashboard = groupDashboard.isSecondaryDashboard();
+        groupDashboardContract.groupId = groupDashboard.getGroup().getId();
+        groupDashboardContract.dashboardId = groupDashboard.getDashboard().getId();
+        groupDashboardContract.dashboardName = groupDashboard.getDashboard().getName();
+        groupDashboardContract.dashboardDescription = groupDashboard.getDashboard().getDescription();
+    }
+
+    public static GroupDashboardContract fromEntityForExternal(GroupDashboard groupDashboard) {
+        GroupDashboardContract groupDashboardContract = new GroupDashboardContract();
+        populateCommonFields(groupDashboard, groupDashboardContract);
         return groupDashboardContract;
     }
 }

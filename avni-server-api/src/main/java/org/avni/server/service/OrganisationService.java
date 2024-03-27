@@ -21,10 +21,12 @@ import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepo
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.*;
+import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
+import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
@@ -42,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -510,12 +513,12 @@ public class OrganisationService {
     public void addSubjectTypeIcons(ZipOutputStream zos) throws IOException {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAllByIconFileS3KeyNotNull();
         if (subjectTypes.size() > 0) {
-            addDirectoryToZip(zos, "subjectTypeIcons");
+            addDirectoryToZip(zos, BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         }
         for (SubjectType subjectType : subjectTypes) {
             InputStream objectContent = s3Service.getObjectContentFromUrl(subjectType.getIconFileS3Key());
             String extension = S.getLastStringAfter(subjectType.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("subjectTypeIcons/%s.%s", subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.SUBJECT_TYPE_ICONS.getFolderName(), subjectType.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -523,12 +526,13 @@ public class OrganisationService {
         List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
             .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
         if (cards.size() > 0) {
-            addDirectoryToZip(zos, "reportCardIcons");
+            addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
         for (Card reportCard : cards) {
+            if (StringUtils.isEmpty(reportCard.getIconFileS3Key())) continue;
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");
-            addIconToZip(zos, String.format("reportCardIcons/%s.%s", reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
+            addIconToZip(zos, String.format("%s/%s.%s", BundleFolder.REPORT_CARD_ICONS.getFolderName(), reportCard.getUuid(), extension), IOUtils.toByteArray(objectContent));
         }
     }
 
@@ -722,6 +726,14 @@ public class OrganisationService {
             s3Service.deleteOrgMedia(deleteMetadata);
         } catch (Exception e) {
             logger.info("Error while deleting the media files, skipping.");
+        }
+    }
+
+    public void addGroupDashboardJson(ZipOutputStream zos) throws IOException {
+        List<GroupDashboardBundleContract> groupDashboards = groupDashboardRepository.findAll().stream()
+                .map(GroupDashboardBundleContract::fromEntity).collect(Collectors.toList());
+        if (!groupDashboards.isEmpty()) {
+            addFileToZip(zos, "groupDashboards.json", groupDashboards);
         }
     }
 }

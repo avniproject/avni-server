@@ -16,11 +16,9 @@ import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.ReferenceDataContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
 import org.avni.server.web.request.application.FormUsageContract;
-import org.avni.server.web.response.ConceptNameUuidAndDatatype;
 import org.avni.server.web.response.Response;
 import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
-import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +112,7 @@ public class ConceptService implements NonScopeAwareService {
         return conceptAnswer;
     }
 
-    private Concept createCodedConcept(Concept concept, ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
+    private void createCodedConcept(Concept concept, ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
         List<ConceptContract> answers = (List<ConceptContract>) O.coalesce(conceptRequest.getAnswers(), new ArrayList<>());
         AtomicInteger index = new AtomicInteger(0);
         List<ConceptAnswer> conceptAnswers = new ArrayList<>();
@@ -123,7 +121,6 @@ public class ConceptService implements NonScopeAwareService {
             conceptAnswers.add(conceptAnswer);
         }
         concept.addAll(conceptAnswers);
-        return concept;
     }
 
     private Concept createNumericConcept(Concept concept, ConceptContract conceptRequest) {
@@ -155,10 +152,10 @@ public class ConceptService implements NonScopeAwareService {
         concept.updateAudit();
         switch (ConceptDataType.valueOf(impliedDataType)) {
             case Coded:
-                concept = createCodedConcept(concept, conceptRequest);
+                createCodedConcept(concept, conceptRequest);
                 break;
             case Numeric:
-                concept = createNumericConcept(concept, conceptRequest);
+                createNumericConcept(concept, conceptRequest);
                 break;
         }
         return concept;
@@ -251,8 +248,8 @@ public class ConceptService implements NonScopeAwareService {
     /**
      * Important: Not to be used in any Internal API calls
      */
-    public Object getObservationValue(ConceptNameUuidAndDatatype concept, Map<String, ConceptNameUuidAndDatatype> conceptMap, Object value) {
-        if (concept.getConceptDataType().equals(ConceptDataType.Date)) {
+    public Object getObservationValue(Concept questionConcept, Object value) {
+        if (questionConcept.getDataType().equals(ConceptDataType.Date.toString())) {
             return ApiRequestContextHolder.isVersionGreaterThan(1)?  DateTimeUtil.toDateString((String) value): value;
         }
 
@@ -260,22 +257,23 @@ public class ConceptService implements NonScopeAwareService {
                         ConceptDataType.Duration, ConceptDataType.File, ConceptDataType.GroupAffiliation, ConceptDataType.Image,
                         ConceptDataType.NA, ConceptDataType.Notes, ConceptDataType.Numeric, ConceptDataType.PhoneNumber,
                         ConceptDataType.Subject, ConceptDataType.Text, ConceptDataType.Time, ConceptDataType.Video)
-                .contains(concept.getConceptDataType())) {
+                .contains(ConceptDataType.valueOf(questionConcept.getDataType()))) {
             return value;
         }
 
         if (value instanceof ArrayList) {
-            List<Object> elements = (List<Object>) value;
-            return elements.stream().map(element -> {
-                if (element != null && element instanceof String) { // Multicoded concept
-                    return getNameWithDefaultValue(matchingConcept(conceptMap, element), element);
-                } else if (element != null && element instanceof HashMap) { // Repeatable question group
+            List<Object> answerElements = (List<Object>) value;
+            return answerElements.stream().map(answersItem -> {
+                if (answersItem instanceof String) { // Multi coded concept
+                    Concept answerConcept = conceptRepository.findByUuid((String) answersItem);
+                    return getNameWithDefaultValue(answerConcept, answersItem);
+                } else if (answersItem instanceof HashMap) { // Repeatable question group
                     LinkedHashMap<String, Object> observationResponse = new LinkedHashMap<>();
                     Response.mapObservations(conceptRepository, this, observationResponse,
-                            new ObservationCollection((HashMap<String, Object>) element));
+                            new ObservationCollection((HashMap<String, Object>) answersItem));
                     return observationResponse;
                 } else {
-                    return getNameWithDefaultValue(matchingConcept(conceptMap, element), element);
+                    return answersItem;
                 }
             }).toArray();
         }
@@ -286,19 +284,21 @@ public class ConceptService implements NonScopeAwareService {
             return observationResponse;
         }
 
-        if (concept.getConceptDataType().equals(ConceptDataType.Location)) {
+        if (questionConcept.getDataType().equals(ConceptDataType.Location.toString())) {
             return checkAndReturnLocationAddress(value);
         }
 
-        return getNameWithDefaultValue(matchingConcept(conceptMap, value), value);
+        // Should be used single coded values only. Multi-coded handled above based on value
+        if (value instanceof String && questionConcept.getDataType().equals(ConceptDataType.Coded.toString())) {
+            Concept answerConcept = conceptRepository.findByUuid((String) value);
+            return getNameWithDefaultValue(answerConcept, value);
+        }
+
+        return value;
     }
 
-    private ConceptNameUuidAndDatatype matchingConcept(Map<String, ConceptNameUuidAndDatatype> conceptMap, Object element) {
-        return conceptMap.get(element);
-    }
-
-    private Object getNameWithDefaultValue(ConceptNameUuidAndDatatype value, Object defaultValue) {
-        return value == null ? defaultValue : value.getName();
+    private Object getNameWithDefaultValue(Concept answerConcept, Object obsRawValue) {
+        return answerConcept == null ? obsRawValue : answerConcept.getName();
     }
 
     private Object checkAndReturnLocationAddress(Object value) {

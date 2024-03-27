@@ -6,17 +6,19 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.geo.Point;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.MediaObservationService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.TimeTakenLogger;
 import org.avni.server.web.request.api.ApiEncounterRequest;
 import org.avni.server.web.request.api.RequestUtils;
 import org.avni.server.web.response.EncounterResponse;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +51,7 @@ public class GeneralEncounterApiController {
     private final MediaObservationService mediaObservationService;
     private final AccessControlService accessControlService;
     private final UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(GeneralEncounterApiController.class);
 
     @Autowired
     public GeneralEncounterApiController(ConceptService conceptService, EncounterRepository encounterRepository, ConceptRepository conceptRepository, IndividualRepository individualRepository, EncounterTypeRepository encounterTypeRepository, EncounterService encounterService, MediaObservationService mediaObservationService, AccessControlService accessControlService, UserService userService) {
@@ -76,8 +78,9 @@ public class GeneralEncounterApiController {
         Map<Concept, String> conceptsMap = conceptService.readConceptsFromJsonObject(concepts);
 
         EncounterSearchRequest encounterSearchRequest = new EncounterSearchRequest(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), encounterType, subjectUUID, conceptsMap, pageable);
-
+        TimeTakenLogger timeTakenLogger = new TimeTakenLogger("Search encounters", logger);
         encounters = encounterService.search(encounterSearchRequest);
+        timeTakenLogger.logInfo();
 
         ArrayList<EncounterResponse> encounterResponses = new ArrayList<>();
         encounters.forEach(encounter -> {
