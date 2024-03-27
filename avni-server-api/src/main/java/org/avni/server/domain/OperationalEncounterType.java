@@ -52,12 +52,14 @@ public class OperationalEncounterType extends OrganisationAwareEntity {
 
     @Override
     public DateTime getLastModifiedDateTime() {
-        return getLastModified(getEncounterType()).getLastModifiedDateTime();
+        Auditable lastModified = getLastModified(getEncounterType());
+        return lastModified.equals(this)?super.getLastModifiedDateTime(): lastModified.getLastModifiedDateTime();
     }
 
     @Override
     public User getLastModifiedBy() {
-        return getLastModified(getEncounterType()).getLastModifiedBy();
+        Auditable lastModified = getLastModified(getEncounterType());
+        return lastModified.equals(this)?super.getLastModifiedBy(): lastModified.getLastModifiedBy();
     }
 
     public String getEncounterEligibilityCheckRule() {

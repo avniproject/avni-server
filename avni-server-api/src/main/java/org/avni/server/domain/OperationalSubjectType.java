@@ -98,12 +98,14 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
 
     @Override
     public DateTime getLastModifiedDateTime() {
-        return getLastModified(getSubjectType()).getLastModifiedDateTime();
+        Auditable lastModified = getLastModified(getSubjectType());
+        return lastModified.equals(this)?super.getLastModifiedDateTime(): lastModified.getLastModifiedDateTime();
     }
 
     @Override
     public User getLastModifiedBy() {
-        return getLastModified(getSubjectType()).getLastModifiedBy();
+        Auditable lastModified = getLastModified(getSubjectType());
+        return lastModified.equals(this)?super.getLastModifiedBy(): lastModified.getLastModifiedBy();
     }
 
     public boolean isDirectlyAssignable() {

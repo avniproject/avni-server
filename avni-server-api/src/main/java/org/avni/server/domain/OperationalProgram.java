@@ -51,12 +51,14 @@ public class OperationalProgram extends OrganisationAwareEntity {
 
     @Override
     public DateTime getLastModifiedDateTime() {
-        return getLastModified(getProgram()).getLastModifiedDateTime();
+        Auditable lastModified = getLastModified(getProgram());
+        return lastModified.equals(this)?super.getLastModifiedDateTime(): lastModified.getLastModifiedDateTime();
     }
 
     @Override
     public User getLastModifiedBy() {
-        return getLastModified(getProgram()).getLastModifiedBy();
+        Auditable lastModified = getLastModified(getProgram());
+        return lastModified.equals(this)?super.getLastModifiedBy(): lastModified.getLastModifiedBy();
     }
 
 
