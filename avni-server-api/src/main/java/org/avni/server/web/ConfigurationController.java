@@ -12,11 +12,15 @@ import java.util.List;
 
 @RestController
 public class ConfigurationController {
-    @Autowired
-    private Configuration configuration;
+    private final Configuration configuration;
 
-    @GetMapping("/Config")
-    public ResponseEntity<ConfigurationResponse> getReportConfig() {
+    @Autowired
+    public ConfigurationController(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
+    @GetMapping("/config")
+    public ResponseEntity<ConfigurationResponse> getConfig() {
         ConfigurationResponse configurationResponse = new ConfigurationResponse();
         List<ReportingSystem> reportingSystems = configuration.getReportingSystems();
         configurationResponse.setReportingSystems(reportingSystems);
