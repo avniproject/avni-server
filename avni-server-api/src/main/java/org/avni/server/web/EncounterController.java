@@ -9,6 +9,7 @@ import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -140,6 +141,17 @@ public class EncounterController extends AbstractController<Encounter> implement
         //Planned visit can not overwrite completed encounter
         if (encounter.isCompleted() && request.isPlanned())
             return null;
+
+        if ((request.getObservations() == null || request.getObservations().isEmpty()) && encounter.getObservations() != null && !encounter.getObservations().isEmpty()) {
+            String errorMessage = String.format("Encounter Observations is getting empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+        }
+        if ((request.getCancelObservations() == null || request.getCancelObservations().isEmpty()) && encounter.getCancelObservations() != null && !encounter.getCancelObservations().isEmpty()) {
+            String errorMessage = String.format("Encounter Cancel Observations is getting empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+        }
 
         encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
         encounter.setIndividual(individual);

@@ -8,6 +8,7 @@ import org.avni.server.common.EntityHelper;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.EntityTypeContract;
@@ -148,7 +149,16 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         //Planned visit can not overwrite completed encounter
         if (encounter.isCompleted() && request.isPlanned())
             return null;
-
+        if ((request.getObservations() == null || request.getObservations().isEmpty()) && encounter.getObservations() != null && !encounter.getObservations().isEmpty()) {
+            String errorMessage = String.format("ProgramEncounter Observations is getting empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+        }
+        if ((request.getCancelObservations() == null || request.getCancelObservations().isEmpty()) && encounter.getCancelObservations() != null && !encounter.getCancelObservations().isEmpty()) {
+            String errorMessage = String.format("ProgramEncounter Cancel Observations is getting empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), request.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+        }
         encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(request.getProgramEnrolmentUUID());
         encounter.setProgramEnrolment(programEnrolment);
@@ -159,6 +169,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         encounter.setMaxVisitDateTime(request.getMaxVisitDateTime());
         encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
+
         PointRequest encounterLocation = request.getEncounterLocation();
         if (encounterLocation != null)
             encounter.setEncounterLocation(new Point(encounterLocation.getX(), encounterLocation.getY()));

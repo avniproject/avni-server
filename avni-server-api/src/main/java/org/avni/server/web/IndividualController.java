@@ -1,11 +1,13 @@
 package org.avni.server.web;
 
+import com.bugsnag.Bugsnag;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.service.*;
@@ -69,6 +71,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final FormMappingService formMappingService;
+    private final Bugsnag bugsnag;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -83,7 +86,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
                                 IndividualConstructionService individualConstructionService,
-                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService) {
+                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService, Bugsnag bugsnag) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -101,6 +104,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
         this.formMappingService = formMappingService;
+        this.bugsnag = bugsnag;
     }
 
     // used in offline mode hence no access check
@@ -357,7 +361,16 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.markSubjectMigrationIfRequired(individualRequest, observations);
 
         Individual individual = createIndividualWithoutObservations(individualRequest);
-        individual.setObservations(observations);
+
+        // Temporary fix to
+        if ((individualRequest.getObservations() == null || individualRequest.getObservations().isEmpty()) && individual.getObservations() != null && !individual.getObservations().isEmpty()) {
+            String errorMessage = String.format("Individual Observations not all allowed to be made empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), individualRequest.getUuid());
+            bugsnag.notify(new Exception(errorMessage));
+            logger.error(errorMessage);
+            individual.updateAudit();
+        } else {
+            individual.setObservations(observations);
+        }
 
         Individual savedIndividual = individualService.save(individual);
         saveVisitSchedules(individualRequest);
