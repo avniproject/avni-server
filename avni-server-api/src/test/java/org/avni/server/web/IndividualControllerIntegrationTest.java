@@ -52,6 +52,32 @@ public class IndividualControllerIntegrationTest extends AbstractControllerInteg
         }
     }
 
+    /**
+     * TODO Remove this after finding root cause of overwrite of observations to empty
+     */
+    @Test
+    public void ensureUpdateExistingIndividualWithEmptyObsFails() {
+        try {
+            Object json = mapper.readValue(this.getClass().getResource("/ref/individual/NonEmptyObsIndividual.json"), Object.class);
+            post("/individuals", json);
+
+            Individual newIndividual = individualRepository.findByUuid(INDIVIDUAL_UUID);
+            assertThat(newIndividual).isNotNull();
+
+            json = mapper.readValue(this.getClass().getResource("/ref/individual/newIndividual.json"), Object.class);
+            post("/individuals", json);
+
+            Individual updatedIndividual = individualRepository.findByUuid(INDIVIDUAL_UUID);
+            assertThat(updatedIndividual).isNotNull();
+            assertThat(updatedIndividual.getObservations().size()).isGreaterThan(0);
+            assertThat(updatedIndividual.getObservations().size()).isEqualTo(newIndividual.getObservations().size());
+            assertThat(updatedIndividual.getLastModifiedDateTime()).isNotEqualTo(newIndividual.getLastModifiedDateTime());
+
+        } catch (IOException e) {
+            Assert.fail();
+        }
+    }
+
     @Test
     public void voidExistingIndividual() {
         try {
