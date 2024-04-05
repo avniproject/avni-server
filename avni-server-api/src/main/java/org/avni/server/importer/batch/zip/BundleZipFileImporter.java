@@ -115,10 +115,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("groups.json");
         add("groupRole.json");
         add("groupPrivilege.json");
-        add("groupDashboards.json");
         add("video.json");
         add("reportCard.json");
         add("reportDashboard.json");
+        add("groupDashboards.json");
         add("taskType.json");
         add("taskStatus.json");
         add("menuItem.json");
