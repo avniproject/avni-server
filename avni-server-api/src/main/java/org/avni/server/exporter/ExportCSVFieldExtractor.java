@@ -350,7 +350,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
 
     private void appendObsColumns(StringBuilder sb, String prefix, LinkedHashMap<String, FormElement> map) {
         map.forEach((uuid, fe) -> {
-            if (ConceptDataType.isGroupQuestion(fe.getConcept().getDataType())) return;
+            if (ConceptDataType.isQuestionGroup(fe.getConcept().getDataType())) return;
             Concept concept = fe.getConcept();
             String groupPrefix = fe.getGroup() != null ? fe.getGroup().getConcept().getName() + "_" : "";
             if (concept.getDataType().equals(ConceptDataType.Coded.toString()) && fe.getType().equals(FormElementType.MultiSelect.toString())) {
@@ -376,7 +376,7 @@ public class ExportCSVFieldExtractor implements FieldExtractor<ExportItemRow>, F
     private List<Object> getObs(ObservationCollection observations, LinkedHashMap<String, FormElement> obsMap) {
         List<Object> values = new ArrayList<>(obsMap.size());
         obsMap.forEach((conceptUUID, formElement) -> {
-            if (ConceptDataType.isGroupQuestion(formElement.getConcept().getDataType())) return;
+            if (ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType())) return;
             Object val;
             if (formElement.getGroup() != null) {
                 Concept parentConcept = formElement.getGroup().getConcept();

@@ -250,6 +250,6 @@ public class FormElement extends OrganisationAwareEntity {
 
     public boolean isQuestionGroupElement() {
         Concept concept = getConcept();
-        return ConceptDataType.isGroupQuestion(concept.getDataType());
+        return ConceptDataType.isQuestionGroup(concept.getDataType());
     }
 }

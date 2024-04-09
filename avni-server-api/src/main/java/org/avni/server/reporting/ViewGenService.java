@@ -102,7 +102,7 @@ public class ViewGenService {
         if (formElements.isEmpty())
             return new ArrayList<>();
         List<ViewGenConcept> formElementConcepts = formElements.stream()
-                .filter(formElement -> !ConceptDataType.isGroupQuestion(formElement.getConcept().getDataType()))
+                .filter(formElement -> !ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType()))
                 .map(formElement -> {
                     FormElement parentFormElement = formElement.getGroup();
                     Concept parentConcept = parentFormElement == null ? null: parentFormElement.getConcept();

@@ -290,7 +290,7 @@ public class ObservationService {
             conceptContract.setAnswers(conceptAnswers.stream().map(ConceptContract::create).collect(Collectors.toList()));
         }
         observationContract.setConcept(conceptContract);
-        if (ConceptDataType.isGroupQuestion(conceptDataType)) {
+        if (ConceptDataType.isQuestionGroup(conceptDataType)) {
             if (entry.getValue() instanceof Collection) {
                 List<Object> repeatableQuestionGroup = (List<Object>) ((Collection) entry.getValue()).stream().map(value -> {
                     HashMap<String, Object> values = (HashMap<String, Object>) value;

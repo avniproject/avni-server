@@ -43,7 +43,7 @@ public enum ConceptDataType {
         return found != null;
     }
 
-    public static boolean isGroupQuestion(String dataType) {
+    public static boolean isQuestionGroup(String dataType) {
         return ConceptDataType.valueOf(dataType).equals(QuestionGroup);
     }
 

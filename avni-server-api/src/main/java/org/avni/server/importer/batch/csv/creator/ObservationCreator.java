@@ -108,7 +108,7 @@ public class ObservationCreator {
 
     private boolean isNonEmptyQuestionGroup(FormElement formElement, Row row) {
         Concept concept = formElement.getConcept();
-        if (ConceptDataType.isGroupQuestion(concept.getDataType())) {
+        if (ConceptDataType.isQuestionGroup(concept.getDataType())) {
             List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(formElement.getId());
             return allChildQuestions.stream().anyMatch(fe -> {
                 String parentChildName = concept.getName() + "|" + fe.getConcept().getName();

@@ -265,7 +265,7 @@ public class ImportService {
                 .getForm()
                 .getApplicableFormElements()
                 .stream()
-                .filter(formElement -> !ConceptDataType.isGroupQuestion(formElement.getConcept().getDataType()))
+                .filter(formElement -> !ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType()))
                 .map(this::getHeaderName)
                 .collect(Collectors.toList());
         concatenatedString = concatenatedString.concat(String.join(",", conceptNames));
