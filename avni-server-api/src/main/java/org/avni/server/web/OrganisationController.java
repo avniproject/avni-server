@@ -54,6 +54,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         org.setUuid(request.getUuid() == null ? UUID.randomUUID().toString() : request.getUuid());
         org.setDbUser(request.getDbUser());
         org.setSchemaName(request.getSchemaName());
+        org.setCategory(request.getCategory());
         setAttributesOnOrganisation(request, org);
         setOrgAccountByIdOrDefault(org, request.getAccountId());
 
@@ -161,6 +162,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         }
         organisation.setMediaDirectory(request.getMediaDirectory());
         organisation.setVoided(request.isVoided());
+        organisation.setCategory(request.getCategory());
     }
 
     private void setOrgAccountByIdOrDefault(Organisation organisation, Long accountId) {

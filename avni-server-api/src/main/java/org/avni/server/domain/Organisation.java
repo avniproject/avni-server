@@ -1,11 +1,11 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.avni.server.domain.metadata.OrganisationCategory;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
 
 @Entity
 @Table(name = "organisation")
@@ -23,6 +23,10 @@ public class Organisation extends ETLEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private OrganisationCategory category;
 
     public Organisation() {
     }
@@ -75,5 +79,13 @@ public class Organisation extends ETLEntity {
 
     public String getEffectiveUsernameSuffix() {
         return usernameSuffix == null ? getDbUser() : usernameSuffix;
+    }
+
+    public OrganisationCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(OrganisationCategory organisationCategory) {
+        this.category = organisationCategory;
     }
 }

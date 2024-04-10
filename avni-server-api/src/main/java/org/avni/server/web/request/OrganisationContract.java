@@ -1,12 +1,14 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.metadata.OrganisationCategory;
 
 public class OrganisationContract extends ETLContract {
     private Long parentOrganisationId;
     private String mediaDirectory;
     private String usernameSuffix;
     private Long accountId;
+    private OrganisationCategory category;
 
     public static OrganisationContract fromEntity(Organisation organisation) {
         OrganisationContract organisationContract = new OrganisationContract();
@@ -16,6 +18,7 @@ public class OrganisationContract extends ETLContract {
         organisationContract.setMediaDirectory(organisation.getMediaDirectory());
         organisationContract.setUsernameSuffix(organisation.getEffectiveUsernameSuffix());
         organisationContract.setAccountId(organisation.getAccount() == null ? null : organisation.getAccount().getId());
+        organisationContract.setCategory(organisation.getCategory());
         mapEntity(organisationContract, organisation);
         return organisationContract;
     }
@@ -52,4 +55,11 @@ public class OrganisationContract extends ETLContract {
         this.mediaDirectory = mediaDirectory;
     }
 
+    public OrganisationCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(OrganisationCategory category) {
+        this.category = category;
+    }
 }
