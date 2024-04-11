@@ -86,7 +86,7 @@ public class SubjectApiController {
         subjects = individualRepository.findSubjects(individualSearchParams, pageable);
         List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(subjects.getContent());
         ArrayList<SubjectResponse> subjectResponses = new ArrayList<>();
-        subjects.forEach(subject -> subjectResponses.add(SubjectResponse.fromSubject(subject, !S.isEmpty(subjectTypeName), conceptRepository, conceptService, findGroupAffiliation(subject, groupsOfAllMemberSubjects), s3Service)));
+        subjects.forEach(subject -> subjectResponses.add(SubjectResponse.fromSubject(subject, S.isEmpty(subjectTypeName), conceptRepository, conceptService, findGroupAffiliation(subject, groupsOfAllMemberSubjects), s3Service)));
         accessControlService.checkSubjectPrivileges(PrivilegeType.ViewSubject, subjects.getContent());
         return new ResponsePage(subjectResponses, subjects.getNumberOfElements(), subjects.getTotalPages(), subjects.getSize());
     }
