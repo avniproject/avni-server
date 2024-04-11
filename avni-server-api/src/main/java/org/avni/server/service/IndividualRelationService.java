@@ -50,14 +50,14 @@ public class IndividualRelationService implements NonScopeAwareService {
     }
 
     public void uploadRelation(IndividualRelationContract individualRelationContract) {
+        String uuid = individualRelationContract.getUuid();
         String name = individualRelationContract.getName();
-        IndividualRelation individualRelation = individualRelationRepository.findByName(name);
+        IndividualRelation individualRelation = individualRelationRepository.findByUuidOrName(uuid, name);
         if (individualRelation == null) {
             individualRelation = new IndividualRelation();
-            individualRelation.setName(name);
-            String uuid = individualRelationContract.getUuid();
             individualRelation.setUuid(uuid == null ? UUID.randomUUID().toString() : uuid);
         }
+        individualRelation.setName(name); //Update name if changed
         IndividualRelation savedRelation = individualRelationRepository.save(individualRelation);
         saveGenderMappings(individualRelationContract, savedRelation);
     }
