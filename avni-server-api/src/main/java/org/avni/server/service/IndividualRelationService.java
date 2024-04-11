@@ -52,7 +52,7 @@ public class IndividualRelationService implements NonScopeAwareService {
     public void uploadRelation(IndividualRelationContract individualRelationContract) {
         String uuid = individualRelationContract.getUuid();
         String name = individualRelationContract.getName();
-        IndividualRelation individualRelation = individualRelationRepository.findByUuidOrName(uuid, name);
+        IndividualRelation individualRelation = individualRelationRepository.findByNameOrUUID(name, uuid);
         if (individualRelation == null) {
             individualRelation = new IndividualRelation();
             individualRelation.setUuid(uuid == null ? UUID.randomUUID().toString() : uuid);

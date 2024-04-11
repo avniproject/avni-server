@@ -142,7 +142,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
     public ProgramEncounter saveProgramEncounter(ProgramEncounterRequest request) {
         logger.info(String.format("Saving programEncounter with uuid %s", request.getUuid()));
         checkForSchedulingCompleteConstraintViolation(request);
-        EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterType(), request.getEncounterTypeUUID());
+        EncounterType encounterType = encounterTypeRepository.findByNameOrUUID(request.getEncounterType(), request.getEncounterTypeUUID());
         Decisions decisions = request.getDecisions();
         observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEncounterDecisions() : null, formMappingService.find(encounterType, FormType.ProgramEncounter));
         ProgramEncounter encounter = EntityHelper.newOrExistingEntity(programEncounterRepository, request, new ProgramEncounter());

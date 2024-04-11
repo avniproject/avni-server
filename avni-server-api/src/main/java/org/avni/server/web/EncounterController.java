@@ -129,7 +129,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
         checkForSchedulingCompleteConstraintViolation(request);
 
-        EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterType(), request.getEncounterTypeUUID());
+        EncounterType encounterType = encounterTypeRepository.findByNameOrUUID(request.getEncounterType(), request.getEncounterTypeUUID());
         Decisions decisions = request.getDecisions();
         observationService.validateObservationsAndDecisions(request.getObservations(), decisions != null ? decisions.getEncounterDecisions() : null, formMappingService.find(encounterType, FormType.Encounter));
         Individual individual = individualRepository.findByUuid(request.getIndividualUUID());
