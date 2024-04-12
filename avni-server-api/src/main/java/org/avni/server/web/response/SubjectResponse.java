@@ -70,6 +70,8 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
             addressLevel = addressLevel.getParent();
         }
         subjectResponse.put("location", location);
+        if (subject.getAddressLevel() != null)
+            subjectResponse.put("Location ID", subject.getAddressLevel().getUuid());
     }
 
     private static void putCatchments(Individual subject, SubjectResponse subjectResponse) {

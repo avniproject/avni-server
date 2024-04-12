@@ -1281,6 +1281,10 @@ components:
             type: string
           description: "full hierarchy of location is provided, each one as key-value pair"
           example: "{\"Village\": \"Ganks\", \"Block\": \"Ynaos\"}"
+        Location ID:
+          type: string
+          format: uuid
+          description: Unique identifier of the lowest location/address at which the subject is registered
         relatives:
           type: array
           items:
@@ -1319,6 +1323,10 @@ components:
           type: string
           description: Complete address of the subject
           example: "India, Uttarakhand, Dehradun"
+        Location ID:
+          type: string
+          format: uuid
+          description: Unique identifier of the lowest location/address at which the subject is registered
         Date of birth:
           type: string
           description: Applicable only for Person type subject
