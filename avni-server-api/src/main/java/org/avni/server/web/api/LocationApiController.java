@@ -32,7 +32,7 @@ public class LocationApiController {
 
     @RequestMapping(value = "/api/locations", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponsePage getLocations(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+    public ResponsePage getLocations(@RequestParam(value = "lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                     @RequestParam(value = "now", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                     Pageable pageable) {
         Page<AddressLevel> addresses = locationRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable);
