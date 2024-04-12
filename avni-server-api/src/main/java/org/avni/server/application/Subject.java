@@ -1,5 +1,5 @@
 package org.avni.server.application;
 
 public enum Subject {
-    Group, Household, Individual, Person
+    Group, Household, Individual, Person, User
 }

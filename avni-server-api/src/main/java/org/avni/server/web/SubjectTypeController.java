@@ -99,7 +99,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             return ResponseEntity.notFound().build();
         FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
-        List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<List<SubjectTypeSetting>>() {});
+        List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<List<SubjectTypeSetting>>() {
+        });
         Optional<List<String>> locationUUIDs = customRegistrationLocations
                 .stream()
                 .filter(s -> s.getSubjectTypeUUID().equals(operationalSubjectType.getSubjectTypeUUID()))
@@ -111,7 +112,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
 
     @PostMapping(value = "/web/subjectType")
     @Transactional
-    ResponseEntity saveSubjectTypeForWeb(@RequestBody SubjectTypeContractWeb request) {
+    public ResponseEntity saveSubjectTypeForWeb(@RequestBody SubjectTypeContractWeb request) {
         accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
         SubjectType existingSubjectType =
                 subjectTypeRepository.findByNameIgnoreCase(request.getName());
@@ -121,7 +122,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             return ResponseEntity.badRequest().body(
                     ReactAdminUtil.generateJsonError(String.format("SubjectType %s already exists", request.getName()))
             );
-        if(request.getType() == null){
+        if (request.getType() == null) {
             return ResponseEntity.badRequest().body(
                     ReactAdminUtil.generateJsonError("Can't save subjectType with empty type")
             );
@@ -197,10 +198,10 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         SubjectType subjectType = operationalSubjectType.getSubjectType();
         boolean isSyncConcept1Changed = !Objects.equals(request.getSyncRegistrationConcept1(), subjectType.getSyncRegistrationConcept1());
         boolean isSyncConcept2Changed = !Objects.equals(request.getSyncRegistrationConcept2(), subjectType.getSyncRegistrationConcept2());
-            if (isSyncConcept1Changed)
-                subjectType.setSyncRegistrationConcept1Usable(false);
-            if (isSyncConcept2Changed)
-                subjectType.setSyncRegistrationConcept2Usable(false);
+        if (isSyncConcept1Changed)
+            subjectType.setSyncRegistrationConcept1Usable(false);
+        if (isSyncConcept2Changed)
+            subjectType.setSyncRegistrationConcept2Usable(false);
         resetSyncService.recordSyncAttributeChange(operationalSubjectType.getSubjectType(), request);
         updateSubjectType(request, operationalSubjectType);
         subjectTypeService.updateSyncAttributesIfRequired(subjectType);
@@ -254,7 +255,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
 
     @GetMapping(value = "/subjectType/syncAttributesData")
     public UserSyncAttributeAssignmentRequest getAllConceptSyncAttributes() {
-       return subjectTypeService.getSyncAttributeData();
+        return subjectTypeService.getSyncAttributeData();
     }
 
     private void voidAllGroupRoles(SubjectType subjectType) {

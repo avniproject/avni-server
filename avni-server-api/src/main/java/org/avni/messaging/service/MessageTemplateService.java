@@ -23,8 +23,8 @@ public class MessageTemplateService {
     }
 
     public List<GlificMessageTemplate> findAll() {
-        return organisationConfigService.isMessagingEnabled()?
-                messageTemplateRepository.findAllForOrganisationId(UserContextHolder.getUserContext().getOrganisationId()):
+        return organisationConfigService.isMessagingEnabled() ?
+                messageTemplateRepository.findAllForOrganisationId(UserContextHolder.getUserContext().getOrganisationId()) :
                 Collections.emptyList();
     }
 }

@@ -11,9 +11,9 @@ import java.util.Map;
 
 public class SubjectTypes implements MetaData {
     private List<SubjectType> subjectTypes;
-    private Map<SubjectType, List<Program>> programs = new HashMap<>();
-    private Map<SubjectType, Map<Program, List<EncounterType>>> programEncounterTypes = new HashMap<>();
-    private Map<SubjectType, List<EncounterType>> generalEncounterTypes = new HashMap<>();
+    private final Map<SubjectType, List<Program>> programs = new HashMap<>();
+    private final Map<SubjectType, Map<Program, List<EncounterType>>> programEncounterTypes = new HashMap<>();
+    private final Map<SubjectType, List<EncounterType>> generalEncounterTypes = new HashMap<>();
 
     public SubjectTypes(List<SubjectType> subjectTypes) {
         this.subjectTypes = subjectTypes;
