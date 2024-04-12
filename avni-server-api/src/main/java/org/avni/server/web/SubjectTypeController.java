@@ -146,6 +146,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         FormMapping formMapping = formMappingService.find(subjectType);
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
         subjectTypeContractWeb.setLocationTypeUUIDs(request.getLocationTypeUUIDs());
+
+        if (subjectType.getType().equals(Subject.User))
+            subjectTypeService.userSubjectTypeCreated(subjectType);
         return ResponseEntity.ok(subjectTypeContractWeb);
     }
 

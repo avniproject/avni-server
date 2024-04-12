@@ -13,16 +13,14 @@ import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequ
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -31,13 +29,14 @@ import java.util.stream.Stream;
 
 @Service
 public class SubjectTypeService implements NonScopeAwareService {
-
     private final Logger logger;
     private final OperationalSubjectTypeRepository operationalSubjectTypeRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private Job syncAttributesJob;
-    private JobLauncher syncAttributesJobLauncher;
-    private AvniJobRepository avniJobRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final Job syncAttributesJob;
+    private final JobLauncher syncAttributesJobLauncher;
+    private final Job userSubjectTypeCreateJob;
+    private final JobLauncher userSubjectTypeCreateJobLauncher;
+    private final AvniJobRepository avniJobRepository;
     private final ConceptService conceptService;
 
     @Autowired
@@ -45,12 +44,16 @@ public class SubjectTypeService implements NonScopeAwareService {
                               OperationalSubjectTypeRepository operationalSubjectTypeRepository,
                               Job syncAttributesJob,
                               JobLauncher syncAttributesJobLauncher,
+                              Job userSubjectTypeCreateJob,
+                              JobLauncher userSubjectTypeCreateJobLauncher,
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
         this.syncAttributesJobLauncher = syncAttributesJobLauncher;
+        this.userSubjectTypeCreateJob = userSubjectTypeCreateJob;
+        this.userSubjectTypeCreateJobLauncher = userSubjectTypeCreateJobLauncher;
         this.avniJobRepository = avniJobRepository;
         this.conceptService = conceptService;
         logger = LoggerFactory.getLogger(this.getClass());
@@ -171,8 +174,24 @@ public class SubjectTypeService implements NonScopeAwareService {
             try {
                 syncAttributesJobLauncher.run(syncAttributesJob, jobParameters);
             } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
-                throw new RuntimeException(String.format("Error while starting the sync attribute job, %s", e.getMessage()));
+                throw new RuntimeException(String.format("Error while starting the sync attribute job, %s", e.getMessage()), e);
             }
+        }
+    }
+
+    public void userSubjectTypeCreated(SubjectType subjectType) {
+        String jobUUID = UUID.randomUUID().toString();
+        UserContext userContext = UserContextHolder.getUserContext();
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addString("uuid", jobUUID)
+                .addString("organisationUUID", userContext.getOrganisationUUID())
+                .addLong("userId", userContext.getUser().getId())
+                .addLong("subjectTypeId", subjectType.getId())
+                .toJobParameters();
+        try {
+            userSubjectTypeCreateJobLauncher.run(userSubjectTypeCreateJob, jobParameters);
+        } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
+            throw new RuntimeException(String.format("Error while starting user subject type create job, %s", e.getMessage()), e);
         }
     }
 
@@ -195,7 +214,7 @@ public class SubjectTypeService implements NonScopeAwareService {
 
         return Arrays.stream(syncAttributes).
                 filter(Objects::nonNull).
-                map(sa -> String.format("%s->%s", subjectTypeWithSyncAttribute.getName(),conceptService.get(sa).getName())).
+                map(sa -> String.format("%s->%s", subjectTypeWithSyncAttribute.getName(), conceptService.get(sa).getName())).
                 collect(Collectors.toList());
     }
 

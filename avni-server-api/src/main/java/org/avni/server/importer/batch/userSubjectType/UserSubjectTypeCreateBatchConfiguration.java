@@ -1,4 +1,4 @@
-package org.avni.server.importer.batch.sync.attributes;
+package org.avni.server.importer.batch.userSubjectType;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -12,53 +12,54 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Configuration
+@EnableScheduling
 @EnableBatchProcessing
-public class SyncAttributesBatchConfiguration {
+public class UserSubjectTypeCreateBatchConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final JobRepository jobRepository;
 
     @Autowired
-    public SyncAttributesBatchConfiguration(JobBuilderFactory jobBuilderFactory,
-                                            StepBuilderFactory stepBuilderFactory,
-                                            JobRepository jobRepository) {
+    public UserSubjectTypeCreateBatchConfiguration(JobBuilderFactory jobBuilderFactory,
+                                                   StepBuilderFactory stepBuilderFactory,
+                                                   JobRepository jobRepository) {
         this.jobBuilderFactory = jobBuilderFactory;
         this.stepBuilderFactory = stepBuilderFactory;
         this.jobRepository = jobRepository;
     }
 
     @Bean
-    public JobLauncher syncAttributesJobLauncher() {
+    public JobLauncher userSubjectTypeCreateJobLauncher() {
         return new SimpleJobLauncher() {{
             setJobRepository(jobRepository);
             setTaskExecutor(new ThreadPoolTaskExecutor() {{
                 setCorePoolSize(1);
                 setMaxPoolSize(1);
-                setQueueCapacity(100);
+                setQueueCapacity(1);
                 initialize();
             }});
         }};
     }
 
     @Bean
-    public Job syncAttributesJob(SyncAttributesJobListener listener, Step updateSyncAttributesStep) {
+    public Job userSubjectTypeCreateJob(UserSubjectTypeCreateJobListener listener, Step userSubjectTypeCreateStep) {
         return jobBuilderFactory
-                .get("syncAttributesJob")
+                .get("userSubjectTypeCreateJob")
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
-                .start(updateSyncAttributesStep)
+                .start(userSubjectTypeCreateStep)
                 .build();
     }
 
     @Bean
-    public Step updateSyncAttributesStep(UpdateSyncAttributesTasklet tasklet) {
-        return stepBuilderFactory.get("updateSyncAttributesStep")
+    public Step userSubjectTypeCreateStep(UserSubjectTypeCreateTasklet tasklet) {
+        return stepBuilderFactory.get("userSubjectTypeCreateStep")
                 .tasklet(tasklet)
                 .build();
     }
 }
-
 

@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class UserContext {
-    private Collection<String> roles = new HashSet<>();
+    private final Collection<String> roles = new HashSet<>();
     private Organisation organisation;
     private User user;
     private String organisationUUID;

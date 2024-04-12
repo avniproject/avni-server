@@ -14,14 +14,13 @@ import org.springframework.stereotype.Component;
 @Component
 @JobScope
 public class UpdateSyncAttributesTasklet implements Tasklet {
-
-    private EntityApprovalStatusRepository entityApprovalStatusRepository;
-    private SubjectTypeRepository subjectTypeRepository;
-    private IndividualRepository individualRepository;
-    private EncounterRepository encounterRepository;
-    private ProgramEnrolmentRepository programEnrolmentRepository;
-    private ProgramEncounterRepository programEncounterRepository;
-    private GroupSubjectRepository groupSubjectRepository;
+    private final EntityApprovalStatusRepository entityApprovalStatusRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final IndividualRepository individualRepository;
+    private final EncounterRepository encounterRepository;
+    private final ProgramEnrolmentRepository programEnrolmentRepository;
+    private final ProgramEncounterRepository programEncounterRepository;
+    private final GroupSubjectRepository groupSubjectRepository;
 
     @Value("#{jobParameters['subjectTypeId']}")
     private Long subjectTypeId;
