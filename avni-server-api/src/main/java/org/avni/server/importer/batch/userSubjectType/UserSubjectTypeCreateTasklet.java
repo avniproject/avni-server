@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.userSubjectType;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
@@ -23,6 +24,7 @@ public class UserSubjectTypeCreateTasklet implements Tasklet {
     private final IndividualRepository individualRepository;
     private final UserRepository userRepository;
     private final UserSubjectRepository userSubjectRepository;
+    private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserSubjectTypeCreateTasklet.class);
 
     @Value("#{jobParameters['subjectTypeId']}")
@@ -32,11 +34,12 @@ public class UserSubjectTypeCreateTasklet implements Tasklet {
     public UserSubjectTypeCreateTasklet(SubjectTypeRepository subjectTypeRepository,
                                         IndividualRepository individualRepository,
                                         UserRepository userRepository,
-                                        UserSubjectRepository userSubjectRepository) {
+                                        UserSubjectRepository userSubjectRepository, UserService userService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.individualRepository = individualRepository;
         this.userRepository = userRepository;
         this.userSubjectRepository = userSubjectRepository;
+        this.userService = userService;
     }
 
     @Override
@@ -46,26 +49,7 @@ public class UserSubjectTypeCreateTasklet implements Tasklet {
             SubjectType subjectType = subjectTypeRepository.findOne(subjectTypeId);
             List<User> users = userRepository.findAllByIsVoidedFalseAndOrganisationId(subjectType.getOrganisationId());
             users.forEach(user -> {
-                UserSubject userSubject = userSubjectRepository.findByUser(user);
-                if (userSubject != null && !userSubject.isVoided()) return;
-
-                Individual subject = new Individual();
-                subject.setSubjectType(subjectType);
-                subject.setFirstName(user.getName());
-                subject.setOrganisationId(subjectType.getOrganisationId());
-                subject.setRegistrationDate(user.getCreatedDateTime().toLocalDate());
-                subject.assignUUID();
-                individualRepository.save(subject);
-
-                if (userSubject == null)
-                    userSubject = new UserSubject();
-
-                userSubject.setSubject(subject);
-                userSubject.setUser(user);
-                userSubject.assignUUID();
-                userSubject.setOrganisationId(subjectType.getOrganisationId());
-
-                userSubjectRepository.save(userSubject);
+                userService.ensureSubjectForUser(user, subjectType);
             });
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

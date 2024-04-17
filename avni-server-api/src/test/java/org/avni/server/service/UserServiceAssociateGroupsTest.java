@@ -50,7 +50,7 @@ public class UserServiceAssociateGroupsTest {
     public void setup() {
         initMocks(this);
 
-        userService = new UserService(null, groupRepository, userGroupRepository);
+        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null);
 
         // init
         orgId = 1234l;

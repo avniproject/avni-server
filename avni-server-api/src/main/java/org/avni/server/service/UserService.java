@@ -1,8 +1,7 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.GroupRepository;
-import org.avni.server.dao.UserGroupRepository;
-import org.avni.server.dao.UserRepository;
+import org.avni.server.application.Subject;
+import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
@@ -30,12 +29,18 @@ public class UserService implements NonScopeAwareService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final UserGroupRepository userGroupRepository;
+    private final UserSubjectRepository userSubjectRepository;
+    private final IndividualRepository individualRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
+        this.userSubjectRepository = userSubjectRepository;
+        this.individualRepository = individualRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
     }
 
     public User getCurrentUser() {
@@ -49,14 +54,22 @@ public class UserService implements NonScopeAwareService {
             synchronized (String.format("%d-USER-ID-PREFIX-%s", user.getOrganisationId(), idPrefix).intern()) {
                 List<User> usersWithSameIdPrefix = userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
                 if (usersWithSameIdPrefix.size() == 0) {
-                    return userRepository.save(user);
+                    return createUpdateUser(user);
                 } else {
                     throw new ValidationException(String.format("There is another user %s with same prefix: %s", usersWithSameIdPrefix.get(0).getUsername(), idPrefix));
                 }
             }
         } else {
-            return userRepository.save(user);
+            return createUpdateUser(user);
         }
+    }
+
+    private User createUpdateUser(User user) {
+        SubjectType userSubjectType = subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User);
+        User savedUser = userRepository.save(user);
+        if (userSubjectType != null)
+            this.ensureSubjectForUser(user, userSubjectType);
+        return savedUser;
     }
 
     @Transactional
@@ -143,5 +156,35 @@ public class UserService implements NonScopeAwareService {
         if (!Arrays.asList(groupNames).contains(Group.Everyone)) {
             this.addToDefaultUserGroup(user);
         }
+    }
+
+    public void ensureSubjectForUser(User user, SubjectType subjectType) {
+        if (!subjectType.getType().equals(Subject.User))
+            throw new RuntimeException(String.format("Subject type: %s is not of User type", subjectType.getType()));
+
+        UserSubject userSubject = userSubjectRepository.findByUser(user);
+        Individual subject;
+        if (userSubject == null) {
+            userSubject = new UserSubject();
+            subject = new Individual();
+            subject.setSubjectType(subjectType);
+            subject.setFirstName(user.getName());
+            subject.setOrganisationId(subjectType.getOrganisationId());
+            subject.setRegistrationDate(user.getCreatedDateTime().toLocalDate());
+            subject.assignUUID();
+
+            userSubject.setSubject(subject);
+            userSubject.setUser(user);
+            userSubject.assignUUID();
+            userSubject.setOrganisationId(subjectType.getOrganisationId());
+        } else {
+            subject = userSubject.getSubject();
+        }
+
+        subject.setVoided(false);
+        userSubject.setVoided(false);
+
+        individualRepository.save(subject);
+        userSubjectRepository.save(userSubject);
     }
 }

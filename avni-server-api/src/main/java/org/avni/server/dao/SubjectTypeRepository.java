@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.application.Subject;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.SubjectType.SubjectTypeProjection;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,6 @@ public interface SubjectTypeRepository extends ReferenceDataRepository<SubjectTy
     List<SubjectType> findAllByUuidIn(List<String> UUIDs);
 
     List<SubjectType> findAllByIsVoidedFalseAndIsDirectlyAssignableTrue();
+
+    SubjectType findByTypeAndIsVoidedFalse(Subject type);
 }
