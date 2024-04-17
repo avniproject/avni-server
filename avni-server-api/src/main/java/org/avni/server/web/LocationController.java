@@ -4,6 +4,7 @@ package org.avni.server.web;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.LocationSyncRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -45,14 +46,16 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     private final LocationService locationService;
     private final ScopeBasedSyncService<AddressLevel> scopeBasedSyncService;
     private final AccessControlService accessControlService;
+    private LocationSyncRepository locationSyncRepository;
 
     @Autowired
-    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService, AccessControlService accessControlService) {
+    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService, AccessControlService accessControlService, LocationSyncRepository locationSyncRepository) {
         this.locationRepository = locationRepository;
         this.userService = userService;
         this.locationService = locationService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.accessControlService = accessControlService;
+        this.locationSyncRepository = locationSyncRepository;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -111,7 +114,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return wrap(scopeBasedSyncService.getSyncResultsByCatchment(locationRepository, userService.getCurrentUser(), lastModifiedDateTime, now, pageable, SyncEntityName.Location));
+        return wrap(scopeBasedSyncService.getSyncResultsByCatchment(locationSyncRepository, userService.getCurrentUser(), lastModifiedDateTime, now, pageable, SyncEntityName.Location));
     }
 
     @PutMapping(value = "/locations/{id}")

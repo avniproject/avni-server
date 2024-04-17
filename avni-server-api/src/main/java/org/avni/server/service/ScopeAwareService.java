@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SyncParameters;
+import org.avni.server.dao.SyncableRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.SubjectType;
@@ -23,7 +23,7 @@ public interface ScopeAwareService<T extends CHSEntity> {
         return repository().isEntityChanged(new SyncParameters(lastModifiedDateTime, DateTime.now(), null, null, null, null, null, user.getSyncSettings(), syncEntityName, user.getCatchment()));
     }
 
-    OperatingIndividualScopeAwareRepository<T> repository();
+    SyncableRepository<T> repository();
 
     boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String typeUUID);
 }
