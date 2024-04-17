@@ -20,8 +20,8 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -179,7 +179,8 @@ public class SubjectTypeService implements NonScopeAwareService {
         }
     }
 
-    public void userSubjectTypeCreated(SubjectType subjectType) {
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public void launchUserSubjectTypeJob(SubjectType subjectType) {
         String jobUUID = UUID.randomUUID().toString();
         UserContext userContext = UserContextHolder.getUserContext();
         JobParameters jobParameters = new JobParametersBuilder()
