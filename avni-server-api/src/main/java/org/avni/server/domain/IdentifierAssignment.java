@@ -34,6 +34,8 @@ public class IdentifierAssignment extends OrganisationAwareEntity {
     @JoinColumn(name = "program_enrolment_id")
     private ProgramEnrolment programEnrolment;
 
+    private boolean used;
+
     public IdentifierAssignment() {
         super();
     }
@@ -92,5 +94,13 @@ public class IdentifierAssignment extends OrganisationAwareEntity {
 
     public void setProgramEnrolment(ProgramEnrolment programEnrolment) {
         this.programEnrolment = programEnrolment;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
     }
 }
