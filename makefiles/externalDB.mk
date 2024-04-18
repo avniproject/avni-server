@@ -152,6 +152,36 @@ endif
 		--exclude-table='public.individual_02_24' \
 		--exclude-table='public.program_enrolment_02_24'
 
+dump-org-data-without-etl:
+ifndef dbRole
+	@echo "Provde the dbRole variable"
+	exit 1
+endif
+	pg_dump -h localhost -p 5433 \
+		--dbname=openchs \
+		--username=openchs \
+		--role=$(dbRole) \
+		--file=$(HOME)/projects/avni/avni-db-dumps/$(prefix)-$(dbRole).sql \
+		--enable-row-security --verbose --schema=public --host=localhost \
+		--exclude-table-data=audit \
+		--exclude-table-data='public.sync_telemetry' \
+		--exclude-table-data='rule_failure_log' \
+		--exclude-table='qrtz_*' \
+		--exclude-table-data='batch_*' \
+		--exclude-table='public.individual_copy' \
+		--exclude-table='public.program_enrolment_copy' \
+		--exclude-table='public.encounter_copy' \
+		--exclude-table='public.program_encounter_copy' \
+		--exclude-table='public.individual_copy_ck' \
+		--exclude-table='public.program_enrolment_ck' \
+		--exclude-table='public.encounter_ck' \
+		--exclude-table='public.program_encounter_ck' \
+		--exclude-table='public.individual_copy_ihmp' \
+		--exclude-table='public.program_enrolment_ihmp' \
+		--exclude-table='public.individual_02_24' \
+		--exclude-table='public.program_enrolment_02_24' \
+		--exclude-table='public.scheduled_job_run*'
+
 dump-metabase-prod:
 	pg_dump -h localhost -p 5433 \
 		--dbname=reportingdb \
