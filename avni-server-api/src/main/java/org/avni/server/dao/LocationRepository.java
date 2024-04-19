@@ -42,9 +42,10 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "         inner join address_level al on cam.addresslevel_id = al.id\n" +
             "         inner join address_level al1 on al.lineage @> al1.lineage \n" +
             "where c.id = :catchmentId\n" +
+            "  and c.organisation_id = :organisationId\n" +
             "  and al1.last_modified_date_time between :lastModifiedDateTime and :now\n" +
             "order by al1.last_modified_date_time asc, al1.id asc", nativeQuery = true)
-    Page<AddressLevel> getSyncResults(long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
+    Page<AddressLevel> getSyncResults(long catchmentId, Date lastModifiedDateTime, Date now, long organisationId, Pageable pageable);
 
     @Query(value = "select count(*)\n" +
             "from catchment c\n" +
@@ -105,7 +106,8 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     @Override
     default Page<AddressLevel> getSyncResults(SyncParameters syncParameters) {
-        return getSyncResults(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate(), syncParameters.getNow().toDate(), syncParameters.getPageable());
+        Long organisationId = UserContextHolder.getOrganisation().getId();
+        return getSyncResults(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate(), syncParameters.getNow().toDate(), organisationId, syncParameters.getPageable());
     }
 
     @Override

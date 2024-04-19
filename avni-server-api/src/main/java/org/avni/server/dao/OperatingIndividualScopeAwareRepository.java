@@ -18,7 +18,7 @@ import java.util.List;
 
 @SuppressWarnings("rawtypes")
 @NoRepositoryBean
-public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> extends JpaSpecificationExecutor<T>, CustomCHSJpaRepository<T, Long> {
+public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> extends JpaSpecificationExecutor<T>, CustomCHSJpaRepository<T, Long>, SyncableRepository<T> {
     default Specification getSpecification(SyncParameters syncParameters) {
         Specification specification;
         if (syncParameters.isModificationCheckOnEntity()) {
@@ -35,16 +35,19 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         return specification;
     }
 
+    @Override
     default Slice<T> getSyncResultsAsSlice(SyncParameters syncParameters) {
         Specification specification = getSpecification(syncParameters);
         return findAllAsSlice(specification, syncParameters.getPageable());
     }
 
+    @Override
     default Page<T> getSyncResults(SyncParameters syncParameters) {
         Specification specification = getSpecification(syncParameters);
         return findAll(specification, syncParameters.getPageable());
     }
 
+    @Override
     boolean isEntityChanged(SyncParameters syncParameters);
 
     default Specification<T> getAuditSpecification(SyncParameters syncParameters) {
