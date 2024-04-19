@@ -34,6 +34,7 @@ public class IdentifierAssignment extends OrganisationAwareEntity {
     @JoinColumn(name = "program_enrolment_id")
     private ProgramEnrolment programEnrolment;
 
+    @NotNull
     private boolean used;
 
     public IdentifierAssignment() {

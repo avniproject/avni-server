@@ -11,12 +11,12 @@ import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.identifier.IdentifierGenerator;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import org.joda.time.DateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,7 +66,7 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
     }
 
     private boolean shouldGenerateIdentifiers(User user, IdentifierSource identifierSource) {
-        Integer spareIdentifierAssignments = identifierAssignmentRepository.countIdentifierAssignmentByIdentifierSourceEqualsAndAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNull(identifierSource, user);
+        Integer spareIdentifierAssignments = identifierAssignmentRepository.countIdentifierAssignmentByIdentifierSourceEqualsAndAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNullAndUsedIsFalse(identifierSource, user);
         return spareIdentifierAssignments < identifierSource.getMinimumBalance();
     }
 
