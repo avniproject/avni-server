@@ -6,6 +6,7 @@ import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
+import org.avni.server.web.request.api.SubjectResponseOptions;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -91,6 +92,7 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
                 subjectType.getName(),
                 String.format("{\"%s\": \"%s\"}", singleCodedConcept.getName(), singleCodedConcept.getAnswerConcept("singleCoded1").getUuid()),
                 Collections.singletonList(catchmentData.getAddressLevel1().getUuid()),
+                true,
                 PageRequest.of(0, 10));
         assertEquals(1, subjects.getContent().size());
 
@@ -119,6 +121,7 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
                 subjectType.getName(),
                 String.format("{\"%s\": \"%s\"}", singleCodedConcept.getName(), singleCodedConcept.getAnswerConcept("singleCoded1").getUuid()),
                 Collections.singletonList(catchmentData.getAddressLevel1().getUuid()),
+                true,
                 PageRequest.of(0, 10));
         assertEquals(1, subjects.getContent().size());
 
@@ -134,6 +137,7 @@ public class SubjectApiControllerIntegrationTest extends AbstractControllerInteg
                 subjectType.getName(),
                 String.format("{\"%s\": \"%s\"}", singleCodedConcept.getName(), singleCodedConcept.getAnswerConcept("singleCoded1").getUuid()),
                 Collections.singletonList(catchmentData.getAddressLevel1().getUuid()),
+                true,
                 PageRequest.of(0, 10));
         assertEquals(1, subjects.getContent().size());
     }

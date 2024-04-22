@@ -8,6 +8,7 @@ import org.avni.server.service.ConceptService;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.S;
+import org.avni.server.web.request.api.SubjectResponseOptions;
 import org.avni.server.web.response.GroupSubjectResponse;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
@@ -51,6 +52,7 @@ public class GroupSubjectApiController {
                               @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                               @RequestParam(value = "groupSubjectId", required = false) String groupSubjectUUID,
                               @RequestParam(value = "memberSubjectId", required = false) String memberSubjectUUID,
+                              @RequestParam(value = "includeCatchments", required = false) Boolean includeCatchments,
                               Pageable pageable) {
         Page<GroupSubject> groupSubjects;
         if (!S.isEmpty(groupSubjectUUID) && lastModifiedDateTime == null) {
@@ -64,8 +66,7 @@ public class GroupSubjectApiController {
         }
         accessControlService.checkGroupSubjectPrivileges(PrivilegeType.ViewSubject, groupSubjects.getContent());
         ArrayList<GroupSubjectResponse> groupSubjectResponses = new ArrayList<>();
-        groupSubjects.forEach(groupSubject -> groupSubjectResponses.add(GroupSubjectResponse.fromGroupSubject(groupSubject, conceptRepository, conceptService, s3Service)));
+        groupSubjects.forEach(groupSubject -> groupSubjectResponses.add(GroupSubjectResponse.fromGroupSubject(groupSubject, conceptRepository, conceptService, s3Service, SubjectResponseOptions.forSingleSubject(includeCatchments))));
         return new ResponsePage(groupSubjectResponses, groupSubjects.getNumberOfElements(), groupSubjects.getTotalPages(), groupSubjects.getSize());
     }
-
 }
