@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.application.Subject;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.*;
@@ -131,6 +132,15 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
 
                 query.orderBy(cb.asc(lastModifiedDateTimePath), cb.asc(userSubjectAssignmentJoin.get("id")));
             }
+        }
+        if (Subject.User.equals(subjectType.getType())) {
+            From fromSubject;
+            if (syncParameters.getSyncEntityName().equals(SyncEntityName.Individual))
+                fromSubject = from;
+            else
+                fromSubject = TransactionDataCriteriaBuilderUtil.joinSubjectForUserSubjectType(syncParameters, from);
+            predicates.add(cb.equal(fromSubject.get("subjectType").get("type"), Subject.User));
+            predicates.add(cb.equal(fromSubject.join("userSubjects").get("user"), user));
         }
         addSyncAttributeConceptPredicate(cb, predicates, from, syncParameters, "syncConcept1Value", "syncConcept2Value");
     }

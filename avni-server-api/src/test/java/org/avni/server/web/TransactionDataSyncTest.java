@@ -14,6 +14,7 @@ import org.avni.server.domain.factory.txn.*;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.UserSubjectAssignmentService;
 import org.avni.server.service.builder.*;
+import org.avni.server.service.sync.TestSyncService;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
@@ -23,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
@@ -37,11 +37,7 @@ import static org.junit.Assert.assertTrue;
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     @Autowired
-    private SyncController syncController;
-    @Autowired
-    private IndividualController individualController;
-    @Autowired
-    private ProgramEnrolmentController programEnrolmentController;
+    private TestSyncService testSyncService;
     @Autowired
     private GroupSubjectController groupSubjectController;
     @Autowired
@@ -213,16 +209,16 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
         setUser(organisationData.getUser().getUsername());
 
-        List syncDetails = getSyncDetails();
+        List syncDetails = testSyncService.getSyncDetails();
 
         // Check catchment based sync strategy
         assertFalse(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithNoAccess.getUuid())));
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithCatchmentBasedSync.getUuid())));
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.GroupSubject.name(), groupSubjectTypeForCatchmentBasedSync.getUuid())));
-        List<Individual> subjects = getSubjects(subjectTypeWithCatchmentBasedSync);
+        List<Individual> subjects = testSyncService.getSubjects(subjectTypeWithCatchmentBasedSync);
         assertTrue(hasEntity(inTheCatchment, subjects));
         assertFalse(hasEntity(outsideCatchment, subjects));
-        List<ProgramEnrolment> enrolments = getEnrolments(programWithCatchmentBasedSync);
+        List<ProgramEnrolment> enrolments = testSyncService.getEnrolments(programWithCatchmentBasedSync);
         assertTrue(hasEntity(enrolmentInTheCatchment, enrolments));
         assertFalse(hasEntity(enrolmentOutsideCatchment, enrolments));
         List<GroupSubject> groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync);
@@ -234,11 +230,11 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
         // CHECK FOR SYNC ATTRIBUTES BASED SYNC STRATEGY
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeWithSyncAttributeBasedSync.getUuid())));
-        subjects = getSubjects(subjectTypeWithSyncAttributeBasedSync);
+        subjects = testSyncService.getSubjects(subjectTypeWithSyncAttributeBasedSync);
         assertTrue(hasEntity(hasMatchingObs, subjects));
         assertFalse(hasEntity(obsNotMatching, subjects));
         assertFalse(hasEntity(obsNotPresent, subjects));
-        enrolments = getEnrolments(programForSyncAttributeBasedSync);
+        enrolments = testSyncService.getEnrolments(programForSyncAttributeBasedSync);
         assertTrue(hasEntity(enrolmentHasMatchingObs, enrolments));
         assertFalse(hasEntity(enrolmentObsNotMatching, enrolments));
         assertFalse(hasEntity(enrolmentObsNotPresent, enrolments));
@@ -266,10 +262,10 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
         // CHECK FOR DIRECT ASSIGNMENT BASED SYNC STRATEGY
         assertTrue(syncDetails.contains(EntitySyncStatusContract.createForComparison(SyncEntityName.Individual.name(), subjectTypeForDirectAssignment.getUuid())));
-        subjects = getSubjects(subjectTypeForDirectAssignment);
+        subjects = testSyncService.getSubjects(subjectTypeForDirectAssignment);
         assertTrue(hasEntity(assigned, subjects));
         assertFalse(hasEntity(notAssigned, subjects));
-        enrolments = getEnrolments(programForDirectAssignment);
+        enrolments = testSyncService.getEnrolments(programForDirectAssignment);
         assertTrue(hasEntity(enrolmentAssigned, enrolments));
         assertFalse(hasEntity(enrolmentNotAssigned, enrolments));
 
@@ -277,10 +273,10 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         UserSubjectAssignment userSubjectAssignment = userSubjectAssignmentRepository.save(new TestUserSubjectAssignmentBuilder().withMandatoryFieldsForNewEntity().withSubject(notAssigned).withUser(organisationData.getUser()).build());
         Thread.sleep(1);
         Individual assignedNow = notAssigned;
-        subjects = getSubjects(subjectTypeForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
+        subjects = testSyncService.getSubjects(subjectTypeForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
         assertTrue(hasEntity(assignedNow, subjects));
         ProgramEnrolment enrolmentAssignedNow = enrolmentNotAssigned;
-        enrolments = getEnrolments(programForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
+        enrolments = testSyncService.getEnrolments(programForDirectAssignment, userSubjectAssignment.getLastModifiedDateTime());
         assertTrue(hasEntity(enrolmentAssignedNow, enrolments));
         // Group Subject
         Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
@@ -317,17 +313,17 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         setUser(organisationData.getUser().getUsername());
 
         // Check catchment based sync strategy
-        List<Individual> subjects = getSubjects(subjectTypeWithCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        List<Individual> subjects = testSyncService.getSubjects(subjectTypeWithCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(inTheCatchment, subjects));
-        List<ProgramEnrolment> enrolments = getEnrolments(programWithCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        List<ProgramEnrolment> enrolments = testSyncService.getEnrolments(programWithCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(enrolmentInTheCatchment, enrolments));
         List<GroupSubject> groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(groupSubjectInCatchment, groupSubjects));
 
-        subjects = getSubjects(subjectTypeWithSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        subjects = testSyncService.getSubjects(subjectTypeWithSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(hasMatchingObs, subjects));
 
-        enrolments = getEnrolments(programForSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        enrolments = testSyncService.getEnrolments(programForSyncAttributeBasedSync, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(enrolmentHasMatchingObs, enrolments));
 
         // Group Subject
@@ -340,46 +336,14 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertFalse(hasEntity(groupSubjectInObsMatching, groupSubjects));
 
         // CHECK FOR DIRECT ASSIGNMENT BASED SYNC STRATEGY
-        subjects = getSubjects(subjectTypeForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        subjects = testSyncService.getSubjects(subjectTypeForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(assigned, subjects));
-        enrolments = getEnrolments(programForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
+        enrolments = testSyncService.getEnrolments(programForDirectAssignment, DateTime.now().minusDays(1), DateTime.now().minusMinutes(5));
         assertFalse(hasEntity(enrolmentAssigned, enrolments));
     }
 
     private boolean hasEntity(CHSEntity entity, List<? extends CHSEntity> entities) {
         return entities.stream().anyMatch(x -> x.getUuid().equals(entity.getUuid()));
-    }
-
-    private List getSyncDetails() {
-        List<EntitySyncStatusContract> contracts = SyncEntityName.getNonTransactionalEntities().stream().map(EntitySyncStatusContract::createForEntityWithoutSubType).collect(Collectors.toList());
-        ResponseEntity<?> response = syncController.getSyncDetailsWithScopeAwareEAS(contracts, false);
-        return ((JsonObject) response.getBody()).getList("syncDetails");
-    }
-
-    private List<Individual> getSubjects(SubjectType subjectType) {
-        return this.getSubjects(subjectType, DateTime.now().minusDays(1));
-    }
-
-    private List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime) {
-        return getSubjects(subjectType, lastModifiedDateTime, DateTime.now());
-    }
-
-    private List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
-        PagedResources<Resource<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
-        return individuals.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
-    }
-
-    private List<ProgramEnrolment> getEnrolments(Program program) throws Exception {
-        return this.getEnrolments(program, DateTime.now().minusDays(1));
-    }
-
-    private List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime) throws Exception {
-        return getEnrolments(program, lastModifiedDateTime, DateTime.now());
-    }
-
-    private List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime, DateTime now) throws Exception {
-        PagedResources<Resource<ProgramEnrolment>> enrolments = programEnrolmentController.getProgramEnrolmentsByOperatingIndividualScope(lastModifiedDateTime, now, program.getUuid(), PageRequest.of(0, 10));
-        return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
     }
 
     private List<GroupSubject> getGroupSubjects(SubjectType groupSubjectType) {

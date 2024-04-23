@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 @JsonIgnoreProperties({"programEnrolments", "encounters", "relationshipsFromSelfToOthers", "relationshipsFromOthersToSelf", "userSubjectAssignments"})
 @BatchSize(size = 100)
 public class Individual extends SyncAttributeEntity implements MessageableEntity {
-
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subject_type_id")
@@ -84,6 +83,9 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     @Type(type = "org.avni.server.geo.PointType")
     @Column
     private Point registrationLocation;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "subject")
+    private Set<UserSubject> userSubjects;
 
     public static Individual create(String firstName, String lastName, String profilePicture, LocalDate dateOfBirth, boolean dateOfBirthVerified, Gender gender, AddressLevel address, LocalDate registrationDate) {
         Individual individual = new Individual();

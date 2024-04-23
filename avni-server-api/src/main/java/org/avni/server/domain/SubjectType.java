@@ -289,7 +289,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
     }
 
     public boolean isDirectlyAssignable() {
-        return isDirectlyAssignable;
+        return isDirectlyAssignable && !Subject.User.equals(this.type);
     }
 
     public void setDirectlyAssignable(boolean directlyAssignable) {
@@ -297,7 +297,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
     }
 
     public boolean isShouldSyncByLocation() {
-        return shouldSyncByLocation;
+        return shouldSyncByLocation && !Subject.User.equals(this.type);
     }
 
     public void setShouldSyncByLocation(boolean shouldSyncByLocation) {

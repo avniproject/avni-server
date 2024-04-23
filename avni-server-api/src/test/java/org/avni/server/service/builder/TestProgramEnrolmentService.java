@@ -1,6 +1,7 @@
 package org.avni.server.service.builder;
 
 import org.avni.server.dao.ProgramEnrolmentRepository;
+import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.domain.User;
@@ -21,7 +22,9 @@ public class TestProgramEnrolmentService {
         if (individual.getObservations() != null) {
             programEnrolment.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
         }
-        programEnrolment.setAddressId(individual.getAddressLevel().getId());
+        AddressLevel addressLevel = individual.getAddressLevel();
+        if (addressLevel != null)
+            programEnrolment.setAddressId(addressLevel.getId());
         programEnrolmentRepository.save(programEnrolment);
         return programEnrolment;
     }

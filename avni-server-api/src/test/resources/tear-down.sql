@@ -3,6 +3,7 @@ DELETE FROM form_element where 1 = 1;
 DELETE FROM form_element_group where 1 = 1;
 DELETE FROM form_mapping where 1 = 1;
 DELETE FROM form where 1 = 1;
+DELETE FROM user_subject where 1 = 1;
 DELETE FROM encounter where 1 = 1;
 DELETE FROM program_encounter where 1 = 1;
 DELETE FROM program_enrolment where 1 = 1;
