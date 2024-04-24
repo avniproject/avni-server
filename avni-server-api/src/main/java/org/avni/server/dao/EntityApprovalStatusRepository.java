@@ -49,7 +49,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
         return findAll(specification, pageable);
     }
 
-    default Specification<EntityApprovalStatus> findByEntityTypeSpec(String entityType) {
+    default Specification<EntityApprovalStatus> findByEntityTypeSpec(EntityApprovalStatus.EntityType entityType) {
         Specification<EntityApprovalStatus> spec = (Root<EntityApprovalStatus> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             return cb.and(cb.equal(root.get("entityType"), entityType));
         };

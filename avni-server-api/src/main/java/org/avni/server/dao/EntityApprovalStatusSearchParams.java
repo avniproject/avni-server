@@ -1,15 +1,16 @@
 package org.avni.server.dao;
 
+import org.avni.server.domain.EntityApprovalStatus;
 import org.joda.time.DateTime;
 
 
 public class EntityApprovalStatusSearchParams {
     private final DateTime lastModifiedDateTime;
     private final DateTime now;
-    private final String entityType;
+    private final EntityApprovalStatus.EntityType entityType;
     private final String entityTypeUuid;
 
-    public EntityApprovalStatusSearchParams(DateTime lastModifiedDateTime, DateTime now, String entityType, String entityTypeUuid) {
+    public EntityApprovalStatusSearchParams(DateTime lastModifiedDateTime, DateTime now, EntityApprovalStatus.EntityType entityType, String entityTypeUuid) {
         this.lastModifiedDateTime = lastModifiedDateTime;
         this.now = now;
         this.entityType = entityType;
@@ -24,7 +25,7 @@ public class EntityApprovalStatusSearchParams {
         return now;
     }
 
-    public String getEntityType() {
+    public EntityApprovalStatus.EntityType getEntityType() {
         return entityType;
     }
 

@@ -42,10 +42,10 @@ public class EntityApprovalStatusApiController {
                                                   @RequestParam(value = "entityTypeId", required = false) String entityTypeUuid,
                                                   Pageable pageable) {
 
-        Page<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findEntityApprovalStatuses(new EntityApprovalStatusSearchParams(lastModifiedDateTime, now, entityType, entityTypeUuid), pageable);
+        Page<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findEntityApprovalStatuses(new EntityApprovalStatusSearchParams(lastModifiedDateTime, now, EntityApprovalStatus.EntityType.valueOf(entityType), entityTypeUuid), pageable);
+        accessControlService.checkApprovePrivilegeOnEntityApprovalStatuses(entityApprovalStatuses.getContent());
         ArrayList<EntityApprovalStatusResponse> entityApprovalStatusResponse = new ArrayList<>();
         entityApprovalStatuses.forEach(entityApprovalStatus -> entityApprovalStatusResponse.add(EntityApprovalStatusResponse.fromEntityApprovalStatus(entityApprovalStatus, entityApprovalStatusService.getEntityUuid(entityApprovalStatus))));
-        accessControlService.checkApprovePrivilegeOnEntityApprovalStatuses(entityApprovalStatuses.getContent());
         return new ResponsePage(entityApprovalStatusResponse, entityApprovalStatuses.getNumberOfElements(), entityApprovalStatuses.getTotalPages(), entityApprovalStatuses.getSize());
     }
 }
