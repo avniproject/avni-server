@@ -94,6 +94,9 @@ public class ImportController {
                                   @RequestParam boolean autoApprove,
                                   @RequestParam String locationUploadMode) throws IOException {
 
+
+        username = username.trim();
+        email = email.trim();                            
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
 
