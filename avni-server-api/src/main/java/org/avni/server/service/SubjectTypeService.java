@@ -62,7 +62,8 @@ public class SubjectTypeService implements NonScopeAwareService {
     public void saveSubjectType(SubjectTypeContract subjectTypeRequest) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
-        if (subjectType == null) {
+        boolean isSubjectTypeNotPresentInDB = (subjectType == null);
+        if (isSubjectTypeNotPresentInDB) {
             subjectType = new SubjectType();
         }
         subjectType.setUuid(subjectTypeRequest.getUuid());
@@ -90,7 +91,10 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setSyncRegistrationConcept2Usable(subjectTypeRequest.getSyncRegistrationConcept2Usable());
         subjectType.setNameHelpText(subjectTypeRequest.getNameHelpText());
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
-        subjectTypeRepository.save(subjectType);
+        subjectType = subjectTypeRepository.save(subjectType);
+        if(isSubjectTypeNotPresentInDB && subjectType.getType().equals(Subject.User)) {
+            launchUserSubjectTypeJob(subjectType);
+        }
     }
 
     public void createOperationalSubjectType(OperationalSubjectTypeContract operationalSubjectTypeContract, Organisation organisation) {
@@ -180,7 +184,8 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     @Transactional(Transactional.TxType.NOT_SUPPORTED)
-    public void launchUserSubjectTypeJob(SubjectType subjectType) {
+    public void
+    launchUserSubjectTypeJob(SubjectType subjectType) {
         String jobUUID = UUID.randomUUID().toString();
         UserContext userContext = UserContextHolder.getUserContext();
         JobParameters jobParameters = new JobParametersBuilder()
