@@ -77,7 +77,12 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     @Transactional
     public void save(@RequestBody List<SubjectTypeContract> subjectTypeRequests) {
         accessControlService.checkPrivilege(PrivilegeType.EditSubjectType);
-        subjectTypeRequests.forEach(subjectTypeService::saveSubjectType);
+        subjectTypeRequests.forEach(subjectTypeContract -> {
+            boolean wasSubjectTypeNotPresentInDB = subjectTypeService.saveSubjectType(subjectTypeContract);
+            if(wasSubjectTypeNotPresentInDB && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
+                subjectTypeService.launchUserSubjectTypeJob(subjectTypeContract.getUuid());
+            }
+        });
     }
 
     @GetMapping(value = "/web/subjectType")

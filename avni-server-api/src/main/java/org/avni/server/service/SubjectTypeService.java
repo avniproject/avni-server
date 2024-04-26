@@ -59,7 +59,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    public void saveSubjectType(SubjectTypeContract subjectTypeRequest) {
+    public boolean saveSubjectType(SubjectTypeContract subjectTypeRequest) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
@@ -92,9 +92,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setNameHelpText(subjectTypeRequest.getNameHelpText());
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
         subjectType = subjectTypeRepository.save(subjectType);
-        if(isSubjectTypeNotPresentInDB && subjectType.getType().equals(Subject.User)) {
-            launchUserSubjectTypeJob(subjectType);
-        }
+        return isSubjectTypeNotPresentInDB;
     }
 
     public void createOperationalSubjectType(OperationalSubjectTypeContract operationalSubjectTypeContract, Organisation organisation) {
@@ -181,6 +179,11 @@ public class SubjectTypeService implements NonScopeAwareService {
                 throw new RuntimeException(String.format("Error while starting the sync attribute job, %s", e.getMessage()), e);
             }
         }
+    }
+
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public void launchUserSubjectTypeJob(String subjectTypeUUID) {
+        launchUserSubjectTypeJob( subjectTypeRepository.findByUuid(subjectTypeUUID));
     }
 
     @Transactional(Transactional.TxType.NOT_SUPPORTED)

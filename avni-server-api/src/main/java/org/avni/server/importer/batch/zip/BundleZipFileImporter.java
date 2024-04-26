@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.domain.MessageRule;
 import org.avni.messaging.service.MessagingService;
+import org.avni.server.application.Subject;
 import org.avni.server.application.menu.MenuItem;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
@@ -269,7 +270,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             case "subjectTypes.json":
                 SubjectTypeContract[] subjectTypeContracts = convertString(fileData, SubjectTypeContract[].class);
                 for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
-                    subjectTypeService.saveSubjectType(subjectTypeContract);
+                    boolean isSubjectTypeNotPresentInDB = subjectTypeService.saveSubjectType(subjectTypeContract);
+                    if(isSubjectTypeNotPresentInDB && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
+                        subjectTypeService.launchUserSubjectTypeJob(subjectTypeContract.getUuid());
+                    }
                 }
                 break;
             case "operationalSubjectTypes.json":
