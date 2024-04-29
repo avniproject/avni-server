@@ -270,9 +270,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             case "subjectTypes.json":
                 SubjectTypeContract[] subjectTypeContracts = convertString(fileData, SubjectTypeContract[].class);
                 for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
-                    boolean isSubjectTypeNotPresentInDB = subjectTypeService.saveSubjectType(subjectTypeContract);
-                    if(isSubjectTypeNotPresentInDB && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
-                        subjectTypeService.launchUserSubjectTypeJob(subjectTypeContract.getUuid());
+                    SubjectTypeService.SubjectTypeUpsertResponse response = subjectTypeService.saveSubjectType(subjectTypeContract);
+                    if(response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
+                        subjectTypeService.launchUserSubjectTypeJob(response.getSubjectType());
                     }
                 }
                 break;

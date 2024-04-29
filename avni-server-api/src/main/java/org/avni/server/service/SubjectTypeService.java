@@ -59,7 +59,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    public boolean saveSubjectType(SubjectTypeContract subjectTypeRequest) {
+    public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
         logger.info(String.format("Creating subjectType: %s", subjectTypeRequest.toString()));
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeRequest.getUuid());
         boolean isSubjectTypeNotPresentInDB = (subjectType == null);
@@ -92,7 +92,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         subjectType.setNameHelpText(subjectTypeRequest.getNameHelpText());
         subjectType.setSettings(subjectTypeRequest.getSettings() != null ? subjectTypeRequest.getSettings() : getDefaultSettings());
         subjectType = subjectTypeRepository.save(subjectType);
-        return isSubjectTypeNotPresentInDB;
+        return new SubjectTypeUpsertResponse(isSubjectTypeNotPresentInDB, subjectType);
     }
 
     public void createOperationalSubjectType(OperationalSubjectTypeContract operationalSubjectTypeContract, Organisation organisation) {
@@ -182,11 +182,6 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     @Transactional(Transactional.TxType.NOT_SUPPORTED)
-    public void launchUserSubjectTypeJob(String subjectTypeUUID) {
-        launchUserSubjectTypeJob( subjectTypeRepository.findByUuid(subjectTypeUUID));
-    }
-
-    @Transactional(Transactional.TxType.NOT_SUPPORTED)
     public void
     launchUserSubjectTypeJob(SubjectType subjectType) {
         String jobUUID = UUID.randomUUID().toString();
@@ -232,5 +227,23 @@ public class SubjectTypeService implements NonScopeAwareService {
         defaultSettings.put(String.valueOf(SubjectTypeSettingKey.displayPlannedEncounters), true);
         defaultSettings.put(String.valueOf(SubjectTypeSettingKey.displayRegistrationDetails), true);
         return defaultSettings;
+    }
+
+    public class SubjectTypeUpsertResponse {
+        boolean isSubjectTypeNotPresentInDB;
+        SubjectType subjectType;
+
+        public SubjectTypeUpsertResponse(boolean isSubjectTypeNotPresentInDB, SubjectType subjectType) {
+            this.isSubjectTypeNotPresentInDB = isSubjectTypeNotPresentInDB;
+            this.subjectType = subjectType;
+        }
+
+        public boolean isSubjectTypeNotPresentInDB() {
+            return isSubjectTypeNotPresentInDB;
+        }
+
+        public SubjectType getSubjectType() {
+            return subjectType;
+        }
     }
 }
