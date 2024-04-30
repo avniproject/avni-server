@@ -1253,6 +1253,73 @@ paths:
       responses:
         "200":
           description: successful
+  /api/entityApprovalStatuses:
+    get:
+      tags:
+        - Entity Approval Status
+      summary: Get paged list of entity approval statues
+      description: |
+        By passing in the appropriate options, you can get the entity approval statuses in set of pages
+      operationId: entityApprovalStatuses
+      parameters:
+        - name: lastModifiedDateTime
+          in: query
+          description: "date-time in ISO datetime format. All the entity approval statuses which have been updated since this time will be returned. The value should be specified in the following format - yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g. \"2000-10-31T01:30:00.000Z\". Defaults to \"1900-01-01T00:00:00.000Z\"."
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: now
+          in: query
+          description: "date-time in ISO datetime format. All the entity approval statuses which have been updated till this time will be returned. The value should be specified in the following format - yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g. \"2000-10-31T01:30:00.000Z\". Defaults to current time."
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: entityType
+          in: query
+          description: "Allows filtering results by entity type name"
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: entityTypeId
+          in: query
+          description: "Allows filtering results by entity type id"
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: "{\"Diagnosis\": \"Diabetes\", \"Blood Group\": \"B+\"}"
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      responses:
+        "200":
+          description: "successful, a page of entity approval statuses"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_eas'
+        "400":
+          description: bad input parameter
 components:
   schemas:
     Subject:
@@ -1796,6 +1863,29 @@ components:
           description: "id of locations"
           items:
             type: number
+    EntityApprovalStatusBody:
+      type: object
+      properties:
+        Entity ID:
+          type: string
+          description: ID of the entity for which the approval status is being returned
+        Entity type:
+          type: string
+          description: Type of the entity for which the approval status is being returned i.e. Subject / Encounter etc
+        Entity type ID:
+          type: string
+          description: ID of the entity type for which the approval status is being returned
+        Approval status:
+          type: string
+          description: Approval status for the entity
+        Approval status comment:
+          type: string
+          description: Comments on the approval status for the entity
+        Status date time:
+          type: string
+          description: Date/Time when the approval status was set
+        audit:
+          $ref: '#/components/schemas/Audit'
     inline_response_200:
       properties:
         content:
@@ -1838,5 +1928,13 @@ components:
             type: array
             items:
                 $ref: '#/components/schemas/Location'
+        allOf:
+            - $ref: '#/components/schemas/ResponsePage'
+    inline_response_200_eas:
+        properties:
+          content:
+            type: array
+            items:
+                $ref: '#/components/schemas/EntityApprovalStatusBody'
         allOf:
             - $ref: '#/components/schemas/ResponsePage'
