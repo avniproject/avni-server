@@ -291,10 +291,11 @@ public class SyncController {
     @PostMapping(value = "/v2/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
-                                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
+                                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp,
+                                                             @RequestParam(value = "includeUserSubjectType", required = false, defaultValue = "false") boolean includeUserSubjectType) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
-        Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true);
+        Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true, includeUserSubjectType);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
         List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true);
@@ -315,10 +316,11 @@ public class SyncController {
     @PostMapping(value = "/syncDetails")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetails(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
-                                            @RequestParam(value = "isStockApp", required = false) boolean isStockApp) {
+                                            @RequestParam(value = "isStockApp", required = false) boolean isStockApp,
+                                            @RequestParam(value = "includeUserSubjectType", required = false, defaultValue = "false") boolean includeUserSubjectType) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
-        Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(false);
+        Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(false, includeUserSubjectType);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
         List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, false);

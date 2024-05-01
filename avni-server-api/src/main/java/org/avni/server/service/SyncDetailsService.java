@@ -1,17 +1,17 @@
 package org.avni.server.service;
 
 import org.avni.server.application.FormMapping;
+import org.avni.server.application.Subject;
 import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
-import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.domain.OperationalSubjectType;
-import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.SyncableItem;
+import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.springframework.stereotype.Service;
@@ -39,9 +39,10 @@ public class SyncDetailsService {
     }
 
     @Transactional
-    public Set<SyncableItem> getAllSyncableItems(boolean scopeAwareEAS) {
+    public Set<SyncableItem> getAllSyncableItems(boolean scopeAwareEAS, boolean includeUserSubjectType) {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll()
                 .stream()
+                .filter(st -> !st.getSubjectType().getType().equals(Subject.User) || includeUserSubjectType)
                 .map(OperationalSubjectType::getSubjectType)
                 .collect(Collectors.toList());
 

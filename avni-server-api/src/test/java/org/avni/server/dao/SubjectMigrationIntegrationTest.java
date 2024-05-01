@@ -68,7 +68,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
 
     private List getSyncDetails() {
         List<EntitySyncStatusContract> contracts = SyncEntityName.getNonTransactionalEntities().stream().map(EntitySyncStatusContract::createForEntityWithoutSubType).collect(Collectors.toList());
-        ResponseEntity<?> response = syncController.getSyncDetailsWithScopeAwareEAS(contracts, false);
+        ResponseEntity<?> response = syncController.getSyncDetailsWithScopeAwareEAS(contracts, false, true);
         return ((JsonObject) response.getBody()).getList("syncDetails");
     }
 
