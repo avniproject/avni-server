@@ -2,6 +2,7 @@ package org.avni.messaging.repository;
 
 import org.avni.messaging.contract.glific.GlificMessageResponse;
 import org.avni.messaging.contract.glific.GlificResponse;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.external.GlificRestClient;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,7 @@ public class GlificMessageRepository extends AbstractGlificRepository {
         SEND_HSM_MESSAGE_JSON = getJson("sendHsmMessage");
     }
 
-    public GlificMessageResponse sendMessageToContact(String messageTemplateId, String externalId, String[] parameters) {
+    public GlificMessageResponse sendMessageToContact(String messageTemplateId, String externalId, String[] parameters) throws GlificNotConfiguredException {
         String message = SEND_HSM_MESSAGE_JSON.replace("\"${templateId}\"", messageTemplateId)
                 .replace("\"${receiverId}\"", externalId)
                 .replace("\"${parameters}\"", arrayToString(parameters));
@@ -24,7 +25,7 @@ public class GlificMessageRepository extends AbstractGlificRepository {
         });
     }
 
-    public void sendMessageToGroup(String externalId, String messageTemplateId, String[] parameters) {
+    public void sendMessageToGroup(String externalId, String messageTemplateId, String[] parameters) throws GlificNotConfiguredException {
         String message = getJson("sendHsmMessageToGroup").replace("\"${templateId}\"", messageTemplateId)
                 .replace("\"${groupId}\"", externalId)
                 .replace("\"${parameters}\"", arrayToString(parameters));

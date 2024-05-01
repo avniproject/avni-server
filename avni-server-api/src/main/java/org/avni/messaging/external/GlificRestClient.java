@@ -3,6 +3,7 @@ package org.avni.messaging.external;
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.GlificSystemConfig;
 import org.avni.messaging.domain.exception.GlificConnectException;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.extenalSystem.ExternalSystemConfig;
 import org.avni.server.domain.extenalSystem.SystemName;
@@ -35,7 +36,7 @@ public class GlificRestClient {
         this.externalSystemConfigRepository = externalSystemConfigRepository;
     }
 
-    public GlificAuth authenticate() {
+    public GlificAuth authenticate() throws GlificNotConfiguredException {
         HttpEntity<Object> request = new RequestObjectBuilder()
                 .withRequestObject(new GlificAuthRequest(new GlificUser(getSystemConfig())))
                 .withJsonContent()
@@ -47,11 +48,11 @@ public class GlificRestClient {
                 });
     }
 
-    public <T> T callAPI(Object requestObject, ParameterizedTypeReference<GlificResponse<T>> responseType) {
+    public <T> T callAPI(Object requestObject, ParameterizedTypeReference<GlificResponse<T>> responseType) throws GlificNotConfiguredException {
         return callAPI(requestObject, responseType, this.authenticate());
     }
 
-    public <T> T callAPI(Object requestObject, ParameterizedTypeReference<GlificResponse<T>> responseType, GlificAuth auth) {
+    public <T> T callAPI(Object requestObject, ParameterizedTypeReference<GlificResponse<T>> responseType, GlificAuth auth) throws GlificNotConfiguredException {
         HttpEntity<Object> request = new RequestObjectBuilder()
                 .withRequestObject(requestObject)
                 .withAuth(auth)
@@ -62,7 +63,7 @@ public class GlificRestClient {
         return makeCall(REQUEST_URL, request, responseType);
     }
 
-    private <T> T makeCall(String url, HttpEntity<Object> request, ParameterizedTypeReference<GlificResponse<T>> responseType)  {
+    private <T> T makeCall(String url, HttpEntity<Object> request, ParameterizedTypeReference<GlificResponse<T>> responseType) throws GlificNotConfiguredException {
         String fullUrl = getSystemConfig().getBaseUrl() + (StringUtils.isEmpty(url) ? "/" : url);
         logger.info("Calling glific - {}", fullUrl);
         ResponseEntity<GlificResponse<T>> responseEntity = restTemplate.exchange(fullUrl, HttpMethod.POST, request, responseType);
@@ -80,10 +81,10 @@ public class GlificRestClient {
         return response.getData();
     }
 
-    private GlificSystemConfig getSystemConfig() {
+    private GlificSystemConfig getSystemConfig() throws GlificNotConfiguredException {
         ExternalSystemConfig externalSystemConfig = externalSystemConfigRepository.findBySystemName(SystemName.Glific);
-        Assert.notNull(externalSystemConfig, "External system config not set up for organisation");
-
+        if (externalSystemConfig == null)
+            throw new GlificNotConfiguredException("External system config not set up for organisation");
         return new GlificSystemConfig(externalSystemConfig);
     }
 

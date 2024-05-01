@@ -3,6 +3,7 @@ package org.avni.messaging.controller;
 import org.avni.messaging.contract.glific.GlificContactResponse;
 import org.avni.messaging.contract.glific.Message;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.dao.UserRepository;
@@ -34,21 +35,21 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GlificContactResponse fetchContactSubject(@PathVariable("id") String subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableOrIncorrectException {
+    public GlificContactResponse fetchContactSubject(@PathVariable("id") String subjectId) throws GlificContactNotFoundError, PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         String phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
         return glificContactRepository.findContact(phoneNumber);
     }
 
     @GetMapping(ContactEndpoint + "/user/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GlificContactResponse fetchContactUser(@PathVariable("id") String userId) throws GlificContactNotFoundError {
+    public GlificContactResponse fetchContactUser(@PathVariable("id") String userId) throws GlificContactNotFoundError, GlificNotConfiguredException {
         User user = userRepository.getUser(userId);
         return glificContactRepository.findContact(user.getPhoneNumber());
     }
 
     @GetMapping(ContactEndpoint + "/subject/{id}/msgs")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity<List<Message>> fetchAllMsgsForContactSubject(@PathVariable("id") String subjectId) {
+    public ResponseEntity<List<Message>> fetchAllMsgsForContactSubject(@PathVariable("id") String subjectId) throws GlificNotConfiguredException {
         String phoneNumber = null;
         try {
             phoneNumber = individualService.fetchIndividualPhoneNumber(subjectId);
@@ -60,7 +61,7 @@ public class ContactController {
 
     @GetMapping(ContactEndpoint + "/user/{id}/msgs")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public List<Message> fetchAllMsgsForContactUser(@PathVariable("id") String userId) {
+    public List<Message> fetchAllMsgsForContactUser(@PathVariable("id") String userId) throws GlificNotConfiguredException {
         User user = userRepository.getUser(userId);
         return glificContactRepository.getAllMsgsForContact(user.getPhoneNumber());
     }

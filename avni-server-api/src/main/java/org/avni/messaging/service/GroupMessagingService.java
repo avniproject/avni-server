@@ -7,6 +7,7 @@ import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.NextTriggerDetails;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.server.domain.Individual;
@@ -48,7 +49,7 @@ public class GroupMessagingService {
         this.bugsnag = bugsnag;
     }
 
-    public void sendManualMessage(MessageRequest messageRequest) {
+    public void sendManualMessage(MessageRequest messageRequest) throws GlificNotConfiguredException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         ManualMessage manualMessage = messageRequest.getManualMessage();
         String[] parameters = manualMessage.getParameters();
@@ -88,7 +89,7 @@ public class GroupMessagingService {
         }
     }
 
-    private int sendMessageToContactsInThePartiallySentPage(MessageReceiver messageReceiver, ManualMessage manualMessage, String[] parameters, int[] indicesOfNonStaticParameters) {
+    private int sendMessageToContactsInThePartiallySentPage(MessageReceiver messageReceiver, ManualMessage manualMessage, String[] parameters, int[] indicesOfNonStaticParameters) throws GlificNotConfiguredException {
         int pageNoToResumeFrom = manualMessage.getNextTriggerDetails().getPageNo();
         String contactIdToResumeFrom = manualMessage.getNextTriggerDetails().getContactId();
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts;

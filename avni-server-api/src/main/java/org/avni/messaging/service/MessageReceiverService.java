@@ -2,6 +2,7 @@ package org.avni.messaging.service;
 
 import org.avni.messaging.domain.MessageReceiver;
 import org.avni.messaging.domain.ReceiverType;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.repository.MessageReceiverRepository;
 import org.avni.server.domain.Individual;
@@ -55,7 +56,7 @@ public class MessageReceiverService {
         });
     }
 
-    public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) throws PhoneNumberNotAvailableOrIncorrectException {
+    public MessageReceiver ensureExternalIdPresent(MessageReceiver messageReceiver) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         if (messageReceiver.getExternalId() != null) {
             return messageReceiver;
         }

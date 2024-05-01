@@ -3,6 +3,7 @@ package org.avni.messaging.repository;
 import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
 import org.avni.messaging.contract.glific.GlificGetGroupResponse;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,33 +20,33 @@ public class GlificContactRepositoryET extends AbstractControllerIntegrationTest
     private GlificContactRepository glificContactRepository;
 
     @Test
-    public void shouldGetContactGroups() {
+    public void shouldGetContactGroups() throws GlificNotConfiguredException {
         PageRequest pageable = PageRequest.of(0, 5);
         List<GlificContactGroupsResponse.ContactGroup> contactGroups = glificContactRepository.getContactGroups("", pageable);
         assertThat(contactGroups.size()).isGreaterThan(0);
     }
 
     @Test
-    public void shouldGetContactGroupCount() {
+    public void shouldGetContactGroupCount() throws GlificNotConfiguredException {
         int contactGroupCount = glificContactRepository.getContactGroupCount();
         assertThat(contactGroupCount).isGreaterThan(0);
     }
 
     @Test
-    public void shouldGetContactGroupContacts() {
+    public void shouldGetContactGroupContacts() throws GlificNotConfiguredException {
         PageRequest pageable = PageRequest.of(0, 5);
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts = glificContactRepository.getContactGroupContacts("1460" ,pageable);
         assertThat(contactGroupContacts.size()).isGreaterThan(0);
     }
 
     @Test
-    public void shouldGetContactGroupContactsCount() {
+    public void shouldGetContactGroupContactsCount() throws GlificNotConfiguredException {
         int contactGroupContactCount = glificContactRepository.getContactGroupContactsCount("1460");
         assertThat(contactGroupContactCount).isGreaterThan(0);
     }
 
     @Test
-    public void shouldGetGroup() {
+    public void shouldGetGroup() throws GlificNotConfiguredException {
         GlificGetGroupResponse.GlificGroup glificGroup = glificContactRepository.getContactGroup("1460");
         assertThat(glificGroup.getLabel().length()).isGreaterThan(0);
     }

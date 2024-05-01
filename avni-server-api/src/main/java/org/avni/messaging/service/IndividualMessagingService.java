@@ -2,6 +2,7 @@ package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.RuleExecutionException;
@@ -38,12 +39,12 @@ public class IndividualMessagingService {
         this.ruleService = ruleService;
     }
 
-    private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableOrIncorrectException {
+    private void ensureExternalIdPresenceAndSendMessage(MessageReceiver messageReceiver, String templateId, String[] parameters) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         messageReceiverService.ensureExternalIdPresent(messageReceiver);
         glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
     }
 
-    public void sendAutomatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException {
+    public void sendAutomatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException, GlificNotConfiguredException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
         String entityType = messageRule.getEntityType().name();
@@ -56,7 +57,7 @@ public class IndividualMessagingService {
         ensureExternalIdPresenceAndSendMessage(messageReceiver, messageRule.getMessageTemplateId(), messageRuleResponseEntity.getParameters());
     }
 
-    public void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException {
+    public void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         ManualMessage manualMessage = messageRequest.getManualMessage();
         String[] parameters = manualMessage.getParameters();
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();

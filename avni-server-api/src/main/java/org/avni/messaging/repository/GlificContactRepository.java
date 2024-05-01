@@ -4,6 +4,7 @@ import org.avni.messaging.contract.ContactGroupRequest;
 import org.avni.messaging.contract.glific.*;
 import org.avni.messaging.domain.exception.GlificContactNotFoundError;
 import org.avni.messaging.domain.exception.GlificException;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.external.GlificRestClient;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.springframework.cache.annotation.Cacheable;
@@ -65,7 +66,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         DELETE_CONTACT_GROUP_JSON = getJson("deleteContactGroup");
     }
 
-    public String getOrCreateContact(String phoneNumber, String fullName) throws PhoneNumberNotAvailableOrIncorrectException {
+    public String getOrCreateContact(String phoneNumber, String fullName) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         if (phoneNumber == null || phoneNumber.length() < NO_OF_DIGITS_IN_INDIAN_MOBILE_NO) {
             throw new PhoneNumberNotAvailableOrIncorrectException();
         }
@@ -80,7 +81,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         return INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
     }
 
-    private String createContact(String phoneNumber, String fullName) {
+    private String createContact(String phoneNumber, String fullName) throws GlificNotConfiguredException {
         String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, formatPhoneNumberToGlificFormat(phoneNumber))
                 .replace(FULL_NAME, fullName);
         GlificOptinContactResponse glificOptinContactResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificOptinContactResponse>>() {
@@ -88,13 +89,13 @@ public class GlificContactRepository extends AbstractGlificRepository {
         return glificOptinContactResponse.getOptinContact().getContact().getId();
     }
 
-    private GlificGetContactsResponse getContact(String phoneNumber) {
+    private GlificGetContactsResponse getContact(String phoneNumber) throws GlificNotConfiguredException {
         String message = GET_CONTACT_JSON.replace(PHONE_NUMBER, formatPhoneNumberToGlificFormat(phoneNumber));
         return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificGetContactsResponse>>() {
         });
     }
 
-    public List<GlificContactGroupsResponse.ContactGroup> getContactGroups(String labelFilter, Pageable pageable) {
+    public List<GlificContactGroupsResponse.ContactGroup> getContactGroups(String labelFilter, Pageable pageable) throws GlificNotConfiguredException {
         String templateWithFilter = GET_CONTACT_GROUPS_JSON.replace(LABEL, labelFilter);
         String message = this.populatePaginationDetails(templateWithFilter, pageable);
         GlificContactGroupsResponse glificContactGroupsResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupsResponse>>() {
@@ -102,13 +103,13 @@ public class GlificContactRepository extends AbstractGlificRepository {
         return glificContactGroupsResponse.getGroups();
     }
 
-    public int getContactGroupCount() {
+    public int getContactGroupCount() throws GlificNotConfiguredException {
         GlificContactGroupCountResponse response = glificRestClient.callAPI(GET_CONTACT_GROUP_COUNT_JSON, new ParameterizedTypeReference<GlificResponse<GlificContactGroupCountResponse>>() {
         });
         return response.getCountGroups();
     }
 
-    public List<GlificContactGroupContactsResponse.GlificContactGroupContacts> getContactGroupContacts(String contactGroupId, Pageable pageable) {
+    public List<GlificContactGroupContactsResponse.GlificContactGroupContacts> getContactGroupContacts(String contactGroupId, Pageable pageable) throws GlificNotConfiguredException {
         String message = this.populatePaginationDetails(GET_CONTACT_GROUP_CONTACTS_JSON, pageable);
         message = message.replace(GROUP_ID, contactGroupId);
         GlificContactGroupContactsResponse response = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificContactGroupContactsResponse>>() {
@@ -116,7 +117,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         return response.getContacts();
     }
 
-    public int getContactGroupContactsCount(String contactGroupId) {
+    public int getContactGroupContactsCount(String contactGroupId) throws GlificNotConfiguredException {
         String message = GET_CONTACT_GROUP_CONTACT_COUNT_JSON.replace(GROUP_ID, contactGroupId);
         GlificContactGroupContactCountResponse response = glificRestClient.callAPI(message, new
                 ParameterizedTypeReference<GlificResponse<GlificContactGroupContactCountResponse>>() {
@@ -124,7 +125,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         return response.getCountContacts();
     }
 
-    public GlificGetGroupResponse.GlificGroup getContactGroup(String id) {
+    public GlificGetGroupResponse.GlificGroup getContactGroup(String id) throws GlificNotConfiguredException {
         String message = GET_CONTACT_GROUP_JSON.replace(ID, id);
         GlificGetGroupResponse glificGetGroupResponse = glificRestClient.callAPI(message, new
                 ParameterizedTypeReference<GlificResponse<GlificGetGroupResponse>>() {
@@ -139,7 +140,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
      * Throws 404 Not found error, if contact matching specified phoneNumber is not found
      */
     @Cacheable(value = GLIFIC_CONTACT_FOR_PHONE_NUMBER)
-    public GlificContactResponse findContact(String phoneNumber) throws GlificContactNotFoundError {
+    public GlificContactResponse findContact(String phoneNumber) throws GlificContactNotFoundError, GlificNotConfiguredException {
         assert StringUtils.hasText(phoneNumber);
         GlificGetContactsResponse glificContact = getContact(phoneNumber);
         if(glificContact.getContacts().isEmpty()) {
@@ -154,7 +155,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
      * @param phoneNumber
      * @return
      */
-    public List<Message> getAllMsgsForContact(String phoneNumber) {
+    public List<Message> getAllMsgsForContact(String phoneNumber) throws GlificNotConfiguredException {
         GlificContactResponse contact = findContact(phoneNumber);
         String getAllMessagesRequest = GET_ALL_MSGS_JSON.replace(RECEIVER_ID, contact.getId());
         GlificSearchDataResponse data = glificRestClient.callAPI(getAllMessagesRequest,
@@ -164,13 +165,13 @@ public class GlificContactRepository extends AbstractGlificRepository {
                 data.getSearch().get(0).getMessages() : Collections.emptyList();
     }
 
-    public void addContactToGroup(String contactGroupId, String contactId) {
+    public void addContactToGroup(String contactGroupId, String contactId) throws GlificNotConfiguredException {
         String message = ADD_CONTACTS_IN_GROUP_JSON.replace("${contactGroupId}", contactGroupId).replace("${contactId}", contactId);
         glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
         });
     }
 
-    public void removeContactsFromGroup(String contactGroupId, List<String> contactIds) {
+    public void removeContactsFromGroup(String contactGroupId, List<String> contactIds) throws GlificNotConfiguredException {
         String message = REMOVE_CONTACTS_IN_GROUP_JSON
                 .replace("${contactGroupId}", contactGroupId)
                 .replace( "[\"${deleteContactIds}\"]", contactIds.toString());
@@ -178,7 +179,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public void createContactGroup(ContactGroupRequest contactGroupRequest) throws GlificException {
+    public void createContactGroup(ContactGroupRequest contactGroupRequest) throws GlificException, GlificNotConfiguredException {
         String message = ADD_CONTACT_GROUP_JSON.replace("${contactGroupName}", contactGroupRequest.getLabel())
                 .replace("${contactGroupDescription}", contactGroupRequest.getDescription());
         GlificCreateContactGroupResponse glificResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificCreateContactGroupResponse>>() {
@@ -188,7 +189,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         }
     }
 
-    public void updateContactGroup(String id, ContactGroupRequest contactGroupRequest) {
+    public void updateContactGroup(String id, ContactGroupRequest contactGroupRequest) throws GlificNotConfiguredException {
         String message = UPDATE_CONTACT_GROUP_JSON.replace(LABEL, contactGroupRequest.getLabel())
                 .replace("${description}", contactGroupRequest.getDescription())
                 .replace("${id}", id);
@@ -196,7 +197,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
         });
     }
 
-    public void deleteContactGroup(String id) {
+    public void deleteContactGroup(String id) throws GlificNotConfiguredException {
         String message = DELETE_CONTACT_GROUP_JSON.replace("${id}", id);
         glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<Object>>() {
         });

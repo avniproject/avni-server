@@ -1,6 +1,7 @@
 package org.avni.messaging.service;
 
 import org.avni.messaging.domain.GlificSystemConfig;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
 import org.avni.server.domain.OrganisationConfig;
@@ -55,10 +56,11 @@ public class MessageSenderJob {
             authService.authenticateByUserName(glificConfig.getAvniSystemUser(), null);
             Duration scheduledSince = Duration.standardDays(Long.parseLong(scheduledSinceDays));
             messagingService.sendMessages(scheduledSince);
-        }
-        catch (Exception e) {
+        } catch (RuntimeException e) {
             logger.error(String.format("Message sending failed for organisation with id: %d. Ensure if right Glific config is setup for the organisation.", enabledOrganisation.getOrganisationId()));
             logger.error("Exception for the above message sending failed error:", e);
+        } catch (GlificNotConfiguredException e) {
+            logger.warn(String.format("Glific enabled but not configured: %s", e.getMessage()));
         }
     }
 }

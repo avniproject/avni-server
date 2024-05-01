@@ -3,6 +3,7 @@ package org.avni.messaging.service;
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
 import org.avni.messaging.repository.MessageRuleRepository;
@@ -167,14 +168,14 @@ public class MessagingService {
         messageRequestService.createManualMessageRequest(manualMessage, messageReceiver, scheduledDateTime);
     }
 
-    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException {
+    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException, GlificNotConfiguredException {
         if(messageRequest.getManualMessage() != null)
             sendManualMessage(messageRequest);
         else
             individualMessagingService.sendAutomatedMessage(messageRequest);
     }
 
-    private void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException {
+    private void sendManualMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         if(messageReceiver.getReceiverType() == ReceiverType.Group)
             groupMessagingService.sendManualMessage(messageRequest);

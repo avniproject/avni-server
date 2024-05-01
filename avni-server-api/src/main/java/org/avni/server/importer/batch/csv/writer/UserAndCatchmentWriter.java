@@ -120,7 +120,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private JsonObject constructSyncSettings(Row row) throws Exception {
+    private JsonObject constructSyncSettings(Row row) {
         List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
         Map<String, UserSyncSettings> syncSettingsMap = new HashMap<>();
         for (String saHeader : syncAttributeHeadersForSubjectTypes) {
@@ -135,7 +135,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         return syncSettings;
     }
 
-    private void updateSyncSettingsFor(String saHeader, Row row, Map<String, UserSyncSettings> syncSettingsMap) throws Exception {
+    private void updateSyncSettingsFor(String saHeader, Row row, Map<String, UserSyncSettings> syncSettingsMap) {
         Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
         if (headerPatternMatcher.matches()) {
             String conceptName = headerPatternMatcher.group("conceptName");
@@ -157,7 +157,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userSyncSettings.setSubjectTypeUUID(subjectTypeUuid);
     }
 
-    private void updateSyncConceptSettings(SubjectType subjectType, String conceptName, String conceptValues, UserSyncSettings userSyncSettings) throws Exception {
+    private void updateSyncConceptSettings(SubjectType subjectType, String conceptName, String conceptValues, UserSyncSettings userSyncSettings) {
         Concept concept = conceptService.getByName(conceptName);
         String conceptUuid = concept.getUuid();
         List<String> syncSettingsConceptRawValues = Arrays.asList(conceptValues.split(","));
@@ -174,11 +174,11 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues, Concept concept) throws Exception {
+    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues, Concept concept) {
         List<String> syncSettingCodedConceptValues = new ArrayList<>();
         for (String syncSettingsValue : syncSettingsValues) {
             Optional<Concept> conceptAnswer = Optional.ofNullable(conceptService.getByName(syncSettingsValue));
-            conceptAnswer.orElseThrow(() -> new Exception(String.format("'%s' is not a valid value for the concept '%s'. " +
+            conceptAnswer.orElseThrow(() -> new RuntimeException(String.format("'%s' is not a valid value for the concept '%s'. " +
                             "To input this value, add this as an answer to the coded concept '%s'",
                     syncSettingsValue, concept.getName(), concept.getName())));
             syncSettingCodedConceptValues.add(conceptAnswer.get().getUuid());

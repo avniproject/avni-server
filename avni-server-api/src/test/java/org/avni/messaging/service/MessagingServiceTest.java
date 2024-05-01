@@ -1,6 +1,7 @@
 package org.avni.messaging.service;
 
 import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
@@ -172,7 +173,7 @@ public class MessagingServiceTest {
     }
 
     @Test
-    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException, PhoneNumberNotAvailableOrIncorrectException {
+    public void shouldSendMessagesForAllNotSentMessages() throws RuleExecutionException, PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
         MessageRule messageRule = new MessageRule();
         messageRule.setId(10L);
         messageRule.setMessageRule("I am a message rule");

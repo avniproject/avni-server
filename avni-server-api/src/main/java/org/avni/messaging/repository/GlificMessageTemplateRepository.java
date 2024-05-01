@@ -3,6 +3,7 @@ package org.avni.messaging.repository;
 import org.avni.messaging.contract.glific.GlificMessageTemplate;
 import org.avni.messaging.contract.glific.GlificMessageTemplateResponse;
 import org.avni.messaging.contract.glific.GlificResponse;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.external.GlificRestClient;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,13 +30,13 @@ public class GlificMessageTemplateRepository {
         }
     }
 
-    public List<GlificMessageTemplate> findAll() {
+    public List<GlificMessageTemplate> findAll() throws GlificNotConfiguredException {
         return glificRestClient.callAPI(MESSAGE_TEMPLATE_REQUEST, new ParameterizedTypeReference<GlificResponse<GlificMessageTemplateResponse>>() {
         }).getSessionTemplates();
     }
 
     @Cacheable(value = GLIFIC_TEMPLATES_FOR_ORG)
-    public List<GlificMessageTemplate> findAllForOrganisationId(Long organisationId) {
+    public List<GlificMessageTemplate> findAllForOrganisationId(Long organisationId) throws GlificNotConfiguredException {
         return glificRestClient.callAPI(MESSAGE_TEMPLATE_REQUEST, new ParameterizedTypeReference<GlificResponse<GlificMessageTemplateResponse>>() {
         }).getSessionTemplates();
     }

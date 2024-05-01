@@ -6,6 +6,7 @@ import org.avni.messaging.contract.glific.GlificContactGroupContactsResponse;
 import org.avni.messaging.contract.glific.GlificContactGroupsResponse;
 import org.avni.messaging.contract.glific.GlificGetGroupResponse;
 import org.avni.messaging.domain.exception.GlificException;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificContactRepository;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
 import org.avni.server.dao.UserRepository;
@@ -40,7 +41,7 @@ public class ContactGroupController {
 
     @GetMapping(ContactGroupEndpoint)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public WebPagedResponse getContactGroups( @RequestParam(value = "label", required = false, defaultValue = "") String labelFilter, Pageable pageable) {
+    public WebPagedResponse getContactGroups( @RequestParam(value = "label", required = false, defaultValue = "") String labelFilter, Pageable pageable) throws GlificNotConfiguredException {
         List<GlificContactGroupsResponse.ContactGroup> groups = glificContactRepository.getContactGroups(labelFilter, pageable);
         int count = glificContactRepository.getContactGroupCount();
         return new WebPagedResponse(groups, pageable.getPageNumber(), count);
@@ -48,7 +49,7 @@ public class ContactGroupController {
 
     @GetMapping(ContactGroupEndpoint + "/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public GroupContactsResponse getContactGroupContacts(@PathVariable("id") String id, Pageable pageable) {
+    public GroupContactsResponse getContactGroupContacts(@PathVariable("id") String id, Pageable pageable) throws GlificNotConfiguredException {
         List<GlificContactGroupContactsResponse.GlificContactGroupContacts> contactGroupContacts = glificContactRepository.getContactGroupContacts(id, pageable);
         int count = glificContactRepository.getContactGroupContactsCount(id);
         WebPagedResponse webPagedResponse = new WebPagedResponse(contactGroupContacts, pageable.getPageNumber(), count);
@@ -62,20 +63,20 @@ public class ContactGroupController {
         try {
             glificContactRepository.createContactGroup(contactGroupRequest);
             return ResponseEntity.ok("Contact Group Created");
-        } catch (GlificException glificException) {
+        } catch (GlificException | GlificNotConfiguredException glificException) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(glificException.getMessage());
         }
     }
 
     @PutMapping(ContactGroupEndpoint + "/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void addContactGroup(@PathVariable("id") String id, @RequestBody ContactGroupRequest contactGroupRequest) {
+    public void addContactGroup(@PathVariable("id") String id, @RequestBody ContactGroupRequest contactGroupRequest) throws GlificNotConfiguredException {
         glificContactRepository.updateContactGroup(id, contactGroupRequest);
     }
 
     @PostMapping(ContactGroupEndpoint + "/{contactGroupId}/subject")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponseEntity<String> addSubject(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest subject) throws PhoneNumberNotAvailableOrIncorrectException {
+    public ResponseEntity<String> addSubject(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest subject) {
         String phoneNumber = individualService.findPhoneNumber(subject.getId());
         if (StringUtils.isEmpty(phoneNumber))
            return ResponseEntity.badRequest().body("This subject doesn't have a phone number");
@@ -84,7 +85,7 @@ public class ContactGroupController {
         try {
             String contactId = glificContactRepository.getOrCreateContact(phoneNumber, individual.getFullName());
             glificContactRepository.addContactToGroup(contactGroupId, contactId);
-        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
+        } catch (PhoneNumberNotAvailableOrIncorrectException | GlificNotConfiguredException e) {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
 
@@ -93,7 +94,7 @@ public class ContactGroupController {
 
     @PostMapping(ContactGroupEndpoint + "/{contactGroupId}/user")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void addUser(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest userRequest) throws PhoneNumberNotAvailableOrIncorrectException {
+    public void addUser(@PathVariable("contactGroupId") String contactGroupId, @RequestBody CHSRequest userRequest) throws GlificNotConfiguredException, PhoneNumberNotAvailableOrIncorrectException {
         User user = userRepository.findById(userRequest.getId()).get();
         String contactId = glificContactRepository.getOrCreateContact(user.getPhoneNumber(), user.getName());
         glificContactRepository.addContactToGroup(contactGroupId, contactId);
@@ -101,13 +102,15 @@ public class ContactGroupController {
 
     @DeleteMapping(ContactGroupEndpoint + "/{contactGroupId}/contact")
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void removeContacts(@PathVariable("contactGroupId") String contactGroupId, @RequestBody List<String> contacts) {
+    public void removeContacts(@PathVariable("contactGroupId") String contactGroupId, @RequestBody List<String> contacts) throws GlificNotConfiguredException {
         glificContactRepository.removeContactsFromGroup(contactGroupId, contacts);
     }
 
     @DeleteMapping(ContactGroupEndpoint)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void deleteContactGroups(@RequestBody List<String> contactGroups) {
-        contactGroups.forEach(glificContactRepository::deleteContactGroup);
+    public void deleteContactGroups(@RequestBody List<String> contactGroups) throws GlificNotConfiguredException {
+        for (String contactGroup : contactGroups) {
+            glificContactRepository.deleteContactGroup(contactGroup);
+        }
     }
 }

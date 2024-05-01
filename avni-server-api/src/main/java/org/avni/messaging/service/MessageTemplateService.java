@@ -1,6 +1,7 @@
 package org.avni.messaging.service;
 
 import org.avni.messaging.contract.glific.GlificMessageTemplate;
+import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificMessageTemplateRepository;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
@@ -23,8 +24,12 @@ public class MessageTemplateService {
     }
 
     public List<GlificMessageTemplate> findAll() {
-        return organisationConfigService.isMessagingEnabled() ?
-                messageTemplateRepository.findAllForOrganisationId(UserContextHolder.getUserContext().getOrganisationId()) :
-                Collections.emptyList();
+        try {
+            return organisationConfigService.isMessagingEnabled() ?
+                    messageTemplateRepository.findAllForOrganisationId(UserContextHolder.getUserContext().getOrganisationId()) :
+                    Collections.emptyList();
+        } catch (GlificNotConfiguredException e) {
+            return Collections.emptyList();
+        }
     }
 }
