@@ -3,6 +3,7 @@ package org.avni.server.service.accessControl;
 import org.apache.commons.collections4.IterableUtils;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.application.Subject;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
@@ -60,13 +61,30 @@ public class GroupPrivilegeService implements NonScopeAwareService {
 
         List<GroupPrivilege> allGroupPrivileges = new ArrayList<>();
 
+        //User Type SubjectTypes, might not have a Registration form Mapping associated with them, still we would like to Show the privilege to sync them to client
+        subjectTypeRepository.findAllByIsVoidedFalse().stream()
+                .filter(st -> st.getType().equals(Subject.User) && !st.isVoided())
+                .forEach(subjectType -> {
+                    privilegeList.stream()
+                            .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
+                            .forEach(subjectPrivilege -> {
+                                        GroupPrivilege groupPrivilege = new GroupPrivilege();
+                                        groupPrivilege.setGroup(group);
+                                        groupPrivilege.setPrivilege(subjectPrivilege);
+                                        groupPrivilege.setSubjectType(subjectType);
+                                        groupPrivilege.assignUUID();
+                                        allGroupPrivileges.add(groupPrivilege);
+                                    }
+                            );
+                });
+
         formMappings.forEach(formMapping -> {
             SubjectType subjectType = formMapping.getSubjectType();
             Program program = formMapping.getProgram();
             EncounterType encounterType = formMapping.getEncounterType();
             FormType formType = formMapping.getForm().getFormType();
 
-            if (formType.equals(FormType.IndividualProfile)) {
+            if (formType.equals(FormType.IndividualProfile) && !subjectType.getType().equals(Subject.User)) {
                 privilegeList.stream()
                         .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
                         .forEach(subjectPrivilege -> {
