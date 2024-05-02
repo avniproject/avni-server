@@ -54,7 +54,6 @@ public class IdpServiceFactory {
             return noopIdpService;
 
         if (cognitoIdpService != null)
-            trimUserAttributes();
             return cognitoIdpService;
 
         return keycloakIdpService;
@@ -68,23 +67,8 @@ public class IdpServiceFactory {
 
         if (idpType.equals(IdpType.none))
             return noopIdpService;
-        
-        trimUserAttributes();
 
         return cognitoIdpService;
-    }
-
-    private void trimUserAttributes() {
-    // Trim username
-    if (userContract.getUsername() != null) {
-        userContract.setUsername(userContract.getUsername().trim());
-    }
-
-    // Trim email
-    if (userContract.getEmail() != null) {
-        userContract.setEmail(userContract.getEmail().trim());
-    }
-
     }
 
     public IdpService getIdpService(User user) {

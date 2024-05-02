@@ -151,9 +151,9 @@ public class CognitoIdpService extends IdpServiceImpl {
     private AdminUpdateUserAttributesRequest prepareUpdateUserRequest(User user) {
         return new AdminUpdateUserAttributesRequest()
                 .withUserPoolId(userPoolId)
-                .withUsername(user.getUsername().trim())
+                .withUsername(user.getUsername())
                 .withUserAttributes(
-                        new AttributeType().withName("email").withValue(user.getEmail().trim()),
+                        new AttributeType().withName("email").withValue(user.getEmail()),
                         new AttributeType().withName("phone_number").withValue(user.getPhoneNumber()),
                         new AttributeType().withName("custom:userUUID").withValue(user.getUuid())
                 );
@@ -162,9 +162,9 @@ public class CognitoIdpService extends IdpServiceImpl {
     private AdminCreateUserRequest prepareCreateUserRequest(User user, String password) {
         return new AdminCreateUserRequest()
                 .withUserPoolId(userPoolId)
-                .withUsername(user.getUsername().trim())
+                .withUsername(user.getUsername())
                 .withUserAttributes(
-                        new AttributeType().withName("email").withValue(user.getEmail().trim()),
+                        new AttributeType().withName("email").withValue(user.getEmail()),
                         new AttributeType().withName("phone_number").withValue(user.getPhoneNumber()),
                         new AttributeType().withName("email_verified").withValue("true"),
                         new AttributeType().withName("phone_number_verified").withValue("true"),

@@ -74,7 +74,7 @@ public class UserContract extends ReferenceDataContract {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username != null ? username.trim() : null;
     }
 
     public Long getCatchmentId() {
@@ -196,4 +196,5 @@ public class UserContract extends ReferenceDataContract {
     public void setUserGroupNames(List<String> userGroupNames) {
         this.userGroupNames = userGroupNames;
     }
+
 }

@@ -25,27 +25,7 @@ public class BulkUploadS3Service {
 
     public ObjectInfo uploadFile(MultipartFile source, String uuid) throws IOException {
         String targetFileName = format("%s-%s", uuid, source.getOriginalFilename());
-        List<String> trimmedLines = readAndTrimCSVFile(source.getInputStream());
-        String trimmedCSVContent = String.join("\n", trimmedLines);
-        return s3Service.uploadString(trimmedCSVContent, targetFileName, "bulkuploads/input");
-    }
-
-    private List<String> readAndTrimCSVFile(InputStream inputStream) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            return reader.lines()
-                .map(line -> {
-                    // Split the line into fields
-                    String[] fields = line.split(",");
-                    // Trim the username and email fields (assuming they are at specific indexes)
-                    if (fields.length >= 2) {
-                        fields[0] = fields[0].trim(); // Assuming username is at index 0
-                        fields[1] = fields[1].trim(); // Assuming email is at index 1
-                    }
-                    // Join the trimmed fields back to a line
-                    return String.join(",", fields);
-                })
-                .collect(Collectors.toList());
-        }
+        return s3Service.uploadFile(source, targetFileName, "bulkuploads/input");
     }
 
     public ObjectInfo uploadZip(MultipartFile source, String uuid) throws IOException {
