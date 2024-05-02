@@ -13,7 +13,6 @@ public enum SyncEntityName {
     Subject,
     ProgramEnrolment,
     Individual,
-    Enrolment,
     Encounter,
     ProgramEncounter,
     ChecklistItem,

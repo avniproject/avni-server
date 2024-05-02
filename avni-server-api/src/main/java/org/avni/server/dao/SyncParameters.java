@@ -80,7 +80,7 @@ public class SyncParameters {
     }
 
     public boolean isParentOrSelfEnrolment() {
-        return Arrays.asList(SyncEntityName.Enrolment, SyncEntityName.Checklist, SyncEntityName.ChecklistItem).contains(syncEntityName);
+        return Arrays.asList(SyncEntityName.ProgramEnrolment, SyncEntityName.Checklist, SyncEntityName.ChecklistItem).contains(syncEntityName);
     }
 
     public boolean isProgramEncounter() {

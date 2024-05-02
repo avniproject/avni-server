@@ -98,7 +98,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));
-            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Enrolment));
+            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocationAsSlice(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEnrolment));
         }
     }
 
@@ -116,7 +116,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
             FormMapping formMapping = formMappingService.find(program, FormType.ProgramEnrolment);
             if (formMapping == null)
                 throw new Exception(String.format("No form mapping found for program %s", program.getName()));
-            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.Enrolment));
+            return wrap(scopeBasedSyncService.getSyncResultsBySubjectTypeRegistrationLocation(programEnrolmentRepository, userService.getCurrentUser(), lastModifiedDateTime, now, program.getId(), pageable, formMapping.getSubjectType(), SyncEntityName.ProgramEnrolment));
         }
     }
 
