@@ -175,9 +175,14 @@ public class AccessControlService {
         this.checkEncounterPrivilege(privilegeType, encounters.stream().map(Encounter::getEncounterType).distinct().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
     }
 
-    public void checkIsAdmin() {
+    public void assertIsSuperAdmin() {
         User user = UserContextHolder.getUser();
         if (!user.isAdmin())
             throw AvniAccessException.createForNotAdmin(user);
+    }
+
+    public boolean isSuperAdmin() {
+        User user = UserContextHolder.getUser();
+        return user.isAdmin();
     }
 }

@@ -21,6 +21,7 @@ import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepo
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.*;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -58,7 +59,6 @@ import java.util.zip.ZipOutputStream;
 
 @Service
 public class OrganisationService {
-
     private final FormRepository formRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final LocationRepository locationRepository;
@@ -134,6 +134,9 @@ public class OrganisationService {
     private final TaskRepository taskRepository;
     private final MessageRequestQueueRepository messageRequestQueueRepository;
     private final MessageReceiverRepository messageReceiverRepository;
+    private final OrganisationConfigService organisationConfigService;
+    private final GenderRepository genderRepository;
+    private final OrganisationRepository organisationRepository;
     private final Logger logger;
 
     @Autowired
@@ -207,7 +210,10 @@ public class OrganisationService {
                                SubjectProgramEligibilityRepository subjectProgramEligibilityRepository,
                                TaskRepository taskRepository,
                                MessageRequestQueueRepository messageRequestQueueRepository,
-                               MessageReceiverRepository messageReceiverRepository) {
+                               MessageReceiverRepository messageReceiverRepository,
+                               OrganisationConfigService organisationConfigService,
+                               GenderRepository genderRepository,
+                               OrganisationRepository organisationRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -280,6 +286,9 @@ public class OrganisationService {
         this.taskRepository = taskRepository;
         this.messageRequestQueueRepository = messageRequestQueueRepository;
         this.messageReceiverRepository = messageReceiverRepository;
+        this.organisationConfigService = organisationConfigService;
+        this.genderRepository = genderRepository;
+        this.organisationRepository = organisationRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -707,12 +716,13 @@ public class OrganisationService {
                 dashboardSectionRepository,
                 groupDashboardRepository,
                 dashboardRepository,
-                msg91ConfigRepository
+                msg91ConfigRepository,
+                genderRepository,
+                userGroupRepository,
+                groupRepository
         };
 
         Arrays.asList(metadataRepositories).forEach(this::deleteAll);
-        userGroupRepository.deleteAllByGroupIsNotIn(groupRepository.findAllByName(Group.Everyone));
-        groupRepository.deleteAllByNameNot(Group.Everyone);
     }
 
     private void deleteAll(JpaRepository repository) {
@@ -735,5 +745,41 @@ public class OrganisationService {
         if (!groupDashboards.isEmpty()) {
             addFileToZip(zos, "groupDashboards.json", groupDashboards);
         }
+    }
+
+    private void createGender(String genderName, Organisation org) {
+        Gender gender = new Gender();
+        gender.setName(genderName);
+        gender.assignUUID();
+        gender.setOrganisationId(org.getId());
+        genderRepository.save(gender);
+    }
+
+    private void addDefaultGroup(Long organisationId, String groupType) {
+        Group group = new Group();
+        group.setName(groupType);
+        group.setOrganisationId(organisationId);
+        group.setUuid(UUID.randomUUID().toString());
+        group.setHasAllPrivileges(group.isAdministrator());
+        group.setVersion(0);
+        groupRepository.save(group);
+    }
+
+    private void createDefaultGenders(Organisation org) {
+        createGender("Male", org);
+        createGender("Female", org);
+        createGender("Other", org);
+    }
+
+    public void setupBaseOrganisationData(Organisation organisation) {
+        createDefaultGenders(organisation);
+        addDefaultGroup(organisation.getId(), Group.Everyone);
+        addDefaultGroup(organisation.getId(), Group.Administrators);
+        organisationConfigService.createDefaultOrganisationConfig(organisation);
+    }
+
+    public Organisation getCurrentOrganisation() {
+        Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        return organisationRepository.findOne(organisationId);
     }
 }

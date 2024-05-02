@@ -16,7 +16,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -37,7 +36,7 @@ public class PlatformTranslationController implements RestControllerResourceProc
     @RequestMapping(value = "/platformTranslation", method = RequestMethod.POST)
     @Transactional
     public ResponseEntity<?> uploadPlatformTranslations(@RequestBody TranslationRequest request) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         Platform platform = Platform.valueOf(request.getPlatform());
         Locale language = Locale.valueOf(request.getLanguage());
         PlatformTranslation platformTranslation = platformTranslationRepository.findByPlatformAndLanguage(platform, language);
