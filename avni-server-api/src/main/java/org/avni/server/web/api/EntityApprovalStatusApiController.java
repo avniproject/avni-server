@@ -38,11 +38,11 @@ public class EntityApprovalStatusApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponsePage getEntityApprovalStatuses(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                   @RequestParam(value = "now", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-                                                  @RequestParam(value = "entityType", required = false) String entityType,
+                                                  @RequestParam(value = "entityType", required = false) EntityApprovalStatus.EntityType entityType,
                                                   @RequestParam(value = "entityTypeId", required = false) String entityTypeUuid,
                                                   Pageable pageable) {
 
-        Page<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findEntityApprovalStatuses(new EntityApprovalStatusSearchParams(lastModifiedDateTime, now, EntityApprovalStatus.EntityType.valueOf(entityType), entityTypeUuid), pageable);
+        Page<EntityApprovalStatus> entityApprovalStatuses = entityApprovalStatusRepository.findEntityApprovalStatuses(new EntityApprovalStatusSearchParams(lastModifiedDateTime, now, entityType, entityTypeUuid), pageable);
         accessControlService.checkApprovePrivilegeOnEntityApprovalStatuses(entityApprovalStatuses.getContent());
         ArrayList<EntityApprovalStatusResponse> entityApprovalStatusResponse = new ArrayList<>();
         entityApprovalStatuses.forEach(entityApprovalStatus -> entityApprovalStatusResponse.add(EntityApprovalStatusResponse.fromEntityApprovalStatus(entityApprovalStatus, entityApprovalStatusService.getEntityUuid(entityApprovalStatus))));
