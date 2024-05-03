@@ -88,7 +88,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                 privilegeList.stream()
                         .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
                         .forEach(subjectPrivilege -> {
-                                    if (subjectPrivilege.getType() == PrivilegeType.ViewSubject && subjectType.getType().equals(Subject.User)) {
+                                    if (subjectPrivilege.getType() == PrivilegeType.ViewSubject && subjectType.getType().equals(Subject.User) && !subjectType.isVoided()) {
                                         return; //Continue, already added this privilege
                                     }
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
