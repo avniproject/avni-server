@@ -1253,7 +1253,7 @@ paths:
       responses:
         "200":
           description: successful
-  /api/entityApprovalStatuses:
+  /api/approvalStatuses:
     get:
       tags:
         - Entity Approval Status
@@ -1286,6 +1286,8 @@ paths:
           explode: true
           schema:
             type: string
+            nullable: true
+            enum: [Subject,ProgramEnrolment,ProgramEncounter,Encounter,ChecklistItem]
         - name: entityTypeId
           in: query
           description: "Allows filtering results by entity type id"
@@ -1294,7 +1296,7 @@ paths:
           explode: true
           schema:
             type: string
-          example: "{\"Diagnosis\": \"Diabetes\", \"Blood Group\": \"B+\"}"
+          example: 1e9afb68-7e64-4295-8865-dbe7c433823e
         - name: auth-token
           in: header
           required: false
