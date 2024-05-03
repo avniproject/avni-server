@@ -10,6 +10,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.accessControl.Privilege;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.NonScopeAwareService;
 import org.avni.server.util.CollectionUtil;
@@ -61,21 +62,20 @@ public class GroupPrivilegeService implements NonScopeAwareService {
 
         List<GroupPrivilege> allGroupPrivileges = new ArrayList<>();
 
-        //User Type SubjectTypes, might not have a Registration form Mapping associated with them, still we would like to Show the privilege to sync them to client
+        /**
+         * User Type SubjectTypes, might not have a Registration form Mapping associated with them,
+         * still we would like to Show the ViewSubject privilege to be able to sync Subject and its children them to client
+         */
         subjectTypeRepository.findAllByIsVoidedFalse().stream()
                 .filter(st -> st.getType().equals(Subject.User) && !st.isVoided())
                 .forEach(subjectType -> {
-                    privilegeList.stream()
-                            .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
-                            .forEach(subjectPrivilege -> {
-                                        GroupPrivilege groupPrivilege = new GroupPrivilege();
-                                        groupPrivilege.setGroup(group);
-                                        groupPrivilege.setPrivilege(subjectPrivilege);
-                                        groupPrivilege.setSubjectType(subjectType);
-                                        groupPrivilege.assignUUID();
-                                        allGroupPrivileges.add(groupPrivilege);
-                                    }
-                            );
+                    Privilege viewSubjectPrivilege = privilegeRepository.findByType(PrivilegeType.ViewSubject);
+                    GroupPrivilege groupPrivilege = new GroupPrivilege();
+                    groupPrivilege.setGroup(group);
+                    groupPrivilege.setPrivilege(viewSubjectPrivilege);
+                    groupPrivilege.setSubjectType(subjectType);
+                    groupPrivilege.assignUUID();
+                    allGroupPrivileges.add(groupPrivilege);
                 });
 
         formMappings.forEach(formMapping -> {
@@ -84,10 +84,13 @@ public class GroupPrivilegeService implements NonScopeAwareService {
             EncounterType encounterType = formMapping.getEncounterType();
             FormType formType = formMapping.getForm().getFormType();
 
-            if (formType.equals(FormType.IndividualProfile) && !subjectType.getType().equals(Subject.User)) {
+            if (formType.equals(FormType.IndividualProfile)) {
                 privilegeList.stream()
                         .filter(privilege -> privilege.getEntityType() == PrivilegeEntityType.Subject && isGroupSubjectTypePrivilege(subjectType, privilege))
                         .forEach(subjectPrivilege -> {
+                                    if (subjectPrivilege.getType() == PrivilegeType.ViewSubject && subjectType.getType().equals(Subject.User)) {
+                                        return; //Continue, already added this privilege
+                                    }
                                     GroupPrivilege groupPrivilege = new GroupPrivilege();
                                     groupPrivilege.setGroup(group);
                                     groupPrivilege.setPrivilege(subjectPrivilege);
