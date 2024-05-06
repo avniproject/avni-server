@@ -45,7 +45,7 @@ public class UserContract implements RuleServerEntityContract {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username != null ? username.trim() : null;
     }
 
     public String getOrganisationName() {
@@ -69,7 +69,7 @@ public class UserContract implements RuleServerEntityContract {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name != null ? name.trim() : null;
     }
 
     public JsonObject getSyncSettings() {
@@ -95,4 +95,5 @@ public class UserContract implements RuleServerEntityContract {
     public void setUserGroupNames(List<String> userGroupNames) {
         this.userGroupNames = userGroupNames;
     }
+
 }

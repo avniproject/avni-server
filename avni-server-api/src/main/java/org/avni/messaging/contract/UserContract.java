@@ -23,7 +23,7 @@ public class UserContract {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username != null ? username.trim() : null;
     }
 
     public String getName() {
@@ -31,7 +31,7 @@ public class UserContract {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name != null ? name.trim() : null;
     }
 
     public Long getId() {
@@ -49,4 +49,5 @@ public class UserContract {
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
+    
 }

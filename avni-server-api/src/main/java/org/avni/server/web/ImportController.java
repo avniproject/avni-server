@@ -93,7 +93,7 @@ public class ImportController {
                                   @RequestParam String type,
                                   @RequestParam boolean autoApprove,
                                   @RequestParam String locationUploadMode) throws IOException {
-
+                          
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
 
