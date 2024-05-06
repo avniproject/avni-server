@@ -18,7 +18,7 @@ public class DashboardSectionCardMapping extends OrganisationAwareEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id")
-    private Card card;
+    private ReportCard card;
 
     @NotNull
     private Double displayOrder;
@@ -31,11 +31,11 @@ public class DashboardSectionCardMapping extends OrganisationAwareEntity {
         this.dashboardSection = dashboardSection;
     }
 
-    public Card getCard() {
+    public ReportCard getCard() {
         return card;
     }
 
-    public void setCard(Card card) {
+    public void setCard(ReportCard card) {
         this.card = card;
     }
 

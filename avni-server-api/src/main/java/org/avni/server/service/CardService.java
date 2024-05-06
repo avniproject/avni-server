@@ -2,7 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.StandardReportCardTypeRepository;
-import org.avni.server.domain.Card;
+import org.avni.server.domain.ReportCard;
 import org.avni.server.domain.StandardReportCardType;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.CardContract;
@@ -25,9 +25,9 @@ public class CardService implements NonScopeAwareService {
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
     }
 
-    public Card saveCard(CardContract cardContract) {
+    public ReportCard saveCard(CardContract cardContract) {
         assertNoExistingCardWithName(cardContract.getName());
-        Card card = new Card();
+        ReportCard card = new ReportCard();
         card.assignUUID();
         buildCard(cardContract, card);
         cardRepository.save(card);
@@ -35,34 +35,34 @@ public class CardService implements NonScopeAwareService {
     }
 
     public void uploadCard(CardContract cardContract) {
-        Card card = cardRepository.findByUuid(cardContract.getUuid());
+        ReportCard card = cardRepository.findByUuid(cardContract.getUuid());
         if (card == null) {
-            card = new Card();
+            card = new ReportCard();
             card.setUuid(cardContract.getUuid());
         }
         buildCard(cardContract, card);
         cardRepository.save(card);
     }
 
-    public Card editCard(CardContract newCard, Long cardId) {
-        Card existingCard = cardRepository.findOne(cardId);
+    public ReportCard editCard(CardContract newCard, Long cardId) {
+        ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(newCard.getName(), existingCard.getName());
         buildCard(newCard, existingCard);
         cardRepository.save(existingCard);
         return existingCard;
     }
 
-    public void deleteCard(Card card) {
+    public void deleteCard(ReportCard card) {
         card.setVoided(true);
         cardRepository.save(card);
     }
 
     public List<CardContract> getAll() {
-        List<Card> reportCards = cardRepository.findAll();
+        List<ReportCard> reportCards = cardRepository.findAll();
         return reportCards.stream().map(CardContract::fromEntity).collect(Collectors.toList());
     }
 
-    private void buildCard(CardContract cardContract, Card card) {
+    private void buildCard(CardContract cardContract, ReportCard card) {
         card.setName(cardContract.getName());
         card.setColour(cardContract.getColor());
         card.setDescription(cardContract.getDescription());
@@ -80,9 +80,9 @@ public class CardService implements NonScopeAwareService {
             card.setStandardReportCardType(null);
         }
         card.setNested(cardContract.isNested());
-        if (cardContract.getCount() < Card.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS || cardContract.getCount() > Card.INT_CONSTANT_MAX_COUNT_OF_CARDS) {
+        if (cardContract.getCount() < ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS || cardContract.getCount() > ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS) {
             throw new BadRequestError(String.format("Nested ReportCard count should have minmum value of %d and maximum value of %d",
-                    Card.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, Card.INT_CONSTANT_MAX_COUNT_OF_CARDS));
+                    ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(cardContract.getCount());
     }
@@ -94,7 +94,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     private void assertNoExistingCardWithName(String name) {
-        Card existingCard = cardRepository.findByName(name);
+        ReportCard existingCard = cardRepository.findByName(name);
         if (existingCard != null) {
             throw new BadRequestError(String.format("Card %s already exists", name));
         }

@@ -30,7 +30,7 @@ public class RepositoryConfig extends RepositoryRestConfigurerAdapter {
         config.exposeIdsFor(GroupPrivilege.class);
         config.exposeIdsFor(UserGroup.class);
         config.exposeIdsFor(GroupRole.class);
-        config.exposeIdsFor(Card.class);
+        config.exposeIdsFor(ReportCard.class);
         config.exposeIdsFor(Dashboard.class);
         config.exposeIdsFor(News.class);
         config.exposeIdsFor(Comment.class);

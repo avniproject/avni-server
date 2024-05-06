@@ -23,7 +23,6 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 
-import java.util.stream.Collectors;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
@@ -135,11 +134,11 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<Card>> CardProcessor() {
-        return new ResourceProcessor<Resource<Card>>() {
+    public ResourceProcessor<Resource<ReportCard>> CardProcessor() {
+        return new ResourceProcessor<Resource<ReportCard>>() {
             @Override
-            public Resource<Card> process(Resource<Card> resource) {
-                Card card = resource.getContent();
+            public Resource<ReportCard> process(Resource<ReportCard> resource) {
+                ReportCard card = resource.getContent();
                 StandardReportCardType standardReportCardType = card.getStandardReportCardType();
                 resource.removeLinks();
                 if (standardReportCardType != null) {

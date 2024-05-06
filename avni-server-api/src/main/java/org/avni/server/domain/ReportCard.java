@@ -11,8 +11,7 @@ import javax.validation.constraints.NotNull;
 @Table(name = "report_card")
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"standardReportCardType"})
-public class Card extends OrganisationAwareEntity {
-
+public class ReportCard extends OrganisationAwareEntity {
     public static final int INT_CONSTANT_DEFAULT_COUNT_OF_CARDS = 1;
     public static final int INT_CONSTANT_MAX_COUNT_OF_CARDS = 9;
     @NotNull

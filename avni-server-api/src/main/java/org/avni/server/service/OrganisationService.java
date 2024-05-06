@@ -523,12 +523,12 @@ public class OrganisationService {
     }
 
     public void addReportCardIcons(ZipOutputStream zos) throws IOException {
-        List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
+        List<ReportCard> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
             .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
         if (cards.size() > 0) {
             addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
-        for (Card reportCard : cards) {
+        for (ReportCard reportCard : cards) {
             if (StringUtils.isEmpty(reportCard.getIconFileS3Key())) continue;
             InputStream objectContent = s3Service.getObjectContentFromUrl(reportCard.getIconFileS3Key());
             String extension = S.getLastStringAfter(reportCard.getIconFileS3Key(), ".");

@@ -450,7 +450,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
             case REPORT_CARD_ICONS:
                 String cs3ObjectKey = uploadIcon(fileData.getKey(), fileData.getValue());
                 String reportCardUUID = fileData.getKey().substring(0, fileData.getKey().indexOf(SEPARATOR_FOR_EXTENSION));
-                Card card = cardRepository.findByUuid(reportCardUUID);
+                ReportCard card = cardRepository.findByUuid(reportCardUUID);
                 card.setIconFileS3Key(cs3ObjectKey);
                 cardRepository.save(card);
                 break;

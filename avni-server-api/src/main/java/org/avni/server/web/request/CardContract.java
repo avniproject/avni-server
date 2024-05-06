@@ -1,6 +1,6 @@
 package org.avni.server.web.request;
 
-import org.avni.server.domain.Card;
+import org.avni.server.domain.ReportCard;
 import org.avni.server.domain.DashboardSectionCardMapping;
 
 public class CardContract extends CHSRequest {
@@ -14,7 +14,7 @@ public class CardContract extends CHSRequest {
     private boolean nested;
     private int count;
 
-    public static CardContract fromEntity(Card card) {
+    public static CardContract fromEntity(ReportCard card) {
         CardContract cardContract = new CardContract();
         cardContract.setId(card.getId());
         cardContract.setUuid(card.getUuid());
