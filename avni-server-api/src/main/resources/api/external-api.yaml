@@ -1287,7 +1287,7 @@ paths:
           schema:
             type: string
             nullable: true
-            enum: [Subject,ProgramEnrolment,ProgramEncounter,Encounter,ChecklistItem]
+            enum: [ Subject,ProgramEnrolment,ProgramEncounter,Encounter,ChecklistItem ]
         - name: entityTypeId
           in: query
           description: "Allows filtering results by entity type id"
@@ -1870,13 +1870,13 @@ components:
       properties:
         Entity ID:
           type: string
-          description: ID of the entity for which the approval status is being returned
+          description: ID of the entity for which the approval action was done.
         Entity type:
           type: string
-          description: Type of the entity for which the approval status is being returned i.e. Subject / Encounter etc
+          description: Type of the entity which the approval action was done.
         Entity type ID:
           type: string
-          description: ID of the entity type for which the approval status is being returned
+          description: ID of the entity type of the entity for which the approval action was done. This will be the ID of the subject type, program, or encounter type - for the entity for which approval action was taken.
         Approval status:
           type: string
           description: Approval status for the entity
@@ -1925,18 +1925,18 @@ components:
         - $ref: '#/components/schemas/Task'
         - $ref: '#/components/schemas/TaskBody'
     inline_response_200_locations:
-        properties:
-          content:
-            type: array
-            items:
-                $ref: '#/components/schemas/Location'
-        allOf:
-            - $ref: '#/components/schemas/ResponsePage'
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+      allOf:
+        - $ref: '#/components/schemas/ResponsePage'
     inline_response_200_eas:
-        properties:
-          content:
-            type: array
-            items:
-                $ref: '#/components/schemas/EntityApprovalStatusBody'
-        allOf:
-            - $ref: '#/components/schemas/ResponsePage'
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityApprovalStatusBody'
+      allOf:
+        - $ref: '#/components/schemas/ResponsePage'
