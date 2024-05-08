@@ -48,8 +48,7 @@ public class CardService implements NonScopeAwareService {
         ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(newCard.getName(), existingCard.getName());
         buildCard(newCard, existingCard);
-        cardRepository.save(existingCard);
-        return existingCard;
+        return cardRepository.save(existingCard);
     }
 
     public void deleteCard(ReportCard card) {
@@ -70,6 +69,7 @@ public class CardService implements NonScopeAwareService {
         card.setVoided(cardContract.isVoided());
         card.setIconFileS3Key(cardContract.getIconFileS3Key());
         Long standardReportCardTypeId = cardContract.getStandardReportCardTypeId();
+
         if (standardReportCardTypeId != null) {
             StandardReportCardType type = standardReportCardTypeRepository.findById(standardReportCardTypeId).orElse(null);
             if (type == null) {

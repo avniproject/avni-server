@@ -16,19 +16,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-public class CardController {
+public class ReportCardController {
     private final CardRepository cardRepository;
     private final CardService cardService;
     private final AccessControlService accessControlService;
 
     @Autowired
-    public CardController(CardRepository cardRepository, CardService cardService, AccessControlService accessControlService) {
+    public ReportCardController(CardRepository cardRepository, CardService cardService, AccessControlService accessControlService) {
         this.cardRepository = cardRepository;
         this.cardService = cardService;
         this.accessControlService = accessControlService;
     }
 
-    @GetMapping(value = "/web/card")
+    @GetMapping(value = "/web/reportCard")
     @ResponseBody
     public List<CardContract> getAll() {
         return cardRepository.findAllByIsVoidedFalse()
@@ -36,7 +36,7 @@ public class CardController {
                 .collect(Collectors.toList());
     }
 
-    @GetMapping(value = "/web/card/{id}")
+    @GetMapping(value = "/web/reportCard/{id}")
     @ResponseBody
     public ResponseEntity<CardContract> getById(@PathVariable Long id) {
         Optional<ReportCard> card = cardRepository.findById(id);
@@ -44,7 +44,7 @@ public class CardController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping(value = "/web/card")
+    @PostMapping(value = "/web/reportCard")
     @ResponseBody
     @Transactional
     public ResponseEntity<CardContract> newCard(@RequestBody CardContract cardContract) {
@@ -53,7 +53,7 @@ public class CardController {
         return ResponseEntity.ok(CardContract.fromEntity(card));
     }
 
-    @PutMapping(value = "/web/card/{id}")
+    @PutMapping(value = "/web/reportCard/{id}")
     @ResponseBody
     @Transactional
     public ResponseEntity<CardContract> editCard(@PathVariable Long id, @RequestBody CardContract cardContract) {
@@ -62,11 +62,11 @@ public class CardController {
         if (!card.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        ReportCard newCard = cardService.editCard(cardContract, id);
-        return ResponseEntity.ok(CardContract.fromEntity(newCard));
+        ReportCard savedCard = cardService.editCard(cardContract, id);
+        return ResponseEntity.ok(CardContract.fromEntity(savedCard));
     }
 
-    @DeleteMapping(value = "/web/card/{id}")
+    @DeleteMapping(value = "/web/reportCard/{id}")
     @ResponseBody
     @Transactional
     public void deleteCard(@PathVariable Long id) {

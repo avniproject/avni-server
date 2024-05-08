@@ -10,6 +10,7 @@ public class CardContract extends CHSRequest {
     private String color;
     private Double displayOrder;
     private Long standardReportCardTypeId;
+    private StandardReportCardTypeContract standardReportCardType;
     private String iconFileS3Key;
     private boolean nested;
     private int count;
@@ -23,7 +24,8 @@ public class CardContract extends CHSRequest {
         cardContract.setQuery(card.getQuery());
         cardContract.setDescription(card.getDescription());
         cardContract.setColor(card.getColour());
-        cardContract.setStandardReportCardTypeId(card.getStandardReportCardTypeId());
+        if (card.getStandardReportCardType() != null)
+            cardContract.standardReportCardType = StandardReportCardTypeContract.fromEntity(card.getStandardReportCardType());
         cardContract.setIconFileS3Key(card.getIconFileS3Key());
         cardContract.setNested(card.isNested());
         cardContract.setCount(card.getCountOfCards());
@@ -106,5 +108,13 @@ public class CardContract extends CHSRequest {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public StandardReportCardTypeContract getStandardReportCardType() {
+        return standardReportCardType;
+    }
+
+    public void setStandardReportCardType(StandardReportCardTypeContract standardReportCardType) {
+        this.standardReportCardType = standardReportCardType;
     }
 }
