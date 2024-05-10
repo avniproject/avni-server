@@ -1,6 +1,5 @@
 package org.avni.server.dao;
 
-import java.util.Date;
 import org.avni.server.domain.IdentifierAssignment;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
@@ -10,6 +9,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "identifierAssignment", path = "identifierAssignment")
 public interface IdentifierAssignmentRepository extends TransactionalDataRepository<IdentifierAssignment>, FindByLastModifiedDateTime<IdentifierAssignment> {
@@ -17,7 +18,7 @@ public interface IdentifierAssignmentRepository extends TransactionalDataReposit
 
     Slice<IdentifierAssignment> findSliceByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullOrderByAssignmentOrderAsc(User currentUser, Date lastModifiedDateTime, Pageable pageable);
 
-    Integer countIdentifierAssignmentByIdentifierSourceEqualsAndAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNull(IdentifierSource identifierSource, User assignedTo);
+    Integer countIdentifierAssignmentByIdentifierSourceEqualsAndAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNullAndUsedIsFalse(IdentifierSource identifierSource, User assignedTo);
 
     boolean existsByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNull(User currentUser, Date lastModifiedDateTime);
 }

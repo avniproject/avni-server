@@ -45,6 +45,13 @@ public class ImplementationController implements RestControllerResourceProcessor
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         //ZipOutputStream will be automatically closed because we are using try-with-resources.
+        /**
+         * IMPORTANT: The un-tampered bundle is processed in the order of files inserted while generating the bundle,
+         * which is as per below code.
+         *
+         * Always ensure that bundle is created with content in the same sequence that you want it to be processed during upload.
+         * DISCLAIMER: If the bundle is tampered, for example to remove any forms or concepts, then the sequence of processing of bundle files is unknown
+         */
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             organisationService.addAddressLevelTypesJson(orgId, zos);
             if (includeLocations) {
@@ -69,10 +76,10 @@ public class ImplementationController implements RestControllerResourceProcessor
             organisationService.addGroupsJson(zos);
             organisationService.addGroupRoleJson(zos);
             organisationService.addGroupPrivilegeJson(zos);
-            organisationService.addGroupDashboardJson(zos);
             organisationService.addVideoJson(zos);
             organisationService.addReportCards(zos);
             organisationService.addReportDashboard(zos);
+            organisationService.addGroupDashboardJson(zos);
             organisationService.addDocumentation(zos);
             organisationService.addTaskType(zos);
             organisationService.addTaskStatus(zos);

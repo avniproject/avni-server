@@ -7,6 +7,7 @@ public class IdentifierAssignmentRequest extends CHSRequest {
     private String identifierSourceUUID;
     private String individualUUID;
     private String programEnrolmentUUID;
+    private boolean used;
 
     public String getIdentifierSourceUUID() {
         return identifierSourceUUID;
@@ -30,5 +31,13 @@ public class IdentifierAssignmentRequest extends CHSRequest {
 
     public void setProgramEnrolmentUUID(String programEnrolmentUUID) {
         this.programEnrolmentUUID = programEnrolmentUUID;
+    }
+
+    public boolean isUsed() {
+        return used;
+    }
+
+    public void setUsed(boolean used) {
+        this.used = used;
     }
 }

@@ -29,7 +29,7 @@ public interface ReferenceDataRepository<T extends CHSEntity> extends CHSReposit
         return findById(id).orElse(null);
     }
 
-    default T findByUuidOrName(String name, String uuid) {
+    default T findByUuidOrName(String uuid, String name) {
         return uuid != null ? findByUuid(uuid) : findByName(name);
     }
 }
