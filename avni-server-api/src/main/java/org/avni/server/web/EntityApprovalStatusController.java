@@ -78,7 +78,7 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
             @RequestParam(value = "entityType", required = false) SyncEntityName entityName,
             @RequestParam(value = "entityTypeUuid", required = false) String entityTypeUuid,
             Pageable pageable) {
-        if(entityName == null) {
+        if (entityName == null) {
             return wrap(entityApprovalStatusRepository
                     .findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
                             CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable));
@@ -112,7 +112,8 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
 
     private String fetchSubjectTypeForEntityNameAndUuid(SyncEntityName entityName, String entityTypeUuid) {
         switch (entityName) {
-            case Subject: return entityTypeUuid.isEmpty() ? null : entityTypeUuid;
+            case Subject:
+                return entityTypeUuid.isEmpty() ? null : entityTypeUuid;
             case Encounter:
                 return getSubjectTypeUuidFromEncounterTypeUuid(entityTypeUuid, FormType.Encounter);
             case ProgramEncounter:
@@ -120,7 +121,8 @@ public class EntityApprovalStatusController implements RestControllerResourcePro
             case ProgramEnrolment:
             case ChecklistItem:
                 return getSubjectTypeUuidFromProgramTypeUuid(entityTypeUuid, FormType.ProgramEnrolment);
-            default: return null;
+            default:
+                return null;
         }
     }
 

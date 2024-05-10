@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -179,5 +180,30 @@ public class AccessControlService {
         User user = UserContextHolder.getUser();
         if (!user.isAdmin())
             throw AvniAccessException.createForNotAdmin(user);
+    }
+
+    public void checkApprovePrivilegeOnEntityApprovalStatus(String entityType, String entityTypeUuid) {
+        switch (EntityApprovalStatus.EntityType.valueOf(entityType)) {
+            case Subject:
+                this.checkSubjectPrivilege(PrivilegeType.ApproveSubject, entityTypeUuid);
+                break;
+            case Encounter:
+            case ProgramEncounter:
+                this.checkEncounterPrivilege(PrivilegeType.ApproveEncounter, entityTypeUuid);
+                break;
+            case ProgramEnrolment:
+                this.checkProgramPrivilege(PrivilegeType.ApproveEnrolment, entityTypeUuid);
+                break;
+//            TODO: implement when ApproveChecklistitem privileges are enforced
+//            case ChecklistItem:
+        }
+    }
+
+    public void checkApprovePrivilegeOnEntityApprovalStatuses(List<EntityApprovalStatus> entityApprovalStatuses) {
+        Map<List<String>, Long> uniqueEASByTypeAndTypeUuid = entityApprovalStatuses
+            .stream()
+            .collect(Collectors.groupingBy(entityApprovalStatus -> Arrays.asList(String.valueOf(entityApprovalStatus.getEntityType()), entityApprovalStatus.getEntityTypeUuid()), Collectors.counting()));
+
+        uniqueEASByTypeAndTypeUuid.keySet().forEach(entity -> checkApprovePrivilegeOnEntityApprovalStatus(entity.get(0), entity.get(1)));
     }
 }

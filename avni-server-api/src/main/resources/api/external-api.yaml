@@ -1117,6 +1117,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/inline_response_200_4'
+  /api/locations:
+    get:
+      tags:
+        - Location
+      summary: Get paged list of locations
+      description: |
+        By passing in the appropriate options, you can get the locations in set of pages.
+      parameters:
+        - name: lastModifiedDateTime
+          in: query
+          description: "date-time in ISO datetime format. All the locations which have been updated since this time will be returned. The value should be specified in the following format - yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g. \"2000-10-31T01:30:00.000Z\"."
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      responses:
+        "200":
+          description: "successful, a page of locations"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_locations'
+        "400":
+          description: bad input parameter
+  /api/location/{ID}:
+    get:
+      tags:
+        - Location
+      summary: Get a specific location by ID
+      description: |
+        Provide the ID of the location. The ID is in UUID format.
+      parameters:
+        - name: ID
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+            format: uuid
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        "400":
+          description: bad input parameter
   /api/subjectMigration/bulk:
     post:
       tags:
@@ -1195,6 +1277,75 @@ paths:
       responses:
         "200":
           description: successful
+  /api/approvalStatuses:
+    get:
+      tags:
+        - Entity Approval Status
+      summary: Get paged list of entity approval statues
+      description: |
+        By passing in the appropriate options, you can get the entity approval statuses in set of pages
+      operationId: entityApprovalStatuses
+      parameters:
+        - name: lastModifiedDateTime
+          in: query
+          description: "date-time in ISO datetime format. All the entity approval statuses which have been updated since this time will be returned. The value should be specified in the following format - yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g. \"2000-10-31T01:30:00.000Z\". Defaults to \"1900-01-01T00:00:00.000Z\"."
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: now
+          in: query
+          description: "date-time in ISO datetime format. All the entity approval statuses which have been updated till this time will be returned. The value should be specified in the following format - yyyy-MM-dd'T'HH:mm:ss.SSSZ, e.g. \"2000-10-31T01:30:00.000Z\". Defaults to current time."
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+        - name: entityType
+          in: query
+          description: "Allows filtering results by entity type name"
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+            nullable: true
+            enum: [ Subject,ProgramEnrolment,ProgramEncounter,Encounter,ChecklistItem ]
+        - name: entityTypeId
+          in: query
+          description: "Allows filtering results by entity type id"
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: 1e9afb68-7e64-4295-8865-dbe7c433823e
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      responses:
+        "200":
+          description: "successful, a page of entity approval statuses"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_eas'
+        "400":
+          description: bad input parameter
 components:
   schemas:
     Subject:
@@ -1205,7 +1356,7 @@ components:
           format: uuid
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when subject is created by an external integrating system. This field is optional."
         Voided:
           type: boolean
         Subject type:
@@ -1223,6 +1374,10 @@ components:
             type: string
           description: "full hierarchy of location is provided, each one as key-value pair"
           example: "{\"Village\": \"Ganks\", \"Block\": \"Ynaos\"}"
+        Location ID:
+          type: string
+          format: uuid
+          description: Unique identifier of the lowest location/address at which the subject is registered
         relatives:
           type: array
           items:
@@ -1253,7 +1408,7 @@ components:
       properties:
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when subject is created by an external integrating system. This field is optional."
         Subject type:
           type: string
           example: Individual
@@ -1261,6 +1416,10 @@ components:
           type: string
           description: Complete address of the subject
           example: "India, Uttarakhand, Dehradun"
+        Location ID:
+          type: string
+          format: uuid
+          description: Unique identifier of the lowest location/address at which the subject is registered
         Date of birth:
           type: string
           description: Applicable only for Person type subject
@@ -1320,7 +1479,7 @@ components:
           format: uuid
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when enrolment is created by an external integrating system. This field is optional."
         Voided:
           type: boolean
         Subject ID:
@@ -1328,7 +1487,7 @@ components:
           format: uuid
         Subject external ID:
           type: string
-          description: "Subject's Legacy ID set by the external integrating system, this field is optional."
+          description: "Subject's external ID, present when its subject is created by an external integrating system. This field is optional."
         Subject type:
           type: string
         Program:
@@ -1365,7 +1524,7 @@ components:
           format: uuid
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when program encounter is created by an external integrating system. This field is optional."
         Voided:
           type: boolean
         Subject ID:
@@ -1374,7 +1533,7 @@ components:
           format: uuid
         Subject external ID:
           type: string
-          description: "Subject's Legacy ID set by the external integrating system, this field is optional."
+          description: "Subject's external ID, present when subject is created by an external integrating system. This field is optional."
         Subject type:
           type: string
           description: "name of the subject type to which this encounter belongs, same as subject type in the subject resource"
@@ -1384,7 +1543,7 @@ components:
           format: uuid
         Enrolment external ID:
           type: string
-          description: "Enrolment's Legacy ID set by the external integrating system, this field is optional."
+          description: "Enrolment's external ID, present when enrolment is created by an external integrating system. This field is optional."
         Program:
           type: string
           description: "name of the program of the enrolment to which this encounter belongs, same as program in the program enrolment resource"
@@ -1423,14 +1582,14 @@ components:
       properties:
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when program encounter is created by an external integrating system. This field is optional."
         Enrolment ID:
           type: string
           description: id of the program enrolment
           format: uuid
         Enrolment external ID:
           type: string
-          description: "Enrolment's Legacy ID set by the external integrating system, this field is optional."
+          description: "Enrolment's external ID, present when enrolment is created by an external integrating system. This field is optional."
         Program:
           type: string
           description: "name of the program of the enrolment to which this encounter belongs, same as program in the program enrolment resource"
@@ -1472,7 +1631,7 @@ components:
           format: uuid
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when encounter is created by an external integrating system. This field is optional."
         Voided:
           type: boolean
         Encounter type:
@@ -1484,7 +1643,7 @@ components:
           format: uuid
         Subject external ID:
           type: string
-          description: "Subject's Legacy ID set by the external integrating system, this field is optional."
+          description: "Subject's external ID, present when subject is created by an external integrating system. This field is optional."
         Subject type:
           type: string
           description: "name of the subject type to which this encounter belongs, same as subject type in the subject resource"
@@ -1520,7 +1679,7 @@ components:
       properties:
         External ID:
           type: string
-          description: "Legacy ID set by the external integrating system, this field is optional."
+          description: "External ID, present when enrolment is created by an external integrating system. This field is optional."
         Program:
           type: string
           example: ANC program
@@ -1530,7 +1689,7 @@ components:
           format: uuid
         Subject external ID:
           type: string
-          description: "Subject's Legacy ID set by the external integrating system, this field is optional."
+          description: "Subject's external ID, present when enrolment is created by an external integrating system. This field is optional."
         Enrolment location:
           $ref: '#/components/schemas/GeoLocation'
         Exit location:
@@ -1554,7 +1713,7 @@ components:
       properties:
         External ID:
           type: string
-          description: Legacy ID set by the external integrating system
+          description: "External ID, present when encounter is created by an external integrating system. This field is optional."
         Encounter type:
           type: string
           example: Monthly Visit
@@ -1564,7 +1723,7 @@ components:
           format: uuid
         Subject external ID:
           type: string
-          description: Subject's Legacy ID set by the external integrating system
+          description: "Subject's external ID, present when subject is created by an external integrating system. This field is optional."
         Encounter location:
           $ref: '#/components/schemas/GeoLocation'
         Encounter date time:
@@ -1592,6 +1751,30 @@ components:
           description: "as key value pairs. key is string and value of type (date, string, number or array of string of name of concepts)"
         Voided:
           type: boolean
+    Location:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+        External ID:
+          type: string
+          description: "External ID, present when location is created by an external integrating system. This field is optional."
+        Title:
+          type: string
+        Type:
+          type: string
+        Level:
+          type: number
+          description: "Level of the location in the hierarchy"
+        GPS Coordinates:
+          $ref: '#/components/schemas/GeoLocation'
+        Parent:
+          $ref: '#/components/schemas/Location'
+        Voided:
+          type: boolean
+        audit:
+          $ref: '#/components/schemas/Audit'
     GeoLocation:
       type: object
       properties:
@@ -1601,7 +1784,7 @@ components:
         "Y":
           type: number
           example: 74.7364501
-      description: Available if the location is enabled by the user
+      description: Available if the location is enabled by the user for transactional data
     Audit:
       type: object
       properties:
@@ -1706,6 +1889,29 @@ components:
           description: "id of locations"
           items:
             type: number
+    EntityApprovalStatusBody:
+      type: object
+      properties:
+        Entity ID:
+          type: string
+          description: ID of the entity for which the approval action was done.
+        Entity type:
+          type: string
+          description: Type of the entity which the approval action was done.
+        Entity type ID:
+          type: string
+          description: ID of the entity type of the entity for which the approval action was done. This will be the ID of the subject type, program, or encounter type - for the entity for which approval action was taken.
+        Approval status:
+          type: string
+          description: Approval status for the entity
+        Approval status comment:
+          type: string
+          description: Comments on the approval status for the entity
+        Status date time:
+          type: string
+          description: Date/Time when the approval status was set
+        audit:
+          $ref: '#/components/schemas/Audit'
     inline_response_200:
       properties:
         content:
@@ -1742,3 +1948,19 @@ components:
       allOf:
         - $ref: '#/components/schemas/Task'
         - $ref: '#/components/schemas/TaskBody'
+    inline_response_200_locations:
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+      allOf:
+        - $ref: '#/components/schemas/ResponsePage'
+    inline_response_200_eas:
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityApprovalStatusBody'
+      allOf:
+        - $ref: '#/components/schemas/ResponsePage'

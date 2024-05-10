@@ -1,17 +1,16 @@
 package org.avni.server.web;
 
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.web.response.slice.SlicedResources;
-import org.joda.time.DateTime;
 import org.avni.server.dao.IdentifierAssignmentRepository;
-import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
+import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.IdentifierAssignment;
 import org.avni.server.domain.User;
 import org.avni.server.service.IdentifierAssignmentService;
 import org.avni.server.service.UserService;
 import org.avni.server.web.request.IdentifierAssignmentRequest;
+import org.avni.server.web.response.slice.SlicedResources;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -102,6 +101,7 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
             identifierAssignment.setProgramEnrolment(programEnrolmentRepository.findByUuid(identifierAssignmentRequest.getProgramEnrolmentUUID()));
         }
 
+        identifierAssignment.setUsed(identifierAssignmentRequest.isUsed());
         return identifierAssignment;
     }
 

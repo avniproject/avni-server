@@ -94,6 +94,13 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
+    /**
+     * IMPORTANT: The un-tampered bundle is processed in the order of files inserted while generating the bundle,
+     * which is as per code in ImplementationController.export().
+     *
+     * Always ensure that bundle is created with content in the same sequence that you want it to be processed during upload.
+     * DISCLAIMER: If the bundle is tampered, for example to remove any forms or concepts, then the sequence of processing of bundle files is unknown
+     */
     private final List<String> fileSequence = new ArrayList<String>() {{
         add("organisationConfig.json");
         add("addressLevelTypes.json");
@@ -116,10 +123,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add("groups.json");
         add("groupRole.json");
         add("groupPrivilege.json");
-        add("groupDashboards.json");
         add("video.json");
         add("reportCard.json");
         add("reportDashboard.json");
+        add("groupDashboards.json");
         add("taskType.json");
         add("taskStatus.json");
         add("menuItem.json");

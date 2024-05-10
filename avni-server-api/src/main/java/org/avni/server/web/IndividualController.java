@@ -369,7 +369,7 @@ public class IndividualController extends AbstractController<Individual> impleme
             logger.error(errorMessage);
             individual.updateAudit();
         } else {
-            individual.setObservations(observations);
+        individual.setObservations(observations);
         }
 
         Individual savedIndividual = individualService.save(individual);
