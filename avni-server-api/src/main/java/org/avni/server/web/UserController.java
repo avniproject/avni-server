@@ -137,6 +137,8 @@ public class UserController {
             if (user == null)
                 return ResponseEntity.badRequest()
                         .body(String.format("User with username '%s' not found", userContract.getUsername()));
+            User currentUser = userService.getCurrentUser();
+            user.setAuditInfo(currentUser);
             resetSyncService.recordSyncAttributeValueChangeForUser(user, userContract, UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
             user = setUserAttributes(user, userContract);
 
@@ -210,6 +212,8 @@ public class UserController {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(id);
+            User currentUser = userService.getCurrentUser();
+            user.setAuditInfo(currentUser);
             idpServiceFactory.getIdpService(user).deleteUser(user);
             user.setVoided(true);
             user.setDisabledInCognito(true);
@@ -228,6 +232,8 @@ public class UserController {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(id);
+            User currentUser = userService.getCurrentUser();
+            user.setAuditInfo(currentUser);
             if (disable) {
                 idpServiceFactory.getIdpService(user).disableUser(user);
                 user.setDisabledInCognito(true);
