@@ -316,7 +316,7 @@ public class UserController {
                                            @RequestParam(value = "email", required = false) String email,
                                            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
                                            Pageable pageable) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Long> userAccountIds = getOwnedAccountIds(user);
         Page<UserContract> userContracts = userRepository.findAccountAndOrgAdmins(username, name, email, phoneNumber, userAccountIds, pageable)
@@ -328,7 +328,7 @@ public class UserController {
     @GetMapping(value = "/user/accountOrgAdmin/{id}")
     @ResponseBody
     public UserContract getOne(@PathVariable("id") Long id) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Long> userAccountIds = getOwnedAccountIds(user);
         List<Long> organisationIds = getOwnedOrganisationIds(user);

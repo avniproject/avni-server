@@ -19,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -49,7 +48,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     @RequestMapping(value = "/organisationGroup", method = RequestMethod.POST)
     @Transactional
     public ResponseEntity save(@RequestBody OrganisationGroupContract request) throws Exception {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         if (organisationGroupRepository.findByName(request.getName()) != null) {
             throw new ValidationException(String.format("Organisation group %s already exists", request.getName()));
         }
@@ -65,7 +64,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     @RequestMapping(value = "/organisationGroup/{id}", method = RequestMethod.PUT)
     @Transactional
     public ResponseEntity<?> updateOrganisationGroup(@PathVariable("id") Long id, @RequestBody OrganisationGroupContract request) throws Exception {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         OrganisationGroup organisationGroup = organisationGroupRepository.findByIdAndAccount_AccountAdmin_User_Id(id, user.getId());;
         //disable changing dbUser
@@ -75,7 +74,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
 
     @RequestMapping(value = "/organisationGroup", method = RequestMethod.GET)
     public Page<OrganisationGroupContract> get(Pageable pageable) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         Page<OrganisationGroup> organisationGroups = organisationGroupRepository.findByAccount_AccountAdmin_User_Id(user.getId(), pageable);
         return organisationGroups.map(OrganisationGroupContract::fromEntity);
@@ -83,7 +82,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
 
     @RequestMapping(value = "/organisationGroup/{id}", method = RequestMethod.GET)
     public OrganisationGroupContract getById(@PathVariable Long id) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         OrganisationGroup organisationGroup = organisationGroupRepository.findByIdAndAccount_AccountAdmin_User_Id(id, user.getId());
         return OrganisationGroupContract.fromEntity(organisationGroup);
@@ -92,7 +91,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
     @RequestMapping(value = "/organisationGroup/{id}", method = RequestMethod.DELETE)
     @Transactional
     public ResponseEntity<?> deleteById(@PathVariable Long id) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         OrganisationGroup organisationGroup = organisationGroupRepository.findByIdAndAccount_AccountAdmin_User_Id(id, user.getId());
         if (organisationGroup == null) {

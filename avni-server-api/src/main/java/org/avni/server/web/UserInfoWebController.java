@@ -64,7 +64,7 @@ public class UserInfoWebController {
                 user.getSyncSettings(),
                 groupPrivilegeResponses,
                 user.hasAllPrivileges(),
-                lastSessionTime);
+                lastSessionTime,
+                contextOrganisation.getCategory());
     }
-
 }

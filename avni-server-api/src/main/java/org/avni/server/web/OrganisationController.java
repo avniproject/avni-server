@@ -3,7 +3,7 @@ package org.avni.server.web;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.OrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.OrganisationContract;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,27 +23,23 @@ import java.util.stream.Collectors;
 public class OrganisationController implements RestControllerResourceProcessor<Organisation> {
     private final OrganisationRepository organisationRepository;
     private final AccountRepository accountRepository;
-    private final GenderRepository genderRepository;
-    private final GroupRepository groupRepository;
     private final ImplementationRepository implementationRepository;
     private final AccessControlService accessControlService;
-    private final OrganisationConfigService organisationConfigService;
+    private final OrganisationService organisationService;
 
     @Autowired
-    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, GenderRepository genderRepository, GroupRepository groupRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
+    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService) {
         this.organisationRepository = organisationRepository;
         this.accountRepository = accountRepository;
-        this.genderRepository = genderRepository;
-        this.groupRepository = groupRepository;
         this.implementationRepository = implementationRepository;
         this.accessControlService = accessControlService;
-        this.organisationConfigService = organisationConfigService;
+        this.organisationService = organisationService;
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.POST)
     @Transactional
     public ResponseEntity save(@RequestBody OrganisationContract request) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         String tempPassword = "password";
         Organisation org = organisationRepository.findByUuid(request.getUuid());
         implementationRepository.createDBUser(request.getDbUser(), tempPassword);
@@ -59,41 +55,13 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         setOrgAccountByIdOrDefault(org, request.getAccountId());
 
         organisationRepository.save(org);
-        createDefaultGenders(org);
-        addDefaultGroup(org.getId(), Group.Everyone);
-        addDefaultGroup(org.getId(), Group.Administrators);
-        organisationConfigService.createDefaultOrganisationConfig(org);
-
+        organisationService.setupBaseOrganisationData(org);
         return new ResponseEntity<>(org, HttpStatus.CREATED);
-    }
-
-    private void createDefaultGenders(Organisation org) {
-        createGender("Male", org);
-        createGender("Female", org);
-        createGender("Other", org);
-    }
-
-    private void createGender(String genderName, Organisation org) {
-        Gender gender = new Gender();
-        gender.setName(genderName);
-        gender.assignUUID();
-        gender.setOrganisationId(org.getId());
-        genderRepository.save(gender);
-    }
-
-    private void addDefaultGroup(Long organisationId, String groupType) {
-        Group group = new Group();
-        group.setName(groupType);
-        group.setOrganisationId(organisationId);
-        group.setUuid(UUID.randomUUID().toString());
-        group.setHasAllPrivileges(group.isAdministrator());
-        group.setVersion(0);
-        groupRepository.save(group);
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.GET)
     public List<OrganisationContract> findAll() {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Organisation> organisations = organisationRepository.findByAccount_AccountAdmin_User_Id(user.getId());
         return organisations.stream().map(OrganisationContract::fromEntity).collect(Collectors.toList());
@@ -101,16 +69,22 @@ public class OrganisationController implements RestControllerResourceProcessor<O
 
     @RequestMapping(value = "/organisation/{id}", method = RequestMethod.GET)
     public OrganisationContract findById(@PathVariable Long id) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         Organisation organisation = organisationRepository.findByIdAndAccount_AccountAdmin_User_Id(id, user.getId());
         return organisation != null ? OrganisationContract.fromEntity(organisation) : null;
     }
 
+    @RequestMapping(value = "/organisation/current", method = RequestMethod.GET)
+    public OrganisationContract findCurrent() {
+        long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        return OrganisationContract.fromEntity(organisationRepository.findOne(organisationId));
+    }
+
     @RequestMapping(value = "/organisation/{id}", method = RequestMethod.PUT)
     @Transactional
     public Organisation updateOrganisation(@PathVariable Long id, @RequestBody OrganisationContract request) throws Exception {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         Organisation organisation = organisationRepository.findByIdAndAccount_AccountAdmin_User_Id(id, user.getId());
         if (organisation == null) {
@@ -128,7 +102,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     public Page<OrganisationContract> find(@RequestParam(value = "name", required = false) String name,
                                            @RequestParam(value = "dbUser", required = false) String dbUser,
                                            Pageable pageable) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         List<Account> ownedAccounts = accountRepository.findAllByAccountAdmin_User_Id(user.getId());
         Page<Organisation> organisations = organisationRepository.findAll((root, query, builder) -> {
@@ -149,7 +123,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
 
     @RequestMapping(value = "organisation/search/findAllById", method = RequestMethod.GET)
     public Page<Organisation> findAllById(@Param("ids") Long[] ids, Pageable pageable) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         return organisationRepository.findAllByIdInAndIsVoidedFalse(ids, pageable);
     }
 
@@ -171,5 +145,4 @@ public class OrganisationController implements RestControllerResourceProcessor<O
                 : accountRepository.findOne(accountId);
         organisation.setAccount(account);
     }
-
 }

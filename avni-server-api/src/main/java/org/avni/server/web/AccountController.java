@@ -14,7 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -35,7 +34,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
     @RequestMapping(value = "/account", method = RequestMethod.POST)
     @Transactional
     public ResponseEntity createAccount(@RequestBody AccountRequest accountRequest) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         if (accountRepository.findByName(accountRequest.getName()) != null) {
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Account with name %s already exists", accountRequest.getName())));
         }
@@ -50,7 +49,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
     @RequestMapping(value = "/account/{id}", method = RequestMethod.PUT)
     @Transactional
     public ResponseEntity<?> updateAccount(@PathVariable Long id, @RequestBody AccountRequest accountRequest) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         Account account = accountRepository.findOne(id);
         account.setName(accountRequest.getName());
         accountRepository.save(account);
@@ -59,7 +58,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
 
     @RequestMapping(value = {"/account/search/findAll", "/account", "/account/search/find"}, method = RequestMethod.GET)
     public Page<Account> get(@Param("name") String name, Pageable pageable) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         if (name != null) {
             return accountRepository.findByAccountAdmin_User_IdAndNameIgnoreCaseContaining(user.getId(), name, pageable);
@@ -70,7 +69,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
 
     @RequestMapping(value = "/account/{id}", method = RequestMethod.GET)
     public Account getById(@PathVariable Long id) {
-        accessControlService.checkIsAdmin();
+        accessControlService.assertIsSuperAdmin();
         User user = UserContextHolder.getUserContext().getUser();
         return accountRepository.findByIdAndAccountAdmin_User_Id(id, user.getId());
     }

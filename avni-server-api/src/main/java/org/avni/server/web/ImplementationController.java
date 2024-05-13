@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.metadata.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.transaction.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.util.zip.ZipOutputStream;
+
+import static org.avni.server.domain.accessControl.PrivilegeType.MultiTxEntityTypeUpdate;
 
 @RestController
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
@@ -102,12 +105,26 @@ public class ImplementationController implements RestControllerResourceProcessor
     @RequestMapping(value = "/implementation/delete", method = RequestMethod.DELETE)
     @Transactional
     public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata) {
-        accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
+        if (accessControlService.isSuperAdmin()) {
+            return new ResponseEntity<>("Super admin cannot delete implementation data", HttpStatus.FORBIDDEN);
+        }
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        if (OrganisationCategory.Production.equals(organisation.getCategory())) {
+            return new ResponseEntity<>("Production organisation's data cannot be deleted", HttpStatus.CONFLICT);
+        }
+
+        accessControlService.checkPrivilege(MultiTxEntityTypeUpdate);
         organisationService.deleteTransactionalData();
+
         if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
             organisationService.deleteMetadata();
         }
         organisationService.deleteMediaContent(deleteMetadata);
+
+        if (deleteMetadata)
+            organisationService.setupBaseOrganisationData(UserContextHolder.getOrganisation());
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

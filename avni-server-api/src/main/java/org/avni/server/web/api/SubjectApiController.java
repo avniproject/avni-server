@@ -1,6 +1,5 @@
 package org.avni.server.web.api;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
