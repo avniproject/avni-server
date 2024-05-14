@@ -182,13 +182,13 @@ public class IndividualController extends AbstractController<Individual> impleme
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "subjectTypeUUID", required = false) String subjectTypeUUID,
             Pageable pageable) {
-        IndividualRepository repo = this.individualRepository;
+            IndividualRepository repo = this.individualRepository;
         return repo.findAll(
-                where(repo.getFilterSpecForName(name))
-                        .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
-                        .and(repo.getFilterSpecForVoid(false))
-                , pageable)
-                .map(t -> projectionFactory.createProjection(IndividualWebProjection.class, t));
+                            where(repo.getFilterSpecForName(name))
+                                    .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
+                                    .and(repo.getFilterSpecForVoid(false))
+                            , pageable)
+                    .map(t -> projectionFactory.createProjection(IndividualWebProjection.class, t));
     }
 
     @PostMapping(value = "/web/searchAPI/v2")

@@ -195,9 +195,13 @@ public class OrganisationConfigService implements NonScopeAwareService {
     }
 
     public Object getSettingsByKey(String key) {
+        OrganisationConfig currentOrganisationConfig = this.getCurrentOrganisationConfig();
+        return currentOrganisationConfig.getSettings().getOrDefault(key, Collections.EMPTY_LIST);
+    }
+
+    public OrganisationConfig getCurrentOrganisationConfig() {
         Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
-        OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
-        return organisationConfig.getSettings().getOrDefault(key, Collections.EMPTY_LIST);
+        return organisationConfigRepository.findByOrganisationId(organisationId);
     }
 
     public void saveCustomRegistrationLocations(List<String> locationTypeUUIDs, SubjectType subjectType) {
