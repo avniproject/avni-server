@@ -5,6 +5,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CognitoConfig {
+    @Value("${cognito.region}")
+    private String region;
+
     @Value("${cognito.poolid}")
     private String poolId;
 
@@ -17,5 +20,9 @@ public class CognitoConfig {
 
     public String getClientId() {
         return clientId;
+    }
+
+    public String getRegion() {
+        return region;
     }
 }

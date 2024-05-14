@@ -39,7 +39,8 @@ public class CognitoIdpService extends IdpServiceImpl {
     @Value("${cognito.poolid}")
     private String userPoolId;
 
-    private Regions REGION = Regions.AP_SOUTH_1;
+    @Value("${cognito.region}")
+    private String region;
 
     private AWSCognitoIdentityProvider cognitoClient;
 
@@ -52,7 +53,7 @@ public class CognitoIdpService extends IdpServiceImpl {
     public void init() {
         cognitoClient = AWSCognitoIdentityProviderClientBuilder.standard()
                 .withCredentials(getCredentialsProvider())
-                .withRegion(REGION)
+                .withRegion(Regions.fromName(region))
                 .build();
         logger.info("Initialized CognitoIDP client");
     }
