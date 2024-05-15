@@ -126,7 +126,7 @@ public class AddressLevel extends OrganisationAwareEntity {
         return null !=
                 subLocations
                         .stream()
-                        .filter(location -> location.getTitle().equals(title) &&
+                        .filter(location -> location.getTitle().equalsIgnoreCase(title) &&
                                 location.getType().equals(type)
                         ).findFirst()
                         .orElse(null);
@@ -137,7 +137,7 @@ public class AddressLevel extends OrganisationAwareEntity {
                 subLocations
                         .stream()
                         .filter(location -> !location.getId().equals(exclude.getId()))
-                        .filter(location -> location.getTitle().equals(title) &&
+                        .filter(location -> location.getTitle().equalsIgnoreCase(title) &&
                                 location.getType().equals(type)
                         ).findFirst()
                         .orElse(null);
