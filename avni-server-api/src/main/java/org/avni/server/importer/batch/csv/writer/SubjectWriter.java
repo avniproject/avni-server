@@ -46,6 +46,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final S3Service s3Service;
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
     private AddressLevelCreator addressLevelCreator;
+    private final SubjectMigrationService subjectMigrationService;
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
@@ -63,7 +64,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                          ObservationCreator observationCreator, IndividualService individualService, EntityApprovalStatusWriter entityApprovalStatusWriter,
                          S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
-                         AddressLevelCreator addressLevelCreator) {
+                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService) {
         super(organisationConfigService);
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -79,6 +80,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.individualService = individualService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.addressLevelCreator = addressLevelCreator;
+        this.subjectMigrationService = subjectMigrationService;
         this.locationCreator = new LocationCreator();
         this.s3Service = s3Service;
     }
@@ -94,6 +96,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
 
             Individual individual = getOrCreateIndividual(row);
+            AddressLevel oldAddressLevel = individual.getAddressLevel();
+            ObservationCollection oldObservations = individual.getObservations();
             List<String> allErrorMsgs = new ArrayList<>();
 
             SubjectType subjectType = subjectTypeCreator.getSubjectType(row.get(SubjectHeaders.subjectTypeHeader), SubjectHeaders.subjectTypeHeader);
@@ -126,6 +130,9 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                 decisionCreator.addRegistrationDecisions(individual.getObservations(), ruleResponse.getDecisions());
                 savedIndividual = individualService.save(individual);
                 visitCreator.saveScheduledVisits(formMapping.getType(), savedIndividual.getUuid(), null, ruleResponse.getVisitSchedules(), null);
+            }
+            if (oldAddressLevel != null) { // existing subject is being updated
+                subjectMigrationService.markSubjectMigrationIfRequired(savedIndividual.getUuid(), oldAddressLevel, savedIndividual.getAddressLevel(), oldObservations, savedIndividual.getObservations(), false);
             }
             entityApprovalStatusWriter.saveStatus(formMapping, savedIndividual.getId(), EntityApprovalStatus.EntityType.Subject, savedIndividual.getSubjectType().getUuid());
         } catch (Exception e) {
