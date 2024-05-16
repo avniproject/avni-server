@@ -156,7 +156,7 @@ public class ImportController {
     public JsonObject getSubjectOrLocationObsValue(@RequestParam("type") String type,
                                                    @RequestParam("ids") String ids,
                                                    @RequestParam("formElementUuid") String formElementUuid) {
-        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         FormElement formElement = formElementRepository.findByUuid(formElementUuid);
         JsonObject response = new JsonObject();
         if (ConceptDataType.Location.toString().equals(type)) {
