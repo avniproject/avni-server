@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class EntitySyncStatusContract {
-    private static final DateTime REALLY_OLD_DATE = new DateTime("1900-01-01T00:00:00.000Z");
+    public static final DateTime REALLY_OLD_DATE = new DateTime("1900-01-01T00:00:00.000Z");
     private String uuid;
     private String entityName;
     private DateTime loadedSince;

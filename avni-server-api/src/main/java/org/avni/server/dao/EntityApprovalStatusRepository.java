@@ -3,6 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.web.request.EntitySyncStatusContract;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +37,7 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     default Page<EntityApprovalStatus> findEntityApprovalStatuses(EntityApprovalStatusSearchParams searchParams, Pageable pageable) {
 
         Specification specification = lastModifiedBetween(
-            CHSEntity.toDate(searchParams.getLastModifiedDateTime() != null ? searchParams.getLastModifiedDateTime() : new DateTime("1900-01-01T00:00:00.000Z")),
+            CHSEntity.toDate(searchParams.getLastModifiedDateTime() != null ? searchParams.getLastModifiedDateTime() : EntitySyncStatusContract.REALLY_OLD_DATE),
             CHSEntity.toDate(searchParams.getNow() != null ? searchParams.getNow() : new DateTime()));
 
         if (searchParams.getEntityType() != null) {
