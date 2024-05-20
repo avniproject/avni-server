@@ -31,7 +31,7 @@ public class ReportCardController {
     @GetMapping(value = "/web/reportCard")
     @ResponseBody
     public List<CardContract> getAll() {
-        return cardRepository.findAllByIsVoidedFalse()
+        return cardRepository.findAllByIsVoidedFalseOrderByName()
                 .stream().map(CardContract::fromEntity)
                 .collect(Collectors.toList());
     }

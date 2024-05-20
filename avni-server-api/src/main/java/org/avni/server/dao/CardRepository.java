@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.ReportCard;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -17,4 +18,5 @@ public interface CardRepository extends ReferenceDataRepository<ReportCard>, Fin
 
     List<ReportCard> findAllByIconFileS3KeyNotNull();
 
+    List<ReportCard> findAllByIsVoidedFalseOrderByName();
 }

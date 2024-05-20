@@ -42,7 +42,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     @GetMapping(value = "/web/dashboard")
     @ResponseBody
     public List<DashboardResponse> getAll() {
-        return dashboardRepository.findAllByIsVoidedFalse()
+        return dashboardRepository.findAllByIsVoidedFalseOrderByName()
                 .stream().map(dashboardMapper::fromEntity)
                 .collect(Collectors.toList());
     }

@@ -14,4 +14,6 @@ public interface DashboardRepository extends ReferenceDataRepository<Dashboard>,
 
     @Query("select d.name from Dashboard d where d.isVoided = false")
     List<String> getAllNames();
+
+    List<Dashboard> findAllByIsVoidedFalseOrderByName();
 }
