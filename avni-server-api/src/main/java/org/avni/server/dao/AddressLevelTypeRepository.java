@@ -1,6 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.AddressLevelTypes;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
@@ -36,4 +37,8 @@ public interface AddressLevelTypeRepository extends ReferenceDataRepository<Addr
     AddressLevelType findByParent(AddressLevelType parent);
 
     List<AddressLevelType> findByIsVoidedFalseAndNameIgnoreCaseContains(String name);
+
+    default AddressLevelTypes getAllAddressLevelTypes() {
+        return new AddressLevelTypes(this.findAllByIsVoidedFalse());
+    }
 }

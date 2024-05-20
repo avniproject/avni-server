@@ -6,7 +6,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 
 public abstract class EntityWriter {
-    private final OrganisationConfigService organisationConfigService;
+    protected final OrganisationConfigService organisationConfigService;
 
     protected EntityWriter(OrganisationConfigService organisationConfigService) {
         this.organisationConfigService = organisationConfigService;
