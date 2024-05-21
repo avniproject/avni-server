@@ -2,15 +2,14 @@ package org.avni.server.service;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
-import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.web.request.CardContract;
+import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.request.ReportCardRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CardService implements NonScopeAwareService {
@@ -29,26 +28,26 @@ public class CardService implements NonScopeAwareService {
         this.encounterTypeRepository = encounterTypeRepository;
     }
 
-    public ReportCard saveCard(CardContract cardContract) {
-        assertNoExistingCardWithName(cardContract.getName());
+    public ReportCard saveCard(org.avni.server.web.request.ReportCardRequest reportCardRequest) {
+        assertNoExistingCardWithName(reportCardRequest.getName());
         ReportCard card = new ReportCard();
         card.assignUUID();
-        buildCard(cardContract, card);
+        buildCard(reportCardRequest, card);
         cardRepository.save(card);
         return card;
     }
 
-    public void uploadCard(CardContract cardContract) {
-        ReportCard card = cardRepository.findByUuid(cardContract.getUuid());
+    public void uploadCard(ReportCardRequest reportCardRequest) {
+        ReportCard card = cardRepository.findByUuid(reportCardRequest.getUuid());
         if (card == null) {
             card = new ReportCard();
-            card.setUuid(cardContract.getUuid());
+            card.setUuid(reportCardRequest.getUuid());
         }
-        buildCard(cardContract, card);
+        buildCard(reportCardRequest, card);
         cardRepository.save(card);
     }
 
-    public ReportCard editCard(CardContract newCard, Long cardId) {
+    public ReportCard editCard(ReportCardRequest newCard, Long cardId) {
         ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(newCard.getName(), existingCard.getName());
         buildCard(newCard, existingCard);
@@ -64,14 +63,14 @@ public class CardService implements NonScopeAwareService {
         return cardRepository.findAll();
     }
 
-    private void buildCard(CardContract cardContract, ReportCard card) {
-        card.setName(cardContract.getName());
-        card.setColour(cardContract.getColor());
-        card.setDescription(cardContract.getDescription());
-        card.setQuery(cardContract.getQuery());
-        card.setVoided(cardContract.isVoided());
-        card.setIconFileS3Key(cardContract.getIconFileS3Key());
-        Long standardReportCardTypeId = cardContract.getStandardReportCardTypeId();
+    private void buildCard(ReportCardRequest reportCardRequest, ReportCard card) {
+        card.setName(reportCardRequest.getName());
+        card.setColour(reportCardRequest.getColor());
+        card.setDescription(reportCardRequest.getDescription());
+        card.setQuery(reportCardRequest.getQuery());
+        card.setVoided(reportCardRequest.isVoided());
+        card.setIconFileS3Key(reportCardRequest.getIconFileS3Key());
+        Long standardReportCardTypeId = reportCardRequest.getStandardReportCardTypeId();
 
         if (standardReportCardTypeId != null) {
             StandardReportCardType type = standardReportCardTypeRepository.findById(standardReportCardTypeId).orElse(null);
@@ -82,12 +81,16 @@ public class CardService implements NonScopeAwareService {
         } else {
             card.setStandardReportCardType(null);
         }
-        card.setNested(cardContract.isNested());
-        if (cardContract.getCount() < ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS || cardContract.getCount() > ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS) {
+        card.setNested(reportCardRequest.isNested());
+        if (reportCardRequest.getCount() < ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS || reportCardRequest.getCount() > ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS) {
             throw new BadRequestError(String.format("Nested ReportCard count should have minmum value of %d and maximum value of %d",
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
-        card.setCountOfCards(cardContract.getCount());
+        card.setCountOfCards(reportCardRequest.getCount());
+
+        card.setStandardReportCardInputSubjectTypes(reportCardRequest.getStandardReportCardInputSubjectTypes());
+        card.setStandardReportCardInputPrograms(reportCardRequest.getStandardReportCardInputPrograms());
+        card.setStandardReportCardInputEncounterTypes(reportCardRequest.getStandardReportCardInputEncounterTypes());
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {

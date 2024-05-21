@@ -6,7 +6,9 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.web.request.CardContract;
+import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.request.ReportCardRequest;
+import org.avni.server.web.response.ReportCardResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +35,7 @@ public class ReportCardController {
 
     @GetMapping(value = "/web/reportCard")
     @ResponseBody
-    public List<CardContract> getAll() {
+    public List<ReportCardContract> getAll() {
         return cardRepository.findAllByIsVoidedFalseOrderByName()
                 .stream().map(reportCardMapper::fromEntity)
                 .collect(Collectors.toList());
@@ -41,7 +43,7 @@ public class ReportCardController {
 
     @GetMapping(value = "/web/reportCard/{id}")
     @ResponseBody
-    public ResponseEntity<CardContract> getById(@PathVariable Long id) {
+    public ResponseEntity<ReportCardResponse> getById(@PathVariable Long id) {
         Optional<ReportCard> card = cardRepository.findById(id);
         return card.map(c -> ResponseEntity.ok(reportCardMapper.fromEntity(c)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
@@ -50,22 +52,22 @@ public class ReportCardController {
     @PostMapping(value = "/web/reportCard")
     @ResponseBody
     @Transactional
-    public ResponseEntity<CardContract> newCard(@RequestBody CardContract cardContract) {
+    public ResponseEntity<ReportCardContract> newCard(@RequestBody ReportCardRequest cardRequest) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
-        ReportCard card = cardService.saveCard(cardContract);
+        ReportCard card = cardService.saveCard(cardRequest);
         return ResponseEntity.ok(reportCardMapper.fromEntity(card));
     }
 
     @PutMapping(value = "/web/reportCard/{id}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<CardContract> editCard(@PathVariable Long id, @RequestBody CardContract cardContract) {
+    public ResponseEntity<ReportCardContract> editCard(@PathVariable Long id, @RequestBody ReportCardRequest request) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<ReportCard> card = cardRepository.findById(id);
         if (!card.isPresent()) {
             return ResponseEntity.notFound().build();
         }
-        ReportCard savedCard = cardService.editCard(cardContract, id);
+        ReportCard savedCard = cardService.editCard(request, id);
         return ResponseEntity.ok(reportCardMapper.fromEntity(savedCard));
     }
 

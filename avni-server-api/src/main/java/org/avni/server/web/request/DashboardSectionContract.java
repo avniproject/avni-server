@@ -1,10 +1,9 @@
 package org.avni.server.web.request;
 
-import org.avni.server.domain.DashboardSection;
+import org.avni.server.web.contract.ReportCardContract;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DashboardSectionContract extends CHSRequest {
     private String name;
@@ -12,7 +11,7 @@ public class DashboardSectionContract extends CHSRequest {
     private String viewType;
     private Double displayOrder;
     private String dashboardUUID;
-    private List<CardContract> cards = new ArrayList<>();
+    private List<ReportCardContract> cards = new ArrayList<>();
     private List<DashboardSectionCardMappingContract> dashboardSectionCardMappings = new ArrayList<>();
 
     public String getName() {
@@ -31,11 +30,11 @@ public class DashboardSectionContract extends CHSRequest {
         this.description = description;
     }
 
-    public List<CardContract> getCards() {
+    public List<ReportCardContract> getCards() {
         return cards;
     }
 
-    public void setCards(List<CardContract> cards) {
+    public void setCards(List<ReportCardContract> cards) {
         this.cards = cards;
     }
 

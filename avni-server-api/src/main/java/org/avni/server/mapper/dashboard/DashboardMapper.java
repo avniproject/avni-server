@@ -2,6 +2,7 @@ package org.avni.server.mapper.dashboard;
 
 import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.DashboardSection;
+import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -58,9 +59,9 @@ public class DashboardMapper {
         dashboardContract.setViewType(ds.getViewType().name());
         dashboardContract.setDisplayOrder(ds.getDisplayOrder());
 
-        List<CardContract> list = ds.getDashboardSectionCardMappings().stream()
+        List<ReportCardContract> list = ds.getDashboardSectionCardMappings().stream()
                 .map(mapping -> {
-                    CardContract cardContract = reportCardMapper.fromEntity(mapping.getCard());
+                    ReportCardContract cardContract = reportCardMapper.fromEntity(mapping.getCard());
                     cardContract.setDisplayOrder(mapping.getDisplayOrder());
                     return cardContract;
                 })
