@@ -11,7 +11,6 @@ import org.avni.server.domain.SubjectType;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"name", "uuid"})
 public class SubjectTypeContract extends ReferenceDataContract {
-
     @JsonProperty(value = "group")
     private boolean isGroup;
 
@@ -83,6 +82,14 @@ public class SubjectTypeContract extends ReferenceDataContract {
         contract.setNameHelpText(subjectType.getNameHelpText());
         contract.setIconFileS3Key(subjectType.getIconFileS3Key());
         contract.setSettings(subjectType.getSettings());
+        return contract;
+    }
+
+    public static SubjectTypeContract createBasic(SubjectType subjectType) {
+        SubjectTypeContract contract = new SubjectTypeContract();
+        contract.setName(subjectType.getName());
+        contract.setUuid(subjectType.getUuid());
+        contract.setType(subjectType.getType().name());
         return contract;
     }
 

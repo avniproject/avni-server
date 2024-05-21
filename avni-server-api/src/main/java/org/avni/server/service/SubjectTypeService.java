@@ -229,7 +229,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         return defaultSettings;
     }
 
-    public class SubjectTypeUpsertResponse {
+    public static class SubjectTypeUpsertResponse {
         boolean isSubjectTypeNotPresentInDB;
         SubjectType subjectType;
 

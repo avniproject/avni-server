@@ -1,6 +1,7 @@
 package org.avni.server.web.contract;
 
 import org.avni.server.domain.DeclarativeRule;
+import org.avni.server.domain.Program;
 
 public class ProgramContract {
     private String name;
@@ -110,5 +111,12 @@ public class ProgramContract {
 
     public void setAllowMultipleEnrolments(boolean allowMultipleEnrolments) {
         this.allowMultipleEnrolments = allowMultipleEnrolments;
+    }
+
+    public static ProgramContract createBasic(Program program) {
+        ProgramContract contract = new ProgramContract();
+        contract.setName(program.getName());
+        contract.setUuid(program.getUuid());
+        return contract;
     }
 }

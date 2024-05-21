@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 public class SubjectTypes implements MetaData {
-    private List<SubjectType> subjectTypes;
+    private final List<SubjectType> subjectTypes;
     private final Map<SubjectType, List<Program>> programs = new HashMap<>();
     private final Map<SubjectType, Map<Program, List<EncounterType>>> programEncounterTypes = new HashMap<>();
     private final Map<SubjectType, List<EncounterType>> generalEncounterTypes = new HashMap<>();

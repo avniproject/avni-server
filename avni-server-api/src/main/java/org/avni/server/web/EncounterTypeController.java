@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.apache.commons.collections.ListUtils;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
@@ -7,6 +8,7 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.OperationalEncounterType;
+import org.avni.server.domain.Program;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.EncounterTypeService;
 import org.avni.server.service.FormMappingParameterObject;
@@ -14,6 +16,9 @@ import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
+import org.avni.server.web.contract.EncounterTypeContract;
+import org.avni.server.web.contract.ProgramContract;
+import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EntityTypeContract;
 import org.avni.server.web.request.webapp.EncounterTypeContractWeb;
 import org.slf4j.Logger;
@@ -25,10 +30,12 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class EncounterTypeController extends AbstractController<EncounterType> implements RestControllerResourceProcessor<EncounterTypeContractWeb> {
@@ -70,6 +77,26 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
         return wrap(operationalEncounterTypeRepository
                 .findPageByIsVoidedFalse(pageable)
                 .map(EncounterTypeContractWeb::fromOperationalEncounterType));
+    }
+
+    @GetMapping(value = "/web/encounterType/v2")
+    public List<EncounterTypeContract> getAllEncounterTypes(@RequestParam(required = false, name = "subjectType") List<String> subjectTypeUuids,
+                                                      @RequestParam(required = false, name = "program") List<String> programUuids) {
+        List<EncounterType> allEncounterTypes;
+        if (CollectionUtils.isEmpty(subjectTypeUuids) && CollectionUtils.isEmpty(programUuids)) {
+            allEncounterTypes = encounterTypeRepository.findAllByIsVoidedFalseOrderByName();
+        } else if (CollectionUtils.isEmpty(programUuids)) {
+            allEncounterTypes = formMappingService.getEncounterTypes(subjectTypeUuids);
+        } else {
+            allEncounterTypes = formMappingService.getEncounterTypes(subjectTypeUuids, programUuids);
+        }
+
+        return allEncounterTypes.stream().map(encounterType -> {
+            EncounterTypeContract contract = new EncounterTypeContract();
+            contract.setName(encounterType.getName());
+            contract.setUuid(encounterType.getUuid());
+            return contract;
+        }).collect(Collectors.toList());
     }
 
     @GetMapping(value = "/web/encounterTypes")

@@ -2,10 +2,13 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.web.request.SubjectTypeContract;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Entity
 @Table(name = "report_card")
@@ -33,6 +36,10 @@ public class ReportCard extends OrganisationAwareEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "standard_report_card_type_id")
     private StandardReportCardType standardReportCardType;
+
+    @Column
+    @Type(type = "jsonObject")
+    private JsonObject standardReportCardInput;
 
     public String getName() {
         return name;
@@ -109,5 +116,29 @@ public class ReportCard extends OrganisationAwareEntity {
 
     public void setIconFileS3Key(String iconFileS3Key) {
         this.iconFileS3Key = iconFileS3Key;
+    }
+
+    public List<String> getStandardReportCardInputSubjectTypes() {
+        return standardReportCardInput.getList("subjectTypes");
+    }
+
+    public void setStandardReportCardInputSubjectTypes(List<String> subjectTypes) {
+        standardReportCardInput.with("subjectTypes", subjectTypes);
+    }
+
+    public List<String> getStandardReportCardInputPrograms() {
+        return standardReportCardInput.getList("programs");
+    }
+
+    public void setStandardReportCardInputPrograms(List<String> programs) {
+        standardReportCardInput.with("programs", programs);
+    }
+
+    public List<String> getStandardReportCardInputEncounterTypes() {
+        return standardReportCardInput.getList("encounterTypes");
+    }
+
+    public void setStandardReportCardInputEncounterTypes(List<String> encounterTypes) {
+        standardReportCardInput.with("encounterTypes", encounterTypes);
     }
 }

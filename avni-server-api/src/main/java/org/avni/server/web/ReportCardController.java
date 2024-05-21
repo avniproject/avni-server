@@ -3,6 +3,7 @@ package org.avni.server.web;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.CardContract;
@@ -20,19 +21,21 @@ public class ReportCardController {
     private final CardRepository cardRepository;
     private final CardService cardService;
     private final AccessControlService accessControlService;
+    private final ReportCardMapper reportCardMapper;
 
     @Autowired
-    public ReportCardController(CardRepository cardRepository, CardService cardService, AccessControlService accessControlService) {
+    public ReportCardController(CardRepository cardRepository, CardService cardService, AccessControlService accessControlService, ReportCardMapper reportCardMapper) {
         this.cardRepository = cardRepository;
         this.cardService = cardService;
         this.accessControlService = accessControlService;
+        this.reportCardMapper = reportCardMapper;
     }
 
     @GetMapping(value = "/web/reportCard")
     @ResponseBody
     public List<CardContract> getAll() {
         return cardRepository.findAllByIsVoidedFalseOrderByName()
-                .stream().map(CardContract::fromEntity)
+                .stream().map(reportCardMapper::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -40,7 +43,7 @@ public class ReportCardController {
     @ResponseBody
     public ResponseEntity<CardContract> getById(@PathVariable Long id) {
         Optional<ReportCard> card = cardRepository.findById(id);
-        return card.map(c -> ResponseEntity.ok(CardContract.fromEntity(c)))
+        return card.map(c -> ResponseEntity.ok(reportCardMapper.fromEntity(c)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -50,7 +53,7 @@ public class ReportCardController {
     public ResponseEntity<CardContract> newCard(@RequestBody CardContract cardContract) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         ReportCard card = cardService.saveCard(cardContract);
-        return ResponseEntity.ok(CardContract.fromEntity(card));
+        return ResponseEntity.ok(reportCardMapper.fromEntity(card));
     }
 
     @PutMapping(value = "/web/reportCard/{id}")
@@ -63,7 +66,7 @@ public class ReportCardController {
             return ResponseEntity.notFound().build();
         }
         ReportCard savedCard = cardService.editCard(cardContract, id);
-        return ResponseEntity.ok(CardContract.fromEntity(savedCard));
+        return ResponseEntity.ok(reportCardMapper.fromEntity(savedCard));
     }
 
     @DeleteMapping(value = "/web/reportCard/{id}")

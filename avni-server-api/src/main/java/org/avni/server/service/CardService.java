@@ -1,9 +1,8 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.CardRepository;
-import org.avni.server.dao.StandardReportCardTypeRepository;
-import org.avni.server.domain.ReportCard;
-import org.avni.server.domain.StandardReportCardType;
+import org.avni.server.dao.*;
+import org.avni.server.domain.*;
+import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.CardContract;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +14,19 @@ import java.util.stream.Collectors;
 
 @Service
 public class CardService implements NonScopeAwareService {
-
     private final CardRepository cardRepository;
     private final StandardReportCardTypeRepository standardReportCardTypeRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final ProgramRepository programRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
+        this.programRepository = programRepository;
+        this.encounterTypeRepository = encounterTypeRepository;
     }
 
     public ReportCard saveCard(CardContract cardContract) {
@@ -56,9 +60,8 @@ public class CardService implements NonScopeAwareService {
         cardRepository.save(card);
     }
 
-    public List<CardContract> getAll() {
-        List<ReportCard> reportCards = cardRepository.findAll();
-        return reportCards.stream().map(CardContract::fromEntity).collect(Collectors.toList());
+    public List<ReportCard> getAll() {
+        return cardRepository.findAll();
     }
 
     private void buildCard(CardContract cardContract, ReportCard card) {
@@ -98,6 +101,18 @@ public class CardService implements NonScopeAwareService {
         if (existingCard != null) {
             throw new BadRequestError(String.format("Card %s already exists", name));
         }
+    }
+
+    public List<SubjectType> getStandardReportCardInputSubjectTypes(ReportCard card) {
+        return subjectTypeRepository.findAllByUuidIn(card.getStandardReportCardInputSubjectTypes());
+    }
+
+    public List<Program> getStandardReportCardInputPrograms(ReportCard card) {
+        return programRepository.findAllByUuidIn(card.getStandardReportCardInputPrograms());
+    }
+
+    public List<EncounterType> getStandardReportCardInputEncounterTypes(ReportCard card) {
+        return encounterTypeRepository.findAllByUuidIn(card.getStandardReportCardInputEncounterTypes());
     }
 
     @Override

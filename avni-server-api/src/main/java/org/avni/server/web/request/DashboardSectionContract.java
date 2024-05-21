@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DashboardSectionContract extends CHSRequest {
-
     private String name;
     private String description;
     private String viewType;
@@ -15,35 +14,6 @@ public class DashboardSectionContract extends CHSRequest {
     private String dashboardUUID;
     private List<CardContract> cards = new ArrayList<>();
     private List<DashboardSectionCardMappingContract> dashboardSectionCardMappings = new ArrayList<>();
-
-    public static DashboardSectionContract fromEntity(DashboardSection ds) {
-        DashboardSectionContract dashboardContract = new DashboardSectionContract();
-        dashboardContract.setId(ds.getId());
-        dashboardContract.setUuid(ds.getUuid());
-        dashboardContract.setVoided(ds.isVoided());
-        dashboardContract.setName(ds.getName());
-        dashboardContract.setDescription(ds.getDescription());
-        dashboardContract.setViewType(ds.getViewType().name());
-        dashboardContract.setDisplayOrder(ds.getDisplayOrder());
-        setCards(dashboardContract, ds);
-        setDashboardSectionCardMappings(dashboardContract, ds);
-        dashboardContract.setDashboardUUID(ds.getDashboardUUID());
-        return dashboardContract;
-    }
-
-    private static void setDashboardSectionCardMappings(DashboardSectionContract contract, DashboardSection ds) {
-        List<DashboardSectionCardMappingContract> mappingContracts = ds.getDashboardSectionCardMappings().stream()
-                .map(DashboardSectionCardMappingContract ::fromEntity)
-                .collect(Collectors.toList());
-        contract.setDashboardSectionCardMappings(mappingContracts);
-    }
-
-    private static void setCards(DashboardSectionContract contract, DashboardSection ds) {
-        List<CardContract> list = ds.getDashboardSectionCardMappings().stream()
-                .map(CardContract::fromMapping)
-                .collect(Collectors.toList());
-        contract.setCards(list);
-    }
 
     public String getName() {
         return name;

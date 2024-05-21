@@ -32,4 +32,6 @@ public interface ReferenceDataRepository<T extends CHSEntity> extends CHSReposit
     default T findByUuidOrName(String uuid, String name) {
         return uuid != null ? findByUuid(uuid) : findByName(name);
     }
+
+    List<T> findAllByUuidIn(List<String> uuids);
 }

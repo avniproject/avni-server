@@ -1,7 +1,10 @@
 package org.avni.server.web.request;
 
-import org.avni.server.domain.ReportCard;
-import org.avni.server.domain.DashboardSectionCardMapping;
+import org.avni.server.web.contract.EncounterTypeContract;
+import org.avni.server.web.contract.ProgramContract;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CardContract extends CHSRequest {
     private String name;
@@ -14,29 +17,9 @@ public class CardContract extends CHSRequest {
     private String iconFileS3Key;
     private boolean nested;
     private int count;
-
-    public static CardContract fromEntity(ReportCard card) {
-        CardContract cardContract = new CardContract();
-        cardContract.setId(card.getId());
-        cardContract.setUuid(card.getUuid());
-        cardContract.setVoided(card.isVoided());
-        cardContract.setName(card.getName());
-        cardContract.setQuery(card.getQuery());
-        cardContract.setDescription(card.getDescription());
-        cardContract.setColor(card.getColour());
-        if (card.getStandardReportCardType() != null)
-            cardContract.standardReportCardType = StandardReportCardTypeContract.fromEntity(card.getStandardReportCardType());
-        cardContract.setIconFileS3Key(card.getIconFileS3Key());
-        cardContract.setNested(card.isNested());
-        cardContract.setCount(card.getCountOfCards());
-        return cardContract;
-    }
-
-    public static CardContract fromMapping(DashboardSectionCardMapping mapping) {
-        CardContract cardContract = CardContract.fromEntity(mapping.getCard());
-        cardContract.setDisplayOrder(mapping.getDisplayOrder());
-        return cardContract;
-    }
+    private List<SubjectTypeContract> standardReportCardInputSubjectTypes = new ArrayList<>();
+    private List<ProgramContract> standardReportCardInputPrograms = new ArrayList<>();
+    private List<EncounterTypeContract> standardReportCardInputEncounterTypes = new ArrayList<>();
 
     public Long getStandardReportCardTypeId() {
         return standardReportCardTypeId;
@@ -116,5 +99,29 @@ public class CardContract extends CHSRequest {
 
     public void setStandardReportCardType(StandardReportCardTypeContract standardReportCardType) {
         this.standardReportCardType = standardReportCardType;
+    }
+
+    public List<SubjectTypeContract> getStandardReportCardInputSubjectTypes() {
+        return standardReportCardInputSubjectTypes;
+    }
+
+    public void setStandardReportCardInputSubjectTypes(List<SubjectTypeContract> standardReportCardInputSubjectTypes) {
+        this.standardReportCardInputSubjectTypes = standardReportCardInputSubjectTypes;
+    }
+
+    public List<ProgramContract> getStandardReportCardInputPrograms() {
+        return standardReportCardInputPrograms;
+    }
+
+    public void setStandardReportCardInputPrograms(List<ProgramContract> standardReportCardInputPrograms) {
+        this.standardReportCardInputPrograms = standardReportCardInputPrograms;
+    }
+
+    public List<EncounterTypeContract> getStandardReportCardInputEncounterTypes() {
+        return standardReportCardInputEncounterTypes;
+    }
+
+    public void setStandardReportCardInputEncounterTypes(List<EncounterTypeContract> standardReportCardInputEncounterTypes) {
+        this.standardReportCardInputEncounterTypes = standardReportCardInputEncounterTypes;
     }
 }

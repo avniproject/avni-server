@@ -16,6 +16,7 @@ import org.avni.server.service.ProgramService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ReactAdminUtil;
+import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.ProgramRequest;
 import org.avni.server.web.request.webapp.ProgramContractWeb;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -167,6 +169,23 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
         return wrap(operationalProgramRepository
                 .findPageByIsVoidedFalse(pageable)
                 .map(ProgramContractWeb::fromOperationalProgram));
+    }
+
+    @GetMapping(value = "/web/program/v2")
+    public List<ProgramContract> getAllPrograms(@RequestParam(required = false, name = "subjectType") List<String> subjectTypeUuids) {
+        List<Program> allPrograms;
+        if (CollectionUtils.isEmpty(subjectTypeUuids)) {
+            allPrograms = programRepository.findAllByIsVoidedFalseOrderByName();
+        } else {
+            allPrograms = formMappingService.getAllPrograms(subjectTypeUuids);
+        }
+
+        return allPrograms.stream().map(program -> {
+            ProgramContract programContract = new ProgramContract();
+            programContract.setName(program.getName());
+            programContract.setUuid(program.getUuid());
+            return programContract;
+        }).collect(Collectors.toList());
     }
 
     @GetMapping(value = "web/eligiblePrograms")

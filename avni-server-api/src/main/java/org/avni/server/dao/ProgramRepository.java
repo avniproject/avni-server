@@ -16,4 +16,6 @@ public interface ProgramRepository extends ReferenceDataRepository<Program>, Fin
 
     @Query("select p.name from Program p where p.isVoided = false")
     List<String> getAllNames();
+
+    List<Program> findAllByIsVoidedFalseOrderByName();
 }

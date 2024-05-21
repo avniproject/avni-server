@@ -8,12 +8,10 @@ import org.avni.server.dao.ReferenceDataRepository;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
-import org.avni.server.domain.ValidationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -97,6 +95,12 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
     default List<FormMapping> getAllProgramEnrolmentFormMapping(SubjectType subjectType) {
         return findAllBySubjectTypeAndProgramNotNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(subjectType, FormType.ProgramEnrolment, FormMapping.IMPL_VERSION);
     }
+
+    default List<FormMapping> getAllProgramEnrolmentFormMapping(List<SubjectType> subjectTypes) {
+        return findAllBySubjectTypeInAndProgramNotNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(subjectTypes, FormType.ProgramEnrolment, FormMapping.IMPL_VERSION);
+    }
+
+    List<FormMapping> findAllBySubjectTypeInAndProgramNotNullAndEncounterTypeNullAndFormFormTypeAndImplVersionAndIsVoidedFalse(List<SubjectType> subjectTypes, FormType formType, int implVersion);
 
     List<FormMapping> findByFormFormTypeAndImplVersionAndIsVoidedFalse(FormType formType, int implVersion);
 
@@ -242,4 +246,16 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
     default List<FormMapping> findAllByOrganisationId(Long organisationId) {
         return this.findAllByOrganisationIdAndImplVersion(organisationId, FormMapping.IMPL_VERSION);
     }
+
+    default List<FormMapping> getAllProgramEncounterTypeFormMapping(List<SubjectType> subjectTypes, List<Program> programs) {
+        return this.findAllBySubjectTypeInAndProgramInAndEncounterTypeNotNullAndIsVoidedFalseAndImplVersion(subjectTypes, programs, FormMapping.IMPL_VERSION);
+    }
+
+    List<FormMapping> findAllBySubjectTypeInAndProgramInAndEncounterTypeNotNullAndIsVoidedFalseAndImplVersion(List<SubjectType> subjectTypes, List<Program> programs, int implVersion);
+
+    default List<FormMapping> getAllGeneralEncounterTypeFormMapping(List<SubjectType> subjectTypes) {
+        return this.findAllBySubjectTypeInAndProgramNullAndEncounterTypeNotNullAndIsVoidedFalseAndImplVersion(subjectTypes, FormMapping.IMPL_VERSION);
+    }
+
+    List<FormMapping> findAllBySubjectTypeInAndProgramNullAndEncounterTypeNotNullAndIsVoidedFalseAndImplVersion(List<SubjectType> subjectTypes, int implVersion);
 }
