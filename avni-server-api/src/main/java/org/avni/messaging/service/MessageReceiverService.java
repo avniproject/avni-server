@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 @Service
 public class MessageReceiverService {
 
@@ -47,7 +45,7 @@ public class MessageReceiverService {
     }
 
     public MessageReceiver saveReceiverIfRequired(ReceiverType receiverType, String receiverId) {
-        if(receiverType != ReceiverType.Group) return saveReceiverIfRequired(receiverType, new Long(receiverId));
+        if (receiverType != ReceiverType.Group) return saveReceiverIfRequired(receiverType, new Long(receiverId));
         Optional<MessageReceiver> messageReceiverOptional = messageReceiverRepository.findByReceiverTypeAndExternalId(receiverType, receiverId);
         return messageReceiverOptional.orElseGet(() -> {
             MessageReceiver messageReceiver = new MessageReceiver(receiverType, receiverId);
@@ -62,12 +60,11 @@ public class MessageReceiverService {
         }
 
         String phoneNumber = null, fullName = null;
-        if(messageReceiver.getReceiverType() == ReceiverType.Subject){
+        if (messageReceiver.getReceiverType() == ReceiverType.Subject) {
             Individual individual = individualService.findById(messageReceiver.getReceiverId());
             phoneNumber = individualService.findPhoneNumber(individual);
             fullName = individual.getFullName();
-        }
-        else if (messageReceiver.getReceiverType() == ReceiverType.User){
+        } else if (messageReceiver.getReceiverType() == ReceiverType.User) {
             User user = userService.findById(messageReceiver.getReceiverId()).get();
             phoneNumber = user.getPhoneNumber();
             fullName = user.getName();

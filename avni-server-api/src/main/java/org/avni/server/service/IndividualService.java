@@ -21,6 +21,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.api.RequestUtils;
@@ -37,9 +38,6 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 
 @Service
 public class IndividualService implements ScopeAwareService<Individual> {
@@ -461,7 +459,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (!phoneNumberConcept.isPresent()) {
             phoneNumberConcept = conceptService.findContactNumberConcept();
         }
-        phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
+        phoneNumber = PhoneNumberUtil.getDomesticPhoneNumber(phoneNumber);
         return phoneNumberConcept.isPresent()
             ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
             : Optional.empty();

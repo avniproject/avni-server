@@ -21,6 +21,7 @@ import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.validation.ValidationException;
@@ -34,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.avni.messaging.domain.Constants.DURATION_PATTERN;
-import static org.avni.messaging.domain.Constants.PHONE_NUMBER_PATTERN;
 
 @Service("EnhancedValidationService")
 @ConditionalOnProperty(value = "avni.enhancedValidation.enabled", havingValue = "true")
@@ -240,7 +240,7 @@ public class EnhancedValidationService {
             case PhoneNumber:
                 try {
                     PhoneNumberObservationValue phoneNumber = objectMapper.convertValue(value, PhoneNumberObservationValue.class);
-                    if (!phoneNumber.getPhoneNumber().matches(PHONE_NUMBER_PATTERN)) {
+                    if (PhoneNumberUtil.isValidPhoneNumber(phoneNumber.getPhoneNumber())) {
                         return formatErrorMessage(question, value);
                     }
                 } catch (ClassCastException | IllegalArgumentException e) {

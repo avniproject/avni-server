@@ -40,6 +40,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
         }
         Account account = new Account();
         account.setName(accountRequest.getName());
+        account.setRegion(accountRequest.getRegion());
         User user = UserContextHolder.getUserContext().getUser();
         setDefaultAccountAdmin(account, user, new HashSet<>());
         accountRepository.save(account);
@@ -52,6 +53,7 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
         accessControlService.assertIsSuperAdmin();
         Account account = accountRepository.findOne(id);
         account.setName(accountRequest.getName());
+        account.setRegion(accountRequest.getRegion());
         accountRepository.save(account);
         return new ResponseEntity<>(account, HttpStatus.OK);
     }
@@ -74,7 +76,6 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
         return accountRepository.findByIdAndAccountAdmin_User_Id(id, user.getId());
     }
 
-
     private void setDefaultAccountAdmin(Account account, User user, Set<AccountAdmin> accountAdmins) {
         AccountAdmin accountAdmin = new AccountAdmin();
         accountAdmin.setName(user.getName());
@@ -83,5 +84,4 @@ public class AccountController implements RestControllerResourceProcessor<Accoun
         accountAdmins.add(accountAdmin);
         account.setAccountAdmin(accountAdmins);
     }
-
 }

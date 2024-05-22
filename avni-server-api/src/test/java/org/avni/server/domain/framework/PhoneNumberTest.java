@@ -4,8 +4,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class PhoneNumberTest {
     @Test
@@ -27,6 +26,8 @@ public class PhoneNumberTest {
         assertFalse(isValidNumber(instance, "92452629290"));
         assertFalse(isValidNumber(instance, "452629290"));
         assertFalse(isValidNumber(instance, "+95 9245262929"));
+
+        assertEquals("+919245262929", instance.format(instance.parse("9245262929", "IN"), PhoneNumberUtil.PhoneNumberFormat.E164));
     }
 
     private static boolean isValidNumber(PhoneNumberUtil instance, String number) throws NumberParseException {

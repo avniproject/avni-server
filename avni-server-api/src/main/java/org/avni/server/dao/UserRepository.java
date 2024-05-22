@@ -75,14 +75,6 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
 
     List<User> findByCatchmentAndIsVoidedFalse(Catchment catchment);
 
-    default Optional<User> findUserWithMatchingPropertyValue(String propertyName, String value) {
-        Specification<User> specification = (Root<User> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                cb.like(root.get(propertyName), "%" + value + "%");
-
-        List<User> users = findAll(specification);
-        return users.isEmpty() ? Optional.empty() : Optional.of(users.get(0));
-    }
-
     default User getUser(String userId) {
         User user = null;
         if (RequestUtils.isValidUUID(userId)) {
@@ -95,6 +87,8 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
         }
         return user;
     }
+
+    Optional<User> findByPhoneNumber(String phoneNumber);
 
     @Query(value = "select (count(p.id) > 0) as exists from group_privilege\n" +
             "    join privilege p on group_privilege.privilege_id = p.id\n" +

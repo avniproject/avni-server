@@ -15,6 +15,7 @@ import org.avni.server.domain.User;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.UserService;
 import org.avni.server.util.A;
+import org.avni.server.util.PhoneNumberUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -143,6 +144,7 @@ public class GroupMessagingService {
     }
 
     private Optional<String> findNameOfTheContact(GlificContactGroupContactsResponse.GlificContactGroupContacts contactGroupContact) {
+        PhoneNumberUtil.getStandardFormatPhoneNumber(contactGroupContact.getPhone());
         Optional<String> name = Stream.<Supplier<Optional<String>>>of(
                         () -> userService.findByPhoneNumber(contactGroupContact.getPhone()).map(User::getName),
                         () -> individualService.findByPhoneNumber(contactGroupContact.getPhone()).map(Individual::getFirstName))

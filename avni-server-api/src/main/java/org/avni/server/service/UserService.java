@@ -1,12 +1,11 @@
 package org.avni.server.service;
 
-import com.google.i18n.phonenumbers.NumberParseException;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.web.validation.ValidationException;
 import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
@@ -23,8 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 @Service
 public class UserService implements NonScopeAwareService {
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
@@ -34,17 +31,15 @@ public class UserService implements NonScopeAwareService {
     private final UserSubjectRepository userSubjectRepository;
     private final IndividualRepository individualRepository;
     private final SubjectTypeRepository subjectTypeRepository;
-    private final AccountRepository accountRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, AccountRepository accountRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
         this.userSubjectRepository = userSubjectRepository;
         this.individualRepository = individualRepository;
         this.subjectTypeRepository = subjectTypeRepository;
-        this.accountRepository = accountRepository;
     }
 
     public User getCurrentUser() {
@@ -132,8 +127,7 @@ public class UserService implements NonScopeAwareService {
     }
 
     public Optional<User> findByPhoneNumber(String phoneNumber) {
-        phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        return userRepository.findUserWithMatchingPropertyValue("phoneNumber", phoneNumber);
+        return userRepository.findByPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
     }
 
     @Transactional
@@ -192,13 +186,10 @@ public class UserService implements NonScopeAwareService {
         userSubjectRepository.save(userSubject);
     }
 
-    public boolean isValidPhoneNumber(String phoneNumber) {
-        try {
-            String region = UserContextHolder.getOrganisation().getAccount().getRegion();
-            PhoneNumberUtil instance = PhoneNumberUtil.getInstance();
-            return instance.isValidNumber(instance.parse(phoneNumber, region));
-        } catch (NumberParseException e) {
-            return false;
+    public void setPhoneNumber(String phoneNumber, User user) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
+            throw new ValidationException(String.format("Phone number is invalid or empty - '%s'.", phoneNumber));
         }
+        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
     }
 }
