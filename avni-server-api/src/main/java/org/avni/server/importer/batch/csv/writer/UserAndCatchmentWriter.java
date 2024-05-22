@@ -94,7 +94,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
         User.validateEmail(email);
         user.setEmail(email);
-        User.validatePhoneNumber(phoneNumber);
+        if (!userService.isValidPhoneNumber(phoneNumber)) {
+            throw new ValidationException(String.format("Phone number is invalid or empty - '%s'.", phoneNumber));
+        }
         user.setPhoneNumber(phoneNumber);
         user.setName(nameOfUser);
         if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);

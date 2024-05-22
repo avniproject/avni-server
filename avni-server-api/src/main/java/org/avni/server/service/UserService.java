@@ -1,5 +1,7 @@
 package org.avni.server.service;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -32,15 +34,17 @@ public class UserService implements NonScopeAwareService {
     private final UserSubjectRepository userSubjectRepository;
     private final IndividualRepository individualRepository;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final AccountRepository accountRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, AccountRepository accountRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
         this.userSubjectRepository = userSubjectRepository;
         this.individualRepository = individualRepository;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.accountRepository = accountRepository;
     }
 
     public User getCurrentUser() {
@@ -186,5 +190,15 @@ public class UserService implements NonScopeAwareService {
 
         individualRepository.save(subject);
         userSubjectRepository.save(userSubject);
+    }
+
+    public boolean isValidPhoneNumber(String phoneNumber) {
+        try {
+            String region = UserContextHolder.getOrganisation().getAccount().getRegion();
+            PhoneNumberUtil instance = PhoneNumberUtil.getInstance();
+            return instance.isValidNumber(instance.parse(phoneNumber, region));
+        } catch (NumberParseException e) {
+            return false;
+        }
     }
 }

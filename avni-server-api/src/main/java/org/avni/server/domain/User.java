@@ -1,6 +1,8 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -14,6 +16,7 @@ import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 @Entity
 @Table(name = "users")
 @BatchSize(size = 100)
@@ -21,8 +24,6 @@ import java.util.stream.Collectors;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class User {
     public static final String DEFAULT_SUPER_ADMIN = "5fed2907-df3a-4867-aef5-c87f4c78a31a";
-
-    public static String MOBILE_NUMBER_PATTERN = "^\\+91[0-9]{10}";
 
     @Column
     @NotNull
@@ -150,7 +151,11 @@ public class User {
 
     public String getPhoneNumber() { return phoneNumber; }
 
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) {
+
+        this.phoneNumber = phoneNumber;
+    }
+
     public boolean isDisabledInCognito() {
         return disabledInCognito;
     }
@@ -350,12 +355,6 @@ public class User {
     public static void validateEmail(String email) {
         if (!EmailValidator.getInstance().isValid(email)) {
             throw new ValidationException(String.format("Invalid email address %s", email));
-        }
-    }
-
-    public static void validatePhoneNumber(String phoneNumber) {
-        if (!phoneNumber.matches(MOBILE_NUMBER_PATTERN)) {
-            throw new ValidationException(String.format("Invalid phone number %s", phoneNumber));
         }
     }
 

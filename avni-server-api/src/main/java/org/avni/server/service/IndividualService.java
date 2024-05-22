@@ -16,7 +16,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
-import org.avni.server.domain.observation.PhoneNumber;
+import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
@@ -415,7 +415,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (phoneNumberConcept.isPresent()) {
             Optional<String> phoneNumber = individual.getObservations().entrySet().stream().filter(entrySet ->
                     Objects.equals(entrySet.getKey(), phoneNumberConcept.get().getUuid()))
-                .map(phoneNumberEntry -> objectMapper.convertValue(phoneNumberEntry.getValue(), PhoneNumber.class).getPhoneNumber()).findFirst();
+                .map(phoneNumberEntry -> objectMapper.convertValue(phoneNumberEntry.getValue(), PhoneNumberObservationValue.class).getPhoneNumber()).findFirst();
             if (phoneNumber.isPresent()) {
                 return phoneNumber.get();
             }

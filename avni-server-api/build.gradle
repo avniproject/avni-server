@@ -89,6 +89,7 @@ dependencies {
     implementation 'org.apache.tika:tika-core:2.7.0'
     compile 'org.owasp.encoder:encoder:1.2.3'
     implementation 'org.apache.commons:commons-csv:1.10.0'
+    compile 'com.googlecode.libphonenumber:libphonenumber:8.12.32'
 }
 
 bootRun {

@@ -17,7 +17,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
-import org.avni.server.domain.observation.PhoneNumber;
+import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -239,7 +239,7 @@ public class EnhancedValidationService {
                 return null;
             case PhoneNumber:
                 try {
-                    PhoneNumber phoneNumber = objectMapper.convertValue(value, PhoneNumber.class);
+                    PhoneNumberObservationValue phoneNumber = objectMapper.convertValue(value, PhoneNumberObservationValue.class);
                     if (!phoneNumber.getPhoneNumber().matches(PHONE_NUMBER_PATTERN)) {
                         return formatErrorMessage(question, value);
                     }

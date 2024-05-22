@@ -53,8 +53,6 @@ public class UserController {
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
 
-    @Value("${avni.userPhoneNumberPattern}")
-    private String MOBILE_NUMBER_PATTERN;
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
     private final AccessControlService accessControlService;
 
@@ -167,16 +165,12 @@ public class UserController {
         return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
     }
 
-    private Boolean phoneNumberIsValid(String phoneNumber) {
-        return phoneNumber.matches(MOBILE_NUMBER_PATTERN);
-    }
-
     private User setUserAttributes(User user, UserContract userContract) {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
 
-        if (!phoneNumberIsValid(userContract.getPhoneNumber()))
+        if (!userService.isValidPhoneNumber(userContract.getPhoneNumber()))
             throw new ValidationException(String.format("Invalid phone number %s", userContract.getPhoneNumber()));
         user.setPhoneNumber(userContract.getPhoneNumber());
 
