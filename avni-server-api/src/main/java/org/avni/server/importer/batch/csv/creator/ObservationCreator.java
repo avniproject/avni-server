@@ -277,7 +277,7 @@ public class ObservationCreator {
             errorMsgs.add(format("Invalid %s provided %s. Please provide valid phone number.", conceptName, phoneNumber));
             return null;
         }
-        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getDomesticPhoneNumber(phoneNumber));
+        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getNationalPhoneNumber(phoneNumber));
         phoneNumberObs.put("verified", false);
         return phoneNumberObs;
     }

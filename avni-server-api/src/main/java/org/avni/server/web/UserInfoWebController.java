@@ -65,6 +65,8 @@ public class UserInfoWebController {
                 groupPrivilegeResponses,
                 user.hasAllPrivileges(),
                 lastSessionTime,
-                contextOrganisation.getCategory());
+                contextOrganisation.getCategory(),
+                contextOrganisation.getAccount().getRegion()
+                );
     }
 }

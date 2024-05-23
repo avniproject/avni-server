@@ -9,6 +9,7 @@ public class OrganisationContract extends ETLContract {
     private String usernameSuffix;
     private Long accountId;
     private OrganisationCategory category;
+    private String region;
 
     public static OrganisationContract fromEntity(Organisation organisation) {
         OrganisationContract organisationContract = new OrganisationContract();
@@ -19,6 +20,7 @@ public class OrganisationContract extends ETLContract {
         organisationContract.setUsernameSuffix(organisation.getEffectiveUsernameSuffix());
         organisationContract.setAccountId(organisation.getAccount() == null ? null : organisation.getAccount().getId());
         organisationContract.setCategory(organisation.getCategory());
+        organisationContract.region = organisation.getAccount().getRegion();
         mapEntity(organisationContract, organisation);
         return organisationContract;
     }
@@ -61,5 +63,13 @@ public class OrganisationContract extends ETLContract {
 
     public void setCategory(OrganisationCategory category) {
         this.category = category;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
 }

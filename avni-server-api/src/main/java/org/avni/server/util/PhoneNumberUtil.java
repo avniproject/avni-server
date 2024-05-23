@@ -38,7 +38,7 @@ public class PhoneNumberUtil {
         return PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber).replace("+", "");
     }
 
-    public static String getDomesticPhoneNumber(String phoneNumber) {
+    public static String getNationalPhoneNumber(String phoneNumber) {
         Phonenumber.PhoneNumber pn = getPhoneNumber(phoneNumber);
         return "" + pn.getNationalNumber();
     }

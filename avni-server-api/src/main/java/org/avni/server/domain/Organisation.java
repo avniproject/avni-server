@@ -20,7 +20,7 @@ public class Organisation extends ETLEntity {
     @Column
     private String usernameSuffix;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 

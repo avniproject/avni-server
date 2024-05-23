@@ -19,8 +19,8 @@ public class PhoneNumberUtilTest {
         UserContext userContext = new UserContextBuilder().withOrganisation(organisation).build();
         UserContextHolder.create(userContext);
 
-        assertEquals("919245262929", PhoneNumberUtil.getPhoneNumberInGlificFormat("9245262929"));
-        assertEquals("9245262929", PhoneNumberUtil.getDomesticPhoneNumber("9245262929"));
-        assertEquals("+919245262929", PhoneNumberUtil.getStandardFormatPhoneNumber("9245262929"));
+        assertEquals("919455509147", PhoneNumberUtil.getPhoneNumberInGlificFormat("9455509147"));
+        assertEquals("9455509147", PhoneNumberUtil.getNationalPhoneNumber("9455509147"));
+        assertEquals("+919455509147", PhoneNumberUtil.getStandardFormatPhoneNumber("9455509147"));
     }
 }

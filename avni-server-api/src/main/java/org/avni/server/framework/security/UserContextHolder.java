@@ -5,7 +5,7 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 
 public class UserContextHolder {
-    private static ThreadLocal<UserContext> userContext = new ThreadLocal<>();
+    private static final ThreadLocal<UserContext> userContext = new ThreadLocal<>();
 
     private UserContextHolder() {
     }
@@ -22,6 +22,7 @@ public class UserContextHolder {
         userContext.remove();
     }
 
+    // Any child entity of user not eagerly loaded may give no session error
     public static User getUser() {
         UserContext context = getUserContext();
         return context != null ? context.getUser() : null;
@@ -32,6 +33,7 @@ public class UserContextHolder {
         return user == null ? null : user.getId();
     }
 
+    // Any child entity of organisation not eagerly loaded may give no session error
     public static Organisation getOrganisation() {
         UserContext context = getUserContext();
         return context != null ? context.getOrganisation() : null;

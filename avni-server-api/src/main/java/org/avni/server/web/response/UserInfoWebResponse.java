@@ -1,5 +1,6 @@
 package org.avni.server.web.response;
 
+import org.avni.server.domain.Account;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
@@ -9,6 +10,7 @@ import org.avni.server.web.request.UserInfoContract;
 import java.util.List;
 
 public class UserInfoWebResponse extends UserInfoContract {
+    private String region;
     private OrganisationCategory organisationCategory;
     private long lastSessionTime;
     private boolean hasAllPrivileges;
@@ -30,16 +32,20 @@ public class UserInfoWebResponse extends UserInfoContract {
             response.setOrganisationName(contextOrganisation.getName());
             response.setUsernameSuffix(contextOrganisation.getEffectiveUsernameSuffix());
             response.organisationCategory = contextOrganisation.getCategory();
+            response.region = contextOrganisation.getAccount().getRegion();
+        } else {
+            response.region = Account.DEFAULT_REGION; // current cannot support multiple regions for super admins
         }
         return response;
     }
 
-    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges, long lastSessionTime, OrganisationCategory organisationCategory) {
+    public UserInfoWebResponse(String username, String orgName, Long orgId, String usernameSuffix, JsonObject settings, String name, String catchmentName, JsonObject syncSettings, List<UserPrivilegeWebResponse> privileges, boolean hasAllPrivileges, long lastSessionTime, OrganisationCategory organisationCategory, String region) {
         super(username, orgName, orgId, usernameSuffix, settings, name, catchmentName, syncSettings);
         this.privileges = privileges;
         this.hasAllPrivileges = hasAllPrivileges;
         this.lastSessionTime = lastSessionTime;
         this.organisationCategory = organisationCategory;
+        this.region = region;
     }
 
     public List<UserPrivilegeWebResponse> getPrivileges() {
@@ -64,5 +70,9 @@ public class UserInfoWebResponse extends UserInfoContract {
 
     public OrganisationCategory getOrganisationCategory() {
         return organisationCategory;
+    }
+
+    public String getRegion() {
+        return region;
     }
 }

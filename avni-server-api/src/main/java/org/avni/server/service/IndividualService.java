@@ -459,7 +459,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (!phoneNumberConcept.isPresent()) {
             phoneNumberConcept = conceptService.findContactNumberConcept();
         }
-        phoneNumber = PhoneNumberUtil.getDomesticPhoneNumber(phoneNumber);
+        phoneNumber = PhoneNumberUtil.getNationalPhoneNumber(phoneNumber);
         return phoneNumberConcept.isPresent()
             ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
             : Optional.empty();

@@ -10,27 +10,31 @@ public class PhoneNumberTest {
     @Test
     public void checkOutFeatures() throws NumberParseException {
         PhoneNumberUtil instance = PhoneNumberUtil.getInstance();
-        assertTrue(isValidNumber(instance, "919245262929"));
-        assertTrue(isValidNumber(instance, "91 9245262929"));
-        assertTrue(isValidNumber(instance, "+91 9245262929"));
-        assertTrue(isValidNumber(instance, "+919245262929"));
-        assertTrue(isValidNumber(instance, "+ 91 9245262929"));
-        assertTrue(isValidNumber(instance, "9245262929"));
-        assertTrue(isValidNumber(instance, "09245262929"));
-        assertTrue(isValidNumber(instance, " 09245262929 "));
-        assertTrue(isValidNumber(instance, " 09245262929"));
-        assertTrue(isValidNumber(instance, " + 91 9245262929"));
+        assertTrue(isValidNumber(instance, "919455509147"));
+        assertTrue(isValidNumber(instance, "91 9455509147"));
+        assertTrue(isValidNumber(instance, "+91 9455509147"));
+        assertTrue(isValidNumber(instance, "+919455509147"));
+        assertTrue(isValidNumber(instance, "+ 91 9455509147"));
+        assertTrue(isValidNumber(instance, "9455509147"));
+        assertTrue(isValidNumber(instance, "09455509147"));
+        assertTrue(isValidNumber(instance, " 09455509147 "));
+        assertTrue(isValidNumber(instance, " 09455509147"));
+        assertTrue(isValidNumber(instance, " + 91 9455509147"));
         assertTrue(isValidNumber(instance, " + 91 080 24242424"));
         assertTrue(isValidNumber(instance, " + 91 080 24242424 "));
 
-        assertFalse(isValidNumber(instance, "92452629290"));
-        assertFalse(isValidNumber(instance, "452629290"));
-        assertFalse(isValidNumber(instance, "+95 9245262929"));
+        assertFalse(isValidNumber(instance, "94555091470"));
+        assertFalse(isValidNumber(instance, "945550914"));
+        assertFalse(isValidNumber(instance, "+99 9455509147"));
 
-        assertEquals("+919245262929", instance.format(instance.parse("9245262929", "IN"), PhoneNumberUtil.PhoneNumberFormat.E164));
+        assertEquals("+919455509147", instance.format(instance.parse("9455509147", "IN"), PhoneNumberUtil.PhoneNumberFormat.E164));
     }
 
     private static boolean isValidNumber(PhoneNumberUtil instance, String number) throws NumberParseException {
-        return instance.isValidNumber(instance.parse(number, "IN"));
+        try {
+            return instance.isValidNumber(instance.parse(number, "IN"));
+        } catch (NumberParseException e) {
+            return false;
+        }
     }
 }

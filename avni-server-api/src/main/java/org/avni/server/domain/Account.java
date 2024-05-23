@@ -12,6 +12,7 @@ import java.util.Set;
 @BatchSize(size = 100)
 public class Account {
     public static final String DEFAULT_ACCOUNT_NAME = "default";
+    public static final String DEFAULT_REGION = "IN";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
