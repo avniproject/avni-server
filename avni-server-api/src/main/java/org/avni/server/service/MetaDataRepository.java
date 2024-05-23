@@ -12,7 +12,7 @@ import java.util.List;
 
 @Component
 public class MetaDataRepository {
-    private SubjectTypeRepository subjectTypeRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
 
     public MetaDataRepository(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository) {

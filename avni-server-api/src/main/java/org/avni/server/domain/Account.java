@@ -21,6 +21,9 @@ public class Account {
     @Column
     private String name;
 
+    @Column
+    private String region;
+
     @JsonIgnore
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "account")
     private Set<AccountAdmin> accountAdmin = new HashSet<>();
@@ -52,4 +55,11 @@ public class Account {
         this.name = name;
     }
 
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
 }

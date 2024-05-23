@@ -23,10 +23,12 @@ import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFolder;
+import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
+import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
@@ -137,6 +139,7 @@ public class OrganisationService {
     private final OrganisationConfigService organisationConfigService;
     private final GenderRepository genderRepository;
     private final OrganisationRepository organisationRepository;
+    private final ReportCardMapper reportCardMapper;
     private final Logger logger;
 
     @Autowired
@@ -213,7 +216,8 @@ public class OrganisationService {
                                MessageReceiverRepository messageReceiverRepository,
                                OrganisationConfigService organisationConfigService,
                                GenderRepository genderRepository,
-                               OrganisationRepository organisationRepository) {
+                               OrganisationRepository organisationRepository,
+                               ReportCardMapper reportCardMapper) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -289,6 +293,7 @@ public class OrganisationService {
         this.organisationConfigService = organisationConfigService;
         this.genderRepository = genderRepository;
         this.organisationRepository = organisationRepository;
+        this.reportCardMapper = reportCardMapper;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -521,7 +526,7 @@ public class OrganisationService {
 
     public void addSubjectTypeIcons(ZipOutputStream zos) throws IOException {
         List<SubjectType> subjectTypes = subjectTypeRepository.findAllByIconFileS3KeyNotNull();
-        if (subjectTypes.size() > 0) {
+        if (!subjectTypes.isEmpty()) {
             addDirectoryToZip(zos, BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         }
         for (SubjectType subjectType : subjectTypes) {
@@ -534,7 +539,7 @@ public class OrganisationService {
     public void addReportCardIcons(ZipOutputStream zos) throws IOException {
         List<ReportCard> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
             .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
-        if (cards.size() > 0) {
+        if (!cards.isEmpty()) {
             addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
         for (ReportCard reportCard : cards) {
@@ -546,7 +551,7 @@ public class OrganisationService {
     }
 
     public void addReportCards(ZipOutputStream zos) throws IOException {
-        List<CardContract> cardContracts = cardService.getAll();
+        List<ReportCardContract> cardContracts = cardService.getAll().stream().map(reportCardMapper::fromEntity).collect(Collectors.toList());
         if (!cardContracts.isEmpty()) {
             addFileToZip(zos, "reportCard.json", cardContracts);
         }

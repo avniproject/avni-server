@@ -18,6 +18,7 @@ import org.avni.server.service.IndividualService;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.S3Service;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.ObservationRequest;
 import org.slf4j.Logger;
@@ -37,20 +38,18 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
-import static org.avni.messaging.domain.Constants.PHONE_NUMBER_PATTERN;
 
 @Component
 public class ObservationCreator {
-
     private static Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
-    private AddressLevelTypeRepository addressLevelTypeRepository;
-    private ConceptRepository conceptRepository;
-    private FormRepository formRepository;
-    private ObservationService observationService;
-    private S3Service s3Service;
-    private IndividualService individualService;
-    private LocationService locationService;
-    private FormElementRepository formElementRepository;
+    private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final ConceptRepository conceptRepository;
+    private final FormRepository formRepository;
+    private final ObservationService observationService;
+    private final S3Service s3Service;
+    private final IndividualService individualService;
+    private final LocationService locationService;
+    private final FormElementRepository formElementRepository;
 
     @Autowired
     public ObservationCreator(AddressLevelTypeRepository addressLevelTypeRepository,
@@ -274,11 +273,11 @@ public class ObservationCreator {
 
     private Map<String, Object> toPhoneNumberFormat(String phoneNumber, List<String> errorMsgs, String conceptName) {
         Map<String, Object> phoneNumberObs = new HashMap<>();
-        if (!phoneNumber.matches(PHONE_NUMBER_PATTERN)) {
-            errorMsgs.add(format("Invalid %s provided %s. Please provide 10 digit number.", conceptName, phoneNumber));
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
+            errorMsgs.add(format("Invalid %s provided %s. Please provide valid phone number.", conceptName, phoneNumber));
             return null;
         }
-        phoneNumberObs.put("phoneNumber", phoneNumber);
+        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getDomesticPhoneNumber(phoneNumber));
         phoneNumberObs.put("verified", false);
         return phoneNumberObs;
     }

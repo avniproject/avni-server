@@ -1,49 +1,18 @@
 package org.avni.server.web.request;
 
-import org.avni.server.domain.DashboardSection;
+import org.avni.server.web.contract.ReportCardContract;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DashboardSectionContract extends CHSRequest {
-
     private String name;
     private String description;
     private String viewType;
     private Double displayOrder;
     private String dashboardUUID;
-    private List<CardContract> cards = new ArrayList<>();
+    private List<ReportCardContract> cards = new ArrayList<>();
     private List<DashboardSectionCardMappingContract> dashboardSectionCardMappings = new ArrayList<>();
-
-    public static DashboardSectionContract fromEntity(DashboardSection ds) {
-        DashboardSectionContract dashboardContract = new DashboardSectionContract();
-        dashboardContract.setId(ds.getId());
-        dashboardContract.setUuid(ds.getUuid());
-        dashboardContract.setVoided(ds.isVoided());
-        dashboardContract.setName(ds.getName());
-        dashboardContract.setDescription(ds.getDescription());
-        dashboardContract.setViewType(ds.getViewType().name());
-        dashboardContract.setDisplayOrder(ds.getDisplayOrder());
-        setCards(dashboardContract, ds);
-        setDashboardSectionCardMappings(dashboardContract, ds);
-        dashboardContract.setDashboardUUID(ds.getDashboardUUID());
-        return dashboardContract;
-    }
-
-    private static void setDashboardSectionCardMappings(DashboardSectionContract contract, DashboardSection ds) {
-        List<DashboardSectionCardMappingContract> mappingContracts = ds.getDashboardSectionCardMappings().stream()
-                .map(DashboardSectionCardMappingContract ::fromEntity)
-                .collect(Collectors.toList());
-        contract.setDashboardSectionCardMappings(mappingContracts);
-    }
-
-    private static void setCards(DashboardSectionContract contract, DashboardSection ds) {
-        List<CardContract> list = ds.getDashboardSectionCardMappings().stream()
-                .map(CardContract::fromMapping)
-                .collect(Collectors.toList());
-        contract.setCards(list);
-    }
 
     public String getName() {
         return name;
@@ -61,11 +30,11 @@ public class DashboardSectionContract extends CHSRequest {
         this.description = description;
     }
 
-    public List<CardContract> getCards() {
+    public List<ReportCardContract> getCards() {
         return cards;
     }
 
-    public void setCards(List<CardContract> cards) {
+    public void setCards(List<ReportCardContract> cards) {
         this.cards = cards;
     }
 

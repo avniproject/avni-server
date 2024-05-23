@@ -94,8 +94,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
         User.validateEmail(email);
         user.setEmail(email);
-        User.validatePhoneNumber(phoneNumber);
-        user.setPhoneNumber(phoneNumber);
+        userService.setPhoneNumber(phoneNumber, user);
         user.setName(nameOfUser);
         if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);
         user.setCatchment(catchment);

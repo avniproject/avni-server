@@ -1,6 +1,6 @@
 package org.avni.server.domain.observation;
 
-public class PhoneNumber {
+public class PhoneNumberObservationValue {
     String phoneNumber;
     Boolean verified;
     Boolean skipVerification;

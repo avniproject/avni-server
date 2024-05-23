@@ -5,6 +5,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.request.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -130,9 +131,9 @@ public class DashboardService implements NonScopeAwareService {
             section.setDisplayOrder(sectionContract.getDisplayOrder());
             section = dashboardSectionRepository.save(section);
 
-            List<CardContract> cardContracts = sectionContract.getCards();
+            List<ReportCardContract> cardContracts = sectionContract.getCards();
             Set<DashboardSectionCardMapping> updatedMappings = new HashSet<>();
-            for (CardContract cardContract : cardContracts) {
+            for (ReportCardContract cardContract : cardContracts) {
                 DashboardSectionCardMapping mapping = dashboardSectionCardMappingRepository.findByCardIdAndDashboardSectionAndIsVoidedFalse(cardContract.getId(), section);
                 if (mapping == null) {
                     mapping = new DashboardSectionCardMapping();

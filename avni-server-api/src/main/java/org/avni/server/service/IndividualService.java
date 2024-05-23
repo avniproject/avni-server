@@ -16,11 +16,12 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
-import org.avni.server.domain.observation.PhoneNumber;
+import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.api.RequestUtils;
@@ -37,9 +38,6 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 
 @Service
 public class IndividualService implements ScopeAwareService<Individual> {
@@ -415,7 +413,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (phoneNumberConcept.isPresent()) {
             Optional<String> phoneNumber = individual.getObservations().entrySet().stream().filter(entrySet ->
                     Objects.equals(entrySet.getKey(), phoneNumberConcept.get().getUuid()))
-                .map(phoneNumberEntry -> objectMapper.convertValue(phoneNumberEntry.getValue(), PhoneNumber.class).getPhoneNumber()).findFirst();
+                .map(phoneNumberEntry -> objectMapper.convertValue(phoneNumberEntry.getValue(), PhoneNumberObservationValue.class).getPhoneNumber()).findFirst();
             if (phoneNumber.isPresent()) {
                 return phoneNumber.get();
             }
@@ -461,7 +459,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (!phoneNumberConcept.isPresent()) {
             phoneNumberConcept = conceptService.findContactNumberConcept();
         }
-        phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
+        phoneNumber = PhoneNumberUtil.getDomesticPhoneNumber(phoneNumber);
         return phoneNumberConcept.isPresent()
             ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
             : Optional.empty();

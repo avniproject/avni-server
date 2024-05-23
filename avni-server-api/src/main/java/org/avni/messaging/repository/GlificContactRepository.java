@@ -7,6 +7,7 @@ import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.external.GlificRestClient;
 import org.avni.messaging.service.PhoneNumberNotAvailableOrIncorrectException;
+import org.avni.server.util.PhoneNumberUtil;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
@@ -17,15 +18,11 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
-
 @Repository
 @Lazy //for better startup performance
 public class GlificContactRepository extends AbstractGlificRepository {
     public static final String GLIFIC_CONTACT_FOR_PHONE_NUMBER = "glificContactForPhoneNumber";
-    public static final String INDIA_ISD_CODE = "91";
     public static final String PHONE_NUMBER = "${phoneNumber}";
-    public static final String RECEIVER_NAME = "${receiverName}";
     public static final String RECEIVER_ID = "${receiverId}";
     public static final String FULL_NAME = "${fullName}";
     public static final String GROUP_ID = "${groupId}";
@@ -41,7 +38,6 @@ public class GlificContactRepository extends AbstractGlificRepository {
     private final String GET_CONTACT_GROUP_CONTACT_COUNT_JSON;
     private final String GET_CONTACT_GROUP_JSON;
     private final String GET_ALL_MSGS_JSON;
-    private final String GET_ALL_GROUP_CONVERSATION_MSGS_JSON;
     private final String ADD_CONTACTS_IN_GROUP_JSON;
     private final String REMOVE_CONTACTS_IN_GROUP_JSON;
     private final String ADD_CONTACT_GROUP_JSON;
@@ -58,7 +54,6 @@ public class GlificContactRepository extends AbstractGlificRepository {
         GET_CONTACT_GROUP_CONTACT_COUNT_JSON = getJson("getContactGroupContactCount");
         GET_CONTACT_GROUP_JSON = getJson("getContactGroup");
         GET_ALL_MSGS_JSON = getJson("getAllMessages");
-        GET_ALL_GROUP_CONVERSATION_MSGS_JSON = getJson("searchConversationMessages");
         ADD_CONTACTS_IN_GROUP_JSON = getJson("updateContactsInGroup");
         REMOVE_CONTACTS_IN_GROUP_JSON = getJson("removeContactsInGroup");
         ADD_CONTACT_GROUP_JSON = getJson("addContactGroup");
@@ -67,7 +62,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     public String getOrCreateContact(String phoneNumber, String fullName) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
-        if (phoneNumber == null || phoneNumber.length() < NO_OF_DIGITS_IN_INDIAN_MOBILE_NO) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
             throw new PhoneNumberNotAvailableOrIncorrectException();
         }
 
@@ -77,12 +72,8 @@ public class GlificContactRepository extends AbstractGlificRepository {
                 glificContacts.getContacts().get(0).getId();
     }
 
-    private String formatPhoneNumberToGlificFormat(String phoneNumber) {
-        return INDIA_ISD_CODE + phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-    }
-
     private String createContact(String phoneNumber, String fullName) throws GlificNotConfiguredException {
-        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, formatPhoneNumberToGlificFormat(phoneNumber))
+        String message = OPTIN_CONTACT_JSON.replace(PHONE_NUMBER, PhoneNumberUtil.getPhoneNumberInGlificFormat(phoneNumber))
                 .replace(FULL_NAME, fullName);
         GlificOptinContactResponse glificOptinContactResponse = glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificOptinContactResponse>>() {
         });
@@ -90,7 +81,7 @@ public class GlificContactRepository extends AbstractGlificRepository {
     }
 
     private GlificGetContactsResponse getContact(String phoneNumber) throws GlificNotConfiguredException {
-        String message = GET_CONTACT_JSON.replace(PHONE_NUMBER, formatPhoneNumberToGlificFormat(phoneNumber));
+        String message = GET_CONTACT_JSON.replace(PHONE_NUMBER, PhoneNumberUtil.getPhoneNumberInGlificFormat(phoneNumber));
         return glificRestClient.callAPI(message, new ParameterizedTypeReference<GlificResponse<GlificGetContactsResponse>>() {
         });
     }

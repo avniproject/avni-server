@@ -8,7 +8,6 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.*;
-import org.avni.server.importer.batch.csv.ErrorFileWriterListener;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.FormMappingContract;
@@ -236,10 +235,10 @@ public class FormMappingService implements NonScopeAwareService {
                 .orElse(null);
         if (formMapping == null) {
             formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedTrueOrderByLastModifiedDateTimeDesc(formType)
-                .stream()
-                .filter(fm -> encounterType.equals(fm.getEncounterType()))
-                .findFirst()
-                .orElse(null);
+                    .stream()
+                    .filter(fm -> encounterType.equals(fm.getEncounterType()))
+                    .findFirst()
+                    .orElse(null);
         }
         return formMapping;
     }
@@ -247,15 +246,15 @@ public class FormMappingService implements NonScopeAwareService {
     public FormMapping find(Program program, FormType formType) {
         FormMapping formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedFalse(formType)
                 .stream()
-                .filter(fm ->  program.equals(fm.getProgram()))
+                .filter(fm -> program.equals(fm.getProgram()))
                 .findFirst()
                 .orElse(null);
         if (formMapping == null) {
             formMapping = formMappingRepository.findByFormFormTypeAndIsVoidedTrueOrderByLastModifiedDateTimeDesc(formType)
-                .stream()
-                .filter(fm -> program.equals(fm.getProgram()))
-                .findFirst()
-                .orElse(null);
+                    .stream()
+                    .filter(fm -> program.equals(fm.getProgram()))
+                    .findFirst()
+                    .orElse(null);
         }
         return formMapping;
     }
@@ -281,5 +280,29 @@ public class FormMappingService implements NonScopeAwareService {
 
     public FormMapping findBy(SubjectType subjectType, Program program, EncounterType encounterType, FormType formType) {
         return formMappingRepository.findBySubjectTypeAndProgramAndEncounterTypeAndIsVoidedFalseAndFormFormType(subjectType, program, encounterType, formType);
+    }
+
+    public List<Program> getAllPrograms(List<String> subjectTypeUuids) {
+        List<SubjectType> subjectTypes = subjectTypeRepository.findAllByUuidIn(subjectTypeUuids);
+        return formMappingRepository.getAllProgramEnrolmentFormMapping(subjectTypes).stream().filter(formMapping -> formMapping.getForm().getFormType().equals(FormType.ProgramEnrolment)).map(FormMapping::getProgram).filter(program -> !program.isVoided()).collect(Collectors.toList());
+    }
+
+    private List<EncounterType> getUniqueEncounterTypes(List<FormMapping> formMappings, FormType formType) {
+        return formMappings.stream()
+                .filter(x -> x.getForm().getFormType().equals(formType))
+                .map(FormMapping::getEncounterType)
+                .filter(encounterType -> !encounterType.isVoided())
+                .collect(Collectors.toList());
+    }
+
+    public List<EncounterType> getEncounterTypes(List<String> subjectTypeUuids) {
+        List<SubjectType> subjectTypes = subjectTypeRepository.findAllByUuidIn(subjectTypeUuids);
+        return getUniqueEncounterTypes(formMappingRepository.getAllGeneralEncounterTypeFormMapping(subjectTypes), FormType.Encounter);
+    }
+
+    public List<EncounterType> getEncounterTypes(List<String> subjectTypeUuids, List<String> programUuids) {
+        List<SubjectType> subjectTypes = subjectTypeRepository.findAllByUuidIn(subjectTypeUuids);
+        List<Program> programs = programRepository.findAllByUuidIn(programUuids);
+        return getUniqueEncounterTypes(formMappingRepository.getAllProgramEncounterTypeFormMapping(subjectTypes, programs), FormType.ProgramEncounter);
     }
 }

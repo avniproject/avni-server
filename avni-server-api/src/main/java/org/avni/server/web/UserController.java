@@ -4,12 +4,16 @@ import com.amazonaws.services.cognitoidp.model.AWSCognitoIdentityProviderExcepti
 import com.amazonaws.services.cognitoidp.model.UsernameExistsException;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
-import org.avni.server.domain.*;
+import org.avni.server.domain.Account;
+import org.avni.server.domain.OperatingIndividualScope;
+import org.avni.server.domain.Organisation;
+import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.request.ChangePasswordRequest;
@@ -20,7 +24,6 @@ import org.avni.server.web.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
@@ -53,8 +56,6 @@ public class UserController {
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
 
-    @Value("${avni.userPhoneNumberPattern}")
-    private String MOBILE_NUMBER_PATTERN;
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
     private final AccessControlService accessControlService;
 
@@ -67,7 +68,7 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          OrganisationConfigService organisationConfigService, AccessControlService accessControlService) {
+                          AccessControlService accessControlService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -167,18 +168,12 @@ public class UserController {
         return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
     }
 
-    private Boolean phoneNumberIsValid(String phoneNumber) {
-        return phoneNumber.matches(MOBILE_NUMBER_PATTERN);
-    }
-
     private User setUserAttributes(User user, UserContract userContract) {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
 
-        if (!phoneNumberIsValid(userContract.getPhoneNumber()))
-            throw new ValidationException(String.format("Invalid phone number %s", userContract.getPhoneNumber()));
-        user.setPhoneNumber(userContract.getPhoneNumber());
+        userService.setPhoneNumber(userContract.getPhoneNumber(), user);
 
         if (isUserNameInvalid(userContract.getUsername())) {
             throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));

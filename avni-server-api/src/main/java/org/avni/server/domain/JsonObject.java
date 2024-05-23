@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import org.avni.server.util.S;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,10 @@ public class JsonObject extends HashMap<String, Object> implements Serializable 
     }
 
     public List getList(String key) {
-        return (List) get(key);
+        Object o = get(key);
+        if (o == null) {
+            return new ArrayList();
+        }
+        return (List) o;
     }
 }

@@ -5,6 +5,7 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.web.validation.ValidationException;
 import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
@@ -20,8 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
 
 @Service
 public class UserService implements NonScopeAwareService {
@@ -128,8 +127,7 @@ public class UserService implements NonScopeAwareService {
     }
 
     public Optional<User> findByPhoneNumber(String phoneNumber) {
-        phoneNumber = phoneNumber.substring(phoneNumber.length() - NO_OF_DIGITS_IN_INDIAN_MOBILE_NO);
-        return userRepository.findUserWithMatchingPropertyValue("phoneNumber", phoneNumber);
+        return userRepository.findByPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
     }
 
     @Transactional
@@ -186,5 +184,12 @@ public class UserService implements NonScopeAwareService {
 
         individualRepository.save(subject);
         userSubjectRepository.save(userSubject);
+    }
+
+    public void setPhoneNumber(String phoneNumber, User user) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
+            throw new ValidationException(String.format("Phone number is invalid or empty - '%s'.", phoneNumber));
+        }
+        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
     }
 }
