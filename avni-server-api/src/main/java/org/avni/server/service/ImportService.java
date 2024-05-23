@@ -5,10 +5,9 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.ConceptDataType;
-import org.avni.server.domain.EncounterType;
-import org.avni.server.domain.Program;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
+import org.avni.server.domain.Locale;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.ProgramEnrolmentWriter;
 import org.avni.server.importer.batch.csv.writer.header.*;
 import org.slf4j.Logger;
@@ -30,15 +29,17 @@ public class ImportService {
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final OrganisationConfigRepository organisationConfigRepository;
     private final SubjectTypeService subjectTypeService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, SubjectTypeService subjectTypeService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, SubjectTypeService subjectTypeService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.organisationConfigRepository = organisationConfigRepository;
         this.subjectTypeService = subjectTypeService;
     }
 
@@ -175,8 +176,18 @@ public class ImportService {
         List<String> allowedValuesForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeAllowedValuesForSubjectTypes();
         String syncAttributesSampleValues = String.join(",", allowedValuesForSubjectTypesWithSyncAttributes);
 
-        descriptionRow = allowedValuesForSubjectTypesWithSyncAttributes.isEmpty() ? descriptionRow :  String.format("%s,%s", descriptionRow ,syncAttributesSampleValues);
+        descriptionRow = descriptionRow.replace("#supported_languages#", getSupportedLanguages().stream()
+                .map(language -> Locale.valueOf(language).getName())
+                .collect(Collectors.joining(", ", "{", "}")));
+        descriptionRow = allowedValuesForSubjectTypesWithSyncAttributes.isEmpty() ? descriptionRow
+                : String.format("%s,%s", descriptionRow ,syncAttributesSampleValues);
         sampleFileBuilder.append("\n").append(descriptionRow);
+    }
+
+    private Set<String> getSupportedLanguages() {
+        Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
+        OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
+        return organisationConfig.getSettingsObject().getSupportedLanguages();
     }
 
     private void appendSampleValues(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
