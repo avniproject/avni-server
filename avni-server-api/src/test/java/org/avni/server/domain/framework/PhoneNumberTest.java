@@ -23,6 +23,9 @@ public class PhoneNumberTest {
         assertTrue(isValidNumber(instance, " + 91 080 24242424"));
         assertTrue(isValidNumber(instance, " + 91 080 24242424 "));
 
+        assertFalse(isValidNumber(instance, " +9111111111"));
+        assertTrue(isValidNumber(instance, " 9111111111"));
+
         assertFalse(isValidNumber(instance, "94555091470"));
         assertFalse(isValidNumber(instance, "945550914"));
         assertFalse(isValidNumber(instance, "+99 9455509147"));

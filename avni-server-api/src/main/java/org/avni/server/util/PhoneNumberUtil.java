@@ -5,13 +5,29 @@ import com.google.i18n.phonenumbers.Phonenumber;
 import org.avni.server.framework.security.UserContextHolder;
 
 public class PhoneNumberUtil {
+    private static Phonenumber.PhoneNumber parsePhoneNumber(String phoneNumber) throws NumberParseException {
+        String region = UserContextHolder.getOrganisation().getAccount().getRegion();
+        com.google.i18n.phonenumbers.PhoneNumberUtil instance = com.google.i18n.phonenumbers.PhoneNumberUtil.getInstance();
+        return instance.parse(phoneNumber, region);
+    }
+
     public static boolean isValidPhoneNumber(String phoneNumber) {
         try {
-            String region = UserContextHolder.getOrganisation().getAccount().getRegion();
             com.google.i18n.phonenumbers.PhoneNumberUtil instance = com.google.i18n.phonenumbers.PhoneNumberUtil.getInstance();
-            return instance.isValidNumber(instance.parse(phoneNumber, region));
+            return instance.isValidNumber(parsePhoneNumber(phoneNumber));
         } catch (NumberParseException e) {
             return false;
+        }
+    }
+
+    public static String getInvalidMessage(String phoneNumber) {
+        if (isValidPhoneNumber(phoneNumber)) throw new RuntimeException("Phone number is valid");
+
+        try {
+            Phonenumber.PhoneNumber pn = parsePhoneNumber(phoneNumber);
+            return "Invalid phone number. CountryCode:" + pn.getCountryCode() + ", NationalNumber:" + pn.getNationalNumber();
+        } catch (NumberParseException e) {
+            return e.getMessage();
         }
     }
 

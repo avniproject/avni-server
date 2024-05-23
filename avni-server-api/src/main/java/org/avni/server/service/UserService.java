@@ -188,7 +188,7 @@ public class UserService implements NonScopeAwareService {
 
     public void setPhoneNumber(String phoneNumber, User user) {
         if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
-            throw new ValidationException(String.format("Phone number is invalid or empty - '%s'.", phoneNumber));
+            throw new ValidationException(PhoneNumberUtil.getInvalidMessage(phoneNumber));
         }
         user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
     }
