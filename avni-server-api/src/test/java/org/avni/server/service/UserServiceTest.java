@@ -81,7 +81,7 @@ public class UserServiceTest {
         when(groupRepository.findByName("group2")).thenReturn(group2);
         when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(group1);
 
-        userService.addToGroups(user, "group1|group2|group1");
+        userService.addToGroups(user, "group1,group2,group1");
         verify(userGroupRepository, times(3)).save(userGroupArgumentCaptor.capture());
 
         List<UserGroup> allValues = userGroupArgumentCaptor.getAllValues();
