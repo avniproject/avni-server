@@ -239,7 +239,7 @@ public class SubjectTypeService implements NonScopeAwareService {
 
         return Arrays.stream(syncAttributes).
                 filter(Objects::nonNull).sorted().
-                map(sa -> String.format("Allowed values: %s", getSampleValuesForSyncConcept(conceptService.get(sa))))
+                map(sa -> String.format("\"- Allowed values: %s\"", getSampleValuesForSyncConcept(conceptService.get(sa))))
                 .collect(Collectors.toList());
     }
 
@@ -247,7 +247,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         switch (ConceptDataType.valueOf(concept.getDataType())) {
             case Numeric: return "Any Number";
             case Text: return "Any Text";
-            case Coded: return concept.getSortedAnswers().map(sca -> sca.getConcept().getName())
+            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
                         .collect(Collectors.joining(", ", "{", "}"));
             default: return String.format("Appropriate value for a %s type concept", concept.getDataType());
         }
