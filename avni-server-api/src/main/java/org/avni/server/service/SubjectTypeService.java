@@ -204,8 +204,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         Predicate<SubjectType> subjectTypeHasSyncAttributes = subjectType ->
                 Objects.nonNull(subjectType.getSyncRegistrationConcept1()) ||
                         Objects.nonNull(subjectType.getSyncRegistrationConcept2());
-
-        return subjectTypes.stream().
+        return subjectTypes.stream().sorted((a,b) -> (int) (a.getId() - b.getId())).
                 filter(subjectTypeHasSyncAttributes).
                 map(this::constructSyncAttributeHeadersForSubjectType).
                 flatMap(Collection::stream).
@@ -217,9 +216,41 @@ public class SubjectTypeService implements NonScopeAwareService {
                 subjectTypeWithSyncAttribute.getSyncRegistrationConcept2()};
 
         return Arrays.stream(syncAttributes).
-                filter(Objects::nonNull).
+                filter(Objects::nonNull).sorted().
                 map(sa -> String.format("%s->%s", subjectTypeWithSyncAttribute.getName(), conceptService.get(sa).getName())).
                 collect(Collectors.toList());
+    }
+
+    public List<String> constructSyncAttributeAllowedValuesForSubjectTypes() {
+        List<SubjectType> subjectTypes = subjectTypeRepository.findByIsVoidedFalse();
+        Predicate<SubjectType> subjectTypeHasSyncAttributes = subjectType ->
+                Objects.nonNull(subjectType.getSyncRegistrationConcept1()) ||
+                        Objects.nonNull(subjectType.getSyncRegistrationConcept2());
+        return subjectTypes.stream().sorted((a,b) -> (int) (a.getId() - b.getId())).
+                filter(subjectTypeHasSyncAttributes).
+                map(this::constructSyncAttributeAllowedValuesForSubjectType).
+                flatMap(Collection::stream).
+                collect(Collectors.toList());
+    }
+
+    private List<String> constructSyncAttributeAllowedValuesForSubjectType(SubjectType subjectTypeWithSyncAttribute) {
+        String[] syncAttributes = new String[]{subjectTypeWithSyncAttribute.getSyncRegistrationConcept1(),
+                subjectTypeWithSyncAttribute.getSyncRegistrationConcept2()};
+
+        return Arrays.stream(syncAttributes).
+                filter(Objects::nonNull).sorted().
+                map(sa -> String.format("Allowed values: %s", getSampleValuesForSyncConcept(conceptService.get(sa))))
+                .collect(Collectors.toList());
+    }
+
+    private String getSampleValuesForSyncConcept(Concept concept) {
+        switch (ConceptDataType.valueOf(concept.getDataType())) {
+            case Numeric: return "Any Number";
+            case Text: return "Any Text";
+            case Coded: return concept.getSortedAnswers().map(sca -> sca.getConcept().getName())
+                        .collect(Collectors.joining(", ", "{", "}"));
+            default: return String.format("Appropriate value for a %s type concept", concept.getDataType());
+        }
     }
 
     public JsonObject getDefaultSettings() {

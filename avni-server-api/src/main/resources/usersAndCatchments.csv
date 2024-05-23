@@ -1,7 +1,8 @@
-Location with full hierarchy,Catchment Name,Username,Full Name of User,Email,Phone,Language,Track Location,Date picker mode,Enable Beneficiary mode,Beneficiary ID Prefix,User Groups
-"PHC B, Sub B, Vil B",Org X Cat A,user29@orgx,user29,email@example.com,+919876543210,English,yes,calendar,no,U29,"Group 1|Group 2"
-"PHC B, Sub B, Vil C",Org X Cat A,user29@orgx,user29,email@example.com,+919876543210,English,yes,calendar,no,U29,"Group 1|Group 2
-"PHC B, Sub C, Vil C",Org X Cat A,user29@orgx,user29,email@example.com,+919876543210,English,yes,calendar,no,U29,"Group 1|Group 2
+Location with full hierarchy,Catchment Name,Username,Full Name of User,Email Address,Mobile Number,Preferred Language,Track Location,Date picker mode,Enable Beneficiary mode,Identifier Prefix,User Groups
+"- mandatory field\n- Can be found from Admin -> Locations -> Click Export\n",- mandatory field,- mandatory field,- mandatory field,- mandatory field,"- mandatory field\n- prepend the mobile number with country code","- Allowed values: English, Marathi\n- Only single value allowed\n- default: English","- Allowed values: yes, no\n- default: no","- Allowed values: calendar, spinner \n- default: calendar","- Allowed values: yes, no\n- default: no",,"- Allowed values: Administrator, POSHAN Sathi, QRT Users"
+"PHC B, Sub B, Vil B",Org X Cat A,user29@orgx,user29,email@example.com,+919876543210,English,yes,calendar,no,U29,"Group 1,Group 2"
+"PHC B, Sub B, Vil C",Org X Cat A,user29@orgx,user29,email@example.com,+919876543210,English,yes,calendar,no,U29,"Group 1,Group 2"
+"PHC B, Sub C, Vil C",Org X Cat A,user29@orgx,user29,email@example.com,+919876543210,English,yes,calendar,no,U29,"Group 1,Group 2"
 "PHC B, Sub B, Vil C",Org X Cat B,user49@orgx,user49,email@example.com,+919876543210,English,yes,,no,U49,"Group 1"
 "PHC B, Sub C, Vil C",Org X Cat B,user49@orgx,user49,email@example.com,+919876543210,English,yes,,no,U49,"Group 1"
 "PHC C, Sub C, Vil C",Org X Cat B,user49@orgx,user49,email@example.com,+919876543210,English,yes,,no,U49,"Group 1"

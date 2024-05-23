@@ -162,11 +162,21 @@ public class ImportService {
         try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/usersAndCatchments.csv")) {
             BufferedReader csvReader = new BufferedReader(new InputStreamReader(csvFileResourceStream));
             List<String> headersForSubjectTypesWithSyncAttributes = appendHeaderRow(sampleFileBuilder, csvReader);
+            appendDescription(sampleFileBuilder, csvReader);
             appendSampleValues(sampleFileBuilder, csvReader, headersForSubjectTypesWithSyncAttributes);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return sampleFileBuilder.toString();
+    }
+
+    private void appendDescription(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
+        String descriptionRow = csvReader.readLine();
+        List<String> allowedValuesForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeAllowedValuesForSubjectTypes();
+        String syncAttributesSampleValues = String.join(",", allowedValuesForSubjectTypesWithSyncAttributes);
+
+        descriptionRow = allowedValuesForSubjectTypesWithSyncAttributes.isEmpty() ? descriptionRow :  String.format("%s,%s", descriptionRow ,syncAttributesSampleValues);
+        sampleFileBuilder.append("\n").append(descriptionRow);
     }
 
     private void appendSampleValues(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
