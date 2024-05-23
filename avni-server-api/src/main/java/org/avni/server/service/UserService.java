@@ -137,7 +137,7 @@ public class UserService implements NonScopeAwareService {
             return;
         }
 
-        String[] groupNames = Strings.split(groupsSpecified, '|');
+        String[] groupNames = Strings.split(groupsSpecified, ',');
         Arrays.stream(groupNames).distinct().forEach(groupName -> {
             if (!StringUtils.hasLength(groupName.trim())) return;
 

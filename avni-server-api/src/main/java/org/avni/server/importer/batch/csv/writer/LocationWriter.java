@@ -73,7 +73,7 @@ public class LocationWriter implements ItemWriter<Row> {
     private void strictWriter(Row row, List<String> allErrorMsgs) throws Exception {
         Map<String, String> nonEmptyLocations = new LinkedHashMap<>();
         for (String header : row.getHeaders()) {
-            if(this.locationTypeNames.contains(header) && !S.isEmpty(row.get(header))) {
+            if (this.locationTypeNames.contains(header) && !S.isEmpty(row.get(header))) {
                 nonEmptyLocations.put(header, row.get(header));
             }
         }

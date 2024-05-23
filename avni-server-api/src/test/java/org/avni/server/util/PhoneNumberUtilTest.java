@@ -39,5 +39,6 @@ public class PhoneNumberUtilTest {
     public void getInvalidMessage() {
         assertEquals("Invalid phone number. CountryCode:91, NationalNumber:11111111", PhoneNumberUtil.getInvalidMessage("+9111111111"));
         assertEquals("Invalid phone number. CountryCode:91, NationalNumber:2829", PhoneNumberUtil.getInvalidMessage("+91 2829"));
+        assertEquals("The string supplied did not seem to be a phone number.", PhoneNumberUtil.getInvalidMessage(""));
     }
 }

@@ -77,7 +77,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress)
                 .orElseThrow(() -> new Exception(format(
-                        "Provided Location does not exist. Please check for spelling mistakes '%s'", fullAddress)));
+                        "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'", fullAddress)));
 
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
