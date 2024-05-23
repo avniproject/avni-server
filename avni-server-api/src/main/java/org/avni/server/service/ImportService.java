@@ -30,16 +30,18 @@ public class ImportService {
     private final EncounterTypeRepository encounterTypeRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationConfigRepository organisationConfigRepository;
+    private final GroupRepository groupRepository;
     private final SubjectTypeService subjectTypeService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, SubjectTypeService subjectTypeService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationConfigRepository = organisationConfigRepository;
+        this.groupRepository = groupRepository;
         this.subjectTypeService = subjectTypeService;
     }
 
@@ -179,6 +181,9 @@ public class ImportService {
         descriptionRow = descriptionRow.replace("#supported_languages#", getSupportedLanguages().stream()
                 .map(language -> Locale.valueOf(language).getName())
                 .collect(Collectors.joining(", ", "{", "}")));
+        descriptionRow = descriptionRow.replace("#all_user_groups#", getGroups().stream()
+                .map(Group::getName)
+                .collect(Collectors.joining(", ", "{", "}")));
         descriptionRow = allowedValuesForSubjectTypesWithSyncAttributes.isEmpty() ? descriptionRow
                 : String.format("%s,%s", descriptionRow ,syncAttributesSampleValues);
         sampleFileBuilder.append("\n").append(descriptionRow);
@@ -188,6 +193,10 @@ public class ImportService {
         Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisationId);
         return organisationConfig.getSettingsObject().getSupportedLanguages();
+    }
+
+    private List<Group> getGroups() {
+        return groupRepository.findAllByIsVoidedFalse();
     }
 
     private void appendSampleValues(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
