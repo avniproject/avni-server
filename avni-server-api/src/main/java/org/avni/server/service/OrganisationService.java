@@ -137,6 +137,7 @@ public class OrganisationService {
     private final OrganisationConfigService organisationConfigService;
     private final GenderRepository genderRepository;
     private final OrganisationRepository organisationRepository;
+    private final UserSubjectRepository userSubjectRepository;
     private final Logger logger;
 
     @Autowired
@@ -213,7 +214,8 @@ public class OrganisationService {
                                MessageReceiverRepository messageReceiverRepository,
                                OrganisationConfigService organisationConfigService,
                                GenderRepository genderRepository,
-                               OrganisationRepository organisationRepository) {
+                               OrganisationRepository organisationRepository,
+                               UserSubjectRepository userSubjectRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -289,6 +291,7 @@ public class OrganisationService {
         this.organisationConfigService = organisationConfigService;
         this.genderRepository = genderRepository;
         this.organisationRepository = organisationRepository;
+        this.userSubjectRepository = userSubjectRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -673,6 +676,7 @@ public class OrganisationService {
             userSubjectAssignmentRepository,
             subjectProgramEligibilityRepository,
             taskRepository,
+            userSubjectRepository,
             individualRepository
         };
 
