@@ -74,7 +74,7 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
     List<String> getAllNames();
     List<Concept> getAllConceptByUuidIn(List<String> uuid);
 
-    Page<Concept> findAllByUuidIn(String [] uuids, Pageable pageable);
+    Page<Concept> findByUuidIn(String [] uuids, Pageable pageable);
     List<Concept> findAllByUuidInAndDataTypeIn(String[] uuids, String[] dataTypes);
 
     List<Concept> findByIsVoidedFalseAndNameIgnoreCaseContainsAndDataTypeIn(String name, List<String> includedDataTypes);

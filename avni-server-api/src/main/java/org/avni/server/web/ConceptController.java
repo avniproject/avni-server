@@ -154,7 +154,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
     @GetMapping(value = "/concept/answerConcepts/search/findAllById")
     @ResponseBody
     public Page<ConceptSyncAttributeContract> findByIds(@Param("ids") String[] ids, Pageable pageable) {
-        return this.conceptRepository.findAllByUuidIn(ids, pageable).map(ConceptSyncAttributeContract::fromConcept);
+        return this.conceptRepository.findByUuidIn(ids, pageable).map(ConceptSyncAttributeContract::fromConcept);
     }
 
     @RequestMapping(value = "/web/concept/dashboardFilter/search", method = RequestMethod.GET)

@@ -1,6 +1,5 @@
 package org.avni.server.dao;
 
-import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.ReportCard;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
