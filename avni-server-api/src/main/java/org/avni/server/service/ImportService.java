@@ -1,10 +1,9 @@
 package org.avni.server.service;
 
-import org.avni.server.application.FormElement;
-import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
+import org.avni.server.application.*;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
 import org.avni.server.framework.security.UserContextHolder;
@@ -23,6 +22,9 @@ import java.util.stream.Stream;
 @Service
 public class ImportService {
 
+    public static final String GPS_COORDINATES = ",\""+LocationHeaders.gpsCoordinates+"\",";
+    public static final String GPS_COORDINATES_EXAMPLE = ",\"Ex: 23.45,43.85\",";
+    public static final String STRING_CONSTANT_NEW_LINE = "\n";
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
     private static final Logger logger = LoggerFactory.getLogger(ProgramEnrolmentWriter.class);
@@ -32,9 +34,11 @@ public class ImportService {
     private final OrganisationConfigRepository organisationConfigRepository;
     private final GroupRepository groupRepository;
     private final SubjectTypeService subjectTypeService;
+    private final FormRepository formRepository;
+    private final ConceptService conceptService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormRepository formRepository, ConceptService conceptService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
@@ -43,6 +47,8 @@ public class ImportService {
         this.organisationConfigRepository = organisationConfigRepository;
         this.groupRepository = groupRepository;
         this.subjectTypeService = subjectTypeService;
+        this.formRepository = formRepository;
+        this.conceptService = conceptService;
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
@@ -128,6 +134,10 @@ public class ImportService {
         String[] uploadSpec = uploadType.split("---");
         String response = "";
 
+        if (uploadType.equals("locations")) {
+            return getLocationsSampleFile();
+        }
+
         if (uploadType.equals("usersAndCatchments")) {
            return getUsersAndCatchmentsSampleFile();
         }
@@ -159,21 +169,86 @@ public class ImportService {
         throw new UnsupportedOperationException(String.format("Sample file format for %s not supported", uploadType));
     }
 
+    private String getLocationsSampleFile() {
+        StringBuilder sampleFileBuilder = new StringBuilder();
+        try {
+            List<AddressLevelType> addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy();
+            List<FormElement> formElementNamesForLocationTypeFormElements = getFormElementNamesForLocationTypeForms();
+            appendHeaderRowForLocations(sampleFileBuilder, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+            appendDescriptionForLocations(sampleFileBuilder, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return sampleFileBuilder.toString();
+    }
+
+    private List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy() {
+        return addressLevelTypeRepository.findAllByIsVoidedFalse().stream()
+                .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private List<FormElement> getFormElementNamesForLocationTypeForms() throws Exception {
+        List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(FormType.Location);
+        if (applicableForms.size() == 0)
+            throw new Exception(String.format("No forms of type %s found", FormType.Location));
+
+        return applicableForms.stream()
+                .map(f -> {
+                    List<FormElement> formElements = f.getAllFormElements();
+                    formElements.addAll(createDecisionFormElement(f.getDecisionConcepts()));
+                    return formElements;
+                })
+                .flatMap(List::stream)
+                .filter(Objects::nonNull)
+                .filter(formElement -> !formElement.isVoided())
+                .sorted((a,b) -> (int) (a.getDisplayOrder() - b.getDisplayOrder()))
+                .collect(Collectors.toList());
+    }
+
+    private List<FormElement> createDecisionFormElement(Set<Concept> concepts) {
+        return concepts.stream().map(dc -> {
+            FormElement formElement = new FormElement();
+            formElement.setType(dc.getDataType().equals(ConceptDataType.Coded.name()) ? FormElementType.MultiSelect.name() : FormElementType.SingleSelect.name());
+            formElement.setConcept(dc);
+            return formElement;
+        }).collect(Collectors.toList());
+    }
+
+    private void appendHeaderRowForLocations(StringBuilder sampleFileBuilder, List<AddressLevelType> addressLevelTypes,
+                                             List<FormElement> formElementNamesForLocationTypeFormElements) {
+        sampleFileBuilder.append(addressLevelTypes.stream()
+                .map(alt -> String.format("\"%s\"", alt.getName())).collect(Collectors.joining(",")));
+        sampleFileBuilder.append(GPS_COORDINATES);
+        sampleFileBuilder.append(formElementNamesForLocationTypeFormElements.stream()
+                .map(fe -> String.format("\"%s\"", fe.getName())).collect(Collectors.joining(",")));
+    }
+
+    private void appendDescriptionForLocations(StringBuilder sampleFileBuilder, List<AddressLevelType> addressLevelTypes,
+                                               List<FormElement> formElementNamesForLocationTypeFormElements) {
+        sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(addressLevelTypes.stream()
+                .map(alt -> String.format("\"Ex: %s1\"", alt.getName())).collect(Collectors.joining(",")));
+        sampleFileBuilder.append(GPS_COORDINATES_EXAMPLE);
+        sampleFileBuilder.append(formElementNamesForLocationTypeFormElements.stream()
+                .map(fe -> String.format("\"Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(fe.getConcept())))
+                .collect(Collectors.joining(",")));
+    }
+
     private String getUsersAndCatchmentsSampleFile()  {
         StringBuilder sampleFileBuilder = new StringBuilder();
 
-        try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/usersAndCatchments.csv")) {
+        try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/bulkuploads/sample/usersAndCatchments.csv")) {
             BufferedReader csvReader = new BufferedReader(new InputStreamReader(csvFileResourceStream));
-            List<String> headersForSubjectTypesWithSyncAttributes = appendHeaderRow(sampleFileBuilder, csvReader);
-            appendDescription(sampleFileBuilder, csvReader);
-            appendSampleValues(sampleFileBuilder, csvReader, headersForSubjectTypesWithSyncAttributes);
+            List<String> headersForSubjectTypesWithSyncAttributes = appendHeaderRowForUsersAndCatchments(sampleFileBuilder, csvReader);
+            appendDescriptionForUsersAndCatchments(sampleFileBuilder, csvReader);
+            appendSampleValuesForUsersAndCatchments(sampleFileBuilder, csvReader, headersForSubjectTypesWithSyncAttributes);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return sampleFileBuilder.toString();
     }
 
-    private void appendDescription(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
+    private void appendDescriptionForUsersAndCatchments(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
         String descriptionRow = csvReader.readLine();
         List<String> allowedValuesForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeAllowedValuesForSubjectTypes();
         String syncAttributesSampleValues = String.join(",", allowedValuesForSubjectTypesWithSyncAttributes);
@@ -186,7 +261,7 @@ public class ImportService {
                 .collect(Collectors.joining(", ", "{", "}")));
         descriptionRow = allowedValuesForSubjectTypesWithSyncAttributes.isEmpty() ? descriptionRow
                 : String.format("%s,%s", descriptionRow ,syncAttributesSampleValues);
-        sampleFileBuilder.append("\n").append(descriptionRow);
+        sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(descriptionRow);
     }
 
     private Set<String> getSupportedLanguages() {
@@ -199,14 +274,14 @@ public class ImportService {
         return groupRepository.findAllByIsVoidedFalse();
     }
 
-    private void appendSampleValues(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
+    private void appendSampleValuesForUsersAndCatchments(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
         String toBeAppendedValuesForSyncAttributeConcepts = constructSampleSyncAttributeConceptValues(headersForSubjectTypesWithSyncAttributes);
 
         String line;
         while ((line = csvReader.readLine()) != null) {
             line = headersForSubjectTypesWithSyncAttributes.isEmpty() ? line :
                     String.format("%s,%s", line, toBeAppendedValuesForSyncAttributeConcepts);
-            sampleFileBuilder.append("\n").append(line);
+            sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(line);
         }
     }
 
@@ -216,7 +291,7 @@ public class ImportService {
         return String.join(",", sampleValuesForSyncAttributeConcepts);
     }
 
-    private List<String> appendHeaderRow(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
+    private List<String> appendHeaderRowForUsersAndCatchments(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
         String headerRow = csvReader.readLine();
         List<String> headersForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
         String syncAttributesHeader = String.join(",", headersForSubjectTypesWithSyncAttributes);

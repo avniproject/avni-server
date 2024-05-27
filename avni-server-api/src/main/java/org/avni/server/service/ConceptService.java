@@ -373,4 +373,14 @@ public class ConceptService implements NonScopeAwareService {
                     keyValues.containsOneOfTheValues(KeyType.primary_contact, valueTypes)));
         }).findFirst();
     }
+
+    public String getSampleValuesForSyncConcept(Concept concept) {
+        switch (ConceptDataType.valueOf(concept.getDataType())) {
+            case Numeric: return "Any Number";
+            case Text: return "Any Text";
+            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
+                    .collect(Collectors.joining(", ", "{", "}"));
+            default: return String.format("Appropriate value for a %s type concept", concept.getDataType());
+        }
+    }
 }
