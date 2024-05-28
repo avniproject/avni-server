@@ -210,7 +210,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     public List<IndividualWebProjection> getByUUIDs(@RequestParam(value = "uuids") List<String> uuids) {
-        List<IndividualWebProjection> projections = individualRepository.findAllByUuidIn(uuids);
+        List<IndividualWebProjection> projections = individualRepository.findAllIndividualWebProjectionByUuidIn(uuids);
         List<String> subjectTypeUUIDs = projections.stream().map(individualWebProjection -> individualWebProjection.getSubjectType().getUuid()).distinct().collect(Collectors.toList());
         accessControlService.checkSubjectPrivilege(PrivilegeType.ViewSubject, subjectTypeUUIDs);
         return projections;

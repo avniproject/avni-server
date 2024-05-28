@@ -23,8 +23,6 @@ public interface AddressLevelTypeRepository extends ReferenceDataRepository<Addr
 
     List<AddressLevelType> findAllByIdIn(Collection<Long> id);
 
-    List<AddressLevelType> findAllByUuidIn(Collection<String> UUIDs);
-
     @Query("select a.name from AddressLevelType a where a.isVoided = false")
     List<String> getAllNames();
 

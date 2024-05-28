@@ -175,7 +175,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     List<Individual> findAllByAddressLevelAndSubjectTypeAndIsVoidedFalse(AddressLevel addressLevel, SubjectType subjectType);
     List<Individual> findAllByAddressLevelAndSubjectType(AddressLevel addressLevel, SubjectType subjectType);
 
-    List<IndividualWebProjection> findAllByUuidIn(List<String> uuids);
+    List<IndividualWebProjection> findAllIndividualWebProjectionByUuidIn(List<String> uuids);
 
     @Modifying(clearAutomatically = true)
     @Query(value = "update individual i set " +
