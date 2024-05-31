@@ -5,6 +5,7 @@ import org.avni.server.builder.FormBuilder;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormRepository;
+import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormContract;
@@ -13,8 +14,9 @@ import org.avni.server.web.request.application.FormElementGroupContract;
 import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FormService implements NonScopeAwareService {
@@ -103,6 +105,33 @@ public class FormService implements NonScopeAwareService {
         if (!locationConceptUuids.isEmpty()) {
             organisationConfigService.updateLowestAddressLevelTypeSetting(locationConceptUuids);
         }
+    }
+
+    public List<FormElement> getFormElementNamesForLocationTypeForms() throws Exception {
+        List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(FormType.Location);
+        if (applicableForms.size() == 0)
+            throw new Exception(String.format("No forms of type %s found", FormType.Location));
+
+        return applicableForms.stream()
+                .map(f -> {
+                    List<FormElement> formElements = f.getAllFormElements();
+                    formElements.addAll(createDecisionFormElement(f.getDecisionConcepts()));
+                    return formElements;
+                })
+                .flatMap(List::stream)
+                .filter(Objects::nonNull)
+                .filter(formElement -> !formElement.isVoided())
+                .sorted((a,b) -> (int) (a.getDisplayOrder() - b.getDisplayOrder()))
+                .collect(Collectors.toList());
+    }
+
+    private List<FormElement> createDecisionFormElement(Set<Concept> concepts) {
+        return concepts.stream().map(dc -> {
+            FormElement formElement = new FormElement();
+            formElement.setType(dc.getDataType().equals(ConceptDataType.Coded.name()) ? FormElementType.MultiSelect.name() : FormElementType.SingleSelect.name());
+            formElement.setConcept(dc);
+            return formElement;
+        }).collect(Collectors.toList());
     }
 
     @Override

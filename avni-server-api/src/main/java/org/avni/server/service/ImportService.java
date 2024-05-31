@@ -1,11 +1,12 @@
 package org.avni.server.service;
 
-import org.avni.server.application.*;
+import org.avni.server.application.FormElement;
+import org.avni.server.application.FormMapping;
+import org.avni.server.application.FormType;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.LocationWriter;
 import org.avni.server.importer.batch.csv.writer.ProgramEnrolmentWriter;
@@ -16,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,11 +37,11 @@ public class ImportService implements ImportLocationsConstants{
     private final OrganisationConfigRepository organisationConfigRepository;
     private final GroupRepository groupRepository;
     private final SubjectTypeService subjectTypeService;
-    private final FormRepository formRepository;
+    private final FormService formService;
     private final ConceptService conceptService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormRepository formRepository, ConceptService conceptService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
@@ -46,7 +50,7 @@ public class ImportService implements ImportLocationsConstants{
         this.organisationConfigRepository = organisationConfigRepository;
         this.groupRepository = groupRepository;
         this.subjectTypeService = subjectTypeService;
-        this.formRepository = formRepository;
+        this.formService = formService;
         this.conceptService = conceptService;
     }
 
@@ -171,7 +175,7 @@ public class ImportService implements ImportLocationsConstants{
             if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
                 addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy);
             }
-            List<FormElement> formElementNamesForLocationTypeFormElements = getFormElementNamesForLocationTypeForms();
+            List<FormElement> formElementNamesForLocationTypeFormElements = formService.getFormElementNamesForLocationTypeForms();
             appendHeaderRowForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
             appendDescriptionForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
             appendExamplesForLocations(sampleFileBuilder, locationUploadMode);
@@ -191,33 +195,6 @@ public class ImportService implements ImportLocationsConstants{
                 .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
                 .filter(alt -> selectedLocationHierarchy.contains(alt.getId()))
                 .collect(Collectors.toList());
-    }
-
-    private List<FormElement> getFormElementNamesForLocationTypeForms() throws Exception {
-        List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(FormType.Location);
-        if (applicableForms.size() == 0)
-            throw new Exception(String.format("No forms of type %s found", FormType.Location));
-
-        return applicableForms.stream()
-                .map(f -> {
-                    List<FormElement> formElements = f.getAllFormElements();
-                    formElements.addAll(createDecisionFormElement(f.getDecisionConcepts()));
-                    return formElements;
-                })
-                .flatMap(List::stream)
-                .filter(Objects::nonNull)
-                .filter(formElement -> !formElement.isVoided())
-                .sorted((a,b) -> (int) (a.getDisplayOrder() - b.getDisplayOrder()))
-                .collect(Collectors.toList());
-    }
-
-    private List<FormElement> createDecisionFormElement(Set<Concept> concepts) {
-        return concepts.stream().map(dc -> {
-            FormElement formElement = new FormElement();
-            formElement.setType(dc.getDataType().equals(ConceptDataType.Coded.name()) ? FormElementType.MultiSelect.name() : FormElementType.SingleSelect.name());
-            formElement.setConcept(dc);
-            return formElement;
-        }).collect(Collectors.toList());
     }
 
     private void appendHeaderRowForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
