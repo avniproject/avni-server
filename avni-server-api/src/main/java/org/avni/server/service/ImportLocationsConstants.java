@@ -5,6 +5,7 @@ import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
 import java.util.Collections;
 
 public interface ImportLocationsConstants {
+    String STRING_CONSTANT_ONE = "1";
     String STRING_CONSTANT_NEW_LINE = "\n";
     String STRING_CONSTANT_EMPTY_STRING = "";
     String STRING_PLACEHOLDER_BLOCK = "\"%s\",";

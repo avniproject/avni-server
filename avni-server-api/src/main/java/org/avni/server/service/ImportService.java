@@ -215,7 +215,7 @@ public class ImportService implements ImportLocationsConstants{
                                                List<FormElement> formElementNamesForLocationTypeFormElements) {
         if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(addressLevelTypes.stream()
-                    .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, Example +alt.getName())).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
+                    .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, Example+alt.getName()+ STRING_CONSTANT_ONE)).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
         } else {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(String.format(STRING_3_PLACEHOLDER_BLOCK, LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION,
                     NEW_LOCATION_NAME_DESCRIPTION, PARENT_LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION));
