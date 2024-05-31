@@ -7,12 +7,14 @@ import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.importer.batch.csv.writer.LocationWriter;
 import org.avni.server.importer.batch.csv.writer.ProgramEnrolmentWriter;
 import org.avni.server.importer.batch.csv.writer.header.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.util.*;
@@ -20,11 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-public class ImportService {
+public class ImportService implements ImportLocationsConstants{
 
-    public static final String GPS_COORDINATES = ",\""+LocationHeaders.gpsCoordinates+"\",";
-    public static final String GPS_COORDINATES_EXAMPLE = ",\"Ex: 23.45,43.85\",";
-    public static final String STRING_CONSTANT_NEW_LINE = "\n";
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
     private static final Logger logger = LoggerFactory.getLogger(ProgramEnrolmentWriter.class);
@@ -134,10 +133,6 @@ public class ImportService {
         String[] uploadSpec = uploadType.split("---");
         String response = "";
 
-        if (uploadType.equals("locations")) {
-            return getLocationsSampleFile();
-        }
-
         if (uploadType.equals("usersAndCatchments")) {
            return getUsersAndCatchmentsSampleFile();
         }
@@ -169,22 +164,32 @@ public class ImportService {
         throw new UnsupportedOperationException(String.format("Sample file format for %s not supported", uploadType));
     }
 
-    private String getLocationsSampleFile() {
+    public String getLocationsSampleFile(LocationWriter.LocationUploadMode locationUploadMode, String locationHierarchy) {
         StringBuilder sampleFileBuilder = new StringBuilder();
+        List<AddressLevelType> addressLevelTypes = null;
         try {
-            List<AddressLevelType> addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy();
+            if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+                addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy);
+            }
             List<FormElement> formElementNamesForLocationTypeFormElements = getFormElementNamesForLocationTypeForms();
-            appendHeaderRowForLocations(sampleFileBuilder, addressLevelTypes, formElementNamesForLocationTypeFormElements);
-            appendDescriptionForLocations(sampleFileBuilder, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+            appendHeaderRowForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+            appendDescriptionForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+            appendExamplesForLocations(sampleFileBuilder, locationUploadMode);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return sampleFileBuilder.toString();
     }
 
-    private List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy() {
+    private List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) throws Exception {
+        if(!StringUtils.hasText(locationHierarchy)) {
+            throw new Exception(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
+        }
+        List<Long> selectedLocationHierarchy = Arrays.stream(locationHierarchy.split("\\."))
+                .map(Long::parseLong).collect(Collectors.toList());
         return addressLevelTypeRepository.findAllByIsVoidedFalse().stream()
                 .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
+                .filter(alt -> selectedLocationHierarchy.contains(alt.getId()))
                 .collect(Collectors.toList());
     }
 
@@ -215,23 +220,42 @@ public class ImportService {
         }).collect(Collectors.toList());
     }
 
-    private void appendHeaderRowForLocations(StringBuilder sampleFileBuilder, List<AddressLevelType> addressLevelTypes,
+    private void appendHeaderRowForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
                                              List<FormElement> formElementNamesForLocationTypeFormElements) {
-        sampleFileBuilder.append(addressLevelTypes.stream()
-                .map(alt -> String.format("\"%s\"", alt.getName())).collect(Collectors.joining(",")));
-        sampleFileBuilder.append(GPS_COORDINATES);
+        if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+            sampleFileBuilder.append(addressLevelTypes.stream()
+                    .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, alt.getName())).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
+        } else {
+            sampleFileBuilder.append(String.format(STRING_3_PLACEHOLDER_BLOCK, COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY,
+                    COLUMN_NAME_NEW_LOCATION_NAME, COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY));
+        }
+        sampleFileBuilder.append(String.format(STRING_PLACEHOLDER_BLOCK, COLUMN_NAME_GPS_COORDINATES));
         sampleFileBuilder.append(formElementNamesForLocationTypeFormElements.stream()
-                .map(fe -> String.format("\"%s\"", fe.getName())).collect(Collectors.joining(",")));
+                .map(fe -> String.format(STRING_PLACEHOLDER_BLOCK, fe.getName())).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
     }
 
-    private void appendDescriptionForLocations(StringBuilder sampleFileBuilder, List<AddressLevelType> addressLevelTypes,
+    private void appendDescriptionForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
                                                List<FormElement> formElementNamesForLocationTypeFormElements) {
-        sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(addressLevelTypes.stream()
-                .map(alt -> String.format("\"Ex: %s1\"", alt.getName())).collect(Collectors.joining(",")));
-        sampleFileBuilder.append(GPS_COORDINATES_EXAMPLE);
+        if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+            sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(addressLevelTypes.stream()
+                    .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, Example +alt.getName())).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
+        } else {
+            sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(String.format(STRING_3_PLACEHOLDER_BLOCK, LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION,
+                    NEW_LOCATION_NAME_DESCRIPTION, PARENT_LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION));
+        }
+        sampleFileBuilder.append(String.format(STRING_PLACEHOLDER_BLOCK, GPS_COORDINATES_EXAMPLE));
         sampleFileBuilder.append(formElementNamesForLocationTypeFormElements.stream()
-                .map(fe -> String.format("\"Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(fe.getConcept())))
-                .collect(Collectors.joining(",")));
+                .map(fe -> String.format(STRING_PLACEHOLDER_BLOCK, ALLOWED_VALUES +conceptService.getSampleValuesForSyncConcept(fe.getConcept())))
+                .collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
+    }
+
+    private void appendExamplesForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode) {
+        if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+            sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(ENTER_YOUR_DATA_STARTING_HERE);
+        } else {
+            sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(String.format(STRING_3_PLACEHOLDER_BLOCK, LOCATION_WITH_FULL_HIERARCHY_EXAMPLE,
+                    NEW_LOCATION_NAME_EXAMPLE, PARENT_LOCATION_WITH_FULL_HIERARCHY_EXAMPLE));
+        }
     }
 
     private String getUsersAndCatchmentsSampleFile()  {

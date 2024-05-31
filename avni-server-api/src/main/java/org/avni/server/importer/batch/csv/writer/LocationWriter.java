@@ -177,11 +177,15 @@ public class LocationWriter implements ItemWriter<Row> {
         this.locationUploadMode = locationUploadMode;
     }
 
-    private enum LocationUploadMode {
+    public enum LocationUploadMode {
         relaxed, strict;
 
         public static boolean isRelaxedMode(String mode) {
             return mode == null || LocationUploadMode.valueOf(mode).equals(relaxed);
+        }
+
+        public static boolean isRelaxedMode(LocationUploadMode mode) {
+            return mode.equals(relaxed);
         }
     }
 }

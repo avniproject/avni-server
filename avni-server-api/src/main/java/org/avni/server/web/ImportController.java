@@ -10,8 +10,10 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
+import org.avni.server.importer.batch.csv.writer.LocationWriter;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -75,11 +78,24 @@ public class ImportController {
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
-    public void getSampleImportFile(@RequestParam String uploadType, HttpServletResponse response) throws IOException {
+    public void getSampleImportFile(@RequestParam String uploadType,
+                                    @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
+                                    @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
+                                    HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + uploadType + ".csv\"");
-        response.getWriter().write(importService.getSampleFile(uploadType));
+        if (uploadType.equals("locations")) {
+            if(!StringUtils.hasText(locationHierarchy)) {
+                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": "+ locationHierarchy);
+            }
+            if(locationUploadMode == null) {
+                throw new BadRequestError("Missing value for request param \"locationUploadMode\"");
+            }
+            response.getWriter().write(importService.getLocationsSampleFile(locationUploadMode, locationHierarchy));
+        } else {
+            response.getWriter().write(importService.getSampleFile(uploadType));
+        }
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)
