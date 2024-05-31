@@ -28,7 +28,6 @@ import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
-import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
@@ -41,6 +40,7 @@ import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
+import org.avni.server.web.response.reports.ReportCardBundleResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -551,9 +551,9 @@ public class OrganisationService {
     }
 
     public void addReportCards(ZipOutputStream zos) throws IOException {
-        List<ReportCardContract> cardContracts = cardService.getAll().stream().map(reportCardMapper::fromEntity).collect(Collectors.toList());
-        if (!cardContracts.isEmpty()) {
-            addFileToZip(zos, "reportCard.json", cardContracts);
+        List<ReportCardBundleResponse> cards = cardService.getAll().stream().map(reportCardMapper::toBundleResponse).collect(Collectors.toList());
+        if (!cards.isEmpty()) {
+            addFileToZip(zos, "reportCard.json", cards);
         }
     }
 

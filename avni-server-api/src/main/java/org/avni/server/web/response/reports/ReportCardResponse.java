@@ -1,4 +1,4 @@
-package org.avni.server.web.response;
+package org.avni.server.web.response.reports;
 
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;

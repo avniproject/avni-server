@@ -21,12 +21,12 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
+import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
@@ -383,8 +383,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 }
                 break;
             case "reportCard.json":
-                ReportCardRequest[] cardContracts = convertString(fileData, ReportCardRequest[].class);
-                for (ReportCardRequest cardRequest : cardContracts) {
+                ReportCardBundleRequest[] cardContracts = convertString(fileData, ReportCardBundleRequest[].class);
+                for (ReportCardBundleRequest cardRequest : cardContracts) {
                     cardService.uploadCard(cardRequest);
                 }
                 break;

@@ -106,10 +106,6 @@ public class ReportCard extends OrganisationAwareEntity {
         }
     }
 
-    public Long getStandardReportCardTypeId() {
-        return standardReportCardType == null ? null : standardReportCardType.getId();
-    }
-
     public String getIconFileS3Key() {
         return iconFileS3Key;
     }

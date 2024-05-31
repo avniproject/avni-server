@@ -1,22 +1,13 @@
-package org.avni.server.web.request;
+package org.avni.server.web.request.reports;
 
 import org.avni.server.web.contract.ReportCardContract;
 
 import java.util.List;
 
-public class ReportCardRequest extends ReportCardContract {
-    private Long standardReportCardTypeId;
+public abstract class ReportCardRequest extends ReportCardContract {
     private List<String> standardReportCardInputSubjectTypes;
     private List<String> standardReportCardInputPrograms;
     private List<String> standardReportCardInputEncounterTypes;
-
-    public Long getStandardReportCardTypeId() {
-        return standardReportCardTypeId;
-    }
-
-    public void setStandardReportCardTypeId(Long standardReportCardTypeId) {
-        this.standardReportCardTypeId = standardReportCardTypeId;
-    }
 
     public List<String> getStandardReportCardInputSubjectTypes() {
         return standardReportCardInputSubjectTypes;

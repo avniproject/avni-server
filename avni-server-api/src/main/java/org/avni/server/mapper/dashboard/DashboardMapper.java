@@ -61,7 +61,7 @@ public class DashboardMapper {
 
         List<ReportCardContract> list = ds.getDashboardSectionCardMappings().stream()
                 .map(mapping -> {
-                    ReportCardContract cardContract = reportCardMapper.fromEntity(mapping.getCard());
+                    ReportCardContract cardContract = reportCardMapper.toWebResponse(mapping.getCard());
                     cardContract.setDisplayOrder(mapping.getDisplayOrder());
                     return cardContract;
                 })
