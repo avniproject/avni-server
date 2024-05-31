@@ -33,10 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 
 import static java.lang.String.format;
 import static org.avni.server.util.AvniFiles.*;
@@ -54,6 +51,7 @@ public class ImportController {
     private final FormElementRepository formElementRepository;
     private final AccessControlService accessControlService;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final LocationHierarchyService locationHierarchyService;
 
     @Autowired
     public ImportController(JobService jobService,
@@ -62,7 +60,7 @@ public class ImportController {
                             S3Service s3Service,
                             IndividualService individualService,
                             LocationService locationService,
-                            FormElementRepository formElementRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
+                            FormElementRepository formElementRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder, LocationHierarchyService locationHierarchyService) {
         this.jobService = jobService;
         this.bulkUploadS3Service = bulkUploadS3Service;
         this.importService = importService;
@@ -72,6 +70,7 @@ public class ImportController {
         this.formElementRepository = formElementRepository;
         this.accessControlService = accessControlService;
         this.errorBodyBuilder = errorBodyBuilder;
+        this.locationHierarchyService = locationHierarchyService;
         logger = LoggerFactory.getLogger(getClass());
     }
 
@@ -165,5 +164,16 @@ public class ImportController {
             response.with("value", individualService.getObservationValueForUpload(formElement, ids));
         }
         return response;
+    }
+
+    @GetMapping(value = "/web/locationHierarchies")
+    @ResponseBody
+    public HashMap<String, String> getAllAddressLevelTypeHierarchies() {
+        try {
+            return locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg();
+        } catch (Exception exception) {
+            logger.error("Error getting web locationHierarchies", exception);
+            return null;
+        }
     }
 }
