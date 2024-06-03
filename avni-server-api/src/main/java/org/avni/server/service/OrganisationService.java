@@ -791,6 +791,7 @@ public class OrganisationService {
     public List<OrganisationDTO> getOrganisations() {
         List<Organisation> organisations = organisationRepository.findAllByIsVoidedFalse();
         return organisations.stream()
+                .filter(org -> !"OpenCHS".equals(org.getName()))
                 .map(org -> new OrganisationDTO(org.getName(), org.getDbUser()))
                 .collect(Collectors.toList());
     }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/metabase")
+@RequestMapping("/api/metabase")
 public class MetabaseController {
 
     private final Logger logger = LoggerFactory.getLogger(MetabaseController.class);
@@ -35,6 +35,7 @@ public class MetabaseController {
 
     @PostMapping("/setup")
     public ResponseEntity<?> setupMetabase() {
+        logger.info("Received request to setup Metabase");
         List<OrganisationDTO> organisations = organisationService.getOrganisations();
 
         for (OrganisationDTO organisation : organisations) {
@@ -42,7 +43,8 @@ public class MetabaseController {
             String dbUser = organisation.getDbUser();
 
             try {
-                // Step 1: Create Database
+                logger.info("Setting up Metabase for organisation: {}", name);
+                // Step 1: Create Database (with constant database name)
                 createDatabase(dbUser);
 
                 // Step 2: Create Collection
@@ -52,7 +54,7 @@ public class MetabaseController {
                 createPermissionsGroup(name);
 
                 // Step 4: Add User to Permissions Group
-                addUserToPermissionsGroup(name, dbUser);
+                // addUserToPermissionsGroup(name, dbUser);
 
             } catch (Exception e) {
                 logger.error("Error setting up Metabase for organisation: " + name, e);
@@ -71,15 +73,19 @@ public class MetabaseController {
 
         Map<String, Object> details = new HashMap<>();
         details.put("host", "localhost");
+        details.put("port", "5432");  // Add port if required
+        details.put("db", "openchs");  // Constant database name
         details.put("user", dbUser);
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("engine", "postgres");
-        requestBody.put("name", dbUser);
+        requestBody.put("name", dbUser);  // Or another identifier if preferred
         requestBody.put("details", details);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Sending request to create database for user: {}", dbUser);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Response from Metabase API (create database): " + response.getBody());
     }
 
     private void createCollection(String name) {
@@ -93,7 +99,9 @@ public class MetabaseController {
         requestBody.put("description", name + " collection");
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Sending request to create collection for name: {}", name);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Response from Metabase API (create collection): " + response.getBody());
     }
 
     private void createPermissionsGroup(String name) {
@@ -106,7 +114,9 @@ public class MetabaseController {
         requestBody.put("name", name);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Sending request to create permissions group for name: {}", name);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Response from Metabase API (create permissions group): " + response.getBody());
     }
 
     private void addUserToPermissionsGroup(String groupName, String dbUser) {
@@ -120,6 +130,8 @@ public class MetabaseController {
         requestBody.put("user", dbUser);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-        restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Sending request to add user to permissions group: {}", groupName);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        logger.info("Response from Metabase API (add user to permissions group): " + response.getBody());
     }
 }
