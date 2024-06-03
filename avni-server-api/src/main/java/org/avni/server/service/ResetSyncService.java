@@ -1,9 +1,9 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.IndividualRepository;
-import org.avni.server.dao.ResetSyncRepository;
-import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.UserRepository;
+import org.avni.server.application.projections.BaseProjection;
+import org.avni.server.application.projections.LocationProjection;
+import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.util.JsonObjectUtil;
 import org.avni.server.web.request.CatchmentContract;
@@ -27,13 +27,15 @@ public class ResetSyncService {
     private final UserRepository userRepository;
     private final IndividualRepository individualRepository;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final LocationRepository locationRepository;
 
     @Autowired
-    public ResetSyncService(ResetSyncRepository resetSyncRepository, UserRepository userRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
+    public ResetSyncService(ResetSyncRepository resetSyncRepository, UserRepository userRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, LocationRepository locationRepository) {
         this.resetSyncRepository = resetSyncRepository;
         this.userRepository = userRepository;
         this.individualRepository = individualRepository;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.locationRepository = locationRepository;
     }
 
     public void recordCatchmentChange(Catchment savedCatchment, CatchmentContract request) {
@@ -57,6 +59,30 @@ public class ResetSyncService {
             ResetSync resetSync = buildNewResetSync();
             resetSync.setSubjectType(savedSubjectType);
             resetSyncRepository.save(resetSync);
+        }
+    }
+
+    public void recordLocationParentChange(AddressLevel addressLevel, Long oldParentId) {
+        String lquery = "*.".concat(addressLevel.getLineage()).concat(".*");
+        List<AddressLevel> allChildLocations = locationRepository.getAllChildLocations(lquery);
+        List<Long> allChildLocationIds = allChildLocations.stream().map(AddressLevel::getId).collect(Collectors.toList());
+        if (individualRepository.hasSubjectsInLocations(allChildLocationIds)) {
+            List<LocationProjection> parentLocations = locationRepository.getParents(addressLevel.getParentUuid());
+            List<LocationProjection> oldParentParentLocations = locationRepository.getParents(locationRepository.findById(oldParentId).get().getUuid());
+            parentLocations.addAll(oldParentParentLocations);
+            List<VirtualCatchmentProjection> virtualCatchmentsForAddressLevelIds = locationRepository.getVirtualCatchmentsForAddressLevelIds(parentLocations.stream().map(BaseProjection::getId).collect(Collectors.toList()));
+            List<ResetSync> resetSyncRecords = new ArrayList<>();
+            userRepository.findByCatchment_IdInAndIsVoidedFalse(virtualCatchmentsForAddressLevelIds
+                    .stream()
+                    .map(VirtualCatchmentProjection::getCatchment_id)
+                    .collect(Collectors.toList()))
+                .forEach(user -> {
+                    ResetSync resetSync = buildNewResetSync();
+                    resetSync.setUser(user);
+                    resetSyncRecords.add(resetSync);
+                });
+
+            if (!resetSyncRecords.isEmpty()) resetSyncRepository.saveAll(resetSyncRecords);
         }
     }
 

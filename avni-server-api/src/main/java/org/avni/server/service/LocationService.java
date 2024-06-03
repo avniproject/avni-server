@@ -40,14 +40,16 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     private final OrganisationRepository organisationRepository;
     private final LocationRepository locationRepository;
     private final LocationMappingRepository locationMappingRepository;
+    private final ResetSyncService resetSyncService;
     private final Logger logger;
 
     @Autowired
-    public LocationService(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationRepository organisationRepository, LocationMappingRepository locationMappingRepository) {
+    public LocationService(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationRepository organisationRepository, LocationMappingRepository locationMappingRepository, ResetSyncService resetSyncService) {
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationRepository = organisationRepository;
         this.locationMappingRepository = locationMappingRepository;
+        this.resetSyncService = resetSyncService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -170,6 +172,7 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
             updateLocationMapping(location, locationEditContract);
             location.setLineage(updateLineage(lineage, oldParentId, newParentId));
             location.setParent(locationRepository.findOne(newParentId));
+            resetSyncService.recordLocationParentChange(location, oldParentId);
         }
 
         location.setTitle(locationEditContract.getTitle());

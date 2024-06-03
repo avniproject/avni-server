@@ -190,7 +190,10 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     List<AddressLevel> findByIsVoidedFalseAndTitleIgnoreCaseContains(String title);
 
     @Query(value = "select id from address_level where lineage ~ cast(:lquery as lquery)", nativeQuery = true)
-    List<Long> getAllChildrenLocationsIds(@Param("lquery") String lquery);
+    List<Long> getAllChildrenLocationsIds(@Param("lquery") String lquery); //actually returns List<Integer>
+
+    @Query(value = "select * from address_level where lineage ~ cast(:lquery as lquery)", nativeQuery = true)
+    List<AddressLevel> getAllChildLocations(@Param("lquery") String lquery);
 
     @Query(value = "select * from virtual_catchment_address_mapping_table where catchment_id = :catchmentId", nativeQuery = true)
     List<VirtualCatchmentProjection> getVirtualCatchmentsForCatchmentId(@Param("catchmentId") Long catchmentId);
