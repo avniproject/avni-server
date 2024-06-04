@@ -11,7 +11,6 @@ import javax.validation.constraints.NotNull;
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"dashboardSection", "card"})
 public class DashboardSectionCardMapping extends OrganisationAwareEntity {
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dashboard_section_id")
     private DashboardSection dashboardSection;

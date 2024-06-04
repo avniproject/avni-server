@@ -6,15 +6,14 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.service.DashboardService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.web.request.DashboardRequest;
-import org.avni.server.web.request.DashboardResponse;
+import org.avni.server.web.request.DashboardWebRequest;
+import org.avni.server.web.response.reports.DashboardWebResponse;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -41,39 +40,39 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
 
     @GetMapping(value = "/web/dashboard")
     @ResponseBody
-    public List<DashboardResponse> getAll() {
+    public List<DashboardWebResponse> getAll() {
         return dashboardRepository.findAllByIsVoidedFalseOrderByName()
-                .stream().map(dashboardMapper::fromEntity)
+                .stream().map(dashboardMapper::toWebResponse)
                 .collect(Collectors.toList());
     }
 
     @GetMapping(value = "/web/dashboard/{id}")
     @ResponseBody
-    public DashboardResponse getById(@PathVariable Long id) {
+    public DashboardWebResponse getById(@PathVariable Long id) {
         Dashboard dashboard = dashboardRepository.findEntity(id);
-        return dashboardMapper.fromEntity(dashboard);
+        return dashboardMapper.toWebResponse(dashboard);
     }
 
     @PostMapping(value = "/web/dashboard")
     @ResponseBody
     @Transactional
-    public ResponseEntity<DashboardResponse> newDashboard(@RequestBody DashboardRequest dashboardRequest) {
+    public ResponseEntity<DashboardWebResponse> newDashboard(@RequestBody DashboardWebRequest dashboardRequest) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Dashboard dashboard = dashboardService.saveDashboard(dashboardRequest);
-        return ResponseEntity.ok(dashboardMapper.fromEntity(dashboard));
+        return ResponseEntity.ok(dashboardMapper.toWebResponse(dashboard));
     }
 
     @PutMapping(value = "/web/dashboard/{id}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<DashboardResponse> editDashboard(@PathVariable Long id, @RequestBody DashboardRequest dashboardRequest) {
+    public ResponseEntity<DashboardWebResponse> editDashboard(@PathVariable Long id, @RequestBody DashboardWebRequest dashboardRequest) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<Dashboard> dashboard = dashboardRepository.findById(id);
         if (!dashboard.isPresent()) {
             return ResponseEntity.notFound().build();
         }
         Dashboard newDashboard = dashboardService.editDashboard(dashboardRequest, id);
-        return ResponseEntity.ok(dashboardMapper.fromEntity(newDashboard));
+        return ResponseEntity.ok(dashboardMapper.toWebResponse(newDashboard));
     }
 
     @DeleteMapping(value = "/web/dashboard/{id}")

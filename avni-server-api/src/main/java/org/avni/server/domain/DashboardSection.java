@@ -15,7 +15,6 @@ import java.util.Set;
 @BatchSize(size = 100)
 @JsonIgnoreProperties({"dashboard", "dashboardSectionCardMappings"})
 public class DashboardSection extends OrganisationAwareEntity {
-
     @Column
     private String name;
 
@@ -87,6 +86,14 @@ public class DashboardSection extends OrganisationAwareEntity {
 
     public void setDashboardSectionCardMappings(Set<DashboardSectionCardMapping> dashboardSectionCardMappings) {
         this.dashboardSectionCardMappings.addAll(dashboardSectionCardMappings);
+    }
+
+    public void addDashboardSectionCardMapping(DashboardSectionCardMapping mapping) {
+        this.dashboardSectionCardMappings.add(mapping);
+    }
+
+    public DashboardSectionCardMapping getDashboardSectionMapping(String uuid) {
+        return dashboardSectionCardMappings.stream().filter(mapping -> mapping.getUuid().equals(uuid)).findFirst().orElse(null);
     }
 
     public enum ViewType {

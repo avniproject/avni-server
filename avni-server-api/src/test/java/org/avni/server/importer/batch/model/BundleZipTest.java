@@ -14,11 +14,13 @@ public class BundleZipTest {
         HashMap<String, byte[]> bundleEntries = new HashMap<>();
         bundleEntries.put("someParentFolder/programs.json", new byte[1]);
         bundleEntries.put("encounterTypes.json", new byte[1]);
+        bundleEntries.put("__MACOSX/JSSCP/._reportCard.json", new byte[1]);
         BundleZip bundleZip = new BundleZip(bundleEntries);
         assertNotNull(bundleZip.getFile("programs.json"));
         assertNotNull(bundleZip.getFile("encounterTypes.json"));
         assertNull(bundleZip.getFile("foo.json"));
         assertNull(bundleZip.getFile("someParentFolder"));
+        assertNull(bundleZip.getFile("reportCard.json"));
     }
 
     @Test
@@ -29,7 +31,7 @@ public class BundleZipTest {
         BundleZip bundleZip = new BundleZip(bundleEntries);
         Map<String, byte[]> forms = bundleZip.getFileNameAndDataInFolder(BundleFolder.FORMS.getFolderName());
         assertEquals(1, forms.size());
-        assertTrue(forms.keySet().contains("st1.json"));
+        assertTrue(forms.containsKey("st1.json"));
         assertEquals(8, forms.get("st1.json").length);
     }
 

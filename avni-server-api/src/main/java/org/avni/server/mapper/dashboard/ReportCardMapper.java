@@ -8,8 +8,8 @@ import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
-import org.avni.server.web.response.reports.ReportCardBundleResponse;
-import org.avni.server.web.response.reports.ReportCardResponse;
+import org.avni.server.web.response.reports.ReportCardBundleContract;
+import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +24,8 @@ public class ReportCardMapper {
         this.reportCardService = reportCardService;
     }
 
-    public ReportCardResponse toWebResponse(ReportCard card) {
-        ReportCardResponse response = new ReportCardResponse();
+    public ReportCardWebResponse toWebResponse(ReportCard card) {
+        ReportCardWebResponse response = new ReportCardWebResponse();
         setPrimitives(card, response);
         if (card.getStandardReportCardType() != null)
             response.setStandardReportCardType(StandardReportCardTypeContract.fromEntity(card.getStandardReportCardType()));
@@ -48,8 +48,8 @@ public class ReportCardMapper {
         contract.setCount(card.getCountOfCards());
     }
 
-    public ReportCardBundleResponse toBundleResponse(ReportCard reportCard) {
-        ReportCardBundleResponse response = new ReportCardBundleResponse();
+    public ReportCardBundleContract toBundle(ReportCard reportCard) {
+        ReportCardBundleContract response = new ReportCardBundleContract();
         setPrimitives(reportCard, response);
         if (reportCard.getStandardReportCardType() != null) {
             response.setStandardReportCardType(reportCard.getStandardReportCardType().getUuid());

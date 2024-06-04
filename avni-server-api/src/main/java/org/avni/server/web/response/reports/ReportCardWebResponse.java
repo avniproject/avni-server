@@ -9,7 +9,7 @@ import org.avni.server.web.request.SubjectTypeContract;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReportCardResponse extends ReportCardContract {
+public class ReportCardWebResponse extends ReportCardContract {
     private StandardReportCardTypeContract standardReportCardType;
 
     private List<SubjectTypeContract> standardReportCardInputSubjectTypes = new ArrayList<>();

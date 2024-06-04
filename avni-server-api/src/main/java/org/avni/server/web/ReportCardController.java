@@ -8,7 +8,7 @@ import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
-import org.avni.server.web.response.reports.ReportCardResponse;
+import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +43,7 @@ public class ReportCardController {
 
     @GetMapping(value = "/web/reportCard/{id}")
     @ResponseBody
-    public ResponseEntity<ReportCardResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<ReportCardWebResponse> getById(@PathVariable Long id) {
         Optional<ReportCard> card = cardRepository.findById(id);
         return card.map(c -> ResponseEntity.ok(reportCardMapper.toWebResponse(c)))
                 .orElseGet(() -> ResponseEntity.notFound().build());

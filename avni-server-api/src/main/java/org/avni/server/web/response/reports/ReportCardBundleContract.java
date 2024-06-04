@@ -5,7 +5,7 @@ import org.avni.server.web.contract.ReportCardContract;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReportCardBundleResponse extends ReportCardContract {
+public class ReportCardBundleContract extends ReportCardContract {
     private String standardReportCardType;
     private List<String> standardReportCardInputSubjectTypes = new ArrayList<>();
     private List<String> standardReportCardInputPrograms = new ArrayList<>();

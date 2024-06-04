@@ -2,8 +2,13 @@ package org.avni.server.mapper.dashboard;
 
 import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.DashboardSection;
-import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.contract.reports.DashboardBundleContract;
+import org.avni.server.web.contract.reports.DashboardSectionBundleContract;
+import org.avni.server.web.contract.reports.DashboardSectionCardMappingBundleContract;
 import org.avni.server.web.request.*;
+import org.avni.server.web.response.reports.DashboardSectionCardMappingWebResponse;
+import org.avni.server.web.response.reports.DashboardSectionWebResponse;
+import org.avni.server.web.response.reports.DashboardWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,27 +26,32 @@ public class DashboardMapper {
         this.reportCardMapper = reportCardMapper;
     }
 
-    public DashboardResponse fromEntity(Dashboard dashboard) {
-        DashboardResponse dashboardResponse = new DashboardResponse();
-        dashboardResponse.setId(dashboard.getId());
-        dashboardResponse.setUuid(dashboard.getUuid());
-        dashboardResponse.setVoided(dashboard.isVoided());
-        dashboardResponse.setName(dashboard.getName());
-        dashboardResponse.setDescription(dashboard.getDescription());
+    public DashboardWebResponse toWebResponse(Dashboard dashboard) {
+        DashboardWebResponse dashboardResponse = new DashboardWebResponse();
+        dashboardResponse.populatePrimitives(dashboard);
         setSections(dashboardResponse, dashboard);
         setFilters(dashboardResponse, dashboard);
         return dashboardResponse;
     }
 
-    private void setSections(DashboardResponse dashboardContract, Dashboard dashboard) {
-        List<DashboardSectionContract> list = dashboard.getDashboardSections()
+    private void setSections(DashboardWebResponse dashboardContract, Dashboard dashboard) {
+        List<DashboardSectionWebResponse> list = dashboard.getDashboardSections()
                 .stream()
-                .map(this::fromEntity)
+                .filter(dashboardSection -> !dashboardSection.isVoided())
+                .map(this::toWebResponse)
                 .collect(Collectors.toList());
         dashboardContract.setSections(list);
     }
 
-    private void setFilters(DashboardResponse dashboardContract, Dashboard dashboard) {
+    private void setSections(DashboardBundleContract dashboardContract, Dashboard dashboard) {
+        List<DashboardSectionBundleContract> list = dashboard.getDashboardSections()
+                .stream()
+                .map(this::toBundle)
+                .collect(Collectors.toList());
+        dashboardContract.setSections(list);
+    }
+
+    private void setFilters(DashboardWebResponse dashboardContract, Dashboard dashboard) {
         List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
                 .stream()
                 .map(dashboardFilterMapper::fromEntity)
@@ -49,34 +59,54 @@ public class DashboardMapper {
         dashboardContract.setFilters(list);
     }
 
-    private DashboardSectionContract fromEntity(DashboardSection ds) {
-        DashboardSectionContract dashboardContract = new DashboardSectionContract();
-        dashboardContract.setId(ds.getId());
-        dashboardContract.setUuid(ds.getUuid());
-        dashboardContract.setVoided(ds.isVoided());
-        dashboardContract.setName(ds.getName());
-        dashboardContract.setDescription(ds.getDescription());
-        dashboardContract.setViewType(ds.getViewType().name());
-        dashboardContract.setDisplayOrder(ds.getDisplayOrder());
-
-        List<ReportCardContract> list = ds.getDashboardSectionCardMappings().stream()
-                .map(mapping -> {
-                    ReportCardContract cardContract = reportCardMapper.toWebResponse(mapping.getCard());
-                    cardContract.setDisplayOrder(mapping.getDisplayOrder());
-                    return cardContract;
-                })
+    private void setFilters(DashboardBundleContract dashboardContract, Dashboard dashboard) {
+        List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
+                .stream()
+                .map(dashboardFilterMapper::fromEntity)
                 .collect(Collectors.toList());
-        dashboardContract.setCards(list);
+        dashboardContract.setFilters(list);
+    }
 
+    private DashboardSectionWebResponse toWebResponse(DashboardSection ds) {
+        DashboardSectionWebResponse dashboardContract = new DashboardSectionWebResponse();
+        dashboardContract.setPrimitiveFields(ds);
         setDashboardSectionCardMappings(dashboardContract, ds);
-        dashboardContract.setDashboardUUID(ds.getDashboardUUID());
         return dashboardContract;
     }
 
-    private void setDashboardSectionCardMappings(DashboardSectionContract contract, DashboardSection ds) {
-        List<DashboardSectionCardMappingContract> mappingContracts = ds.getDashboardSectionCardMappings().stream()
-                .map(DashboardSectionCardMappingContract ::fromEntity)
+    private DashboardSectionBundleContract toBundle(DashboardSection ds) {
+        DashboardSectionBundleContract dashboardContract = new DashboardSectionBundleContract();
+        dashboardContract.setPrimitiveFields(ds);
+        setDashboardSectionCardMappings(dashboardContract, ds);
+        return dashboardContract;
+    }
+
+    private void setDashboardSectionCardMappings(DashboardSectionWebResponse response, DashboardSection ds) {
+        List<DashboardSectionCardMappingWebResponse> mappingContracts = ds.getDashboardSectionCardMappings().stream()
+                .map(dashboardSectionCardMapping -> {
+                    DashboardSectionCardMappingWebResponse mappingResponse = new DashboardSectionCardMappingWebResponse();
+                    mappingResponse.setUuid(dashboardSectionCardMapping.getUuid());
+                    mappingResponse.setDisplayOrder(dashboardSectionCardMapping.getDisplayOrder());
+                    mappingResponse.setCard(reportCardMapper.toWebResponse(dashboardSectionCardMapping.getCard()));
+                    mappingResponse.setVoided(dashboardSectionCardMapping.isVoided());
+                    return mappingResponse;
+                })
+                .collect(Collectors.toList());
+        response.setDashboardSectionCardMappings(mappingContracts);
+    }
+
+    private void setDashboardSectionCardMappings(DashboardSectionBundleContract contract, DashboardSection dashboardSection) {
+        List<DashboardSectionCardMappingBundleContract> mappingContracts = dashboardSection.getDashboardSectionCardMappings().stream()
+                .map(DashboardSectionCardMappingBundleContract::fromEntity)
                 .collect(Collectors.toList());
         contract.setDashboardSectionCardMappings(mappingContracts);
+    }
+
+    public DashboardBundleContract toBundle(Dashboard dashboard) {
+        DashboardBundleContract bundleContract = new DashboardBundleContract();
+        bundleContract.populatePrimitives(dashboard);
+        setSections(bundleContract, dashboard);
+        setFilters(bundleContract, dashboard);
+        return bundleContract;
     }
 }

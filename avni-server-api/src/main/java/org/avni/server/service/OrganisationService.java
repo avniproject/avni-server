@@ -23,12 +23,14 @@ import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFolder;
+import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
+import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
@@ -40,7 +42,7 @@ import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
-import org.avni.server.web.response.reports.ReportCardBundleResponse;
+import org.avni.server.web.response.reports.ReportCardBundleContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,6 +143,7 @@ public class OrganisationService {
     private final OrganisationRepository organisationRepository;
     private final ReportCardMapper reportCardMapper;
     private final Logger logger;
+    private final DashboardMapper dashboardMapper;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -217,7 +220,8 @@ public class OrganisationService {
                                OrganisationConfigService organisationConfigService,
                                GenderRepository genderRepository,
                                OrganisationRepository organisationRepository,
-                               ReportCardMapper reportCardMapper) {
+                               ReportCardMapper reportCardMapper,
+                               DashboardMapper dashboardMapper) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -294,6 +298,7 @@ public class OrganisationService {
         this.genderRepository = genderRepository;
         this.organisationRepository = organisationRepository;
         this.reportCardMapper = reportCardMapper;
+        this.dashboardMapper = dashboardMapper;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -551,16 +556,17 @@ public class OrganisationService {
     }
 
     public void addReportCards(ZipOutputStream zos) throws IOException {
-        List<ReportCardBundleResponse> cards = cardService.getAll().stream().map(reportCardMapper::toBundleResponse).collect(Collectors.toList());
+        List<ReportCardBundleContract> cards = cardService.getAll().stream().map(reportCardMapper::toBundle).collect(Collectors.toList());
         if (!cards.isEmpty()) {
             addFileToZip(zos, "reportCard.json", cards);
         }
     }
 
     public void addReportDashboard(ZipOutputStream zos) throws IOException {
-        List<DashboardResponse> dashboardContracts = dashboardService.getAll();
-        if (!dashboardContracts.isEmpty()) {
-            addFileToZip(zos, "reportDashboard.json", dashboardContracts);
+        List<Dashboard> dashboards = dashboardRepository.findAll();
+        List<DashboardBundleContract> dashboardBundleContracts = dashboards.stream().map(dashboardMapper::toBundle).collect(Collectors.toList());
+        if (!dashboardBundleContracts.isEmpty()) {
+            addFileToZip(zos, "reportDashboard.json", dashboardBundleContracts);
         }
     }
 
