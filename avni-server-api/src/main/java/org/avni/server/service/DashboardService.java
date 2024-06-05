@@ -118,6 +118,7 @@ public class DashboardService implements NonScopeAwareService {
             section.setDescription(sectionRequest.getDescription());
             section.setViewType(DashboardSection.ViewType.valueOf(sectionRequest.getViewType()));
             section.setDisplayOrder(sectionRequest.getDisplayOrder());
+            section.setVoided(sectionRequest.isVoided());
             dashboard.addSection(section);
 
             List<DashboardSectionCardMappingRequest> sectionCardMappingRequests = sectionRequest.getDashboardSectionCardMappings();
