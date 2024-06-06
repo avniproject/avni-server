@@ -198,8 +198,8 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     private void assertNoExistingDashboardWithName(String name) {
-        Dashboard existingDashboard = dashboardRepository.findByName(name);
-        if (existingDashboard != null) {
+        boolean existingDashboard = dashboardRepository.existsByNameAndIsVoidedFalse(name);
+        if (existingDashboard == false) {
             throw new BadRequestError(String.format("Dashboard %s already exists", name));
         }
     }
