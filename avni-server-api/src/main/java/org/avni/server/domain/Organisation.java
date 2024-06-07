@@ -28,9 +28,6 @@ public class Organisation extends ETLEntity {
     @Enumerated(EnumType.STRING)
     private OrganisationCategory category;
 
-    @Column(name = "db_user") 
-    private String dbUser;
-
     public Organisation() {
     }
 
@@ -92,11 +89,4 @@ public class Organisation extends ETLEntity {
         this.category = organisationCategory;
     }
 
-    public String getDbUser() {
-        return dbUser;
-    }
-
-    public void setDbUser(String dbUser) {
-        this.dbUser = dbUser;
-    }
 }

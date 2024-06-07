@@ -47,6 +47,11 @@ public class UserService implements NonScopeAwareService {
         return userContext.getUser();
     }
 
+    public boolean isDefaultSuperAdmin() {
+        User currentUser = getCurrentUser();
+        return currentUser != null && User.DEFAULT_SUPER_ADMIN.equals(currentUser.getUuid());
+    }
+
     public User save(User user) {
         String idPrefix = UserSettings.getIdPrefix(user.getSettings());
         if (StringUtils.hasLength(idPrefix)) {
