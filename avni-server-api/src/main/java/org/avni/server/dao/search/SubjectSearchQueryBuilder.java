@@ -6,7 +6,7 @@ import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<SubjectSearchQueryBuilder> implements SearchBuilder {
 
     public SqlQuery build() {
-        String baseQuery = "select i.id as \"id\",\n" +
+        String baseQuery = "select distinct i.id as \"id\",\n" +
                 "                i.first_name as \"firstName\",\n" +
                 "                i.last_name as \"lastName\",\n" +
                 "                i.profile_picture as \"profilePicture\",\n" +
