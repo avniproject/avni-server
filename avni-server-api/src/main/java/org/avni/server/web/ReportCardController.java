@@ -35,7 +35,7 @@ public class ReportCardController {
 
     @GetMapping(value = "/web/reportCard")
     @ResponseBody
-    public List<ReportCardContract> getAll() {
+    public List<ReportCardWebResponse> getAll() {
         return cardRepository.findAllByIsVoidedFalseOrderByName()
                 .stream().map(reportCardMapper::toWebResponse)
                 .collect(Collectors.toList());
@@ -52,7 +52,7 @@ public class ReportCardController {
     @PostMapping(value = "/web/reportCard")
     @ResponseBody
     @Transactional
-    public ResponseEntity<ReportCardContract> newCard(@RequestBody ReportCardWebRequest cardRequest) {
+    public ResponseEntity<ReportCardWebResponse> newCard(@RequestBody ReportCardWebRequest cardRequest) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         ReportCard card = cardService.saveCard(cardRequest);
         return ResponseEntity.ok(reportCardMapper.toWebResponse(card));
@@ -61,7 +61,7 @@ public class ReportCardController {
     @PutMapping(value = "/web/reportCard/{id}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<ReportCardContract> editCard(@PathVariable Long id, @RequestBody ReportCardWebRequest request) {
+    public ResponseEntity<ReportCardWebResponse> editCard(@PathVariable Long id, @RequestBody ReportCardWebRequest request) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
         Optional<ReportCard> card = cardRepository.findById(id);
         if (!card.isPresent()) {
