@@ -131,9 +131,7 @@ public class LocationWriter implements ItemWriter<Row> {
     private void validateCreateModeHeaders(String[] headers, List<String> allErrorMsgs) throws Exception {
         List<String> headerList = Arrays.asList(headers);
         List<String> locationTypeHeaders = checkIfHeaderHasLocationTypesInOrderForHierarchy(this.locationHierarchy, headerList, allErrorMsgs);
-        System.out.println(locationTypeHeaders);
         List<String> additionalHeaders = new ArrayList<>(headerList.subList(locationTypeHeaders.size(), headerList.size()));
-        System.out.println(additionalHeaders);
         checkIfHeaderRowHasUnknownHeaders(additionalHeaders, allErrorMsgs);
     }
 
@@ -153,13 +151,12 @@ public class LocationWriter implements ItemWriter<Row> {
     }
 
     private List<String> checkIfHeaderHasLocationTypesInOrderForHierarchy(String locationHierarchy, List<String> headerList, List<String> allErrorMsgs) throws Exception {
-        // There can be location properties in the header, so we save other values as locationProperties
         List<String> locationTypeNamesForHierachy = importService.getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy)
             .stream().map(AddressLevelType::getName).collect(Collectors.toList());
         this.locationTypeNames = locationTypeNamesForHierachy;
 
         if (headerList.size() >= locationTypeNamesForHierachy.size() && !headerList.subList(0, locationTypeNamesForHierachy.size()).equals(locationTypeNamesForHierachy)) {
-            allErrorMsgs.add("Location types missing in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.");
+            allErrorMsgs.add("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.");
             throw new Exception(String.join(", ", allErrorMsgs));
         }
         return locationTypeNamesForHierachy;
