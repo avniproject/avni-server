@@ -107,10 +107,8 @@ public class FormService implements NonScopeAwareService {
         }
     }
 
-    public List<FormElement> getFormElementNamesForLocationTypeForms() throws Exception {
+    public List<FormElement> getFormElementNamesForLocationTypeForms() {
         List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(FormType.Location);
-        if (applicableForms.size() == 0)
-            throw new Exception(String.format("No forms of type %s found", FormType.Location));
 
         return applicableForms.stream()
                 .map(f -> {

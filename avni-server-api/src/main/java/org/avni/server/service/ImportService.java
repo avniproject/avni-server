@@ -172,7 +172,7 @@ public class ImportService implements ImportLocationsConstants{
         StringBuilder sampleFileBuilder = new StringBuilder();
         List<AddressLevelType> addressLevelTypes = null;
         try {
-            if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+            if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
                 addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy);
             }
             List<FormElement> formElementNamesForLocationTypeFormElements = formService.getFormElementNamesForLocationTypeForms();
@@ -185,7 +185,7 @@ public class ImportService implements ImportLocationsConstants{
         return sampleFileBuilder.toString();
     }
 
-    private List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) throws Exception {
+    public List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) throws Exception {
         if(!StringUtils.hasText(locationHierarchy)) {
             throw new Exception(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
         }
@@ -199,7 +199,7 @@ public class ImportService implements ImportLocationsConstants{
 
     private void appendHeaderRowForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
                                              List<FormElement> formElementNamesForLocationTypeFormElements) {
-        if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+        if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
             sampleFileBuilder.append(addressLevelTypes.stream()
                     .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, alt.getName())).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
         } else {
@@ -213,7 +213,7 @@ public class ImportService implements ImportLocationsConstants{
 
     private void appendDescriptionForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
                                                List<FormElement> formElementNamesForLocationTypeFormElements) {
-        if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+        if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(addressLevelTypes.stream()
                     .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, Example+alt.getName()+ STRING_CONSTANT_ONE)).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
         } else {
@@ -227,7 +227,7 @@ public class ImportService implements ImportLocationsConstants{
     }
 
     private void appendExamplesForLocations(StringBuilder sampleFileBuilder, LocationWriter.LocationUploadMode locationUploadMode) {
-        if (LocationWriter.LocationUploadMode.isRelaxedMode(locationUploadMode)) {
+        if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(ENTER_YOUR_DATA_STARTING_HERE);
         } else {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(String.format(STRING_3_PLACEHOLDER_BLOCK, LOCATION_WITH_FULL_HIERARCHY_EXAMPLE,

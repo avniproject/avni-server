@@ -165,14 +165,7 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         }
 
         if (locationEditContract.getParentId() != null && !locationEditContract.getParentId().equals(location.getParentId())) {
-            Long oldParentId = location.getParentId();
-            Long newParentId = locationEditContract.getParentId();
-            String lineage = location.getLineage();
-            updateDescendantLocationLineage(locationRepository.findAllByParent(location), oldParentId, newParentId);
-            updateLocationMapping(location, locationEditContract);
-            location.setLineage(updateLineage(lineage, oldParentId, newParentId));
-            location.setParent(locationRepository.findOne(newParentId));
-            resetSyncService.recordLocationParentChange(location, oldParentId);
+            updateParent(location, locationEditContract.getParentId());
         }
 
         location.setTitle(locationEditContract.getTitle());
@@ -180,9 +173,21 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         return location;
     }
 
-    private void updateLocationMapping(AddressLevel location, LocationEditContract locationEditContract) {
+    public void updateParent(AddressLevel location, AddressLevel newParent) {
+        updateDescendantLocationLineage(locationRepository.findAllByParent(location), location.getParentId(), newParent.getId());
+        updateLocationMapping(location, newParent);
+        location.setLineage(updateLineage(location.getLineage(), location.getParentId(), newParent.getId()));
+        Long oldParentId = location.getParentId();
+        location.setParent(newParent);
+        resetSyncService.recordLocationParentChange(location, oldParentId);
+    }
+
+    private void updateParent(AddressLevel location, Long newParentId) {
+        updateParent(location, locationRepository.findOne(newParentId));
+    }
+
+    private void updateLocationMapping(AddressLevel location, AddressLevel newParent) {
         List<ParentLocationMapping> locationMappings = locationMappingRepository.findAllByLocation(location);
-        AddressLevel newParent = locationRepository.findOne(locationEditContract.getParentId());
         List<ParentLocationMapping> updatedLocationMappings = locationMappings.stream()
                 .peek(locationMapping -> locationMapping.setParentLocation(newParent))
                 .collect(Collectors.toList());

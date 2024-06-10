@@ -84,12 +84,12 @@ public class ImportController {
                                     HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + uploadType + ".csv\"");
+            "attachment; filename=\"" + uploadType + ".csv\"");
         if (uploadType.equals("locations")) {
-            if(!StringUtils.hasText(locationHierarchy)) {
-                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": "+ locationHierarchy);
+            if (!StringUtils.hasText(locationHierarchy)) {
+                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": " + locationHierarchy);
             }
-            if(locationUploadMode == null) {
+            if (locationUploadMode == null) {
                 throw new BadRequestError("Missing value for request param \"locationUploadMode\"");
             }
             response.getWriter().write(importService.getLocationsSampleFile(locationUploadMode, locationHierarchy));
@@ -107,7 +107,8 @@ public class ImportController {
     public ResponseEntity<?> doit(@RequestParam MultipartFile file,
                                   @RequestParam String type,
                                   @RequestParam boolean autoApprove,
-                                  @RequestParam String locationUploadMode) throws IOException {
+                                  @RequestParam String locationUploadMode,
+                                  @RequestParam String locationHierarchy) throws IOException {
                           
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
@@ -117,7 +118,7 @@ public class ImportController {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         try {
             ObjectInfo storedFileInfo = type.equals("metadataZip") ? bulkUploadS3Service.uploadZip(file, uuid) : bulkUploadS3Service.uploadFile(file, uuid);
-            jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode);
+            jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode, locationHierarchy);
         } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
             logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
