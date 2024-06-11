@@ -1,7 +1,6 @@
 package org.avni.server.service;
 
 import org.avni.server.application.projections.BaseProjection;
-import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -17,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -67,15 +67,14 @@ public class ResetSyncService {
         List<AddressLevel> allChildLocations = locationRepository.getAllChildLocations(lquery);
         List<Long> allChildLocationIds = allChildLocations.stream().map(AddressLevel::getId).collect(Collectors.toList());
         if (individualRepository.hasSubjectsInLocations(allChildLocationIds)) {
-            List<LocationProjection> parentLocations = locationRepository.getParents(addressLevel.getParentUuid());
-            List<LocationProjection> oldParentParentLocations = locationRepository.getParents(locationRepository.findById(oldParentId).get().getUuid());
-            parentLocations.addAll(oldParentParentLocations);
-            List<VirtualCatchmentProjection> virtualCatchmentsForAddressLevelIds = locationRepository.getVirtualCatchmentsForAddressLevelIds(parentLocations.stream().map(BaseProjection::getId).collect(Collectors.toList()));
+            List<Long> addressLevelIdsToBeChecked = new ArrayList<>(Collections.singletonList(addressLevel.getId()));
+            addressLevelIdsToBeChecked.addAll(locationRepository.getParents(addressLevel.getParentUuid()).stream().map(BaseProjection::getId).collect(Collectors.toList()));
+            addressLevelIdsToBeChecked.addAll(locationRepository.getParents(locationRepository.findById(oldParentId).get().getUuid()).stream().map(BaseProjection::getId).collect(Collectors.toList()));
+            List<Long> virtualCatchmentIdsForAddressLevelIds = locationRepository.getVirtualCatchmentsForAddressLevelIds(addressLevelIdsToBeChecked).stream()
+                .map(VirtualCatchmentProjection::getCatchment_id)
+                .collect(Collectors.toList());
             List<ResetSync> resetSyncRecords = new ArrayList<>();
-            userRepository.findByCatchment_IdInAndIsVoidedFalse(virtualCatchmentsForAddressLevelIds
-                    .stream()
-                    .map(VirtualCatchmentProjection::getCatchment_id)
-                    .collect(Collectors.toList()))
+            userRepository.findByCatchment_IdInAndIsVoidedFalse(virtualCatchmentIdsForAddressLevelIds)
                 .forEach(user -> {
                     ResetSync resetSync = buildNewResetSync();
                     resetSync.setUser(user);
@@ -133,7 +132,7 @@ public class ResetSyncService {
 
     private boolean isSyncConcept2Changed(UserSyncSettings olderSettings, UserSyncSettings newSettings) {
         return isChanged(olderSettings.getSyncConcept2(), newSettings.getSyncConcept2()) ||
-                isConceptValueChanged(olderSettings.getSyncConcept2Values(), newSettings.getSyncConcept2Values());
+            isConceptValueChanged(olderSettings.getSyncConcept2Values(), newSettings.getSyncConcept2Values());
     }
 
     private boolean isCatchmentChanged(List<Long> savedLocationIds, List<Long> locationIdsPassedInRequest) {
@@ -146,7 +145,7 @@ public class ResetSyncService {
         List<Long> removedIds = new ArrayList<>(savedLocationIds);
         removedIds.removeAll(locationIdsPassedInRequest);
         return individualRepository.hasSubjectsInLocations(newlyAddedIds) ||
-                individualRepository.hasSubjectsInLocations(removedIds);
+            individualRepository.hasSubjectsInLocations(removedIds);
     }
 
     private ResetSync buildNewResetSync() {
