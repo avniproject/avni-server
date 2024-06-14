@@ -17,17 +17,16 @@ public class MetabaseService {
     private final MetabaseRepository metabaseRepository;
     private final OrganisationService organisationService;
 
-    @Value("${database.host}")
-    private String dbHost;
+    @Value("${avni.database.server}")
+    private String avniDatabaseServer;
 
-    @Value("${database.port}")
-    private String dbPort;
+    @Value("${avni.database.port}")
+    private String avniDatabasePort;
 
-    @Value("${database.name}")
-    private String dbName;
+    @Value("${avni.database}")
+    private String avniDatabaseName;
 
-    @Value("${database.engine}")
-    private String dbEngine;
+    private final String DB_ENGINE = "postgres";
 
     public MetabaseService(MetabaseRepository metabaseRepository, OrganisationService organisationService) {
         this.metabaseRepository = metabaseRepository;
@@ -39,8 +38,8 @@ public class MetabaseService {
         String name = currentOrganisation.getName();
         String dbUser = currentOrganisation.getDbUser();
 
-        DatabaseDetails databaseDetails = new DatabaseDetails(dbHost, dbPort, dbName, dbUser);
-        Database database = new Database(name, dbEngine, databaseDetails);
+        DatabaseDetails databaseDetails = new DatabaseDetails(avniDatabaseServer, avniDatabasePort, avniDatabaseName, dbUser);
+        Database database = new Database(name, DB_ENGINE, databaseDetails);
         Collection collection = new Collection(name, name + " collection");
         PermissionsGroup permissionsGroup = new PermissionsGroup(name);
 
