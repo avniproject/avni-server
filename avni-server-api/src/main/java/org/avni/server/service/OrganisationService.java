@@ -788,37 +788,4 @@ public class OrganisationService {
         return organisationRepository.findOne(organisationId);
     }
 
-    public List<OrganisationDTO> getOrganisations() {
-        List<Organisation> organisations = organisationRepository.findAllByIsVoidedFalse();
-        return organisations.stream()
-                .filter(org -> !"OpenCHS".equals(org.getName()))
-                .map(org -> new OrganisationDTO(org.getName(), org.getDbUser()))
-                .collect(Collectors.toList());
-    }
-
-    public static class OrganisationDTO {
-        private String name;
-        private String dbUser;
-
-        public OrganisationDTO(String name, String dbUser) {
-            this.name = name;
-            this.dbUser = dbUser;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getDbUser() {
-            return dbUser;
-        }
-
-        public void setDbUser(String dbUser) {
-            this.dbUser = dbUser;
-        }
-    }
 }

@@ -1,0 +1,35 @@
+package org.avni.server.domain.metabase;
+
+public class DatabaseDetails {
+    private String host;
+    private String port;
+    private String db;
+    private String user;
+
+    public DatabaseDetails(String host, String port, String db, String user) {
+        this.host = host;
+        this.port = port;
+        this.db = db;
+        this.user = user;
+    }
+
+        
+    public String getHost() {
+        return host;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public String getDb() {
+        return db;
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+
+}
+ 
