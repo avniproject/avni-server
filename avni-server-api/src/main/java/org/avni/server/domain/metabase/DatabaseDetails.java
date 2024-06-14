@@ -13,7 +13,10 @@ public class DatabaseDetails {
         this.user = user;
     }
 
-        
+    public DatabaseDetails(AvniDatabase avniDatabase, String dbUser) {
+        this(avniDatabase.getAvniDatabaseServer(), avniDatabase.getAvniDatabasePort(), avniDatabase.getAvniDatabaseName(), dbUser);
+    }
+
     public String getHost() {
         return host;
     }
@@ -32,4 +35,3 @@ public class DatabaseDetails {
 
 
 }
- 
