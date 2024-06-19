@@ -71,6 +71,19 @@ public class LocationHierarchyService implements NonScopeAwareService {
         return filterHierarchiesWithCommonAncestries(addressLevelTypeHierarchies);
     }
 
+    public HashMap<String, String> determineAddressHierarchiesForAllAddressLevelTypesInOrg() {
+        HashMap<String, String> hierarchyToDisplayNameMap = new HashMap<>();
+        List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByIsVoidedFalse();
+        TreeSet<String> addressLevelTypeHierarchies = buildHierarchyForAddressLevelTypes(addressLevelTypes);
+        TreeSet<String> filteredAddressLevelTypeHierarchies = filterHierarchiesWithCommonAncestries(addressLevelTypeHierarchies);
+        filteredAddressLevelTypeHierarchies.forEach(key -> {
+            hierarchyToDisplayNameMap.put(key, Arrays.stream(key.split("\\."))
+                    .map(altId -> addressLevelTypeRepository.findOne(Long.parseLong(altId)).getName())
+                    .collect(Collectors.joining(" -> ")));
+        });
+        return hierarchyToDisplayNameMap;
+    }
+
     public TreeSet<String> buildHierarchyForAddressLevelTypes(List<AddressLevelType> addressLevelTypes) {
         TreeSet<String> addressLevelTypeHierarchies = new TreeSet<>();
 

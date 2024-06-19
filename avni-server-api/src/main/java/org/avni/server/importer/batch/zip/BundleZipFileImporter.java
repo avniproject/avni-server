@@ -21,12 +21,13 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
+import org.avni.server.web.contract.reports.DashboardBundleContract;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.application.ChecklistDetailRequest;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.menu.MenuItemContract;
+import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.avni.server.web.request.webapp.task.TaskStatusContract;
@@ -98,7 +99,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     /**
      * IMPORTANT: The un-tampered bundle is processed in the order of files inserted while generating the bundle,
      * which is as per code in ImplementationController.export().
-     *
+     * <p>
      * Always ensure that bundle is created with content in the same sequence that you want it to be processed during upload.
      * DISCLAIMER: If the bundle is tampered, for example to remove any forms or concepts, then the sequence of processing of bundle files is unknown
      */
@@ -218,7 +219,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         BundleZip bundleZip = new BundleZip(bundleFiles.stream().collect(Collectors.toMap(BundleFile::getName, BundleFile::getContent)));
         for (String filename : fileSequence) {
             Optional<BundleFolder> fromFileName = BundleFolder.getFromFileName(filename);
-            if(fromFileName.isPresent()) {
+            if (fromFileName.isPresent()) {
                 deployFolder(fromFileName.get(), bundleFiles, bundleZip);
             } else {
                 deployFileIfDataExists(bundleFiles, bundleZip, filename);
@@ -279,7 +280,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 SubjectTypeContract[] subjectTypeContracts = convertString(fileData, SubjectTypeContract[].class);
                 for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
                     SubjectTypeService.SubjectTypeUpsertResponse response = subjectTypeService.saveSubjectType(subjectTypeContract);
-                    if(response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
+                    if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
                         subjectTypeService.launchUserSubjectTypeJob(response.getSubjectType());
                     }
                 }
@@ -383,14 +384,14 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 }
                 break;
             case "reportCard.json":
-                ReportCardRequest[] cardContracts = convertString(fileData, ReportCardRequest[].class);
-                for (ReportCardRequest cardRequest : cardContracts) {
+                ReportCardBundleRequest[] cardContracts = convertString(fileData, ReportCardBundleRequest[].class);
+                for (ReportCardBundleRequest cardRequest : cardContracts) {
                     cardService.uploadCard(cardRequest);
                 }
                 break;
             case "reportDashboard.json":
-                DashboardResponse[] dashboardContracts = convertString(fileData, DashboardResponse[].class);
-                for (DashboardResponse dashboardContract : dashboardContracts) {
+                DashboardBundleContract[] dashboardContracts = convertString(fileData, DashboardBundleContract[].class);
+                for (DashboardBundleContract dashboardContract : dashboardContracts) {
                     dashboardService.uploadDashboard(dashboardContract);
                 }
                 break;
@@ -471,7 +472,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     private <T> T convertString(byte[] data, Class<T> convertTo) throws IOException {
-        return convertString(new String(data, StandardCharsets.UTF_8),convertTo);
+        return convertString(new String(data, StandardCharsets.UTF_8), convertTo);
     }
 
     private <T> T convertString(String data, Class<T> convertTo) throws IOException {

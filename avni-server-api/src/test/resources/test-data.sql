@@ -31,6 +31,7 @@ DELETE FROM organisation_config;
 DELETE from message_request_queue;
 DELETE from message_receiver;
 DELETE from message_rule;
+DELETE FROM reset_sync;
 DELETE FROM users;
 DELETE FROM subject_type;
 DELETE FROM group_privilege;
@@ -245,9 +246,33 @@ INSERT INTO address_level (id, title, uuid, version, lineage, parent_id, created
 VALUES (1, 'Nijhma', 'ae35fe6d-910e-47bd-a0c7-0c10182a4085', 1, '1', NULL, 1, 1, now(), now());
 INSERT INTO address_level (id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES (2, 'Naya Gaon', 'a62d5ff9-4480-44f8-ab9f-9fe12e2e1a91', 1, '2', NULL, 1, 1, now(), now());
+INSERT INTO address_level (id, organisation_id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES (3, 2, 'GP1', '04c419a4-4fbe-4d54-b4d2-8e669f0e47a4', 1, '3', NULL, 1, 1, now(), now());
+INSERT INTO address_level (id, organisation_id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES (4, 2, 'GP1.Parent1', '53de16f0-d8ba-40d0-9a75-7e1b9e8b1969', 1, '3.4', 3, 1, 1, now(), now());
+INSERT INTO address_level (id, organisation_id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES (5, 2, 'GP1.Parent1.Child1', 'eb012ab0-680b-4e2d-beda-bc000a50f4cd', 1, '3.4.5', 4, 1, 1, now(), now());
+INSERT INTO address_level (id, organisation_id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES (6, 2, 'GP2', '8108d1e6-7de8-4c0e-a2ce-8f3ff72d1540', 1, '6', NULL, 1, 1, now(), now());
+INSERT INTO address_level (id, organisation_id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES (7, 2, 'GP2.Parent2', '87d4037f-2d55-485e-8473-8474db421a74', 1, '6.7', 6, 1, 1, now(), now());
+INSERT INTO address_level (id, organisation_id, title, uuid, version, lineage, parent_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES (8, 2, 'GP2.Parent2.Child2', 'c26bf9e0-7368-490f-ba95-29c82b6a3978', 1, '6.7.8', 7, 1, 1, now(), now());
+
+INSERT INTO catchment (id, name, uuid, version, organisation_id, type, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES
+  (3, 'CatchmentZ', '640867e4-2374-4a26-b0b9-adebad2d86b8', 0, 2, 'TypeZ', 1, 1, now(), now());
+INSERT INTO catchment (id, name, uuid, version, organisation_id, type, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES
+  (4, 'CatchmentZ2', 'b9ea6198-6dd7-4891-ab17-c5697361f733', 0, 2, 'TypeZ', 1, 1, now(), now());
 
 INSERT INTO catchment_address_mapping (catchment_id, addresslevel_id)
-VALUES (1, 1), (1, 2), (2, 2);
+VALUES (1, 1), (1, 2), (2, 2), (3, 4), (4, 6);
+
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id, name)
+VALUES (7, 'user-reset-sync-test1@demo', '8fecc62f-4b6b-4dd4-a27d-fa2587e59d04', 2, 'ByCatchment', false, 3, 'user-reset-sync-test1');
+INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, catchment_id, name)
+VALUES (8, 'user-reset-sync-test2@demo', '8924b997-70c9-431c-9f40-be5c9700018f', 2, 'ByCatchment', false, 4, 'user-reset-sync-test2');
 
 INSERT INTO individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, gender_id, organisation_id,
                         subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -298,6 +323,11 @@ INSERT INTO individual (address_id, date_of_birth, date_of_birth_verified, first
                         subject_type_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES (2, '1955-01-05', FALSE, 'Ram', 'Kumari', 1, 'bb312ece-5e2e-490f-ae1d-2896089da81e', 1,
         (select id from subject_type where name = 'Individual'), 1, 1, now(), now());
+
+INSERT INTO individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, gender_id, organisation_id,
+                        subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES ('74a37894-0cca-4104-811b-34d84ce8f06e', (select id from address_level where title = 'GP1.Parent1'), 1, current_timestamp, FALSE, 'Subject6', 'Subject6', 2, 2,
+        (select id from subject_type where name = 'Individual'), '{"7c39cb04-4f02-4c49-8f94-a5b697d40365": "9282738493"}'::jsonb, 1, 1, now(), now());
 
 INSERT INTO form (NAME, form_type, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES ('encounter_form', 'Encounter', '2c32a184-6d27-4c51-841d-551ca94594a5', 1, 1, 1, now(), now());

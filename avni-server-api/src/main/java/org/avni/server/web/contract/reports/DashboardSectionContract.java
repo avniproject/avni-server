@@ -1,18 +1,14 @@
-package org.avni.server.web.request;
+package org.avni.server.web.contract.reports;
 
-import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.domain.DashboardSection;
+import org.avni.server.web.request.CHSRequest;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class DashboardSectionContract extends CHSRequest {
+public abstract class DashboardSectionContract extends CHSRequest {
     private String name;
     private String description;
     private String viewType;
     private Double displayOrder;
     private String dashboardUUID;
-    private List<ReportCardContract> cards = new ArrayList<>();
-    private List<DashboardSectionCardMappingContract> dashboardSectionCardMappings = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -28,14 +24,6 @@ public class DashboardSectionContract extends CHSRequest {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public List<ReportCardContract> getCards() {
-        return cards;
-    }
-
-    public void setCards(List<ReportCardContract> cards) {
-        this.cards = cards;
     }
 
     public String getViewType() {
@@ -62,12 +50,14 @@ public class DashboardSectionContract extends CHSRequest {
         this.dashboardUUID = dashboardUUID;
     }
 
-    public List<DashboardSectionCardMappingContract> getDashboardSectionCardMappings() {
-        return dashboardSectionCardMappings;
+    public void setPrimitiveFields(DashboardSection dashboardSection) {
+        this.setId(dashboardSection.getId());
+        this.setUuid(dashboardSection.getUuid());
+        this.setVoided(dashboardSection.isVoided());
+        this.setName(dashboardSection.getName());
+        this.setDescription(dashboardSection.getDescription());
+        this.setViewType(dashboardSection.getViewType().name());
+        this.setDisplayOrder(dashboardSection.getDisplayOrder());
+        this.setDashboardUUID(dashboardSection.getDashboardUUID());
     }
-
-    public void setDashboardSectionCardMappings(List<DashboardSectionCardMappingContract> dashboardSectionCardMappings) {
-        this.dashboardSectionCardMappings = dashboardSectionCardMappings;
-    }
-
 }

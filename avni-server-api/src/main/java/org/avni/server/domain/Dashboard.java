@@ -61,4 +61,13 @@ public class Dashboard extends OrganisationAwareEntity {
         dashboardFilters.add(dashboardFilter);
         dashboardFilter.setDashboard(this);
     }
+
+    public DashboardSection getSection(String sectionUUID) {
+        return dashboardSections.stream().filter(section -> section.getUuid().equals(sectionUUID)).findFirst().orElse(null);
+    }
+
+    public void addSection(DashboardSection section) {
+        dashboardSections.add(section);
+        section.setDashboard(this);
+    }
 }

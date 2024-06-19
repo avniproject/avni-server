@@ -2,12 +2,13 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.avni.server.web.request.SubjectTypeContract;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Entity
@@ -110,10 +111,6 @@ public class ReportCard extends OrganisationAwareEntity {
         }
     }
 
-    public Long getStandardReportCardTypeId() {
-        return standardReportCardType == null ? null : standardReportCardType.getId();
-    }
-
     public String getIconFileS3Key() {
         return iconFileS3Key;
     }
@@ -131,21 +128,37 @@ public class ReportCard extends OrganisationAwareEntity {
         standardReportCardInput = new JsonObject();
      }
        standardReportCardInput.with("subjectTypes", subjectTypes);
+        return safeGetterForStandardReportCardInput("subjectTypes");
+    }
+
+    public void setStandardReportCardInputSubjectTypes(List<String> subjectTypes) {
+        safeSetterForStandardReportCardInput("subjectTypes", subjectTypes);
     }
 
     public List<String> getStandardReportCardInputPrograms() {
-        return standardReportCardInput.getList("programs");
+        return safeGetterForStandardReportCardInput("programs");
     }
 
     public void setStandardReportCardInputPrograms(List<String> programs) {
-        standardReportCardInput.with("programs", programs);
+        safeSetterForStandardReportCardInput("programs", programs);
     }
 
     public List<String> getStandardReportCardInputEncounterTypes() {
-        return standardReportCardInput.getList("encounterTypes");
+        return safeGetterForStandardReportCardInput("encounterTypes");
     }
 
     public void setStandardReportCardInputEncounterTypes(List<String> encounterTypes) {
-        standardReportCardInput.with("encounterTypes", encounterTypes);
+        safeSetterForStandardReportCardInput("encounterTypes", encounterTypes);
+    }
+
+    private List safeGetterForStandardReportCardInput(String key) {
+        return standardReportCardInput == null ? new ArrayList() : standardReportCardInput.getList(key);
+    }
+
+    private void safeSetterForStandardReportCardInput(String key, List<String> value) {
+        if(standardReportCardInput == null) {
+            standardReportCardInput = new JsonObject(new HashMap<>());
+        }
+        standardReportCardInput.with(key, value);
     }
 }

@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import org.avni.server.application.FormElement;
 import org.avni.server.application.FormType;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
@@ -10,6 +11,9 @@ import org.avni.server.importer.batch.csv.creator.LocationCreator;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
 import org.avni.server.importer.batch.model.Row;
+import org.avni.server.service.FormService;
+import org.avni.server.service.ImportLocationsConstants;
+import org.avni.server.service.ImportService;
 import org.avni.server.service.LocationService;
 import org.avni.server.util.S;
 import org.avni.server.web.request.LocationContract;
@@ -18,6 +22,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
@@ -31,22 +36,30 @@ public class LocationWriter implements ItemWriter<Row> {
     private static final LocationHeaders headers = new LocationHeaders();
     @Value("#{jobParameters['locationUploadMode']}")
     private String locationUploadMode;
+    @Value("#{jobParameters['locationHierarchy']}")
+    private String locationHierarchy;
     private final LocationService locationService;
     private final LocationRepository locationRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final LocationCreator locationCreator;
     private final ObservationCreator observationCreator;
+    private final ImportService importService;
+    private final FormService formService;
     private List<String> locationTypeNames;
 
     @Autowired
     public LocationWriter(LocationService locationService,
                           LocationRepository locationRepository,
                           AddressLevelTypeRepository addressLevelTypeRepository,
-                          ObservationCreator observationCreator) {
+                          ObservationCreator observationCreator,
+                          ImportService importService,
+                          FormService formService) {
         this.locationService = locationService;
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.observationCreator = observationCreator;
+        this.importService = importService;
+        this.formService = formService;
         this.locationCreator = new LocationCreator();
     }
 
@@ -59,45 +72,43 @@ public class LocationWriter implements ItemWriter<Row> {
 
     @Override
     public void write(List<? extends Row> rows) throws Exception {
-        for (Row row : rows) {
-            List<String> allErrorMsgs = new ArrayList<>();
-            checkIfHeaderHasLocationTypes(this.locationTypeNames, row.getHeaders(), allErrorMsgs);
-            if (LocationUploadMode.isRelaxedMode(locationUploadMode)) {
-                relaxedWriter(row, allErrorMsgs);
-            } else {
-                strictWriter(row, allErrorMsgs);
-            }
-        }
-    }
-
-    private void strictWriter(Row row, List<String> allErrorMsgs) throws Exception {
-        Map<String, String> nonEmptyLocations = new LinkedHashMap<>();
-        for (String header : row.getHeaders()) {
-            if (this.locationTypeNames.contains(header) && !S.isEmpty(row.get(header))) {
-                nonEmptyLocations.put(header, row.get(header));
-            }
-        }
-        List<Map.Entry<String, String>> allNonEmptyLocations = new ArrayList<>(nonEmptyLocations.entrySet());
-        Map.Entry<String, String> parentEntry = ensureAllParentsExist(allErrorMsgs, allNonEmptyLocations);
-        Map.Entry<String, String> locationEntry = allNonEmptyLocations.get(allNonEmptyLocations.size() - 1);
-        String id = row.get(getIdColumnHeaderName(row));
-        AddressLevel parent = parentEntry == null ? null : locationRepository.findLocation(parentEntry.getValue(), parentEntry.getKey());
-        AddressLevel existingLocation = S.isEmpty(id) ?
-                locationRepository.findChildLocation(parent, locationEntry.getValue()) :
-                locationRepository.findByLegacyIdOrUuid(id);
-        if (existingLocation != null) {
-            updateExistingLocation(existingLocation, parent, row, allErrorMsgs, id);
+        List<String> allErrorMsgs = new ArrayList<>();
+        if (LocationUploadMode.isCreateMode(locationUploadMode)) {
+            validateCreateModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
         } else {
-            AddressLevel location = createAddressLevel(row, parent, locationEntry.getKey());
-            updateLocationProperties(row, allErrorMsgs, location, locationEntry.getKey());
+            validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
+        }
+        for (Row row : rows) {
+            if (LocationUploadMode.isCreateMode(locationUploadMode)) {
+                createLocationWriter(row, allErrorMsgs);
+            } else {
+                editLocationWriter(row, allErrorMsgs);
+            }
         }
     }
 
-    private String getIdColumnHeaderName(Row row) {
-        return Arrays.stream(row.getHeaders()).filter(s -> s.equalsIgnoreCase("id")).findAny().orElse("");
+    private void editLocationWriter(Row row, List<String> allErrorMsgs) throws Exception {
+        String existingLocationTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY);
+        if (existingLocationTitleLineage.equalsIgnoreCase(ImportLocationsConstants.LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION)) return;
+        String newLocationParentTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY);
+
+        Optional<AddressLevel> existingLocationAddressLevel = locationRepository.findByTitleLineageIgnoreCase(existingLocationTitleLineage);
+        if (!existingLocationAddressLevel.isPresent()) {
+            allErrorMsgs.add(String.format("Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'", existingLocationTitleLineage));
+            throw new Exception(String.join(", ", allErrorMsgs));
+        }
+
+        AddressLevel newLocationParentAddressLevel = null;
+        if (!StringUtils.isEmpty(newLocationParentTitleLineage)) {
+            newLocationParentAddressLevel = locationRepository.findByTitleLineageIgnoreCase(newLocationParentTitleLineage).orElse(null);
+            if (newLocationParentAddressLevel == null) {
+                allErrorMsgs.add(String.format("Provided new Location parent does not exist in Avni. Please add it or check for spelling mistakes '%s'", newLocationParentTitleLineage));
+            }
+        }
+        updateExistingLocation(existingLocationAddressLevel.get(), newLocationParentAddressLevel, row, allErrorMsgs);
     }
 
-    private void relaxedWriter(Row row, List<String> allErrorMsgs) throws Exception {
+    private void createLocationWriter(Row row, List<String> allErrorMsgs) throws Exception {
         AddressLevel parent = null;
         AddressLevel location = null;
         for (String header : row.getHeaders()) {
@@ -106,22 +117,61 @@ public class LocationWriter implements ItemWriter<Row> {
                 parent = location;
             } //This will get called only when location have extra properties
             if (location != null && !this.locationTypeNames.contains(header)) {
-                updateLocationProperties(row, allErrorMsgs, location, header);
+                updateLocationProperties(row, allErrorMsgs, location);
             }
         }
     }
 
-    private void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location, String header) throws Exception {
-        location.setGpsCoordinates(locationCreator.getLocation(row, headers.gpsCoordinates, allErrorMsgs));
+    private void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) throws Exception {
+        location.setGpsCoordinates(locationCreator.getLocation(row, LocationHeaders.gpsCoordinates, allErrorMsgs));
         location.setLocationProperties(observationCreator.getObservations(row, headers, allErrorMsgs, FormType.Location, location.getLocationProperties()));
         locationRepository.save(location);
     }
 
-    private void checkIfHeaderHasLocationTypes(List<String> locationTypeNames, String[] headers, List<String> allErrorMsgs) throws Exception {
-        // There can be location properties in the header, so we save other values as locationProperties
-        if (Collections.disjoint(locationTypeNames, Arrays.asList(headers))) {
-            allErrorMsgs.add("No location type found in the header, either create location types or specify it correctly in the file header");
+    private void validateCreateModeHeaders(String[] headers, List<String> allErrorMsgs) throws Exception {
+        List<String> headerList = Arrays.asList(headers);
+        List<String> locationTypeHeaders = checkIfHeaderHasLocationTypesInOrderForHierarchy(this.locationHierarchy, headerList, allErrorMsgs);
+        List<String> additionalHeaders = new ArrayList<>(headerList.subList(locationTypeHeaders.size(), headerList.size()));
+        checkIfHeaderRowHasUnknownHeaders(additionalHeaders, allErrorMsgs);
+    }
+
+    private void validateEditModeHeaders(String[] headers, List<String> allErrorMsgs) throws Exception {
+        List<String> headerList = Arrays.asList(headers);
+        if (!headerList.contains(ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY)) {
+            allErrorMsgs.add(String.format("'%s' is required", ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY));
+        }
+        if (!(headerList.contains(ImportLocationsConstants.COLUMN_NAME_NEW_LOCATION_NAME)
+            || headerList.contains(ImportLocationsConstants.COLUMN_NAME_GPS_COORDINATES)
+            || headerList.contains(ImportLocationsConstants.COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY))) {
+            allErrorMsgs.add(String.format("At least one of '%s', '%s' or '%s' is required", ImportLocationsConstants.COLUMN_NAME_NEW_LOCATION_NAME, ImportLocationsConstants.COLUMN_NAME_GPS_COORDINATES, ImportLocationsConstants.COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY));
+        }
+        if (!allErrorMsgs.isEmpty()) {
             throw new Exception(String.join(", ", allErrorMsgs));
+        }
+    }
+
+    private List<String> checkIfHeaderHasLocationTypesInOrderForHierarchy(String locationHierarchy, List<String> headerList, List<String> allErrorMsgs) throws Exception {
+        List<String> locationTypeNamesForHierachy = importService.getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy)
+            .stream().map(AddressLevelType::getName).collect(Collectors.toList());
+        this.locationTypeNames = locationTypeNamesForHierachy;
+
+        if (headerList.size() >= locationTypeNamesForHierachy.size() && !headerList.subList(0, locationTypeNamesForHierachy.size()).equals(locationTypeNamesForHierachy)) {
+            allErrorMsgs.add("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.");
+            throw new Exception(String.join(", ", allErrorMsgs));
+        }
+        return locationTypeNamesForHierachy;
+    }
+
+    private void checkIfHeaderRowHasUnknownHeaders(List<String> additionalHeaders, List<String> allErrorMsgs) throws Exception {
+        additionalHeaders.removeIf(StringUtils::isEmpty);
+        if (!additionalHeaders.isEmpty()) {
+            List<String> locationPropertyNames = formService.getFormElementNamesForLocationTypeForms()
+                .stream().map(FormElement::getName).collect(Collectors.toList());
+            locationPropertyNames.add(LocationHeaders.gpsCoordinates);
+            if ((!locationPropertyNames.containsAll(additionalHeaders))) {
+                allErrorMsgs.add("Unknown headers included in file. Please refer to sample file for valid list of headers.");
+                throw new Exception(String.join(", ", allErrorMsgs));
+            }
         }
     }
 
@@ -133,7 +183,7 @@ public class LocationWriter implements ItemWriter<Row> {
             locationContract.setupUuidIfNeeded();
             locationContract.setName(row.get(header));
             locationContract.setType(header);
-            locationContract.setLevel(parent == null ? row.getHeaders().length : parent.getLevel() - 1);
+            locationContract.setLevel(parent == null ? this.locationTypeNames.size() : parent.getLevel() - 1);
             if (parent != null) {
                 locationContract.setParent(new LocationContract(parent.getUuid()));
             }
@@ -146,42 +196,32 @@ public class LocationWriter implements ItemWriter<Row> {
         return locationTypeNames.contains(header) && !S.isEmpty(row.get(header));
     }
 
-    private void updateExistingLocation(AddressLevel location, AddressLevel parent, Row row, List<String> allErrorMsgs, String id) throws Exception {
-        String header = location.getTypeString();
-        String lineage = parent == null ? location.getId().toString() : parent.getLineage().concat(".").concat(location.getId().toString());
-        location.setTitle(row.get(header));
-        location.setParent(parent);
-        location.setLegacyId(id);
-        location.setLineage(lineage);
-        updateLocationProperties(row, allErrorMsgs, location, header);
-    }
-
-    private Map.Entry<String, String> ensureAllParentsExist(List<String> allErrorMsgs, List<Map.Entry<String, String>> allNonEmptyLocations) throws Exception {
-        Map.Entry<String, String> parentEntry = null;
-        for (int i = 0; i < allNonEmptyLocations.size() - 1; i++) {
-            Map.Entry<String, String> locationEntry = allNonEmptyLocations.get(i);
-            String type = locationEntry.getKey();
-            String title = locationEntry.getValue();
-            String parent = parentEntry == null ? null : parentEntry.getValue();
-            AddressLevel location = locationRepository.findChildLocation(title, type, parent);
-            if (location == null) {
-                allErrorMsgs.add(String.format("No location found with name %s, type %s and parent %s", title, type, parent));
-                throw new Exception(String.join(", ", allErrorMsgs));
-            }
-            parentEntry = locationEntry;
+    private void updateExistingLocation(AddressLevel location, AddressLevel newParent, Row row, List<String> allErrorMsgs) throws Exception {
+        String newTitle = row.get(ImportLocationsConstants.COLUMN_NAME_NEW_LOCATION_NAME);
+        if (!StringUtils.isEmpty(newTitle)) location.setTitle(newTitle);
+        if (newParent != null) {
+            locationService.updateParent(location, newParent);
         }
-        return parentEntry;
+        updateLocationProperties(row, allErrorMsgs, location);
     }
 
     public void setLocationUploadMode(String locationUploadMode) {
         this.locationUploadMode = locationUploadMode;
     }
 
-    private enum LocationUploadMode {
-        relaxed, strict;
+    public void setLocationHierarchy(String locationHierarchy) {
+        this.locationHierarchy = locationHierarchy;
+    }
 
-        public static boolean isRelaxedMode(String mode) {
-            return mode == null || LocationUploadMode.valueOf(mode).equals(relaxed);
+    public enum LocationUploadMode {
+        CREATE, EDIT;
+
+        public static boolean isCreateMode(String mode) {
+            return mode == null || LocationUploadMode.valueOf(mode).equals(CREATE);
+        }
+
+        public static boolean isCreateMode(LocationUploadMode mode) {
+            return mode.equals(CREATE);
         }
     }
 }

@@ -31,23 +31,20 @@ public class BaseSubjectSearchQueryBuilder<T> {
             "                            pe.encounter_date_time is not null and\n" +
             "                            pe.is_voided is false";
     private static final String ADDRESS_LEVEL_JOIN = "left outer join address_level al on al.id = i.address_id";
+    private String orderByClause = "";
 
-    private String offsetLimitClause = "offset :offset limit :limit";
-    private String orderByClause = "\norder by i.id desc\n";
-
-
-    private Set<String> whereClauses = new HashSet<>();
-    private Set<String> joinClauses = new LinkedHashSet<>();
-    private Map<String, Object> parameters = new HashMap<>();
+    private final Set<String> whereClauses = new HashSet<>();
+    private final Set<String> joinClauses = new LinkedHashSet<>();
+    private final Map<String, Object> parameters = new HashMap<>();
     private boolean forCount;
-    private Set<String> customFields = new HashSet<>();
+    private final Set<String> customFields = new HashSet<>();
 
     public BaseSubjectSearchQueryBuilder() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
     public SqlQuery buildUsingBaseQuery(String baseQuery, String groupByClause) {
-        StringBuffer query = new StringBuffer();
+        StringBuilder query = new StringBuilder();
         query.append(baseQuery);
         query.append(String.join(" \n ", joinClauses));
         if (!whereClauses.isEmpty()) {
@@ -61,9 +58,10 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
         String finalQuery = "";
         if (forCount) {
-            finalQuery = "select count(*) from (" + query.toString() + ") a";
+            finalQuery = "select count(*) from (" + query + ") a";
             removePaginationFilters();
         } else {
+            String offsetLimitClause = "offset :offset limit :limit";
             finalQuery = query.append("\n")
                     .append(orderByClause)
                     .append("\n")
@@ -109,13 +107,11 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     put("GENDER", "gender.name");
                     put("DATEOFBIRTH", "i.date_of_birth");
                     put("TITLE_LINEAGE", "tllv.title_lineage");
-
                 }
             };
 
             this.orderByClause = "order by " + columnsMap.get(sortColumn.toUpperCase()) + " " + sortOrder.name() + ", i.id desc";
         }
-
 
         return (T) this;
     }

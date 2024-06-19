@@ -7,18 +7,9 @@ public class ReportCardContract extends CHSRequest {
     private String query;
     private String description;
     private String color;
-    private Double displayOrder;
     private String iconFileS3Key;
     private boolean nested;
     private int count;
-
-    public Double getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(Double displayOrder) {
-        this.displayOrder = displayOrder;
-    }
 
     public String getName() {
         return name;

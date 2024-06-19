@@ -10,8 +10,10 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.JobService;
+import org.avni.server.importer.batch.csv.writer.LocationWriter;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,16 +29,14 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 
 import static java.lang.String.format;
 import static org.avni.server.util.AvniFiles.*;
@@ -54,6 +54,7 @@ public class ImportController {
     private final FormElementRepository formElementRepository;
     private final AccessControlService accessControlService;
     private final ErrorBodyBuilder errorBodyBuilder;
+    private final LocationHierarchyService locationHierarchyService;
 
     @Autowired
     public ImportController(JobService jobService,
@@ -62,7 +63,7 @@ public class ImportController {
                             S3Service s3Service,
                             IndividualService individualService,
                             LocationService locationService,
-                            FormElementRepository formElementRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder) {
+                            FormElementRepository formElementRepository, AccessControlService accessControlService, ErrorBodyBuilder errorBodyBuilder, LocationHierarchyService locationHierarchyService) {
         this.jobService = jobService;
         this.bulkUploadS3Service = bulkUploadS3Service;
         this.importService = importService;
@@ -72,15 +73,29 @@ public class ImportController {
         this.formElementRepository = formElementRepository;
         this.accessControlService = accessControlService;
         this.errorBodyBuilder = errorBodyBuilder;
+        this.locationHierarchyService = locationHierarchyService;
         logger = LoggerFactory.getLogger(getClass());
     }
 
     @RequestMapping(value = "/web/importSample", method = RequestMethod.GET)
-    public void getSampleImportFile(@RequestParam String uploadType, HttpServletResponse response) throws IOException {
+    public void getSampleImportFile(@RequestParam String uploadType,
+                                    @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
+                                    @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
+                                    HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + uploadType + ".csv\"");
-        response.getWriter().write(importService.getSampleFile(uploadType));
+            "attachment; filename=\"" + uploadType + ".csv\"");
+        if (uploadType.equals("locations")) {
+            if (!StringUtils.hasText(locationHierarchy)) {
+                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": " + locationHierarchy);
+            }
+            if (locationUploadMode == null) {
+                throw new BadRequestError("Missing value for request param \"locationUploadMode\"");
+            }
+            response.getWriter().write(importService.getLocationsSampleFile(locationUploadMode, locationHierarchy));
+        } else {
+            response.getWriter().write(importService.getSampleFile(uploadType));
+        }
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)
@@ -92,7 +107,8 @@ public class ImportController {
     public ResponseEntity<?> doit(@RequestParam MultipartFile file,
                                   @RequestParam String type,
                                   @RequestParam boolean autoApprove,
-                                  @RequestParam String locationUploadMode) throws IOException {
+                                  @RequestParam String locationUploadMode,
+                                  @RequestParam String locationHierarchy) throws IOException {
                           
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
@@ -102,7 +118,7 @@ public class ImportController {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         try {
             ObjectInfo storedFileInfo = type.equals("metadataZip") ? bulkUploadS3Service.uploadZip(file, uuid) : bulkUploadS3Service.uploadFile(file, uuid);
-            jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode);
+            jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode, locationHierarchy);
         } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
             logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
@@ -156,7 +172,7 @@ public class ImportController {
     public JsonObject getSubjectOrLocationObsValue(@RequestParam("type") String type,
                                                    @RequestParam("ids") String ids,
                                                    @RequestParam("formElementUuid") String formElementUuid) {
-        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
         FormElement formElement = formElementRepository.findByUuid(formElementUuid);
         JsonObject response = new JsonObject();
         if (ConceptDataType.Location.toString().equals(type)) {
@@ -165,5 +181,16 @@ public class ImportController {
             response.with("value", individualService.getObservationValueForUpload(formElement, ids));
         }
         return response;
+    }
+
+    @GetMapping(value = "/web/locationHierarchies")
+    @ResponseBody
+    public HashMap<String, String> getAllAddressLevelTypeHierarchies() {
+        try {
+            return locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg();
+        } catch (Exception exception) {
+            logger.error("Error getting web locationHierarchies", exception);
+            return null;
+        }
     }
 }

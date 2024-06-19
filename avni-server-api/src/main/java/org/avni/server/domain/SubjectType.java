@@ -197,6 +197,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
                 .collect(Collectors.toList());
     }
 
+    // Used from projections
     @JsonIgnore
     public List<String> getMemberSubjectUUIDs() {
         return isGroup() ? groupRoles.stream()

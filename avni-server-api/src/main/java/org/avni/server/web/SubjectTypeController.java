@@ -1,21 +1,18 @@
 package org.avni.server.web;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
-import org.avni.server.application.KeyType;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.GroupRole;
 import org.avni.server.domain.OperationalSubjectType;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.GroupRoleContract;
 import org.avni.server.web.request.SubjectTypeContract;
@@ -50,7 +47,6 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     private final FormMappingService formMappingService;
     private final OrganisationConfigService organisationConfigService;
     private final AccessControlService accessControlService;
-    private final ObjectMapper objectMapper;
 
     @Autowired
     public SubjectTypeController(SubjectTypeRepository subjectTypeRepository,
@@ -69,7 +65,6 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         this.formMappingService = formMappingService;
         this.organisationConfigService = organisationConfigService;
         this.accessControlService = accessControlService;
-        objectMapper = ObjectMapperSingleton.getObjectMapper();
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -104,8 +99,8 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
             return ResponseEntity.notFound().build();
         FormMapping formMapping = formMappingService.find(operationalSubjectType.getSubjectType());
         SubjectTypeContractWeb subjectTypeContractWeb = SubjectTypeContractWeb.fromOperationalSubjectType(operationalSubjectType, formMapping);
-        List<SubjectTypeSetting> customRegistrationLocations = objectMapper.convertValue(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()), new TypeReference<List<SubjectTypeSetting>>() {
-        });
+        OrganisationConfig organisationConfig = organisationConfigService.getCurrentOrganisationConfig();
+        List<SubjectTypeSetting> customRegistrationLocations = organisationConfig.getCustomRegistrationLocations();
         Optional<List<String>> locationUUIDs = customRegistrationLocations
                 .stream()
                 .filter(s -> s.getSubjectTypeUUID().equals(operationalSubjectType.getSubjectTypeUUID()))
@@ -224,7 +219,7 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
     }
 
     @Transactional
-    protected void updateSubjectType(@RequestBody SubjectTypeContractWeb request, OperationalSubjectType operationalSubjectType) {
+    public void updateSubjectType(@RequestBody SubjectTypeContractWeb request, OperationalSubjectType operationalSubjectType) {
         SubjectType subjectType = operationalSubjectType.getSubjectType();
 
         buildSubjectType(request, subjectType);

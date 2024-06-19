@@ -1,11 +1,10 @@
 package org.avni.server.importer.batch;
 
-import org.avni.server.service.ObjectInfo;
-import org.joda.time.DateTime;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.JobStatus;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.UserService;
+import org.avni.server.service.ObjectInfo;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.*;
@@ -69,7 +68,7 @@ public class JobService {
         }
     }
 
-    public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+    public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode, String locationHierarchy) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
         JobParameters parameters = new JobParametersBuilder()
                 .addString("organisationUUID", organisationUUID)
                 .addString("uuid", uuid)
@@ -80,6 +79,7 @@ public class JobService {
                 .addString("type", type, false)
                 .addString("autoApprove", String.valueOf(autoApprove))
                 .addString("locationUploadMode", locationUploadMode)
+                .addString("locationHierarchy", locationHierarchy)
                 .toJobParameters();
         logger.info(format("Bulkupload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));
 

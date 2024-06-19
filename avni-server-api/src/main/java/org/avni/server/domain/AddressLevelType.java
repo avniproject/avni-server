@@ -89,4 +89,12 @@ public class AddressLevelType extends OrganisationAwareEntity {
     public interface AddressLevelTypeProjection extends BaseProjection {
         String getName();
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "name='" + name + '\'' +
+                ", level=" + level +
+                '}';
+    }
 }

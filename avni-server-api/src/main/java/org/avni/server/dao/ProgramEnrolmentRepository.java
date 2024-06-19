@@ -1,9 +1,9 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.projection.SearchSubjectEnrolledProgram;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,8 +27,8 @@ import java.util.stream.Stream;
 @RepositoryRestResource(collectionResourceRel = "programEnrolment", path = "programEnrolment", exported = false)
 public interface ProgramEnrolmentRepository extends TransactionalDataRepository<ProgramEnrolment>, FindByLastModifiedDateTime<ProgramEnrolment>, OperatingIndividualScopeAwareRepository<ProgramEnrolment>, SubjectTreeItemRepository {
 
-    @Query("select pe.program from ProgramEnrolment pe join pe.program join pe.program.operationalPrograms where pe.individual.id = :individualId and pe.programExitDateTime is null and pe.isVoided = false")
-    List<Program> findActiveEnrolmentsByIndividualId(Long individualId);
+    @Query("select new org.avni.server.projection.SearchSubjectEnrolledProgram(pe.individual.id, pe.program) from ProgramEnrolment pe join pe.program join pe.program.operationalPrograms where pe.individual.id in :individualIds and pe.programExitDateTime is null and pe.isVoided = false")
+    List<SearchSubjectEnrolledProgram> findActiveEnrolmentsByIndividualIds(List<Long> individualIds);
 
     @Query("select enl from ProgramEnrolment enl " +
             "join enl.individual i " +

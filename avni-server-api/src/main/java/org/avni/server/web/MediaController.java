@@ -13,6 +13,8 @@ import org.avni.server.web.validation.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -178,5 +181,15 @@ public class MediaController {
     private boolean isInvalidDimension(File tempSourceFile, AvniFiles.ImageType imageType) throws IOException {
         Dimension dimension = AvniFiles.getImageDimension(tempSourceFile, imageType);
         return dimension.getHeight() > 75 || dimension.getWidth() > 75;
+    }
+
+    @GetMapping("/web/media/downloadStream")
+    public ResponseEntity<InputStreamResource> downloadFile(@RequestParam String s3Url, @RequestParam String fileName) throws IOException {
+        InputStreamResource resource = new InputStreamResource(s3Service.getObjectContentFromUrl(s3Url));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                .contentType(MediaType.parseMediaType("application/octet-stream"))
+                .body(resource);
     }
 }
