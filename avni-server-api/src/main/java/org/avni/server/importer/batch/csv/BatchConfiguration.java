@@ -88,6 +88,7 @@ public class BatchConfiguration {
                 .writer(csvFileItemWriter)
                 .faultTolerant()
                 .skip(Exception.class)
+                .skip(RuntimeException.class)
                 .noSkip(FileNotFoundException.class)
                 .noSkip(FlatFileParseException.class)
                 .noSkip(FlatFileFormatException.class)

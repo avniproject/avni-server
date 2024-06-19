@@ -4,6 +4,8 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.service.ConceptService;
+import org.avni.server.util.DateTimeUtil;
+import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.response.LocationApiResponse;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
@@ -32,9 +34,12 @@ public class LocationApiController {
 
     @RequestMapping(value = "/api/locations", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public ResponsePage getLocations(@RequestParam(value = "lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+    public ResponsePage getLocations(@RequestParam(value = "lastModifiedDateTime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                     @RequestParam(value = "now", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                     Pageable pageable) {
+        if (lastModifiedDateTime == null) {
+            lastModifiedDateTime = EntitySyncStatusContract.REALLY_OLD_DATE;
+        }
         Page<AddressLevel> addresses = locationRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable);
         ArrayList<LocationApiResponse> locationApiResponses = new ArrayList<>();
         addresses.forEach(addressLevel -> {

@@ -24,14 +24,11 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 
 @Component
 public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
-    private final AddressLevelTypeRepository addressLevelTypeRepository;
-    private final LocationRepository locationRepository;
     private final IndividualRepository individualRepository;
     private final GenderRepository genderRepository;
     private final SubjectTypeCreator subjectTypeCreator;
@@ -45,8 +42,9 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final IndividualService individualService;
     private final S3Service s3Service;
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
-    private AddressLevelCreator addressLevelCreator;
+    private final AddressLevelCreator addressLevelCreator;
     private final SubjectMigrationService subjectMigrationService;
+    private final SubjectTypeService subjectTypeService;
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
@@ -64,10 +62,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                          ObservationCreator observationCreator, IndividualService individualService, EntityApprovalStatusWriter entityApprovalStatusWriter,
                          S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
-                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService) {
+                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService) {
         super(organisationConfigService);
-        this.addressLevelTypeRepository = addressLevelTypeRepository;
-        this.locationRepository = locationRepository;
         this.individualRepository = individualRepository;
         this.genderRepository = genderRepository;
         this.subjectTypeCreator = subjectTypeCreator;
@@ -81,6 +77,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.addressLevelCreator = addressLevelCreator;
         this.subjectMigrationService = subjectMigrationService;
+        this.subjectTypeService = subjectTypeService;
         this.locationCreator = new LocationCreator();
         this.s3Service = s3Service;
     }
@@ -92,9 +89,6 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
 
     private void write(Row row) throws Exception {
         try {
-            List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAllByIsVoidedFalse();
-            locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
-
             Individual individual = getOrCreateIndividual(row);
             AddressLevel oldAddressLevel = individual.getAddressLevel();
             ObservationCollection oldObservations = individual.getObservations();
@@ -111,7 +105,10 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             individual.setDateOfBirthVerified(row.getBool(SubjectHeaders.dobVerified));
             setRegistrationDate(individual, row, allErrorMsgs);
             individual.setRegistrationLocation(locationCreator.getLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
-            individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, locationTypes));
+
+            AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
+            individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
+
             if (individual.getSubjectType().getType().equals(Subject.Person)) setGender(individual, row);
             FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
             individual.setVoided(false);

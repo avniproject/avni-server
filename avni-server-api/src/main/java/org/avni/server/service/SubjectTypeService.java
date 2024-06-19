@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.application.Subject;
 import org.avni.server.application.SubjectTypeSettingKey;
+import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -10,6 +11,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
+import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +36,12 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final Job syncAttributesJob;
     private final JobLauncher syncAttributesJobLauncher;
+    private final AvniJobRepository avniJobRepository;
     private final Job userSubjectTypeCreateJob;
     private final JobLauncher userSubjectTypeCreateJobLauncher;
-    private final AvniJobRepository avniJobRepository;
     private final ConceptService conceptService;
+    private final OrganisationConfigService organisationConfigService;
+    private final AddressLevelTypeRepository addressLevelTypeRepository;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -47,7 +51,8 @@ public class SubjectTypeService implements NonScopeAwareService {
                               Job userSubjectTypeCreateJob,
                               JobLauncher userSubjectTypeCreateJobLauncher,
                               AvniJobRepository avniJobRepository,
-                              ConceptService conceptService) {
+                              ConceptService conceptService, OrganisationConfigService organisationConfigService,
+                              AddressLevelTypeRepository addressLevelTypeRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -56,6 +61,8 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.userSubjectTypeCreateJobLauncher = userSubjectTypeCreateJobLauncher;
         this.avniJobRepository = avniJobRepository;
         this.conceptService = conceptService;
+        this.organisationConfigService = organisationConfigService;
+        this.addressLevelTypeRepository = addressLevelTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -250,7 +257,23 @@ public class SubjectTypeService implements NonScopeAwareService {
         return defaultSettings;
     }
 
-    public static class SubjectTypeUpsertResponse {
+    public AddressLevelTypes getRegistrableLocationTypes(SubjectType subjectType) {
+        OrganisationConfig organisationConfig = this.organisationConfigService.getCurrentOrganisationConfig();
+        SubjectTypeSetting registrationSetting = organisationConfig.getRegistrationSetting(subjectType);
+        AddressLevelTypes locationTypes = addressLevelTypeRepository.getAllAddressLevelTypes();
+        if (locationTypes.isEmpty()) {
+            throw new RuntimeException("No address level types found");
+        }
+
+        if (registrationSetting == null) {
+            return new AddressLevelTypes(locationTypes);
+        } else {
+            return registrationSetting.getAddressLevelTypes(locationTypes);
+        }
+    }
+
+
+    public class SubjectTypeUpsertResponse {
         boolean isSubjectTypeNotPresentInDB;
         SubjectType subjectType;
 

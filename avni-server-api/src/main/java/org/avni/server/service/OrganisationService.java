@@ -142,6 +142,7 @@ public class OrganisationService {
     private final GenderRepository genderRepository;
     private final OrganisationRepository organisationRepository;
     private final ReportCardMapper reportCardMapper;
+    private final UserSubjectRepository userSubjectRepository;
     private final Logger logger;
     private final DashboardMapper dashboardMapper;
 
@@ -221,7 +222,8 @@ public class OrganisationService {
                                GenderRepository genderRepository,
                                OrganisationRepository organisationRepository,
                                ReportCardMapper reportCardMapper,
-                               DashboardMapper dashboardMapper) {
+                               DashboardMapper dashboardMapper,
+                               UserSubjectRepository userSubjectRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -299,6 +301,7 @@ public class OrganisationService {
         this.organisationRepository = organisationRepository;
         this.reportCardMapper = reportCardMapper;
         this.dashboardMapper = dashboardMapper;
+        this.userSubjectRepository = userSubjectRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -684,6 +687,7 @@ public class OrganisationService {
             userSubjectAssignmentRepository,
             subjectProgramEligibilityRepository,
             taskRepository,
+            userSubjectRepository,
             individualRepository
         };
 

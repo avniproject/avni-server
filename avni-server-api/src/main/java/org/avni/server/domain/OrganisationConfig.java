@@ -2,8 +2,12 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -69,6 +73,15 @@ public class OrganisationConfig extends OrganisationAwareEntity {
     }
     public Boolean isFeatureEnabled(String feature) {
         return (Boolean) getSettings().getOrDefault(feature, false);
+    }
+
+    @JsonIgnore
+    public List<SubjectTypeSetting> getCustomRegistrationLocations() {
+        return ObjectMapperSingleton.getObjectMapper().convertValue(this.getSettings().getOrDefault(KeyType.customRegistrationLocations.toString(), Collections.EMPTY_LIST), new TypeReference<List<SubjectTypeSetting>>() {});
+    }
+
+    public SubjectTypeSetting getRegistrationSetting(SubjectType subjectType) {
+        return this.getCustomRegistrationLocations().stream().filter(subjectTypeSetting -> subjectTypeSetting.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
     }
 
     public class Settings {
