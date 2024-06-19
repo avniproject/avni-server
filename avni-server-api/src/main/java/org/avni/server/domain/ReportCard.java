@@ -40,6 +40,10 @@ public class ReportCard extends OrganisationAwareEntity {
     @Column
     @Type(type = "jsonObject")
     private JsonObject standardReportCardInput;
+    
+    public ReportCard() {
+        this.standardReportCardInput = new JsonObject(); // Initialize to avoid null issues
+    }
 
     public String getName() {
         return name;
@@ -119,11 +123,14 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public List<String> getStandardReportCardInputSubjectTypes() {
-        return standardReportCardInput.getList("subjectTypes");
+       return standardReportCardInput != null ? standardReportCardInput.getList("subjectTypes") : null;
     }
 
     public void setStandardReportCardInputSubjectTypes(List<String> subjectTypes) {
-        standardReportCardInput.with("subjectTypes", subjectTypes);
+        if (standardReportCardInput == null) {
+        standardReportCardInput = new JsonObject();
+     }
+       standardReportCardInput.with("subjectTypes", subjectTypes);
     }
 
     public List<String> getStandardReportCardInputPrograms() {
