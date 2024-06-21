@@ -1,5 +1,8 @@
 package org.avni.server.domain.metabase;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class CollectionResponse {
     private int id;
 

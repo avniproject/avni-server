@@ -1,23 +1,33 @@
 package org.avni.server.domain.metabase;
 
 public class Group {
-    private int id;
-    private boolean hasPermission;
+    private String name;
+    private Integer id;
 
-    public Group(int id, boolean hasPermission) {
-        this.id = id;
-        this.hasPermission = hasPermission;
+    public Group(){
+
+    }
+    public Group(String name){
+        this(name,null);
+
+    }
+    public Group(String name ,Integer id){
+        this.name=name;
+        this.id=id;
+    }
+    public String getName() {
+        return name;
     }
 
     public int getId() {
         return id;
     }
 
-    public boolean hasPermission() {
-        return hasPermission;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setPermission(boolean hasPermission) {
-        this.hasPermission = hasPermission;
+    public void setId(int id) {
+        this.id = id;
     }
 }

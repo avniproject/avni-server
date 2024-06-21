@@ -1,10 +1,16 @@
 package org.avni.server.domain.metabase;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class DatabaseDetails {
     private String host;
     private String port;
     private String db;
     private String user;
+
+    public DatabaseDetails() {
+    }
 
     public DatabaseDetails(String host, String port, String db, String user) {
         this.host = host;
@@ -32,6 +38,4 @@ public class DatabaseDetails {
     public String getUser() {
         return user;
     }
-
-
 }
