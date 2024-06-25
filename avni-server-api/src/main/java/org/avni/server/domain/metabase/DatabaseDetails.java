@@ -1,8 +1,5 @@
 package org.avni.server.domain.metabase;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class DatabaseDetails {
     private String host;
     private String port;
