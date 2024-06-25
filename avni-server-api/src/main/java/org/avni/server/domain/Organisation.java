@@ -88,4 +88,5 @@ public class Organisation extends ETLEntity {
     public void setCategory(OrganisationCategory organisationCategory) {
         this.category = organisationCategory;
     }
+
 }

@@ -797,4 +797,5 @@ public class OrganisationService {
         Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
         return organisationRepository.findOne(organisationId);
     }
+
 }
