@@ -54,6 +54,7 @@ public class DashboardMapper {
     private void setFilters(DashboardWebResponse dashboardContract, Dashboard dashboard) {
         List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
                 .stream()
+                .filter(dashboardFilter -> !dashboardFilter.isVoided())
                 .map(dashboardFilterMapper::fromEntity)
                 .collect(Collectors.toList());
         dashboardContract.setFilters(list);
