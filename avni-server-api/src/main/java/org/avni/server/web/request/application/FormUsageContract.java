@@ -10,6 +10,8 @@ public class FormUsageContract {
     private Long formId;
     private String formElementGroupUUID;
     private String formElementUUID;
+    private String formElementGroupName;
+    private String formElementName;
 
     static public FormUsageContract fromEntity(FormElement formElement) {
         FormUsageContract formUsageContract = new FormUsageContract();
@@ -20,6 +22,8 @@ public class FormUsageContract {
         formUsageContract.setFormId(form.getId());
         formUsageContract.setFormName(form.getName());
         formUsageContract.setFormUUID(form.getUuid());
+        formUsageContract.setFormElementGroupName(formElementGroup.getName());
+        formUsageContract.setformElementName(formElement.getName());
         return formUsageContract;
     }
 
@@ -62,4 +66,21 @@ public class FormUsageContract {
     public void setFormElementUUID(String formElementUUID) {
         this.formElementUUID = formElementUUID;
     }
+
+    public void setFormElementGroupName(String formElementGroupName){
+        this.formElementGroupName =  formElementGroupName;
+    }
+    public String getFormElementGroupName(){
+        return formElementGroupName ;
+    }
+
+    public void setformElementName(String formElementName){
+        this.formElementName =  formElementName;
+    }
+
+    public String getformElementName(){
+        return formElementName;
+    }
+
+
 }
