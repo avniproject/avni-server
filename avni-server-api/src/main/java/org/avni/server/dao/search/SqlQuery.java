@@ -3,8 +3,8 @@ package org.avni.server.dao.search;
 import java.util.Map;
 
 public class SqlQuery {
-    private String query;
-    private Map<String, Object> parameters;
+    private final String query;
+    private final Map<String, Object> parameters;
 
     public SqlQuery(String query, Map<String, Object> parameters) {
         this.query = query;

@@ -6,7 +6,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-public class RoleSwitchableRepository {
+public abstract class RoleSwitchableRepository {
     @PersistenceContext
     protected EntityManager entityManager;
 
@@ -15,12 +15,12 @@ public class RoleSwitchableRepository {
     }
 
     protected void setRoleBackToUser() {
-        Query setRoleBackToWhatever = entityManager.createNativeQuery("set role \"" + UserContextHolder.getOrganisation().getDbUser() + "\"");
-        setRoleBackToWhatever.executeUpdate();
+        Query setRoleBackToOrgDbUser = entityManager.createNativeQuery("set role \"" + UserContextHolder.getOrganisation().getDbUser() + "\"");
+        setRoleBackToOrgDbUser.executeUpdate();
     }
 
     protected void setRoleToNone() {
-        Query resetQuery = entityManager.createNativeQuery("reset role;");
-        resetQuery.executeUpdate();
+        Query resetRoleQuery = entityManager.createNativeQuery("reset role;");
+        resetRoleQuery.executeUpdate();
     }
 }

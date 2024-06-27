@@ -38,7 +38,6 @@ public abstract class BaseIAMService implements IAMAuthService {
 
     @Override
     public User getUserFromToken(String token) throws SigningKeyNotFoundException {
-        logConfiguration();
         if (StringUtils.isEmpty(token)) return null;
 
         DecodedJWT jwt = verifyAndDecodeToken(token);
@@ -80,7 +79,7 @@ public abstract class BaseIAMService implements IAMAuthService {
                     .acceptLeeway(240);
             addClaim(verification);
             JWTVerifier verifier = verification.build();
-            logger.debug(String.format("Verifying token for issuer: %s, token_use: id and audience: %s", this.getIssuer(), getAudience()));
+            logger.trace(String.format("Verifying token for issuer: %s, token_use: id and audience: %s", this.getIssuer(), getAudience()));
             return verifier.verify(token);
 
         } catch (InvalidPublicKeyException e) {

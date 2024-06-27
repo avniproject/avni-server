@@ -8,6 +8,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.framework.ApplicationContextProvider;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
@@ -47,9 +48,9 @@ public class BaseSubjectSearchQueryBuilder<T> {
         StringBuilder query = new StringBuilder();
         query.append(baseQuery);
         query.append(String.join(" \n ", joinClauses));
-        if (!whereClauses.isEmpty()) {
-            query.append("\n where \n");
-        }
+
+        query.append(String.format("\n where i.organisation_id = %d and \n", UserContextHolder.getOrganisation().getId()));
+
         query.append(String.join(" \nand ", whereClauses));
         query.append(groupByClause);
         if (parameters.get("offset") == null || parameters.get("limit") == null) {
@@ -70,7 +71,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         }
         String customFieldString = customFields.isEmpty() ? "" : ",\n".concat(String.join(",\n", customFields));
         String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString);
-        logger.debug(parameters.toString());
+        logger.trace(parameters.toString());
         return new SqlQuery(queryWithCustomFields, parameters);
     }
 

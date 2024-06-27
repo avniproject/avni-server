@@ -10,7 +10,7 @@ import javax.transaction.Transactional;
 
 @Repository
 public class LocationSyncRepository extends RoleSwitchableRepository implements SyncableRepository<AddressLevel> {
-    private LocationRepository locationRepository;
+    private final LocationRepository locationRepository;
 
     public LocationSyncRepository(EntityManager entityManager, LocationRepository locationRepository) {
         super(entityManager);
@@ -32,8 +32,7 @@ public class LocationSyncRepository extends RoleSwitchableRepository implements 
     public Page<AddressLevel> getSyncResults(SyncParameters syncParameters) {
         try {
             setRoleToNone();
-            Page<AddressLevel> syncResults = locationRepository.getSyncResults(syncParameters);
-            return syncResults;
+            return locationRepository.getSyncResults(syncParameters);
         } finally {
             setRoleBackToUser();
         }

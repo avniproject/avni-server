@@ -16,7 +16,7 @@ import javax.transaction.Transactional;
  */
 @Repository
 public class LocationMappingSyncRepository extends RoleSwitchableRepository implements SyncableRepository<ParentLocationMapping> {
-    private LocationMappingRepository locationMappingRepository;
+    private final LocationMappingRepository locationMappingRepository;
 
     public LocationMappingSyncRepository(EntityManager entityManager, LocationMappingRepository locationMappingRepository) {
         super(entityManager);
@@ -39,8 +39,7 @@ public class LocationMappingSyncRepository extends RoleSwitchableRepository impl
     public Page<ParentLocationMapping> getSyncResults(SyncParameters syncParameters) {
         try {
             setRoleToNone();
-            Page<ParentLocationMapping> syncResults = locationMappingRepository.getSyncResults(syncParameters);
-            return syncResults;
+            return locationMappingRepository.getSyncResults(syncParameters);
         } finally {
             setRoleBackToUser();
         }

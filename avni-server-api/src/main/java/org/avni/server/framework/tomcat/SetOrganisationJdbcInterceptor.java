@@ -15,7 +15,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-
 public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(TomcatContainerCustomizer.class);
 
@@ -39,7 +38,7 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
             statement.execute("set role \"" + dbUser + "\";");
             statement.execute("set application_name to \"" + dbUser + "\";");
             statement.close();
-//            logger.info(String.format("DBUSER: %s", dbUser));
+            logger.trace(String.format("DB USER: %s", dbUser));
         } catch (SQLException exp) {
             throw new RuntimeException(exp);
         }
@@ -47,14 +46,12 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-
         if ("close".equals(method.getName())) {
             Statement statement = ((Connection) proxy).createStatement();
             statement.execute("RESET ROLE");
             statement.close();
-//            logger.info(String.format("ROLE RESET"));
+            logger.trace("Role Reset Done");
         }
-
         return super.invoke(proxy, method, args);
     }
 }

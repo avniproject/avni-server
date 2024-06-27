@@ -13,44 +13,41 @@ import java.math.BigInteger;
 import java.util.List;
 
 @Repository
-@Transactional
-public class EncounterSearchRepository extends RoleSwitchableRepository{
-
+public class EncounterSearchRepository extends RoleSwitchableRepository {
     public EncounterSearchRepository(EntityManager entityManager) {
         super(entityManager);
     }
 
     @Transactional
     public List<Encounter> search(EncounterSearchRequest searchRequest) {
-        setRoleToNone();
+        try {
+            setRoleToNone();
+            SqlQuery query = new EncounterSearchQueryBuilder().withRequest(searchRequest).build();
+            Query sql = entityManager.createNativeQuery(query.getSql(), Encounter.class);
+            query.getParameters().forEach((name, value) -> {
+                sql.setParameter(name, value);
+            });
 
-        SqlQuery query = new EncounterSearchQueryBuilder().withRequest(searchRequest).build();
-        Query sql = entityManager.createNativeQuery(query.getSql(), Encounter.class);
-
-        query.getParameters().forEach((name, value) -> {
-            sql.setParameter(name, value);
-        });
-        List resultList = sql.getResultList();
-
-        setRoleBackToUser();
-
-        return resultList;
+            return sql.getResultList();
+        } finally {
+            setRoleBackToUser();
+        }
     }
 
-
+    @Transactional
     public long getCount(EncounterSearchRequest searchRequest) {
-        setRoleToNone();
+        try {
+            setRoleToNone();
+            SqlQuery query = new EncounterSearchQueryBuilder().withRequest(searchRequest).forCount().build();
+            Query sql = entityManager.createNativeQuery(query.getSql());
 
-        SqlQuery query = new EncounterSearchQueryBuilder().withRequest(searchRequest).forCount().build();
-        Query sql = entityManager.createNativeQuery(query.getSql());
-
-        query.getParameters().forEach((name, value) -> {
-            sql.setParameter(name, value);
-        });
-        BigInteger count = (BigInteger) sql.getSingleResult();
-
-        setRoleBackToUser();
-
-        return count.longValue();
+            query.getParameters().forEach((name, value) -> {
+                sql.setParameter(name, value);
+            });
+            BigInteger count = (BigInteger) sql.getSingleResult();
+            return count.longValue();
+        } finally {
+            setRoleBackToUser();
+        }
     }
 }

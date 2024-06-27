@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
     <springProfile name="dev">
-        <logger name="org.avni" additivity="true" level="info">
-            <appender-ref ref="FILE"/>
-        </logger>
+        <logger name="org.avni" level="DEBUG"/>
         <logger name="org.springframework" level="OFF"/>
+        <logger name="org.avni.server.framework.hibernate" level="INFO"/>
         <logger name="org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor" level="OFF"/>
     </springProfile>
     <springProfile name="staging">
         <logger name="org.avni" additivity="false" level="info">
             <appender-ref ref="FILE"/>
+            <appender-ref ref="CONSOLE"/>
         </logger>
         <logger name="org.springframework" level="OFF"/>
         <logger name="org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor" level="OFF"/>
@@ -18,6 +19,7 @@
     <springProfile name="live">
         <logger name="org.avni" additivity="false" level="info">
             <appender-ref ref="FILE"/>
+            <appender-ref ref="CONSOLE"/>
         </logger>
         <logger name="org.springframework" level="OFF"/>
         <logger name="org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor" level="OFF"/>
