@@ -6,7 +6,7 @@ import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<SubjectSearchQueryBuilder> implements SearchBuilder {
 
     public SqlQuery build() {
-        String baseQuery = "select distinct i.id as \"id\",\n" +
+        String baseQuery = "select $DISTINCT i.id as \"id\",\n" +
                 "                i.first_name as \"firstName\",\n" +
                 "                i.last_name as \"lastName\",\n" +
                 "                i.profile_picture as \"profilePicture\",\n" +
@@ -43,7 +43,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withEncounterDateFilter(DateRange encounterDateRange) {
         if (encounterDateRange == null || encounterDateRange.isEmpty()) return this;
-        return withJoin(ENCOUNTER_JOIN)
+        return withJoin(ENCOUNTER_JOIN, true)
                 .withRangeFilter(encounterDateRange,
                         "encounterDate",
                         "e.encounter_date_time >= cast(:rangeParam as date)",
@@ -52,8 +52,8 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withProgramEncounterDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withJoin(PROGRAM_ENROLMENT_JOIN)
-                .withJoin(PROGRAM_ENCOUNTER_JOIN)
+        return withJoin(PROGRAM_ENROLMENT_JOIN, true)
+                .withJoin(PROGRAM_ENCOUNTER_JOIN, true)
                 .withRangeFilter(dateRange,
                         "programEncounterDate",
                         "pe.encounter_date_time >= cast(:rangeParam as date)",
@@ -62,7 +62,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withJoin(PROGRAM_ENROLMENT_JOIN)
+        return withJoin(PROGRAM_ENROLMENT_JOIN, true)
                 .withRangeFilter(dateRange,
                         "programEnrolmentDate",
                         "penr.enrolment_date_time >= cast(trim(:rangeParam) as date)",

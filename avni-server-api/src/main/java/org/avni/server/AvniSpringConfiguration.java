@@ -116,14 +116,16 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
 
             private ConcurrentMapCache getConcurrentMapCacheWithWeightedCapacityForAddressesConfig(String name) {
                 return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
-                        TimeUnit.SECONDS).maximumWeight(cacheMaxWeight)
-                        .weigher((key, value) -> value == null ? 0 : (((List<VirtualCatchmentProjection>)value).size() / 100)+1)
+                                TimeUnit.SECONDS).maximumWeight(cacheMaxWeight)
+                        .weigher((key, value) -> value == null ? 0 : (((List<VirtualCatchmentProjection>) value).size() / 100) + 1)
                         .build().asMap(), DISALLOW_NULL_VALUES);
             }
 
             private ConcurrentMapCache getConcurrentMapCacheWithMaxEntriesConfig(String name) {
-                return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
-                        TimeUnit.SECONDS).maximumSize(maxEntriesToCache).build().asMap(), DISALLOW_NULL_VALUES);
+                return new ConcurrentMapCache(name, CacheBuilder.newBuilder()
+                                .expireAfterWrite(timeToLiveInSeconds, TimeUnit.SECONDS)
+                                .maximumSize(maxEntriesToCache)
+                        .build().asMap(), DISALLOW_NULL_VALUES);
             }
         };
     }

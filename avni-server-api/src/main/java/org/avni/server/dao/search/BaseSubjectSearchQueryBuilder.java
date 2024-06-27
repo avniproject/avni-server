@@ -38,6 +38,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     private final Set<String> joinClauses = new LinkedHashSet<>();
     private final Map<String, Object> parameters = new HashMap<>();
     private boolean forCount;
+    private boolean findDistinctOnly;
     private final Set<String> customFields = new HashSet<>();
 
     public BaseSubjectSearchQueryBuilder() {
@@ -70,7 +71,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
                     .toString();
         }
         String customFieldString = customFields.isEmpty() ? "" : ",\n".concat(String.join(",\n", customFields));
-        String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString);
+        String queryWithCustomFields = finalQuery.replace(" $CUSTOM_FIELDS", customFieldString).replace("$DISTINCT", findDistinctOnly ? "distinct" : "");
         logger.trace(parameters.toString());
         return new SqlQuery(queryWithCustomFields, parameters);
     }
@@ -232,6 +233,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         whereClauses.add("(cast(i.observations as text) ilike :searchAll\n" +
                 " or cast(penr.observations as text) ilike :searchAll)");
         joinClauses.add(PROGRAM_ENROLMENT_JOIN);
+        this.findDistinctOnly = true;
         return (T) this;
     }
 
@@ -253,14 +255,14 @@ public class BaseSubjectSearchQueryBuilder<T> {
             addParameter(conceptUuidParam, c.getUuid());
             String tableAlias = aliasMap.get(c.getSearchScope().toUpperCase());
             if (c.getSearchScope().equalsIgnoreCase("encounter")) {
-                joinClauses.add(ENCOUNTER_JOIN);
+                withJoin(ENCOUNTER_JOIN, true);
             }
             if (c.getSearchScope().equalsIgnoreCase("programEnrolment")) {
-                joinClauses.add(PROGRAM_ENROLMENT_JOIN);
+                withJoin(PROGRAM_ENROLMENT_JOIN, true);
             }
             if (c.getSearchScope().equalsIgnoreCase("programEncounter")) {
-                joinClauses.add(PROGRAM_ENROLMENT_JOIN);
-                joinClauses.add(PROGRAM_ENCOUNTER_JOIN);
+                withJoin(PROGRAM_ENROLMENT_JOIN, true);
+                withJoin(PROGRAM_ENCOUNTER_JOIN, true);
             }
 
             if (c.getDataType().equalsIgnoreCase("CODED")) {
@@ -335,8 +337,9 @@ public class BaseSubjectSearchQueryBuilder<T> {
         return (T) this;
     }
 
-    protected T withJoin(String joinClause) {
+    protected T withJoin(String joinClause, boolean findDistinctOnly) {
         joinClauses.add(joinClause);
+        this.findDistinctOnly = findDistinctOnly || this.findDistinctOnly;
         return (T) this;
     }
 

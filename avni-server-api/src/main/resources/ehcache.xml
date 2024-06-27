@@ -5,7 +5,7 @@
 - Separate caches are defined so that they can be evicted selectively. These can be
 -->
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ehcache.xsd"
-         updateCheck="true" monitoring="autodetect" dynamicConfig="true"
+         updateCheck="false" monitoring="autodetect" dynamicConfig="true"
          maxBytesLocalHeap="500M" statistics="true">
     <diskStore path="user.home/.ehcache"/>
     <cache name="org.avni.server.domain.Concept" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">

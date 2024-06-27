@@ -10,32 +10,48 @@ import org.slf4j.LoggerFactory;
 public class CacheEventLogger implements CacheEventListener {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CacheEventLogger.class);
 
+    private String getCacheInfo(Ehcache ehcache) {
+        return String.format("Cache name: %s, Cache size: %d", ehcache.getName(), ehcache.getSize());
+    }
+
+    private String getElementInfo(Element element) {
+        return String.format("Element: %s", element.getObjectKey().toString());
+    }
+
+    private void log(String action, Ehcache cache, Element element) {
+        if (logger.isTraceEnabled()) {
+            logger.trace("{} -> {}, {}, User: {}", action, getCacheInfo(cache), getElementInfo(element), UserContextHolder.getUserName());
+        }
+    }
+
     @Override
     public void notifyElementRemoved(Ehcache cache, Element element) throws CacheException {
-//        logger.debug("Element added in {} : {}", cache.getName(), element);
+        this.log("Removed", cache, element);
     }
 
     @Override
     public void notifyElementPut(Ehcache cache, Element element) throws CacheException {
-        logger.info("Element added in {}: {} by {}", cache.getName(), element, UserContextHolder.getUserName());
+        this.log("Put", cache, element);
     }
 
     @Override
     public void notifyElementUpdated(Ehcache cache, Element element) throws CacheException {
+        this.log("Updated", cache, element);
     }
 
     @Override
     public void notifyElementExpired(Ehcache cache, Element element) {
-//        logger.debug("Element expired in {}: {}", cache.getName(), element);
+        this.log("Expired", cache, element);
     }
 
     @Override
     public void notifyElementEvicted(Ehcache cache, Element element) {
-//        logger.debug("Element evicted in {}: {}", cache.getName(), element);
+        logger.debug("Evicted -> {}, {}, User: {}", getCacheInfo(cache), getElementInfo(element), UserContextHolder.getUserName());
     }
 
     @Override
     public void notifyRemoveAll(Ehcache cache) {
+        logger.debug("All removed. {}", getCacheInfo(cache));
     }
 
     @Override
@@ -45,5 +61,6 @@ public class CacheEventLogger implements CacheEventListener {
 
     @Override
     public void dispose() {
+        logger.info("Dispose called.");
     }
 }
