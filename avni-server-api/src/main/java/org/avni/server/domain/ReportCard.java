@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.web.contract.ValueUnit;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -143,10 +144,29 @@ public class ReportCard extends OrganisationAwareEntity {
         return standardReportCardInput == null ? new ArrayList() : standardReportCardInput.getList(key);
     }
 
+    private String getterForStandardReportCardInputString(String key) {
+        return standardReportCardInput.getString(key);
+    }
+
     private void safeSetterForStandardReportCardInput(String key, List<String> value) {
-        if(standardReportCardInput == null) {
+        if (standardReportCardInput == null) {
             standardReportCardInput = new JsonObject(new HashMap<>());
         }
         standardReportCardInput.with(key, value);
+    }
+
+    private void safeSetterForStandardReportCardInput(String key, String value) {
+        if (standardReportCardInput == null) {
+            standardReportCardInput = new JsonObject(new HashMap<>());
+        }
+        standardReportCardInput.with(key, value);
+    }
+
+    public String getStandardReportCardInputRecentDuration() {
+        return getterForStandardReportCardInputString("recentDuration");
+    }
+
+    public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
+        safeSetterForStandardReportCardInput("recentDuration", standardReportCardInputRecentDuration.toJSONString());
     }
 }

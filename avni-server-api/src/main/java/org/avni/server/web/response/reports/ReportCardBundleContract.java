@@ -1,6 +1,7 @@
 package org.avni.server.web.response.reports;
 
 import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.contract.ValueUnit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ public class ReportCardBundleContract extends ReportCardContract {
     private List<String> standardReportCardInputSubjectTypes = new ArrayList<>();
     private List<String> standardReportCardInputPrograms = new ArrayList<>();
     private List<String> standardReportCardInputEncounterTypes = new ArrayList<>();
+    private ValueUnit standardReportCardInputRecentDuration = null;
 
     public String getStandardReportCardType() {
         return standardReportCardType;
@@ -41,5 +43,9 @@ public class ReportCardBundleContract extends ReportCardContract {
 
     public void setStandardReportCardInputEncounterTypes(List<String> standardReportCardInputEncounterTypes) {
         this.standardReportCardInputEncounterTypes = standardReportCardInputEncounterTypes;
+    }
+
+    public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
+        this.standardReportCardInputRecentDuration = standardReportCardInputRecentDuration;
     }
 }

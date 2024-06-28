@@ -1,11 +1,15 @@
 package org.avni.server.mapper.dashboard;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.service.CardService;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.contract.ValueUnit;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.response.reports.ReportCardBundleContract;
@@ -33,6 +37,9 @@ public class ReportCardMapper {
         response.setStandardReportCardInputSubjectTypes(reportCardService.getStandardReportCardInputSubjectTypes(card).stream().map(SubjectTypeContract::createBasic).collect(Collectors.toList()));
         response.setStandardReportCardInputPrograms(reportCardService.getStandardReportCardInputPrograms(card).stream().map(ProgramContract::createBasic).collect(Collectors.toList()));
         response.setStandardReportCardInputEncounterTypes(reportCardService.getStandardReportCardInputEncounterTypes(card).stream().map(EncounterTypeContract::createBasic).collect(Collectors.toList()));
+        if (card.getStandardReportCardInputRecentDuration() != null) {
+            response.setStandardReportCardInputRecentDuration(buildDurationForRecentTypeCards(card.getStandardReportCardInputRecentDuration()));
+        }
         return response;
     }
 
@@ -57,6 +64,18 @@ public class ReportCardMapper {
         response.setStandardReportCardInputSubjectTypes(reportCardService.getStandardReportCardInputSubjectTypes(reportCard).stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
         response.setStandardReportCardInputPrograms(reportCardService.getStandardReportCardInputPrograms(reportCard).stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
         response.setStandardReportCardInputEncounterTypes(reportCardService.getStandardReportCardInputEncounterTypes(reportCard).stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
+        if (reportCard.getStandardReportCardInputRecentDuration() != null) {
+            response.setStandardReportCardInputRecentDuration(buildDurationForRecentTypeCards(reportCard.getStandardReportCardInputRecentDuration()));
+        }
         return response;
+    }
+
+    private ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
+        try {
+            ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
+            return objectMapper.readValue(recentDurationString, ValueUnit.class);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
     }
 }

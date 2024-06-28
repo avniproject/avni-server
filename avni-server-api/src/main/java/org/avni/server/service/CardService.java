@@ -76,6 +76,7 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with id %d doesn't exist", standardReportCardTypeId));
             }
             reportCard.setStandardReportCardType(type);
+            buildStandardReportCardInputs(type, reportCardWebRequest, reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
         }
@@ -90,8 +91,22 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with uuid %s doesn't exist", standardReportCardTypeUUID));
             }
             reportCard.setStandardReportCardType(type);
+            buildStandardReportCardInputs(type, reportCardBundleRequest, reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
+        }
+    }
+
+    private void buildStandardReportCardInputs(StandardReportCardType type, ReportCardRequest reportCardRequest, ReportCard card) {
+        card.setStandardReportCardInputSubjectTypes(reportCardRequest.getStandardReportCardInputSubjectTypes());
+        card.setStandardReportCardInputPrograms(reportCardRequest.getStandardReportCardInputPrograms());
+        card.setStandardReportCardInputEncounterTypes(reportCardRequest.getStandardReportCardInputEncounterTypes());
+
+        if (type.getName().toLowerCase().contains("recent") && reportCardRequest.getStandardReportCardInputRecentDuration() == null) {
+            throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
+        }
+        if (type.getName().toLowerCase().contains("recent")) {
+            card.setStandardReportCardInputRecentDuration(reportCardRequest.getStandardReportCardInputRecentDuration());
         }
     }
 
@@ -109,10 +124,6 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
-
-        card.setStandardReportCardInputSubjectTypes(reportCardRequest.getStandardReportCardInputSubjectTypes());
-        card.setStandardReportCardInputPrograms(reportCardRequest.getStandardReportCardInputPrograms());
-        card.setStandardReportCardInputEncounterTypes(reportCardRequest.getStandardReportCardInputEncounterTypes());
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
