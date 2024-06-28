@@ -27,6 +27,11 @@ public class AddressLevelBuilder {
         return this;
     }
 
+    public AddressLevelBuilder child(AddressLevel addressLevel) {
+        entity.addChild(addressLevel);
+        return this;
+    }
+
     public AddressLevelBuilder id(long id) {
         entity.setId(id);
         return this;
@@ -34,6 +39,11 @@ public class AddressLevelBuilder {
 
     public AddressLevelBuilder withUuid(String uuid) {
         entity.setUuid(uuid);
+        return this;
+    }
+
+    public AddressLevelBuilder withLineage(String lineage) {
+        entity.setLineage(lineage);
         return this;
     }
 

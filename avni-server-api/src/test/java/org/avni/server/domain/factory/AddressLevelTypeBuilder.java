@@ -27,6 +27,16 @@ public class AddressLevelTypeBuilder {
         return withUuid(placeholder).name(placeholder).level(3d);
     }
 
+    public AddressLevelTypeBuilder parent(AddressLevelType parent) {
+        addressLevelType.setParent(parent);
+        return this;
+    }
+
+    public AddressLevelTypeBuilder child(AddressLevelType child) {
+        addressLevelType.addChildAddressLevelType(child);
+        return this;
+    }
+
     public AddressLevelType build() {
         return this.addressLevelType;
     }

@@ -12,12 +12,11 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 "                i.profile_picture as \"profilePicture\",\n" +
                 "                cast(concat_ws(' ',i.first_name,i.middle_name,i.last_name)as text) as \"fullName\",\n" +
                 "                i.uuid as \"uuid\",\n" +
-                "                cast(tllv.title_lineage as text) as \"addressLevel\",\n" +
+                "                i.address_id as \"addressId\",\n" +
                 "                st.name as \"subjectTypeName\",\n" +
                 "                gender.name as \"gender\",\n" +
                 "                i.date_of_birth as \"dateOfBirth\" $CUSTOM_FIELDS\n" +
                 "from individual i\n" +
-                "         left outer join title_lineage_locations_view tllv on i.address_id = tllv.lowestpoint_id\n" +
                 "         left outer join gender on i.gender_id = gender.id\n" +
                 "         left outer join subject_type st on i.subject_type_id = st.id and st.is_voided is false\n";
         return super.buildUsingBaseQuery(baseQuery, "");

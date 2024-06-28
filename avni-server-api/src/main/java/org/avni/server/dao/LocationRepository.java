@@ -18,10 +18,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.QueryHint;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "locations", path = "locations")
@@ -263,4 +260,6 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     List<AddressLevel> findByTitleAndType(String title, AddressLevelType lowestAddressLevelType, Pageable pageable);
     AddressLevel findByTitleAndTypeAndIsVoidedFalse(String title, AddressLevelType addressLevelType);
+
+    List<AddressLevel> findAllByIdIn(List<Long> addressIds);
 }

@@ -12,9 +12,7 @@ import org.avni.server.web.request.AddressLevelContract;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +22,18 @@ public class AddressLevelService {
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelCache addressLevelCache;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+
+    public AddressLevelService(LocationRepository locationRepository,
+                               AddressLevelTypeRepository addressLevelTypeRepository,
+                               OrganisationConfigService organisationConfigService,
+                               AddressLevelCache addressLevelCache) {
+        this.locationRepository = locationRepository;
+        this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.organisationConfigService = organisationConfigService;
+        this.addressLevelCache = addressLevelCache;
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
+    }
 
     public List<Long> getAddressLevelsByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
         return filterByCatchmentAndSubjectType(catchment, subjectType)
@@ -53,22 +62,10 @@ public class AddressLevelService {
                 organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()),
                 new TypeReference<List<SubjectTypeSetting>>() {
                 });
-        Optional<SubjectTypeSetting> customLocationTypes = customRegistrationLocations.stream()
+        return customRegistrationLocations.stream()
                 .filter(crl -> crl.getSubjectTypeUUID()
                         .equals(subjectType.getUuid()))
                 .findFirst();
-        return customLocationTypes;
-    }
-
-    public AddressLevelService(LocationRepository locationRepository,
-                               AddressLevelTypeRepository addressLevelTypeRepository,
-                               OrganisationConfigService organisationConfigService,
-                               AddressLevelCache addressLevelCache) {
-        this.locationRepository = locationRepository;
-        this.addressLevelTypeRepository = addressLevelTypeRepository;
-        this.organisationConfigService = organisationConfigService;
-        this.addressLevelCache = addressLevelCache;
-        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public List<AddressLevelContract> getAllLocations() {
@@ -99,5 +96,28 @@ public class AddressLevelService {
 
     public String getTitleLineage(AddressLevel location) {
         return locationRepository.getTitleLineageById(location.getId());
+    }
+
+    // This method uses in memory approach instead of database, because for smaller number of addresses the query plan to achive this is expensive due to over estimation by postgres.
+    public Map<Long, String> getTitleLineages(List<Long> addressIds) {
+        List<AddressLevel> addresses = locationRepository.findAllByIdIn(addressIds);
+
+        HashSet<Long> uniqueAddresses = new HashSet<>();
+        addresses.forEach(addressLevel -> uniqueAddresses.addAll(addressLevel.getLineageAddressIds()));
+        List<AddressLevel> allAddressesInScope = locationRepository.findAllByIdIn(new ArrayList<>(uniqueAddresses));
+
+        HashMap<Long, String> titleLineages = new HashMap<>();
+        addressIds.forEach(addressId -> {
+            final AddressLevel addressLevel = addresses.stream().filter(al -> al.getId().equals(addressId)).findFirst().orElseThrow(() -> new AssertionError("Address not found"));
+
+            String lineage = allAddressesInScope.stream()
+                    .filter(inScopeAddress -> addressLevel.getLineageAddressIds().contains(inScopeAddress.getId()))
+                    .sorted((o1, o2) -> o2.getLevel().compareTo(o1.getLevel()))
+                    .map(AddressLevel::getTitle)
+                    .collect(Collectors.joining(", "));
+
+            titleLineages.put(addressId, lineage);
+        });
+        return titleLineages;
     }
 }

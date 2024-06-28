@@ -80,6 +80,11 @@ public class AddressLevelType extends OrganisationAwareEntity {
         this.addressLevels = addressLevels;
     }
 
+    public void addChildAddressLevelType(AddressLevelType addressLevelType) {
+        subTypes.add(addressLevelType);
+        addressLevelType.setParent(this);
+    }
+
     @JsonIgnore
     public Boolean isVoidable() {
         return subTypes.stream().allMatch(CHSEntity::isVoided) && addressLevels.stream().allMatch(CHSEntity::isVoided);

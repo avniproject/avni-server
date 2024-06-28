@@ -18,6 +18,10 @@ public class TestLocationService {
         locationRepository.save(location);
         location.calculateLineage();
         locationRepository.save(location);
+        location.getSubLocations().forEach(addressLevel -> {
+            addressLevel.calculateLineage();
+            locationRepository.save(addressLevel);
+        });
         return location;
     }
 }

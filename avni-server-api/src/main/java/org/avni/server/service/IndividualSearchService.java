@@ -1,6 +1,5 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.SubjectSearchRepository;
 import org.avni.server.dao.search.SubjectSearchQueryBuilder;
@@ -19,11 +18,13 @@ import java.util.stream.Collectors;
 public class IndividualSearchService {
     private final SubjectSearchRepository subjectSearchRepository;
     private final ProgramEnrolmentRepository programEnrolmentRepository;
+    private final AddressLevelService addressLevelService;
 
     @Autowired
-    public IndividualSearchService(SubjectSearchRepository subjectSearchRepository, IndividualRepository individualRepository, ProgramEnrolmentRepository programEnrolmentRepository) {
+    public IndividualSearchService(SubjectSearchRepository subjectSearchRepository, ProgramEnrolmentRepository programEnrolmentRepository, AddressLevelService addressLevelService) {
         this.subjectSearchRepository = subjectSearchRepository;
         this.programEnrolmentRepository = programEnrolmentRepository;
+        this.addressLevelService = addressLevelService;
     }
 
     public LinkedHashMap<String, Object> search(SubjectSearchRequest subjectSearchRequest) {
@@ -37,7 +38,11 @@ public class IndividualSearchService {
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
                 .collect(Collectors.toList());
+        List<Long> addressIds = individualList.stream()
+                .map(individualRecord -> ((BigInteger) individualRecord.get("addressId")).longValue())
+                .collect(Collectors.toList());
         List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds);
+        Map<Long, String> titleLineages = addressLevelService.getTitleLineages(addressIds);
 
         List<Map<String, Object>> listOfRecords = individualList.stream()
                 .peek(individualRecord -> {
@@ -46,6 +51,7 @@ public class IndividualSearchService {
                             .filter(x -> x.getId().equals(individualId))
                             .map(SearchSubjectEnrolledProgram::getProgram)
                             .collect(Collectors.toList()));
+                    individualRecord.put("addressLevel", titleLineages.get(((BigInteger) individualRecord.get("addressId")).longValue()));
                 }).collect(Collectors.toList());
         recordsMap.put("totalElements", totalCount);
         recordsMap.put("listOfRecords", listOfRecords);

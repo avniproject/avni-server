@@ -27,6 +27,7 @@ DELETE FROM encounter_type where 1 = 1;
 DELETE FROM gender where 1 = 1;
 DELETE FROM catchment_address_mapping where 1 = 1;
 DELETE FROM address_level where 1 = 1;
+DELETE FROM address_level_type where 1 = 1;
 DELETE FROM catchment where 1 = 1;
 DELETE FROM account_admin where 1 = 1;
 DELETE FROM user_group where 1 = 1;
