@@ -1,15 +1,19 @@
 package org.avni.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.contract.ValueUnit;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
-import org.avni.server.web.request.reports.ReportCardRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import org.joda.time.DateTime;
 import java.util.List;
 
 @Service
@@ -76,7 +80,7 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with id %d doesn't exist", standardReportCardTypeId));
             }
             reportCard.setStandardReportCardType(type);
-            buildStandardReportCardInputs(type, reportCardWebRequest, reportCard);
+            buildStandardReportCardInputs(type, reportCardWebRequest.getStandardReportCardInputSubjectTypes(), reportCardWebRequest.getStandardReportCardInputPrograms(), reportCardWebRequest.getStandardReportCardInputPrograms(), reportCardWebRequest.getStandardReportCardInputRecentDuration(), reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
         }
@@ -91,26 +95,27 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with uuid %s doesn't exist", standardReportCardTypeUUID));
             }
             reportCard.setStandardReportCardType(type);
-            buildStandardReportCardInputs(type, reportCardBundleRequest, reportCard);
+            ValueUnit recentDuration = buildDurationForRecentTypeCards(reportCardBundleRequest.getStandardReportCardInputRecentDuration());
+            buildStandardReportCardInputs(type, reportCardBundleRequest.getStandardReportCardInputSubjectTypes(), reportCardBundleRequest.getStandardReportCardInputPrograms(), reportCardBundleRequest.getStandardReportCardInputEncounterTypes(), recentDuration, reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
         }
     }
 
-    private void buildStandardReportCardInputs(StandardReportCardType type, ReportCardRequest reportCardRequest, ReportCard card) {
-        card.setStandardReportCardInputSubjectTypes(reportCardRequest.getStandardReportCardInputSubjectTypes());
-        card.setStandardReportCardInputPrograms(reportCardRequest.getStandardReportCardInputPrograms());
-        card.setStandardReportCardInputEncounterTypes(reportCardRequest.getStandardReportCardInputEncounterTypes());
+    private void buildStandardReportCardInputs(StandardReportCardType type, List<String> srciSubjectTypes, List<String> srciPrograms, List<String> srciEncounterTypes, ValueUnit srciRecentDuration, ReportCard card) {
+        card.setStandardReportCardInputSubjectTypes(srciSubjectTypes);
+        card.setStandardReportCardInputPrograms(srciPrograms);
+        card.setStandardReportCardInputEncounterTypes(srciEncounterTypes);
 
-        if (type.getName().toLowerCase().contains("recent") && reportCardRequest.getStandardReportCardInputRecentDuration() == null) {
+        if (type.getName().toLowerCase().contains("recent") && srciRecentDuration == null) {
             throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
         }
         if (type.getName().toLowerCase().contains("recent")) {
-            card.setStandardReportCardInputRecentDuration(reportCardRequest.getStandardReportCardInputRecentDuration());
+            card.setStandardReportCardInputRecentDuration(srciRecentDuration);
         }
     }
 
-    private void buildCard(ReportCardRequest reportCardRequest, ReportCard card) {
+    private void buildCard(ReportCardContract reportCardRequest, ReportCard card) {
         card.setName(reportCardRequest.getName());
         card.setColour(reportCardRequest.getColor());
         card.setDescription(reportCardRequest.getDescription());
@@ -124,6 +129,16 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
+    }
+
+    public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
+        if (recentDurationString == null) return null;
+        try {
+            ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
+            return objectMapper.readValue(recentDurationString, ValueUnit.class);
+        } catch (JsonProcessingException e) {
+            return null;
+        }
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
