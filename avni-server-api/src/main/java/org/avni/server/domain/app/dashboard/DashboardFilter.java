@@ -150,6 +150,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
         GroupSubject,
         Address,
         Concept,
-        SubjectType;
+        SubjectType,
+        AsOnDate;
     }
 }
