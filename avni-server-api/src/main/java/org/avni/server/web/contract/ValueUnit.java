@@ -1,7 +1,9 @@
 package org.avni.server.web.contract;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.avni.server.util.ObjectMapperSingleton;
+
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 
 public class ValueUnit implements Serializable {
     private String value;
@@ -14,11 +16,6 @@ public class ValueUnit implements Serializable {
     public ValueUnit(String value, String unit) {
         this.value = value;
         this.unit = unit;
-    }
-
-    public ValueUnit(LinkedHashMap<String, String> valueUnit) {
-        this.value = valueUnit.get("value");
-        this.unit = valueUnit.get("unit");
     }
 
     public String getValue() {
@@ -38,6 +35,10 @@ public class ValueUnit implements Serializable {
     }
 
     public String toJSONString() {
-        return String.format("{\"%s\":\"%s\", \"%s\":\"%s\"}", "value", value, "unit", unit);
+        try {
+            return ObjectMapperSingleton.getObjectMapper().writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

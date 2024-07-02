@@ -1,7 +1,6 @@
 package org.avni.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
@@ -134,11 +133,11 @@ public class CardService implements NonScopeAwareService {
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
         if (recentDurationString == null) return null;
         try {
-            ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
-            return objectMapper.readValue(recentDurationString, ValueUnit.class);
+            return ObjectMapperSingleton.getObjectMapper().readValue(recentDurationString, ValueUnit.class);
         } catch (JsonProcessingException e) {
-            return null;
+            throw new RuntimeException(e);
         }
+
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
