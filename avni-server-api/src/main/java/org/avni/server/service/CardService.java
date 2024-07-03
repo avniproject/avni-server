@@ -79,7 +79,9 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with id %d doesn't exist", standardReportCardTypeId));
             }
             reportCard.setStandardReportCardType(type);
-            buildStandardReportCardInputs(type, reportCardWebRequest.getStandardReportCardInputSubjectTypes(), reportCardWebRequest.getStandardReportCardInputPrograms(), reportCardWebRequest.getStandardReportCardInputPrograms(), reportCardWebRequest.getStandardReportCardInputRecentDuration(), reportCard);
+            buildStandardReportCardInputs(type, reportCardWebRequest.getStandardReportCardInputSubjectTypes(),
+                    reportCardWebRequest.getStandardReportCardInputPrograms(),
+                    reportCardWebRequest.getStandardReportCardInputEncounterTypes(), reportCardWebRequest.getStandardReportCardInputRecentDuration(), reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
         }
@@ -101,16 +103,16 @@ public class CardService implements NonScopeAwareService {
         }
     }
 
-    private void buildStandardReportCardInputs(StandardReportCardType type, List<String> srciSubjectTypes, List<String> srciPrograms, List<String> srciEncounterTypes, ValueUnit srciRecentDuration, ReportCard card) {
-        card.setStandardReportCardInputSubjectTypes(srciSubjectTypes);
-        card.setStandardReportCardInputPrograms(srciPrograms);
-        card.setStandardReportCardInputEncounterTypes(srciEncounterTypes);
+    private void buildStandardReportCardInputs(StandardReportCardType type, List<String> subjectTypes, List<String> programs, List<String> encounterTypes, ValueUnit recentDuration, ReportCard card) {
+        card.setStandardReportCardInputSubjectTypes(subjectTypes);
+        card.setStandardReportCardInputPrograms(programs);
+        card.setStandardReportCardInputEncounterTypes(encounterTypes);
 
-        if (type.getName().toLowerCase().contains("recent") && srciRecentDuration == null) {
+        if (type.getName().toLowerCase().contains("recent") && recentDuration == null) {
             throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
         }
         if (type.getName().toLowerCase().contains("recent")) {
-            card.setStandardReportCardInputRecentDuration(srciRecentDuration);
+            card.setStandardReportCardInputRecentDuration(recentDuration);
         }
     }
 

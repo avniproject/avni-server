@@ -144,10 +144,6 @@ public class ReportCard extends OrganisationAwareEntity {
         return standardReportCardInput == null ? new ArrayList() : standardReportCardInput.getList(key);
     }
 
-    private String getterForStandardReportCardInputString(String key) {
-        return standardReportCardInput.getString(key);
-    }
-
     private void safeSetterForStandardReportCardInput(String key, List<String> value) {
         if (standardReportCardInput == null) {
             standardReportCardInput = new JsonObject(new HashMap<>());
@@ -163,7 +159,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public String getStandardReportCardInputRecentDuration() {
-        return getterForStandardReportCardInputString("recentDuration");
+        return standardReportCardInput.getString("recentDuration");
     }
 
     public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
