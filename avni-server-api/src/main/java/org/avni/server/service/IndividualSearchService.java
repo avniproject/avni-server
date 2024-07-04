@@ -9,9 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,7 +39,11 @@ public class IndividualSearchService {
         List<Long> addressIds = individualList.stream()
                 .map(individualRecord -> ((BigInteger) individualRecord.get("addressId")).longValue())
                 .collect(Collectors.toList());
-        List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds);
+
+        List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = individualIds.size() > 0 ?
+                programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds) :
+                Collections.emptyList();
+
         Map<Long, String> titleLineages = addressLevelService.getTitleLineages(addressIds);
 
         List<Map<String, Object>> listOfRecords = individualList.stream()

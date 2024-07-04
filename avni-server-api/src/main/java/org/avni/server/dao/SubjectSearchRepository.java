@@ -31,8 +31,8 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
     @Transactional
     public List<Map<String,Object>> search(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
         try {
-            setRoleToNone();
             SqlQuery query = searchBuilder.getSQLResultQuery(searchRequest);
+            setRoleToNone();
             logger.debug("Executing query: " + query.getSql());
             logger.debug("Parameters: " + query.getParameters());
             Query sql = entityManager.createNativeQuery(query.getSql());
@@ -50,8 +50,8 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
     @Transactional
     public BigInteger getTotalCount(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
         try {
-            setRoleToNone();
             SqlQuery query = searchBuilder.getSQLCountQuery(searchRequest);
+            setRoleToNone();
             Query sql = entityManager.createNativeQuery(query.getSql());
             query.getParameters().forEach((name, value) -> {
                 sql.setParameter(name, value);
