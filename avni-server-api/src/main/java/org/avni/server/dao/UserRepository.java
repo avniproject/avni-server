@@ -140,4 +140,7 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
 
     @Query(value = "select * from users where lower(users.settings->>'idPrefix') = lower(:prefix) and id <> :exceptUserId", nativeQuery = true)
     List<User> getUsersWithSameIdPrefix(String prefix, long exceptUserId);
+
+    @Query(value = "select * from users where lower(users.settings->>'idPrefix') = lower(:prefix)", nativeQuery = true)
+    List<User> getUsersWithSameIdPrefix(String prefix);
 }
