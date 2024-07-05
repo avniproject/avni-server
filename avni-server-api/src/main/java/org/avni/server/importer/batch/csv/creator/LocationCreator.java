@@ -9,8 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 public class LocationCreator {
-
-    private static Logger logger = LoggerFactory.getLogger(LocationCreator.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocationCreator.class);
 
     public Point getLocation(Row row, String header, List<String> errorMsgs) {
         try {

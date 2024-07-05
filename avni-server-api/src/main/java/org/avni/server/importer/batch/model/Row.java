@@ -8,7 +8,6 @@ import java.util.stream.IntStream;
 import static java.lang.String.format;
 
 public class Row extends HashMap<String, String> {
-
     public static final Pattern TRUE_VALUE = Pattern.compile("y|yes|true|1", Pattern.CASE_INSENSITIVE);
     private final String[] headers;
     private final String[] values;
@@ -19,8 +18,29 @@ public class Row extends HashMap<String, String> {
         IntStream.range(0, values.length).forEach(index -> this.put(headers[index], values[index].trim()));
     }
 
+    private String nullSafeTrim(String s) {
+        if (s == null) {
+            return null;
+        }
+        return s.trim();
+    }
+
     public String[] getHeaders() {
-        return headers;
+        return Arrays.stream(headers).map(this::nullSafeTrim).toArray(String[]::new);
+    }
+
+    @Override
+    public String get(Object key) {
+        String k = nullSafeTrim((String) key);
+        String s = super.get(k);
+        return this.nullSafeTrim(s);
+    }
+
+    @Override
+    public String getOrDefault(Object key, String defaultValue) {
+        String k = nullSafeTrim((String) key);
+        String s = super.getOrDefault(k, defaultValue);
+        return this.nullSafeTrim(s);
     }
 
     @Override
