@@ -17,6 +17,7 @@ public class GroupContract extends ReferenceDataContract {
         groupContract.setHasAllPrivileges(group.isHasAllPrivileges());
         groupContract.setNotEveryoneGroup(!group.isEveryone());
         groupContract.setUuid(group.getUuid());
+        groupContract.setVoided(group.isVoided());
         return groupContract;
     }
 
