@@ -1,6 +1,5 @@
 package org.avni.server.dao;
 
-import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
@@ -27,7 +26,7 @@ public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupP
         throw new UnsupportedOperationException("No field 'name' in GroupPrivilege.");
     }
 
-    List<GroupPrivilege> findByGroup_Id(Long groupId);
+    List<GroupPrivilege> findByGroup_IdAndImplVersion(Long groupId, int implVersion);
 
     @Query(value = "select distinct gp.*\n" +
             "from group_privilege gp\n" +
@@ -35,6 +34,7 @@ public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupP
             "         join privilege p on gp.privilege_id = p.id\n" +
             "where ug.user_id = :userId\n" +
             "  and gp.is_voided = false\n" +
+            "  and gp.impl_version = 1\n" +
             "  and ug.is_voided = false\n" +
             "  and allow = true", nativeQuery = true)
     List<GroupPrivilege> getAllAllowedPrivilegesForUser(Long userId);
@@ -49,5 +49,15 @@ public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupP
 
     default boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime) {
         return existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime == null ? null : lastModifiedDateTime.toDate());
+    }
+
+    default GroupPrivilege saveGroupPrivilege(GroupPrivilege groupPrivilege) {
+        groupPrivilege.setImplVersion(GroupPrivilege.IMPL_VERSION);
+        return this.save(groupPrivilege);
+    }
+
+    default List<GroupPrivilege> saveAllGroupPrivileges(List<GroupPrivilege> groupPrivileges) {
+        groupPrivileges.forEach(gp -> gp.setImplVersion(GroupPrivilege.IMPL_VERSION));
+        return this.saveAll(groupPrivileges);
     }
 }

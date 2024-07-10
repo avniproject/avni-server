@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
@@ -174,7 +176,9 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     }
 
     public void savePrivileges(GroupPrivilegeContractWeb[] requests, Organisation organisation) {
-        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findAll();
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findAll()
+            .stream().filter(groupPrivilege -> groupPrivilege.getImplVersion() == GroupPrivilege.IMPL_VERSION)
+            .collect(Collectors.toList());
         List<Privilege> privileges = privilegeRepository.findAll();
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll();
         List<Program> programs = programRepository.findAll();
@@ -183,21 +187,30 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         List<Group> groups = groupRepository.findAll();
 
         Arrays.stream(requests).forEach(request -> {
-            GroupPrivilege groupPrivilege = CollectionUtil.findByUuid(groupPrivileges, request.getUuid());
+            GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
+                Objects.equals(request.getGroupUUID(), gp.getGroupUuid())
+                && Objects.equals(request.getPrivilegeUUID(), gp.getPrivilegeUuid())
+                && Objects.equals(request.getSubjectTypeUUID(), gp.getSubjectTypeUuid())
+                && Objects.equals(request.getProgramUUID(), gp.getProgramUuid())
+                && Objects.equals(request.getProgramEncounterTypeUUID(), gp.getProgramEncounterTypeUuid())
+                && Objects.equals(request.getEncounterTypeUUID(), gp.getEncounterTypeUuid())
+                && Objects.equals(request.getChecklistDetailUUID(), gp.getChecklistDetailUuid()))
+                .findAny().orElse(null);
             if (groupPrivilege == null) {
                 groupPrivilege = new GroupPrivilege();
-                groupPrivilege.setUuid(request.getUuid());
+                //don't use uuid from request for bundle uploads since there could be records with matching uuid with older impl_version in db and unique org_uuid constraint is violated
+                groupPrivilege.assignUUID();
+                groupPrivilege.setPrivilege(CollectionUtil.findByUuid(privileges, request.getPrivilegeUUID()));
+                groupPrivilege.setSubjectType(CollectionUtil.findByUuid(subjectTypes, request.getSubjectTypeUUID()));
+                groupPrivilege.setProgram(CollectionUtil.findByUuid(programs, request.getProgramUUID()));
+                groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getEncounterTypeUUID()));
+                groupPrivilege.setProgramEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getProgramEncounterTypeUUID()));
+                groupPrivilege.setChecklistDetail(CollectionUtil.findByUuid(checklistDetails, request.getChecklistDetailUUID()));
+                groupPrivilege.setGroup(getGroup(request, organisation, groups));
             }
-            groupPrivilege.setPrivilege(CollectionUtil.findByUuid(privileges, request.getPrivilegeUUID()));
-            groupPrivilege.setSubjectType(CollectionUtil.findByUuid(subjectTypes, request.getSubjectTypeUUID()));
-            groupPrivilege.setProgram(CollectionUtil.findByUuid(programs, request.getProgramUUID()));
-            groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getEncounterTypeUUID()));
-            groupPrivilege.setProgramEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getProgramEncounterTypeUUID()));
-            groupPrivilege.setChecklistDetail(CollectionUtil.findByUuid(checklistDetails, request.getChecklistDetailUUID()));
 
-            groupPrivilege.setGroup(getGroup(request, organisation, groups));
             groupPrivilege.setAllow(request.isAllow());
-            groupPrivilegeRepository.save(groupPrivilege);
+            groupPrivilegeRepository.saveGroupPrivilege(groupPrivilege);
         });
     }
 

@@ -39,7 +39,7 @@ public class TestGroupService {
         Privilege p = privilegeRepository.findByType(privilegeType);
         groupPrivilege.setPrivilege(p);
         groupPrivilege.setGroup(group);
-        groupPrivilegeRepository.save(groupPrivilege);
+        groupPrivilegeRepository.saveGroupPrivilege(groupPrivilege);
     }
 
     public void giveViewSubjectPrivilegeTo(Group group, SubjectType ... subjectTypes) {
