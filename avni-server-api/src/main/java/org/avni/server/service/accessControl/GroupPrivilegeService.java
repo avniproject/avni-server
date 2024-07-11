@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
@@ -176,9 +175,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     }
 
     public void savePrivileges(GroupPrivilegeContractWeb[] requests, Organisation organisation) {
-        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findAll()
-            .stream().filter(groupPrivilege -> groupPrivilege.getImplVersion() == GroupPrivilege.IMPL_VERSION)
-            .collect(Collectors.toList());
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByImplVersion(GroupPrivilege.IMPL_VERSION);
         List<Privilege> privileges = privilegeRepository.findAll();
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll();
         List<Program> programs = programRepository.findAll();

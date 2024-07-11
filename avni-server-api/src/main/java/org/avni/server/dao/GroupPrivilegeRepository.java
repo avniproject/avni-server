@@ -60,4 +60,6 @@ public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupP
         groupPrivileges.forEach(gp -> gp.setImplVersion(GroupPrivilege.IMPL_VERSION));
         return this.saveAll(groupPrivileges);
     }
+
+    List<GroupPrivilege> findByImplVersion(int implVersion);
 }
