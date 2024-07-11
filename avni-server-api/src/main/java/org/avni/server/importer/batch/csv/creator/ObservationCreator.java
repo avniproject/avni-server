@@ -19,6 +19,7 @@ import org.avni.server.service.LocationService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.S3Service;
 import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.ObservationRequest;
 import org.slf4j.Logger;
@@ -273,11 +274,11 @@ public class ObservationCreator {
 
     private Map<String, Object> toPhoneNumberFormat(String phoneNumber, List<String> errorMsgs, String conceptName) {
         Map<String, Object> phoneNumberObs = new HashMap<>();
-        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion())) {
             errorMsgs.add(format("Invalid %s provided %s. Please provide valid phone number.", conceptName, phoneNumber));
             return null;
         }
-        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getNationalPhoneNumber(phoneNumber));
+        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getNationalPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion()));
         phoneNumberObs.put("verified", false);
         return phoneNumberObs;
     }

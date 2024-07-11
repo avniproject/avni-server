@@ -6,6 +6,7 @@ import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
 import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.web.validation.ValidationException;
 import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
@@ -127,7 +128,7 @@ public class UserService implements NonScopeAwareService {
     }
 
     public Optional<User> findByPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
+        return userRepository.findByPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion()));
     }
 
     @Transactional
@@ -186,10 +187,10 @@ public class UserService implements NonScopeAwareService {
         userSubjectRepository.save(userSubject);
     }
 
-    public void setPhoneNumber(String phoneNumber, User user) {
-        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
-            throw new ValidationException(PhoneNumberUtil.getInvalidMessage(phoneNumber));
+    public void setPhoneNumber(String phoneNumber, User user, String userRegion) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, userRegion)) {
+            throw new ValidationException(PhoneNumberUtil.getInvalidMessage(phoneNumber, userRegion));
         }
-        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
+        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber, userRegion));
     }
 }

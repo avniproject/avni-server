@@ -19,10 +19,7 @@ import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.observation.PhoneNumberObservationValue;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.BadRequestError;
-import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.util.PhoneNumberUtil;
-import org.avni.server.util.S;
+import org.avni.server.util.*;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.api.RequestUtils;
 import org.joda.time.DateTime;
@@ -459,7 +456,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         if (!phoneNumberConcept.isPresent()) {
             phoneNumberConcept = conceptService.findContactNumberConcept();
         }
-        phoneNumber = PhoneNumberUtil.getNationalPhoneNumber(phoneNumber);
+        phoneNumber = PhoneNumberUtil.getNationalPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion());
         return phoneNumberConcept.isPresent()
             ? individualRepository.findByConceptWithMatchingPattern(phoneNumberConcept.get(), "%" + phoneNumber)
             : Optional.empty();

@@ -14,6 +14,7 @@ import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.request.ChangePasswordRequest;
@@ -100,7 +101,7 @@ public class UserController {
             logger.info(String.format("Creating user with username '%s' and UUID '%s'", userContract.getUsername(), user.getUuid()));
 
             user.setUsername(userContract.getUsername());
-            user = setUserAttributes(user, userContract);
+            user = setUserAttributes(user, userContract, getRegionForUser(userContract));
 
             User savedUser = userService.save(user);
             idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
@@ -141,7 +142,9 @@ public class UserController {
             User currentUser = userService.getCurrentUser();
             user.setAuditInfo(currentUser);
             resetSyncService.recordSyncAttributeValueChangeForUser(user, userContract, UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
-            user = setUserAttributes(user, userContract);
+
+            String region = getRegionForUser(userContract);
+            user = setUserAttributes(user, userContract, region);
 
             idpServiceFactory.getIdpService(user).updateUser(user);
             userService.save(user);
@@ -156,6 +159,16 @@ public class UserController {
         }
     }
 
+    private String getRegionForUser(UserContract userContract) {
+        String region;
+        if (userContract.getAccountIds().isEmpty()) {
+            region = RegionUtil.getCurrentUserRegion();
+        } else {
+            region = accountRepository.findOne(userContract.getAccountIds().get(0)).getRegion();
+        }
+        return region;
+    }
+
     private Boolean emailIsValid(String email) {
         return EmailValidator.getInstance().isValid(email);
     }
@@ -168,12 +181,12 @@ public class UserController {
         return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
     }
 
-    private User setUserAttributes(User user, UserContract userContract) {
+    private User setUserAttributes(User user, UserContract userContract, String userRegion) {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
 
-        userService.setPhoneNumber(userContract.getPhoneNumber(), user);
+        userService.setPhoneNumber(userContract.getPhoneNumber(), user, userRegion);
 
         if (isUserNameInvalid(userContract.getUsername())) {
             throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
@@ -184,7 +197,7 @@ public class UserController {
         }
 
         user.setName(userContract.getName());
-        if(userContract.getCatchmentId()!=null) {
+        if (userContract.getCatchmentId() != null) {
             user.setCatchment(catchmentRepository.findOne(userContract.getCatchmentId()));
         }
 
@@ -363,7 +376,7 @@ public class UserController {
                 .map(Organisation::getId).collect(Collectors.toList());
     }
 
-    @GetMapping( "/user/search/findByOrganisation")
+    @GetMapping("/user/search/findByOrganisation")
     @ResponseBody
     public Page<User> getUsersByOrganisation(@RequestParam("organisationId") Long organisationId, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);

@@ -7,6 +7,7 @@ import org.avni.server.domain.Locale;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.springframework.batch.item.ItemWriter;
@@ -94,7 +95,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
         User.validateEmail(email);
         user.setEmail(email);
-        userService.setPhoneNumber(phoneNumber, user);
+        userService.setPhoneNumber(phoneNumber, user, RegionUtil.getCurrentUserRegion());
         user.setName(nameOfUser);
         if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);
         user.setCatchment(catchment);
