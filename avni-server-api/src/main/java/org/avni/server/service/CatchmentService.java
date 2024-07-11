@@ -71,6 +71,7 @@ public class CatchmentService {
             addAddressLevels(catchmentRequest, catchment);
             removeObsoleteAddressLevelsFromCatchment(catchment, catchmentRequest);
             catchment.setOrganisationId(organisation.getId());
+            catchment.setVoided(catchmentRequest.isVoided());
 
             catchments.add(catchmentRepository.save(catchment));
         }
