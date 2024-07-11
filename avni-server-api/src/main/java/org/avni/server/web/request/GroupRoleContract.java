@@ -24,6 +24,7 @@ public class GroupRoleContract extends CHSRequest {
         groupRoleContract.setSubjectMemberName(groupRole.getMemberSubjectType().getName());
         groupRoleContract.setMaximumNumberOfMembers(groupRole.getMaximumNumberOfMembers());
         groupRoleContract.setMinimumNumberOfMembers(groupRole.getMinimumNumberOfMembers());
+        groupRoleContract.setVoided(groupRole.isVoided());
         return groupRoleContract;
     }
 
