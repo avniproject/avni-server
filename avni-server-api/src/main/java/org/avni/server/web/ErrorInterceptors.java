@@ -5,6 +5,7 @@ import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.rest.RestControllerErrorResponse;
+import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.util.ErrorBodyBuilder;
@@ -89,6 +90,14 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = {MaxUploadSizeExceededException.class, SizeLimitExceededException.class})
     public ResponseEntity fileUploadSizeLimitExceededError(Exception e) {
         return ResponseEntity.badRequest().body(String.format("Maximum upload file size exceeded; ensure file size is less than %s.", maxFileSize));
+    }
+
+    @ExceptionHandler(value = {ConstraintViolationExceptionAcrossOrganisations.class})
+    public ResponseEntity entityUpsertErrorDueToConstraintViolationAcrossOrganisations(Exception e) {
+        bugsnagReporter.logAndReportToBugsnag(e);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                String.format("Entity create or update failed due to constraint violation across organisations: %s",
+                        errorBodyBuilder.getErrorMessageBody(e)));
     }
 
     @ExceptionHandler(value = {Exception.class})
