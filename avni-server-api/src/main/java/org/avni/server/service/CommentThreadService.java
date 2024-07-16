@@ -44,13 +44,13 @@ public class CommentThreadService implements ScopeAwareService<CommentThread> {
             comments.add(comment);
         });
         commentThread.setComments(comments);
-        return commentThreadRepository.save(commentThread);
+        return commentThreadRepository.saveEntity(commentThread);
     }
 
     public CommentThread resolveThread(CommentThread commentThread) {
         commentThread.setStatus(CommentThread.CommentThreadStatus.Resolved);
         commentThread.setResolvedDateTime(new DateTime());
-        return commentThreadRepository.save(commentThread);
+        return commentThreadRepository.saveEntity(commentThread);
     }
 
     @Override

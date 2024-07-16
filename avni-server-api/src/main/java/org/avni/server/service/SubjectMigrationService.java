@@ -127,7 +127,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         subjects.forEach(individual -> {
             this.markSubjectMigrationIfRequired(individual.getUuid(), null, destAddressLevel, null, individual.getObservations(), true);
             individual.setAddressLevel(destAddressLevel);
-            individualRepository.save(individual);
+            individualRepository.saveEntity(individual);
         });
     }
 }
