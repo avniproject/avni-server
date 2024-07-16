@@ -37,7 +37,7 @@ public class ChecklistService implements ScopeAwareService<Checklist> {
 
     @Transactional(Transactional.TxType.REQUIRED)
     public void saveItem(ChecklistItem checklistItem) {
-        checklistItemRepository.save(checklistItem);
+        checklistItemRepository.saveEntity(checklistItem);
     }
 
     @Override

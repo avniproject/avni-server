@@ -348,7 +348,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
         assertNoUnVoidedEncounters(individual);
         assertNoUnVoidedEnrolments(individual);
         individual.setVoided(true);
-        return individualRepository.save(individual);
+        return individualRepository.saveEntity(individual);
     }
 
     private void assertNoUnVoidedEnrolments(Individual individual) {
@@ -396,7 +396,7 @@ public class IndividualService implements ScopeAwareService<Individual> {
     @Messageable(EntityType.Subject)
     public Individual save(Individual individual) {
         individual.addConceptSyncAttributeValues(individual.getSubjectType(), individual.getObservations());
-        return individualRepository.save(individual);
+        return individualRepository.saveEntity(individual);
     }
 
     public String findPhoneNumber(long subjectId) {

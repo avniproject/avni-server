@@ -206,7 +206,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
             programEnrolment.setIndividual(individual);
             saveIdentifierAssignments(programEnrolment, request);
         }
-        programEnrolment = programEnrolmentRepository.save(programEnrolment);
+        programEnrolment = programEnrolmentRepository.saveEntity(programEnrolment);
 
         if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
             programEncounterService.saveVisitSchedules(request.getUuid(), request.getVisitSchedules(), null);
@@ -223,7 +223,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     @Messageable(EntityType.ProgramEnrolment)
     public ProgramEnrolment save(ProgramEnrolment programEnrolment) {
         this.addSyncAttributes(programEnrolment);
-        return programEnrolmentRepository.save(programEnrolment);
+        return programEnrolmentRepository.saveEntity(programEnrolment);
     }
 
     private void addSyncAttributes(ProgramEnrolment enrolment) {
@@ -250,7 +250,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         Checklist existingChecklist = checklistRepository.findByProgramEnrolmentId(programEnrolment.getId());
         if (existingChecklist != null) {
             existingChecklist.setBaseDate(checklistContract.getBaseDate());
-            return checklistRepository.save(existingChecklist);
+            return checklistRepository.saveEntity(existingChecklist);
         }
         Checklist checklist = new Checklist();
         checklist.assignUUIDIfRequired();
@@ -259,7 +259,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         checklist.setBaseDate(checklistContract.getBaseDate());
         checklist.setChecklistDetail(checklistDetail);
         checklist.setProgramEnrolment(programEnrolment);
-        Checklist savedChecklist = checklistRepository.save(checklist);
+        Checklist savedChecklist = checklistRepository.saveEntity(checklist);
         checklistContract.getItems().forEach(item -> {
             ChecklistItem checklistItem = new ChecklistItem();
             checklistItem.assignUUIDIfRequired();
@@ -267,7 +267,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
             ChecklistItemDetail checklistItemDetail = checklistItemDetailRepository.findByUuid(checklistItemDetailUUID);
             checklistItem.setChecklistItemDetail(checklistItemDetail);
             checklistItem.setChecklist(savedChecklist);
-            checklistItemRepository.save(checklistItem);
+            checklistItemRepository.saveEntity(checklistItem);
         });
         return savedChecklist;
     }
@@ -276,7 +276,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     public ProgramEnrolment voidEnrolment(ProgramEnrolment programEnrolment) {
         assertNoUnVoidedProgramEncounters(programEnrolment);
         programEnrolment.setVoided(true);
-        return programEnrolmentRepository.save(programEnrolment);
+        return programEnrolmentRepository.saveEntity(programEnrolment);
     }
 
     private void assertNoUnVoidedProgramEncounters(ProgramEnrolment programEnrolment) {

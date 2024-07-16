@@ -230,7 +230,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
         if (individual.getAddressLevel() != null) {
             programEncounter.setAddressId(individual.getAddressLevel().getId());
         }
-        programEncounter = programEncounterRepository.save(programEncounter);
+        programEncounter = programEncounterRepository.saveEntity(programEncounter);
         return programEncounter;
     }
 
