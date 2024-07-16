@@ -40,3 +40,4 @@ dev-commands.txt
 /avni-server-api/log/
 /blacklisted.json
 **/*.env
+.class
