@@ -1,0 +1,119 @@
+[ {
+  "name" : "Household",
+  "uuid" : "a2eee202-b440-4120-ada1-f3a820820f9c",
+  "active" : true,
+  "type" : "Household",
+  "allowEmptyLocation" : false,
+  "allowMiddleName" : false,
+  "lastNameOptional" : false,
+  "allowProfilePicture" : false,
+  "uniqueName" : false,
+  "shouldSyncByLocation" : true,
+  "settings" : {
+    "displayRegistrationDetails" : true,
+    "displayPlannedEncounters" : true
+  },
+  "directlyAssignable" : false,
+  "household" : true,
+  "group" : true,
+  "voided" : false
+}, {
+  "name" : "SHG member (voided~481)",
+  "uuid" : "660a0d04-53fc-4e42-bf60-7b95e2efc2e7",
+  "active" : true,
+  "type" : "Person",
+  "subjectSummaryRule" : "",
+  "allowEmptyLocation" : false,
+  "allowMiddleName" : false,
+  "lastNameOptional" : false,
+  "allowProfilePicture" : false,
+  "uniqueName" : false,
+  "shouldSyncByLocation" : true,
+  "settings" : {
+    "displayRegistrationDetails" : true,
+    "displayPlannedEncounters" : true
+  },
+  "directlyAssignable" : false,
+  "household" : false,
+  "group" : false,
+  "voided" : true
+}, {
+  "name" : "Individual",
+  "uuid" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+  "active" : true,
+  "type" : "Person",
+  "allowEmptyLocation" : false,
+  "allowMiddleName" : false,
+  "lastNameOptional" : false,
+  "allowProfilePicture" : true,
+  "uniqueName" : false,
+  "shouldSyncByLocation" : true,
+  "settings" : {
+    "displayRegistrationDetails" : true,
+    "displayPlannedEncounters" : true
+  },
+  "directlyAssignable" : false,
+  "household" : false,
+  "group" : false,
+  "voided" : false
+}, {
+  "name" : "Monthly Monitoring",
+  "uuid" : "6b4a3f82-1de6-4743-a380-0d3d1bbe7a45",
+  "active" : true,
+  "type" : "Individual",
+  "subjectSummaryRule" : "",
+  "allowEmptyLocation" : false,
+  "allowMiddleName" : false,
+  "lastNameOptional" : false,
+  "allowProfilePicture" : false,
+  "uniqueName" : false,
+  "shouldSyncByLocation" : true,
+  "settings" : {
+    "displayRegistrationDetails" : true,
+    "displayPlannedEncounters" : true
+  },
+  "directlyAssignable" : false,
+  "household" : false,
+  "group" : false,
+  "voided" : false
+}, {
+  "name" : "Phulwari",
+  "uuid" : "771bba5d-e4ad-4dbd-afb4-37fb36edc220",
+  "active" : true,
+  "type" : "Group",
+  "subjectSummaryRule" : "",
+  "allowEmptyLocation" : false,
+  "allowMiddleName" : false,
+  "lastNameOptional" : false,
+  "allowProfilePicture" : false,
+  "uniqueName" : false,
+  "shouldSyncByLocation" : true,
+  "settings" : {
+    "displayRegistrationDetails" : true,
+    "displayPlannedEncounters" : true
+  },
+  "directlyAssignable" : false,
+  "household" : false,
+  "group" : true,
+  "voided" : false
+}, {
+  "name" : "SHG",
+  "uuid" : "161956c9-a26a-4b4e-9939-a096f2c84cad",
+  "active" : true,
+  "type" : "Group",
+  "subjectSummaryRule" : "",
+  "allowEmptyLocation" : false,
+  "allowMiddleName" : false,
+  "lastNameOptional" : false,
+  "allowProfilePicture" : false,
+  "uniqueName" : false,
+  "shouldSyncByLocation" : true,
+  "settings" : {
+    "displayRegistrationDetails" : true,
+    "displayPlannedEncounters" : true
+  },
+  "directlyAssignable" : false,
+  "household" : false,
+  "group" : true,
+  "voided" : false
+} ]

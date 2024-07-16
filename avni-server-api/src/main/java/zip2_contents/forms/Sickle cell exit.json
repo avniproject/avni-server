@@ -1,0 +1,62 @@
+{
+  "name" : "Sickle cell exit",
+  "uuid" : "4180507a-5f5b-4b72-a77b-6649222de06f",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "6094e4d9-7474-480f-a164-7bfd2302dae9",
+    "name" : "Exit",
+    "displayOrder" : 1.0,
+    "display" : "Exit",
+    "formElements" : [ {
+      "name" : "Reason for exit",
+      "uuid" : "e3587a99-77bf-4035-baf7-4459b4e58623",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for exit",
+        "uuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Shifted to other geographical area",
+          "uuid" : "0c46f359-eb0f-4a5e-8fe7-f86bd706d1d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Completion",
+          "uuid" : "bafe149e-dbf8-4c80-8c13-fc5b1274f0ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({programEnrolment});\n  console.log(\"entered _______>\");\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment}).when.ageInYears.greaterThanOrEqualTo(18).and.when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"c125eec0-2bc4-4add-b1d0-7531e5ffa9c8\").matches();\n  \n  if(condition11 ){\n    const earliestDate = moment(programEnrolment.programExitDateTime).add(0, 'days').toDate();\n    const maxDate = moment(programEnrolment.programExitDateTime).add(3, 'days').toDate();\n    scheduleBuilder.add({name: \"Verbal Autopsy Adult\", encounterType: \"Verbal Autopsy Adult\", earliestDate, maxDate});  \n}\n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

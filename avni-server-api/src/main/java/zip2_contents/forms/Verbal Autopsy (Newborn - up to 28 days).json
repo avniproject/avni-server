@@ -1,0 +1,2380 @@
+{
+  "name" : "Verbal Autopsy (Newborn - up to 28 days)",
+  "uuid" : "8e06a41d-76e4-463e-afa4-22ffb0897891",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "3dc7e6a7-955a-4bf9-b78b-c9bcf26b04fb",
+    "name" : "Details of Respondent",
+    "displayOrder" : 1.0,
+    "display" : "Details of Respondent",
+    "formElements" : [ {
+      "name" : "Name of respondent",
+      "uuid" : "49c0979c-014d-4df6-8586-b197a600cd79",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of respondent",
+        "uuid" : "e99f2b93-0df4-4824-b310-f549dd1e4f68",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Relationship of respondent with deceased",
+      "uuid" : "214538a5-6672-48c6-a400-d1c024fbfb8f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Relationship of respondent with deceased",
+        "uuid" : "06552e28-99cc-48f8-95ec-912932f8365b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sister",
+          "uuid" : "8e131779-ed2b-4db9-a217-529aef1c1562",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Dont know",
+          "uuid" : "6945f300-7cbc-4256-9ff1-b9405c6f011a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Father",
+          "uuid" : "15e207ee-44f9-4fad-8076-0c6e6d4fc67f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Grandmother",
+          "uuid" : "a03e8eab-7173-4876-86e6-22be1e261f86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Grandfather",
+          "uuid" : "9840eeaf-befa-48cf-8c4e-441bdb982e02",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Brother",
+          "uuid" : "53df677a-7d97-48d7-a644-38e4132c7076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Neighbor/No relative",
+          "uuid" : "7c7a1197-ef8e-4252-ae37-4eccafcc5714",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Mother",
+          "uuid" : "da30ce4e-8b49-40fb-af94-0b4f705b47ca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other relative",
+          "uuid" : "4eb188e7-841e-4041-af80-dd54950b72e1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did the respondent live with the deceased during the events that led to death?",
+      "uuid" : "80764f50-9f42-4c09-91a6-469a00647e97",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did the respondent live with the deceased during the events that led to death?",
+        "uuid" : "e77ed295-dd96-4489-ae38-d14bbd6c566d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Age of respondent",
+      "uuid" : "e7ff6459-3b4a-4b0d-9f34-b6eda57efe9a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Age of respondent",
+        "uuid" : "c514122a-dbbc-452e-9616-860355312864",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 4.0,
+        "highAbsolute" : 110.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Sex of respondent",
+      "uuid" : "ef349fb7-2760-470f-9b7a-e41f52daddd2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sex of respondent",
+        "uuid" : "3b5588c8-b143-4544-8340-07e29b3dad43",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Female",
+          "uuid" : "7030fea5-05e1-4abb-982a-7ceb2712adf4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Male",
+          "uuid" : "9be76824-e7c8-4145-b6c1-7f0b006f1b3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Education",
+      "uuid" : "8fed0ab7-e407-480b-8b53-7fc4cfa0c8de",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Education",
+        "uuid" : "673d65bd-6dc4-4aac-8e1e-1ee355ac081b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Post Graduation and above",
+          "uuid" : "4c9f0571-a3ce-4026-854e-a28b388b0c0f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Literate without schooling",
+          "uuid" : "9fa90cc8-0dc0-43ee-820f-39f8fe3ca1ec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "11-12",
+          "uuid" : "d3ff5645-4c84-47f4-9f35-6d0242cd727c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "1-5",
+          "uuid" : "9ac76826-0daa-4b90-9a9c-e269ac168005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Illiterate",
+          "uuid" : "45b68efb-635d-48ae-9fdf-64f0ea3f46db",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Graduation",
+          "uuid" : "ff7c5cd7-fe19-4a64-b8cb-700b4ad7a58f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "6-7",
+          "uuid" : "0b2b6bb5-7eb8-4b14-bc68-662fade3aca4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "8-10",
+          "uuid" : "6b941c49-349f-40f6-a4ae-bdd00f45fbba",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Religion",
+      "uuid" : "291b2c2a-6f5c-4a4b-8a3b-c6edd4254b63",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Religion",
+        "uuid" : "b2c60cb8-983c-4e0e-a90d-4b21e87e10bd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Jain",
+          "uuid" : "e8bb7929-2357-49ff-8c98-28b338f2c6d8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Hindu",
+          "uuid" : "6dbd4a89-d040-4ed3-bf1d-23bafdb1553e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Sikh",
+          "uuid" : "2f6e7ba7-15dc-4af3-b4d7-e971e6733525",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Muslim",
+          "uuid" : "fd46c9f7-783a-4cc0-b6b3-489aeb28f26c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Christian",
+          "uuid" : "a1a0ecc3-2a85-43c4-b75a-3544a1ada0bf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "acb4a1f2-edf7-4c74-9dd7-78596ea568ca",
+    "name" : "Details of deceased",
+    "displayOrder" : 2.0,
+    "display" : "Details of deceased",
+    "formElements" : [ {
+      "name" : "Gender",
+      "uuid" : "15cd84b9-4644-434b-990e-1faaaba5ba8e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gender",
+        "uuid" : "4427af7e-6a76-4980-a038-ae4a3ec0d7aa",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other Gender",
+          "uuid" : "92086909-2ba1-4905-b863-417785053d92",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Female",
+          "uuid" : "7030fea5-05e1-4abb-982a-7ceb2712adf4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Male",
+          "uuid" : "9be76824-e7c8-4145-b6c1-7f0b006f1b3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Age of neonate",
+      "uuid" : "b6c8b67c-2363-40b2-8601-9e007f551b03",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Age of neonate",
+        "uuid" : "2ccee42b-1da8-472a-9d27-1af7a8e1311a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Relation to head of the household",
+      "uuid" : "b067c9b0-3503-459c-aee1-da82f7b27dee",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Relation to head of the family",
+        "uuid" : "09fde7a9-0497-4e49-b1cc-52f8e5f2d333",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Grandfather",
+          "uuid" : "9840eeaf-befa-48cf-8c4e-441bdb982e02",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Self",
+          "uuid" : "03c3c21c-6e8c-4210-a15e-fbb181c266b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Daughter",
+          "uuid" : "0f8b507f-709f-44af-855b-67b2f8b8a800",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Grandmother",
+          "uuid" : "a03e8eab-7173-4876-86e6-22be1e261f86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Daughter-in-law",
+          "uuid" : "1ed49a1e-0568-414b-a48c-b4967bf53dc0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Wife",
+          "uuid" : "dd3958f6-376a-447a-90cd-95ed2c8cdf18",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Brother",
+          "uuid" : "53df677a-7d97-48d7-a644-38e4132c7076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 14.0,
+          "active" : true
+        }, {
+          "name" : "Son",
+          "uuid" : "cb3de879-6c0a-497b-81ad-d825a5740daa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Sister",
+          "uuid" : "8e131779-ed2b-4db9-a217-529aef1c1562",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Brother in law",
+          "uuid" : "96163c7e-00a7-4b7c-bc65-a6880115bded",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Husband",
+          "uuid" : "df321e20-e432-40c9-bdf1-a874efe0a7d6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Sister in law",
+          "uuid" : "9bc82780-fa25-4350-8288-86c4be3b0ebf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Grandson",
+          "uuid" : "24ab6af6-5000-4a86-95ba-0668c118f92c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "active" : true
+        }, {
+          "name" : "Granddaughter",
+          "uuid" : "37492e0b-34f3-4a7f-ade1-9a95546ed884",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Date of birth",
+      "uuid" : "3f29bbed-af45-45be-92c4-ce04e7cea777",
+      "keyValues" : [ {
+        "key" : "datePickerMode",
+        "value" : "Calendar"
+      } ],
+      "concept" : {
+        "name" : "Date of birth",
+        "uuid" : "3dabac85-13a8-41b7-87f4-d52a3bdf4a24",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Date of Death",
+      "uuid" : "54f99b48-d2d1-4df3-95b0-ec63a9525468",
+      "keyValues" : [ {
+        "key" : "datePickerMode",
+        "value" : "Calendar"
+      } ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Place of death",
+      "uuid" : "199c2484-8a94-4ace-b134-8b6e875ba061",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of death",
+        "uuid" : "93c4be55-8953-4cf0-bf35-182042a3bccb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "On the way to health facility",
+          "uuid" : "c4286b04-2545-4e27-bceb-2c647b390d22",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Pvt. Hospital",
+          "uuid" : "a251776a-2d2a-4bc6-9578-74481c4a9727",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "JSS Ganiyari hospital/subcenter",
+          "uuid" : "1e1c6598-7542-41ee-8c45-71646ee02499",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Hospital",
+          "uuid" : "e763cad4-722a-4c37-b5a0-5c17428f1089",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Outside home (non work place)",
+          "uuid" : "2f2dec98-7266-4329-bd41-12e108b8a0f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Govt. Hospital",
+          "uuid" : "5402f256-869f-4999-83c1-35e00eeb9453",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Workplace",
+          "uuid" : "dbd55a29-8666-4891-88f5-59dc013d2b9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "On the way to Health Facility",
+          "uuid" : "95bf036d-7edc-4ca6-8ba3-16cc098cc357",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "SC/PHC/CHC/Rural hospital",
+          "uuid" : "4a29543e-9c71-4821-bb90-9a377367c44e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Ambulance",
+          "uuid" : "6948293d-8f64-4958-b022-b69af64cdcde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Other place",
+          "uuid" : "781c225d-7f2c-49a9-b600-a95cd36d60c5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Cause of death of newborn according to respondent",
+      "uuid" : "7dae9357-3b31-4429-b347-d28d43055cf9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cause of death of newborn according to respondent",
+        "uuid" : "5f50ef67-da45-4c99-924c-a09dcd0844b3",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "70b7412a-6d21-4e84-9ef5-0d61662658a3",
+    "name" : "Details of neonatal death",
+    "displayOrder" : 3.0,
+    "display" : "Details of neonatal death",
+    "formElements" : [ {
+      "name" : "Did s/he die from an injury or accident?",
+      "uuid" : "fd57a457-8b09-49ff-b44c-dd2558a6dfca",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he die from an injury or accident?",
+        "uuid" : "6d47f21f-9ac7-495f-a224-e4a8455472e4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "What kind of injury/accident",
+      "uuid" : "dda65e61-890f-447b-99f0-37be0d3b0183",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What kind of injury/accident",
+        "uuid" : "e004d628-2a86-4411-af11-efaa0a88f2fa",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Drowning",
+          "uuid" : "a0d4b271-200a-43ce-8442-0eb59ba49c7c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Bites/Stings",
+          "uuid" : "f59a35b8-7f14-4fb9-be72-eef20344879b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Road traffic accident",
+          "uuid" : "79cbb748-6f12-4077-8f1e-0dca4a047fd0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Homicide/Assault",
+          "uuid" : "f529bad1-b67c-41d8-86ae-fb003aad06e2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Natural disaster",
+          "uuid" : "c14c0288-1596-4bbd-8964-41b90e91a4d0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Poisoning",
+          "uuid" : "3c6f7d45-1775-4dc3-b838-f4557ce57718",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Falls",
+          "uuid" : "1228e513-3f53-4c7e-be94-b9a6f625db49",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Burns",
+          "uuid" : "cbabc65c-5b90-4cde-b3d2-3498c06b3048",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Fall of objects",
+          "uuid" : "5bdaaf49-880a-4153-91ba-6758f7a1be88",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n \n statusBuilder.show().when.valueInEncounter('Did s/he die from an injury or accident?').containsAnswerConceptName('Yes');\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "da5ae46d-7ddb-42f7-b131-658c5807ac9d",
+    "name" : "Details of pregnancy and delivery",
+    "displayOrder" : 4.0,
+    "display" : "Details of pregnancy and delivery",
+    "formElements" : [ {
+      "name" : "How many month long was the pregnancy?",
+      "uuid" : "fd9572da-89d3-43fc-9005-d8eadbf04ba9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many month long was the pregnancy?",
+        "uuid" : "07743948-20aa-4a07-9ff4-ac796c16b52f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 5.0,
+        "highAbsolute" : 10.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did the mother receive 2 doses of TT during pregnancy?",
+      "uuid" : "f581c5b2-17ce-4fbe-b9e1-049da9cc2699",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did the mother receive 2 doses of TT during pregnancy?",
+        "uuid" : "62df42e3-3616-4ebe-8cf3-3dc8e31405cb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Were there any complication during the pregnancy, or during labour?",
+      "uuid" : "83d25573-779e-49ad-9d02-d770c242c5a4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there any complication during the pregnancy, or during labour?",
+        "uuid" : "84bef21a-41ff-45b3-91db-0a65c356c66f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "What pregnancy/labour complication?",
+      "uuid" : "9b622838-766f-4b37-9174-3b51b08e0528",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What pregnancy/labour complication?",
+        "uuid" : "e6a6b64e-527d-4237-b0b4-4dd2b9a8bcc7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Prolonged/difficult labour (>12 hrs)",
+          "uuid" : "d00a85ba-add0-4592-9c13-8f36a5f09ef4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Mother had fever",
+          "uuid" : "deb3a838-1067-420c-8509-8d237640fdc1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Mother had fits",
+          "uuid" : "fc3c2def-7800-4991-8b90-235097e24c46",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Operative delivery",
+          "uuid" : "a984b395-051e-4516-9266-0b52a9d4437a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Excessive bleeding before/during delivery",
+          "uuid" : "8839ee61-6552-4915-b2d7-7e6d7ade75c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Baby had cord around neck",
+          "uuid" : "4f18454a-781c-4f7d-827b-fc4aa8dca47d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Water broke one or more days before contractions started",
+          "uuid" : "abc445aa-e4a8-4b1f-9095-594bb870e936",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  \n  statusBuilder.show().when.valueInEncounter('Were there any complication during the pregnancy, or during labour?').containsAnswerConceptName('Yes');\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Was the child a single or multiple birth?",
+      "uuid" : "8384d981-b6ea-4255-8a14-2846467de62e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was the child a single or multiple birth?",
+        "uuid" : "f70184d7-2d13-436d-a0c1-85af02eb841b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Single",
+          "uuid" : "17f3a1d5-2b37-4fb7-9fee-d8ad18ccb7f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Multiple",
+          "uuid" : "cc7d9462-ae06-43c7-b1b6-b30f5fb3a643",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Where was he/she born",
+      "uuid" : "e0d42e21-2880-4dca-a883-5bba660ef817",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Where was he/she born",
+        "uuid" : "53a131cd-0b52-429a-b21e-15a6f2f0bd6a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Subcenter",
+          "uuid" : "9543f299-93fb-41ec-9c2b-2f5a75f3e9ca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "NGO hospital",
+          "uuid" : "8f60df3d-947c-4ccd-af4b-1fc572f5d3c0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "PHC",
+          "uuid" : "43449534-1e2b-45de-8a5d-d99d13f3321f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "CHC",
+          "uuid" : "8d91333e-0942-44bf-904b-6cdd30d54817",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "On the way to health facility",
+          "uuid" : "c4286b04-2545-4e27-bceb-2c647b390d22",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Delivery conducted by",
+      "uuid" : "c9541649-2d3b-4328-b70c-09c5898f90bb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Delivery conducted by",
+        "uuid" : "11bfa900-973e-49ff-bc2b-cab409d6e938",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Nurse (ANM/GNM)",
+          "uuid" : "3627adf0-c083-4af2-a0a2-c5007540a19b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Any member of house/village",
+          "uuid" : "af225e01-3cfb-41be-8335-2eb773c4da61",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Mitanin",
+          "uuid" : "6b8c76ee-a089-4154-8579-d16677e3fd29",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "SHW",
+          "uuid" : "7ac0d9a2-ff82-41e6-9f38-134904d476f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Untrained TBA",
+          "uuid" : "e7087fb1-9a18-4518-a3b4-58b2e1258c1f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Trained TBA",
+          "uuid" : "acbb5c72-be42-4ed9-b169-949262319d10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Self",
+          "uuid" : "03c3c21c-6e8c-4210-a15e-fbb181c266b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Doctor",
+          "uuid" : "d7265308-9843-4d5f-859f-1585c119c8cb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Was a clean blade (disinfected or new) used to cut the umbilical cord?",
+      "uuid" : "3a3f2dfe-e64d-412b-a14a-be37cb5bd98a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was a clean blade (disinfected or new) used to cut the umbilical cord?",
+        "uuid" : "e5dfa65f-beb6-464f-a002-d737d48ab3aa",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "d3de7475-19fb-483c-9273-7ac6fe153e8a",
+    "name" : "Details of baby after birth",
+    "displayOrder" : 5.0,
+    "display" : "Details of baby after birth",
+    "formElements" : [ {
+      "name" : "Did the baby ever cry, move or breath?",
+      "uuid" : "5887a939-d101-4571-bd23-77638fcd1d9f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did the baby ever cry, move or breath?",
+        "uuid" : "724592d8-caf3-4ff8-8390-ba31c8a5e01f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Were there any bruises or signs of injury on child's body after the birth?",
+      "uuid" : "6256acb6-f0b4-4c12-ad23-4b148cf3ef91",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there any bruises or signs of injury on child's body after the birth?",
+        "uuid" : "958e7676-46cd-4b2a-9a2f-eb0a6e7629cb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have any visible malformations at birth?",
+      "uuid" : "856d36fd-b9c8-400b-a058-d6abc1eddcf2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have any visible malformations at birth?",
+        "uuid" : "1cfe3f91-c6ac-43ba-afb9-b3066b6faaf7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "What was the child's size at birth?",
+      "uuid" : "f9d03046-534f-49dc-9925-0cd623c1ae3e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "what was the child's size at birth?",
+        "uuid" : "f05fb6e3-69fb-4642-9d00-8e10ee19091f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Very small",
+          "uuid" : "9165e627-d1fe-4b58-a163-b7794a6288e8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Smaller than average",
+          "uuid" : "9d298f8f-018e-4a1a-ad11-d8c1f65733b7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Average",
+          "uuid" : "df2e4901-af8f-4300-8f71-97b5f0508606",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Larger than average",
+          "uuid" : "5e2dbea9-3326-4ef7-aaa8-0783852e8a54",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Birth Weight",
+      "uuid" : "4e84ae9d-65cd-41ce-ae30-8ea7b15f84c3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Birth Weight",
+        "uuid" : "24a9549b-05fc-4899-b861-b5c0e54b7340",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 2.5,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did s/he stop being able to suck  in a normal way?",
+      "uuid" : "6fcfc99a-6ab4-4089-becc-a45536b59d62",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he stop being able to suck  in a normal way?",
+        "uuid" : "0956ffe2-efe9-4d07-9c60-04c5967b0862",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Did s/he stop being able to cry?",
+      "uuid" : "ce314424-4cb3-44ba-8249-761e4e86abec",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he stop being able to cry?",
+        "uuid" : "8f2c0afc-d60d-424a-8d33-80e8b1fd8325",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How many completed days after birth did s/he stop crying?",
+      "uuid" : "00573e12-9d95-445f-ac7a-84c9561598e8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many completed days after birth did s/he stop crying?",
+        "uuid" : "34aee20d-ed52-49a1-a78c-4044f7ab01c1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n\nstatusBuilder.show().when.valueInEncounter('Did s/he stop being able to cry?').containsAnswerConceptName('Yes');\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "When was s/he first breastfed?",
+      "uuid" : "67ba641d-e2a6-4d45-abc2-801de7558716",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When was s/he first breastfed?",
+        "uuid" : "8b7ce4d7-367f-4a32-8d70-6a76adab5fb8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Second day or later",
+          "uuid" : "78d7a97c-c519-4d05-9ec4-2e0d6c43e6b3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Immediately/within 1 hour of birth",
+          "uuid" : "f1d41d13-1bf7-4514-8207-9d925cc7716d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Same day child was born",
+          "uuid" : "b9cb3c6f-4c3a-4525-8677-bb121cac8294",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Was the baby ever given anything to drink other than breast milk?",
+      "uuid" : "e0e2cdfd-1065-4127-b57d-ef3e7ef0d4f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was the baby ever given anything to drink other than breast milk?",
+        "uuid" : "487ff64f-6248-4469-85f9-4bd5efbc2aca",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknwon",
+          "uuid" : "eb913124-8a30-42cd-93b0-a17ef887e1a0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Was s/he able to suckle normally during the first day of life?",
+      "uuid" : "bdc82994-bf9f-4398-bd6d-35246e5ff180",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was s/he able to suckle normally during the first day of life?",
+        "uuid" : "8451d1dc-f56c-4a4f-a92b-f9a15b34b298",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he stop being able to suck  in a normal way?",
+      "uuid" : "4c4df631-7929-486e-aa16-1acef8234c8e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he stop being able to suck  in a normal way?",
+        "uuid" : "0956ffe2-efe9-4d07-9c60-04c5967b0862",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "How many completed days after birth did s/he stop sucking?",
+      "uuid" : "f65375d0-bfaf-4425-82e4-752161c2a5cc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many completed days after birth did s/he stop sucking?",
+        "uuid" : "536b5ee9-9b75-45a6-a100-93377b16a5d4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n \n statusBuilder.show().when.valueInEncounter('Did s/he stop being able to suck  in a normal way?').containsAnswerConceptName('Yes');\n\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "3c802b1c-22cb-4d15-9abd-3a3422e4a948",
+    "name" : "Details of sickness at the time of death",
+    "displayOrder" : 6.0,
+    "display" : "Details of sickness at the time of death",
+    "formElements" : [ {
+      "name" : "Did s/he have fever?",
+      "uuid" : "06e7d599-a0ff-4654-bb1f-2d997d92ea7b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have fever?",
+        "uuid" : "16f7822f-2243-4b49-bf37-63916be33d20",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "How many completed days did the fever last?",
+      "uuid" : "9e405d79-ba0b-41df-9469-941a06a30430",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many completed days did the fever last?",
+        "uuid" : "3b57ec5f-95bc-4d5f-aa71-e4c844d21470",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n \n statusBuilder.show().when.valueInEncounter('Did s/he have fever?').containsAnswerConceptName('Yes');\n\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have any difficulty with breathing?",
+      "uuid" : "197c75b7-e553-4775-ba30-ee6ad3d6ef0c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have any difficulty with breathing?",
+        "uuid" : "a0e7790d-31d8-4801-9ad5-9b38ff398e65",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "For how many completed days did the difficulty with breathing last?",
+      "uuid" : "dbeb03cb-f98a-459c-9196-fe8b421364eb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "For how many completed days did the difficulty with breathing last?",
+        "uuid" : "111cad4b-e337-4da3-bbaf-94b025c3e507",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  \n  statusBuilder.show().when.valueInEncounter('Did s/he have any difficulty with breathing?').containsAnswerConceptName('Yes');\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Did s/he have in-drawing of the chest?",
+      "uuid" : "e2a6ecbf-1bf9-4f38-b94b-79f9ad837de6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have in-drawing of the chest?",
+        "uuid" : "99602e57-ecfb-4d5d-a981-49c9e0be14c6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have a cough?",
+      "uuid" : "75e86e79-beff-4142-96f9-c7a8c842ca6f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have a cough?",
+        "uuid" : "86cb6280-b55d-47eb-ac43-40b0b85eab89",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have grunting (demonstrate)?",
+      "uuid" : "cb56fea6-bc75-4b8f-b1d3-f88337c541ad",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have grunting (demonstrate)?",
+        "uuid" : "0f218e55-c93a-4205-9da9-92acc2aa4d3f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did his/her nostrils flare with breathing?",
+      "uuid" : "2e285428-71a7-4ee5-a832-7f9652c481ab",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did his/her nostrils flare with breathing?",
+        "uuid" : "a17aec77-c480-4de7-8006-7d2341b78be0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have diarrhoea (frequent liquid stools)?",
+      "uuid" : "06933ac8-9fd8-44a6-a172-9c2afc22c9cb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have diarrhoea (frequent liquid stools)?",
+        "uuid" : "d714a126-6799-4340-ab59-9842be01a54d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "For how many completed days were the stools frequent or liquid?",
+      "uuid" : "24edce74-7701-40a9-90cc-94503ea0e350",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "For how many completed days were the stools frequent or liquid?",
+        "uuid" : "70db92d1-8e09-4545-8ce8-9023930c5e34",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n \n statusBuilder.show().when.valueInEncounter('Did s/he have diarrhoea (frequent liquid stools)?').containsAnswerConceptName('Yes');\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he vomit?",
+      "uuid" : "00dd2f71-f6fb-4d0b-9119-f85b12ceb156",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he vomit?",
+        "uuid" : "d8d03f36-2637-428d-8106-7b7ed1e0e37c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "For how many completed days did s/he vomit?",
+      "uuid" : "f7b5b891-a7c3-4092-aacd-1876847e879e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "For how many completed days did s/he vomit?",
+        "uuid" : "13514775-63fc-4dfb-95ec-f7695db32aec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 28.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  \n  statusBuilder.show().when.valueInEncounter('Did s/he vomit?').containsAnswerConceptName('Yes');\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have redness around, or discharge from, the umbilical cord stump?",
+      "uuid" : "e16a9236-5a67-4e9b-bc85-04637ad62bb3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have redness around, or discharge from, the umbilical cord stump?",
+        "uuid" : "81383a8b-9ab7-48d6-b52c-c22660043088",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have yellow eyes or skin?",
+      "uuid" : "44ca47df-8fb1-4128-b657-b918788356d7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have yellow eyes or skin?",
+        "uuid" : "124b110e-0032-4c55-9502-23df230ecd67",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have spasms or fits (convulsions)?",
+      "uuid" : "6732e4d1-1b7c-4b28-9c17-23bf3bdf56b7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have spasms or fits (convulsions)?",
+        "uuid" : "7844c5fa-2f90-4458-9bed-d51f5ac9873f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he become unresponsive or unconscious?",
+      "uuid" : "763271eb-113a-4654-a2c3-dc87f8778d27",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he become unresponsive or unconscious?",
+        "uuid" : "d41e414f-7f45-44a9-b2d7-873d7fd7623e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did s/he have a bulging fontanelle (describe)?",
+      "uuid" : "e41494fe-a3ee-46d2-985c-568f96f8d094",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did s/he have a bulging fontanelle (describe)?",
+        "uuid" : "2c45e2cf-d465-4942-9a42-1d36c898de93",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did the child's body feel cold when touched?",
+      "uuid" : "bd2c84e3-b2e4-4cd9-b52d-9ffa359bd12f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did the child's body feel cold when touched?",
+        "uuid" : "7f808795-cca3-4b88-abf6-17ffae58981e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Were the child’s hands, legs or lips discoloured (blue, other colour)?",
+      "uuid" : "54c30bd6-896d-4c24-924a-1996ed94db04",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were the child’s hands, legs or lips discoloured (blue, other colour)?",
+        "uuid" : "334867eb-2347-45ea-a6bf-7832dea79e75",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "60364b9a-3e4b-4db1-8961-c0e02f18042b",
+    "name" : "Written narrative in local language",
+    "displayOrder" : 7.0,
+    "display" : "Written narrative in local language",
+    "formElements" : [ {
+      "name" : "Have you written the narration of entire event?",
+      "uuid" : "596eb2e2-bb0a-4f5a-8afc-7010e3f63667",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Have you written the narration of entire event?",
+        "uuid" : "7c1c89e9-f8b5-477f-aa3b-707711b1549e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes but yet to sent",
+          "uuid" : "af13d15d-c816-4b23-80c7-f4dd99d9ce82",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes and sent the pic/copy of the same",
+          "uuid" : "98bfecc9-6466-4b64-88f2-626ca8426125",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Interviewer name",
+      "uuid" : "8e6b84c2-aab2-4bf3-9305-446b4fc334b3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Interviewer name",
+        "uuid" : "8214fe3b-89b8-40ef-8433-61b2a112bd48",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

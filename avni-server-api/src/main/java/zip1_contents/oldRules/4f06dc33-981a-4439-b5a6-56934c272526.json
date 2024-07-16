@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "d785f701-fbf7-4ee3-b724-09b4b9af2d37",
+    "type" : "Form"
+  },
+  "entityUUID" : "d785f701-fbf7-4ee3-b724-09b4b9af2d37",
+  "entityType" : "Form",
+  "type" : "Decision",
+  "executionOrder" : 1.0,
+  "data" : { },
+  "name" : "JSSCP AnthroDecisions",
+  "uuid" : "4f06dc33-981a-4439-b5a6-56934c272526",
+  "fnName" : "AnthroDecisions"
+}

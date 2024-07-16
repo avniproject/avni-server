@@ -1,0 +1,77 @@
+{
+  "name" : "Diabetes Exit",
+  "uuid" : "200a850e-8d50-4e02-89fd-93dbbcbf8cf2",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "823aec13-5f1c-42be-a8c8-d95bd58a3092",
+    "name" : "Exit",
+    "displayOrder" : 1.0,
+    "display" : "Exit",
+    "formElements" : [ {
+      "name" : "Reason for exit",
+      "uuid" : "4b2f70d8-82b2-4d8d-9b30-3bd92efca0b6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for exit",
+        "uuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completion",
+          "uuid" : "bafe149e-dbf8-4c80-8c13-fc5b1274f0ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Shifted to other geographical area",
+          "uuid" : "0c46f359-eb0f-4a5e-8fe7-f86bd706d1d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason for Program exit",
+      "uuid" : "bdd6b8d3-939b-4913-b987-22793f9ba819",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for Program exit",
+        "uuid" : "63390533-9229-4e7d-816d-d07c23fba826",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Other', null);;\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

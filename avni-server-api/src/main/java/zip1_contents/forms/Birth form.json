@@ -1,0 +1,555 @@
+{
+  "name" : "Birth form",
+  "uuid" : "68ae820c-0141-475f-89ee-a023849e76bb",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "d8465f9a-7002-45b1-b60e-9328adbcbd15",
+    "name" : "General",
+    "displayOrder" : 1.0,
+    "display" : "General",
+    "formElements" : [ {
+      "name" : "Place of birth",
+      "uuid" : "a47ba481-d51d-45a7-a470-d8cbf3f3670b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of birth",
+        "uuid" : "f30df7d4-2748-4053-81ae-80a6431e1435",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "During Transportation like in Ambulance etc",
+          "uuid" : "067904d0-dd82-40b9-a3cb-c301d0ac3819",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "NGO Hospital",
+          "uuid" : "375d6307-1d19-416d-9ec1-a40071806a85",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Regional Hospital",
+          "uuid" : "29d4721e-5db8-4e58-83e8-7741af970c15",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Primary Health Center",
+          "uuid" : "a9b35608-e850-4414-b3e9-c3f9b306c17e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Birth weight",
+      "uuid" : "8f636522-6b2d-47c3-9f24-fa240f45a7e0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Birth Weight",
+        "uuid" : "24a9549b-05fc-4899-b861-b5c0e54b7340",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 2.5,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Gestational age category at birth",
+      "uuid" : "c1e8a347-059c-46cd-a27b-336d5bfbc42a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gestational age category at birth",
+        "uuid" : "022dce71-0209-44a3-b0eb-70bd15ff96d7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Preterm (<28 weeks)",
+          "uuid" : "8d28c84a-e420-4f18-9111-07a68f09bfb2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Very preterm",
+          "uuid" : "67859756-c327-4511-a45b-e3e9e56808d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Term (37 -38 weeks)",
+          "uuid" : "dcd071c8-c0ff-4641-8b37-74b3c720e85c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did the baby cry soon after birth?",
+      "uuid" : "cc6f6e4a-e32d-49a2-8cb5-3d5dcab23f65",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cried soon after birth",
+        "uuid" : "9caf6e62-8f34-4f0d-85ed-9c03d4b7651e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did breast feeding start within 1 hour of birth?",
+      "uuid" : "8cad7834-e6b8-43b0-a31d-be097376e6fe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Breast feeding within 1 hour of birth",
+        "uuid" : "08dea399-8aa5-4f0c-b76c-1f6215ffe14c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "When did breast feeding start?",
+      "uuid" : "6ebce4dd-9e32-494a-aa50-b19c0b988778",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Breast feeding started",
+        "uuid" : "28c46d92-6772-429c-961d-3dd09ee70f0e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "b9c2a565-eb29-44e6-98f3-5f8ca36cce25",
+    "name" : "Physical Examination",
+    "displayOrder" : 2.0,
+    "display" : "Physical Examination",
+    "formElements" : [ {
+      "name" : "Birth defects",
+      "uuid" : "ba9b43ec-2b6b-4e7c-9cd5-db684bc11098",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Birth Defects",
+        "uuid" : "c8bc3f3c-4336-411b-b561-28b00c51e67b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 14.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Cleft Lip",
+          "uuid" : "c49cc380-5cd4-4508-a17b-4e072155b09b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Down's syndrome",
+          "uuid" : "ced6c09c-5f8b-4078-a21a-c9d86a3cce03",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Congenital deafness",
+          "uuid" : "2d35f519-6c6b-46ae-8f91-9ad1dc6008be",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Cleft Palate",
+          "uuid" : "4cf558a4-034b-47dc-9fd7-819f8ce4dc82",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Inguinal Hernia",
+          "uuid" : "92d9e5da-157f-4e98-aeb0-0a88e4506d9c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Club foot",
+          "uuid" : "aa041239-1d97-491d-8eb4-eee9f09047a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "neural tube defects",
+          "uuid" : "b2f3638e-6896-45c7-a79f-45e90cf61979",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Congenital Cataract",
+          "uuid" : "6134eca9-c774-4e49-8ed3-b186a17b617e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Congenital Heart disease (Patent Dutus arteriosus or Coarctation(narrowing) of aorta)",
+          "uuid" : "e289182d-32c1-4d8e-9c68-6223ac48caf1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Undescended Testicle",
+          "uuid" : "03e7502a-0e41-4ad4-8dff-c9f9133071a5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Hypospadias",
+          "uuid" : "03ad8811-e4c9-4d74-965d-3586ebfc2b76",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Umbilical Hernia",
+          "uuid" : "ebfc9117-bc58-4602-a5d5-0a9580ab382f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Hydrocele",
+          "uuid" : "ab11793b-931c-4850-9c83-20f4440f1e84",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other birth defects",
+      "uuid" : "1250fdb0-714f-4453-91ae-b34cb34f6e15",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other Birth Defects",
+        "uuid" : "bc265380-55bd-4309-997e-06c3a3ecf679",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Colour of child",
+      "uuid" : "dac82947-23c2-4c4b-8529-4f6d46fd35da",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Colour of child",
+        "uuid" : "8d145f65-e269-467c-af05-548ff5595452",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Body pink but hands and feet blue/pale",
+          "uuid" : "2b87253c-d609-49b2-8342-69326c6d777a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Blue/pale",
+          "uuid" : "31d85214-569a-41b1-9ffe-a4be09086678",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Completely pink",
+          "uuid" : "858ef088-1d46-454a-a9e1-84f832947e4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Reflex",
+      "uuid" : "18035f2a-cfc4-4faf-a164-a6fd4f0345a8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reflex",
+        "uuid" : "475f39c6-9551-4611-abef-0f2d80784bc0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Grimace/painful expression and Cough or sneeze",
+          "uuid" : "c2e180af-5b3d-44ab-b97e-56a982ad9e59",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Absent",
+          "uuid" : "4d6cf097-ea82-4b4d-ba8f-2bd51132f04d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Grimace/painful expression",
+          "uuid" : "b20e4778-d36b-42a7-99b9-2af17f85a3d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Muscle Tone",
+      "uuid" : "59d210ed-1e76-468e-b71f-5d8635db4ea0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Muscle tone",
+        "uuid" : "f363fcc6-988f-4115-97a4-cfaf30993801",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Absent",
+          "uuid" : "4d6cf097-ea82-4b4d-ba8f-2bd51132f04d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Flexed arms and legs",
+          "uuid" : "facd78f8-56ab-4f75-adcc-38464126564c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Active movements",
+          "uuid" : "6f628793-7064-48cc-a42d-1103454b4ee5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Icterus present within 24 hrs of birth?",
+      "uuid" : "a442ee26-a23b-40a3-b213-1d9eb259ff73",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Jaundice (Icterus)",
+        "uuid" : "828da3c7-8564-4cc0-a1c4-76ed6ad9e333",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Absent",
+          "uuid" : "4d6cf097-ea82-4b4d-ba8f-2bd51132f04d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Present",
+          "uuid" : "078f19fa-f7b8-4355-b387-ebc0746a9c1a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "302f5849-d3f5-4879-8a1d-94f16a4ff82b",
+    "name" : "Vitals",
+    "displayOrder" : 3.0,
+    "display" : "Vitals",
+    "formElements" : [ {
+      "name" : "Pulse",
+      "uuid" : "59aedd24-47b7-4711-b2bb-c36ff30fa9aa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Child Pulse",
+        "uuid" : "ba3dd12d-967b-416a-b8e8-4aa3e8fb000b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Temperature",
+      "uuid" : "26915e89-6339-4aa5-93d3-f7d9bb22aa70",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Child Temperature",
+        "uuid" : "fc367cf1-69e0-43d9-82d8-0ace18ba4b3c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 97.5,
+        "highNormal" : 99.5,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Respiratory Rate",
+      "uuid" : "ee2265fb-de85-4628-915a-47ef6a5d324b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Child Respiratory Rate",
+        "uuid" : "38204cd7-2d30-41cf-9c67-b3f13ac5c98c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 30.0,
+        "highNormal" : 60.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "39014bcd-2308-47aa-9297-01eaba882331",
+    "name" : "Physical Examination",
+    "displayOrder" : 4.0,
+    "display" : "Physical Examination",
+    "formElements" : [ ],
+    "voided" : true,
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

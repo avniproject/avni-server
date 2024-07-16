@@ -1,0 +1,801 @@
+{
+  "name" : "Verbal Autopsy form - Maternal death",
+  "uuid" : "8783ec67-5221-4e5c-9c5a-28bbe901733e",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "b4759380-ea84-465f-b8ad-cacb7996c772",
+    "name" : "Section 1: Details of pregnancy and delivery",
+    "displayOrder" : 1.0,
+    "display" : "Section 1: Details of pregnancy and delivery",
+    "formElements" : [ {
+      "name" : "How many month long was the pregnancy?",
+      "uuid" : "de7360f4-2ad4-4608-8ca9-9608bc81566e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many month long was the pregnancy?",
+        "uuid" : "07743948-20aa-4a07-9ff4-ac796c16b52f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 5.0,
+        "highAbsolute" : 10.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Gravida",
+      "uuid" : "f603cec3-6bce-433f-b4ec-724c04a481be",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gravida",
+        "uuid" : "838cdad2-e661-4517-88ca-5b9e8e6c676e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 1.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 5.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Live birth",
+      "uuid" : "a431038b-9a2b-427b-93d8-f50a860e07c0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Live birth",
+        "uuid" : "47bb4fbd-729b-48db-995c-4464e26dd3f3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 5.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did she receive antenatal care during this pregnancy?",
+      "uuid" : "0e00150a-f2d2-4ba0-88e2-8934c332469b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she receive antenatal care during this pregnancy?",
+        "uuid" : "1f138998-3a6a-4c10-8b18-14a0d7421de4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "How many times did she receive antenatal care during this pregnancy?",
+      "uuid" : "1fada074-8ed2-4923-924c-b0dc1c3a3dde",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many times did she receive antenatal care during this pregnancy?",
+        "uuid" : "ac7f8f26-2a42-4d6b-bbec-fad90a96be67",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 15.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  \n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  \n  statusBuilder.show().when.valueInEncounter('Did she receive antenatal care during this pregnancy?').containsAnswerConceptName('Yes');\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "How many days after delivery/abortion did she die?",
+      "uuid" : "1c64713c-6995-45ab-9d81-28ede4e36b59",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many days after delivery/abortion did she die?",
+        "uuid" : "f00f3f9c-78ef-4c73-9def-ee1faa51c2e3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 42.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of delivery",
+      "uuid" : "98aa0eaf-05dc-4329-ae2e-f61043d82aee",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of delivery",
+        "uuid" : "dea1a2d3-2583-4a77-8723-e64d9e10079e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS subcenter",
+          "uuid" : "b704eaf7-3cfb-4016-a884-456e1f0b7e62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "At mother's place",
+          "uuid" : "8a6fb293-0da1-4103-a7e9-99c986281e40",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "At In law's place",
+          "uuid" : "50e4f70d-634d-487f-9cf4-2e965cc83165",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "JSS Ganiyari hospital",
+          "uuid" : "b03ca67b-390c-4223-9084-577ac737100a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center- Govt",
+          "uuid" : "92ef8513-ef65-49c0-9bd2-a284f7656b52",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Primary Health Center",
+          "uuid" : "a9b35608-e850-4414-b3e9-c3f9b306c17e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other place of delivery",
+      "uuid" : "f5681c58-6735-4096-b255-07bb419f2de6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of delivery",
+        "uuid" : "ebdc6d6b-4510-4659-b595-a090186d1832",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  \nstatusBuilder.show().when.valueInEncounter('Place of delivery').containsAnswerConceptName('Other');\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "If the delivery was NOT at home - were other women delivering babies at the facility at the same time the woman delivered?",
+      "uuid" : "b9bf31f8-7de8-41ab-9284-d9697bd26044",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If the delivery was NOT at home - were other women delivering babies at the facility at the same time the woman delivered?",
+        "uuid" : "d1cf6324-d1f6-4c59-ac1a-d91fb94e30bd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes - 5 or less other women",
+          "uuid" : "60f48078-620f-4ee0-ad11-c39244ae9d4b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No - mother was only delivery",
+          "uuid" : "b6656363-889b-4dce-8077-aec4cb22d219",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Yes - more than 5 other women",
+          "uuid" : "da532ef4-e0cd-4957-8758-6054bc94d48b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n \n statusBuilder.show().when.valueInEncounter('Place of delivery').containsAnswerConceptName('JSS subcenter','Sub Center-Govt','Primary Health Center','Community Health Center','District Hospital','Medical College','Private Hospital','JSS Ganiyari Hospital','Other');\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Who conducted delivery?",
+      "uuid" : "fc42a808-4d1e-4633-9dfd-e75df17717a6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Delivery conducted by",
+        "uuid" : "11bfa900-973e-49ff-bc2b-cab409d6e938",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Any member of house/village",
+          "uuid" : "af225e01-3cfb-41be-8335-2eb773c4da61",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Trained TBA",
+          "uuid" : "acbb5c72-be42-4ed9-b169-949262319d10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Untrained TBA",
+          "uuid" : "e7087fb1-9a18-4518-a3b4-58b2e1258c1f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "SHW",
+          "uuid" : "7ac0d9a2-ff82-41e6-9f38-134904d476f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mitanin",
+          "uuid" : "6b8c76ee-a089-4154-8579-d16677e3fd29",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Nurse (ANM/GNM)",
+          "uuid" : "3627adf0-c083-4af2-a0a2-c5007540a19b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Doctor",
+          "uuid" : "d7265308-9843-4d5f-859f-1585c119c8cb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Self",
+          "uuid" : "03c3c21c-6e8c-4210-a15e-fbb181c266b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other who conducted delivery",
+      "uuid" : "80a902f6-4da8-4c0e-80ea-3a28a2824817",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other who conducted delivery",
+        "uuid" : "03ae48d3-6d4e-4e39-8194-cb2653c0eaf7",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Type of delivery",
+      "uuid" : "e7f41e4f-0f4d-45b6-9b46-53d200c3a9e7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of delivery",
+        "uuid" : "c48b5ece-3daf-4f19-9754-11bd898020fc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Normal with episiotomy",
+          "uuid" : "cf845903-bae0-4157-bfef-2e31d012834c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Assisted delivery",
+          "uuid" : "87808f03-7424-46e5-9db2-95d2f189e498",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "C-section",
+          "uuid" : "6984e037-93fc-4df0-9bce-ea7e8f44d1aa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did she have too much bleeding at the beginning of labour pains?",
+      "uuid" : "8dba6253-6557-4ca1-9cca-5a39b6a67266",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have too much bleeding at the beginning of labour pains?",
+        "uuid" : "fa2c3aa1-f523-47ab-89e7-b1bb62f1d5c2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did she have too much bleeding during labour (before delivering the baby)?",
+      "uuid" : "806bf4fb-6382-4d17-887e-f2cf716d5d57",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have too much bleeding during labour (before delivering the baby)?",
+        "uuid" : "1405aa97-9f4e-4ba8-953d-5536204d7dd2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did she have too much bleeding after delivering the baby?",
+      "uuid" : "02b9adc6-d949-420b-ade5-aeea83325e1e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have too much bleeding after delivering the baby?",
+        "uuid" : "780d6173-c55a-419f-8d60-b67b81d16094",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did she have prolonged labour: ≥ 24 hours for first baby, ≥ 12 hours otherwise?",
+      "uuid" : "dd718e9c-d6e4-448d-b948-52ddf1807fdd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have prolonged labour: ≥ 24 hours for first baby, ≥ 12 hours otherwise?",
+        "uuid" : "06ddb017-3848-4ce5-8860-227e41e23c40",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did she have difficulty delivering the placenta?",
+      "uuid" : "f74bb2d2-3525-4f7b-82fb-f9b8ee59bd75",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have difficulty delivering the placenta?",
+        "uuid" : "c5455d4f-e1f8-4634-959c-45498aa2b9a7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did she have fits or loss of consciousness during the pregnancy, during labour or after labour?",
+      "uuid" : "76a80a5f-3d85-430f-aa8d-fc6c4ece4c6c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have fits or loss of consciousness during the pregnancy, during labour or after labour?",
+        "uuid" : "01985be7-b57e-4911-a496-00a1df2c21d3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did she have a fever after the birth?",
+      "uuid" : "a2449526-da40-43fb-9b0d-aecc58357a0a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have a fever after the birth?",
+        "uuid" : "825fae38-2ef2-4d9e-a60a-c57fb63ea3dc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did she have foul smelling discharge?",
+      "uuid" : "91286b3a-5ac0-4145-ab76-b0644654de8b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did she have foul smelling discharge?",
+        "uuid" : "b6a6b5ba-37ee-45e2-baad-6678b18b5aa0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 20.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "2e1614ac-0684-4daf-a32f-21d6a40335c7",
+    "name" : "Section 2: Written Narrative",
+    "displayOrder" : 2.0,
+    "display" : "Section 2: Written Narrative",
+    "formElements" : [ {
+      "name" : "Have you written the narration of entire event?",
+      "uuid" : "82cc5fe1-f17e-4203-9556-de3613387873",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Have you written the narration of entire event?",
+        "uuid" : "7c1c89e9-f8b5-477f-aa3b-707711b1549e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes and sent the pic/copy of the same",
+          "uuid" : "98bfecc9-6466-4b64-88f2-626ca8426125",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Yes but yet to sent",
+          "uuid" : "af13d15d-c816-4b23-80c7-f4dd99d9ce82",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Interviewer name",
+      "uuid" : "9fb1272b-56c4-411d-bb2d-31bc493eefd3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Interviewer name",
+        "uuid" : "8214fe3b-89b8-40ef-8433-61b2a112bd48",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

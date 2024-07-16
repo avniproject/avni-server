@@ -1,0 +1,91 @@
+{
+  "name" : "TB Mantoux test result form",
+  "uuid" : "61f9f5c5-2b5a-4e02-8aa2-59bc19ffaf67",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "c7800db6-4149-4286-afe8-8be41a15b5a6",
+    "name" : "Test Details",
+    "displayOrder" : 1.0,
+    "display" : "Test Details",
+    "formElements" : [ {
+      "name" : "Result of mantoux test",
+      "uuid" : "bcb4d66c-e292-40f9-8b0e-fbe16c27bc98",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Result of mantoux test",
+        "uuid" : "1b684496-3597-4d18-97b9-1e1004256f9b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Started INH prophylaxis",
+      "uuid" : "a62b3a4e-d226-4b58-beed-81af1866f0b5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Started INH prophylaxis",
+        "uuid" : "7b46bae9-2c34-4113-8d71-1e8c09c0390a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Result of mantoux test').containsAnswerConceptName('Positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Start date of INH prophylaxis",
+      "uuid" : "37144407-e354-49a3-9f84-8298f3f06222",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Start date of INH prophylaxis",
+        "uuid" : "aba431af-0276-4ea2-8571-9dcb8376d217",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Started INH prophylaxis').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

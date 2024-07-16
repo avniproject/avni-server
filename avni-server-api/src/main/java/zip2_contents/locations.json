@@ -1,0 +1,682 @@
+[ {
+  "uuid" : "895089ff-ec51-4691-92d1-03f96573305d",
+  "name" : "Bamhani",
+  "level" : 2.0,
+  "type" : "Cluster",
+  "addressLevelTypeUUID" : "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04"
+}, {
+  "uuid" : "2202d48d-bafc-4a69-a8f6-19949990c16e",
+  "name" : "Dudavadongari",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "637a704a-9275-4421-bbca-4043bcf773a1",
+  "name" : "Bahaud",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "acfaee12-4edb-4bec-a2d2-e9f22455f792",
+  "name" : "Jamunahi",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "96053eb7-5db7-4edf-a068-fa068809ce49",
+  "name" : "Manjuraha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "c79e1dda-5c7f-4043-a117-0f331c068869",
+  "name" : "Surahi",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "698ceb71-c80d-4f47-8961-fdc23481ad6d",
+  "name" : "Bijarakachar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "7db7cb56-3e2c-48b3-9814-b6d80301a728",
+  "name" : "Atariya",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "a46e3cd0-c3ca-4afc-9b84-615bcfdb603c",
+  "name" : "Babutola",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "2085a176-fb78-4a7e-8846-395c491813d8",
+  "name" : "Batipathara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "621ab6c9-ae8d-4e7f-99f1-035d7da2c097",
+  "name" : "Danganiya",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "ae3ce6ca-874a-47d3-a8c0-707d05bf0810",
+  "name" : "Bisauni",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "4b40bc8d-6068-4b72-8f30-d15983a0270a",
+  "name" : "Machamahua",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "ef8b9035-fc21-45a1-a9f8-53d0b5005843",
+  "name" : "Katami",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "204092eb-7648-4ef1-b864-6a71b5d8efe7",
+  "name" : "Sarsoha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "d71cafb7-7664-42ea-a080-3458389e1e36",
+  "name" : "Bokarakachar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "a2e9f2b8-0faa-49a2-9ecf-5e328eda33bd",
+  "name" : "Bamhani",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "393c334d-0837-4c48-946b-2e9238661a06",
+  "name" : "Chakada",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "d940670f-7751-49fb-b85d-6fcabffa2e04",
+  "name" : "Boiraha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "f359b443-ebfa-4c78-9941-e6d1fdc228d2",
+  "name" : "Patparaha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "74afaeb5-b226-4b7d-8e13-193bc2241eb2",
+  "name" : "Ghameri",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "fd914d09-5989-462f-9e48-4a63f49b1813",
+  "name" : "Rajak",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "791fa25a-6d8a-4e57-8f8a-431a4e8436ca",
+  "name" : "Aurapani",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "8c4997f8-a7ba-48ab-96ef-1658eb855f2a",
+  "name" : "Parsaha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "5da89353-cd90-4821-9f09-1e9a24f0bcc3",
+  "name" : "Nivaskhar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "7ddb21cd-5e28-4ddf-a7a3-044baeabae73",
+  "name" : "Bankal",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "e62588cf-5daa-4ba3-9d8f-38af276f9c76",
+  "name" : "Jakadbandha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "0f51a895-e79b-4814-a2e4-2115bd048aa5",
+  "name" : "Salagi",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "e0c16148-8cbe-4ef7-b003-30690f5718e6",
+  "name" : "Samardhasan",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "7781ce44-8d17-4403-881e-e71749f469ec",
+  "name" : "Mahamai",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "91523dc5-2fc4-4919-aa0a-d9f69de4d81a",
+  "name" : "Jhiriya",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "895089ff-ec51-4691-92d1-03f96573305d"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46",
+  "name" : "Achanakmar",
+  "level" : 2.0,
+  "type" : "Cluster",
+  "addressLevelTypeUUID" : "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04"
+}, {
+  "uuid" : "5b084964-46c5-405b-b645-97bc27b5be95",
+  "name" : "Tilaidabara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "ad462c73-4816-4cff-91a8-d3e0bc06eb8e",
+  "name" : "Bindaval",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "8266d79c-e56e-4ca4-b896-0d745d4f8ece",
+  "name" : "Achanakmar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "73227191-358d-4220-859a-6bdd8d233738",
+  "name" : "Sivalkhar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "7f269efd-6331-464e-8486-6d38ceb32150",
+  "name" : "Chaparawa",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "d5d1c8a5-cb14-45f6-9948-343970a79979",
+  "name" : "Lamani",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "5aaf9aa4-cee5-4921-b1c5-bf86d2f27c05",
+  "name" : "Sarasdol",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3385f6a0-4212-4146-858d-095d841d5f46"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "fe750983-2f3d-41ff-a01f-52d4ae25ad64",
+  "name" : "Non programme cluster",
+  "level" : 2.0,
+  "type" : "Cluster",
+  "addressLevelTypeUUID" : "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04"
+}, {
+  "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4",
+  "name" : "Shivtarai",
+  "level" : 2.0,
+  "type" : "Cluster",
+  "addressLevelTypeUUID" : "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04"
+}, {
+  "uuid" : "8af4f7e4-57c0-4edf-b134-44fe2be0c72f",
+  "name" : "Koripara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "1b3632f1-a377-4294-988c-58989bdcc1ba",
+  "name" : "Kevarapara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "2ee587db-d2f7-4bad-87ac-4649abf4ba05",
+  "name" : "Nevasa",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "fcfcee14-93d3-4f4a-b559-9891c7a8bd2d",
+  "name" : "Davanpur",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "2c345fa2-ba10-4918-ae38-36a4cb21599d",
+  "name" : "Karpiha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "52c8fea5-b174-457b-9bef-023b49c68d93",
+  "name" : "Karaka",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "954da728-f7d1-410c-8882-a73c852a5ec0",
+  "name" : "Mohatara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "9633fd76-2655-43c4-9905-68de23aec848",
+  "name" : "Manpur",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "29edff3a-5439-4a66-9980-0be1341a5226",
+  "name" : "Surajpur",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "bea459d3-b8ad-4f0b-8627-4669ea4d1cb6",
+  "name" : "Mangalpur",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "fbf29ae2-a272-4db5-a660-45a819dd49ad",
+  "name" : "Piparkhunti",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "6c682e8c-4c25-49a9-8683-204c68b83cde",
+  "name" : "Parsada",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "176b6fb5-66dc-4af9-8ef1-2697d28d5863",
+  "name" : "Saraipali",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "03521ba5-d885-4002-ac3c-f3345a32c6e4"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "7bc6d02c-424e-482d-ad7a-4f672584cc61",
+  "name" : "Ganiyari",
+  "level" : 1.0,
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a",
+  "name" : "Semariya",
+  "level" : 2.0,
+  "type" : "Cluster",
+  "addressLevelTypeUUID" : "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04"
+}, {
+  "uuid" : "f682f877-6525-459b-8d75-5b76af3594ff",
+  "name" : "Jharana",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "fff1fc2a-21cb-4883-9369-038893daeb99",
+  "name" : "Semipani",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "ca66f0f0-fa97-4281-9b64-d8e318efda01",
+  "name" : "Kekaradih",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "c57e25bd-8285-4af2-a444-30b3b566ff35",
+  "name" : "Chotebarar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "741ccbc6-3054-4ecf-bc59-2105acf37885",
+  "name" : "Charpara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "f7cc8b34-46aa-4b03-84fb-1ba666e44637",
+  "name" : "Aurapani",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "0c473fd9-7159-4c2e-a2cc-33b70826e0ed",
+  "name" : "Ratkhandi",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "c6156e58-4f65-4440-ab07-9b8be44468f9",
+  "name" : "Semariya",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "131879cd-89ff-470b-a343-3af4f99ae1fe",
+  "name" : "Baigapara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "036ab3db-a20d-45dc-97f2-8de41f1cfa05",
+  "name" : "Shripara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "3971c53d-2308-4278-afb5-c028c373e3bf",
+  "name" : "Karhikachar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "d9d22473-bd0c-4d89-a06c-f4c5cbc77b0d",
+  "name" : "Kupabandha",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "4a8c95b4-cb7f-4fa8-ad72-682c5c309f79",
+  "name" : "Majhagoan",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "4e1d9da8-c445-4c04-b502-079f201c6f93",
+  "name" : "Phulwaripara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "613d3476-66cd-43f1-9326-8ff751913d8c",
+  "name" : "Badebarar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "8b6df791-614a-47e4-98bc-63955eb63c90",
+  "name" : "Danokhar",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "6e5dd2cd-3b26-4fc1-862f-f34ea0ee9e9f",
+  "name" : "Vicharpur",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "4a148102-db1e-4382-8e4d-1dfdd242e5b6",
+  "name" : "Kholipara",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "744bf94b-34cc-4969-ad29-22c8b03c9572",
+  "name" : "Navadih",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "98d87c0b-1eec-4bee-b3ba-7fa998024759",
+  "name" : "Baheramuda",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "ad224617-f017-4ea9-b003-4296bfc5017e",
+  "name" : "Jhingatpur",
+  "level" : 1.0,
+  "parent" : {
+    "uuid" : "3f97a141-fde7-4709-9e95-87a4bdac019a"
+  },
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+}, {
+  "uuid" : "14f456bb-7811-4aa8-b1e0-26541174d119",
+  "name" : "Non programme village",
+  "level" : 1.0,
+  "type" : "Village",
+  "addressLevelTypeUUID" : "87a38796-fc5b-4392-bca5-347024812941"
+} ]

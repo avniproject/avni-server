@@ -1,0 +1,65 @@
+{
+  "name" : "Daily Attendance Form Encounter",
+  "uuid" : "266d7933-d8a8-441f-a9f0-f1049967795f",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "f16fd6df-98ca-4761-9d27-0d900cf1696f",
+    "name" : "Attendance Details",
+    "displayOrder" : 1.0,
+    "display" : "Attendance Details",
+    "formElements" : [ {
+      "name" : "Are there any children present?",
+      "uuid" : "e8a6a51b-e49b-4bde-9bdf-0dacedbb52f3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Are there any children present",
+        "uuid" : "de2f1848-2841-4dfc-9265-f61d0641c547",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Please select children present in Phulwari",
+      "uuid" : "f6e91849-5282-4211-b9fb-cb17524c0b10",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Please select children present in Phulwari",
+        "uuid" : "a3d441d5-1ad1-4514-9088-16dc4ce3df90",
+        "dataType" : "Subject",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ {
+          "key" : "subjectTypeUUID",
+          "value" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+        } ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const encounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n\n    let areChildPresent = encounter.getObservationReadableValue(\"Are there any children present\");\n    \n    let showCondition = _.isEqual(areChildPresent, 'Yes');\n     console.log('params.entity.individual-->',params.entity.individual);\n    \n    const groupSubject = params.entity.individual.groupSubjects;\n    const children = [];\n    \n    groupSubject.forEach((e) => {\n        if (!e.voided) {\n            children.push(e.memberSubject.uuid);\n            statusBuilder.showAnswers(e.memberSubject.uuid);\n        }\n    });\n    \n\n    statusBuilder.show().whenItem(showCondition).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    encounter\n  });\n  \n let earliestVisitDate = imports.moment(encounter.earliestVisitDateTime).add(1, 'days').toDate();\n let weekDayName =  imports.moment(earliestVisitDate).format('ddd');\n  \n  if(_.isEqual(weekDayName,'Sun')){\n   earliestVisitDate = imports.moment(encounter.earliestVisitDateTime).add(2, 'days').toDate();\n     weekDayName =  imports.moment(earliestVisitDate).format('ddd');\n   }\n  \n  scheduleBuilder.add({\n                name: \"Daily Attendance\" +' -'+weekDayName,\n                encounterType: \"Daily Attendance Form\",\n                earliestDate: earliestVisitDate,\n                maxDate: earliestVisitDate\n            }\n        );\n        \nconst groupSubject = params.entity.individual.groupSubjects;\nconst children = [];\nconst childrenDetails = [];\n \ngroupSubject.forEach((groupSubject) => {\n         if (!groupSubject.memberSubject.voided) {\n            children.push(groupSubject.memberSubject.uuid);\n            childrenDetails.push(groupSubject.memberSubject);\n            }\n        });\n        \n        //console.log('childrenDetails',childrenDetails);\n        \n        let currentVisitAttendance = encounter.getObservationReadableValue('Children present in phulwari');\n         \n        const encounters = encounter.individual.getEncounters(true);\n        \n\n        let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < encounter.encounterDateTime)\n        .nth(0)\n        .value();\n        \n        let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < encounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value(); \n        \n    let enc1VisitAttendance = -1, enc2VisitAttendance = -1;\n   \n    if (enc1 && enc2) {\n        enc1VisitAttendance = enc1.getObservationReadableValue('Children present in phulwari');\n        let enc1VisitAbsentChildern = _.difference(children, enc1VisitAttendance);\n     \n        enc2VisitAttendance = enc2.getObservationReadableValue('Children present in phulwari'); \n        let enc2VisitAbsentChildern = _.difference(children, enc2VisitAttendance);      \n       \n       let currentVisitAbsentChildern = _.difference(children, currentVisitAttendance);\n        \n       let lastThreeVisitAbsentChildren = _.chain(currentVisitAbsentChildern)\n        .filter(e => _.includes(enc1VisitAbsentChildern,e)  === true)\n        .filter(e => _.includes(enc2VisitAbsentChildern,e)  === true)\n        .value();\n        \n       if(lastThreeVisitAbsentChildren)\n       lastThreeVisitAbsentChildren.forEach((e) => {\n       \n       \n       let subject = _.chain(childrenDetails)\n        .filter(childrenDetail => _.isEqual(childrenDetail.uuid,e)  === true)\n        .value();\n        \n       let hasAbsentResumeDate = subject[0].findLatestObservationFromEncounters('Date of phulwari resume',encounter);\n       let resumeDate;\n       if(hasAbsentResumeDate){\n         resumeDate = hasAbsentResumeDate.getReadableValue();\n        }\n          \n        if(resumeDate != undefined){        \n        if(imports.moment(encounter.earliestVisitDateTime).isAfter(resumeDate,'date'))\n          scheduleBuilder.add({\n              name: \"Child Absent followup Form\",\n              encounterType: \"Child Absent followup Form\",\n              earliestDate: imports.moment(encounter.earliestVisitDateTime).toDate(),\n              maxDate: imports.moment(encounter.earliestVisitDateTime).add(2, 'days').toDate(),\n              subjectUUID: e\n            });\n        }else \n          scheduleBuilder.add({\n              name: \"Child Absent followup Form\",\n              encounterType: \"Child Absent followup Form\",\n              earliestDate: imports.moment(encounter.earliestVisitDateTime).toDate(),\n              maxDate: imports.moment(encounter.earliestVisitDateTime).add(2, 'days').toDate(),\n              subjectUUID: e\n            });                  \n        });  \n               \n    }\n    \n    \n        \n        \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const validationResults = [];\n  const moment = imports.moment;\n  if(moment(encounter.encounterDateTime).isBefore(moment(encounter.earliestVisitDateTime), 'day')) {\n  const validationError = imports.common.createValidationError('Cannot save attendance for the future date.');\n  validationResults.push(validationError);\n  }\n  return validationResults;\n};",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

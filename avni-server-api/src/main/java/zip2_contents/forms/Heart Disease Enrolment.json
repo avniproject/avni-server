@@ -1,0 +1,103 @@
+{
+  "name" : "Heart Disease Enrolment",
+  "uuid" : "ff741ec1-6d14-4d86-9067-47f28c42c8b9",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "ecbdec2f-2b39-47a8-935d-c4e9c24d7b81",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of diagnosis",
+      "uuid" : "ae574fff-ddb6-4d15-bac3-a946fb19a7ac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n  const diagnosisDate = programEnrolment.getObservationReadableValue('Date of diagnosis');\n  let visitDate = programEnrolment.enrolmentDateTime;\n \n if(imports.moment(diagnosisDate).isAfter(visitDate, 'date'))\n statusBuilder.validationError(\"Diagnosis Date cannot be after visit date\");\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Type of Heart Disease",
+      "uuid" : "afabaf85-88b0-42fb-8b4f-2d3d17e2588e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of Heart Disease",
+        "uuid" : "89fbbb09-4ff9-4399-a22c-5f46909aedb1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Coronary artery disease (CAD)",
+          "uuid" : "30f5f55d-1354-47ad-ad58-8ed5fda5f5e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Rheumatic heart disease",
+          "uuid" : "aa5d1776-7a88-441c-bac8-c4dae5da5631",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Congenital Heart disease",
+          "uuid" : "bf10e140-9cae-4541-bb30-3e62b22cb275",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Heart valve disease",
+          "uuid" : "f5a4998d-7bee-48e9-bbd7-42f333a49906",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Heart failure",
+          "uuid" : "4c2d8a76-f84e-47b5-a974-860c9f860637",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Name of subcategory of disease",
+      "uuid" : "3aca01e8-b02e-436d-a379-88e7f01d54d5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of subcategory of disease",
+        "uuid" : "677b90f4-aba1-47d0-8f8a-4d0ead1288b0",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

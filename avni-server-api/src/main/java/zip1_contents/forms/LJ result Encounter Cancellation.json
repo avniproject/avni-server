@@ -1,0 +1,7 @@
+{
+  "name" : "LJ result Encounter Cancellation",
+  "uuid" : "3766d55d-185f-4e85-affd-567097bd6056",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

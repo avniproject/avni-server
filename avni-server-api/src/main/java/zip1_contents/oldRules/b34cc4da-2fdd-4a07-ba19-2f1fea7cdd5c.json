@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "68ae820c-0141-475f-89ee-a023849e76bb",
+    "type" : "Form"
+  },
+  "entityUUID" : "68ae820c-0141-475f-89ee-a023849e76bb",
+  "entityType" : "Form",
+  "type" : "ViewFilter",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP BirthViewFilter",
+  "uuid" : "b34cc4da-2fdd-4a07-ba19-2f1fea7cdd5c",
+  "fnName" : "BirthViewFilter"
+}

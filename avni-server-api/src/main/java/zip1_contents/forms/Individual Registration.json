@@ -1,0 +1,7 @@
+{
+  "name" : "Individual Registration",
+  "uuid" : "998ccf0b-0c31-4e36-9bf0-53d65c3f5313",
+  "formType" : "IndividualProfile",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

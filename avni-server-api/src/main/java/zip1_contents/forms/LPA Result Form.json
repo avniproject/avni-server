@@ -1,0 +1,122 @@
+{
+  "name" : "LPA Result Form",
+  "uuid" : "8e7ed3f8-9f68-49da-b0f0-e32b50c2465a",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "4556df77-330c-4590-bf0d-d079d6bd3d10",
+    "name" : "Result",
+    "displayOrder" : 1.0,
+    "display" : "Result",
+    "formElements" : [ {
+      "name" : "LPA",
+      "uuid" : "d4a6605a-a233-4acc-8a72-d38b975bbfbd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "LPA",
+        "uuid" : "892e68cc-a726-4628-8e5d-fde5996ad62c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "LPA",
+      "uuid" : "78c80b30-aee8-434c-b2b4-080eca00e4c3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "tb lab test result LPA",
+        "uuid" : "a3f3eea3-c299-4d4d-b7f0-af8b401e0fe6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No growth",
+          "uuid" : "2166790e-5d9c-4930-a7d0-7f3ec5fd5f05",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Growth positive",
+          "uuid" : "bc959c58-6a89-4cce-8130-6fc1e15ac384",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Growth positive",
+      "uuid" : "bba9f183-a7c0-4055-8d59-d3517a71330f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Positive growth LPA",
+        "uuid" : "9ec5cbdc-7ea4-4dff-88af-b1adb109723a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "INH Sensitive",
+          "uuid" : "a432c869-c3f4-4e16-bb43-c485a6780c86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "INH Resistance",
+          "uuid" : "582a0e00-3cd4-430e-b355-677cbf211cef",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result LPA').containsAnswerConceptName('Growth positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

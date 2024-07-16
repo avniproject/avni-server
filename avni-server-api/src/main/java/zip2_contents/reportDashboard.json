@@ -1,0 +1,2581 @@
+[ {
+  "uuid" : "0404edb0-053d-4069-a169-b4266a6c46d7",
+  "id" : 134,
+  "name" : "MCH",
+  "description" : "MCH Worker",
+  "sections" : [ {
+    "uuid" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+    "id" : 208,
+    "name" : "MCH",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "0404edb0-053d-4069-a169-b4266a6c46d7",
+    "cards" : [ {
+      "uuid" : "652e1c49-78b6-439b-946a-7d983fab839b",
+      "id" : 541,
+      "name" : "No of mothers for post partum visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const MotherPnc= (enrolment) => {\n        const deliveryEnc = enrolment.getEncountersOfType('Mother PNC');\n          const deliveryEncThisMonth = deliveryEnc\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n            const deliveryEncThisYear = deliveryEnc\n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return deliveryEncThisYear .length > 0 && deliveryEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Mother PNC' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && MotherPnc(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "Number of Mother PNCs completed in the month",
+      "color" : "#ff0000",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "07d5855f-9511-4d30-a781-2ecf70dc8454",
+      "id" : 540,
+      "name" : "No of children for post natal visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const ChildBirth= (enrolment) => {\n        const ChildEnc = enrolment.getEncountersOfType('Child PNC');\n        const ChildEncThisMonth = ChildEnc \n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n    const ChildEncThisYear = ChildEnc \n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return ChildEncThisYear.length > 0 && ChildEncThisMonth.length > 0 ? true : false;\n    };\n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Child' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Child PNC' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Child' && ChildBirth(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "Number of Child PNC completed in the month",
+      "color" : "#d3b53d",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "d3c179d8-7e9e-4586-9122-11ca730c8b2b",
+      "id" : 538,
+      "name" : "No of deliveries",
+      "query" : "'use strict';\n({params, imports}) => {\n    const DeliveryCheck = (enrolment) => {\n        const deliveryEnc = enrolment.getEncountersOfType('Delivery');\n        const deliveryEncThisMonth = deliveryEnc\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n    const deliveryEncThisYear = deliveryEnc\n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return deliveryEncThisYear.length >  0 && deliveryEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Delivery' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && DeliveryCheck(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "714f70b0-2fa2-40b4-88b3-b232027ba044",
+      "id" : 539,
+      "name" : "No of births",
+      "query" : "'use strict';\n({params, imports}) => {\n    const ChildBirth= (enrolment) => {\n        const ChildEnc = enrolment.getEncountersOfType('Child Birth');\n        const ChildEncThisMonth = ChildEnc \n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n          const ChildEncThisYear = ChildEnc \n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return ChildEncThisYear.length > 0 && ChildEncThisMonth .length > 0 ? true : false;\n    };\n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Child Birth' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Child' && ChildBirth(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "1a5d5185-4358-4e6b-b055-33ecb5e60245",
+      "id" : 537,
+      "name" : "No of pregnant women",
+      "query" : "'use strict';\n({params, imports}) => {\n   const deliveryCheck = (enrolment) => {\n        const deliveryEnc = enrolment.getEncountersOfType('Delivery');\n        const abortionEnc = enrolment.getEncountersOfType('Abortion');\n        return _.isEmpty(deliveryEnc) && _.isEmpty(abortionEnc);\n    }\n    return params.db.objects('Individual')\n                .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && deliveryCheck(enrolment) && enrolment.programExitDateTime == null))\n};\n",
+      "description" : "Count of women enrolled in pregnancy program with no Delivery encounter filled for them",
+      "color" : "#93a661",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "5dc10f82-39c4-46ca-9e3d-ae607840a5fc",
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "652e1c49-78b6-439b-946a-7d983fab839b",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "474542ba-5b2f-4347-b239-84d0fcb86cba",
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "07d5855f-9511-4d30-a781-2ecf70dc8454",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "9afe0ae5-85bb-41ed-aa4d-3435d2fa2665",
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "d3c179d8-7e9e-4586-9122-11ca730c8b2b",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "24599181-7a24-47ea-874c-108b4b869f73",
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "714f70b0-2fa2-40b4-88b3-b232027ba044",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "1af1576c-8caa-475d-8271-cffaa4713c8b",
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "1a5d5185-4358-4e6b-b055-33ecb5e60245",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : true
+}, {
+  "uuid" : "dd0a9aaa-9319-4c46-910a-a5dbd4d81e8e",
+  "id" : 135,
+  "name" : "MCH Worker",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+    "id" : 209,
+    "name" : "MCH",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "dd0a9aaa-9319-4c46-910a-a5dbd4d81e8e",
+    "cards" : [ {
+      "uuid" : "0a7823fd-fb2d-4ce0-8917-a866b682c11c",
+      "id" : 553,
+      "name" : "No of child deaths (all)",
+      "query" : "'use strict';\n({params, imports}) => {\n\nconst moment = imports.moment;\n\n    const dateOfDeath = (enrolment) => {\n\n        const dateOfChildsDeathFromExit = enrolment.findExitObservation('Date of Death');\n\n        if ( moment().format('MM-YYYY') === moment(dateOfChildsDeathFromExit.getReadableValue()).format('MM-YYYY') ) {\n            return true;\n        }\n\n    }\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Child' and  SUBQUERY($enrolment.programExitObservations, $observation, $observation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($observation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0 and $enrolment.voided = false and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Child' && dateOfDeath(enrolment) && enrolment.programExitDateTime != null))\n};",
+      "description" : "No of Children died in the month (within 5 years)",
+      "color" : "#ff0000",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "2d77b95b-18d7-4f1a-9c35-f2990d8c93da",
+      "id" : 562,
+      "name" : "Lab visits due",
+      "query" : "'use strict';\n({params, imports}) => {\n    const preg= (enrolment) => {\n        const labENC= enrolment.scheduledEncountersOfType('Lab Investigations');\n         const labEncThisMonth = labENC\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.earliestVisitDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null\n    );\n       \n        return labEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Lab Investigations' and $encounter.cancelDateTime = null and  $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && preg(enrolment)))\n};",
+      "description" : "No of Lab visits due for month and not completed",
+      "color" : "#93a661",
+      "displayOrder" : 10.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "b8b674e0-4f1a-4950-9d98-17549dff76ef",
+      "id" : 578,
+      "name" : "Number of completed visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const preg= (enrolment) => {\n        const encounters = enrolment.getEncounters(true);\n         const completedEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY') && e.cancelDateTime === null && e.encounterDateTime != null\n    );\n        return completedEncounters.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && preg(enrolment)))\n};",
+      "description" : "",
+      "color" : "#00ff43",
+      "displayOrder" : 12.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "1a5d5185-4358-4e6b-b055-33ecb5e60245",
+      "id" : 537,
+      "name" : "No of pregnant women",
+      "query" : "'use strict';\n({params, imports}) => {\n   const deliveryCheck = (enrolment) => {\n        const deliveryEnc = enrolment.getEncountersOfType('Delivery');\n        const abortionEnc = enrolment.getEncountersOfType('Abortion');\n        return _.isEmpty(deliveryEnc) && _.isEmpty(abortionEnc);\n    }\n    return params.db.objects('Individual')\n                .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && deliveryCheck(enrolment) && enrolment.programExitDateTime == null))\n};\n",
+      "description" : "Count of women enrolled in pregnancy program with no Delivery encounter filled for them",
+      "color" : "#93a661",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "714f70b0-2fa2-40b4-88b3-b232027ba044",
+      "id" : 539,
+      "name" : "No of births",
+      "query" : "'use strict';\n({params, imports}) => {\n    const ChildBirth= (enrolment) => {\n        const ChildEnc = enrolment.getEncountersOfType('Child Birth');\n        const ChildEncThisMonth = ChildEnc \n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n          const ChildEncThisYear = ChildEnc \n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return ChildEncThisYear.length > 0 && ChildEncThisMonth .length > 0 ? true : false;\n    };\n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Child Birth' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Child' && ChildBirth(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "652e1c49-78b6-439b-946a-7d983fab839b",
+      "id" : 541,
+      "name" : "No of mothers for post partum visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const MotherPnc= (enrolment) => {\n        const deliveryEnc = enrolment.getEncountersOfType('Mother PNC');\n          const deliveryEncThisMonth = deliveryEnc\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n            const deliveryEncThisYear = deliveryEnc\n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return deliveryEncThisYear .length > 0 && deliveryEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Mother PNC' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && MotherPnc(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "Number of Mother PNCs completed in the month",
+      "color" : "#ff0000",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "07d5855f-9511-4d30-a781-2ecf70dc8454",
+      "id" : 540,
+      "name" : "No of children for post natal visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const ChildBirth= (enrolment) => {\n        const ChildEnc = enrolment.getEncountersOfType('Child PNC');\n        const ChildEncThisMonth = ChildEnc \n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n    const ChildEncThisYear = ChildEnc \n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return ChildEncThisYear.length > 0 && ChildEncThisMonth.length > 0 ? true : false;\n    };\n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Child' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Child PNC' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Child' && ChildBirth(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "Number of Child PNC completed in the month",
+      "color" : "#d3b53d",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "d3c179d8-7e9e-4586-9122-11ca730c8b2b",
+      "id" : 538,
+      "name" : "No of deliveries",
+      "query" : "'use strict';\n({params, imports}) => {\n    const DeliveryCheck = (enrolment) => {\n        const deliveryEnc = enrolment.getEncountersOfType('Delivery');\n        const deliveryEncThisMonth = deliveryEnc\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM'));\n    const deliveryEncThisYear = deliveryEnc\n    .filter((e) => imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return deliveryEncThisYear.length >  0 && deliveryEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Delivery' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && DeliveryCheck(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "f0d443ab-054b-45d6-bb14-b944cb31499c",
+      "id" : 561,
+      "name" : "No of maternal deaths",
+      "query" : "'use strict';\n({params, imports}) => {\n\nconst moment = imports.moment;\n\n    const dateOfDeath = (enrolment) => {\n\n        const dateOfMaternalDeathFromExit = enrolment.findExitObservation('Date of Death');\n\n        if ( moment().format('MM-YYYY') === moment(dateOfMaternalDeathFromExit.getReadableValue()).format('MM-YYYY') ) {\n            return true;\n        }\n\n    }\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and  SUBQUERY($enrolment.programExitObservations, $observation, $observation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($observation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0 and $enrolment.voided = false and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && dateOfDeath(enrolment) && enrolment.programExitDateTime != null ))\n};",
+      "description" : "No of maternal deaths recorded within the month",
+      "color" : "#ff0000",
+      "displayOrder" : 9.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "1b481da4-53c1-49d5-b4c6-19104538b9ac",
+      "id" : 554,
+      "name" : "ANC visits due",
+      "query" : "'use strict';\n({params, imports}) => {\n    const preg= (enrolment) => {\n        const ancENC= enrolment.scheduledEncountersOfType('ANC Clinic Visit');\n         const ancEncThisMonth = ancENC\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.earliestVisitDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null\n    );\n       \n        return ancEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'ANC Clinic Visit' and $encounter.cancelDateTime = null and  $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && preg(enrolment)))\n};",
+      "description" : "No of ANC visits scheduled for month",
+      "color" : "#93a661",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "7a87002b-4d06-441d-988a-0e872090744e",
+      "id" : 559,
+      "name" : "PNC visits due",
+      "query" : "'use strict';\n({params, imports}) => {\n    const child = (enrolment) => {\n        const pncENC= enrolment.scheduledEncountersOfType('Child PNC');\n        const motherPncENC= enrolment.scheduledEncountersOfType('Mother PNC');\n        \n         const childPNCEncThisMonth = pncENC\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.earliestVisitDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null\n    );\n        const motherPNCEncThisMonth = motherPncENC\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.earliestVisitDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null\n    );\n       \n        return (childPNCEncThisMonth.length > 0 || motherPNCEncThisMonth.length > 0) ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.cancelDateTime = null and  $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => child(enrolment)))\n};",
+      "description" : "No of PNC visits scheduled for month and not completed for child and pregnancy program",
+      "color" : "#93a661",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "a69ee3f3-1bf2-4052-b541-096e0336f4bf",
+      "id" : 576,
+      "name" : "Number of cancelled visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const preg= (enrolment) => {\n        const encounters = enrolment.getEncounters(false);\n         const cancelledEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.cancelDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.cancelDateTime).format('YYYY') && e.cancelDateTime != null && e.encounterDateTime === null\n    );\n        return cancelledEncounters.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Pregnancy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Pregnancy' && preg(enrolment)))\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 11.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "aec90c79-31cc-43d7-bf74-ddaad1363633",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "0a7823fd-fb2d-4ce0-8917-a866b682c11c",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "b2b00f34-98fe-4568-b6b9-cbb4d765bed2",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "2d77b95b-18d7-4f1a-9c35-f2990d8c93da",
+      "displayOrder" : 10.0,
+      "voided" : false
+    }, {
+      "uuid" : "bd697a90-9637-42de-9d69-ba0be92a18e3",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "b8b674e0-4f1a-4950-9d98-17549dff76ef",
+      "displayOrder" : 12.0,
+      "voided" : false
+    }, {
+      "uuid" : "bbb625f8-2732-4a85-84e9-15b63942ddb7",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "1a5d5185-4358-4e6b-b055-33ecb5e60245",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "7364a53c-65c1-4111-a420-2b05cf9a664f",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "714f70b0-2fa2-40b4-88b3-b232027ba044",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "3fb73566-00db-485d-8db3-f338bf2b10ce",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "652e1c49-78b6-439b-946a-7d983fab839b",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "2f80bc42-2b28-4ab6-a2e3-eb21a08b9a32",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "07d5855f-9511-4d30-a781-2ecf70dc8454",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "3d0634b9-1abc-488c-9d00-d2d1b5fa71a4",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "d3c179d8-7e9e-4586-9122-11ca730c8b2b",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "60a1e157-e0c4-4f05-98e4-830e9a23643b",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "f0d443ab-054b-45d6-bb14-b944cb31499c",
+      "displayOrder" : 9.0,
+      "voided" : false
+    }, {
+      "uuid" : "b01e156b-2bf4-4215-a1a0-3ec93090698a",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "1b481da4-53c1-49d5-b4c6-19104538b9ac",
+      "displayOrder" : 7.0,
+      "voided" : false
+    }, {
+      "uuid" : "7f7a278c-3f8f-44b8-b4f6-c917fdab5f98",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "7a87002b-4d06-441d-988a-0e872090744e",
+      "displayOrder" : 8.0,
+      "voided" : false
+    }, {
+      "uuid" : "24c6c34e-d4ff-4128-9ff3-4b817d088eed",
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "a69ee3f3-1bf2-4052-b541-096e0336f4bf",
+      "displayOrder" : 11.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+  "id" : 136,
+  "name" : "Senior Health Worker",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "0a194050-bfa3-453d-83c4-b27b8e8ae3a0",
+    "id" : 217,
+    "name" : "Thyroidism",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 7.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "1c593b2a-cec3-4097-b581-a33afb572fc5",
+      "id" : 549,
+      "name" : "Total no. of patients for Thyroidism.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Thyroidism' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Thyroidism'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Thyroidism.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "c07280a6-4403-4c1c-84ca-3a9f7e8d7879",
+      "dashboardSectionUUID" : "0a194050-bfa3-453d-83c4-b27b8e8ae3a0",
+      "reportCardUUID" : "1c593b2a-cec3-4097-b581-a33afb572fc5",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "e80c5699-f946-4b20-93a7-09ac93f671fb",
+    "id" : 212,
+    "name" : "Epilepsy",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 2.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "cfc073a1-69c5-47d5-a1ba-3d039d6fe7a3",
+      "id" : 544,
+      "name" : "Total no. of patients for Epilepsy.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Epilepsy.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "cee0f2f7-5478-4c39-8b44-0ad0d0229d71",
+      "dashboardSectionUUID" : "e80c5699-f946-4b20-93a7-09ac93f671fb",
+      "reportCardUUID" : "cfc073a1-69c5-47d5-a1ba-3d039d6fe7a3",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "8c11ef4a-f812-4d49-8133-40f67790c268",
+    "id" : 215,
+    "name" : "Mental illness",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 5.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "33cf3b20-e4ad-4906-96ca-bb7dac2e9374",
+      "id" : 548,
+      "name" : "Total no. of patients for Mental Illness.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Mental Illness' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Mental Illness'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Mental Illness.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "8e5182b3-dea6-4c13-a263-0fddaea29666",
+      "dashboardSectionUUID" : "8c11ef4a-f812-4d49-8133-40f67790c268",
+      "reportCardUUID" : "33cf3b20-e4ad-4906-96ca-bb7dac2e9374",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "ce24284f-a3b7-4107-8905-13a0a58925bb",
+    "id" : 218,
+    "name" : "Arthritis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 8.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "8107e159-5369-428d-ad64-3e4637430612",
+      "id" : 550,
+      "name" : "Total no. of patients for Arthritis.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Arthritis' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Arthritis'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Arthritis.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "27814499-962c-4f02-99bd-c7cdd09ea0d9",
+      "dashboardSectionUUID" : "ce24284f-a3b7-4107-8905-13a0a58925bb",
+      "reportCardUUID" : "8107e159-5369-428d-ad64-3e4637430612",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "0c4d0356-9495-4c71-91ec-ea55529d88b7",
+    "id" : 219,
+    "name" : "Cancer",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 9.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "0532f87d-ebf9-4d59-8fc7-1a9e44c6d308",
+      "id" : 551,
+      "name" : "Total no. of patients for Cancer.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Cancer' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Cancer'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Cancer.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "dae2e7f5-fc65-4212-b359-06a55cdda630",
+      "dashboardSectionUUID" : "0c4d0356-9495-4c71-91ec-ea55529d88b7",
+      "reportCardUUID" : "0532f87d-ebf9-4d59-8fc7-1a9e44c6d308",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "2263318a-4a3b-490e-8cf1-7e631f20c60b",
+    "id" : 214,
+    "name" : "Diabetes",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 4.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "79008668-9943-4a95-b2c3-3f6686294192",
+      "id" : 547,
+      "name" : "Total no. of patients for Diabetes.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Diabetes' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Diabetes'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Diabetes.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "97a9ffe7-daaf-4e42-b284-f4d45e8a1fae",
+      "dashboardSectionUUID" : "2263318a-4a3b-490e-8cf1-7e631f20c60b",
+      "reportCardUUID" : "79008668-9943-4a95-b2c3-3f6686294192",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "c4e0b176-0983-4198-9a32-05927ee90153",
+    "id" : 220,
+    "name" : "COPD",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 10.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "6d5e93de-d417-4f8c-9c29-82ec516429f4",
+      "id" : 555,
+      "name" : "Total no. of patients for COPD.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'COPD' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'COPD'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "c6d6937f-4139-4337-844b-c1e3d43503e8",
+      "dashboardSectionUUID" : "c4e0b176-0983-4198-9a32-05927ee90153",
+      "reportCardUUID" : "6d5e93de-d417-4f8c-9c29-82ec516429f4",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "fd2377f6-6f99-4c2c-8398-9b3772367105",
+    "id" : 213,
+    "name" : "Tuberculosis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 3.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "6ef7c3de-d13d-4c97-95c7-6c2c653cdf60",
+      "id" : 545,
+      "name" : "Total no. of patients for Tuberculosis.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Tuberculosis' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Tuberculosis'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Tuberculosis.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ca477a02-1985-4bf8-aa95-feae5277d7e5",
+      "dashboardSectionUUID" : "fd2377f6-6f99-4c2c-8398-9b3772367105",
+      "reportCardUUID" : "6ef7c3de-d13d-4c97-95c7-6c2c653cdf60",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "d21cbae3-3c21-4bc7-b7c7-251fa9dfebcd",
+    "id" : 216,
+    "name" : "Hypertension",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 6.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "b03730c8-a748-4b6c-bbf7-0b0b38b78950",
+      "id" : 542,
+      "name" : "Total no. of patients for Hypertension",
+      "query" : "//'use strict';\n//({params}) => {\n//    console.log(JSON.stringify(params.db.objects('Individual')));\n//    return params.db.objects('Individual');\n//};\n\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Hypertension' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Hypertension'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "cefcf379-50fe-4d30-9ef7-0789363ee5f5",
+      "dashboardSectionUUID" : "d21cbae3-3c21-4bc7-b7c7-251fa9dfebcd",
+      "reportCardUUID" : "b03730c8-a748-4b6c-bbf7-0b0b38b78950",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "96d63a9e-3ab2-4387-9a21-e7c90b71e3b8",
+    "id" : 221,
+    "name" : "Asthma",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 11.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "ce748329-e7ff-45fc-9adc-96d9fbc08c1f",
+      "id" : 556,
+      "name" : "Total no. of patients for Asthma.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Asthma' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Asthma'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "dd492cbe-f5d7-4af5-a0c3-177775c22a3c",
+      "dashboardSectionUUID" : "96d63a9e-3ab2-4387-9a21-e7c90b71e3b8",
+      "reportCardUUID" : "ce748329-e7ff-45fc-9adc-96d9fbc08c1f",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "a8542c66-eea2-48f8-9f53-345f8725f772",
+    "id" : 223,
+    "name" : "Stroke",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 13.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "9e1817d0-67b0-470c-957a-dec569ddfcf3",
+      "id" : 558,
+      "name" : "Total no. of patients for Stroke.",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Stroke' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Stroke'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Stroke.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "29f51652-b045-41d9-b5dc-ec91336b391e",
+      "dashboardSectionUUID" : "a8542c66-eea2-48f8-9f53-345f8725f772",
+      "reportCardUUID" : "9e1817d0-67b0-470c-957a-dec569ddfcf3",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "2cbfebbb-2ab4-48b8-8dfa-0b3298594619",
+    "id" : 211,
+    "name" : "Sickle cell ",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "50b185ae-206c-4cf6-98c6-a33aad07fdb8",
+      "id" : 543,
+      "name" : "Total no. of patients for Sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Sickle cell' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Sickle cell'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Sickle cell",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "55f99e68-4e17-4bd8-9be7-8b7ad28b0b2f",
+      "dashboardSectionUUID" : "2cbfebbb-2ab4-48b8-8dfa-0b3298594619",
+      "reportCardUUID" : "50b185ae-206c-4cf6-98c6-a33aad07fdb8",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "9a58c7d8-75df-49b5-9b77-66938975545f",
+    "id" : 222,
+    "name" : "Heart Disease",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 12.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "cards" : [ {
+      "uuid" : "2aff9b9d-605e-4caa-9938-93999368b4db",
+      "id" : 557,
+      "name" : "Total no. of patients for Heart Disease.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Heart Disease' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Heart Disease'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Heart Disease.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "17a5aa0c-735c-436b-b7c1-70877165e953",
+      "dashboardSectionUUID" : "9a58c7d8-75df-49b5-9b77-66938975545f",
+      "reportCardUUID" : "2aff9b9d-605e-4caa-9938-93999368b4db",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : true
+}, {
+  "uuid" : "f6740cbf-f2c4-4efe-b0cf-fe7b5bb412c5",
+  "id" : 139,
+  "name" : "Epilepsy",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+    "id" : 226,
+    "name" : "Epilepsy",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "f6740cbf-f2c4-4efe-b0cf-fe7b5bb412c5",
+    "cards" : [ {
+      "uuid" : "2ffcd69b-ca50-4f51-b041-32c6c27e9bab",
+      "id" : 617,
+      "name" : "No of Follow-up visits due for Epilepsy followup",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst moment = imports.moment;\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentEnc = enrolment.scheduledEncountersOfType('Epilepsy followup');\n    \n    const currentMonthEnc = currentEnc\n    .filter((e) => moment().format('MMM') === moment(e.earliestVisitDateTime).format('MMM') &&\n    moment().format('YYYY') === moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null );\n    \n    return currentMonthEnc.length > 0 ? true : false;\n    \n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Epilepsy followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "cfc073a1-69c5-47d5-a1ba-3d039d6fe7a3",
+      "id" : 544,
+      "name" : "Total no. of patients for Epilepsy.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Epilepsy.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "84d0fc77-9d5b-4a63-9587-c02c73972aef",
+      "id" : 608,
+      "name" : "No. of referrals for epilepsy",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment().format('YYYY-MM') == imports.moment(e.encounterDateTime).format('YYYY-MM'))\n    .value();\nvar ansArray = [];\ncurrentMonthEnc.forEach((e) => {\n    const status = e.getObservationReadableValue('Does patient require referral');\n    if (status) {\n        if (status == \"Yes\") {\n            ansArray.push('Yes');\n        }else {\n           ansArray.push('NO');\n        }\n    }\n   });\n              \n        return ansArray ? (!_.includes( ansArray,'NO') && !_.isEmpty(ansArray)) : false;\n    };\n\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Epilepsy followup' and $encounter.voided = false and SUBQUERY($encounter.observations, $observation, $observation.concept.uuid = '7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d').@count > 0).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "649d4807-c2a4-4ee4-8266-fdd4789f7655",
+      "id" : 563,
+      "name" : "New patients for Epilepsy",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Epilepsy'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "8b1a43fd-48e0-4e26-857d-8f95331931d6",
+      "id" : 593,
+      "name" : "No. of patients exited for Epilepsy",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime != null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy' && enrolment.programExitDateTime != null ))\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "6932845d-fbdc-4280-b976-211d15f0be9a",
+      "id" : 623,
+      "name" : "No. of cancelled visits for Epilepsy",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst canceledVisits= (enrolment) => {\n        const encounters = enrolment.getEncounters(false);\n         const cancelledEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.cancelDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.cancelDateTime).format('YYYY') && e.cancelDateTime != null && e.encounterDateTime === null\n    );\n        return cancelledEncounters.length > 0 ? true : false;\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Epilepsy followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy' \n        && canceledVisits(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "0cdf349e-f990-41ce-81ea-a6daf40f0b87",
+      "id" : 579,
+      "name" : "No. of deaths due to Epilepsy",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Epilepsy' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "3a0159bf-0f03-4a5a-bb05-f2c0a0983538",
+      "id" : 627,
+      "name" : "No. of completed visits for Epilepsy",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment(imports.moment().format('YYYY-MM')).isSameOrBefore(imports.moment(e.encounterDateTime).format('YYYY-MM')))\n    .value();\n\n        return !_.isEmpty(currentMonthEnc)\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Epilepsy' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Epilepsy followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Epilepsy' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#107896",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "004c8692-9109-4708-8243-df7ab8a5450b",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "2ffcd69b-ca50-4f51-b041-32c6c27e9bab",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "22683091-80ea-4acb-a186-636efe4b9e9a",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "cfc073a1-69c5-47d5-a1ba-3d039d6fe7a3",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "7f4651e1-fa90-4a09-b463-fa44318c1e35",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "84d0fc77-9d5b-4a63-9587-c02c73972aef",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "0a71ffec-9a9a-441d-99e5-3b9070e9b251",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "649d4807-c2a4-4ee4-8266-fdd4789f7655",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "b3abc152-c470-486e-a8db-fd393c61f5c7",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "8b1a43fd-48e0-4e26-857d-8f95331931d6",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "ee2b1077-cc39-4a88-9b43-2e16cac81acd",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "6932845d-fbdc-4280-b976-211d15f0be9a",
+      "displayOrder" : 7.0,
+      "voided" : false
+    }, {
+      "uuid" : "2cf13db6-eded-4acd-8d0b-c15984500dfc",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "0cdf349e-f990-41ce-81ea-a6daf40f0b87",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "2bd33344-cd8f-4d66-a4af-46e20e0b67d4",
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "3a0159bf-0f03-4a5a-bb05-f2c0a0983538",
+      "displayOrder" : 8.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "6755e709-c280-40ae-a885-0af11b7a2cb9",
+  "id" : 140,
+  "name" : "Tuberculosis",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+    "id" : 227,
+    "name" : "Tuberculosis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "6755e709-c280-40ae-a885-0af11b7a2cb9",
+    "cards" : [ {
+      "uuid" : "8b5a8d92-2261-4a54-b846-da202e4ea117",
+      "id" : 628,
+      "name" : "No. of completed visits for Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment(imports.moment().format('YYYY-MM')).isSameOrBefore(imports.moment(e.encounterDateTime).format('YYYY-MM')))\n    .value();\n\n        return !_.isEmpty(currentMonthEnc)\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Tuberculosis' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'TB followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Tuberculosis' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#107896",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "61cba681-abe9-4096-a000-06edd8d80095",
+      "id" : 611,
+      "name" : "No. of referrals for Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment().format('YYYY-MM') == imports.moment(e.encounterDateTime).format('YYYY-MM'))\n    .value();\nvar ansArray = [];\ncurrentMonthEnc.forEach((e) => {\n    const status = e.getObservationReadableValue('Does patient require referral');\n    if (status) {\n        if (status == \"Yes\") {\n            ansArray.push('Yes');\n        }else {\n           ansArray.push('NO');\n        }\n    }\n   });\n              \n        return ansArray ? (!_.includes( ansArray,'NO') && !_.isEmpty(ansArray)) : false;\n    };\n\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Tuberculosis' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'TB Followup' and $encounter.voided = false and SUBQUERY($encounter.observations, $observation, $observation.concept.uuid = '7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d').@count > 0).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Tuberculosis' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "a86fddc5-cf83-4f48-b7cd-47eeba6ee9b6",
+      "id" : 594,
+      "name" : "No. of patients exited for Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Tuberculosis'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "d676d1f3-f587-4826-ad98-c9f9feb6c480",
+      "id" : 620,
+      "name" : "No of Follow-up visits due for Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst moment = imports.moment;\n  \nconst currentMonthReferralCheck = (enrolment) => {\n    const currentEnc = enrolment.scheduledEncountersOfType('TB followup');\n    \n    const currentMonthEnc = currentEnc\n    .filter((e) => moment().format('MMM') === moment(e.earliestVisitDateTime).format('MMM') &&\n    moment().format('YYYY') === moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null );\n    \n    return currentMonthEnc.length > 0 ? true : false;\n    \n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Tuberculosis' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'TB followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Tuberculosis' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "6ef7c3de-d13d-4c97-95c7-6c2c653cdf60",
+      "id" : 545,
+      "name" : "Total no. of patients for Tuberculosis.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Tuberculosis' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Tuberculosis'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Tuberculosis.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "854c2f48-cf84-4265-8350-e08931c80cc4",
+      "id" : 564,
+      "name" : "New patients for Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Tuberculosis'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "7242c61a-9996-402b-8583-644731365bfd",
+      "id" : 624,
+      "name" : "No. of cancelled visits for Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst canceledVisits= (enrolment) => {\n        const encounters = enrolment.getEncounters(false);\n         const cancelledEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.cancelDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.cancelDateTime).format('YYYY') && e.cancelDateTime != null && e.encounterDateTime === null\n    );\n        return cancelledEncounters.length > 0 ? true : false;\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Tuberculosis' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'TB Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Tuberculosis' \n        && canceledVisits(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "38bd2fd0-59b8-4c9b-b3a6-18772b276173",
+      "id" : 580,
+      "name" : "No. of deaths due to Tuberculosis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Tuberculosis' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '8cc66da0-b652-4587-bdb8-ea8b8bd8f28c' and ($programExitObservation.valueJSON contains 'd5db8603-1099-4ae5-a8f2-12181753debe')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "aa1a396d-de5d-4d73-94a7-3f7a6dbc9470",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "8b5a8d92-2261-4a54-b846-da202e4ea117",
+      "displayOrder" : 8.0,
+      "voided" : false
+    }, {
+      "uuid" : "ad8601ea-0a9b-46f1-9731-e2c656ec11fd",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "61cba681-abe9-4096-a000-06edd8d80095",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "2c76fc1d-5b77-4bf9-9240-c87e24b73ce8",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "a86fddc5-cf83-4f48-b7cd-47eeba6ee9b6",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "17c43947-d855-4ba0-9dd5-d6f5b3e87456",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "d676d1f3-f587-4826-ad98-c9f9feb6c480",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "b3a13065-9cd0-48d0-98a1-30c67e8b92a3",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "6ef7c3de-d13d-4c97-95c7-6c2c653cdf60",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "51fcb682-2355-48c8-86e9-978660451a21",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "854c2f48-cf84-4265-8350-e08931c80cc4",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "7deb30fd-5528-45ac-90b5-7772f7429d8b",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "7242c61a-9996-402b-8583-644731365bfd",
+      "displayOrder" : 7.0,
+      "voided" : false
+    }, {
+      "uuid" : "2de2d264-e828-4a66-8659-2c321dd64820",
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "38bd2fd0-59b8-4c9b-b3a6-18772b276173",
+      "displayOrder" : 3.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "714d18df-ebf1-4b92-b45b-a1f9c9033439",
+  "id" : 141,
+  "name" : "TB - INH Prophylaxis",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+    "id" : 228,
+    "name" : "TB - INH Prophylaxis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "714d18df-ebf1-4b92-b45b-a1f9c9033439",
+    "cards" : [ {
+      "uuid" : "9ff927de-e8ee-4477-9d80-8d23e785bf2d",
+      "id" : 596,
+      "name" : "No. of patients exited for TB - INH Prophylaxis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'TB - INH Prophylaxis'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "1caece16-d79e-47a3-b433-8e7fb6cc0ef8",
+      "id" : 582,
+      "name" : "No. of deaths due to TB - INH Prophylaxis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'TB - INH Prophylaxis' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "12c5a81f-11f2-47c7-8e34-25218371ace1",
+      "id" : 566,
+      "name" : "New patients for TB - INH Prophylaxis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'TB - INH Prophylaxis'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "ef185368-49f8-4411-b3d9-6473a6b6e8d0",
+      "id" : 546,
+      "name" : "Total no. of patients for TB - INH Prophylaxis.",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'TB - INH Prophylaxis' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'TB - INH Prophylaxis'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for TB - INH Prophylaxis.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "158c4e95-5eed-4dea-abd8-1c21b62a8c87",
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "9ff927de-e8ee-4477-9d80-8d23e785bf2d",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "a7b2bc9d-8b46-42ad-9b28-058c57179345",
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "1caece16-d79e-47a3-b433-8e7fb6cc0ef8",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "f40b1138-a17f-479d-bae5-5227e70bf12f",
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "12c5a81f-11f2-47c7-8e34-25218371ace1",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "ba1ea65a-6294-40c3-a253-1610e6744914",
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "ef185368-49f8-4411-b3d9-6473a6b6e8d0",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "33272b0b-fd56-4ff6-9f9f-2ff1b273f0c1",
+  "id" : 142,
+  "name" : "Diabetes",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+    "id" : 229,
+    "name" : "Diabetes",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "33272b0b-fd56-4ff6-9f9f-2ff1b273f0c1",
+    "cards" : [ {
+      "uuid" : "b885e838-05c4-4f47-b2be-a390b85028d1",
+      "id" : 583,
+      "name" : "No. of deaths due to Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Diabetes' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "1cbd6d2a-413a-4148-93fe-f6ae6cc8e7f1",
+      "id" : 610,
+      "name" : "No. of referrals for Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment().format('YYYY-MM') == imports.moment(e.encounterDateTime).format('YYYY-MM'))\n    .value();\nvar ansArray = [];\ncurrentMonthEnc.forEach((e) => {\n    const status = e.getObservationReadableValue('Does patient require referral');\n    if (status) {\n        if (status == \"Yes\") {\n            ansArray.push('Yes');\n        }else {\n           ansArray.push('NO');\n        }\n    }\n   });\n              \n        return ansArray ? (!_.includes( ansArray,'NO') && !_.isEmpty(ansArray)) : false;\n    };\n\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Diabetes' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Diabetes Followup' and $encounter.voided = false and SUBQUERY($encounter.observations, $observation, $observation.concept.uuid = '7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d').@count > 0).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Diabetes' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "9c72eb10-84f6-4aee-8c6e-4a42ba83e874",
+      "id" : 619,
+      "name" : "No of Follow-up visits due for Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst moment = imports.moment;\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentEnc = enrolment.scheduledEncountersOfType('Diabetes Followup');\n    \n    const currentMonthEnc = currentEnc\n    .filter((e) => moment().format('MMM') === moment(e.earliestVisitDateTime).format('MMM') &&\n    moment().format('YYYY') === moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null );\n    \n    return currentMonthEnc.length > 0 ? true : false;\n    \n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Diabetes' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Diabetes Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Diabetes' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "79008668-9943-4a95-b2c3-3f6686294192",
+      "id" : 547,
+      "name" : "Total no. of patients for Diabetes.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Diabetes' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Diabetes'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Diabetes.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "f5fecd5a-00f5-4435-9360-3643c5a43105",
+      "id" : 597,
+      "name" : "No. of patients exited for Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Diabetes'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "7ced3386-737d-478f-a871-34a218fbe2fc",
+      "id" : 626,
+      "name" : "No. of completed visits for Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment(imports.moment().format('YYYY-MM')).isSameOrBefore(imports.moment(e.encounterDateTime).format('YYYY-MM')))\n    .value();\n\n        return !_.isEmpty(currentMonthEnc)\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Diabetes' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Diabetes Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Diabetes' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#107896",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "0c2da478-3ec9-494f-a723-2a6a58acc70c",
+      "id" : 567,
+      "name" : "New patients for Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Diabetes'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "0125e8b9-4556-4367-95bd-31bd7d10c5f1",
+      "id" : 622,
+      "name" : "No. of cancelled visits for Diabetes",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment().isSameOrAfter(imports.moment(e.cancelDateTime).format('YYYY-MM-DD')))\n    .value();\n\n        return !_.isEmpty(currentMonthEnc)\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Diabetes' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Diabetes Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Diabetes' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "d1920cee-c06a-4f2a-9128-386b97ddbbcd",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "b885e838-05c4-4f47-b2be-a390b85028d1",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "93cf89a1-c6ad-42ed-8f7f-f1a548901024",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "1cbd6d2a-413a-4148-93fe-f6ae6cc8e7f1",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "072ccd92-788f-48ae-b8a7-a9f20e5f6a7d",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "9c72eb10-84f6-4aee-8c6e-4a42ba83e874",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "16478dfa-5dab-493e-bb7f-5b1c77310461",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "79008668-9943-4a95-b2c3-3f6686294192",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "2f4af8f7-d395-48fb-8db3-73eb49355d2a",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "f5fecd5a-00f5-4435-9360-3643c5a43105",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "c93e617b-310e-487a-8eb2-45840056a560",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "7ced3386-737d-478f-a871-34a218fbe2fc",
+      "displayOrder" : 8.0,
+      "voided" : false
+    }, {
+      "uuid" : "3029f206-9b7a-49b8-9725-b808676911b3",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "0c2da478-3ec9-494f-a723-2a6a58acc70c",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "87426883-6af2-41b1-b77d-88ed193d2a84",
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "0125e8b9-4556-4367-95bd-31bd7d10c5f1",
+      "displayOrder" : 7.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "f9baab59-e415-4e9e-9633-abb2468a043c",
+  "id" : 143,
+  "name" : "Mental Illness",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+    "id" : 230,
+    "name" : "Mental Illness",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "f9baab59-e415-4e9e-9633-abb2468a043c",
+    "cards" : [ {
+      "uuid" : "753ec903-7f09-4bc9-a053-6d2f73231ff1",
+      "id" : 568,
+      "name" : "New patients for Mental Illness",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Mental Illness'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "33cf3b20-e4ad-4906-96ca-bb7dac2e9374",
+      "id" : 548,
+      "name" : "Total no. of patients for Mental Illness.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Mental Illness' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Mental Illness'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Mental Illness.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "f14f5bd4-3ffe-43c3-be27-d6d754d2e940",
+      "id" : 584,
+      "name" : "No. of deaths due to Mental Illness",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Mental Illness' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "0ca1dba1-a4c7-4edf-a517-95848de4f71d",
+      "id" : 598,
+      "name" : "No. of patients exited for Mental Illness",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Mental Illness'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "4a79edfc-9abf-44f4-b624-5ead62764072",
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "753ec903-7f09-4bc9-a053-6d2f73231ff1",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "8a245867-bda1-4d6c-8c28-3ed3661c7a4d",
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "33cf3b20-e4ad-4906-96ca-bb7dac2e9374",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "0939438d-7d83-470c-ae00-c8aa4efa1ef6",
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "f14f5bd4-3ffe-43c3-be27-d6d754d2e940",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "de8b774f-6283-4849-ba51-a5fd6c4995c1",
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "0ca1dba1-a4c7-4edf-a517-95848de4f71d",
+      "displayOrder" : 4.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "0883dda7-4894-447b-b096-88fb10ffea14",
+  "id" : 144,
+  "name" : "Thyroidism",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+    "id" : 231,
+    "name" : "Thyroidism",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "0883dda7-4894-447b-b096-88fb10ffea14",
+    "cards" : [ {
+      "uuid" : "84ccada6-b9b5-4a63-90fa-a8e5c6ea7d7b",
+      "id" : 569,
+      "name" : "New patients for Thyroidism",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Thyroidism'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "1c593b2a-cec3-4097-b581-a33afb572fc5",
+      "id" : 549,
+      "name" : "Total no. of patients for Thyroidism.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Thyroidism' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Thyroidism'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Thyroidism.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "8273fcb7-e396-426e-8b73-a0f74ccf0319",
+      "id" : 585,
+      "name" : "No. of deaths due to Thyroidism",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Thyroidism' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "4b4cd81c-2006-4dd9-b596-263a0918143f",
+      "id" : 599,
+      "name" : "No. of patients exited for Thyroidism",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Thyroidism'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "de367920-eee0-4f62-8012-e0836b0d56f0",
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "84ccada6-b9b5-4a63-90fa-a8e5c6ea7d7b",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "35601c61-9469-4a43-8bfc-6009bdad3709",
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "1c593b2a-cec3-4097-b581-a33afb572fc5",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "3def5c45-4260-4357-b74b-4c265260c3fb",
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "8273fcb7-e396-426e-8b73-a0f74ccf0319",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "3fb33193-9dc9-43d9-a43f-3e8594a31cfe",
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "4b4cd81c-2006-4dd9-b596-263a0918143f",
+      "displayOrder" : 4.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "ef534291-6e6a-405b-b825-2340f7b2ceb1",
+  "id" : 145,
+  "name" : "Arthritis",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+    "id" : 232,
+    "name" : "Arthritis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ef534291-6e6a-405b-b825-2340f7b2ceb1",
+    "cards" : [ {
+      "uuid" : "a96ce5fa-f54c-4215-8fbe-eae04becd29f",
+      "id" : 600,
+      "name" : "No. of patients exited for Arthritis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Arthritis'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "8912ff1a-17d7-4524-bd24-91b165bdae63",
+      "id" : 586,
+      "name" : "No. of deaths due to Arthritis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Arthritis' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "8107e159-5369-428d-ad64-3e4637430612",
+      "id" : 550,
+      "name" : "Total no. of patients for Arthritis.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Arthritis' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Arthritis'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Arthritis.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "3f303c6c-39f1-4219-85a9-6fa41aa8144e",
+      "id" : 570,
+      "name" : "New patients for Arthritis",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Arthritis'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ff586345-f98b-46a1-ae02-992869262ddc",
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "a96ce5fa-f54c-4215-8fbe-eae04becd29f",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "840cef75-949c-4299-bbd7-a17a7d1bfd14",
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "8912ff1a-17d7-4524-bd24-91b165bdae63",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "c1196046-864b-411a-8a66-7e3b84f089cb",
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "8107e159-5369-428d-ad64-3e4637430612",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "2bac207f-393a-4fe0-82d4-bcce6f91c5b0",
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "3f303c6c-39f1-4219-85a9-6fa41aa8144e",
+      "displayOrder" : 2.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "bf0d924c-9b47-4c75-9792-351a2ec8ab61",
+  "id" : 146,
+  "name" : "Cancer",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+    "id" : 233,
+    "name" : "Cancer",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "bf0d924c-9b47-4c75-9792-351a2ec8ab61",
+    "cards" : [ {
+      "uuid" : "aabe39bc-b0de-460f-95dd-49c2a471c70c",
+      "id" : 587,
+      "name" : "No. of deaths due to Cancer",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Cancer' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "0532f87d-ebf9-4d59-8fc7-1a9e44c6d308",
+      "id" : 551,
+      "name" : "Total no. of patients for Cancer.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Cancer' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Cancer'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Cancer.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "674134d7-534b-4241-8470-c75ba1e86e29",
+      "id" : 571,
+      "name" : "New patients for Cancer",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Cancer'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "01e23c94-c0be-4260-9bb9-5d06e5be44cf",
+      "id" : 601,
+      "name" : "No. of patients exited for Cancer",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Cancer'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "5a7f1697-14df-423f-9487-3cf88edf6fd6",
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "aabe39bc-b0de-460f-95dd-49c2a471c70c",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "3cf4834c-6863-4cf9-ac47-8a9bc6af71e7",
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "0532f87d-ebf9-4d59-8fc7-1a9e44c6d308",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "05c15bce-702f-4faa-adde-aa846a14dc7c",
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "674134d7-534b-4241-8470-c75ba1e86e29",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "451ccd25-775f-490e-96a3-441db991b115",
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "01e23c94-c0be-4260-9bb9-5d06e5be44cf",
+      "displayOrder" : 4.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "ad8c8632-20ee-48bd-8df5-d7416f55b89a",
+  "id" : 147,
+  "name" : "COPD",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+    "id" : 234,
+    "name" : "COPD",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ad8c8632-20ee-48bd-8df5-d7416f55b89a",
+    "cards" : [ {
+      "uuid" : "6d5e93de-d417-4f8c-9c29-82ec516429f4",
+      "id" : 555,
+      "name" : "Total no. of patients for COPD.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'COPD' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'COPD'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "c1831c7f-93d9-40e2-b84b-83d199f2180f",
+      "id" : 602,
+      "name" : "No. of patients exited for COPD",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'COPD'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "737e9151-69ef-4155-bbe2-396612d88e5d",
+      "id" : 572,
+      "name" : "New patients for COPD",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'COPD'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "f4cd4fe1-2bc5-4094-a07c-843ad7fd05db",
+      "id" : 588,
+      "name" : "No. of deaths due to COPD",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'COPD' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "5d52b330-9760-4a48-8fd9-6105ed70c739",
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "6d5e93de-d417-4f8c-9c29-82ec516429f4",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "9397b8a5-16ec-4088-8a7b-4f3eda46f6bc",
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "c1831c7f-93d9-40e2-b84b-83d199f2180f",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "045d7928-be5c-4a2f-bafc-22d72ff4aaa6",
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "737e9151-69ef-4155-bbe2-396612d88e5d",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "3a3d5f7f-fb5d-46b3-8f8d-62c09667f121",
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "f4cd4fe1-2bc5-4094-a07c-843ad7fd05db",
+      "displayOrder" : 3.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "bc010a4f-1533-4dbf-9241-47770ea93274",
+  "id" : 148,
+  "name" : "Asthma",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+    "id" : 235,
+    "name" : "Asthma",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "bc010a4f-1533-4dbf-9241-47770ea93274",
+    "cards" : [ {
+      "uuid" : "bf31a98c-59a7-4ec9-a937-7b28be5f28e4",
+      "id" : 589,
+      "name" : "No. of deaths due to Asthma",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Asthma' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "697cd956-77d4-4f72-b228-0a46a3012090",
+      "id" : 603,
+      "name" : "No. of patients exited for Asthma",
+      "query" : "'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Asthma'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "9f473ac8-d88e-4349-a9d8-e027dccfd309",
+      "id" : 573,
+      "name" : "New patients for Asthma",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Asthma'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "ce748329-e7ff-45fc-9adc-96d9fbc08c1f",
+      "id" : 556,
+      "name" : "Total no. of patients for Asthma.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Asthma' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Asthma'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "2f38c0d0-9880-4192-aedd-db3971d0ebfe",
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "bf31a98c-59a7-4ec9-a937-7b28be5f28e4",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "fe3bc1cb-d0ca-4582-981c-e7e20f74bca6",
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "697cd956-77d4-4f72-b228-0a46a3012090",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "04c37608-22eb-4ae0-bd36-91c57a4e5ac8",
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "9f473ac8-d88e-4349-a9d8-e027dccfd309",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "9e8148d1-addc-4c05-879c-a9a3ffcabe73",
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "ce748329-e7ff-45fc-9adc-96d9fbc08c1f",
+      "displayOrder" : 1.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "ab3cb78c-7b5a-41c2-8cbe-734a000f7156",
+  "id" : 149,
+  "name" : "Heart Disease",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+    "id" : 236,
+    "name" : "Heart Disease",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ab3cb78c-7b5a-41c2-8cbe-734a000f7156",
+    "cards" : [ {
+      "uuid" : "0eba1b5b-5ae4-44f3-aa67-052cd6e6bcad",
+      "id" : 574,
+      "name" : "New patients for Heart Disease",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Heart Disease'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "2aff9b9d-605e-4caa-9938-93999368b4db",
+      "id" : 557,
+      "name" : "Total no. of patients for Heart Disease.",
+      "query" : "'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Heart Disease' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Heart Disease'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Heart Disease.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "5472e86a-8462-4e6f-a38c-8f98b0c0500e",
+      "id" : 604,
+      "name" : "No. of patients exited for Heart Disease",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Heart Disease'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "56846115-a55c-4fb6-b09a-925d852edd3d",
+      "id" : 590,
+      "name" : "No. of deaths due to Heart Disease",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Heart Disease' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ef2d1b55-1f3f-4234-98c0-510453aff3ab",
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "0eba1b5b-5ae4-44f3-aa67-052cd6e6bcad",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "7c7713a6-9bce-49e0-88f0-9df9dcafee15",
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "2aff9b9d-605e-4caa-9938-93999368b4db",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "71ffe9e7-e3c5-4d6c-860c-7ef627ebdfa8",
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "5472e86a-8462-4e6f-a38c-8f98b0c0500e",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "b77d34be-f9ee-4304-bd84-b5bc6517a820",
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "56846115-a55c-4fb6-b09a-925d852edd3d",
+      "displayOrder" : 3.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "d1c6e0e9-ff4e-444b-864c-4b4c3ec3edcc",
+  "id" : 150,
+  "name" : "Stroke",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+    "id" : 237,
+    "name" : "Stroke",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "d1c6e0e9-ff4e-444b-864c-4b4c3ec3edcc",
+    "cards" : [ {
+      "uuid" : "52e52939-3e95-4435-9c24-6137a1f76793",
+      "id" : 575,
+      "name" : "New patients for Stroke",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Stroke'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "d9f4faea-46a9-461a-8185-427efbcd8826",
+      "id" : 605,
+      "name" : "No. of patients exited for Stroke",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Stroke'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "9e1817d0-67b0-470c-957a-dec569ddfcf3",
+      "id" : 558,
+      "name" : "Total no. of patients for Stroke.",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Stroke' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Stroke'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Stroke.",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "e645dcfb-0604-4b04-8446-b2841091c30b",
+      "id" : 591,
+      "name" : "No. of deaths due to Stroke",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Stroke' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ec0d63e7-222b-4c46-bea7-288967777c03",
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "52e52939-3e95-4435-9c24-6137a1f76793",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "afe1b587-bfca-49fc-8c19-29c4f92cd871",
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "d9f4faea-46a9-461a-8185-427efbcd8826",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "7e137202-d780-4f70-ad15-4e5d9a96ab20",
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "9e1817d0-67b0-470c-957a-dec569ddfcf3",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "967a9823-af49-48e5-a243-c9b5f0c8b894",
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "e645dcfb-0604-4b04-8446-b2841091c30b",
+      "displayOrder" : 3.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "92d88f41-122a-4c76-94e7-e3e41aeac040",
+  "id" : 137,
+  "name" : "Sickle cell disease",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "0a360879-a015-4866-9367-ea3787ef0f53",
+    "id" : 224,
+    "name" : "Sickle cell ",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "92d88f41-122a-4c76-94e7-e3e41aeac040",
+    "cards" : [ {
+      "uuid" : "b570afa0-6e2e-48df-9890-8594b1354393",
+      "id" : 592,
+      "name" : "No. of patients exited for sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Sickle cell'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};    ",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "50b185ae-206c-4cf6-98c6-a33aad07fdb8",
+      "id" : 543,
+      "name" : "Total no. of patients for Sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Sickle cell' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Sickle cell'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "Total no. of patients for Sickle cell",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "62531360-ea1d-454c-b808-61b94886ae8f",
+      "id" : 607,
+      "name" : "No. of referrals for sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment().format('YYYY-MM') == imports.moment(e.encounterDateTime).format('YYYY-MM'))\n    .value();\nvar ansArray = [];\ncurrentMonthEnc.forEach((e) => {\n    const status = e.getObservationReadableValue('Does patient require referral');\n    if (status) {\n        if (status == \"Yes\") {\n            ansArray.push('Yes');\n        }else {\n           ansArray.push('NO');\n        }\n    }\n   });\n              \n        return ansArray ? (!_.includes( ansArray,'NO') && !_.isEmpty(ansArray)) : false;\n    };\n\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Sickle cell' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Sickle cell followup' and $encounter.voided = false and SUBQUERY($encounter.observations, $observation, $observation.concept.uuid = '7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d').@count > 0).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Sickle cell' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "3e30c318-c5e0-4cd4-bff9-ec93b2990dd3",
+      "id" : 614,
+      "name" : "No. of completed visits for sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment(imports.moment().format('YYYY-MM')).isSameOrBefore(imports.moment(e.encounterDateTime).format('YYYY-MM')))\n    .value();\n\n        return !_.isEmpty(currentMonthEnc)\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Sickle cell' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Sickle cell followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Sickle cell' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#107896",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "183098dc-513d-4a80-a3bf-30e6d3bb4bc5",
+      "id" : 613,
+      "name" : "No. of cancelled visits for sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst canceledVisits= (enrolment) => {\n        const encounters = enrolment.getEncounters(false);\n         const cancelledEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.cancelDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.cancelDateTime).format('YYYY') && e.cancelDateTime != null && e.encounterDateTime === null\n    );\n        return cancelledEncounters.length > 0 ? true : false;\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Sickle cell' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Sickle cell followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Sickle cell' \n        && canceledVisits(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "6fc60081-c131-495e-9f53-b119a8804818",
+      "id" : 560,
+      "name" : "New patients for sickle cell disease",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Sickle cell'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "c969cd59-f044-462a-86f7-6ddaa044e7c2",
+      "id" : 612,
+      "name" : "No of Follow-up visits due for sickle cell",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst moment = imports.moment;\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentEnc = enrolment.scheduledEncountersOfType('Sickle cell followup');\n    \n    const currentMonthEnc = currentEnc\n    .filter((e) => moment().format('MMM') === moment(e.earliestVisitDateTime).format('MMM') &&\n    moment().format('YYYY') === moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null );\n    \n    return currentMonthEnc.length > 0 ? true : false;\n    \n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Sickle cell' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Sickle cell followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Sickle cell' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "7c041866-b474-4bdb-b1bd-01d917cfa5a3",
+      "id" : 577,
+      "name" : "No. of deaths due to Sickle cell disease",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n\n// This is the query for finding number of deaths due to sickle cell disease for the current month and year.\n// Reason for exit --> '9518f70d-351a-44f0-b3f8-9af412db74af'\n// Anwer to the above question is \"Death\" --> 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8'\n\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Sickle cell' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};\n\n",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "80178d06-ea8c-42e4-9949-ee5b9e711d57",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "b570afa0-6e2e-48df-9890-8594b1354393",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "eecca1e6-582e-4bea-8f0c-18de9795461f",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "50b185ae-206c-4cf6-98c6-a33aad07fdb8",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "1bf57515-3056-463a-8ea6-96a75cc9e8f1",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "62531360-ea1d-454c-b808-61b94886ae8f",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "82585e79-f6b8-4ae6-8522-4f0fa7dd5fff",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "3e30c318-c5e0-4cd4-bff9-ec93b2990dd3",
+      "displayOrder" : 7.0,
+      "voided" : false
+    }, {
+      "uuid" : "6a1a8a95-2c6a-44a8-9513-6c6a4a7146c0",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "183098dc-513d-4a80-a3bf-30e6d3bb4bc5",
+      "displayOrder" : 8.0,
+      "voided" : false
+    }, {
+      "uuid" : "6492d786-1f43-4314-909d-a30fe553fe91",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "6fc60081-c131-495e-9f53-b119a8804818",
+      "displayOrder" : 2.0,
+      "voided" : false
+    }, {
+      "uuid" : "792fbe65-532a-48e5-9722-b0446908bac4",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "c969cd59-f044-462a-86f7-6ddaa044e7c2",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "63c51502-1026-4ccd-a39c-ebfa085cebca",
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "7c041866-b474-4bdb-b1bd-01d917cfa5a3",
+      "displayOrder" : 3.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "d8fd0af5-7d79-4395-bece-e55178bef200",
+  "id" : 138,
+  "name" : "Hypertension",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+    "id" : 225,
+    "name" : "Hypertension",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "d8fd0af5-7d79-4395-bece-e55178bef200",
+    "cards" : [ {
+      "uuid" : "ea14603d-337f-44f4-aa1f-fc7dcde4d6d6",
+      "id" : 609,
+      "name" : "No. of referrals for Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment().format('YYYY-MM') == imports.moment(e.encounterDateTime).format('YYYY-MM'))\n    .value();\nvar ansArray = [];\ncurrentMonthEnc.forEach((e) => {\n    const status = e.getObservationReadableValue('Patient requires referral');\n    if (status) {\n        if (status == \"Yes\") {\n            ansArray.push('Yes');\n        }else {\n           ansArray.push('NO');\n        }\n    }\n   });\n              \n        return ansArray ? (!_.includes( ansArray,'NO') && !_.isEmpty(ansArray)) : false;\n    };\n\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Hypertension' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Hypertension Followup' and $encounter.voided = false and SUBQUERY($encounter.observations, $observation, $observation.concept.uuid = '2f331b4a-4a15-4b97-96ba-689c69000046').@count > 0).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Hypertension' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#1496bb",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "64b11b19-c8ec-4be7-8863-112cea42bc3d",
+      "id" : 618,
+      "name" : "No of Follow-up visits due for Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst moment = imports.moment;\n\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentEnc = enrolment.scheduledEncountersOfType('Hypertension Followup');\n    \n    const currentMonthEnc = currentEnc\n    .filter((e) => moment().format('MMM') === moment(e.earliestVisitDateTime).format('MMM') &&\n    moment().format('YYYY') === moment(e.earliestVisitDateTime).format('YYYY') &&\n    e.cancelDateTime === null && e.encounterDateTime === null );\n    \n    return currentMonthEnc.length > 0 ? true : false;\n    \n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Hypertension' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Hypertension Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Hypertension' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#93a661",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "8dc59921-c018-4f49-9614-cb0ad048f0ad",
+      "id" : 625,
+      "name" : "No. of completed visits for Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\nconst currentMonthReferralCheck = (enrolment) => {\n    const currentMonthEnc = _.chain(enrolment.getEncounters(true))\n    .filter((e) => imports.moment(imports.moment().format('YYYY-MM')).isSameOrBefore(imports.moment(e.encounterDateTime).format('YYYY-MM')))\n    .value();\n\n        return !_.isEmpty(currentMonthEnc)\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Hypertension' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Hypertension Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Hypertension' \n        && currentMonthReferralCheck(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#107896",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "b03730c8-a748-4b6c-bbf7-0b0b38b78950",
+      "id" : 542,
+      "name" : "Total no. of patients for Hypertension",
+      "query" : "//'use strict';\n//({params}) => {\n//    console.log(JSON.stringify(params.db.objects('Individual')));\n//    return params.db.objects('Individual');\n//};\n\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Hypertension' and $enrolment.programExitDateTime = null and $enrolment.voided = false).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Hypertension'  && enrolment.programExitDateTime == null))\n};",
+      "description" : "",
+      "color" : "#093145",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "72dac2cc-6996-4feb-8d06-86503d559d09",
+      "id" : 595,
+      "name" : "No. of patients exited for Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`programExitDateTime != null and individual.voided = false and voided = false and program.name = 'Hypertension'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#f26d21",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "eeef0262-c617-44ea-8c23-09de64e076a3",
+      "id" : 581,
+      "name" : "No. of deaths due to Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\n    \n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Hypertension' and SUBQUERY(individual.enrolments.programExitObservations, $programExitObservation, $programExitObservation.concept.uuid = '9518f70d-351a-44f0-b3f8-9af412db74af' and ($programExitObservation.valueJSON contains 'c125eec0-2bc4-4add-b1d0-7531e5ffa9c8')).@count > 0`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.programExitDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#c02f1d",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "5f778156-3fc9-426a-bfeb-fa706efe3daa",
+      "id" : 621,
+      "name" : "No. of cancelled visits for Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries\n'use strict';\n({params, imports}) => {\nconst _ = imports.lodash;\n\nconst canceledVisits= (enrolment) => {\n        const encounters = enrolment.getEncounters(false);\n         const cancelledEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.cancelDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.cancelDateTime).format('YYYY') && e.cancelDateTime != null && e.encounterDateTime === null\n    );\n        return cancelledEncounters.length > 0 ? true : false;\n    };\n\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Hypertension' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Hypertension Followup' and $encounter.voided = false ).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false  && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Hypertension' \n        && canceledVisits(enrolment)\n        ))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "d440e5e0-3354-4b60-ad78-f5e6da477615",
+      "id" : 565,
+      "name" : "New patients for Hypertension",
+      "query" : "// Documentation - https://docs.mongodb.com/realm-legacy/docs/javascript/latest/index.html#queries \n'use strict';\n({params, imports}) => {\n    return params.db.objects('ProgramEnrolment')\n    .filtered(`voided = false AND individual.voided = false AND program.name = 'Hypertension'`)\n    .filter(enl => imports.moment().format('YYYY-MM') === imports.moment(enl.enrolmentDateTime).format('YYYY-MM'))\n    .map(enl => enl.individual)\n};",
+      "description" : "",
+      "color" : "#d3b53d",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "22aadc7a-c03b-4b13-aa41-5acb3785af8e",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "ea14603d-337f-44f4-aa1f-fc7dcde4d6d6",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "c5e31bc8-472e-4a1f-88ba-a2d6cffcce2f",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "64b11b19-c8ec-4be7-8863-112cea42bc3d",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "008ca90a-a628-4f09-b106-7228926990da",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "8dc59921-c018-4f49-9614-cb0ad048f0ad",
+      "displayOrder" : 8.0,
+      "voided" : false
+    }, {
+      "uuid" : "d60e6c59-7e95-4cdc-93f7-3620b089c3ab",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "b03730c8-a748-4b6c-bbf7-0b0b38b78950",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "a44a1087-2617-4187-8720-13d605964ff1",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "72dac2cc-6996-4feb-8d06-86503d559d09",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "669e4b29-82e3-4058-9141-83c147edf313",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "eeef0262-c617-44ea-8c23-09de64e076a3",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "e6b72f37-5f37-4f7d-bd41-8229e3e90e63",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "5f778156-3fc9-426a-bfeb-fa706efe3daa",
+      "displayOrder" : 7.0,
+      "voided" : false
+    }, {
+      "uuid" : "13b2b569-f4f6-4782-b4d1-083bb1e00535",
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "d440e5e0-3354-4b60-ad78-f5e6da477615",
+      "displayOrder" : 2.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "6bf0d361-017f-4637-8473-5684b6e45977",
+  "id" : 151,
+  "name" : "Phulwari Supervisor",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "e95ffa59-4def-4355-823b-920c8104a359",
+    "id" : 238,
+    "name" : "Phulwari Supervisor",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "6bf0d361-017f-4637-8473-5684b6e45977",
+    "cards" : [ {
+      "uuid" : "44ccb000-c6b0-4614-9bed-0fd604aaef27",
+      "id" : 632,
+      "name" : "No of follow up visits completed",
+      "query" : "'use strict';\n({params, imports}) => {\n    const Phul = (enrolment) => {\n        const encounters = enrolment.getEncounters(true);\n         const completedEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY') && e.cancelDateTime === null && e.encounterDateTime != null\n    );\n        return completedEncounters.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && Phul(enrolment)))\n};",
+      "description" : "Total number of follow-up visits completed in the month",
+      "color" : "#93a661",
+      "displayOrder" : 7.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "46e45568-0860-4f37-a91d-24f9e7c0d1e7",
+      "id" : 630,
+      "name" : "Albendazole",
+      "query" : "({params, imports}) => {\n    const Albenda = (enrolment) => {\n        const AlbendaEnc = enrolment.getEncountersOfType('Albendazole');\n        const AlbendaEncThisMonth = AlbendaEnc \n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return AlbendaEncThisMonth.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Albendazole' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && Albenda(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "Number of visits Albendazole visits scheduled for the month",
+      "color" : "#ff0000",
+      "displayOrder" : 5.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "edb02b8a-6cb7-458c-bd73-e0db744e51f4",
+      "id" : 606,
+      "name" : "Children in grade I",
+      "query" : "'use strict';\n({params, imports}) => {\n    const GradeI= (enrolment) => {\n      let score = enrolment.findLatestObservationInEntireEnrolment('Weight for age Grade');\n      return !_.isNil(score) ? score.getValue() === 1 : false;\n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && GradeI(enrolment)))\n};",
+      "description" : "Total number of Children in Grade I",
+      "color" : "#ff0000",
+      "displayOrder" : 1.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "3782cd68-addc-4490-b41f-80dc32f5cd2e",
+      "id" : 635,
+      "name" : "No of children went into lower grade",
+      "query" : "'use strict';\n({params, imports}) => {\n    const LowerGrade= (enrolment) => {\n       const latestEncounter1 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(0)\n            .value();\n       console.log('latestEncounter1',latestEncounter1.getObservationReadableValue('Weight for age Grade'));\n       const latestEncounter2 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(1)\n            .value();\n            if(!_.isNil(latestEncounter1) && !_.isNil(latestEncounter2)){\n         const enc1Value = latestEncounter1.getObservationReadableValue('Weight for age Grade');\n       const enc2Value = latestEncounter2.getObservationReadableValue('Weight for age Grade');\n       return (enc1Value < enc2Value); \n       }\n       else          \n    return false;\n    \n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && LowerGrade(enrolment)))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 10.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "b6f9836c-df88-4ad9-bdf7-dbe123c33cad",
+      "id" : 616,
+      "name" : "Children in grade III",
+      "query" : "'use strict';\n({params, imports}) => {\n    const GradeIII= (enrolment) => {\n      let score = enrolment.findLatestObservationInEntireEnrolment('Weight for age Grade');\n      return !_.isNil(score) ? score.getValue() === 3 : false;\n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && GradeIII(enrolment)))\n};",
+      "description" : "Total number of Children in Grade III",
+      "color" : "#ff0000",
+      "displayOrder" : 3.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "e3ab6f53-5fae-43fd-be42-ae295eafaa61",
+      "id" : 633,
+      "name" : "No of children - gained grade",
+      "query" : "'use strict';\n({params, imports}) => {\n    const GradeGained= (enrolment) => {\n       const latestEncounter1 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(0)\n            .value();\n       console.log('latestEncounter1',latestEncounter1.getObservationReadableValue('Weight for age Grade'));\n       const latestEncounter2 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(1)\n            .value();\n            if(!_.isNil(latestEncounter1) && !_.isNil(latestEncounter2)){\n         const enc1Value = latestEncounter1.getObservationReadableValue('Weight for age Grade');\n       const enc2Value = latestEncounter2.getObservationReadableValue('Weight for age Grade');\n       return (enc2Value > enc1Value); \n       }\n       else          \n    return false;\n    \n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && GradeGained(enrolment)))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 8.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "de331278-bb9a-43fa-9226-c9b08bcce400",
+      "id" : 634,
+      "name" : "No of children in the same grade",
+      "query" : "'use strict';\n({params, imports}) => {\n    const SameGrade= (enrolment) => {\n       const latestEncounter1 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(0)\n            .value();\n       console.log('latestEncounter1',latestEncounter1.getObservationReadableValue('Weight for age Grade'));\n       const latestEncounter2 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(1)\n            .value();\n            if(!_.isNil(latestEncounter1) && !_.isNil(latestEncounter2)){\n         const enc1Value = latestEncounter1.getObservationReadableValue('Weight for age Grade');\n       const enc2Value = latestEncounter2.getObservationReadableValue('Weight for age Grade');\n       return (enc2Value == enc1Value); \n       }\n       else          \n    return false;\n    \n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && SameGrade(enrolment)))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 9.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "f3142e6c-de7f-4184-9365-e3e40585cb41",
+      "id" : 629,
+      "name" : "Growth monitoring visits",
+      "query" : "({params, imports}) => {\n    const ChildGrowth= (enrolment) => {\n        const ChildGrowthEnc = enrolment.getEncountersOfType('Growth Monitoring');\n        const ChildGrowthEncThisMonth = ChildGrowthEnc \n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.encounterDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.encounterDateTime).format('YYYY'));\n        return ChildGrowthEncThisMonth .length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n    .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0).@count > 0`)\n    .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && ChildGrowth(enrolment) && enrolment.programExitDateTime == null))\n};",
+      "description" : "Number of visits scheduled for growth monitoring in the month",
+      "color" : "#ff0000",
+      "displayOrder" : 4.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "a306c0ec-e784-4eaa-b7ba-b35345f8db77",
+      "id" : 631,
+      "name" : "No of cancelled visits",
+      "query" : "'use strict';\n({params, imports}) => {\n    const Phul = (enrolment) => {\n        const encounters = enrolment.getEncounters(false);\n         const cancelledEncounters = encounters\n    .filter((e) => imports.moment().format('MMM') === imports.moment(e.cancelDateTime).format('MMM') &&\n    imports.moment().format('YYYY') === imports.moment(e.cancelDateTime).format('YYYY') && e.cancelDateTime != null && e.encounterDateTime === null\n    );\n        return cancelledEncounters.length > 0 ? true : false;\n    };\n    \n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.voided = false).@count > 0).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && Phul(enrolment)))\n};",
+      "description" : "Number of total visits canceled in the month",
+      "color" : "#ff0000",
+      "displayOrder" : 6.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "de331278-bb9a-43fa-9226-c9b08bcce400",
+      "id" : 634,
+      "name" : "No of children in the same grade",
+      "query" : "'use strict';\n({params, imports}) => {\n    const SameGrade= (enrolment) => {\n       const latestEncounter1 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(0)\n            .value();\n       console.log('latestEncounter1',latestEncounter1.getObservationReadableValue('Weight for age Grade'));\n       const latestEncounter2 = _.chain(enrolment.getEncountersOfType('Growth Monitoring'))\n            .filter((e) => e.encounterDateTime)\n            .sortBy((e) => e.encounterDateTime, 'desc')\n            .nth(1)\n            .value();\n            if(!_.isNil(latestEncounter1) && !_.isNil(latestEncounter2)){\n         const enc1Value = latestEncounter1.getObservationReadableValue('Weight for age Grade');\n       const enc2Value = latestEncounter2.getObservationReadableValue('Weight for age Grade');\n       return (enc2Value == enc1Value); \n       }\n       else          \n    return false;\n    \n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && SameGrade(enrolment)))\n};",
+      "description" : "",
+      "color" : "#ff0000",
+      "displayOrder" : 9.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    }, {
+      "uuid" : "cf51b682-a1c8-415b-9d3c-ffb851da5e21",
+      "id" : 615,
+      "name" : "Children in grade II",
+      "query" : "'use strict';\n({params, imports}) => {\n    const GradeII= (enrolment) => {\n      let score = enrolment.findLatestObservationInEntireEnrolment('Weight for age Grade');\n      return !_.isNil(score) ? score.getValue() === 2 : false;\n    };\n    return params.db.objects('Individual')\n        .filtered(`SUBQUERY(enrolments, $enrolment, $enrolment.program.name = 'Phulwari' and $enrolment.programExitDateTime = null and $enrolment.voided = false and SUBQUERY($enrolment.encounters, $encounter, $encounter.encounterType.name = 'Growth Monitoring' and $encounter.voided = false).@count > 0 and voided = false).@count > 0`)\n        .filter((individual) => individual.voided === false && _.some(individual.enrolments, enrolment => enrolment.program.name === 'Phulwari' && GradeII(enrolment)))\n};",
+      "description" : "Total number of Children in Grade II",
+      "color" : "#ff0000",
+      "displayOrder" : 2.0,
+      "iconFileS3Key" : "",
+      "nested" : false,
+      "count" : 1,
+      "voided" : false
+    } ],
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "a8157a66-256e-486e-8df2-1488e15911ad",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "44ccb000-c6b0-4614-9bed-0fd604aaef27",
+      "displayOrder" : 7.0,
+      "voided" : false
+    }, {
+      "uuid" : "effdd9b2-a1e0-4e60-a601-7add8d81e66b",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "46e45568-0860-4f37-a91d-24f9e7c0d1e7",
+      "displayOrder" : 5.0,
+      "voided" : false
+    }, {
+      "uuid" : "2c10b4e7-0447-414d-b91f-95f440c66400",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "edb02b8a-6cb7-458c-bd73-e0db744e51f4",
+      "displayOrder" : 1.0,
+      "voided" : false
+    }, {
+      "uuid" : "fc084cb9-9508-45de-92f2-348f7b3f3251",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "3782cd68-addc-4490-b41f-80dc32f5cd2e",
+      "displayOrder" : 10.0,
+      "voided" : false
+    }, {
+      "uuid" : "96be6dda-f809-4de3-ab5a-97635b2d4cef",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "b6f9836c-df88-4ad9-bdf7-dbe123c33cad",
+      "displayOrder" : 3.0,
+      "voided" : false
+    }, {
+      "uuid" : "e9c6900b-b323-444c-9f79-023545de19f0",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "e3ab6f53-5fae-43fd-be42-ae295eafaa61",
+      "displayOrder" : 8.0,
+      "voided" : false
+    }, {
+      "uuid" : "195f7bec-12c2-4d9a-9e19-b0354c20b2fa",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "de331278-bb9a-43fa-9226-c9b08bcce400",
+      "displayOrder" : 9.0,
+      "voided" : true
+    }, {
+      "uuid" : "e931a175-0367-4638-a62e-1ed78ffa5bad",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "f3142e6c-de7f-4184-9365-e3e40585cb41",
+      "displayOrder" : 4.0,
+      "voided" : false
+    }, {
+      "uuid" : "b64e9df7-4100-4113-84a9-017412fe76ca",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "a306c0ec-e784-4eaa-b7ba-b35345f8db77",
+      "displayOrder" : 6.0,
+      "voided" : false
+    }, {
+      "uuid" : "3ee400b7-5b85-4406-b927-6cf503c7662f",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "de331278-bb9a-43fa-9226-c9b08bcce400",
+      "displayOrder" : 9.0,
+      "voided" : false
+    }, {
+      "uuid" : "f1ab0593-7d02-4d3b-a938-8ee7141bba5e",
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "cf51b682-a1c8-415b-9d3c-ffb851da5e21",
+      "displayOrder" : 2.0,
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+} ]

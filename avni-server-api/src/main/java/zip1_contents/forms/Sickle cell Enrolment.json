@@ -1,0 +1,1123 @@
+{
+  "name" : "Sickle cell Enrolment",
+  "uuid" : "3064b9a6-a101-4343-a177-16dd44867bae",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "3e92e94f-9b99-498c-bec1-16bfe0c6fefd",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of Diagnosis",
+      "uuid" : "4010ea4a-150c-43a4-88f2-5b26b8261e45",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Age at diagnosis",
+      "uuid" : "784d7b49-6236-45bb-8c0b-d78fb186cb8b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Age at diagnosis",
+        "uuid" : "2e05f73a-2f4e-4654-86af-0dc7afa552bb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Weight (in Kgs) at diagnosis",
+      "uuid" : "1e6e97ad-c518-46fd-b3b2-dbef0aa8b557",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const _ = imports.lodash;\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Height (in cms) at diagnosis",
+      "uuid" : "0b4d5d42-30c7-4a10-a5ad-b9733f6460ef",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Height",
+        "uuid" : "23bcad9f-ec16-46ec-92f5-e144411e5dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 21.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 30.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "BMI",
+      "uuid" : "f823cc45-5110-428e-856a-b6a8d41d5374",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "BMI",
+        "uuid" : "a205563d-0ac2-4955-93ac-e2e7adebb56e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 18.5,
+        "highNormal" : 24.9,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    let height = programEnrolment.findLatestObservationInEntireEnrolment(\"Height\", programEnrolment);\n    let weight = programEnrolment.findObservation(\"Weight\");\n    height = height && height.getValue();\n    weight = weight && weight.getValue();\n    let value = '';\n    if (_.isFinite(weight) && _.isFinite(height)) {\n        value = imports.common.calculateBMI(weight, height);\n    }\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Type of disease",
+      "uuid" : "528b88d6-833f-4861-93f6-3bbcf5feda28",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Other" ]
+      } ],
+      "concept" : {
+        "name" : "Type of disease",
+        "uuid" : "05ba5101-9a1c-43f5-a5d1-ecc32e001629",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "AS",
+          "uuid" : "48c7a76c-13f8-4f1f-b09e-d4e00461e3c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "SS",
+          "uuid" : "1f43668b-d1fd-41ef-afa3-38c265d467ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify Other",
+      "uuid" : "a92b3ed8-d146-4bb7-a4cf-5ea7ce46dc81",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other disease",
+        "uuid" : "ad604ae2-a1c7-45cc-8652-92d8fd68164d",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Type of disease').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Did ever BT done?",
+      "uuid" : "9dd84f4e-4613-486b-a85a-9f8e4f48e812",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did ever BT done",
+        "uuid" : "957cc778-e964-43d3-b936-47feb8671ee4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Did ever got jaundice",
+      "uuid" : "abc22915-061e-4bc8-a23c-baf3ce87502a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did ever got jaundice",
+        "uuid" : "dd7bd236-b37f-4e7b-907d-de98ee850b76",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Did ever got sickle crisis?",
+      "uuid" : "905b08d3-0714-4165-bd46-8a131208ef53",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did ever got sickle crisis",
+        "uuid" : "0b8f2516-96b5-4698-878f-1b4d50381f6e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Did ever hospitalized due to sickle cell disease?",
+      "uuid" : "00f492da-886a-48b7-9b72-270f4bd428a2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did ever hospitalized due to sickle cell disease",
+        "uuid" : "252e79c3-831d-41cb-aa0b-702e876699e2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Member of peer support",
+      "uuid" : "83ea16b0-acf9-4251-9ea5-9acc4c21bbb1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Member of peer support",
+        "uuid" : "6c7bd0b2-849e-446c-b5eb-a725f8c53296",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "50ea3104-bcae-4c9b-a5ff-02b0c29b6571",
+    "name" : "Lab Investigation",
+    "displayOrder" : 2.0,
+    "display" : "Lab Investigation",
+    "formElements" : [ {
+      "name" : "Hb",
+      "uuid" : "8dfca624-0de5-4ead-b6ad-6ae5bed993f5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "MCV",
+      "uuid" : "d1869fbe-cc61-429c-8787-30d8568da91f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "MCV",
+        "uuid" : "80c5d7b9-2c14-4c9d-bbda-cf84d04d53ca",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 75.0,
+        "highNormal" : 81.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  //read the value of form element using programEnrolment.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  if(!showCondition){\n  statusBuilder.validationError(\"Values are not equal\");\n  }\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "TLC",
+      "uuid" : "171c1da1-350b-43fe-a23a-bfa31202ec01",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "TLC",
+        "uuid" : "19020e9c-56ba-4094-aa21-2b16ea08c88e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 4500.0,
+        "highNormal" : 11000.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "86d55c38-18a8-497f-81b6-84b344008588",
+    "name" : "Medicine",
+    "displayOrder" : 3.0,
+    "display" : "Medicine",
+    "formElements" : [ {
+      "name" : "Medicines",
+      "uuid" : "fe9e450b-3e23-4743-a7a2-6b315260beb5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sickle cell medicines",
+        "uuid" : "52919029-9e98-4968-9c88-435d26a8a0e9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Folic acid",
+          "uuid" : "e56d5686-082d-4703-b975-ccd81307deba",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "2.5 mg",
+            "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "400 mcg",
+            "uuid" : "7ad9a8ec-1c37-49e4-be76-38a2f5d731e2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "5 mg",
+            "uuid" : "e6bf6a8e-3c1a-430f-8f09-a9ada7adaf3f",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "1 mg",
+            "uuid" : "0e54e7b0-5fd1-4c54-877f-0df349011e09",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "800 mcg",
+            "uuid" : "15756fe0-5b8f-4cce-b68c-b241d1072dd3",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Ibuprofen",
+          "uuid" : "86798209-cdbe-4aa3-8f16-57474c2d1b9a",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "200 mg",
+            "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "400 mg",
+            "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Paracetamol",
+          "uuid" : "c8c54559-53e9-4b60-a618-ccd1d6447dc2",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "250 mg",
+            "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "500 mg",
+            "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "1000 mg",
+            "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Hydroxyurea",
+          "uuid" : "1fe766fa-177a-4f2e-9e45-1a31ef826f41",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "250 mg",
+            "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 7.0,
+            "active" : true
+          }, {
+            "name" : "400 mg",
+            "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "200 mg",
+            "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true
+          }, {
+            "name" : "500",
+            "uuid" : "5ea0a3dc-0078-40b8-9b7c-6696cc017ed3",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "1000 mg",
+            "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 6.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "500 mg",
+            "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 5.0,
+            "active" : true
+          }, {
+            "name" : "100 mg",
+            "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "300 mg",
+            "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "750 mg",
+            "uuid" : "f3c64b3e-6564-443d-a868-de8a32e319e0",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 8.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Hydroxyurea",
+      "uuid" : "7cda4e72-0bb7-4cf6-bdc6-4fbfeb6c37f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hydroxyurea",
+        "uuid" : "1fe766fa-177a-4f2e-9e45-1a31ef826f41",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "250 mg",
+          "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "400 mg",
+          "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "500",
+          "uuid" : "5ea0a3dc-0078-40b8-9b7c-6696cc017ed3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "100 mg",
+          "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "300 mg",
+          "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "750 mg",
+          "uuid" : "f3c64b3e-6564-443d-a868-de8a32e319e0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Hydroxyurea\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Hydroxyurea for how many times a day",
+      "uuid" : "4e96235f-61c0-49f3-84fb-0828695695a0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hydroxyurea for how many times a day",
+        "uuid" : "cdf706c1-b25d-4675-8f77-f9e8f1ceadbc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Hydroxyurea\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Hydroxyurea for how many days",
+      "uuid" : "2d0f768c-ee8e-4331-8c8d-2786ff836b69",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hydroxyurea for how many days",
+        "uuid" : "5f7e5069-2ec5-4a0f-af7a-c91a38df72e5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Hydroxyurea\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Folic acid",
+      "uuid" : "68c797cb-0608-4925-996d-42842a2e539b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Folic acid",
+        "uuid" : "e56d5686-082d-4703-b975-ccd81307deba",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "2.5 mg",
+          "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "400 mcg",
+          "uuid" : "7ad9a8ec-1c37-49e4-be76-38a2f5d731e2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "5 mg",
+          "uuid" : "e6bf6a8e-3c1a-430f-8f09-a9ada7adaf3f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "1 mg",
+          "uuid" : "0e54e7b0-5fd1-4c54-877f-0df349011e09",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "800 mcg",
+          "uuid" : "15756fe0-5b8f-4cce-b68c-b241d1072dd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Folic acid\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Folic acid for how many times a day",
+      "uuid" : "9a26b7ca-1519-4489-8fc8-c9854029b2f9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Folic acid for how many times a day",
+        "uuid" : "43d5d38b-6e47-4f50-9fcc-b5ca66acd179",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Folic acid\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Folic acid for how many days",
+      "uuid" : "5baea366-2270-45d2-a00e-e84ef8a8e8db",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Folic acid for how many days",
+        "uuid" : "8ec036a6-3c01-4fb1-b704-3ce2e4c032f8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Folic acid\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Paracetamol",
+      "uuid" : "86d3092d-06ae-4595-bc58-4b357993e08c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol",
+        "uuid" : "c8c54559-53e9-4b60-a618-ccd1d6447dc2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "250 mg",
+          "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Paracetamol for how many times a day",
+      "uuid" : "f63f9633-3dcf-4926-80bf-239bd247c17e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol for how many times a day",
+        "uuid" : "d6e75425-39a7-4eb9-a7e4-8b375c48186e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Paracetamol for how many days",
+      "uuid" : "1bd452aa-9fb4-4ef8-a0e3-0046c9f76c7d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol for how many days",
+        "uuid" : "0b8c3332-7807-4198-a9af-3b21297fff18",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Ibuprofen",
+      "uuid" : "a3b2534e-f7cc-47a5-b117-3221c00ceaff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ibuprofen",
+        "uuid" : "86798209-cdbe-4aa3-8f16-57474c2d1b9a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "400 mg",
+          "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Ibuprofen\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Ibuprofen for how many times a day",
+      "uuid" : "99421bf0-7a23-4611-b7fc-e3905b6e7a55",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ibuprofen for how many times a day",
+        "uuid" : "39226315-d282-4051-a2bb-4bd0c16b258a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Ibuprofen\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Ibuprofen for how many days",
+      "uuid" : "6d9cb9b4-6998-4c97-af25-cdbfd3c4763b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ibuprofen for how many days",
+        "uuid" : "902f7ee0-8795-4d0f-8d97-bdde904818ef",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Sickle cell medicines').containsAnswerConceptName(\"Ibuprofen\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Oral penicilin",
+      "uuid" : "48fa86df-5d3a-42b2-9520-5ab572592f5f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Oral Penicilin",
+        "uuid" : "f837bd9b-0cac-4d2b-ae18-241ea07b34ab",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n\n  const showCondition =programEnrolment.individual.getAgeInYears() < 5;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other",
+      "uuid" : "34a2b513-097b-4b35-bf00-9322f18e4987",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other medicine",
+        "uuid" : "c14b6c69-9136-4a4f-b028-b927b208b02e",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Oral penicilin",
+      "uuid" : "a4015c10-b5e9-4110-9805-328e3c135ce6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Oral peni (voided~68996)",
+        "uuid" : "3e1af70f-fb41-4276-a599-0405a4cb13fd",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n\n  const showCondition =programEnrolment.individual.getAgeInYears() < 5;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "ddaeea46-20c8-4d90-aff8-b889bb634e85",
+    "name" : "Next visit date",
+    "displayOrder" : 4.0,
+    "display" : "Next visit date",
+    "formElements" : [ {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "32e99a51-d39d-42c7-a974-ec81ebd8d21f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"7a1d6893-f96b-4647-b274-bb78fd369185\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const _ = imports.lodash;\n    const programEnrolment = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEnrolment\n    });\n\n    const nextVisitDate = programEnrolment.getObservationValue('Date of next visit');\n\n    scheduleBuilder\n        .add({\n            name: \"Sickle cell followup\",\n            encounterType: \"Sickle cell followup\",\n            earliestDate: imports.moment(nextVisitDate).toDate(),\n            maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n        }).whenItem(!_.isEmpty(nextVisitDate))\n        .is.not.truthy;\n\n        \n  \n    //return scheduleBuilder.getAll();\n     return scheduleBuilder.getAllUnique(\"encounterType\", true);\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

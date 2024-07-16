@@ -1,0 +1,8 @@
+{
+  "name" : "Sickle cell Exit (voided~1176)",
+  "uuid" : "5df07960-bda4-46fa-80fd-ab3df5c89fd1",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

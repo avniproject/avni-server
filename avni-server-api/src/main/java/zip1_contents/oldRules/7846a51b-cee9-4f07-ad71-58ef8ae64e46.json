@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "eb4d392a-87a0-4673-9176-dbd4101505ab",
+    "type" : "Program"
+  },
+  "entityUUID" : "eb4d392a-87a0-4673-9176-dbd4101505ab",
+  "entityType" : "Program",
+  "type" : "EnrolmentSummary",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP ChildProgramSummary",
+  "uuid" : "7846a51b-cee9-4f07-ad71-58ef8ae64e46",
+  "fnName" : "ChildProgramSummary"
+}

@@ -1,0 +1,7 @@
+{
+  "name" : "Clinic lab result Encounter Cancellation",
+  "uuid" : "9f8ce9fa-e9bd-4ee7-89a5-0609193df199",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

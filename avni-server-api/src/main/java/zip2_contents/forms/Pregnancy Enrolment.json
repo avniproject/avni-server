@@ -1,0 +1,1039 @@
+{
+  "name" : "Pregnancy Enrolment",
+  "uuid" : "353a482a-f7a8-4d54-ac9d-62b8bc19291e",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "003da274-55a1-4b28-8647-2ac8d264e72c",
+    "name" : "General Information",
+    "displayOrder" : 1.0,
+    "display" : "General Information",
+    "formElements" : [ {
+      "name" : "ANC Enrolment ID",
+      "uuid" : "7ccb9330-8ac4-4760-9a58-255d50349928",
+      "keyValues" : [ {
+        "key" : "IdSourceUUID",
+        "value" : "156c75a5-6264-442e-bebe-c35e6741555e"
+      } ],
+      "concept" : {
+        "name" : "ANC Enrolment ID",
+        "uuid" : "c2e127a0-ddb2-4a17-b826-e7398e6e0d3c",
+        "dataType" : "Id",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Relation with village",
+      "uuid" : "c11f9219-a461-4812-96a8-b08bdc288ccf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Relation with village",
+        "uuid" : "58d0a437-17ef-4d58-a36f-9a36b608f5a4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Daughter in law",
+          "uuid" : "164cfed0-b411-402f-8f44-1e14d1705883",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Daughter",
+          "uuid" : "0f8b507f-709f-44af-855b-67b2f8b8a800",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other relation with village",
+      "uuid" : "830f61b0-613c-4d2f-b92f-10bf8b3d4af2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other relation with village",
+        "uuid" : "aaac11d9-1237-41ac-9cf9-239c1226048a",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Relation with village').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "72923396-d90e-4993-9489-327cc46e0f15",
+    "name" : "Obstetric details",
+    "displayOrder" : 2.0,
+    "display" : "Obstetric details",
+    "formElements" : [ {
+      "name" : "Gravida",
+      "uuid" : "ff923c10-5c2a-47ef-9e44-7682cae72fa8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gravida",
+        "uuid" : "838cdad2-e661-4517-88ca-5b9e8e6c676e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 1.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 5.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Parity",
+      "uuid" : "4f48a62d-700b-4d99-8760-04af1adcc339",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Parity",
+        "uuid" : "6956e0f7-d31b-4fb5-a3de-bd6251b24f49",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 5.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Live birth",
+      "uuid" : "18a734d9-2892-4705-ba5e-7da83badb575",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Live birth",
+        "uuid" : "47bb4fbd-729b-48db-995c-4464e26dd3f3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 5.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Still birth",
+      "uuid" : "7a4ab104-e243-43a0-8e6a-76d215d35dfe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "still birth",
+        "uuid" : "73e37865-47a7-44ef-8a06-870b79e55fbd",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 1.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Abortions",
+      "uuid" : "0bae545a-2510-40e2-bfc8-d2f71fa7c148",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "number of abortions",
+        "uuid" : "1465d2a8-dd5a-4cec-9cc3-ab9c7ba22cc2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 9.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 2.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Death",
+      "uuid" : "7189fb76-6d5f-4b5f-a2bc-91c1dfdecaa9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "prganancy,death",
+        "uuid" : "42a98500-3c12-426b-9121-e0e993dbacaf",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Death of children within 1 week after delivery",
+      "uuid" : "94c9797c-42dd-4dde-9e57-45d661522b84",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Death of children within 1 week after delivery",
+        "uuid" : "24b4a632-42bd-4847-91f4-7d8e69929581",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Death of children due to congenital abnormality",
+      "uuid" : "f9a1e0e2-f463-4090-b4fc-7bf805e7547c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Death of children due to congenital abnormality",
+        "uuid" : "c9b244f3-7795-4f5a-a0aa-ccafd1e57b94",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Do you know the exact LMP date?",
+      "uuid" : "bb1ec3b8-7105-4612-a11d-92d5f7e47076",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Do you know the exact LMP date?",
+        "uuid" : "2e153301-bd70-4f74-9cb0-75889bc38b72",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "LMP",
+      "uuid" : "fc6963f0-6c21-4272-ac13-59c48cf0ea7e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Last menstrual period",
+        "uuid" : "814f1780-aa3d-4c46-b881-71face696220",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "LMP (estimated)",
+      "uuid" : "ffaa524d-af2b-411c-a501-baabc2cb7396",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "LMP (estimated)",
+        "uuid" : "c7cb9599-398c-4381-89f2-5f5c933be8e7",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Do you know the exact LMP date?').containsAnswerConceptName(\"No\");\n  return statusBuilder.build();//this method returns FormElementStatus object with visibility true if the conditions given above matches\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "EDD",
+      "uuid" : "83bc61b2-be1b-4a63-8171-855862ff6eab",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "EDD",
+        "uuid" : "730ca106-ece0-495d-8962-f60f38e79d12",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n    let visibility = false;\n    let moment = imports.moment;\n    let value = moment();\n    \n    const lmpDate = programEnrolment.getObservationValue('Last menstrual period');\n    console.log('lmpDate----->',lmpDate);\n    console.log('value----->',value);\n    if (lmpDate) {\n        console.log('-------ENTERED------');\n        visibility = true;\n        value = imports.motherCalculations.estimatedDateOfDelivery(programEnrolment);\n    };\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Is women registered within 3 months",
+      "uuid" : "591b1009-ac31-403f-bfba-1b4c5f231e4e",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Is women registered within 3 months",
+        "uuid" : "e817dda1-0cd7-40a9-8d30-06aafbbbbf24",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n    const lmpDate = programEnrolment.getObservationValue('Last menstrual period');\n    //const value =  imports.moment(today).diff(lmpDate, 'months');\n    const value = imports.motherCalculations.currentTrimester(programEnrolment,programEnrolment.enrolmentDateTime);\n   \n    var isRegisterredWithinThreeMonths;\n  if(value > 1)\n    isRegisterredWithinThreeMonths = 'No'; \n  else \n    isRegisterredWithinThreeMonths = 'Yes';\n    \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, isRegisterredWithinThreeMonths);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Registered within 3 months?",
+      "uuid" : "6b3d7c34-d1c8-425b-bdbf-132206093aba",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Registered within 3 months",
+        "uuid" : "2952824c-da18-46b0-b4c7-35328395133d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "3e536be5-fe31-4242-b989-bb46a7c8d0e2",
+    "name" : "Previous Pregnancy Details",
+    "displayOrder" : 3.0,
+    "display" : "Previous Pregnancy Details",
+    "formElements" : [ {
+      "name" : "Last Delivery",
+      "uuid" : "6c9951b6-b182-45f0-96b6-4efac18710c9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Last Delivery",
+        "uuid" : "748b7b66-c9ce-496f-b670-9d2896e82c23",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Last Delivery (estimated)",
+      "uuid" : "4e93b2ae-8553-45de-9f5e-1824f944ef0e",
+      "keyValues" : [ {
+        "key" : "durationOptions",
+        "value" : [ "months", "years" ]
+      } ],
+      "concept" : {
+        "name" : "Last Delivery (estimated)",
+        "uuid" : "fba78a48-2465-4840-81ec-61138e0a3817",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Last delivery place",
+      "uuid" : "6990778f-0252-43a3-b5d0-fda959922787",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Last delivery place",
+        "uuid" : "1952339b-14b0-447d-b6d7-6bcf18b4af62",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Hospital",
+          "uuid" : "e763cad4-722a-4c37-b5a0-5c17428f1089",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Last delivery outcome",
+      "uuid" : "39a49e8d-ebde-4029-aaae-550b4d9f4017",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Last delivery outcome",
+        "uuid" : "6c771640-52b6-46ea-bd56-0a2670ab7a6d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Live birth",
+          "uuid" : "47bb4fbd-729b-48db-995c-4464e26dd3f3",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 0.0,
+          "lowAbsolute" : 0.0,
+          "highAbsolute" : 9.0,
+          "lowNormal" : 0.0,
+          "highNormal" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Still birth",
+          "uuid" : "36de4090-db75-4eca-96fa-93535053b568",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Abortion",
+          "uuid" : "b819f9a6-a645-4c1e-b78a-f0d97d1383b3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Death after birth",
+          "uuid" : "a3e639d2-4ab1-4758-b5cc-d37d3187f604",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Last delivery sex",
+      "uuid" : "5fd49cc3-474d-4270-83c1-03f9a7addf08",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Last delivery gender",
+        "uuid" : "f776b045-2fcb-4275-b08e-e3e9039b699e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Male",
+          "uuid" : "9be76824-e7c8-4145-b6c1-7f0b006f1b3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Female",
+          "uuid" : "7030fea5-05e1-4abb-982a-7ceb2712adf4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Last delivery- Is baby alive?",
+      "uuid" : "35ee1d3e-a9a0-420b-9e22-ca83eac828cc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Last delivery- Is baby alive?",
+        "uuid" : "2f68ca5f-c690-4848-aa2e-592d6c7ef4e8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Any High risk condition in previous pregnancy",
+      "uuid" : "6fa90fa3-6e5b-4d7a-9db9-cebd8fbe0729",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any High risk condition in previous pregnancy",
+        "uuid" : "26cee30f-b36d-4be2-bec3-9a0904492e52",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "High risk condition in previous pregnancy",
+      "uuid" : "66821289-a6ce-4a36-afef-1adc82cc811b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "High risk condition in previous pregnancy",
+        "uuid" : "a0aea5a9-7101-48ef-8463-5b376efa61bf",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Anaemia",
+          "uuid" : "52beb15d-bae3-4125-8a93-8401e26df818",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Obstructed labour/ Prolonged labour",
+          "uuid" : "65f82627-0afa-4290-87c1-cfffe1da2c68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Antepartum hemorrahge",
+          "uuid" : "8817d66a-cbf5-43c9-9235-1ce6c7e89bec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "No high risk condition",
+          "uuid" : "c64cf96e-e46b-4a02-919a-c5fa3c2cfbf3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "LSCS",
+          "uuid" : "6994e45d-33b6-4c42-b2a7-3c749463b88c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Retained Placenta",
+          "uuid" : "22c2f1e5-aeb6-4b06-814e-9d4cefad276a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Post partum haemorrahge",
+          "uuid" : "5d3154b7-d8b3-4180-9b19-d1631a01208e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : ">3 Abortions",
+          "uuid" : "b9f544ce-a11d-4dfe-8f03-9f2ab0c68f2f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Seizure",
+          "uuid" : "cbc1b5b1-e4f9-4c0e-abe6-cc03362ff08d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Disabled baby / Birth Defect",
+          "uuid" : "a694bacc-cf7e-4eb3-8ea5-144633d670ae",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "BP >=140/90",
+          "uuid" : "106a4e98-a782-4375-a861-06d8b285bb87",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Preterm <28 weeks) delivery",
+          "uuid" : "67974f7b-caaa-45cb-a767-69ef1a0c240f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Blood group of last child (if any) was negative",
+          "uuid" : "228a4a4f-2aac-422f-af50-8b709f4a20d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 14.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 15.0,
+          "active" : true
+        }, {
+          "name" : ">=5 still birth / Babies died",
+          "uuid" : "8310d83d-1c92-401c-a85b-9bdfc8225c08",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1).and\n  .valueInEnrolment('Any High risk condition in previous pregnancy').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other high risk condition in previous pregnancy",
+      "uuid" : "bf94db76-3180-4019-8af9-e6215547fb10",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other high risk condition in previous pregnancy",
+        "uuid" : "6bdfb87a-fefc-48ea-bcab-8bd05cbae73d",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('High risk condition in previous pregnancy').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Does woman want to continue this pregnancy?",
+      "uuid" : "880d6115-d07d-490a-959f-df263a8edd17",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does woman want to continue this pregnancy?",
+        "uuid" : "1aac0eaf-1c9e-4284-93c3-7212c06a3286",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Gravida').is.greaterThan(1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "ccde20b5-79dd-4cba-80ab-754c12600237",
+    "name" : "Medical history",
+    "displayOrder" : 4.0,
+    "display" : "Medical history ",
+    "formElements" : [ {
+      "name" : "Are you taking medicine for any chronic disease?",
+      "uuid" : "1b95c3da-5026-4c55-a6de-9d694147639b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Taking medicine for chronic disease",
+        "uuid" : "dbdf3b6e-8710-4364-9d0e-d92c1cc41db2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Name of chronic disease",
+      "uuid" : "d7551c77-8b94-4c24-b390-55c09d5976a8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of chronic disease",
+        "uuid" : "7d9b6992-ee27-4423-90a5-9ad20400d885",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Diabetes",
+          "uuid" : "1928469b-a981-4579-beb7-ae47b972e671",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "TB",
+          "uuid" : "7943642f-c96f-4de6-a470-b9cb0b45feb0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Sickle cell disease",
+          "uuid" : "77ac9c58-afaa-42ba-88d2-992bd0db63d7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Hypertension",
+          "uuid" : "e7e56956-effe-4cc7-85a6-f726b6bf1ffb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Leprosy",
+          "uuid" : "8f50e18a-f14e-4128-82e3-19624cedba47",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Heart disease",
+          "uuid" : "c8a0b118-3326-4948-9fb5-529f6f5d2b96",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Taking medicine for chronic disease').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify the other chronic disease",
+      "uuid" : "a371247d-559a-4ae8-b6dd-e3509e41fb62",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other chronic disease",
+        "uuid" : "a54d0c2c-a054-45a5-a143-9f6c9db3fbbd",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Name of chronic disease').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fd46a601-47bd-4cc8-b423-03e75bb6c029",
+    "name" : "Details of ANC Visit",
+    "displayOrder" : 5.0,
+    "display" : "Details of ANC Visit",
+    "formElements" : [ {
+      "name" : "Date of ANC Visit",
+      "uuid" : "336d2a33-bfa0-4cbe-9ede-3829c1d727a8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next ANC Visit",
+        "uuid" : "6e50431c-6cb0-495f-9735-dd431c9970ff",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Does woman want to continue this pregnancy?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "a18d6f6a-4594-4f95-a2c6-4c3b5b62cf9c",
+    "name" : "Counselling",
+    "displayOrder" : 6.0,
+    "display" : "Counselling",
+    "formElements" : [ {
+      "name" : "Does woman want to continue this pregnancy?",
+      "uuid" : "a1544384-4fbb-401b-8b1c-1695f82816e4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does woman want to continue this pregnancy?",
+        "uuid" : "1aac0eaf-1c9e-4284-93c3-7212c06a3286",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const edd = programEnrolment.getObservationValue('EDD');\n  \n  const value =  imports.motherCalculations.gestationalAgeForEDD(edd,programEnrolment.enrolmentDateTime);\n\n  \n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().whenItem(value).lessThan(25);\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false
+    }, {
+      "name" : "Send her to nearest antenatal clinic",
+      "uuid" : "8a580cbd-4d6d-413f-96c9-8d6d12806842",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Send her to nearest antenatal clinic",
+        "uuid" : "b5ebc472-0f32-4128-97f3-0e2571daeaae",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Does woman want to continue this pregnancy?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};\n\n",
+      "mandatory" : false
+    }, {
+      "name" : "Date of ANC Visit",
+      "uuid" : "b02272cf-25f8-43cd-989f-2682008de20b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next ANC Visit",
+        "uuid" : "6e50431c-6cb0-495f-9735-dd431c9970ff",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n\n  statusBuilder.show().when.valueInEnrolment('Does woman want to continue this pregnancy?').containsAnswerConceptNameOtherThan(\"No\").or.when.valueInEnrolment('Does woman want to continue this pregnancy?').is.notDefined;;\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Send her to hospital for abortion",
+      "uuid" : "d251a5f5-26fc-4078-a1f7-4c26504d265a",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Send her to hospital for abortion",
+        "uuid" : "b6f45def-e3f4-4e7b-97ed-68c539b82fa2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Send to hospital for abortion",
+          "uuid" : "6a01b992-a1d5-4350-9d86-c23ff700db63",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "voided" : true
+        }, {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Does woman want to continue this pregnancy?').containsAnswerConceptNameOtherThan(\"Yes\");\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEnrolment: programEnrolment,\n        complicationsConcept: \"High Risk Conditions\"\n    });\n    complicationsBuilder\n        .addComplication(\"Gravida/pregnancies more than 5\")\n        .when.valueInEnrolment(\"Gravida\")\n        .is.greaterThan(5);\n    complicationsBuilder\n        .addComplication(\"Diabetes\")\n        .when.valueInEnrolment(\"Name of chronic disease\")\n        .containsAnswerConceptName(\"Diabetes\");\n    complicationsBuilder\n        .addComplication(\"Hypertension\")\n        .when.valueInEnrolment(\"Name of chronic disease\")\n        .containsAnswerConceptName(\"Hypertension\");\n    complicationsBuilder\n        .addComplication(\"TB\")\n        .when.valueInEnrolment(\"Name of chronic disease\")\n        .containsAnswerConceptName(\"TB\");\n    complicationsBuilder\n        .addComplication(\"Heart disease\")\n        .when.valueInEnrolment(\"Name of chronic disease\")\n        .containsAnswerConceptName(\"Heart disease\");    \n    complicationsBuilder\n        .addComplication(\"Sickle cell disease\")\n        .when.valueInEnrolment(\"Name of chronic disease\")\n        .containsAnswerConceptName(\"Sickle cell disease\");  \n    complicationsBuilder\n        .addComplication(\"Leprosy\")\n        .when.valueInEnrolment(\"Name of chronic disease\")\n        .containsAnswerConceptName(\"Leprosy\");  \n    decisions.enrolmentDecisions.push(complicationsBuilder.getComplications());\n    return decisions;\n};",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEnrolment = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEnrolment\n  });\n  \n  const isAbortion = programEnrolment.getObservationReadableValue('Does woman want to continue this pregnancy?');\nconst edd = programEnrolment.getObservationValue('EDD');\nconsole.log('edd',edd);\nconst nextANCDate = programEnrolment.getObservationValue('Date of next ANC Visit');\nconsole.log('nextANCDate',nextANCDate);\n\n \n if(isAbortion == \"No\")\n   scheduleBuilder\n    .add({\n      name: \"Abortion\",\n      encounterType: \"Abortion\",\n      earliestDate: imports.moment(programEnrolment.enrolmentDateTime).toDate(),\n      maxDate: imports.moment(programEnrolment.enrolmentDateTime).toDate()\n    });\n else if(imports.moment(edd).isSameOrBefore(imports.moment(nextANCDate), 'date')){\nif((programEnrolment.hasEncounter('Delivery', 'Delivery')) === false)\n scheduleBuilder\n    .add({\n      name: \"Delivery\",\n      encounterType: \"Delivery\",\n      earliestDate: imports.moment(edd).toDate(),\n      maxDate: imports.moment(edd).add(0, 'days').toDate()\n    });\n  }\nelse{\n  scheduleBuilder\n    .add({\n      name: \"ANC Clinic Visit\",\n      encounterType: \"ANC Clinic Visit\",\n      earliestDate: imports.moment(nextANCDate).toDate(),\n      maxDate: imports.moment(nextANCDate).add(8, 'days').toDate()\n    }).whenItem(!_.isEmpty(nextANCDate))\n    .is.not.truthy;\n    }\n           \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "'use strict';\n({params, imports}) => {\n  const validationResults = [];\n  \n  const programEnrolment = params.entity;\n  if(programEnrolment.getObservationReadableValue('Parity') >   \n  programEnrolment.getObservationReadableValue('Gravida')) {\n    validationResults.push(imports.common.createValidationError('Para Cannot be greater than Gravida'));\n  }\n  \n // const individual = params.entity;\n  if(!programEnrolment.individual.isFemale() ){\n    validationResults.push(imports.common.createValidationError('Only female can be enrolled in Pregnancy Program'));\n  }\n  \n  if( programEnrolment.individual.getAgeInYears() < 16){\n    validationResults.push(imports.common.createValidationError(\"Can't enrol in pregnancy program as age is less than 16 years\"));\n  }\n  \n  \n  return validationResults;\n};",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

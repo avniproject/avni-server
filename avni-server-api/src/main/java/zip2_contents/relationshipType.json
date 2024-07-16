@@ -1,0 +1,76 @@
+[ {
+  "uuid" : "001a3d8e-bc8f-453f-bc1a-a99562455382",
+  "id" : 310,
+  "individualAIsToBRelation" : {
+    "uuid" : "38320efd-fa1f-49b0-9241-4ee6d44798b2",
+    "id" : 394,
+    "name" : "Son",
+    "genders" : [ "Male", "Other" ]
+  },
+  "individualBIsToARelation" : {
+    "uuid" : "75d92ab5-a080-42b0-bcc0-1cc17527bd2e",
+    "id" : 398,
+    "name" : "Father",
+    "genders" : [ "Male" ]
+  }
+}, {
+  "uuid" : "145167f8-9393-458f-91da-752a3571444a",
+  "id" : 311,
+  "individualAIsToBRelation" : {
+    "uuid" : "12f7d447-2a96-4577-b0bf-88507054e282",
+    "id" : 395,
+    "name" : "Daughter",
+    "genders" : [ "Other", "Female" ]
+  },
+  "individualBIsToARelation" : {
+    "uuid" : "75d92ab5-a080-42b0-bcc0-1cc17527bd2e",
+    "id" : 398,
+    "name" : "Father",
+    "genders" : [ "Male" ]
+  }
+}, {
+  "uuid" : "7ccdaa4e-ffa1-4aab-990d-128e44fca8cb",
+  "id" : 312,
+  "individualAIsToBRelation" : {
+    "uuid" : "38320efd-fa1f-49b0-9241-4ee6d44798b2",
+    "id" : 394,
+    "name" : "Son",
+    "genders" : [ "Male", "Other" ]
+  },
+  "individualBIsToARelation" : {
+    "uuid" : "0ba6ee22-05fc-428b-9e70-150488bebac8",
+    "id" : 399,
+    "name" : "Mother",
+    "genders" : [ "Female" ]
+  }
+}, {
+  "uuid" : "1794499d-9464-4831-9f16-d7937611a82c",
+  "id" : 313,
+  "individualAIsToBRelation" : {
+    "uuid" : "12f7d447-2a96-4577-b0bf-88507054e282",
+    "id" : 395,
+    "name" : "Daughter",
+    "genders" : [ "Other", "Female" ]
+  },
+  "individualBIsToARelation" : {
+    "uuid" : "0ba6ee22-05fc-428b-9e70-150488bebac8",
+    "id" : 399,
+    "name" : "Mother",
+    "genders" : [ "Female" ]
+  }
+}, {
+  "uuid" : "1125a0a7-7ec3-4a8c-8ff2-d2a7d6687934",
+  "id" : 314,
+  "individualAIsToBRelation" : {
+    "uuid" : "c6e87694-0055-4cdb-b5e6-5ad35ed99cf2",
+    "id" : 396,
+    "name" : "Wife",
+    "genders" : [ "Other", "Female" ]
+  },
+  "individualBIsToARelation" : {
+    "uuid" : "8a32cf94-5a0f-441c-a13b-706838bc8132",
+    "id" : 397,
+    "name" : "Husband",
+    "genders" : [ "Other", "Male" ]
+  }
+} ]

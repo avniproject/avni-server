@@ -1,0 +1,119 @@
+{
+  "name" : "Sickle cell lab test",
+  "uuid" : "8a254dc5-0f79-482f-9ad2-ceed3dae9d99",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "307e421b-d59c-4dac-b131-29ff31a45a2d",
+    "name" : "Lab Investigation",
+    "displayOrder" : 1.0,
+    "display" : "Lab Investigation",
+    "formElements" : [ {
+      "name" : "Hb",
+      "uuid" : "a62083a7-dfb1-4b16-9329-b742f36f5550",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n    let Hb = programEncounter.programEnrolment.getObservationReadableValue('Hb');\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell lab test')) {\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Hb');\n        if (lastEncounterWithConcept) {\n         Hb = lastEncounterWithConcept.getObservationReadableValue('Hb');\n         lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n        }    \n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true);\n\n    if (Hb > 9) {\n\n        if (lastConceptDataCollected >= 3) {\n            visibility = true;\n        } else {\n            visibility = false;\n        }\n    } else {\n        visibility = true;\n    }\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "MCV",
+      "uuid" : "1408e90b-bf92-4ff6-9d1d-6a838831e541",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "MCV",
+        "uuid" : "80c5d7b9-2c14-4c9d-bbda-cf84d04d53ca",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 75.0,
+        "highNormal" : 81.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n    let MVC = programEncounter.programEnrolment.getObservationReadableValue('MVC');\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell lab test')) {\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'MVC');\n        if (lastEncounterWithConcept) {\n            MVC = lastEncounterWithConcept.getObservationReadableValue('MVC');\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n        }\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true);\n\n    if (MVC > 80) {\n\n        if (lastConceptDataCollected >= 3) {\n            visibility = true;\n        } else {\n            visibility = false;\n        }\n    } else {\n        visibility = true;\n    }\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "TLC",
+      "uuid" : "cc2981f7-83f9-4047-a4a1-a51bc2daa18f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "TLC",
+        "uuid" : "19020e9c-56ba-4094-aa21-2b16ea08c88e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 4500.0,
+        "highNormal" : 11000.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n    let TLC = programEncounter.programEnrolment.getObservationReadableValue('TLC');\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell lab test')) {\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'TLC');\n        if (lastEncounterWithConcept) {\n         TLC = lastEncounterWithConcept.getObservationReadableValue('TLC');\n         lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n        }         \n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true);\n\n    if (TLC > 4500 && TLC < 11000) {\n\n        if (lastConceptDataCollected >= 3) {\n            visibility = true;\n        } else {\n            visibility = false;\n        }\n    } else {\n        visibility = true;\n    }\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Disease status",
+      "uuid" : "15f86a07-dc0c-4b31-83d6-c04c44e4e5a7",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Disease status",
+        "uuid" : "0af91ad2-4e0a-4be4-94d1-4567a5094e06",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n\n    const hb = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Hb');\n\n    let value = 'Uncontrolled';\n    \n    if (hb && hb.getReadableValue() > 9) {\n        value = 'Controlled';\n    }\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Disease status",
+      "uuid" : "fb3a82e3-4805-4b02-adf7-b110d4fa20df",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Disease status dummy",
+        "uuid" : "b5f62507-5699-41db-aa74-25f905646d54",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Uncontrolled",
+          "uuid" : "bead2101-7dc0-4106-a5aa-3023e16798f1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Controlled",
+          "uuid" : "6c5c489f-0d19-4207-aea2-08fd5c4dc7d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n\n    const hb=programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Hb');\n\n    let value = 'bead2101-7dc0-4106-a5aa-3023e16798f1';\n    if (hb.getReadableValue() > 9) {\n        value = '6c5c489f-0d19-4207-aea2-08fd5c4dc7d9';\n    }\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

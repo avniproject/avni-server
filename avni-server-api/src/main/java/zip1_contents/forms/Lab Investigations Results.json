@@ -1,0 +1,382 @@
+{
+  "name" : "Lab Investigations Results",
+  "uuid" : "0aa18889-65fe-499a-92d0-678f1c1846a9",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "4a11aa42-3646-45aa-a74e-9a3e58e02b5e",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Blood group",
+      "uuid" : "efd2c120-b6f9-4267-8ef1-5219ae7be016",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood group",
+        "uuid" : "c50c8196-01c9-422f-b917-fd2309adb261",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "AB+",
+          "uuid" : "db83359e-4530-4a79-9981-36bdf03ffc5d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "O-",
+          "uuid" : "2fdc8bab-d738-4362-86fc-27b14a0ab7ba",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "A+",
+          "uuid" : "89d2a461-f458-4565-81df-4efabb333bd6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "A-",
+          "uuid" : "63b128d5-b29d-4759-b242-de24247681fc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "AB-",
+          "uuid" : "d9674584-51ca-40d1-86be-3f65f6b2f84c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "B+",
+          "uuid" : "a2b9a6ca-9266-45b3-a842-fa5f7e9849ff",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "B-",
+          "uuid" : "f781b597-449c-4636-8b52-e9cd1e495003",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "O+",
+          "uuid" : "0e8d5617-3d7f-4585-adee-4b439088bbfe",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "HIV (Elisa)",
+      "uuid" : "85acb9e2-aeb3-493d-a772-45191247f443",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HIV (Elisa)",
+        "uuid" : "b3e8a85a-c7ca-49b8-9c6f-8bd5ee6bfad1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Hepatitis B",
+      "uuid" : "cb35ac2b-0ea8-49c4-bb91-454249929c47",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hepatitis B",
+        "uuid" : "f874c217-2fed-41c9-a094-ba6519bd537d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Sickle prep",
+      "uuid" : "3116cc5d-7d05-4424-bdee-a259362a2a2c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sickle prep",
+        "uuid" : "610db330-fafe-456f-bd58-e062cb6e52e3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Hb Electrophoresis",
+      "uuid" : "43aee17f-8530-4df5-bbd5-15bc3a0cb85c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb Electrophoresis",
+        "uuid" : "198d08c6-b742-4b22-97fd-2293472e571e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "AS",
+          "uuid" : "48c7a76c-13f8-4f1f-b09e-d4e00461e3c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "SS",
+          "uuid" : "1f43668b-d1fd-41ef-afa3-38c265d467ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle prep').containsAnswerConceptName(\"Positive\");\n  return statusBuilder.build();\n};\n",
+      "mandatory" : true
+    }, {
+      "name" : "VDRL",
+      "uuid" : "707aa6e2-6564-409a-9f06-cfd07fccd883",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "VDRL",
+        "uuid" : "cbe884a3-c5f3-441e-900a-6bc76f3cabca",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Random Blood Sugar (RBS)",
+      "uuid" : "856a9b4f-57bb-4c1d-9326-8cf7e3990fd7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Random Blood Sugar (RBS)",
+        "uuid" : "d6ac43a2-527d-4168-ba7d-2d233add3a6e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 160.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Glucose test (75gm Glucose)",
+      "uuid" : "6c4ae274-dc19-4d9a-b651-bfe3cb236738",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glucose test (75gm Glucose)",
+        "uuid" : "ae2046a4-015c-44e2-9703-01bc3da13202",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 199.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 140.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const value = \nimports.motherCalculations.gestationalAgeAsOn(programEncounter.encounterDateTime, programEncounter.programEnrolment);\n\nconsole.log('value',value);  \n\nconst statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\nstatusBuilder.show().whenItem(value).is.greaterThanOrEqualTo(21).and.is.lessThanOrEqualTo(28);\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "FBS",
+      "uuid" : "bb23edf8-4d5c-4ad2-908c-78ff349b0ca3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "FBS",
+        "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n \n  statusBuilder.show().when.valueInEncounter('Random Blood Sugar (RBS)').is.lessThan(60)\n  .or.is.greaterThan(160)\n  .or.when.valueInEncounter('Glucose test (75gm Glucose)').is.greaterThan(140);\n\n  return statusBuilder.build();\n};\n\n",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "PP2BS",
+      "uuid" : "3059fe85-faff-4df4-bdcc-579de2c0757e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "PP2BS",
+        "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n \n  statusBuilder.show().when.valueInEncounter('Random Blood Sugar (RBS)').is.lessThan(60)\n  .or.is.greaterThan(160)\n  .or.when.valueInEncounter('Glucose test (75gm Glucose)').is.greaterThan(140);\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "HbA1C",
+      "uuid" : "0cfdeb8a-d99a-4d6f-84a7-caefad7a5974",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HbA1C",
+        "uuid" : "f11d4eca-f6ca-4471-9a6b-e1f5d742bc22",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highNormal" : 7.0,
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n \n  statusBuilder.show().when.valueInEncounter('Random Blood Sugar (RBS)').is.lessThan(60)\n  .or.is.greaterThan(160)\n  .or.when.valueInEncounter('Glucose test (75gm Glucose)').is.greaterThan(140);\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: \"High Risk Conditions\"\n    });\n       \n     \n     complicationsBuilder\n        .addComplication(\"HIV (Elisa) is positive\")\n        .when.valueInEncounter(\"HIV (Elisa)\")\n        .containsAnswerConceptName(\"Positive\");\n     complicationsBuilder\n        .addComplication(\"Hb Electrophoresis\")\n        .when.valueInEncounter(\"Hb Electrophoresis\")\n        .containsAnswerConceptName(\"SS\");\n     complicationsBuilder\n        .addComplication(\"Hepatitis B is positive\")\n        .when.valueInEncounter(\"Hepatitis B\")\n        .containsAnswerConceptName(\"Positive\");\n     complicationsBuilder\n        .addComplication(\"VDRL is positive\")\n        .when.valueInEncounter(\"VDRL\")\n        .containsAnswerConceptName(\"Positive\");      \n           \n       \n        \n    decisions.encounterDecisions.push(complicationsBuilder.getComplications());\n   \n    return decisions;\n};",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

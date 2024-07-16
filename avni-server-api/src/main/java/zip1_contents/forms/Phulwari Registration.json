@@ -1,0 +1,51 @@
+{
+  "name" : "Phulwari Registration",
+  "uuid" : "af560302-7fad-4683-bb68-551ad5ef2097",
+  "formType" : "IndividualProfile",
+  "formElementGroups" : [ {
+    "uuid" : "1612bbe6-545f-4633-8e10-614fea8372f7",
+    "name" : "Visit details",
+    "displayOrder" : 1.0,
+    "display" : "Visit details",
+    "formElements" : [ {
+      "name" : "Day of the month to visit this Phulwari",
+      "uuid" : "71759a4a-b370-4b7a-9caf-4950a827fa69",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Day of the month to visit this Phulwari",
+        "uuid" : "3a16455f-45e4-4985-8064-b1f06de7ef9e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 15.0,
+        "highAbsolute" : 30.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Day of the month to visit this Phulwari",
+      "uuid" : "35cb28d8-6f0c-486e-87ef-92edd9e3b169",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Day of month for growth monitoring visit",
+        "uuid" : "d1985def-295c-415c-b563-310946a03762",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 15.0,
+        "highAbsolute" : 30.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const individual = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    individual\n  });\n  const _ = imports.lodash;\n  const dailyAttendanceEncounter = _.find(individual.encounters, ({encounterType}) => encounterType.name === 'Daily Attendance Form');\n  if(_.isEmpty(dailyAttendanceEncounter)) {\n      let earliestVisitDate = imports.moment(individual.registrationDate).toDate();\n      let weekDayName =  imports.moment(earliestVisitDate).format('ddd');\n      \n      if(_.isEqual(weekDayName,'Sun')){\n       earliestVisitDate = imports.moment(individual.registrationDate).add(1, 'days').toDate();\n         weekDayName =  imports.moment(earliestVisitDate).format('ddd');\n       }\n      \n      scheduleBuilder.add({\n                    name: \"Daily Attendance\" +' -'+weekDayName,\n                    encounterType: \"Daily Attendance Form\",\n                    earliestDate: earliestVisitDate,\n                    maxDate: earliestVisitDate\n                }\n            );\n    }\n        \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

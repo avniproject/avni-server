@@ -1,0 +1,1118 @@
+{
+  "name" : "Mother PNC",
+  "uuid" : "4faf6f85-358a-49cc-a0b6-3f6fea90fb9b",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "4529cdda-b79d-411e-8adc-77a341f1c7f1",
+    "name" : "Basic Details",
+    "displayOrder" : 1.0,
+    "display" : "Basic Details",
+    "formElements" : [ {
+      "name" : "Birth Weight",
+      "uuid" : "e64dbef0-c8b0-49a3-a112-79ae6eea71f2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Is mother suffering from any of the following?",
+      "uuid" : "92a91ba6-48e9-4197-9d55-86451659c2bb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Mother suffering from",
+        "uuid" : "11244ced-b169-493d-a160-2dda1e1db195",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Excessive bleeding",
+          "uuid" : "946e2ee6-a4ab-4cb6-8440-3dbf1a062843",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Unconscious",
+          "uuid" : "dbdf2686-55e0-47f9-9319-5a55cc5d9f4c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Seizures",
+          "uuid" : "eba8e941-c0f3-4935-8ac6-124f6d8d1c5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify the other problem mother is suffering from",
+      "uuid" : "4d4187a8-1a02-48b7-ab62-f411110587dd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other problem mother is suffering from",
+        "uuid" : "70fa7289-d90e-4c07-a4db-3382cce4daf5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Mother suffering from').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Refer the mother immediately to hospital. Did arrangement was made?",
+      "uuid" : "c6a212c7-258d-4e84-8d02-2606fcd60e0e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Refer the mother immediately to hospital. Did arrangement was made",
+        "uuid" : "9a31b9a0-18bf-4b3b-87cf-fad47128596b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Mother was not ready to go to hospital",
+          "uuid" : "a9c79567-d7bc-4d48-81cb-3146567b86c0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mother went to hospital",
+          "uuid" : "65593745-1a1e-434b-bffc-7c58d40a2113",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Arrangement was made",
+          "uuid" : "7709636f-51c3-4db6-a9d4-0aca4b1a4cab",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Mother suffering from').containsAnswerConceptNameOtherThan(\"No\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "76964dd3-b8aa-4a2c-8991-cb1b7028641f",
+    "name" : "Mother's examination",
+    "displayOrder" : 2.0,
+    "display" : "Mother's examination",
+    "formElements" : [ {
+      "name" : "Temperature",
+      "uuid" : "02b3ce0d-319e-4888-a401-9abfe62e36e3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature",
+        "uuid" : "544438f2-4eeb-41a6-9017-d2895d4d76ef",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 97.0,
+        "highNormal" : 99.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Temperature",
+      "uuid" : "dd862804-aac3-4f36-a2d6-dcb4f7bf301d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature(celcius)",
+        "uuid" : "0c6d2587-382d-4762-8871-b6890d854505",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 36.1,
+        "highNormal" : 37.8,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "validFormat" : {
+        "regex" : "^[0-9]{1,2}(\\.[0-9])??$",
+        "descriptionKey" : "requiredFormatxxDotx"
+      },
+      "mandatory" : true
+    }, {
+      "name" : "Pulse",
+      "uuid" : "0a360f5a-b630-4050-ae18-8fa0433ee563",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pulse",
+        "uuid" : "630c0fa3-38f7-427d-a8dd-f1417cf1b7dc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Blood Pressure (systolic)",
+      "uuid" : "9202148e-f035-4e2b-8a15-e05a4805f30d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (systolic)",
+        "uuid" : "6874d48e-8c2f-4009-992c-1d3ca1678cc6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 20.0,
+        "highAbsolute" : 190.0,
+        "lowNormal" : 90.0,
+        "highNormal" : 140.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Blood Pressure (Diastolic)",
+      "uuid" : "776c6bc7-bc88-4070-ae83-ce12e77d1a3b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (Diastolic)",
+        "uuid" : "da871f6c-cef0-4191-b307-6751b31ac9ec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 10.0,
+        "highAbsolute" : 120.0,
+        "lowNormal" : 50.0,
+        "highNormal" : 90.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Is there foul smelling discharge PV",
+      "uuid" : "d058eee3-f37e-44bf-859e-a8d7e743401c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is there foul smelling discharge PV",
+        "uuid" : "7764a974-7ba8-4a13-9ba9-6d8d580f3c99",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Does mother has seizures?",
+      "uuid" : "f12c0022-6312-45fc-96d9-3e927adecbd1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does mother has seizures?",
+        "uuid" : "74c618b3-a4e0-4382-9486-70dbf5752d9d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Does mother has less breast milk?",
+      "uuid" : "77116109-6cd2-46f5-9468-646cf0cc217c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "mother have less breast milk",
+        "uuid" : "2371bb8d-4561-4396-ba01-14c14f7972ba",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Does mother has any breast related issue like swelling, cracked nipple etc?",
+      "uuid" : "5b4a4abb-fc8f-443f-99b5-119e0a184d41",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does mother has any breast related issue like swelling, cracked nipple etc?",
+        "uuid" : "43567d78-ad97-46bc-afa1-8522ec9e0180",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "9bebd0a2-08a2-4e03-b688-e56c449d6840",
+    "name" : "Schemes",
+    "displayOrder" : 3.0,
+    "display" : "Schemes",
+    "formElements" : [ {
+      "name" : "Does mother get the benefit of JSY scheme?",
+      "uuid" : "d8798a30-a7a6-4150-a4a6-f5f89176e0ca",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "mother get the benefit of JSY scheme",
+        "uuid" : "be8560c8-beab-4b69-80ea-c6e943939a30",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('mother get the benefit of JSY scheme').containsAnswerConceptNameOtherThan(\"Yes\");\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Date of recieving the benefit",
+      "uuid" : "7701098c-0535-42f2-a9bd-1262b23362f5",
+      "keyValues" : [ {
+        "key" : "datePickerMode",
+        "value" : "Calendar"
+      } ],
+      "concept" : {
+        "name" : "Date of recieving the JSY scheme benefit",
+        "uuid" : "d8e3c407-af6d-45df-9db1-a40e289452c0",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('mother get the benefit of JSY scheme').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "5f3c262a-a344-4f97-a633-4a389c653164",
+    "name" : "Counselling",
+    "displayOrder" : 4.0,
+    "display" : "Counselling ",
+    "formElements" : [ {
+      "name" : "Counselling done",
+      "uuid" : "57f2f74f-ee12-42e2-a161-3827be58efaa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Counselling",
+        "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "7c88c74c-feb1-48b3-8ebe-d8238b58dced",
+    "name" : "Counselling details",
+    "displayOrder" : 5.0,
+    "display" : "Counselling details",
+    "formElements" : [ {
+      "name" : "Counselling done",
+      "uuid" : "f7c1bb08-e15a-49d1-93f9-c580bf274abb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Counselling",
+        "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Baby warming",
+      "uuid" : "a5249a09-7e6e-4879-a1da-6afee8821f57",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Keep baby warm",
+        "uuid" : "28d3ae12-a92b-4499-8cce-7471f11d3611",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Child PNC - Baby warming - Dos",
+      "uuid" : "375256b6-150c-436a-b31a-e5eff67707e7",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Child PNC - Baby warming - Dos",
+        "uuid" : "b5255768-9c41-4588-8272-f8a967044992",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Keeping baby warm",
+      "uuid" : "7ae3d4b4-aef5-4db5-ae3e-1f8ff8005e69",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Keeping Baby Warm",
+        "uuid" : "17225eec-e8af-49b7-95a4-5e5293976902",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Breastfeeding",
+      "uuid" : "d01f152d-daee-4556-b3e8-312e8e124f59",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Breastfeeding (counselling)",
+        "uuid" : "6ae137dd-2b6d-4562-aeea-252b7ae6b869",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Breastfeeding (counselling)",
+      "uuid" : "36aaad14-3c0e-42e3-9cab-018e589ce8a3",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Breastfeeding (counselling)",
+        "uuid" : "6ae137dd-2b6d-4562-aeea-252b7ae6b869",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Sign of good latching(counselling)",
+      "uuid" : "f4cc40f0-ebcb-49d0-ac2b-3d15db07c477",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Sign of good latching(counselling)",
+        "uuid" : "42fe9c19-f279-4a0e-a8ce-8a157357bf8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "No bath till one day/ 1 week",
+      "uuid" : "2eeb17fb-adda-45e2-95d0-6012d0064796",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "No bath till one day/ 1 week(counselling)",
+        "uuid" : "72bcb84a-893e-436f-b9de-1919d1480421",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Vaccination",
+      "uuid" : "95e44448-5e0c-4a5f-839f-e8ce678ca1f0",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Vaccination (counselling)",
+        "uuid" : "83705410-0548-4f92-97a2-8e48bf1275ca",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "HBNC checkup",
+      "uuid" : "a2507257-614c-4309-8014-b363ef3a3d6c",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "HBNC checkup (counselling)",
+        "uuid" : "8464b109-5b66-40fc-90ca-5cc9e0ae30fd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "PPMC check",
+      "uuid" : "404f7b02-1b4d-4ae7-8c3a-c6c99c9e1e97",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "PPMC check(counselling)",
+        "uuid" : "6af2f841-e483-42d7-83c5-41de4ecb1966",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Seeking care in case of any health problem",
+      "uuid" : "c3de12e3-bdae-40a5-97d9-660b51c3de4c",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Seeking care in case of any health problem(counselling)",
+        "uuid" : "f63d81de-61e4-4894-87d2-cf0fb8a8cd67",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Family planning",
+      "uuid" : "6d2b8a90-6c67-4d72-875c-299a63f602c0",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Family planning (counselling)",
+        "uuid" : "3b8f36ce-3837-455f-bcc0-26558545dd81",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "refer the woman to SC or ask the SHW to make a home visit",
+      "uuid" : "df6a4692-f856-4bd3-9f9f-cb8d3735ef5b",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the woman to SC or ask the SHW to make a home visit",
+        "uuid" : "ca2af807-ec9f-4b33-8ffa-e17075979996",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is there foul smelling discharge PV').containsAnswerConceptName(\"Yes\")\n  .and.when.valueInEncounter(\"Temperature(celcius)\").is.greaterThan(37.5);\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "refer the mother to SC/Ganiyari",
+      "uuid" : "d61462cd-433c-4fb8-88dd-f6db6b4a54e9",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the mother to SC/Ganiyari",
+        "uuid" : "c3f8600a-aebf-44ea-967e-ff93c11a5946",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does mother has seizures?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fc32cae8-3962-49d8-9590-dc0777407ae1",
+    "name" : "Referral",
+    "displayOrder" : 6.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "refer the woman to SC or ask the SHW to make a home visit",
+      "uuid" : "249c85f6-2c98-4da9-81e9-2a7dacc2dd91",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the woman to SC or ask the SHW to make a home visit",
+        "uuid" : "ca2af807-ec9f-4b33-8ffa-e17075979996",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is there foul smelling discharge PV').containsAnswerConceptName(\"Yes\")\n  .and.when.valueInEncounter(\"Temperature(celcius)\").is.greaterThan(37.5);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "refer the mother to SC/Ganiyari",
+      "uuid" : "bc773de5-3bb1-4f0e-af1d-b8c56485bb13",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the mother to SC/Ganiyari",
+        "uuid" : "c3f8600a-aebf-44ea-967e-ff93c11a5946",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does mother has seizures?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false
+    }, {
+      "name" : "Referral needed to mother?",
+      "uuid" : "090c0d98-6c3b-40fe-8986-e4374a8318eb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral needed to mother?",
+        "uuid" : "c75a610f-27c3-4fad-9c26-04887c15436e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Referral needed to mother?').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "d200a57d-839b-4067-a5e9-8c71a41e7207",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "place of referral",
+        "uuid" : "c470cb18-f902-4b2b-844b-4b6286e36b8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral needed to mother?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "47f9d01f-1cad-49fc-9e4f-a67a505945fd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('place of referral').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "f4509d43-3759-457a-bfd0-ec55b68e887f",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Sonography", "Admission at Referral centre", "Delivery/LACS", "Consultation with specialist at referral centre" ]
+      } ],
+      "concept" : {
+        "name" : "Referral reason",
+        "uuid" : "8a56f008-a910-4d6f-b028-a95db330dbf2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sonography",
+          "uuid" : "1a893a89-4984-43e1-85cc-b64fb582824c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "infec",
+          "uuid" : "8293fa19-4fd6-4942-bc93-032bc3d39e68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "voided" : true
+        }, {
+          "name" : "Admission at Referral centre",
+          "uuid" : "dad7f494-99ec-42ce-b50b-07a7450be30c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Delivery/LACS",
+          "uuid" : "7d0d495a-e733-4ea8-93ca-c57bf42c6ee9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seizure",
+          "uuid" : "cbc1b5b1-e4f9-4c0e-abe6-cc03362ff08d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Bleeding",
+          "uuid" : "0aeb893c-34ba-49f0-bd6f-0696fce74458",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Consultation with specialist at referral centre",
+          "uuid" : "f1ecf77c-122f-4462-8bc8-812013c80fa3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Infection",
+          "uuid" : "e668ceed-92ee-4b2f-8714-72838f11264b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral needed to mother?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other referral reason",
+      "uuid" : "fd1ce620-3448-4af2-9955-5603da75cfe6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n    const programEncounter = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter\n    });\n    const dateOfDelivery = programEncounter.programEnrolment.getObservationReadableValueInEntireEnrolment('Date and time when baby was out');\n //   console.log('dateOfDelivery',dateOfDelivery);\n    //getObservationValue('Date and time when placenta was out');\n    const visitDate = programEncounter.encounterDateTime;\n   // console.log('dateOfDelivery',!_.isEmpty(dateOfDelivery));\n   // console.log('dateOfDelivery',dateOfDelivery !== undefined);\n    \n    if(dateOfDelivery !== undefined){\n    const encounterSchedulePNC = [\n        {\"name\": \"PNC 2\", \"earliest\": 1, \"max\": 4},\n        {\"name\": \"PNC 3\", \"earliest\": 2, \"max\": 5},\n        {\"name\": \"PNC 4\", \"earliest\": 6, \"max\": 9},\n        {\"name\": \"PNC 5\", \"earliest\": 14, \"max\": 17},\n        {\"name\": \"PNC 6\", \"earliest\": 28, \"max\": 31},\n        {\"name\": \"PNC 7\", \"earliest\": 41, \"max\": 44}\n    ];\n      \n    var schedule = _.chain(encounterSchedulePNC).filter(e => imports.moment(visitDate).isSameOrBefore(imports.moment(dateOfDelivery).add(e.earliest, 'days'), 'date') === true)\n        .filter(e => (programEncounter.programEnrolment.hasEncounter('Mother PNC', e.name)) === false)\n        .first()\n        .value();\n        \n    const allscheduledEncounter=programEncounter.programEnrolment.scheduledEncountersOfType('Mother PNC');\n    \n    let scheduleEncounter = '';\n    if(!_.isEmpty(allscheduledEncounter))\n    scheduleEncounter = allscheduledEncounter[0];\n    \n    if (!_.isEmpty(schedule) && _.isEqual(scheduleEncounter.name,programEncounter.name) ) {\n        scheduleBuilder\n            .add({\n                name: schedule.name,\n                encounterType: \"Mother PNC\",\n                earliestDate:  imports.moment(dateOfDelivery).add(schedule.earliest, 'days').toDate() ,\n                maxDate: imports.moment(dateOfDelivery).add(schedule.max, 'days').toDate()\n            });\n     }\n    }\n\n\n    const ifReferral = programEncounter.getObservationReadableValue('Referral needed to mother?');\n//    console.log('ifReferral',ifReferral);\n\n    scheduleBuilder\n        .add({\n            name: \"Referral Status-1\",\n            encounterType: \"Referral Status\",\n            earliestDate: imports.moment(programEncounter.encounterDateTime).add(3, 'days').toDate(),\n            maxDate: imports.moment(programEncounter.encounterDateTime).add(5, 'days').toDate()\n        }).whenItem(ifReferral == 'Yes')\n        .is.truthy;\n\n    return scheduleBuilder.getAll();\n};\n",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

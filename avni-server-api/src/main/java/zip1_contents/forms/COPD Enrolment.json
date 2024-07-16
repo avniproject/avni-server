@@ -1,0 +1,47 @@
+{
+  "name" : "COPD Enrolment",
+  "uuid" : "abc02111-be61-40e7-936f-53de464ff538",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "d745f221-af22-40a2-8cfa-c1bdfc3f9c35",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of diagnosis",
+      "uuid" : "d3a09a9d-65ad-4a58-b82c-068d336295f4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n  const diagnosisDate = programEnrolment.getObservationReadableValue('Date of diagnosis');\n  let visitDate = programEnrolment.enrolmentDateTime;\n \n if(imports.moment(diagnosisDate).isAfter(visitDate, 'date'))\n statusBuilder.validationError(\"Diagnosis Date cannot be after visit date\");\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Name of subcategory of disease",
+      "uuid" : "24307945-4bdd-4a74-8053-99e1b311e6b2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of subcategory of disease",
+        "uuid" : "677b90f4-aba1-47d0-8f8a-4d0ead1288b0",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

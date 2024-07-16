@@ -1,0 +1,172 @@
+{
+  "name" : "Household Registration",
+  "uuid" : "22fb3942-90f1-4d7a-8da3-32f5530d258d",
+  "formType" : "IndividualProfile",
+  "formElementGroups" : [ {
+    "uuid" : "7e1773eb-515f-4ea2-aa4e-63c8caee8326",
+    "name" : "Identification",
+    "displayOrder" : 1.0,
+    "display" : "Identification",
+    "formElements" : [ {
+      "name" : "Household number",
+      "uuid" : "85215830-c431-4558-9ed3-82e6b0b73df5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Household Number",
+        "uuid" : "70ca916e-4a7f-4f92-b131-ff7020662229",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "800ad97c-2ecb-4b79-96ca-2a0553dfd6eb",
+    "name" : "Basic details",
+    "displayOrder" : 2.0,
+    "display" : "Basic details",
+    "formElements" : [ {
+      "name" : "Type of family",
+      "uuid" : "0e847153-4f6f-4916-8945-a143a9fc5ff8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of family",
+        "uuid" : "420d2480-24ac-486f-a34a-09f6249f5325",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Extended",
+          "uuid" : "5113984a-8a5f-451d-ab6d-7b1b155cd1af",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Joint",
+          "uuid" : "56692789-27eb-4203-ac68-c3b76d3fe873",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Nuclear",
+          "uuid" : "e4564fdf-6c1c-45d3-a917-a2560c7a4ed6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Total income",
+      "uuid" : "772d6c4d-66ad-4c1c-ad70-7bdfcbaf0da4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total income",
+        "uuid" : "297bc4c6-deb0-4c12-b525-86a667899d25",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Caste category",
+      "uuid" : "e62e0667-f11d-45c5-a17c-71fcb8d04295",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Caste Category",
+        "uuid" : "9ad4b520-4e33-4b1b-a056-37ae6418988f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "General",
+          "uuid" : "9b3a3dca-b93a-4b67-975f-5f6f1a815cea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "SC",
+          "uuid" : "0b78a94a-c652-4d59-ad16-c9138db05e29",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "ST",
+          "uuid" : "8d1c99b2-fbed-4407-9f6a-040b9a5731b2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "OBC",
+          "uuid" : "8aa7b5ea-5d35-4a08-af33-0345af903e2f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Type of ration",
+      "uuid" : "c6a4f087-f4f7-45b5-bd5a-4336a78ab32d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ration Card",
+        "uuid" : "86fc3018-8eeb-4a58-a9d9-a40fff839305",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "BPL",
+          "uuid" : "906f6286-515b-4ff5-8065-0fcedef003b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "APL",
+          "uuid" : "3eac5822-f5fe-421d-8cdd-e89bef20baca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Antyodaya",
+          "uuid" : "78b4a024-82af-42fe-bf58-6da696073af9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

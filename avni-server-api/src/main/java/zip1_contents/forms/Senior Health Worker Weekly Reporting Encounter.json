@@ -1,0 +1,1414 @@
+{
+  "name" : "Senior Health Worker Weekly Reporting Encounter",
+  "uuid" : "831ed94f-16a3-491c-b26b-cdc2560ed769",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "be9195dd-8362-4424-b656-7839e2a1da09",
+    "name" : "Reporting duration",
+    "displayOrder" : 1.0,
+    "display" : "Reporting duration",
+    "formElements" : [ {
+      "name" : "Week",
+      "uuid" : "fadf4d74-90e5-46a7-80c2-003cebd8c08f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Week",
+        "uuid" : "ed76dd81-854f-4200-815a-181c3485089e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Week start date",
+      "uuid" : "4c85b483-0c12-49f3-8489-6cd202449d23",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Week start date",
+        "uuid" : "6386e57b-9f6e-4e26-8376-e5f805d25c96",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Week end date",
+      "uuid" : "06e806d8-9cb5-4c9e-91e4-04b07582c1f0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Week end date",
+        "uuid" : "176fc62c-e773-4c9c-bf30-799f45a6a9b1",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  let weekStartDateObservation = encounter.findObservation('6386e57b-9f6e-4e26-8376-e5f805d25c96');\n  let weekStartDateValue = _.isEmpty(weekStartDateObservation) ? weekStartDateObservation : weekStartDateObservation.getReadableValue();\n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"176fc62c-e773-4c9c-bf30-799f45a6a9b1\").lessThan(weekStartDateValue, 'ms').matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be earlier than week start date.\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "details" : {
+            "validationError" : "Date cannot be earlier than week start date."
+          },
+          "actionType" : "validationError"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Week end date",
+                "conceptUuid" : "176fc62c-e773-4c9c-bf30-799f45a6a9b1",
+                "conceptDataType" : "Date"
+              },
+              "rhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Week start date",
+                "conceptUuid" : "6386e57b-9f6e-4e26-8376-e5f805d25c96"
+              },
+              "operator" : "lessThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Dates",
+      "uuid" : "04243c7a-a355-4913-b324-0a7dd17440ff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dates",
+        "uuid" : "9e066240-9a87-4fa4-9d56-4e4443bc9bd0",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "0b7ec2f2-82a8-49a7-aa1e-4dbc3fa72d4d",
+    "name" : "OPD Patients",
+    "displayOrder" : 2.0,
+    "display" : "OPD Patients",
+    "formElements" : [ {
+      "name" : "OPD Patients",
+      "uuid" : "2a3b6be6-5d8b-420a-9b50-c7c5a3f3c7d1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "OPD Patients",
+        "uuid" : "db4996ad-007b-4e71-9dc4-4586938b8902",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Female patients above 18",
+      "uuid" : "1bfec857-8133-47b4-a28e-cfaed7ff0760",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients above 18",
+        "uuid" : "dd9baf92-789c-4292-829b-2a34303d80e2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2a3b6be6-5d8b-420a-9b50-c7c5a3f3c7d1",
+      "mandatory" : true
+    }, {
+      "name" : "Male patients above 18",
+      "uuid" : "0af3003f-3778-46c8-a97f-16cc273748c0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients above 18",
+        "uuid" : "664f1187-6ad5-4ae5-95bc-aaef364ee536",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2a3b6be6-5d8b-420a-9b50-c7c5a3f3c7d1",
+      "mandatory" : true
+    }, {
+      "name" : "Female patients below 18",
+      "uuid" : "5edf74a5-2143-4536-9a9d-891d93fc9dbb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients below 18",
+        "uuid" : "26299a93-5485-4f4b-82d7-acf59ab13268",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2a3b6be6-5d8b-420a-9b50-c7c5a3f3c7d1",
+      "mandatory" : true
+    }, {
+      "name" : "Male patients below 18",
+      "uuid" : "e9b31309-df67-4a58-b672-f51d0b3ba174",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients below 18",
+        "uuid" : "5548c34c-4ef7-4a39-adb4-fa66422e38db",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2a3b6be6-5d8b-420a-9b50-c7c5a3f3c7d1",
+      "mandatory" : true
+    }, {
+      "name" : "Total OPD patients",
+      "uuid" : "2b033ac9-43f7-43ab-9948-669a2ba04053",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total OPD patients",
+        "uuid" : "14a83402-dd4e-451e-90b5-78ca74300098",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  \n\n  const femalePatientsAboveEighteen = encounter.getObservationValue('Female patients above 18','OPD Patients');\n  const malePatientsAboveEighteen = encounter.getObservationValue('Male patients above 18','OPD Patients');\n  const femalePatientsBelowEighteen = encounter.getObservationValue('Female patients below 18','OPD Patients');\n  const malePatientsBelowEighteen = encounter.getObservationValue('Male patients below 18','OPD Patients');\n  \n  const value = _.toNumber(femalePatientsAboveEighteen || 0 ) + _.toNumber(malePatientsAboveEighteen || 0) + _.toNumber(femalePatientsBelowEighteen || 0) + _.toNumber(malePatientsBelowEighteen || 0); \n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true,value );\n};",
+      "parentFormElementUuid" : "2a3b6be6-5d8b-420a-9b50-c7c5a3f3c7d1",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "53fd1859-9218-4319-984d-c1908196b198",
+    "name" : "Mobile clinic OPD patients",
+    "displayOrder" : 3.0,
+    "display" : "Mobile clinic OPD patients",
+    "formElements" : [ {
+      "name" : "Mobile clinic OPD patients",
+      "uuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Mobile clinic OPD patients",
+        "uuid" : "c5a8c31e-f5ea-448b-89b0-8e0e73106362",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Female patients above 18",
+      "uuid" : "25e433f0-c69f-43e5-afe5-6b9e43516555",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients above 18",
+        "uuid" : "dd9baf92-789c-4292-829b-2a34303d80e2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    }, {
+      "name" : "Male patients above 18",
+      "uuid" : "1d4f7f3d-a1bf-4624-91ef-316096fd7ad5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients above 18",
+        "uuid" : "664f1187-6ad5-4ae5-95bc-aaef364ee536",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    }, {
+      "name" : "Female patients below 18",
+      "uuid" : "61133961-a4b6-4b75-acfc-602d401932ae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients below 18",
+        "uuid" : "26299a93-5485-4f4b-82d7-acf59ab13268",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    }, {
+      "name" : "Male patients below 18",
+      "uuid" : "c72e2194-f700-4034-ab22-c503b1399bb5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients below 18",
+        "uuid" : "5548c34c-4ef7-4a39-adb4-fa66422e38db",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    }, {
+      "name" : "Old patients",
+      "uuid" : "6db9f7ad-fa6e-44a5-b621-9ca14989b944",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Old patients",
+        "uuid" : "2532654f-018d-40a3-b27d-29d119a19367",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    }, {
+      "name" : "New patients",
+      "uuid" : "99c851ab-5efa-4edc-9733-1a56ce72b6f8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "New patients",
+        "uuid" : "0de4b2c4-1170-4d8c-9797-e271b0ffb6e4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    }, {
+      "name" : "Total patients",
+      "uuid" : "dfbdb473-52de-4d2f-ad0e-eb5e527e21f6",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total patients",
+        "uuid" : "e79e1cce-9fe8-4b36-b286-a228d94cfcfa",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  \n\n  const femalePatientsAboveEighteen = encounter.getObservationValue('Female patients above 18','Mobile clinic OPD patients');\n  const malePatientsAboveEighteen = encounter.getObservationValue('Male patients above 18','Mobile clinic OPD patients');\n  const femalePatientsBelowEighteen = encounter.getObservationValue('Female patients below 18','Mobile clinic OPD patients');\n  const malePatientsBelowEighteen = encounter.getObservationValue('Male patients below 18','Mobile clinic OPD patients');\n  const oldpatients = encounter.getObservationValue('Old patients','Mobile clinic OPD patients');\n  const newpatients = encounter.getObservationValue('New patients','Mobile clinic OPD patients');\n  \n  const value = _.toNumber(femalePatientsAboveEighteen || 0 ) + _.toNumber(malePatientsAboveEighteen || 0) + _.toNumber(femalePatientsBelowEighteen || 0) + _.toNumber(malePatientsBelowEighteen || 0) + _.toNumber(oldpatients || 0) + _.toNumber(newpatients || 0); \n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true,value );\n};",
+      "parentFormElementUuid" : "4f976c8c-3db1-407c-9167-737ccfe82b3f",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "29cb37a4-49c1-4c37-982d-e48b3e9dbbf2",
+    "name" : "SHW referrals",
+    "displayOrder" : 4.0,
+    "display" : "SHW referrals",
+    "formElements" : [ {
+      "name" : "SHW referrals",
+      "uuid" : "6c74b149-aa5a-4681-a760-503e999b40a0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHW Referrals",
+        "uuid" : "f7f047c3-b676-4ecc-87bc-050d4d38e728",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Village to SC",
+      "uuid" : "e063e1af-05c8-44c5-9ca1-2fa00b2f5cc7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village to SC",
+        "uuid" : "2bd6a3f1-8871-4d63-bdc9-6d5fc11b2bb0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6c74b149-aa5a-4681-a760-503e999b40a0",
+      "mandatory" : true
+    }, {
+      "name" : "Village/SC to Ganiyari",
+      "uuid" : "947c1b1c-3cbf-4291-8ab4-8e662e304a18",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village/SC to Ganiyari",
+        "uuid" : "2ebc07e4-8e9a-4a82-8c8b-4c4f7583baf0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6c74b149-aa5a-4681-a760-503e999b40a0",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fe9aad10-ebc9-4f22-83df-e53463f209a5",
+    "name" : "OPD Patients",
+    "displayOrder" : 5.0,
+    "display" : "OPD Patients",
+    "formElements" : [ {
+      "name" : "Total patients",
+      "uuid" : "f9006983-09d8-4a9c-a786-b97a87786a09",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total patients",
+        "uuid" : "e79e1cce-9fe8-4b36-b286-a228d94cfcfa",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Female patients above 18 years",
+      "uuid" : "dcde055f-76fe-4e5e-af57-df1324688bdd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients above 18",
+        "uuid" : "dd9baf92-789c-4292-829b-2a34303d80e2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Male patients above 18 years",
+      "uuid" : "0896fc13-3616-4b8c-bdd4-7d78175927f8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients above 18",
+        "uuid" : "664f1187-6ad5-4ae5-95bc-aaef364ee536",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Female patients below 18 years",
+      "uuid" : "bcc234ba-78ad-479c-9900-fd59b0e949ba",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients below 18",
+        "uuid" : "26299a93-5485-4f4b-82d7-acf59ab13268",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Male patients below 18 years",
+      "uuid" : "5b23548a-f5c4-4879-8112-7241ddb022e6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients below 18",
+        "uuid" : "5548c34c-4ef7-4a39-adb4-fa66422e38db",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Total Patients",
+      "uuid" : "6624c929-c9de-42cf-af88-77cf8b1a4fea",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total Patients",
+        "uuid" : "0b6d98f0-303c-458d-9505-28e2238b2598",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n\n  let femalePatientsAboveEighteen = encounter.getObservationValue('Female patients above 18');\n  let malePatientsAboveEighteen = encounter.getObservationValue('Male patients above 18');\n  let femalePatientsBelowEighteen = encounter.getObservationValue('Female patients below 18');\n  let malePatientsBelowEighteen = encounter.getObservationValue('Male patients below 18');\n  \n  let totalPatients = _.toNumber(femalePatientsAboveEighteen || 0 ) + _.toNumber(malePatientsAboveEighteen || 0) + _.toNumber(femalePatientsBelowEighteen || 0) + _.toNumber(malePatientsBelowEighteen || 0); \n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true,totalPatients );\n};",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "9dd92c13-8c17-42b6-9d32-9952eae5eb98",
+    "name" : "Mobile Clinic OPD Patients",
+    "displayOrder" : 6.0,
+    "display" : "Mobile Clinic OPD Patients",
+    "formElements" : [ {
+      "name" : "Total number of patients",
+      "uuid" : "e2bb96cc-b98e-46c2-ae77-b4c9d42b9c27",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total number of patients",
+        "uuid" : "48f1e0f0-13f2-4a62-a228-4e90b1ac70c1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Female patients above 18 years",
+      "uuid" : "4945bcb0-9024-4339-a14c-adf8818d8309",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients above  18 years",
+        "uuid" : "72169440-a0f5-4890-bc60-f7a346cef45f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Male patients above 18 years",
+      "uuid" : "370dbaa7-69c9-4698-870f-306f0063e786",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients above  18 years",
+        "uuid" : "151c0202-b955-416a-ae90-683331bd8263",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Female patients below 18 years",
+      "uuid" : "4dc09d5f-31a5-4eba-a1f8-507b84b35187",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients below  18 years",
+        "uuid" : "6d75cf8a-35da-41d6-b1ea-395950316d03",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Male patients below 18 years",
+      "uuid" : "70a0c755-1157-4756-adeb-82756fba548b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients below  18 years",
+        "uuid" : "18c30f72-794a-47ee-982a-040d0b10f047",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Old patients",
+      "uuid" : "250c8668-dd1d-464e-a61d-ce97ec1b4283",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Old patients",
+        "uuid" : "2532654f-018d-40a3-b27d-29d119a19367",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "New patients",
+      "uuid" : "2ed4dca4-39c1-4616-9756-e03c4cc76cff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "New patients",
+        "uuid" : "0de4b2c4-1170-4d8c-9797-e271b0ffb6e4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Total number of patients",
+      "uuid" : "016c416a-1f99-48c8-87a7-b99458062d0f",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total number of patient",
+        "uuid" : "d2fc1d88-16c7-4f38-aab1-c1353ec26ca1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n\n  let femalePatientsAboveEighteen = encounter.getObservationValue('72169440-a0f5-4890-bc60-f7a346cef45f');\n  let malePatientsAboveEighteen = encounter.getObservationValue('151c0202-b955-416a-ae90-683331bd8263');\n  let femalePatientsBelowEighteen = encounter.getObservationValue('6d75cf8a-35da-41d6-b1ea-395950316d03');\n  let malePatientsBelowEighteen = encounter.getObservationValue('18c30f72-794a-47ee-982a-040d0b10f047');\n  let oldPatients = encounter.getObservationValue('Old patients');\n  let newPatients = encounter.getObservationValue('New patients');\n\n  let totalPatients = _.toNumber(femalePatientsAboveEighteen || 0) + _.toNumber(malePatientsAboveEighteen || 0) + _.toNumber(femalePatientsBelowEighteen || 0) + _.toNumber(malePatientsBelowEighteen || 0) + _.toNumber(oldPatients || 0) + _.toNumber(newPatients || 0);\n\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true,totalPatients );\n};",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "3142a532-5147-4c3b-9cd7-2c388e29cb8f",
+    "name" : "SHW referrals",
+    "displayOrder" : 7.0,
+    "display" : "SHW referrals",
+    "formElements" : [ {
+      "name" : "Village to SC",
+      "uuid" : "f6c5f37c-b75c-4bf5-97c5-c294a8b4318f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village to SC",
+        "uuid" : "2bd6a3f1-8871-4d63-bdc9-6d5fc11b2bb0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Village/SC to Ganiyari",
+      "uuid" : "144adf1d-3cef-4fd8-8564-26636b0bd0d6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village/SC to Ganiyari",
+        "uuid" : "2ebc07e4-8e9a-4a82-8c8b-4c4f7583baf0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "4ebd104e-cc65-434e-bdff-64818075e90e",
+    "name" : "Mobile clinic referrals",
+    "displayOrder" : 8.0,
+    "display" : "Mobile clinic referrals",
+    "formElements" : [ {
+      "name" : "Mobile Clinic to Ganiyari",
+      "uuid" : "8f4adf7c-4763-4585-94d7-c46ab999903d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Mobile Clinic to Ganiyari",
+        "uuid" : "8d2c3824-c1af-4682-93a0-0f8b80fee974",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "9eeeaab7-2c1b-4764-80b2-4af3f8176e33",
+    "name" : "Fever OPD Patients",
+    "displayOrder" : 9.0,
+    "display" : "Fever OPD Patients",
+    "formElements" : [ {
+      "name" : "Total no of patients",
+      "uuid" : "9758dfdd-e6fe-40ff-ab35-d8dd2219434b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total no of patients",
+        "uuid" : "1c808cc3-43a2-4e50-a436-28ef1df32730",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Female patients above 18 years",
+      "uuid" : "c7bb720a-aa2f-45d9-a651-9ec3094d395b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients above 18 years",
+        "uuid" : "a3ad5039-3e1c-41f8-a308-1dad2b77f292",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Fever OPD Patients",
+      "uuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever OPD Patients",
+        "uuid" : "b1d869ea-c4e2-447a-997a-298acc0d79fb",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Female patients above 18",
+      "uuid" : "e851cbee-9986-4fbf-a3df-cb1686495c31",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients above 18",
+        "uuid" : "dd9baf92-789c-4292-829b-2a34303d80e2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : true
+    }, {
+      "name" : "Male patients above 18",
+      "uuid" : "88e73843-0b14-4a39-b2f7-a106c21fa3d0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients above 18",
+        "uuid" : "664f1187-6ad5-4ae5-95bc-aaef364ee536",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : true
+    }, {
+      "name" : "Female patients below 18",
+      "uuid" : "360e5e1a-9b6a-42de-8a87-f52464bf986d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients below 18",
+        "uuid" : "26299a93-5485-4f4b-82d7-acf59ab13268",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : true
+    }, {
+      "name" : "Male patients below 18",
+      "uuid" : "6daf3064-dc8c-4fa2-8a87-39a5d9d45c6c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients below 18",
+        "uuid" : "5548c34c-4ef7-4a39-adb4-fa66422e38db",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : true
+    }, {
+      "name" : "Fever referrals to Ganiyari",
+      "uuid" : "a07ee25f-b02a-4419-ae57-a0042f65dac6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever Referrals to Ganiyari",
+        "uuid" : "7c639c57-4925-440f-8c8f-d1e6d83159d5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : true
+    }, {
+      "name" : "Total fever OPD patients",
+      "uuid" : "a3112e5b-0375-4cee-a685-7564f9d7d220",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total fever OPD patients",
+        "uuid" : "826a0744-dc7f-4727-b091-ab25c28d1444",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n\n  let femalePatientsAbove18 = encounter.getObservationValue('Female patients above 18','Fever OPD Patients');\n  let femalePatientsBelow18 = encounter.getObservationValue('Female patients below 18','Fever OPD Patients');\n  let malePatientsAbove18 = encounter.getObservationValue('Male patients above 18','Fever OPD Patients');\n  let malePatientsBelow18 = encounter.getObservationValue('Male patients below 18','Fever OPD Patients');\n  let feverReferalsForGaniyari = encounter.getObservationValue('Fever Referrals to Ganiyari','Fever OPD Patients');\n  \n  console.log('femalePatientsAbove18---->',femalePatientsAbove18);\n  console.log('femalePatientsBelow18---->',femalePatientsBelow18);\n  console.log('malePatientsBelow18---->',malePatientsBelow18);\n  \n  value = _.toNumber(femalePatientsAbove18 || 0) + _.toNumber(femalePatientsBelow18 || 0) + _.toNumber(malePatientsAbove18 || 0) + _.toNumber(malePatientsBelow18 || 0) + _.toNumber(feverReferalsForGaniyari || 0);\n  \n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, null, null);\n};",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : false
+    }, {
+      "name" : "Total fever OPD patients",
+      "uuid" : "9866802a-50e4-45fb-b4b1-376b9336a1d4",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total fever OPD patients (voided~126600)",
+        "uuid" : "d28e44ab-71cf-4dae-80a7-d836c776df1c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "parentFormElementUuid" : "6fe52d7d-b9cb-4f85-ad41-5fdc85bb5f8d",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Male patients above 18 years",
+      "uuid" : "0ceec422-edf8-4d24-a187-a28ee46dbe8e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients above 18 years",
+        "uuid" : "b5a1104b-55e5-4457-83b1-435676e0063a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Female patients below 18 years",
+      "uuid" : "ee40804c-2d06-4544-a57b-85c04bb488e7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Female patients below 18 years",
+        "uuid" : "f973c2fd-7e20-4775-9fcd-5120d6d38c76",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Male patients below 18 years",
+      "uuid" : "2cc3d00b-b3f3-414d-a0ce-4121ba68f5da",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Male patients below 18 years",
+        "uuid" : "a4752797-4d59-407e-b5d6-e33858e83534",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Fever Referrals to Ganiyari",
+      "uuid" : "d1b96905-bf24-4458-9508-cc20cd149eab",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever Referrals to Ganiyari",
+        "uuid" : "7c639c57-4925-440f-8c8f-d1e6d83159d5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Total no of patient",
+      "uuid" : "12060a7b-5bbb-4ab5-9c07-b6a2cab62b90",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total no of patient",
+        "uuid" : "2751c9b8-f40e-4fe5-a75e-99bca8beca7d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  \n  let femalePatientsAboveEighteen = encounter.getObservationValue('Female patients above 18 years');\n  let femalePatientsBelowEighteen = encounter.getObservationValue('Female patients below 18 years');\n  let malePatientsAboveEighteen = encounter.getObservationValue('Male patients above 18 years');\n  let malePatientsBelowEighteen = encounter.getObservationValue('Male patients below 18 years');\n  let feverReferralsForGaniyari = encounter.getObservationValue('Fever Referrals to Ganiyari');\n  \n  let totalPatients = _.toNumber( femalePatientsAboveEighteen || 0 ) + _.toNumber( malePatientsAboveEighteen || 0 ) +        \n _.toNumber( femalePatientsBelowEighteen || 0 ) + _.toNumber( malePatientsBelowEighteen || 0 ) +                             \n _.toNumber( feverReferralsForGaniyari || 0 );\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true,totalPatients );\n  \n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Eligible for Fever study",
+      "uuid" : "59543cdc-d2c8-4964-ac5f-eadcdc42f576",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Eligible for Fever study",
+        "uuid" : "1ed761eb-feb7-47e1-83f8-ba64eff5f17e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Enrolled in Fever Study",
+      "uuid" : "b1a3c578-df5d-4dd1-86cf-f01c07d6b74f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Enrolled in Fever Study",
+        "uuid" : "754abdb1-8474-465e-867c-6ad97e5f06b8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  let eligibleForFeverStudyObservation = encounter.findObservation('1ed761eb-feb7-47e1-83f8-ba64eff5f17e');\n  let eligibleForFeverStudyValue = _.isEmpty(eligibleForFeverStudyObservation) ? eligibleForFeverStudyObservation : eligibleForFeverStudyObservation.getReadableValue();\n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"754abdb1-8474-465e-867c-6ad97e5f06b8\").greaterThan(eligibleForFeverStudyValue).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"The entered value must not exceed Eligible for fever study.\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "details" : {
+            "validationError" : "The entered value must not exceed Eligible for fever study."
+          },
+          "actionType" : "validationError"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Enrolled in Fever Study",
+                "conceptUuid" : "754abdb1-8474-465e-867c-6ad97e5f06b8",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Eligible for Fever study",
+                "conceptUuid" : "1ed761eb-feb7-47e1-83f8-ba64eff5f17e"
+              },
+              "operator" : "greaterThan"
+            } ],
+            "conjunction" : "and"
+          }
+        } ]
+      } ],
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Day 7 interviews conducted",
+      "uuid" : "a77bc4cb-38d9-4c21-b9b7-b319da999d63",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Day 7 interviews conducted",
+        "uuid" : "a52f5b0e-91a7-42ad-8eae-f2f6c0a54d5a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "d84b1c21-203d-400a-a999-5ba1ea97990f",
+    "name" : "Animal Bite Patients",
+    "displayOrder" : 10.0,
+    "display" : "Animal Bite Patients",
+    "formElements" : [ {
+      "name" : "Animal bite patients",
+      "uuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animal bite patients",
+        "uuid" : "7d8b2e91-1d29-44e4-8558-b1de8f38721d",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Snake",
+      "uuid" : "33db263c-eda3-4a7c-990b-7d6ad18e8c8b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Snake",
+        "uuid" : "84b6241e-813c-4052-9e3d-70fc8886b421",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Dog",
+      "uuid" : "8474e50d-6d4c-40ea-8109-bdf5241e746b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dog",
+        "uuid" : "39d21a54-e157-437d-958f-610fe9b75718",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Scorpio",
+      "uuid" : "56ff09a3-3d71-4f78-9b93-bafc6a804af2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Scorpio",
+        "uuid" : "b2763efd-582e-4c77-8787-d0dcbaa9d8ad",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Wasp",
+      "uuid" : "f18ca72c-dd83-48a4-9d86-a3fb2baf6ec9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Wasp",
+        "uuid" : "263c5f9e-1b18-47e5-8f95-5cc298387ebd",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Others/Unknown",
+      "uuid" : "04b4e116-8e8e-44bf-b3a7-b952184450f4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Others/Unknown",
+        "uuid" : "a8c350b4-b965-462c-883e-d8628e7c7ad5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Animal bites treated at subcenter",
+      "uuid" : "f13a7d35-446c-4f95-9f4d-eb8d93c2a0ed",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animal bites treated at subcenter",
+        "uuid" : "3388237d-f7a2-4171-acbf-901da38aab19",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Animal bite referrals",
+      "uuid" : "3e125e66-f78f-4772-acb0-5011ff77788c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animal bite referrals",
+        "uuid" : "48935d68-3cd8-44cd-95ac-4ea289501503",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "7fe366d3-0d55-4f4d-af58-4a100bcb8f74",
+      "mandatory" : true
+    }, {
+      "name" : "Snake",
+      "uuid" : "fa1d1fb6-31cd-48a7-9d03-e705f12c250d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Snake (voided~119753)",
+        "uuid" : "f7fcf7d0-1cac-4ff2-87a9-cd6b771636f6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Dog",
+      "uuid" : "6132359d-499f-4d78-8c82-5b91b00562ef",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dog (voided~119754)",
+        "uuid" : "3b04aeac-4b2b-4d06-adb0-3d0f0a072375",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Scorpio",
+      "uuid" : "ce1e0dc2-8dc0-4d64-a27c-93f2534b93b9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Scorpio (voided~119755)",
+        "uuid" : "12a301a5-4cd7-4da6-ba6f-20e6ccd7a5f1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Wasp",
+      "uuid" : "3fc85bcb-6439-4e9b-9381-f963d0338a18",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Wasp (voided~119756)",
+        "uuid" : "e9485bfc-2d2a-4f51-be56-b9a8f3c873a0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Others/Unknown",
+      "uuid" : "b9723b29-d11a-4a63-a601-e50f7cfcc39f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Others/Unknown (voided~119757)",
+        "uuid" : "dc141e3b-ac91-4a61-ae7e-a28e33a1f7ec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Animal bites treated at subcenter",
+      "uuid" : "38da73a2-0184-4a71-9104-6b0e38c3eb31",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animal bites treated at subcenter (voided~119758)",
+        "uuid" : "91654ce4-6314-4165-979c-876be3684fde",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Animal bite referrals",
+      "uuid" : "011fee89-7bc0-4bea-95fa-47fe9d0b4c43",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animal bite referrals (voided~119759)",
+        "uuid" : "4dd9555f-7eab-4af1-a3bb-e8ffb8502f7b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "6eb22bf7-17a0-4504-b326-ea2ad38e7bc6",
+    "name" : "Family Planning",
+    "displayOrder" : 11.0,
+    "display" : "Family Planning",
+    "formElements" : [ {
+      "name" : "Family Planning",
+      "uuid" : "d879305e-15bc-491d-9b6c-b6a90935383c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Family Planning",
+        "uuid" : "65dd6eb0-8d41-41fb-9f09-eaa41f9b38db",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Copper T",
+      "uuid" : "908ea9a7-da44-47c2-a007-5414b104541a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Copper T (voided~119760)",
+        "uuid" : "6dbe2d13-299f-432a-b585-53c2883c6724",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Copper T",
+      "uuid" : "25b2f82e-8f2e-41b1-bc72-9250bf16df19",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Copper T",
+        "uuid" : "4397753b-7693-4538-8c21-d65870a7f4e8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d879305e-15bc-491d-9b6c-b6a90935383c",
+      "mandatory" : true
+    }, {
+      "name" : "Condoms",
+      "uuid" : "1a37e041-29e6-4c5f-9ccd-29c8283888a0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Condoms",
+        "uuid" : "432a852b-003a-4cc8-9fc8-c4772ced188c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d879305e-15bc-491d-9b6c-b6a90935383c",
+      "mandatory" : true
+    }, {
+      "name" : "Mala D",
+      "uuid" : "4d54f9f1-c978-4c9c-b9af-c23fef019add",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Mala D",
+        "uuid" : "96e415cc-9759-4400-8e15-b466916fe516",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d879305e-15bc-491d-9b6c-b6a90935383c",
+      "mandatory" : true
+    }, {
+      "name" : "Tubectomy (Female surgical)",
+      "uuid" : "5b4d97da-adf5-4b84-abc8-cad7ca9d8191",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tubectomy (Female surgical)",
+        "uuid" : "408b818f-e06a-4ee0-b0bf-10ed7012ee69",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d879305e-15bc-491d-9b6c-b6a90935383c",
+      "mandatory" : true
+    }, {
+      "name" : "Vasectomy (Male surgical)",
+      "uuid" : "409d466f-80d2-4494-b597-dbc114ea9480",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Vasectomy (Male surgical)",
+        "uuid" : "ada8e34d-017e-464f-a42e-ec504a8e4b0b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d879305e-15bc-491d-9b6c-b6a90935383c",
+      "mandatory" : true
+    }, {
+      "name" : "Condoms",
+      "uuid" : "c7d40664-30e0-478d-a8c5-e75f66b2455e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Condoms (voided~119761)",
+        "uuid" : "bb6155eb-1cf6-4297-b945-92ec232af4fc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Mala D",
+      "uuid" : "86515301-a38b-4c3c-9ddf-d36685f0515e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Mala D (voided~119762)",
+        "uuid" : "8c2848fa-8f69-4c6e-9259-0876f6353449",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Tubectomy (Female surgical)",
+      "uuid" : "2d2cf478-3d30-41e1-8e8d-dc7202e78c46",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tubectomy (Female surgical) (voided~119763)",
+        "uuid" : "340c6123-263b-4142-93f4-280999fc0c13",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Vasectomy (Male surgical)",
+      "uuid" : "564883b7-babd-41e7-9679-5a4198d81d9d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Vasectomy (Male surgical) (voided~119764)",
+        "uuid" : "1b8f789c-3588-46ca-95a2-16c40d231bdc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({encounter});\n  \n  if( moment(encounter.earliestVisitDateTime).format('dddd') === 'Saturday' ){\n    const earliestDate = moment(encounter.earliestVisitDateTime).day(6).add(7,'days').toDate();\n    const maxDate = moment(earliestDate).add(1, 'days').toDate();\n    scheduleBuilder.add({name: \"Senior Health Worker Weekly Reporting\", encounterType: \"Senior Health Worker Weekly Reporting\", earliestDate, maxDate});  \n} else {\n    const earliestDate = moment(encounter.earliestVisitDateTime).day(6).toDate();\n    const maxDate = moment(earliestDate).add(1, 'days').toDate();\n    scheduleBuilder.add({name: \"Senior Health Worker Weekly Reporting\", encounterType: \"Senior Health Worker Weekly Reporting\", earliestDate, maxDate});\n}\n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

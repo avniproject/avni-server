@@ -1,0 +1,466 @@
+{
+  "name" : "TB Family Screening Form",
+  "uuid" : "4736249b-0806-475f-bc5a-f1db05999740",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "a6144301-bc06-4c37-8ef9-454a60d8e64e",
+    "name" : "Socio-economic Status of Family",
+    "displayOrder" : 1.0,
+    "display" : "Socio-economic Status of Family",
+    "formElements" : [ {
+      "name" : "Do you have land?",
+      "uuid" : "4fd454ca-e504-4955-a391-745b8acda894",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Land possession",
+        "uuid" : "b984ad33-05d8-4621-adf3-152e72a0db1b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Land Area",
+      "uuid" : "2b65b090-6ca5-4a15-afea-e3df509133be",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Land Area",
+        "uuid" : "430ebb19-831d-470d-80eb-7969814f13e4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Land possession').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "History of migration?",
+      "uuid" : "1c49c7d2-0ffe-46f4-a542-39f5400c5902",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Has history of migration",
+        "uuid" : "f6089d93-a0fc-416b-8a03-3a7f2b122fcd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Ration Card",
+      "uuid" : "24a82c45-7b71-4b3e-9cfb-44347e2ea55d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ration Card",
+        "uuid" : "86fc3018-8eeb-4a58-a9d9-a40fff839305",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Antyodaya",
+          "uuid" : "78b4a024-82af-42fe-bf58-6da696073af9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "APL",
+          "uuid" : "3eac5822-f5fe-421d-8cdd-e89bef20baca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "BPL",
+          "uuid" : "906f6286-515b-4ff5-8065-0fcedef003b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Food security",
+      "uuid" : "54277a37-9088-4642-91a6-f325a52f436b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Food security",
+        "uuid" : "a0f78343-d990-40bc-a34a-eca93562923f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Distance of home from center",
+      "uuid" : "0d62c6ae-0250-43b9-bac1-c3e9b892e2b4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Distance of home from center",
+        "uuid" : "992c2469-c28c-4425-bb37-06f0882ca1e6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "validFormat" : {
+        "regex" : "^[0-9]{1,2}$",
+        "descriptionKey" : "EnterA2DigitNumber"
+      },
+      "mandatory" : true
+    }, {
+      "name" : "Have taken any loan?",
+      "uuid" : "0ea80020-f1c9-4320-aee7-902300744052",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Have taken any loan",
+        "uuid" : "a4cbf061-0c4f-4ff6-8472-f8c044df46a8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount",
+      "uuid" : "d3327ca0-dfb3-4ab7-9688-bd97f022464c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount",
+        "uuid" : "93d4f78b-3047-4ae4-b561-3a2b89b9640f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Have taken any loan').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Purpose of taking loan",
+      "uuid" : "907b8c19-8d8c-4477-acd7-6211f8913e61",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Purpose of taking loan",
+        "uuid" : "245869ce-c147-482b-9a31-e4fcae99cc0e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Health",
+          "uuid" : "76c83f95-0bc5-450d-bb36-b5854aabde9f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Marriage",
+          "uuid" : "6d6dbc1b-1375-4af7-8ceb-4385b71a62ec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Agriculture",
+          "uuid" : "a9df39b8-b305-43f3-9c81-60c6ddd200a5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Chhatti",
+          "uuid" : "c327a9fe-0b9e-4ddd-a189-962e40904fd9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Education",
+          "uuid" : "673d65bd-6dc4-4aac-8e1e-1ee355ac081b",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Post Graduation and above",
+            "uuid" : "4c9f0571-a3ce-4026-854e-a28b388b0c0f",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 7.0,
+            "active" : true
+          }, {
+            "name" : "Literate without schooling",
+            "uuid" : "9fa90cc8-0dc0-43ee-820f-39f8fe3ca1ec",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "11-12",
+            "uuid" : "d3ff5645-4c84-47f4-9f35-6d0242cd727c",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 5.0,
+            "active" : true
+          }, {
+            "name" : "1-5",
+            "uuid" : "9ac76826-0daa-4b90-9a9c-e269ac168005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true
+          }, {
+            "name" : "Illiterate",
+            "uuid" : "45b68efb-635d-48ae-9fdf-64f0ea3f46db",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "Graduation",
+            "uuid" : "ff7c5cd7-fe19-4a64-b8cb-700b4ad7a58f",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 6.0,
+            "active" : true
+          }, {
+            "name" : "NA",
+            "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 8.0,
+            "active" : true
+          }, {
+            "name" : "6-7",
+            "uuid" : "0b2b6bb5-7eb8-4b14-bc68-662fade3aca4",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true
+          }, {
+            "name" : "8-10",
+            "uuid" : "6b941c49-349f-40f6-a4ae-bdd00f45fbba",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true
+          } ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Have taken any loan').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other purpose of taking loan",
+      "uuid" : "f5571190-1443-40a1-bb28-25743b0cbd0d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other purpose of taking loan",
+        "uuid" : "449106f3-eb52-4ff6-9664-6ed0f01502d6",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Purpose of taking loan').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "d5f59838-dc4b-45f0-a2f0-9494e87e087f",
+    "name" : "Family screening",
+    "displayOrder" : 2.0,
+    "display" : "Family screening",
+    "formElements" : [ {
+      "name" : "Is there hstrory of TB in the family?",
+      "uuid" : "ac138a17-ea19-4f20-b5c1-4438d763dfae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is there history of TB in the family",
+        "uuid" : "5f20c9ee-51cd-418f-9717-24e356e65e00",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Any death in family due to TB?",
+      "uuid" : "e857824e-7003-49ec-b418-dcab3d773906",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any death in family due to TB",
+        "uuid" : "637e9b74-577c-4be2-9f84-e9d475dbede8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How many suspected members found in the family?",
+      "uuid" : "859d877a-eb95-4e57-b363-2cf1241ba87d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many suspected members found in the family",
+        "uuid" : "dca6e4d2-815a-4e5e-bffa-1c6293c532df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "3c34abab-e9ee-45b8-9faa-e558eb65e83b",
+    "name" : "Counselling",
+    "displayOrder" : 3.0,
+    "display" : "Counselling",
+    "formElements" : [ {
+      "name" : "TB family screening counselling point",
+      "uuid" : "368008dd-361c-425a-bf56-d19132e822dc",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "TB family screening counselling point",
+        "uuid" : "0aa75353-38b4-4fd9-8a06-fa9f501c9a1d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "//SAMPLE RULE EXAMPLE\n\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    encounter\n  });\nconsole.log('encounter.individual.groupSubjects',encounter.individual.groupSubjects[0].memberSubject.uuid);\n \nconst groupSubjects = encounter.individual.groupSubjects;\n \n   groupSubjects.forEach(element => {\n      scheduleBuilder.add({\n        name: \"TB family member screening form\",\n        encounterType: \"TB family member screening form\",\n        earliestDate: imports.moment(encounter.encounterDatetime).toDate(),\n         maxDate: imports.moment(encounter.encounterDatetime).add(15, 'days').toDate(),\n        subjectUUID: element.memberSubject.uuid\n     });\n    \n    console.log('element.memberSubject',element.memberSubject);\n \n    const allEnrolments = _.filter(element.memberSubject.nonVoidedEnrolments(), enl => _.isNil(enl.programExitDateTime));\n    const ecEnrolment = _.find(allEnrolments, enl => enl.program.name === 'Tuberculosis' && enl.voided === false && _.isNil(enl.programExitDateTime));\n    if (ecEnrolment) {\n        scheduleBuilder\n            .add({\n                name: \"TB followup after Encounter\",\n                encounterType: \"TB followup\",\n                earliestDate: imports.moment(encounter.encounterDateTime).toDate(),\n                maxDate: imports.moment(encounter.encounterDateTime).add(7, 'days').toDate(),                \n                programEnrolment: ecEnrolment\n            });\n    }\n    \n  });\n  \n    \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

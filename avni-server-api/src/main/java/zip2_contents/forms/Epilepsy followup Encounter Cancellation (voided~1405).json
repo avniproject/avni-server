@@ -1,0 +1,8 @@
+{
+  "name" : "Epilepsy followup Encounter Cancellation (voided~1405)",
+  "uuid" : "fb91822c-f8d4-42a4-b102-cbd24d30c2ac",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

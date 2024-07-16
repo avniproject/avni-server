@@ -1,0 +1,115 @@
+{
+  "name" : "TB followup Cancellation",
+  "uuid" : "81aceeff-8823-4e39-866e-c05e8fc63dfc",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ {
+    "uuid" : "3b56db98-5d43-47a7-8c79-67e505741a34",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Reason of cancel",
+      "uuid" : "2b1cc3f6-7628-4052-9606-894380476795",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason of cancel",
+        "uuid" : "641a2e3c-6ce3-45d4-a691-7000cae82ed2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Patient is absent",
+          "uuid" : "3c99608d-564a-4fb5-9885-97bc94c60592",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient is migrated",
+          "uuid" : "3906acc2-4dd7-4730-bcfc-e35193d05897",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Program exit",
+          "uuid" : "f302bb7d-84f4-46fc-a80d-05f961bb9a35",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Hospitalization",
+          "uuid" : "edde15f4-4905-4218-bb64-cd291fd264ab",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Health worker absent",
+          "uuid" : "86a084a4-5a36-493c-822f-34e91eabb530",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason for cancelling",
+      "uuid" : "12f3933e-7d62-4e2c-8d8d-c8f160cafb42",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for cancelling",
+        "uuid" : "d038a9c4-fe96-4c09-b883-c80691427b60",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    \nconst cancelReasonObs = programEncounter.findCancelEncounterObservation('Reason of cancel');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\nlet isVisible = false;\nif (answer == 'Other') \n  isVisible = true; \n        \n      return new imports.rulesConfig.FormElementStatus(formElement.uuid, isVisible);\n  };",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "da16d24f-cd1a-484d-b153-defa8e160076",
+    "name" : "Next visit details",
+    "displayOrder" : 2.0,
+    "display" : "Next visit details",
+    "formElements" : [ {
+      "name" : "Next visit date",
+      "uuid" : "19a8b370-a849-4ee4-bd16-c23bdf6b6331",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Next visit date",
+        "uuid" : "26ca2feb-d6b5-4eae-9e3c-b0302646fc73",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    \nconst cancelReasonObs = programEncounter.findCancelEncounterObservation('Reason of cancel');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\nconst hasExitedProgram = programEncounter => programEncounter.programEnrolment.programExitDateTime;\n \n\nlet isVisible = false;\nif (!hasExitedProgram(programEncounter)) \n  isVisible = true; \n        \n      return new imports.rulesConfig.FormElementStatus(formElement.uuid, isVisible);\n  };",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n  \n  const nextVisitDate = programEncounter.findCancelEncounterObservation('Next visit date').getReadableValue();\n  let currentVisitNumber = _.split(programEncounter.name, '-', 2);\n  let visitNumber = currentVisitNumber[1];\n  let nextVisitNumber = ++visitNumber;\n  console.log('visitNumber',nextVisitNumber);\n  console.log('nextVisitDate',nextVisitDate);\n  \n   let treatmentEndDate = programEncounter.programEnrolment.getObservationReadableValue('Expected treatment completion date');\n   //findLatestObservationInEntireEnrolment\n   \n  if((imports.moment(nextVisitDate).isAfter(treatmentEndDate, 'date') == false)){  \n  //nextVisitNumber > 9 ||\n       scheduleBuilder\n            .add({\n                name: \"TB followup-\" + nextVisitNumber,\n                encounterType: \"TB followup\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            });\n  }\n  \n  if((imports.moment(nextVisitDate).isAfter(treatmentEndDate, 'date') == true)){\n  //nextVisitNumber > 9 ||\n  //schedule labs endline\n  scheduleBuilder\n            .add({\n                name: \"Lab test results endline\",\n                encounterType: \"TB Lab test results\",\n                earliestDate: imports.moment(nextVisitDate),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            });\n  \n   scheduleBuilder\n            .add({\n                name: \"Treatment review\",\n                encounterType: \"Treatment review\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            });\n            \n  }\n  //add new visit schedule object to scheduleBuilder\n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

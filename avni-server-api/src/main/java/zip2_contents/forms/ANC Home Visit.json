@@ -1,0 +1,1201 @@
+{
+  "name" : "ANC Home Visit",
+  "uuid" : "1efe2934-cf50-4567-8ff6-7bde5ab7d14e",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "9dfd812f-671c-435e-a40d-1398dd37a690",
+    "name" : "Anthropometry",
+    "displayOrder" : 1.0,
+    "display" : "Anthropometry",
+    "formElements" : [ {
+      "name" : "Height",
+      "uuid" : "a8a9f293-21ab-49d6-8982-649fa845df19",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Height",
+        "uuid" : "23bcad9f-ec16-46ec-92f5-e144411e5dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 21.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 30.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Height').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Weight",
+      "uuid" : "eb107ada-6cf7-445c-a2fc-d07c14a58eae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "BMI",
+      "uuid" : "21857fab-3f3f-4cc5-86a6-3b9d81f81058",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "BMI",
+        "uuid" : "a205563d-0ac2-4955-93ac-e2e7adebb56e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 18.5,
+        "highNormal" : 24.9,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \nlet height = programEncounter.findLatestObservationInEntireEnrolment(\"Height\", programEncounter);\nlet weight = programEncounter.findObservation(\"Weight\");\n        height = height && height.getValue();\n        weight = weight && weight.getValue();\n        console.log('height',height);\n        console.log('weight',weight);\n        let value = '';\n        if (_.isFinite(weight) && _.isFinite(height)) {\n         value = imports.common.calculateBMI(weight, height);\n       }\n       \n        console.log('value',value);\n        \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n  };",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "cf115593-97ba-4d3b-bd5d-e1540f3e8f38",
+    "name" : "Basic Details",
+    "displayOrder" : 2.0,
+    "display" : "Basic Details",
+    "formElements" : [ {
+      "name" : "Blood Pressure (systolic)",
+      "uuid" : "71a4fd50-e67f-4c50-9b6d-006b766d3645",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (systolic)",
+        "uuid" : "6874d48e-8c2f-4009-992c-1d3ca1678cc6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 20.0,
+        "highAbsolute" : 190.0,
+        "lowNormal" : 90.0,
+        "highNormal" : 140.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Blood Pressure (Diastolic)",
+      "uuid" : "201a2c9f-a299-4c89-830a-20a4f886955f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (Diastolic)",
+        "uuid" : "da871f6c-cef0-4191-b307-6751b31ac9ec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 10.0,
+        "highAbsolute" : 120.0,
+        "lowNormal" : 50.0,
+        "highNormal" : 90.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Is mosquito net given?",
+      "uuid" : "9c3d09a3-650b-46d3-82c6-88c5ebef8836",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is mosquito net given",
+        "uuid" : "b7be4ddc-14ee-4caf-ab38-e1c87d088688",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Is mosquito net given').containsAnswerConceptNameOtherThan('Yes').or.when.latestValueInPreviousEncounters('Is mosquito net given').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Is safe delivery kit given?",
+      "uuid" : "1560d3dc-d998-478a-a7a4-3d05ab729458",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is safe delivery kit given",
+        "uuid" : "04eecc2b-93eb-49d4-83a4-6629442711ea",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Is safe delivery kit given').containsAnswerConceptNameOtherThan('Yes').or.when.latestValueInPreviousEncounters('Is safe delivery kit given').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "dbe6d882-140c-4228-affe-c170828982f2",
+    "name" : "History and Physical examination",
+    "displayOrder" : 3.0,
+    "display" : "History and Physical examination",
+    "formElements" : [ {
+      "name" : "New complaint",
+      "uuid" : "e3407af1-6b1f-46c1-b742-f82bc5f78604",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "New complaint",
+        "uuid" : "74599453-6fbd-4f8d-bf7f-34faa3c10eb9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Blured vision",
+          "uuid" : "6fabfd13-9908-4a10-9bb7-39da1d674165",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Headache",
+          "uuid" : "44683953-68ed-4498-81e8-924879c59117",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Bleeding PV",
+          "uuid" : "38efe56c-ba52-44b3-bca8-1d88032e3585",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pain in abdomen",
+          "uuid" : "cb8653a9-3248-440c-aef1-17683e49233b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Fetus is not moving",
+          "uuid" : "7f358e8b-08d2-4243-bb0c-dda19c4997ae",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Burning micturition",
+          "uuid" : "aa43a1cd-faa2-45cc-be26-1a19b0bc9580",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Swelling on face/vulva/abdomen/whole body",
+          "uuid" : "19003a06-5195-49ef-9f4f-52462fe6f17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other complaint",
+      "uuid" : "7afc5090-4699-4106-ae02-6464856b0fb2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other complaint",
+        "uuid" : "dc0c10ca-c151-4c5c-aedc-2b8040dbea52",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\nconst programEncounter = params.entity;\nconst formElement = params.formElement;\n\nconst statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\nstatusBuilder.show().when.valueInEncounter('New complaint').containsAnswerConceptName('Other');\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Whether mother found with pregnancy induced disease",
+      "uuid" : "bed97917-8694-4164-993e-f359609709c0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Mother found with pregnancy induced disease",
+        "uuid" : "2a3a4f97-0ca7-4498-b7ec-37225ba3d4c5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Diabetes",
+          "uuid" : "1928469b-a981-4579-beb7-ae47b972e671",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Hypertension",
+          "uuid" : "e7e56956-effe-4cc7-85a6-f726b6bf1ffb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n  \nconst statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\nstatusBuilder.show().whenItem(programEncounter.programEnrolment.getEncounters(true).filter(encounter => encounter.encounterType.name === \"ANC Home Visit\").length).is.greaterThan(1);\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Oedema",
+      "uuid" : "35cb93ea-5a6c-42e0-9f33-3a8dc17001c3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Oedema",
+        "uuid" : "95dd3094-6c99-4622-8614-bf5d33a509e4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Face",
+          "uuid" : "4b228992-6d31-4e7a-bbcb-e319ffe672f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Vulval",
+          "uuid" : "f9f1945f-eb75-4ddb-b354-919afc5f53c4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pedal",
+          "uuid" : "5d0462d9-1c5c-42bc-a3e3-8c75cf6b6986",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Entire body",
+          "uuid" : "21eae23f-f925-4c69-bb1e-ce330aeb4b02",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No oedema",
+          "uuid" : "6f511b7a-00d4-45a1-ba45-8b1ce608b014",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Foetus movement",
+      "uuid" : "840bb993-2c72-43f0-99f6-0bf342a7d502",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Foetus movement",
+        "uuid" : "31651632-0acb-4ee5-a0f3-1628bbed456c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No foetal movement",
+          "uuid" : "99a2d857-20e0-4bcf-acc8-2f0be2c70663",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    //const lmpDate = programEncounter.programEnrolment.getObservationValue('Last menstrual period');\n    //const value =  imports.moment(today).diff(lmpDate, 'months');\n    const value = \nimports.motherCalculations.currentTrimester(programEncounter.programEnrolment, programEncounter.encounterDateTime);\n   \nconst statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\nstatusBuilder.show().whenItem(value).greaterThanOrEqualTo(2);\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Breast examination",
+      "uuid" : "811c42a1-b181-40eb-af16-c3c5d0f5dccd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Breast examination",
+        "uuid" : "7259b0fa-c8d1-4e04-8d13-7dbc05f0169b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Retracted nipple",
+          "uuid" : "7a6870a8-62f1-4751-8fd1-ef63715876e2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Breast lump",
+          "uuid" : "4ccdcc36-6fdf-4e94-bcda-f441a5124bb0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal nipple",
+          "uuid" : "cbc8d904-4309-4b27-86a7-025654fda538",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Bloody nipple discharge",
+          "uuid" : "64b4da6a-2a29-45ff-b0b6-634fd5c89ffb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mastitis",
+          "uuid" : "bc33afcc-d57a-4925-bd07-fef33097cf47",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "MultiSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    //const lmpDate = programEncounter.programEnrolment.getObservationValue('Last menstrual period');\n    //const value =  imports.moment(today).diff(lmpDate, 'months');\n    const value = \nimports.motherCalculations.currentTrimester(programEncounter.programEnrolment, programEncounter.encounterDateTime);\n   \nconst statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\nstatusBuilder.show().whenItem(value).equals(3);\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "36b68a5d-f943-4dd0-9ebd-d6242c12c9bd",
+    "name" : "Lab investigations",
+    "displayOrder" : 4.0,
+    "display" : "Lab investigations",
+    "formElements" : [ {
+      "name" : "Urine Albumin",
+      "uuid" : "da3754f6-509f-4556-b4ff-a88c47fac32f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Urine Albumin",
+        "uuid" : "78fcebd3-17e5-4621-89be-c580fbf13168",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1+",
+          "uuid" : "d791406f-86bd-47ef-8c23-22accc521558",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4+",
+          "uuid" : "b133d9ce-1661-420f-b73a-392300959b4e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3+",
+          "uuid" : "63513531-d5a4-47c1-a4ef-a02063b43871",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2+",
+          "uuid" : "ba904c8d-502d-4979-bc99-cfa077678279",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Nil",
+          "uuid" : "7f2382b9-e15b-4ff0-a5a6-acb88470100c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Trace",
+          "uuid" : "ae92d882-9ca4-448b-9cbf-f7459548bd55",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Urine sugar",
+      "uuid" : "3f81bcaf-7224-458f-b04f-5c2e2939476c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Urine sugar",
+        "uuid" : "55ae9e7a-f6ff-4c0b-861c-fd29b6c5c646",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "2+",
+          "uuid" : "ba904c8d-502d-4979-bc99-cfa077678279",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4+",
+          "uuid" : "b133d9ce-1661-420f-b73a-392300959b4e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1+",
+          "uuid" : "d791406f-86bd-47ef-8c23-22accc521558",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Trace",
+          "uuid" : "ae92d882-9ca4-448b-9cbf-f7459548bd55",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3+",
+          "uuid" : "63513531-d5a4-47c1-a4ef-a02063b43871",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Nil",
+          "uuid" : "7f2382b9-e15b-4ff0-a5a6-acb88470100c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "9128f100-5dbc-483e-8958-c037b2a11ce8",
+    "name" : "Medicine",
+    "displayOrder" : 5.0,
+    "display" : "Medicine",
+    "formElements" : [ {
+      "name" : "Whether Folic acid given?",
+      "uuid" : "a8468f96-bcf8-4e98-a4cd-6a25668cfc4e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether Folic acid given",
+        "uuid" : "bf1e5598-594c-4444-94e0-9390f5081e41",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Whether IFA given?",
+      "uuid" : "0030cc6e-0166-466a-b372-6a1ab24da1e3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether IFA given",
+        "uuid" : "5740f87b-8cc6-4927-88a2-44636e8f396c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Whether Calcium given?",
+      "uuid" : "f18401a3-2a38-446a-8bea-25245477e272",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether Calcium given",
+        "uuid" : "00de9acc-4ff6-485b-b979-41ff00745d23",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Whether Amala given?",
+      "uuid" : "39d06ed7-0bbb-492f-8369-603cc21a81b7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether Amala given",
+        "uuid" : "2a5a3b4d-80c4-4d05-8585-e16966ff0c3e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "5710560e-494f-45dc-8463-cdc5fbf7172c",
+    "name" : "JSS Visit Details",
+    "displayOrder" : 6.0,
+    "display" : "JSS Visit Details",
+    "formElements" : [ {
+      "name" : "Have you visited any facility for antenatal check other than JSS?",
+      "uuid" : "c28dabe8-5101-44cd-b332-5ef923e72cc4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Have you visited any facility for antenatal check other than JSS?",
+        "uuid" : "84d74870-1c84-4438-ab87-060352eb47cd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "If yes, what are those facilities?",
+      "uuid" : "1b5381a3-16a4-4966-b659-716b6e3a4c12",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other facilities visited for antenatal check other than JSS",
+        "uuid" : "788f3cf0-d125-400f-99e5-86cebb16bc66",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Primary Health Center",
+          "uuid" : "a9b35608-e850-4414-b3e9-c3f9b306c17e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\nconst programEncounter = params.entity;\nconst formElement = params.formElement;\n\nconst statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\nstatusBuilder.show().when.valueInEncounter('Have you visited any facility for antenatal check other than JSS?').containsAnswerConceptName('Yes');\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "36fef80f-ed88-4e87-badb-7c9bf1de6f57",
+    "name" : "Referral",
+    "displayOrder" : 7.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "Does woman require referral?",
+      "uuid" : "8b0a636f-e6b0-44b4-b943-54e7ebc3a8fa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Woman requires referral",
+        "uuid" : "24d80dab-d769-4925-b852-98c0ed8cf069",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Does woman require referral?",
+      "uuid" : "8e4c14ce-84cd-4d5c-b46f-63a379d22f16",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does woman require referral?",
+        "uuid" : "77d122e8-0620-4754-8375-b0cbe329003c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "effbab38-4261-48a8-ac54-74eaa16267e3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of referral",
+        "uuid" : "80fccb06-a62f-43e8-92eb-358bdb600079",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ganiyari",
+          "uuid" : "41f067f3-48a0-4f95-aee5-dcee95a8b9de",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "SHW",
+          "uuid" : "7ac0d9a2-ff82-41e6-9f38-134904d476f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does woman require referral?').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "ba1c85aa-b73b-4db7-88cc-7442884fb70e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of referral').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "5efe0805-d5f0-4095-a065-7b4040deee02",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Bleeding", "Seizure", "Infection" ]
+      } ],
+      "concept" : {
+        "name" : "Referral reason",
+        "uuid" : "8a56f008-a910-4d6f-b028-a95db330dbf2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sonography",
+          "uuid" : "1a893a89-4984-43e1-85cc-b64fb582824c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "infec",
+          "uuid" : "8293fa19-4fd6-4942-bc93-032bc3d39e68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "voided" : true
+        }, {
+          "name" : "Admission at Referral centre",
+          "uuid" : "dad7f494-99ec-42ce-b50b-07a7450be30c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Delivery/LACS",
+          "uuid" : "7d0d495a-e733-4ea8-93ca-c57bf42c6ee9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seizure",
+          "uuid" : "cbc1b5b1-e4f9-4c0e-abe6-cc03362ff08d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Bleeding",
+          "uuid" : "0aeb893c-34ba-49f0-bd6f-0696fce74458",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Consultation with specialist at referral centre",
+          "uuid" : "f1ecf77c-122f-4462-8bc8-812013c80fa3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Infection",
+          "uuid" : "e668ceed-92ee-4b2f-8714-72838f11264b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does woman require referral?').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other referral reason",
+      "uuid" : "0ac071fd-283b-43e5-b5aa-a7d00c9a26d9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "rule" : "",
+    "timed" : false
+  }, {
+    "uuid" : "02febebb-46fa-4cfa-92b9-08266e9f0cb2",
+    "name" : "Details of next visit",
+    "displayOrder" : 8.0,
+    "display" : "Details of next visit",
+    "formElements" : [ {
+      "name" : "Date of next ANC Visit",
+      "uuid" : "84554e94-5c87-4f9b-9cac-35282aa10f5c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next ANC Visit",
+        "uuid" : "6e50431c-6cb0-495f-9735-dd431c9970ff",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  } ],
+  "decisionRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: \"High Risk Conditions\"\n    });\n    //Height is less than 140 cm\n     complicationsBuilder\n        .addComplication(\"Height is less than 140 cm\")\n        .when.valueInEncounter(\"Height\")\n        .is.lessThan(140);\n    //Weight is less than 35 kg\n     complicationsBuilder\n        .addComplication(\"Weight is less than 35 kg\")\n        .when.valueInEncounter(\"Weight\")\n        .is.lessThan(35);\n    //High Blood Pressure\n     complicationsBuilder\n        .addComplication(\"High Blood Pressure\")\n        .when.valueInEncounter(\"Blood Pressure (Diastolic)\")\n        .is.greaterThanOrEqualTo(90)\n        .or.when.valueInEncounter(\"Blood Pressure (systolic)\")\n        .is.greaterThanOrEqualTo(140);\n   //no foetal movement\n    complicationsBuilder\n        .addComplication(\"No foetal movement\")\n        .when.valueInEncounter(\"Foetus movement\")\n        .containsAnyAnswerConceptName(\"No foetal movement\");\n     \n   \n    complicationsBuilder\n        .addComplication(\"Oedema\")\n        .when.valueInEncounter(\"Oedema\")\n        .containsAnyAnswerConceptName(\"Face\",\"Vulval\",\"Entire body\");\n     \n    complicationsBuilder\n        .addComplication(\"Urine Albumin Present\")\n        .when.valueInEncounter(\"Urine Albumin\")\n        .containsAnyAnswerConceptName(\"1+\",\"2+\",\"3+\",\"4+\");\n    complicationsBuilder\n        .addComplication(\"Urine sugar present\")\n        .when.valueInEncounter(\"Urine sugar\")\n        .containsAnyAnswerConceptName(\"1+\",\"2+\",\"3+\",\"4+\");\n        \n     complicationsBuilder\n        .addComplication(\"Bleeding PV\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Bleeding PV\");\n     complicationsBuilder\n        .addComplication(\"Breathing difficulty\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Breathing difficulty\");\n     complicationsBuilder\n        .addComplication(\"Fetus is not moving\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Fetus is not moving\");\n     complicationsBuilder\n        .addComplication(\"Headache\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Headache\");\n     complicationsBuilder\n        .addComplication(\"Pain in abdomen\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Pain in abdomen\");\n     complicationsBuilder\n        .addComplication(\"Swelling on face/vulva/abdomen/whole body\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Swelling on face/vulva/abdomen/whole body\");\n     complicationsBuilder\n        .addComplication(\"Burning micturition\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Burning micturition\");\n     complicationsBuilder\n        .addComplication(\"Fever\")\n        .when.valueInEncounter(\"New complaint\")\n        .containsAnswerConceptName(\"Fever\");\n        \n        \n    decisions.encounterDecisions.push(complicationsBuilder.getComplications());\n    return decisions;\n};",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n\nconst ifReferral = programEncounter.getObservationReadableValue('Does woman require referral?');\nconsole.log(\"====>ifReferral\", ifReferral); \nconst edd = programEncounter.programEnrolment.getObservationValue('EDD');\n console.log(\"====>EDD\",edd);\n const labEarliestDate=imports.moment(programEncounter.encounterDateTime).add(4,'days').toDate();\n console.log(\"======>labEarliestDate\",labEarliestDate)\n \n//if(imports.moment(edd).isSameOrBefore(imports.moment(nextANCDate), 'date')){\n//if((programEncounter.programEnrolment.hasEncounter('Delivery', 'Delivery')) === false)\n //scheduleBuilder\n   // .add({\n    //  name: \"Delivery\",\n    //  encounterType: \"Delivery\",\n    //  earliestDate: imports.moment(edd).toDate(),\n    //  maxDate: imports.moment(edd).add(0, 'days').toDate()\n   // });\n  //  }\n    \n    //Lab Investigations \n//if((programEncounter.programEnrolment.hasEncounter('Lab Investigations', 'Lab Investigations Results')) === false){\n  //  scheduleBuilder\n  // .add({\n  //    name: \"Lab Investigations Results\",\n  //    encounterType: \"Lab Investigations\",\n  //    earliestDate: labEarliestDate,\n  //    maxDate: imports.moment(labEarliestDate).add(8, 'days').toDate()\n  //  }); \n    \n //}\n    \n     if(ifReferral)\n    scheduleBuilder\n    .add({\n      name: \"Referral Status-1\",\n      encounterType: \"Referral Status\",\n      earliestDate: imports.moment(programEncounter.encounterDateTime).add(3, 'days').toDate(),\n      maxDate: imports.moment(programEncounter.encounterDateTime).add(5, 'days').toDate()\n    }).whenItem(ifReferral == 'Yes')\n    .is.truthy;\n    \n    const referralReason = programEncounter.getObservationReadableValue('Referral reason');\n  scheduleBuilder\n    .add({\n      name: \"USG Report\",\n      encounterType: \"USG Report\",\n      earliestDate: imports.moment(programEncounter.encounterDateTime).toDate(),\n      maxDate: imports.moment(programEncounter.encounterDateTime).add(4, 'days').toDate()\n    }).whenItem( _.includes(referralReason,'Sonography'))\n    .is.truthy;\n    \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

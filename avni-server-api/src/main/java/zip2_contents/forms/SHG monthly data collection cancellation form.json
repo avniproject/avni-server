@@ -1,0 +1,18 @@
+{
+  "name" : "SHG monthly data collection cancellation form",
+  "uuid" : "8d0e3247-93f2-43c3-b575-ec4a606ed069",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ {
+    "uuid" : "467f33d7-e362-46e2-9ac0-edd026278e08",
+    "name" : "Cancel details",
+    "displayOrder" : 1.0,
+    "display" : "Cancel details",
+    "formElements" : [ ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "//SAMPLE RULE EXAMPLE\n\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    encounter\n  });\n  //add new visit schedule object to scheduleBuilder\n   let visitDate = imports.moment(encounter.earliestVisitDateTime).add(1, 'months').toDate();\n  scheduleBuilder\n                .add({\n                    name: \"SHG monthly data collection\",\n                    encounterType: \"SHG monthly data collection\",\n                    earliestDate: visitDate,\n                    maxDate: imports.moment(visitDate).add(3, 'days').toDate()\n                });\n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

@@ -1,0 +1,7 @@
+{
+  "name" : "CBNAAT result Encounter Cancellation",
+  "uuid" : "15a0c29b-c5ac-4a3b-a53b-ccbf6cc09131",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

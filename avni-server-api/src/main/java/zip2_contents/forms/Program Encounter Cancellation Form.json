@@ -1,0 +1,106 @@
+{
+  "name" : "Program Encounter Cancellation Form",
+  "uuid" : "8ffd8274-ca88-449f-857d-9638b7db792f",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ {
+    "uuid" : "1df32d74-55ac-4408-80eb-dd86810024f4",
+    "name" : "Cancel Details",
+    "displayOrder" : 1.0,
+    "display" : "Cancel Details",
+    "formElements" : [ {
+      "name" : "Cancel reason",
+      "uuid" : "68d5d3c8-24b4-4809-a533-2e0523651fcc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Visit cancel reason",
+        "uuid" : "bf400e7f-8e1b-4052-af49-b0db47b3eb5a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Delivery/Abortion",
+          "uuid" : "485c07f4-e6bb-4be2-a708-7cb9e5064015",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Absent",
+          "uuid" : "4d6cf097-ea82-4b4d-ba8f-2bd51132f04d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Away from village",
+          "uuid" : "d233d6a3-bbbb-4e68-b6e0-e72b231d221a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Sick",
+          "uuid" : "5d16aa00-e90c-4f11-9cda-9764f01a2aec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  console.log('programEncounter.encounterType.name',_.isEqual(programEncounter.encounterType.name,'ANC Clinic Visit'));\n  //if(programEncounter.programEnrolment.program.name != 'Pregnancy')\n // if(!_.contains(['ANC Clinic Visit','ANC Home Visit'],programEncounter.encounterType.name)\n   // statusBuilder.skipAnswers(\"Delivery/Abortion\");\n      \n  if(!_.isEqual(programEncounter.encounterType.name,'ANC Clinic Visit'))         \n      statusBuilder.skipAnswers(\"Delivery/Abortion\");\n    \n//  if(!_.isEqual(programEncounter.encounterType.name,'ANC Home Visit'))\n  //       statusBuilder.skipAnswers(\"Delivery/Abortion\");\n    \n\n       \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason",
+      "uuid" : "87e15687-d5bb-4dce-8496-eb56533881cd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for cancelling",
+        "uuid" : "d038a9c4-fe96-4c09-b883-c80691427b60",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \nconst cancelReasonObs = programEncounter.findCancelEncounterObservation('Visit cancel reason');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\n// cancelReasonObs && cancelReasonObs.getReadableValue(); \n//console.log('cancelReasonObs',cancelReasonObs);\n//console.log('answer',answer);\nlet isVisible = false;\nif (answer == 'Other') \n  isVisible = true;\n \n        \n      return new imports.rulesConfig.FormElementStatus(formElement.uuid, isVisible);\n  };",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "c97eb2c6-59e8-4065-9eff-cf6e337c8ebf",
+    "name" : "Next ANC Visit Details",
+    "displayOrder" : 2.0,
+    "display" : "Next ANC Visit Details",
+    "formElements" : [ {
+      "name" : "Date of next ANC Clinic Visit",
+      "uuid" : "8544be65-6c70-426d-b0d0-474f9340fad6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next ANC Visit",
+        "uuid" : "6e50431c-6cb0-495f-9735-dd431c9970ff",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  const cancelReasonObs = programEncounter.findCancelEncounterObservation('Visit cancel reason');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\n  statusBuilder.show().whenItem(programEncounter.encounterType.name == 'ANC Clinic Visit').is.truthy.and.whenItem(answer != 'Delivery/Abortion').is.truthy;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter\n    });\n\n    const hasExitedProgram = programEncounter => programEncounter.programEnrolment.programExitDateTime;\n    const cancelReason = programEncounter.findCancelEncounterObservation('Visit cancel reason').getReadableValue();\n\n\n    if (!hasExitedProgram(programEncounter)) {\n        if (programEncounter.encounterType.name == 'ANC Clinic Visit' && cancelReason != 'Delivery/Abortion') {\n\n            const nextANCDate = programEncounter.findCancelEncounterObservation('Date of next ANC Visit').getReadableValue();\n          //  const edd = programEncounter.programEnrolment.hasObservation('EDD') ? programEncounter.programEnrolment.getObservationValue('EDD') : //imports.moment().toDate();\n            const edd = programEncounter.programEnrolment.getObservationValue('EDD');\n            const visitDate = programEncounter.earliestVisitDateTime || programEncounter.encounterDateTime;\n\n            if (imports.moment(edd).isSameOrBefore(imports.moment(nextANCDate), 'date')) {\n                if ((programEncounter.programEnrolment.hasEncounter('Delivery', 'Delivery')) === false)\n                    scheduleBuilder\n                        .add({\n                            name: \"Delivery\",\n                            encounterType: \"Delivery\",\n                            earliestDate: imports.moment(edd).toDate(),\n                            maxDate: imports.moment(edd).add(0, 'days').toDate()\n                        });\n            } else {\n                scheduleBuilder\n                    .add({\n                        name: \"ANC Clinic Visit\",\n                        encounterType: \"ANC Clinic Visit\",\n                        earliestDate: imports.moment(nextANCDate).toDate(),\n                        maxDate: imports.moment(nextANCDate).add(8, 'days').toDate()\n                    }).whenItem(!_.isEmpty(nextANCDate))\n                    .is.not.truthy;\n                if (!_.isEqual(programEncounter.individual.lowestAddressLevel.name, 'Non programme village')) {\n                    scheduleBuilder\n                        .add({\n                            name: \"ANC Home Visit\",\n                            encounterType: \"ANC Home Visit\",\n                            earliestDate: imports.moment(visitDate).add(1, 'days').toDate(),\n                            maxDate: imports.moment(visitDate).add(8, 'days').toDate()\n                        }).whenItem(!_.isEmpty(visitDate))\n                        .is.not.truthy;\n                }\n            }\n        }\n\n      // if (programEncounter.encounterType.name == 'ANC Home Visit' && cancelReason != 'Delivery/Abortion') {\n      //     const nextANCDate = programEncounter.findCancelEncounterObservation('Date of next ANC Visit').getReadableValue();\n      //     const edd = programEncounter.programEnrolment.getObservationValue('EDD');\n      //     if (imports.moment(edd).isSameOrBefore(imports.moment(nextANCDate), 'date')) {\n      //         if ((programEncounter.programEnrolment.hasEncounter('Delivery', 'Delivery')) === false)\n      //             scheduleBuilder\n      //                  .add({\n      //                      name: \"Delivery\",\n      //                      encounterType: \"Delivery\",\n      //                      earliestDate: imports.moment(edd).toDate(),\n      //                      maxDate: imports.moment(edd).add(0, 'days').toDate()\n      //                  });\n      //      } else if (!_.isEqual(programEncounter.individual.lowestAddressLevel.name, 'Non programme village')) {\n      //          scheduleBuilder\n      //               .add({\n      //                  name: \"ANC Home Visit\",\n      //                  encounterType: \"ANC Home Visit\",\n      //                  earliestDate: imports.moment(nextANCDate).toDate(),\n      //                  maxDate: imports.moment(nextANCDate).add(8, 'days').toDate()\n      //              }).whenItem(!_.isEmpty(nextANCDate))\n      //              .is.not.truthy;\n      //      }\n      //  }\n\n        if (programEncounter.encounterType.name == 'Abortion followup') {\n            const visitDate = programEncounter.encounterDateTime || programEncounter.earliestVisitDateTime;\n            const dateOfAbortion = programEncounter.programEnrolment\n                .getObservationReadableValueInEntireEnrolment('Date and time of abortion');\n            const encounterScheduleAbortion = [\n                {\"name\": \"Abortion followup-2\", \"earliest\": 7, \"max\": 11},\n                {\"name\": \"Abortion followup-3\", \"earliest\": 15, \"max\": 19}\n            ];\n\n            var schedule = _.chain(encounterScheduleAbortion).filter(e => imports.moment(visitDate).isSameOrBefore(imports.moment(dateOfAbortion).add(e.earliest, 'days'), 'date') === true).filter(e => (programEncounter.programEnrolment.hasEncounter('Abortion followup', e.name)) === false).first().value();\n\n            if (!_.isEmpty(schedule)) {\n                scheduleBuilder\n                    .add({\n                        name: schedule.name,\n                        encounterType: \"Abortion followup\",\n                        earliestDate: imports.moment(dateOfAbortion).add(schedule.earliest, 'days').toDate(),\n                        maxDate: imports.moment(dateOfAbortion).add(schedule.max, 'days').toDate()\n                    });\n            }\n        }\n\n        if (programEncounter.encounterType.name == 'Mother PNC') {\n            const visitDate = programEncounter.encounterDateTime || programEncounter.earliestVisitDateTime;\n\n            const dateOfDelivery = programEncounter.programEnrolment\n                .getObservationReadableValueInEntireEnrolment('Date and time when baby was out');\n\n            const encounterSchedulePNC = [\n                {\"name\": \"PNC 2\", \"earliest\": 1, \"max\": 4},\n                {\"name\": \"PNC 3\", \"earliest\": 2, \"max\": 5},\n                {\"name\": \"PNC 4\", \"earliest\": 6, \"max\": 9},\n                {\"name\": \"PNC 5\", \"earliest\": 14, \"max\": 17},\n                {\"name\": \"PNC 6\", \"earliest\": 28, \"max\": 31},\n                {\"name\": \"PNC 7\", \"earliest\": 41, \"max\": 44}\n            ];\n\n            var schedule = _.chain(encounterSchedulePNC).filter(e => imports.moment(visitDate).isSameOrBefore(imports.moment(dateOfDelivery).add(e.earliest, 'days'), 'date') === true).filter(e => (programEncounter.programEnrolment.hasEncounter('Mother PNC', e.name)) === false).first().value();\n\n            if (!_.isEmpty(schedule)) {\n                scheduleBuilder\n                    .add({\n                        name: schedule.name,\n                        encounterType: \"Mother PNC\",\n                        earliestDate: imports.moment(dateOfDelivery).add(schedule.earliest, 'days').toDate(),\n                        maxDate: imports.moment(dateOfDelivery).add(schedule.max, 'days').toDate()\n                    });\n            }\n        }\n\n        if (programEncounter.encounterType.name == 'Child PNC') {\n            const visitDate = programEncounter.encounterDateTime || programEncounter.earliestVisitDateTime;\n\n            const dateOfBirth = programEncounter.individual.dateOfBirth;\n            const encounterSchedulePNC = [\n                  {\"name\": \"PNC 2\", \"earliest\": 1, \"max\": 4},\n                  {\"name\": \"PNC 3\", \"earliest\": 2, \"max\": 5},\n                  {\"name\": \"PNC 4\", \"earliest\": 6, \"max\": 9},\n                  {\"name\": \"PNC 5\", \"earliest\": 14, \"max\": 17},\n                  {\"name\": \"PNC 6\", \"earliest\": 28, \"max\": 31},\n                  {\"name\": \"PNC 7\", \"earliest\": 41, \"max\": 44}\n            ];\n\n            var schedule = _.chain(encounterSchedulePNC).filter(e => imports.moment(visitDate).isSameOrBefore(imports.moment(dateOfBirth).add(e.earliest, 'days'), 'date') === true).filter(e => (programEncounter.programEnrolment.hasEncounter('Child PNC', e.name)) === false).first().value();\n\n            if (!_.isEmpty(schedule)) {\n                scheduleBuilder\n                    .add({\n                        name: schedule.name,\n                        encounterType: \"Child PNC\",\n                        earliestDate: imports.moment(dateOfBirth).add(schedule.earliest, 'days').toDate(),\n                        maxDate: imports.moment(dateOfBirth).add(schedule.max, 'days').toDate()\n                    });\n            }\n        }\n\n        if (programEncounter.encounterType.name == 'Referral Status') {\n            const visitDate = programEncounter.encounterDateTime || programEncounter.earliestVisitDateTime;\n\n            const followupDate = imports.moment(visitDate).add(4, 'days').toDate();\n            scheduleBuilder\n                .add({\n                    name: \"Referral Status-2\",\n                    encounterType: \"Referral Status\",\n                    earliestDate: followupDate,\n                    maxDate: imports.moment(followupDate).add(2, 'days').toDate()\n                }).whenItem(programEncounter.name == 'Referral Status-1')\n                .is.truthy;\n        }\n    }\n\n\n    const startOfNextMonth = (date) => {\n        return imports.moment(date).startOf('month').add(1, 'months').startOf('day').toDate();\n    };\n\n    const FEB = 1;\n    const AUG = 7;\n\n    class albendazole {\n        static findSlot(anyDate) {\n            anyDate = imports.moment(anyDate).startOf('day').toDate();\n            if (imports.moment(anyDate).month() < FEB) {\n                return imports.moment(anyDate).startOf('month').month(FEB).toDate();\n            }\n            if (imports.moment(anyDate).month() === FEB) {\n                return anyDate;\n            }\n            if (imports.moment(anyDate).month() < AUG) {\n                return imports.moment(anyDate).startOf('month').month(AUG).toDate();\n            }\n            if (imports.moment(anyDate).month() === AUG) {\n                return anyDate;\n            }\n            return imports.moment(anyDate).add(1, 'year').month(FEB).startOf('month').toDate();\n        }\n\n        static getVisitSchedule(_earliestDate) {\n            let earliestDate = imports.moment(_earliestDate).startOf('day').toDate();\n            let maxDate = imports.moment(earliestDate).endOf('month').toDate();\n            if (imports.moment(_earliestDate).month() === FEB) {\n                return {\n                    name: 'Albendazole FEB',\n                    encounterType: 'Albendazole',\n                    earliestDate, maxDate,\n                }\n            }\n            return {\n                name: 'Albendazole AUG',\n                encounterType: 'Albendazole',\n                earliestDate, maxDate,\n            }\n        }\n\n        //it should simply be\n        //return albendazole.findSlot(moment(currentVisitScheduledDate).add(6, 'months').startOf('month').toDate())\n        //but need to test all scenarios\n        static findNextSlot(currentVisitScheduledDate) {\n            let guessedDate = startOfNextMonth(currentVisitScheduledDate);\n            return albendazole.findSlot(guessedDate);\n        }\n    }\n\n\n    class gmp {\n        static scheduleNext(scheduledDateTime, dayOfMonth) {\n            const earliestDate = imports.moment(scheduledDateTime).add(1, 'M').date(dayOfMonth).toDate();\n            const maxDate = imports.moment(earliestDate).add(3, 'days').toDate();\n            return {\n                name: \"Growth Monitoring Visit\",\n                encounterType: \"Growth Monitoring\",\n                earliestDate: earliestDate,\n                maxDate: maxDate\n            };\n        }\n\n        static scheduleOn(date) {\n            return {\n                name: \"Growth Monitoring Visit\",\n                encounterType: \"Growth Monitoring\",\n                earliestDate: date,\n                maxDate: date\n            };\n        }\n\n        static scheduleOnCancel(scheduledDateTime, dayOfMonth) {\n            const scheduleOnSameMonth = imports.moment(scheduledDateTime).date() < dayOfMonth;\n            const earliestDate = imports.moment(scheduledDateTime)\n                .add(scheduleOnSameMonth ? 0 : 1, 'M').date(dayOfMonth).toDate();\n            const maxDate = imports.moment(earliestDate).add(3, 'days').toDate();\n            return {\n                name: \"Growth Monitoring Visit\",\n                encounterType: \"Growth Monitoring\",\n                earliestDate: earliestDate,\n                maxDate: maxDate\n            }\n        }\n    }\n\n\n    if (programEncounter.encounterType.name == 'Growth Monitoring') {\n        const _ = imports.lodash;\n        if (programEncounter.programEnrolment.isActive) {\n           const myGroups = programEncounter.programEnrolment.individual.groups;\n           const groupSubject = _.get(_.find(myGroups, g => !g.voided && g.groupSubject.subjectType.name === 'Phulwari'), 'groupSubject');\n          \n            if(!_.isNil(groupSubject)){\n            const dayOfMonth = groupSubject.getObservationReadableValue(\"Day of month for growth monitoring visit\");\n            const year = imports.moment(programEncounter.earliestVisitDateTime).format(\"YYYY\");\n            if (year != 2019) {\n                scheduleBuilder.add(gmp.scheduleOnCancel(programEncounter.earliestVisitDateTime, dayOfMonth));\n            }\n          }\n        }\n    }\n\n    if (programEncounter.encounterType.name == 'Albendazole') {\n        if (programEncounter.programEnrolment.isActive) {\n            scheduleBuilder.add(albendazole.getVisitSchedule(albendazole\n                .findNextSlot(programEncounter.earliestVisitDateTime)));\n        }\n    }\n\n\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

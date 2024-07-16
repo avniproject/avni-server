@@ -1,0 +1,8 @@
+{
+  "name" : "SHG monthly data collection Encounter (voided~3273)",
+  "uuid" : "d1773400-0902-4bc4-8f31-b0ee16b9a225",
+  "formType" : "Encounter",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

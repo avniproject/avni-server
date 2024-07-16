@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "09d3039f-b881-4a87-ba6c-d0354ea8f9c2",
+    "type" : "Form"
+  },
+  "entityUUID" : "09d3039f-b881-4a87-ba6c-d0354ea8f9c2",
+  "entityType" : "Form",
+  "type" : "ViewFilter",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP ChildPNCViewFilter",
+  "uuid" : "e8f154d5-3060-4671-9a40-7e53b5ce83e5",
+  "fnName" : "ChildPNCViewFilter"
+}

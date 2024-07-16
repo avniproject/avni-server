@@ -1,0 +1,4235 @@
+{
+  "name" : "TB Followup",
+  "uuid" : "492e62ba-2186-4f19-b0b0-a6083eb66dd1",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "24d28fe0-521a-46b8-a73f-fb9b1839b5ba",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Treatment Start date",
+      "uuid" : "d7de75e9-43d7-4ece-a551-71c468e631ab",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Treatment Start date",
+        "uuid" : "1912c932-ce42-4b20-a021-d5588722c82f",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Expected treatment completion date",
+      "uuid" : "6812854f-bece-4290-aaf3-03a64f1dad18",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Expected treatment completion date",
+        "uuid" : "f1069c69-a2b5-489f-b1e1-dd66a51a18ca",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n\n    let startDate = programEnrolment.findObservation(\"Treatment Start date\");\n    let value = '';\n    if (startDate) {\n        value = new Date(imports.moment(startDate.getValue()).add(9, 'months').toDate());\n          \n         return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n    }\n\n    \n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "dd8bbea1-f63d-4a8b-acf1-4f1ad878f33d",
+    "name" : "Anthropometry",
+    "displayOrder" : 2.0,
+    "display" : "Anthropometry",
+    "formElements" : [ {
+      "name" : "Date of diagnosis",
+      "uuid" : "ed1d5462-99fc-49ae-b9a5-daffa99dcb1f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Weight",
+      "uuid" : "e245a653-cb49-45b8-8a79-8034eb42f1d3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Height",
+      "uuid" : "9ec9fafb-2883-41b3-8e9a-1ea01723ff88",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Height",
+        "uuid" : "23bcad9f-ec16-46ec-92f5-e144411e5dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 21.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 30.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "BMI",
+      "uuid" : "5029a629-6ea1-4266-bbd1-a4f94a523cb6",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "BMI",
+        "uuid" : "a205563d-0ac2-4955-93ac-e2e7adebb56e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 18.5,
+        "highNormal" : 24.9,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    \nlet height = programEncounter.findLatestObservationInEntireEnrolment(\"Height\", programEncounter);\nlet weight = programEncounter.findObservation(\"Weight\");\n        height = height && height.getValue();\n        weight = weight && weight.getValue();\n       let value = '';\n        if (_.isFinite(weight) && _.isFinite(height)) {\n         value = imports.common.calculateBMI(weight, height);\n       }\n              \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n  };",
+      "mandatory" : false
+    }, {
+      "name" : "Weight status",
+      "uuid" : "ab37954c-c9a5-4e13-aa3b-77de7c85dde0",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Weight & BMI status",
+        "uuid" : "6289338c-262e-407e-af9e-fadfd2bbff2e",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    let weight = programEncounter.getObservationReadableValue(\"Weight\");\n    let lastObs = programEncounter.programEnrolment.findLatestObservationFromPreviousEncounters(\"Weight\", programEncounter);\n    const enlWeight = programEncounter.programEnrolment.getObservationReadableValue('Weight');\n    let lastWeight = '';\n   \n    if (_.isEqual(lastObs, undefined)) {\n        lastWeight = enlWeight;\n    } else {\n        lastWeight = lastObs.getValue();\n    }\n\n    let value = '';\n    if (weight && lastWeight) {\n        if (weight > lastWeight) {\n            value = 'Increased';\n        } else if (weight < lastWeight) {\n            value = 'Decreased';\n        } else if (weight == lastWeight) {\n            value = 'As it is';\n        }\n    }\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "be9df491-dcfb-4126-8156-0081d7596719",
+    "name" : "Symptoms improvement",
+    "displayOrder" : 3.0,
+    "display" : "Symptoms improvement",
+    "formElements" : [ {
+      "name" : "Fever",
+      "uuid" : "a38ef852-5a7f-43e3-85ae-d4be51bc2874",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "fever",
+        "uuid" : "281ac79b-f6cb-4c0c-8c39-71b8423b985b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Cough",
+      "uuid" : "368fdb33-dd7c-4896-94b5-19eb8f682039",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "cough",
+        "uuid" : "b14f1222-f626-4a19-845a-2854a1a14f6a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loss of appettite",
+      "uuid" : "1f647794-4ef1-4ed8-a6f8-2759877904e6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "loss of appettite",
+        "uuid" : "b12aff41-3abf-454a-9c29-da90794e8791",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Breathing difficulty",
+      "uuid" : "21853b0a-b55d-42cd-83b7-0d344257e0c7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "breathing difficulty",
+        "uuid" : "8f0ad284-e6b8-42cf-a83d-a5fbfa6c0397",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Size of lymphnode",
+      "uuid" : "1c2bf8e9-5df0-4d6f-8ffe-3c73e7a37c00",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Size of lymphnode",
+        "uuid" : "c20e7230-4c4c-4a8e-ad8e-9d8fcdaedd53",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "47e21ee9-940f-4ae0-af8b-cdfa0c0783bd",
+    "name" : "Baseline disease information",
+    "displayOrder" : 4.0,
+    "display" : "Baseline disease information",
+    "formElements" : [ {
+      "name" : "Disease (TB Type)",
+      "uuid" : "add71543-0fe9-4c84-bec5-14fb2955627d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "TB type",
+        "uuid" : "f107bdc6-a6f6-41c5-baa8-8f5c3a2a06de",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Both",
+          "uuid" : "ee256131-d01e-45ab-a5c4-7fe879be8b93",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pulmonary",
+          "uuid" : "75c26f3f-631b-4759-a290-22eac77b33e4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Extrapulmonary",
+          "uuid" : "7b7cb73c-4a26-4211-a80d-7e7e9c98b30f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "If Pulmonary, place of TB",
+      "uuid" : "75c4ae9e-0d02-41f0-98b0-67a3eab0437a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If Pulmonary, place of TB",
+        "uuid" : "9e169c51-48d3-4b94-acc1-bd6364eb7ffa",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Disseminated",
+          "uuid" : "def80a98-0967-46ed-a1ba-dd577558f034",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Miliary",
+          "uuid" : "a3ebe53e-a38a-4988-82dd-7b2d8eb2e7eb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('TB type').containsAnyAnswerConceptName('Both','Pulmonary');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "If pulmonary TB, sputum status",
+      "uuid" : "fd22f722-c66a-434b-abe7-3bc48a3dc282",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If pulmonary TB, sputum status",
+        "uuid" : "c488c428-8df0-4727-9068-04df399d4a00",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Sputum +ve",
+          "uuid" : "5a2445f8-de31-4def-9fdb-9e1cee4c4bc5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sputum -ev",
+          "uuid" : "a0973908-2a23-439d-b216-94b0d6c5edad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('TB type').containsAnyAnswerConceptName('Both','Pulmonary');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "If sputum positive",
+      "uuid" : "0f2c2be2-ab0d-48d0-8476-639cd3ac7df6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If sputum positive",
+        "uuid" : "68afbd07-d09e-435c-bf19-89c5420e7830",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "3+",
+          "uuid" : "63513531-d5a4-47c1-a4ef-a02063b43871",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1+",
+          "uuid" : "d791406f-86bd-47ef-8c23-22accc521558",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2+",
+          "uuid" : "ba904c8d-502d-4979-bc99-cfa077678279",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4+",
+          "uuid" : "b133d9ce-1661-420f-b73a-392300959b4e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('If pulmonary TB, sputum status').containsAnswerConceptName('Sputum +ve');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Extrapulmonary, place of TB",
+      "uuid" : "730fdd1a-fdfd-4761-9cb7-d6edf1e1c500",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Extrapulmonary, place of TB",
+        "uuid" : "952168db-97b6-421d-bbcf-7b6cf66ff2f8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Pericardial",
+          "uuid" : "e8f07d92-d27d-497e-bf39-8a5d26d902e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Cutanious",
+          "uuid" : "f954e858-1d02-494a-bdfc-0c2d6c7d7dd7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Menigial",
+          "uuid" : "c9fd3f7e-d233-4ff1-a30e-18b355bc10e9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pleural",
+          "uuid" : "64f895ad-aadf-419f-88d5-1df156378beb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Intestinal",
+          "uuid" : "c73dc04f-1529-49a1-9464-69383dd15667",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Genital",
+          "uuid" : "ab5ca25a-e59e-4b84-bc62-61344f869732",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Articular",
+          "uuid" : "fdd74027-0617-45ee-83a7-2da4aa20931c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Peritoneal",
+          "uuid" : "0983af21-f53d-4612-94fb-8cc89f7ef4dd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Renal",
+          "uuid" : "6ff0f5b7-26a3-407a-b558-de1157a11c93",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Combination of all these",
+          "uuid" : "b5646ca3-f03d-47da-994c-735244cd97dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Lymph node",
+          "uuid" : "6ca403ce-3d84-4c2c-825d-d7e3f10b855d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Skeletal",
+          "uuid" : "ef9272c5-3bda-46d1-b7fb-a755edaf7fcd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('TB type').containsAnyAnswerConceptName('Both','Extrapulmonary');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "bba7fd09-83d5-4554-9c3c-89094b1a3ba8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other extrapulmonary, place of TB",
+        "uuid" : "14e08f81-19e6-44e2-af35-27d5097fb31c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Type of patient",
+      "uuid" : "8f0d6163-3909-4d16-87b4-70902a9632fd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "TB Patient type",
+        "uuid" : "09d1ff0a-b1dd-4555-a628-d58648e12ef6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Treatment after failure",
+          "uuid" : "c1b08708-7bb6-49e4-bfea-2e65328605aa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Treatment after relapse",
+          "uuid" : "83c32600-a41f-49cb-a079-011209405974",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Treatment after default",
+          "uuid" : "d60ceecd-ebe9-402f-9dac-a760b2c4faca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Basis of starting the treatment",
+      "uuid" : "69d50e7f-7aea-4de2-ae65-dff5fea6bf36",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Basis of starting the treatment",
+        "uuid" : "aababe19-b50d-4d53-a016-0855e8dd2827",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sputum microscopy",
+          "uuid" : "d7e8ec02-d9db-452e-acd4-ede9cb79f3b6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Clinical",
+          "uuid" : "ccd04192-d9ff-4a94-b4ba-6a7ad8721e38",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "X-ray",
+          "uuid" : "874715dc-7898-4c92-8d93-dd83964b49b7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Culture",
+          "uuid" : "db1d96d3-f789-4039-afe0-a82b935ff628",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "MultiSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "94143229-5f67-4ac5-8894-10f391b2d6dd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other basis of starting the treatment",
+        "uuid" : "eb2039ba-1e9c-4b3e-acb9-50e9c2e0741b",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Basis of starting the treatment').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Symptoms of pulmonary TB",
+      "uuid" : "a56485cf-3774-4a9e-b946-778a590e48f9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Symptoms of pulmonary TB",
+        "uuid" : "27b1f95a-70a7-424e-9c3e-f271fead1364",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Pain in lymph node",
+          "uuid" : "15af3fb2-5136-460e-8207-2947e7359a20",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pain in chest",
+          "uuid" : "5a064324-0d30-4220-b265-891568f28160",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Cough",
+          "uuid" : "6faa04f7-fa23-4a7d-9b0c-e901ca752b23",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Loss of appettite",
+          "uuid" : "60ddd128-dbb9-470a-86e6-71b54228453a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('TB type').containsAnyAnswerConceptName('Both','Pulmonary');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "51af4c42-3f5c-4d10-be1b-36d2266de8c4",
+    "name" : "Physical examination",
+    "displayOrder" : 5.0,
+    "display" : "Physical examination",
+    "formElements" : [ {
+      "name" : "Jaundice",
+      "uuid" : "41531d0f-a81c-47fe-8455-4372cca7d626",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Increased", "Decreased" ]
+      } ],
+      "concept" : {
+        "name" : "Physical examination jaundice",
+        "uuid" : "3607c36b-52b9-4a65-a5f7-236e7eab9cf1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Lymph node - new",
+      "uuid" : "147d2e1a-e35c-439c-b96d-f10e7d369012",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node new",
+        "uuid" : "8691f51f-c6a1-4b9e-a837-3075c5711c78",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Lymph node - Size (length)",
+      "uuid" : "3f973bb3-a03a-4345-b5de-883b703ea411",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node length",
+        "uuid" : "30e3d95c-10db-42b8-8ac9-c5170f286f32",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Lymph node - Size (Width)",
+      "uuid" : "134a942a-cada-4a18-9614-5e38367ad595",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node width",
+        "uuid" : "4b478982-72fb-4259-acc6-a36a68ecd31c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Lymph node - Pain",
+      "uuid" : "6b03b011-a019-4457-b0c1-eada5bc29eb6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node pain",
+        "uuid" : "d2f3d99b-f753-4c8c-a069-3621d1ea0d15",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No pain",
+          "uuid" : "04ba19f6-bdae-4ebf-9793-47841d8fde08",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Moderate",
+          "uuid" : "a5183999-791a-4b60-8206-3168bae6e523",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mild",
+          "uuid" : "41c4edd9-4d03-4824-86e4-9431cae8a7fd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Severe",
+          "uuid" : "b45be430-84a2-4aac-b1b4-d06392b11516",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Lymph node - Discharge",
+      "uuid" : "73470310-7073-436f-93ab-e119145bd202",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node discharge",
+        "uuid" : "ca4ac479-e49a-424a-8677-15671bf0369a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Discharge absent",
+          "uuid" : "c824bee3-f5ee-4c38-b57c-332a24b24804",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Disrchage present",
+          "uuid" : "9c98ea65-30b7-464c-8bd1-8b9afec14bdb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Lymph node - Sinus/Ulcer",
+      "uuid" : "90681640-7545-4265-a33f-febca4838cc6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node - Sinus/Ulcer",
+        "uuid" : "79eac097-1742-4bc0-8702-d9e00e211d56",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No Sinus/Ulcer",
+          "uuid" : "d1e0593d-d69c-45e3-8227-dbd5902b344d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sinus/Ulcer not healing and increasing in size",
+          "uuid" : "88b97c26-f321-4668-9c52-9f606f18687e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sinus/Ulcer healed",
+          "uuid" : "66c555f5-b4fa-4bb7-ae94-4921092083cc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sinus/Ulcer healing",
+          "uuid" : "8ac3c31b-9924-4095-9d4f-f6eb0a9fdbbf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Pleural - Respiratory rate",
+      "uuid" : "206700a2-816c-4add-9cb1-19ef660f77b0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural respiratory rate",
+        "uuid" : "fde9f40b-4df1-4bc4-9944-7e9db357d05b",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Pleural');\n  return statusBuilder.build();\n};",
+      "validFormat" : {
+        "regex" : "^[0-9]{2}$",
+        "descriptionKey" : "Required2Digits"
+      },
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Pleural - Rib level",
+      "uuid" : "b0650710-898e-4176-8fdd-aff4de362e03",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural rib level",
+        "uuid" : "252d42e7-ad86-4555-903e-a6e5a6ea91ee",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Pleural');\n  return statusBuilder.build();\n};",
+      "validFormat" : {
+        "regex" : "^[0-9]{1}$",
+        "descriptionKey" : "Required1Digits"
+      },
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "rule" : "",
+    "timed" : false
+  }, {
+    "uuid" : "371f51d6-09b5-4fe0-8d70-2a6022801255",
+    "name" : "Symptoms of extra pulmonary TB",
+    "displayOrder" : 6.0,
+    "display" : "Symptoms of extra pulmonary TB",
+    "formElements" : [ {
+      "name" : "Lymph node - Size (length)",
+      "uuid" : "056bcd78-c030-40d4-b1bc-d0f7c71dd8e2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node length",
+        "uuid" : "30e3d95c-10db-42b8-8ac9-c5170f286f32",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Lymph node - Size (Width)",
+      "uuid" : "3641947f-dc85-40ef-8255-a703ee246cf3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node width",
+        "uuid" : "4b478982-72fb-4259-acc6-a36a68ecd31c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Lymph node - Pain",
+      "uuid" : "9bc63caf-3210-445a-96cc-97720ddd813f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node pain",
+        "uuid" : "d2f3d99b-f753-4c8c-a069-3621d1ea0d15",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No pain",
+          "uuid" : "04ba19f6-bdae-4ebf-9793-47841d8fde08",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Moderate",
+          "uuid" : "a5183999-791a-4b60-8206-3168bae6e523",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mild",
+          "uuid" : "41c4edd9-4d03-4824-86e4-9431cae8a7fd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Severe",
+          "uuid" : "b45be430-84a2-4aac-b1b4-d06392b11516",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Lymph node - Discharge",
+      "uuid" : "809225cd-e33a-4c9a-b460-bb0ce17d5c89",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node discharge",
+        "uuid" : "ca4ac479-e49a-424a-8677-15671bf0369a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Discharge absent",
+          "uuid" : "c824bee3-f5ee-4c38-b57c-332a24b24804",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Disrchage present",
+          "uuid" : "9c98ea65-30b7-464c-8bd1-8b9afec14bdb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Lymph node - Sinus/Ulcer",
+      "uuid" : "7d265a00-c94b-4876-ae69-559c66fd8052",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node - Sinus/Ulcer",
+        "uuid" : "79eac097-1742-4bc0-8702-d9e00e211d56",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No Sinus/Ulcer",
+          "uuid" : "d1e0593d-d69c-45e3-8227-dbd5902b344d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sinus/Ulcer not healing and increasing in size",
+          "uuid" : "88b97c26-f321-4668-9c52-9f606f18687e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sinus/Ulcer healed",
+          "uuid" : "66c555f5-b4fa-4bb7-ae94-4921092083cc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sinus/Ulcer healing",
+          "uuid" : "8ac3c31b-9924-4095-9d4f-f6eb0a9fdbbf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Lymph node - Sinus/Ulcer",
+      "uuid" : "e56cb149-6a04-4d33-a335-07827b9e8fb7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymph node - sinus/ulcer",
+        "uuid" : "c6116ab5-532e-40ab-94e2-36f18b50aea1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No Sinus/Ulcer",
+          "uuid" : "d1e0593d-d69c-45e3-8227-dbd5902b344d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "ca710b8c-5a97-4ded-9943-76ea044c1f89",
+    "name" : "Medicine Compliance",
+    "displayOrder" : 7.0,
+    "display" : "Medicine Compliance",
+    "formElements" : [ {
+      "name" : "No.of days Medicine taken previous month",
+      "uuid" : "8d9805e6-1cbb-43a6-b9aa-0dcea390c555",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No.of days medicine taken previous month",
+        "uuid" : "9a839d5e-b113-4168-83a8-f47b76bff0cb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 31.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Compliance of previous month",
+      "uuid" : "9f4c8bb1-1f26-46d3-9b7e-6e221d08ed4b",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Compliance of previous month",
+        "uuid" : "e32c3092-b22c-4320-95aa-3fcd51a3e5d3",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n\n    let days = programEncounter.getObservationReadableValue(\"No.of days medicine taken previous month\");\n\n    const visibility = days != undefined;\n    let value = 'Poor';\n    if (days >= 15) {\n        value = 'Good';\n    }\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Reasons for not taking medicines",
+      "uuid" : "ae57b86d-7d35-4636-b950-0d66490c4eb8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reasons for not taking medicines",
+        "uuid" : "455f8f23-7e78-45b1-97d2-b0a6bb048f3d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Side effects of drug",
+          "uuid" : "8efb4e0c-2344-4947-a056-267b9f9499f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Forgotten to take medicines",
+          "uuid" : "07421483-1b84-49a4-8ea2-2c86474f2f45",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong drug",
+          "uuid" : "3862f257-f4a9-480e-8c14-6bd9b1be1e6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Not answered",
+          "uuid" : "ae021fdc-9767-4fae-9b17-410e7d32e218",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong dose",
+          "uuid" : "92ea2630-f541-4080-a21d-d6d506b5afd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Taking medicine from traditional healer",
+          "uuid" : "e377c779-96ff-4277-8e6f-a6370462847e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient dont want to continue medicines from JSS",
+          "uuid" : "146cc7de-d124-4e6f-9715-25553adef09f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Taking medicine from govt/private hospital/dispensary",
+          "uuid" : "7dfb6b50-46ed-4de0-ba3b-ea4271c27fb2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong timing",
+          "uuid" : "270e752f-71a8-4d9c-a71b-29d92ba3a869",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('No.of days medicine taken previous month').is.lessThan(20);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other reasons for not taking medicines",
+      "uuid" : "1968de9f-3019-40cc-b5ca-92b35a5f6056",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reasons for not taking medicines",
+        "uuid" : "09cc4da8-3b67-42dc-88b4-ebd91bc495ea",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reasons for not taking medicines').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Are you taking medicines correctly?",
+      "uuid" : "328b1b7f-50a9-4054-a030-16eecb2c707b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Taking medicine correctly?",
+        "uuid" : "122dc41e-4de9-47fd-8342-beb572cc1ab1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Compliance of previous month').containsAnswerConceptName('Poor');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "If No, what is the problem",
+      "uuid" : "c23b47e6-1282-4b51-855f-31de54e3e762",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the problem for not taking medicines correctly",
+        "uuid" : "d86a7171-0afe-4292-84ef-b264ffeba632",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Wrong dose",
+          "uuid" : "92ea2630-f541-4080-a21d-d6d506b5afd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Wrong drug",
+          "uuid" : "3862f257-f4a9-480e-8c14-6bd9b1be1e6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Wrong timing",
+          "uuid" : "270e752f-71a8-4d9c-a71b-29d92ba3a869",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Taking medicine correctly?').containsAnswerConceptName('No');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other problem",
+      "uuid" : "bde8609f-c7af-45d1-9eae-660de2db7cc8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other problem for not taking medicines correctly",
+        "uuid" : "f3995f52-bd72-48ec-9e35-052a9b9c52ce",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n   statusBuilder.show().when.valueInEncounter('What is the problem for not taking medicines correctly').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "d30c9016-e026-4d2a-9635-8b8bf66f4165",
+    "name" : "Side effect of medicines",
+    "displayOrder" : 8.0,
+    "display" : "Side effect of medicines",
+    "formElements" : [ {
+      "name" : "Any side effects of medicines?",
+      "uuid" : "603f4d47-8d39-4a57-81cc-36809355eaf2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Side effects of medicines",
+        "uuid" : "727d8a44-a1bc-40fb-bbc6-ac3ec120f962",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "chest pain",
+          "uuid" : "b1ab3410-a269-4604-8171-b1d00a59bd1f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 14.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Joint Pain",
+          "uuid" : "3d79e183-29e9-4e16-ba15-39139aaa1487",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pain in abdomen",
+          "uuid" : "cb8653a9-3248-440c-aef1-17683e49233b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Altered sensorium",
+          "uuid" : "c8cdf33d-6106-45d0-be41-10bbd8755d90",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Vision problem",
+          "uuid" : "c741f263-d0c5-44cd-b738-e97a6f59967b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Dry cough",
+          "uuid" : "8e8fc57d-41df-4f5b-b5da-d8d249a94142",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Swelling",
+          "uuid" : "21a6f265-7bcd-4fc6-a8c8-3bf363df0c83",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Nausea",
+          "uuid" : "2e7bdc81-eb3c-4a31-a909-d02159c4ec76",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Jaundice",
+          "uuid" : "49adc061-6cac-4d92-9faa-7d3279bb77f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Mental disturbances",
+          "uuid" : "8e5160c9-02ce-4c5f-a6f9-381e5fe088b1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Loss of appettite",
+          "uuid" : "60ddd128-dbb9-470a-86e6-71b54228453a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 16.0,
+          "active" : true
+        }, {
+          "name" : "Vomitting",
+          "uuid" : "95f7244f-cbfc-4234-8530-cd102551d6b6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No side effects",
+          "uuid" : "17a814ab-808c-4a95-8d10-6a66469b9e8a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weakness",
+          "uuid" : "a347dfa4-9e51-4ab4-9a7f-759379b46390",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 15.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Rashes on body",
+          "uuid" : "2d170055-5a91-4c54-bfe7-7ee50d278c38",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Blood in cough",
+          "uuid" : "4e97422a-e68c-4c13-8448-9f0c7bfe9ed4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other side effects",
+      "uuid" : "5c4118cb-b40c-4aa5-af1e-b68e0b418485",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other side effects",
+        "uuid" : "560d9317-c3f5-4c7a-a4a8-b6803fc04dde",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Side effects of medicines').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Status of side effect",
+      "uuid" : "df813b81-3054-4775-864e-d7db7140a0f0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Status of side effect",
+        "uuid" : "579e005a-92e0-4652-b5e8-8a1a96301a8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completely relieved",
+          "uuid" : "fe3583dc-4408-4fd8-939d-21c9b9c7874c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "New problem",
+          "uuid" : "18fea245-d7e8-4fe0-b40a-01572a045766",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Patient treatment status",
+      "uuid" : "b216dbef-b0ff-4178-9f7f-148df21ce006",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Patient Treatment Status",
+        "uuid" : "39bac4c9-d312-490d-8e1c-2c42da978fea",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let displayText = 'Can not calculate yet';\n\n    const encounters = programEncounter.programEnrolment.getEncountersOfType('TB followup');\n\n\n    let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .nth(0)\n        .value();\n\n    let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value();\n\n\n   \n\n    let enc1Value = -1, enc2Value = -1;\n    let enc1ComplianceValue, enc2ComplianceValue;\n\n    if (enc1) {\n        enc1Value = enc1.getObservationReadableValue('No.of days medicine taken previous month');\n       \n    }\n    if (enc2) {\n        enc2Value = enc2.getObservationReadableValue('No.of days medicine taken previous month');\n        \n    }\n\n    if (enc1) {\n        enc1ComplianceValue = enc1.getObservationReadableValue('Compliance of previous month');\n\n    }\n    if (enc2) {\n        enc2ComplianceValue = enc2.getObservationReadableValue('Compliance of previous month');\n    }\n\n   \n\n\n\n    if ( enc1Value && enc2Value  && enc1Value == 0 && enc2Value == 0 ) {\n        displayText = 'Default';\n    }\n\n\n    if (enc1ComplianceValue !== undefined && enc2ComplianceValue !== undefined ) {\n\n        if (_.isEqual(enc1ComplianceValue, 'Poor') && _.isEqual(enc2ComplianceValue, 'Poor') && enc1Value > 0 && enc2Value > 0)\n            displayText = 'Break in treatment';\n        else if (!_.isEqual(enc1ComplianceValue, 'Poor') && !_.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Treatment not breaking';\n\n    }\n\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Patient treatment status",
+      "uuid" : "6b43ccc5-4f2d-4fa5-af2d-ae1ee2e81c7a",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Patients treatment status",
+        "uuid" : "77a5d630-7c66-4880-94f0-b552b4e8a7d7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Can not calculate yet",
+          "uuid" : "2c93fb82-d24f-4a59-95b4-78b0eda0b926",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Treatment not breaking",
+          "uuid" : "f5384dac-296c-46c1-b957-294d998f6f5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Break in treatment",
+          "uuid" : "10275692-2613-4c3a-adea-ad922dee199a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    let displayText = 'Can not calculate yet';\n\n    const encounters = programEncounter.programEnrolment.getEncountersOfType('TB followup');\n\n\n    let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .nth(0)\n        .value();\n\n    let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value();\n\n\n   \n\n    let enc1Value = -1, enc2Value = -1;\n    let enc1ComplianceValue, enc2ComplianceValue;\n\n    if (enc1) {\n        enc1Value = enc1.getObservationReadableValue('No.of days medicine taken previous month');\n       \n    }\n    if (enc2) {\n        enc2Value = enc2.getObservationReadableValue('No.of days medicine taken previous month');\n        \n    }\n\n    if (enc1) {\n        enc1ComplianceValue = enc1.getObservationReadableValue('Compliance of previous month');\n\n    }\n    if (enc2) {\n        enc2ComplianceValue = enc2.getObservationReadableValue('Compliance of previous month');\n    }\n\n   \n\n\n\n    if ( enc1Value && enc2Value  && enc1Value == 0 && enc2Value == 0 ) {\n        displayText = 'Default';\n    }\n\n\n    if (enc1ComplianceValue !== undefined && enc2ComplianceValue !== undefined ) {\n\n        if ((_.isEqual(enc1ComplianceValue, 'Poor') || _.isEqual(enc2ComplianceValue, 'Poor')) && enc1Value > 0 && enc2Value > 0)\n            displayText = 'Break in treatment';\n        else if (!_.isEqual(enc1ComplianceValue, 'Poor') && !_.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Treatment not breaking';\n\n    }\n\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "239055a7-661b-4c7c-a80d-8f262bc5249b",
+    "name" : "Baseline Lab",
+    "displayOrder" : 9.0,
+    "display" : "Baseline Lab",
+    "formElements" : [ {
+      "name" : "Hb",
+      "uuid" : "6bbaac24-926f-4880-809e-878a640176d2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Serum Albumin",
+      "uuid" : "80fc775c-d53d-43bf-bf07-adc78f589ad2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Serum Albumin",
+        "uuid" : "e663c9f6-d587-4c33-925b-37d92c6b86a2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 6.5,
+        "highNormal" : 8.5,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "ALT",
+      "uuid" : "5d6f656c-b678-4f69-8089-f135c7557e0c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ALT",
+        "uuid" : "28640bfd-8186-4596-a648-46b15e86ef11",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 5.0,
+        "highNormal" : 35.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "RBS",
+      "uuid" : "99963fe6-48cd-4881-bdc2-76e6963a941a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "RBS",
+        "uuid" : "6926107f-5793-4ef8-98e1-4a3cc1e2725f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 160.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "FBS",
+      "uuid" : "bf002261-2dfc-4fbe-a3f0-6a9d2b7f9893",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "FBS",
+        "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('RBS').is.greaterThan(160);\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "PP2BS",
+      "uuid" : "f5659413-106b-4342-8b58-a9bd7db4252e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "PP2BS",
+        "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('RBS').is.greaterThan(160);\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "HIV",
+      "uuid" : "bde9f8e0-aba4-4b36-9e6b-fbaee557e3af",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HIV/AIDS Test",
+        "uuid" : "a8be8aeb-bfbf-4ae5-9158-a307b2e135f0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Serum Creatinin",
+      "uuid" : "44109273-bce1-44b4-a75f-126869926fe2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Serum Creatinin",
+        "uuid" : "4696cc76-ce42-41b8-a837-18ab32ca3a1d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 0.6,
+        "highNormal" : 1.2,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "GGT",
+      "uuid" : "50d3f5b9-4a95-4a42-9364-473762fb0451",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "GGT",
+        "uuid" : "1875dcc9-3f96-40bc-8129-c1edc1191113",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 7.0,
+        "highNormal" : 37.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Pleural fuild colour",
+      "uuid" : "0a0ba5c8-a858-431b-981b-36272161b8a5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid colour",
+        "uuid" : "76f6ae61-d138-4be4-8a08-b50df5fd3f2a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Transudate",
+          "uuid" : "970a4bd9-722e-48fd-96cf-1fcd4e027f3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Exudate",
+          "uuid" : "b400f012-f162-4473-a4cd-49611211601b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Pleural');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Pleural fuild cells",
+      "uuid" : "b1e4b574-e7c4-456d-92a0-18daf62092f5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid cells",
+        "uuid" : "a0d7fdb2-c4d0-40ec-8080-aaf8b9b28f1c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Pleural');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Pleural fuild protien",
+      "uuid" : "84e12e87-e839-4dc7-8f55-d488f9ce4088",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid protein",
+        "uuid" : "5fb97dda-0144-4ee1-a5f0-2d6d9ed1933e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Pleural');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Pleural fuild ADA",
+      "uuid" : "b863e735-3f25-4c93-a434-ac27f5e09361",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid ADA",
+        "uuid" : "95b6e401-836a-4c83-bc66-8b1fd363572a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Pleural');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Lympnode biopsy/FNAC",
+      "uuid" : "00d4df2d-acd3-4f3d-9f62-95770d8009a5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymphnode biopsy/FNAC",
+        "uuid" : "368da433-da3d-4f14-94ed-e0b39bada0c1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Biopsy/FNAC not done",
+          "uuid" : "8b48b931-939d-4a9e-b3fa-53514e39080a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Biopsy/FNAC not required",
+          "uuid" : "30d5a363-d3da-409c-b724-13422159f5dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Biopsy/FNAC done",
+          "uuid" : "2276fa97-10cd-4c2a-8da8-81c7a7fe2bd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Extrapulmonary, place of TB').containsAnswerConceptName('Lymph node');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "X-Ray",
+      "uuid" : "0f20dd17-0756-4044-ba2e-93ca09c142b3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "X-Ray",
+        "uuid" : "da9dd015-9113-4e42-9f08-3ac191472c25",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Extensive",
+          "uuid" : "975ebd10-9f09-4d0c-80e9-c27599d0461d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Cavitary",
+          "uuid" : "350003d9-60cb-4be3-bdb6-752d3bb8adcb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Non cavitary",
+          "uuid" : "38fc25fd-1bd5-4400-b56b-13157c25c50d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Limited",
+          "uuid" : "acf0110b-d2e6-4e41-a564-203df561a6e4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Improved than previous x-ray",
+          "uuid" : "637fe631-29c8-4869-9b42-e092f91aef84",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Not required",
+          "uuid" : "011b0b14-a8e5-4d32-a628-efa459f845d1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New changes",
+          "uuid" : "0485267b-2321-44a8-a71b-ab1c153ab41c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "MultiSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "33d26cba-2662-49d2-a2a0-2cd0c97b9960",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other X-ray",
+        "uuid" : "c5789f65-0ebc-43a6-b425-475e52320c70",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('X-Ray').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Comorbidity",
+      "uuid" : "387f5585-7f3d-44a8-93de-fca5e32edc2b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Comorbidity",
+        "uuid" : "833e28b6-7afa-4eb9-ab39-68a0f7eb7033",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Liver disease",
+          "uuid" : "cc712c5c-4e89-4af4-a96e-2d614f2f074e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Kidney diseases",
+          "uuid" : "ddf28da9-e96b-4452-ba2f-637da2831917",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Diabetes",
+          "uuid" : "1928469b-a981-4579-beb7-ae47b972e671",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "HIV/AIDS",
+          "uuid" : "0b5a9a9a-bbfb-4bd2-a87d-bc53aa316c80",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "MultiSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Specify other comorbidity",
+      "uuid" : "add3f9b7-8884-454c-8e4e-f68e72a2ac41",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other comorbidity",
+        "uuid" : "c4d8c82e-dc41-4793-b5cc-dd4b05616d07",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Comorbidity').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "b5ed069d-e72a-41b2-98d4-c725269f0d14",
+    "name" : "Medicine",
+    "displayOrder" : 10.0,
+    "display" : "Medicine",
+    "formElements" : [ {
+      "name" : "Treatment - Phase type",
+      "uuid" : "c74fcaae-99b7-4ed5-a754-b18367af252a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Treatment phase type",
+        "uuid" : "053980b5-7590-4240-a9c4-762571cd934f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Continuous phase",
+          "uuid" : "7e5139bc-1ab7-40ca-8eec-832ccd147681",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Intensive phase",
+          "uuid" : "4288ea0f-4b04-4dc4-a589-a48d1a0b17d3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Weight band",
+      "uuid" : "6b6c9046-c6fd-40ac-8ad5-3195a8b871e5",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Weight band",
+        "uuid" : "e794c491-e396-4d82-919e-0d3499579072",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\n\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n\n    let weight = programEncounter.getObservationReadableValue(\"Weight\");\n    let value = '';\n    \n        if( weight >= 4 && weight <= 7)\n            value = '4-7';\n        else if (weight >= 8 && weight <= 11)\n            value = '8-11';\n        else if(weight >= 12 && weight <= 15)\n            value = '12-15';\n        else if(weight >= 16 && weight <= 24)\n            value = '16-24';\n        else if (weight >= 25 && weight <= 39)\n            value = '25-39';\n        else if(weight >= 40 && weight <= 54)\n            value = '40-54';\n        else if(weight >= 55 && weight <= 69)\n            value = '55-69';\n        else if(weight >= 70)\n            value = '>=70';\n      \n    console.log('weight----->', weight);\n    console.log('valuew----->', value);\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Drugs",
+      "uuid" : "dcd76edd-894e-421c-8f93-342592748dec",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Drugs",
+        "uuid" : "8d712349-af5d-42e3-ac20-5dcc1be47523",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "12RZFqE",
+          "uuid" : "ad886024-d420-4bac-a882-45ea5a505a06",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "HRZE",
+          "uuid" : "65e9df4c-616e-465e-9d9e-021d59f437b8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "HRE",
+          "uuid" : "fbcfaa23-1243-4535-ade3-acc99a314d9f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "9H",
+          "uuid" : "52349651-8b43-4de6-a9de-9e4f1e8116d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3HRZE+6HRE",
+          "uuid" : "886e1f31-03a6-4784-afc4-755b41489cf1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "MDR Treatment",
+          "uuid" : "ed4f3f09-63cc-4b01-9b4a-23223f6f7396",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3HRZE+9HRE",
+          "uuid" : "3bab10e7-a6f7-44b7-8949-20e95b951ca8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2HRZE+4HR",
+          "uuid" : "97424bfd-7159-488e-8f89-f090f3b7b40e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other drugs",
+      "uuid" : "ad05521e-dc2f-48e9-bc53-103ca5b691bf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other drugs",
+        "uuid" : "47c6994d-2c4f-4b89-9964-3c03c92a8624",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Becadex (multivitamin)",
+          "uuid" : "74182b4d-b305-4621-b0fa-2bde06295f50",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "None of the above",
+          "uuid" : "1024dba0-cf84-4747-8a87-05afafe40a99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Calcium",
+          "uuid" : "a90a1a76-c5fe-4020-924e-0e0e9f5b0f9f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "B-complex",
+          "uuid" : "26d436dc-96a3-4db4-9b36-183d68094e8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Iron (Fersifol)",
+          "uuid" : "1a86c03c-416e-4603-a0d0-2407bc837253",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "paracetamol",
+          "uuid" : "956c10a2-907b-429e-9ed2-4db66f1c8d70",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Omeprazole",
+          "uuid" : "54323fc3-e6e7-45c8-ac2b-cabc4e2140d5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Famotidin",
+          "uuid" : "ff34199b-db41-444d-828a-d30a779446fc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Drugs').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "B-complex Strength",
+      "uuid" : "b0c24ebf-7ab8-4aa6-bf7a-7e8015ca0296",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "B-complex Strength",
+        "uuid" : "a5ed1d52-4b5a-4c79-974b-0adf2bf9ccb5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('B-complex');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "B-complex tablet for how times per day",
+      "uuid" : "d385495c-92fd-4901-a748-320749ebfdb4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "B-complex tablet for how times per day",
+        "uuid" : "8d0a9149-a1a6-4deb-89b9-dcbdfa21fa04",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('B-complex');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "B-complex tablet for how many days",
+      "uuid" : "f13de90b-44d1-4c06-a3d8-1979fd04b8ab",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "B-complex tablet for how many days",
+        "uuid" : "e4fcbd27-8b23-46ba-a59e-1aed275f690b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('B-complex');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Becadex (multivitamin) Strength",
+      "uuid" : "7fe9844e-3fca-405d-a7ba-61d89e3b0ad8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Becadex (multivitamin) Strength",
+        "uuid" : "6e96f709-dc8e-4e10-a79f-e908a790d719",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Becadex (multivitamin)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Becadex (multivitamin) tablet for how times per day",
+      "uuid" : "fa791345-fb5f-405f-8a44-10ea5d74619c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Becadex (multivitamin) tablet for how times per day",
+        "uuid" : "9b8e1c45-8286-4ad3-b20e-bfae7d3e212e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Becadex (multivitamin)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Becadex (multivitamin) tablet for how many days",
+      "uuid" : "e84f5841-a95f-49bc-b7c4-a4ab9bcd2e58",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Becadex (multivitamin) tablet for how many days",
+        "uuid" : "5bd89916-3af1-4af7-a79e-9fc795a7c475",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Becadex (multivitamin)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Iron (Fersifol) Strength",
+      "uuid" : "1c92f164-2d33-4676-8447-63cdb5934267",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron (Fersifol) Strength",
+        "uuid" : "524abcfb-d2b0-46e4-9c18-c5c380adb862",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "150 mg",
+          "uuid" : "7ed903d7-4766-46e4-ae90-3cc00683ee53",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "160 mg",
+          "uuid" : "b2279a5c-4a97-4348-bca8-3a040c1d185a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "360 mg",
+          "uuid" : "46360e77-0cae-4b03-aa2a-5390ecb56f0d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "50 mg",
+          "uuid" : "d2cc3b6c-bbde-4840-9ef9-bf76fe1f7fd0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "60 mg",
+          "uuid" : "95c823e7-27e0-454e-8e51-fc5362c573bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "25 mg",
+          "uuid" : "beadf3cf-f434-4015-9ad2-c84d438f6d90",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Iron (Fersifol)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Iron (Fersifol) tablet for how times per day",
+      "uuid" : "6610fb33-5cf7-4be6-92cb-8192b61ec9fa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron (Fersifol) tablet for how times per day",
+        "uuid" : "2e827b9e-76cb-45bd-8207-a85653d6f4af",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Iron (Fersifol)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Iron (Fersifol) tablet for how many days",
+      "uuid" : "871722e4-85e7-448e-b333-ce0b57c8ee85",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron (Fersifol) tablet for how many days",
+        "uuid" : "c74fd564-30b7-4b4b-a7e7-b93cb189f359",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Iron (Fersifol)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Paracetamol Strength",
+      "uuid" : "95d4c767-213e-4129-9952-d035868ac9d2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol Strength",
+        "uuid" : "6b3c1744-f643-499d-8581-8b0b4a4017bd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "250 mg",
+          "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('paracetamol');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Paracetamol tablet for how times per day",
+      "uuid" : "622ffe84-0ea5-4913-ad48-2b8b802560c0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol tablet for how times per day",
+        "uuid" : "f91a06d7-69c5-443f-b97e-60bb981afca7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('paracetamol');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Paracetamol tablet for how many days",
+      "uuid" : "445fabb0-8d0e-4598-8df8-403cfafeecfd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol tablet for how many days",
+        "uuid" : "4aab6b40-dfc4-4bcb-b413-36689b651a42",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('paracetamol');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Calcium Strength",
+      "uuid" : "1b20c3db-e005-4e82-b340-f79b3a199aae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Calcium Strength",
+        "uuid" : "d6e1be9d-0937-4708-869f-19c816c11d7c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Calcium');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Calcium tablet for how times per day",
+      "uuid" : "b5bce419-8a2c-4ad8-9807-979e30bac473",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Calcium tablet for how times per day",
+        "uuid" : "d38544e2-77f3-4f83-ac43-db76e38593b6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Calcium');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Calcium tablet for how many days",
+      "uuid" : "69c11fe3-5ca5-4cd6-8581-038a6bdf4baa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Calcium tablet for how many days",
+        "uuid" : "95ca8c1b-c012-428b-83d8-c9a210e19d57",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Calcium');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Famotidin Strength",
+      "uuid" : "3cde3609-cbe2-4145-ab7c-6d8447143598",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Famotidin Strength",
+        "uuid" : "a7f6bc7b-5cd0-444f-9892-a923d2468b69",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "10 mg",
+          "uuid" : "2a51c67b-2726-42d1-bf8b-0bbbe0a8da6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "40 mg",
+          "uuid" : "39efffa4-84ab-4551-9bd8-527d262ff469",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 20.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Famotidin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Famotidin tablet for how times per day",
+      "uuid" : "5e26402e-42a9-4447-bc24-cacdee2f256d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Famotidin tablet for how times per day",
+        "uuid" : "04459837-ec31-4a40-aed3-d721ab0c8a7a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 21.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Famotidin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Famotidin tablet for how many days",
+      "uuid" : "78e19a46-241d-410e-95b5-cca250eb4c17",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Famotidin tablet for how many days",
+        "uuid" : "478caac9-3fba-4fe3-809a-d2d11fdb64d6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 22.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Famotidin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Omeprazole Strength",
+      "uuid" : "54824184-4be5-40d4-9aa7-ec182d214d94",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Omeprazole Strength",
+        "uuid" : "74f118f7-60e9-4ea7-b671-894f49e2fd70",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "10 mg",
+          "uuid" : "2a51c67b-2726-42d1-bf8b-0bbbe0a8da6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "45 mg",
+          "uuid" : "cd67e213-cdeb-4c66-99bd-7b371bae1da3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2.5 mg",
+          "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "60 mg",
+          "uuid" : "95c823e7-27e0-454e-8e51-fc5362c573bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 23.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Omeprazole');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Omeprazole tablet for how times per day",
+      "uuid" : "244ca52b-ab53-414f-a2c4-c5401040eca6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Omeprazole tablet for how times per day",
+        "uuid" : "79ac62a8-4355-4fe8-ad6f-beb5b4faa5c7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 24.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Omeprazole');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Omeprazole tablet for how many days",
+      "uuid" : "6f9feb2c-bca8-48ff-bdde-b236647c0716",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Omeprazole tablet for how many days",
+        "uuid" : "5e319446-80eb-499b-bac7-5687f34609ce",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 25.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Other drugs').containsAnswerConceptName('Omeprazole');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Comorbidity and its treatment",
+      "uuid" : "a43eca0f-28d2-49fb-980c-04d20b9bb999",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Comorbidity and its treatment",
+        "uuid" : "4a2960b1-fb5b-4197-bba6-d3a5b71a8cfa",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completed",
+          "uuid" : "e5b37f65-cc1c-4174-81e9-f1a293facd68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not applicable",
+          "uuid" : "fd1731b5-f55f-46a8-96ce-59b5e40bc6ba",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Going on",
+          "uuid" : "8374dcb0-d5bc-49fd-b272-692b15341f52",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Continued",
+          "uuid" : "96d51dfd-bd64-4644-8395-cf6f79fedc1e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Missed",
+          "uuid" : "559ebf9f-0b0a-4f6f-b330-d72da4eaac70",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New comorbidity",
+          "uuid" : "be6240d8-ba9a-4541-bbb3-8911dabfcb91",
+          "dataType" : "Text",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 26.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of tablets",
+      "uuid" : "17f6cd7a-2747-4e90-b4e7-eb4dbf1dbd03",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of tablets",
+        "uuid" : "32de7319-1a4f-4958-a7f6-975d0d601f1b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2+2A",
+          "uuid" : "741b8150-6233-43cd-be85-50bfaa93df6f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "5",
+          "uuid" : "05ebb004-c21c-4c41-933d-9c2e8b164fea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3+A1",
+          "uuid" : "0cd8af1b-dfb8-4f02-9149-f2baa6de14ed",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 27.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Streptomycin (Strength of Medicine)",
+      "uuid" : "7e8f01cf-6967-4814-9c07-c7a450d24357",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Streptomycin strength",
+        "uuid" : "a107dfc3-f3de-402b-9810-14450bbdbc4a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1 g",
+          "uuid" : "45de6d0a-8f7d-48a2-a1e4-9e300c347b4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "300 mg",
+          "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "100 mg",
+          "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "0.75 g",
+          "uuid" : "74af2578-1f6b-4360-9884-77fa78d0ec5a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "400 mg",
+          "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "150 mg",
+          "uuid" : "7ed903d7-4766-46e4-ae90-3cc00683ee53",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 28.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Streptomycin, how many times a day",
+      "uuid" : "3f58a078-03cd-4725-b66c-ff12935e681e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Streptomycin, how many times a day",
+        "uuid" : "f97f8cb6-2795-4089-838a-f8e4f957f6b0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 29.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Streptomycin, for how many days",
+      "uuid" : "c9fb1e31-fff5-48ca-8e08-9fa2465e0690",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Streptomycin, for how many days",
+        "uuid" : "1fc6f193-1dd7-4def-99ca-876c2b735918",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 30.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Iron Tablets",
+      "uuid" : "e5090c1d-e288-4529-b0ce-23771689bc76",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron Tablets",
+        "uuid" : "395ec199-862b-45bf-8068-7d00fd67f4dd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "325 mg",
+          "uuid" : "3ababb1b-b70b-4537-a3f1-f575824730dd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "45 mg",
+          "uuid" : "cd67e213-cdeb-4c66-99bd-7b371bae1da3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "160 mg",
+          "uuid" : "b2279a5c-4a97-4348-bca8-3a040c1d185a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "60 mg",
+          "uuid" : "95c823e7-27e0-454e-8e51-fc5362c573bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "300 mg",
+          "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "60",
+          "uuid" : "6fceafad-d106-479b-827f-8f991ad93246",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "140 mg",
+          "uuid" : "a405db6a-140c-4b84-95b6-5fc9439f594a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "45",
+          "uuid" : "a3b9df18-1aca-41ec-9829-8fec3f69d2ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 31.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "How many times a day",
+      "uuid" : "da16e76a-a3db-4356-a6df-e5a263a514c6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron Tablets, how many times a day (voided~70093)",
+        "uuid" : "a39b4ddf-48ef-4dd9-9822-99df97f156f5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 32.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Iron tablets ,how many times a day",
+      "uuid" : "c45148c9-218f-4932-bf99-3ef7972e0a64",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron Tablets, how many times a day",
+        "uuid" : "f41649ac-2e2f-4259-a598-6d7307dd5a7a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 33.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Iron tablets, for how many days",
+      "uuid" : "87129509-5ef8-4046-aef6-23592cba6698",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron tablet, for how many days",
+        "uuid" : "c7e529b0-fa29-4991-bccd-c0b852d2407a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 34.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "0c33cd08-53bd-493f-8317-f275be39192f",
+    "name" : "Labs - Test Required",
+    "displayOrder" : 11.0,
+    "display" : "Labs - Test Required",
+    "formElements" : [ {
+      "name" : "Any lab investigation is required?",
+      "uuid" : "031fd7ad-41fc-4ab9-9a65-2e5eca5553f9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any lab investigation is required?",
+        "uuid" : "b0f97907-cab0-4925-9f9a-06795766682b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "What lab investigations?",
+      "uuid" : "73fbf676-18a1-4e3e-bd07-3252757c227b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What lab investigations?",
+        "uuid" : "84f7d914-623f-45a8-8c15-a59704c61295",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "LPA",
+          "uuid" : "892e68cc-a726-4628-8e5d-fde5996ad62c",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "RIF resistant",
+            "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "RIF sensitive",
+            "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          } ],
+          "order" : 15.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fluid ADA",
+          "uuid" : "95b6e401-836a-4c83-bc66-8b1fd363572a",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "FBS",
+          "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 7.0,
+          "lowNormal" : 80.0,
+          "highNormal" : 120.0,
+          "active" : true
+        }, {
+          "name" : "HB",
+          "uuid" : "e915a2ac-4e18-4423-862c-0241a126eef0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 17.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "X-Ray",
+          "uuid" : "da9dd015-9113-4e42-9f08-3ac191472c25",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Extensive",
+            "uuid" : "975ebd10-9f09-4d0c-80e9-c27599d0461d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Cavitary",
+            "uuid" : "350003d9-60cb-4be3-bdb6-752d3bb8adcb",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Non cavitary",
+            "uuid" : "38fc25fd-1bd5-4400-b56b-13157c25c50d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Not done",
+            "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 6.0,
+            "unique" : true,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Limited",
+            "uuid" : "acf0110b-d2e6-4e41-a564-203df561a6e4",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Improved than previous x-ray",
+            "uuid" : "637fe631-29c8-4869-9b42-e092f91aef84",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true
+          }, {
+            "name" : "Not required",
+            "uuid" : "011b0b14-a8e5-4d32-a628-efa459f845d1",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 7.0,
+            "unique" : true,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "New changes",
+            "uuid" : "0485267b-2321-44a8-a71b-ab1c153ab41c",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 8.0,
+            "active" : true
+          }, {
+            "name" : "Normal",
+            "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 5.0,
+            "active" : true
+          }, {
+            "name" : "Other",
+            "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 9.0,
+            "active" : true
+          } ],
+          "order" : 13.0,
+          "active" : true
+        }, {
+          "name" : "PP2BS",
+          "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 8.0,
+          "lowNormal" : 120.0,
+          "highNormal" : 150.0,
+          "active" : true
+        }, {
+          "name" : "RBS",
+          "uuid" : "6926107f-5793-4ef8-98e1-4a3cc1e2725f",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 4.0,
+          "lowNormal" : 60.0,
+          "highNormal" : 160.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fuild cells",
+          "uuid" : "29a7f610-e9c3-4ca7-986c-b4cf3954e4e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Serum Creatinin",
+          "uuid" : "4696cc76-ce42-41b8-a837-18ab32ca3a1d",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 3.0,
+          "lowNormal" : 0.6,
+          "highNormal" : 1.2,
+          "active" : true
+        }, {
+          "name" : "ALT",
+          "uuid" : "28640bfd-8186-4596-a648-46b15e86ef11",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 0.0,
+          "lowNormal" : 5.0,
+          "highNormal" : 35.0,
+          "active" : true
+        }, {
+          "name" : "LJ",
+          "uuid" : "40bf14fd-fa1c-42cf-b552-4968ebd5785e",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "RIF sensitive",
+            "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "RIF resistant",
+            "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 16.0,
+          "active" : true
+        }, {
+          "name" : "HIV (Elisa)",
+          "uuid" : "b3e8a85a-c7ca-49b8-9c6f-8bd5ee6bfad1",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Positive",
+            "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "Negative",
+            "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "Not done",
+            "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Serum Albumin",
+          "uuid" : "e663c9f6-d587-4c33-925b-37d92c6b86a2",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 2.0,
+          "lowNormal" : 6.5,
+          "highNormal" : 8.5,
+          "active" : true
+        }, {
+          "name" : "CBNAAT",
+          "uuid" : "7a10b895-cea7-4c69-983c-ef8ef7664fb2",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "RIF resistant",
+            "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "RIF sensitive",
+            "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          } ],
+          "order" : 14.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fuild protien",
+          "uuid" : "d69d1361-87e0-49a4-9205-e05fc2d9fae6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Lymphnode biopsy/FNAC",
+          "uuid" : "368da433-da3d-4f14-94ed-e0b39bada0c1",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Biopsy/FNAC not done",
+            "uuid" : "8b48b931-939d-4a9e-b3fa-53514e39080a",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Biopsy/FNAC not required",
+            "uuid" : "30d5a363-d3da-409c-b724-13422159f5dc",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Biopsy/FNAC done",
+            "uuid" : "2276fa97-10cd-4c2a-8da8-81c7a7fe2bd3",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Sputum AFB",
+          "uuid" : "616f9638-375a-477d-b5a0-3e660edeba8d",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Positive",
+            "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "Negative",
+            "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "HIV/AIDS",
+          "uuid" : "0b5a9a9a-bbfb-4bd2-a87d-bc53aa316c80",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Any lab investigation is required?').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "096bbe4a-dac3-4115-bee6-31cb99edee98",
+    "name" : "Counselling",
+    "displayOrder" : 12.0,
+    "display" : "Counselling",
+    "formElements" : [ {
+      "name" : "TB  counselling points",
+      "uuid" : "b2c90a50-e1e8-494a-a48e-2990ffbfbddd",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Yes" ]
+      } ],
+      "concept" : {
+        "name" : "TB counselling points",
+        "uuid" : "0861571f-cf67-4252-b38d-cecbb159649d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fd0d9dcd-39f4-4e11-a72a-d459d761c2fe",
+    "name" : "Referral",
+    "displayOrder" : 13.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "Does patient require referral",
+      "uuid" : "18ebc2f3-82ef-426f-847b-546e2825128b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does patient require referral",
+        "uuid" : "7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "610c41cf-214a-4984-bd70-05b1a4548ab5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of referral for NCD",
+        "uuid" : "75b9819a-0725-4c7e-94c2-5b5e72e2a2e3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Ganiyari Hospital",
+          "uuid" : "e9a08867-baca-43ea-85ac-34c06811190b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS subcenter",
+          "uuid" : "b704eaf7-3cfb-4016-a884-456e1f0b7e62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS Mobile clinic",
+          "uuid" : "af7205fb-a2c5-45cd-8738-5baec4c02c98",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "PHC",
+          "uuid" : "43449534-1e2b-45de-8a5d-d99d13f3321f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "5ee73aa4-ad73-4d1d-9e6a-16b2ed3d1843",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of referral for NCD').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "c5efab31-40bd-4f58-980a-c93ca2832a7d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral reason NCD",
+        "uuid" : "aa21f9e8-3ed8-4f83-8427-a95a68635380",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Admission",
+          "uuid" : "397c8d3a-9711-4750-88cf-f709b54f8da8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Consultation with specialist",
+          "uuid" : "da91746d-cc9b-4112-801f-ec3fec719886",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Doctors consultation",
+          "uuid" : "6aa41619-2316-4f1a-b908-c07c04008f4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Lab and other investigation work up",
+          "uuid" : "f02354c0-780a-4996-bb37-9cfbaa0fe931",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Annual check",
+          "uuid" : "d8e670a1-55e2-4ea0-9a8e-73f1034fb947",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify, other referral reason",
+      "uuid" : "621f68e6-bf11-406c-acda-934795c0cf0c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason NCD').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "9b4585ed-399b-4057-80b3-b54d4af3b7ad",
+    "name" : "Next Visit",
+    "displayOrder" : 14.0,
+    "display" : "Next Visit",
+    "formElements" : [ {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "f37532d3-85ee-4ae8-bb0a-2b5aeccfe2a3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n     \n  const visitDate = programEnrolment.enrolmentDateTime;  \n  const nextVisitDate = programEnrolment.getObservationReadableValue('Date of next visit');\n \n  if(nextVisitDate !== undefined){\n   if(imports.moment(nextVisitDate).isBefore(visitDate, 'date'))\n    statusBuilder.validationError(\"Next visit date should be after current visit date\");\n  }\n  \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "3bd9d6b2-85c4-49a9-814a-18d73181d70a",
+    "name" : "Complete diagnosis",
+    "displayOrder" : 15.0,
+    "display" : "Complete diagnosis",
+    "formElements" : [ {
+      "name" : "Complete diagnosis",
+      "uuid" : "e2ecb129-3b0d-4e66-a881-c1ad370c3a43",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Complete Diagnosis",
+        "uuid" : "a2f24e5e-b1de-404b-a270-3a6ac41c0fef",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n  let value =  '';\n  const typeOfTB = programEnrolment.getObservationReadableValue(\"TB type\");\n  \n  value = ' ' +'Type of TB- ' + typeOfTB + '\\n';\n  \n   if(_.includes(typeOfTB,'Pulmonary') || _.includes(typeOfTB,'Both') ){\n     const pulmonaryPlaceOfTB = programEnrolment.getObservationReadableValue(\"If Pulmonary, place of TB\");\n     value = value + ' ' + 'Place of pulmonary Tb- ' + pulmonaryPlaceOfTB + '\\n';\n  }\n  \n  if(_.includes(typeOfTB,'Extrapulmonary')|| _.includes(typeOfTB,'Both')){\n   const extrapulmonaryPlaceOfTB = programEnrolment.getObservationReadableValue(\"Extrapulmonary, place of TB\");\n   value = value + ' ' + 'Place of Extrapulmonary Tb- ' + extrapulmonaryPlaceOfTB + '\\n';\n  }\n  \n  const comorbidity = programEnrolment.getObservationReadableValue(\"Comorbidity\");\n  if(comorbidity !== undefined){\n    value = value + ' ' + 'Comorbidity- ' + comorbidity + '\\n';\n    if(_.includes(comorbidity,'Other')){\n     const otherComorbidity = programEnrolment.getObservationReadableValue(\"Other comorbidity\");\n     if(otherComorbidity !== undefined)\n     value = value + ' ' + 'Other comorbidity- ' + otherComorbidity;\n    }    \n  }\n      \n \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  } ],
+  "decisionRule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEnrolment: programEnrolment,\n        complicationsConcept: \"Complete diagnosis\"\n    });\n    \n  // complicationsBuilder\n  //   .addComplication(programEnrolment.getObservationReadableValue(\"Complete Diagnosis\"));\n    \n    \n    complicationsBuilder\n      .addComplication(\"TB type- Pulmonary\")\n        .when.valueInEnrolment(\"TB type\")        \n        .containsAnswerConceptName(\"Pulmonary\");\n    \n    complicationsBuilder\n        .addComplication(\"TB type- Extrapulmonary\")\n        .when.valueInEnrolment(\"TB type\")        \n        .containsAnswerConceptName(\"Extrapulmonary\");\n        \n    complicationsBuilder\n        .addComplication(\"TB type- Both\")\n        .when.valueInEnrolment(\"TB type\")        \n        .containsAnswerConceptName(\"Both\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of pulmonary TB- Disseminated\")\n        .when.valueInEnrolment(\"If Pulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Disseminated\");\n      \n     complicationsBuilder\n        .addComplication(\"Place of pulmonary TB- Miliary\")\n        .when.valueInEnrolment(\"If Pulmonary, place of TB\")        \n        .containsAnswerConceptName(\"MIliary\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Pleural\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Pleural\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Lymph node\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Lymph node\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Intestinal\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Intestinal\");\n    \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Peritoneal\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Peritoneal\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Skeletal\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Skeletal\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Articular\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Articular\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Renal\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Renal\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Menigial\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Menigial\");\n        \n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Genital\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Genital\");\n        \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Cutanious\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Cutanious\");\n               \n     complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Pericardial\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Pericardial\");\n        \n    complicationsBuilder\n        .addComplication(\"Place of extrapulmonary TB- Other\")\n        .when.valueInEnrolment(\"Extrapulmonary, place of TB\")        \n        .containsAnswerConceptName(\"Other\");\n      \n     complicationsBuilder\n        .addComplication(\"Comorbidity- HIV/AIDS\")\n        .when.valueInEnrolment(\"Comorbidity\")        \n        .containsAnswerConceptName(\"HIV/AIDS\");\n        \n     complicationsBuilder\n        .addComplication(\"Comorbidity- Diabetes\")\n        .when.valueInEnrolment(\"Comorbidity\")        \n        .containsAnswerConceptName(\"Diabetes\");\n        \n     complicationsBuilder\n        .addComplication(\"Comorbidity- Liver disease\")\n        .when.valueInEnrolment(\"Comorbidity\")        \n        .containsAnswerConceptName(\"Liver disease\");\n        \n     complicationsBuilder\n        .addComplication(\"Comorbidity- Kidney diseases\")\n        .when.valueInEnrolment(\"Comorbidity\")        \n        .containsAnswerConceptName(\"Kidney diseases\");\n        \n    complicationsBuilder\n        .addComplication(\"Comorbidity- Other\")\n        .when.valueInEnrolment(\"Comorbidity\")        \n        .containsAnswerConceptName(\"Other\");\n        \n\n        \n   decisions.enrolmentDecisions.push(complicationsBuilder.getComplications());\n    return decisions;\n};",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter\n    });\n    \n    const nextVisitDate = programEncounter.getObservationValue('Date of next visit');\n    let currentVisitNumber = _.split(programEncounter.name, '-', 2);\n    let visitNumber = currentVisitNumber[1];\n    let nextVisitNumber = ++visitNumber;\n\n    let treatmentEndDate = programEncounter.programEnrolment.getObservationReadableValue('Expected treatment completion date');\n\n    if ((imports.moment(nextVisitDate).isAfter(treatmentEndDate, 'date') === false)) {\n        //nextVisitNumber > 9 ||\n        scheduleBuilder\n            .add({\n                name: \"TB followup-\" + nextVisitNumber,\n                encounterType: \"TB followup\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            });\n\n        const isLabRequired = programEncounter.getObservationReadableValue('Any lab investigation is required?');\n        const tests = programEncounter.getObservationReadableValue('What lab investigations?');\n\n        if (_.isEqual(isLabRequired, 'Yes')) {\n\n            scheduleBuilder\n                .add({\n                    name: \"CBNAAT result-\" + visitNumber,\n                    encounterType: \"CBNAAT result\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).add(2, 'days').toDate(),\n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(9, 'days').toDate()\n                }).whenItem(_.includes(tests, 'CBNAAT'))\n                .is.truthy;\n            scheduleBuilder\n                .add({\n                    name: \"LPA result-\" + visitNumber,\n                    encounterType: \"LPA result\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).add(2, 'days').toDate(),\n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(9, 'days').toDate()\n                }).whenItem(_.includes(tests, 'LPA'))\n                .is.truthy;\n            scheduleBuilder\n                .add({\n                    name: \"LJ result-\" + visitNumber,\n                    encounterType: \"LJ result\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).add(2, 'days').toDate(),\n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(9, 'days').toDate()\n                }).whenItem(_.includes(tests, 'LJ'))\n                .is.truthy;\n            scheduleBuilder\n                .add({\n                    name: \"Clinic lab result-\" + visitNumber,\n                    encounterType: \"Clinic lab result\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).toDate(), \n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(7, 'days').toDate()\n                }).whenItem(_.includes(tests, 'Sputum AFB') || _.includes(tests, 'RBS') || _.includes(tests, 'PP2BS') ||  _.includes(tests, 'HB') || _.includes(tests, 'FBS'))\n                .is.truthy;\n            scheduleBuilder\n                .add({\n                    name: \"Ganiyari lab result-\" + visitNumber,\n                    encounterType: \"Ganiyari lab result\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).add(2, 'days').toDate(),\n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(9, 'days').toDate()\n                }).whenItem(_.includes(tests, 'Serum Albumin') || _.includes(tests, 'Serum Creatinin') || _.includes(tests, 'HIV/AIDS') || _.includes(tests, 'HIV (Elisa)') || _.includes(tests, 'Pleural fuild protien') || _.includes(tests, 'Pleural fluid ADA') || _.includes(tests, 'Pleural fuild cells') || _.includes(tests, 'Lymphnode biopsy/FNAC') || _.includes(tests, 'X-Ray') || _.includes(tests, 'ALT')).is.truthy;\n\n\n        }\n    }\n\n    if ((imports.moment(nextVisitDate).isAfter(treatmentEndDate, 'date') == true)) {\n        //nextVisitNumber > 9 ||\n        //schedule labs endline\n        scheduleBuilder\n            .add({\n                name: \"Lab test results endline\",\n                encounterType: \"TB Lab test results\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            });\n\n        scheduleBuilder\n            .add({\n                name: \"Treatment review\",\n                encounterType: \"Treatment review\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            });\n\n    }\n\n    const ifReferral = programEncounter.getObservationReadableValue('Does patient require referral');\n\n    scheduleBuilder\n        .add({\n            name: \"Referral Status-1\",\n            encounterType: \"TB referral status\",\n            earliestDate: imports.moment(programEncounter.encounterDateTime).add(3, 'days').toDate(),\n            maxDate: imports.moment(programEncounter.encounterDateTime).add(5, 'days').toDate()\n        }).whenItem(ifReferral == 'Yes')\n        .is.truthy;\n\n\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

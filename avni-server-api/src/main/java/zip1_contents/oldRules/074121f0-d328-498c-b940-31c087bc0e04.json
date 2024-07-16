@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "d785f701-fbf7-4ee3-b724-09b4b9af2d37",
+    "type" : "Form"
+  },
+  "entityUUID" : "d785f701-fbf7-4ee3-b724-09b4b9af2d37",
+  "entityType" : "Form",
+  "type" : "ViewFilter",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP GrowthMonitoringViewFilter",
+  "uuid" : "074121f0-d328-498c-b940-31c087bc0e04",
+  "fnName" : "GrowthMonitoringViewFilter"
+}

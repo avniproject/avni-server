@@ -1,0 +1,125 @@
+{
+  "name" : "Hpertension followup cancellation",
+  "uuid" : "d62bb434-9b88-43ee-95ef-40314f787bcf",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ {
+    "uuid" : "23a1fff7-9ddf-4d4a-a6e8-3ae6c9ce2a39",
+    "name" : "Cancel Details",
+    "displayOrder" : 1.0,
+    "display" : "Cancel Details",
+    "formElements" : [ {
+      "name" : "Cancel reason",
+      "uuid" : "489bf8e0-4eb6-4c4d-a0b1-eee5a32cac15",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Delivery/Abortion" ]
+      } ],
+      "concept" : {
+        "name" : "Visit cancel reason",
+        "uuid" : "bf400e7f-8e1b-4052-af49-b0db47b3eb5a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Delivery/Abortion",
+          "uuid" : "485c07f4-e6bb-4be2-a708-7cb9e5064015",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Sick",
+          "uuid" : "5d16aa00-e90c-4f11-9cda-9764f01a2aec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Away from village",
+          "uuid" : "d233d6a3-bbbb-4e68-b6e0-e72b231d221a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Absent",
+          "uuid" : "4d6cf097-ea82-4b4d-ba8f-2bd51132f04d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  console.log('programEncounter.encounterType.name',_.isEqual(programEncounter.encounterType.name,'ANC Clinic Visit'));\n  //if(programEncounter.programEnrolment.program.name != 'Pregnancy')\n // if(!_.contains(['ANC Clinic Visit','ANC Home Visit'],programEncounter.encounterType.name)\n   // statusBuilder.skipAnswers(\"Delivery/Abortion\");\n      \n  if(!_.isEqual(programEncounter.encounterType.name,'ANC Clinic Visit'))         \n      statusBuilder.skipAnswers(\"Delivery/Abortion\");\n    \n//  if(!_.isEqual(programEncounter.encounterType.name,'ANC Home Visit'))\n  //       statusBuilder.skipAnswers(\"Delivery/Abortion\");\n    \n\n       \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason",
+      "uuid" : "9d4406de-5f92-44d4-becb-56fb83abda52",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for cancelling",
+        "uuid" : "d038a9c4-fe96-4c09-b883-c80691427b60",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    \nconst cancelReasonObs = programEncounter.findCancelEncounterObservation('Visit cancel reason');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\n// cancelReasonObs && cancelReasonObs.getReadableValue(); \n//console.log('cancelReasonObs',cancelReasonObs);\n//console.log('answer',answer);\nlet isVisible = false;\nif (answer == 'Other') \n  isVisible = true;\n \n        \n      return new imports.rulesConfig.FormElementStatus(formElement.uuid, isVisible);\n  };",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "ebfc6750-ba1b-4db0-86fc-04ccff9b2ad7",
+    "name" : "Next Visit Details",
+    "displayOrder" : 2.0,
+    "display" : "Next Visit Details",
+    "formElements" : [ {
+      "name" : "Date of next ANC Clinic Visit",
+      "uuid" : "8701f6d8-793f-44f2-a0d3-d81d976d8a32",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next ANC Visit",
+        "uuid" : "6e50431c-6cb0-495f-9735-dd431c9970ff",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  const cancelReasonObs = programEncounter.findCancelEncounterObservation('Visit cancel reason');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\n  statusBuilder.show().whenItem(programEncounter.encounterType.name == 'ANC Clinic Visit').is.truthy.and.whenItem(answer != 'Delivery/Abortion').is.truthy;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Date of next visit",
+      "uuid" : "4ca4806a-b173-4692-95a0-64d53b45e518",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"7a1d6893-f96b-4647-b274-bb78fd369185\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n  \n  const hasExitedProgram = programEncounter => programEncounter.programEnrolment.programExitDateTime;\n               \n\n if (!hasExitedProgram(programEncounter)) {\n     \n                const nextVisitDate = programEncounter.findCancelEncounterObservation('Date of next visit').getReadableValue();\n                            \n                          scheduleBuilder\n                                 .add({\n                                  name: \"Hypertension Followup\",\n                                  encounterType: \"Hypertension Followup\",\n                                  earliestDate: imports.moment(nextVisitDate).toDate(),\n                                  maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n                                      }).whenItem(!_.isEmpty(nextVisitDate))\n                                  .is.not.truthy;\n         }  \n\n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

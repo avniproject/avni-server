@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "6ca17f07-781c-4161-94ed-bb571218322b",
+    "type" : "Form"
+  },
+  "entityUUID" : "6ca17f07-781c-4161-94ed-bb571218322b",
+  "entityType" : "Form",
+  "type" : "VisitSchedule",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP AlbendazoleVisitSchedule",
+  "uuid" : "c43329ba-f1e5-4b98-8523-3d4f2d160799",
+  "fnName" : "AlbendazoleTrackingVisitSchedule"
+}

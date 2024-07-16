@@ -1,0 +1,222 @@
+{
+  "name" : "SHG Registration",
+  "uuid" : "e5b93b82-dec7-4324-b9e8-a58435f7a912",
+  "formType" : "IndividualProfile",
+  "formElementGroups" : [ {
+    "uuid" : "9e98f466-5cd4-4630-8a7e-7f254b000d98",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "SHG registration",
+      "uuid" : "7a75b9c1-38f4-41e9-a998-c3d89ec1bcc5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHG registration",
+        "uuid" : "1b3137fb-a068-4a35-97fb-66027dcc585b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Cooperative",
+          "uuid" : "3445abc2-1bc3-4ece-8590-d4ef877e61df",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Society",
+          "uuid" : "150a8299-33b7-4c99-a7d1-96225ebb6c32",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Bihan",
+          "uuid" : "998b3269-1a16-436b-b116-5082f63cdbcc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Part of any cooperative",
+      "uuid" : "5191d9fd-e57d-4951-a7d4-a40b270d2c35",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Part of any cooperative",
+        "uuid" : "b4002188-1cab-43d7-bb63-d3dd34bb6e57",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Name of cooperative",
+      "uuid" : "6c4673c9-ca3c-41ac-aadd-6e292296c2cd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of cooperative",
+        "uuid" : "b99fa711-34c2-424f-86b2-3bffb115b417",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({individual, formElement}).when.valueInRegistration(\"b4002188-1cab-43d7-bb63-d3dd34bb6e57\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "registration",
+                "conceptName" : "Part of any cooperative",
+                "conceptUuid" : "b4002188-1cab-43d7-bb63-d3dd34bb6e57",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Part of SHG federation",
+      "uuid" : "f7b40485-d34d-433d-9842-92e0372b2669",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Part of SHG federation",
+        "uuid" : "c9f5a171-3eb5-48fe-90de-bef741679741",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Name of SHG federation",
+      "uuid" : "e536b53e-cde4-453d-96c9-2d29543de8c2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of SHG federation",
+        "uuid" : "14f7da1c-15e8-4326-bf15-ffbf49160f30",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({individual, formElement}).when.valueInRegistration(\"c9f5a171-3eb5-48fe-90de-bef741679741\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "registration",
+                "conceptName" : "Part of SHG federation",
+                "conceptUuid" : "c9f5a171-3eb5-48fe-90de-bef741679741",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Linked with Bank",
+      "uuid" : "dd3c7078-09c2-4c9a-a8c2-e4b4c80fb072",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Linked with Bank",
+        "uuid" : "4d0340b3-84b8-4e31-9301-ef7612ef1a3f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "//SAMPLE RULE EXAMPLE\n\"use strict\";\n({ params, imports }) => {\n  const individual = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    individual\n  });\n  //add new visit schedule object to scheduleBuilder\n  let day = imports.moment(individual.registrationDate).format('d');\n  var monthForNextVisit = day >= 25 ? imports.moment(individual.registrationDate).month() + 1 : imports.moment(individual.registrationDate).month(); \n  let visitDate = imports.moment().month(monthForNextVisit).startOf('month').add(24, 'days').toDate();   \n    \n  scheduleBuilder\n            .add({\n                name: \"SHG monthly data collection\",\n                encounterType: \"SHG monthly data collection\",\n                earliestDate: visitDate,\n                maxDate: imports.moment(visitDate).add(3, 'days').toDate()\n            });\n  return scheduleBuilder.getAll();\n};  ",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

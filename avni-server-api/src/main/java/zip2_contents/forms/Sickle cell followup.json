@@ -1,0 +1,2437 @@
+{
+  "name" : "Sickle cell followup",
+  "uuid" : "1722b4c4-4915-4510-b9b7-069e26f70cbf",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "d3cc27dd-b04b-4c6b-8428-fc0c1564973f",
+    "name" : "Place",
+    "displayOrder" : 1.0,
+    "display" : "Place",
+    "formElements" : [ {
+      "name" : "Place of follow up",
+      "uuid" : "29687eb8-4c37-404a-87d1-20ab352c89f1",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Followup not done" ]
+      } ],
+      "concept" : {
+        "name" : "Place of follow up",
+        "uuid" : "5b570434-5ef2-4933-8dc7-0e809dbdc2fd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Ganiyari Hospital",
+          "uuid" : "e9a08867-baca-43ea-85ac-34c06811190b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Mobile clinic",
+          "uuid" : "b2802bbd-ebc7-4002-a8d8-c068f5eb22da",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "PSG Meeting",
+          "uuid" : "a9ed1d6e-fec3-4bc1-b9c6-946688f1e2cb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Subcenter OPD",
+          "uuid" : "352c714d-0a55-4e46-81ee-c14159dbb636",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Followup not done",
+          "uuid" : "84c5f730-0152-4974-8105-ede182f82dae",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "8c1b5a4c-3e4b-4375-9248-b9fd625566a8",
+    "name" : "Anthropometry",
+    "displayOrder" : 2.0,
+    "display" : "Anthropometry",
+    "formElements" : [ {
+      "name" : "Weight (in Kgs)",
+      "uuid" : "636f091e-a1d3-41c0-92d2-dbfeb62c790b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell followup')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Weight');\n\n        if (lastEncounterWithConcept){\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n}\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 12){\n        visibility = true;}\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Height (in cms)",
+      "uuid" : "0ebd6d91-6bfa-4043-b9ef-8559db0a71da",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Height",
+        "uuid" : "23bcad9f-ec16-46ec-92f5-e144411e5dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 21.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 30.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell followup')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Height');\n\n        if (lastEncounterWithConcept){\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n}\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true);\n        console.log('Height MOnths==================>',lastConceptDataCollected);\n    if (lastConceptDataCollected >= 12){\n        visibility = true;}\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "BMI",
+      "uuid" : "ffaaf4cf-377d-4c4b-b6f9-920d0c539658",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "BMI",
+        "uuid" : "a205563d-0ac2-4955-93ac-e2e7adebb56e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 18.5,
+        "highNormal" : 24.9,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell followup')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'BMI');\n\n        if (lastEncounterWithConcept){\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n}\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 12){\n        visibility = true;}\nlet height = programEncounter.findObservation(\"Height\");\nlet weight = programEncounter.findObservation(\"Weight\");\n        height = height && height.getValue();\n        weight = weight && weight.getValue();\n        console.log('height',height);\n        console.log('weight',weight);\n        let value = '';\n        if (_.isFinite(weight) && _.isFinite(height)) {\n         value = imports.common.calculateBMI(weight, height);\n       }\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "012ea102-7626-41bf-9651-75ce046d3fed",
+    "name" : "History",
+    "displayOrder" : 3.0,
+    "display" : "History",
+    "formElements" : [ {
+      "name" : "Doing well?",
+      "uuid" : "706386fa-2948-4819-8f69-40518021155f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Doing well?",
+        "uuid" : "e4721a46-8949-4268-bb29-8cf8a91b7599",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any new complaint",
+      "uuid" : "d71abbd7-689c-4a59-a17d-e7d9f4bd09cf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any new complaint",
+        "uuid" : "7b9129a5-b168-4afb-91f4-4eacefcb3a90",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "If yes, what complaint",
+      "uuid" : "0425d91e-57ab-4182-a4ce-2b19dfe27fd0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, what complaint",
+        "uuid" : "fb34a579-8778-4ea4-a04c-56d5bd61758a",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Any new complaint').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Hospitalization history",
+      "uuid" : "070c6969-e60c-49a9-a1fb-1f7d08de43b8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hospitalization history",
+        "uuid" : "efeea675-3fd2-4c6d-ba3a-6847980b0bc7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Reason for hospitalization",
+      "uuid" : "1a222bd9-2df0-402b-b43a-0b4f8345ebb0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for hospitalization",
+        "uuid" : "530b3851-cdf3-4543-98ee-714fb29ea71c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Pain crisis",
+          "uuid" : "48131995-741c-4354-ba5b-eaa10160560a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Acute chest syndrom",
+          "uuid" : "89f4e779-a50c-4b76-a9f8-dea76da97b31",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "BT",
+          "uuid" : "5bd2be54-284e-4e38-bb85-2d23e4c0e709",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Hospitalization history').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "3276197d-a4ab-4df3-a1d1-8bd41ddf8248",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for hospitalization",
+        "uuid" : "518959ad-aea5-4344-992c-7f22d07cb3f4",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reason for hospitalization').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Member of peer support",
+      "uuid" : "63ca3265-58e2-4bfb-bd71-d6f67d4c0196",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Member of peer support",
+        "uuid" : "6c7bd0b2-849e-446c-b5eb-a725f8c53296",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "No.of days Medicine taken previous month",
+      "uuid" : "7b4b6b51-db3d-45d8-9ecc-c43e9a234fcc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No.of days medicine taken previous month",
+        "uuid" : "9a839d5e-b113-4168-83a8-f47b76bff0cb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 31.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Compliance of previous month",
+      "uuid" : "8167cd84-a1ba-4af3-b874-b34df5f50e10",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Compliance of previous month",
+        "uuid" : "e32c3092-b22c-4320-95aa-3fcd51a3e5d3",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n\n    let days = programEncounter.getObservationReadableValue(\"No.of days medicine taken previous month\");\n\n    const visibility = days != undefined;\n    let value = 'Poor';\n    if (days >= 20) {\n        value = 'Good';\n    }\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Reasons for not taking medicines",
+      "uuid" : "029e9207-4225-4816-9b3a-955b9e34eb2c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reasons for not taking medicines",
+        "uuid" : "455f8f23-7e78-45b1-97d2-b0a6bb048f3d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Taking medicine from govt/private hospital/dispensary",
+          "uuid" : "7dfb6b50-46ed-4de0-ba3b-ea4271c27fb2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong dose",
+          "uuid" : "92ea2630-f541-4080-a21d-d6d506b5afd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Forgotten to take medicines",
+          "uuid" : "07421483-1b84-49a4-8ea2-2c86474f2f45",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong timing",
+          "uuid" : "270e752f-71a8-4d9c-a71b-29d92ba3a869",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Patient dont want to continue medicines from JSS",
+          "uuid" : "146cc7de-d124-4e6f-9715-25553adef09f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Side effects of drug",
+          "uuid" : "8efb4e0c-2344-4947-a056-267b9f9499f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong drug",
+          "uuid" : "3862f257-f4a9-480e-8c14-6bd9b1be1e6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Not answered",
+          "uuid" : "ae021fdc-9767-4fae-9b17-410e7d32e218",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Taking medicine from traditional healer",
+          "uuid" : "e377c779-96ff-4277-8e6f-a6370462847e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('No.of days medicine taken previous month').is.lessThan(20);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other reason for not taking medicines",
+      "uuid" : "cb10447e-4e64-4199-9667-ac960e6df8ec",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other reason for not taking medicines",
+        "uuid" : "0e0496f1-86d4-4cb8-9e87-ba2a1e60174b",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reasons for not taking medicines').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Side effects of drugs",
+      "uuid" : "1a8c622d-0c70-4a2d-84e5-998d3d0d2047",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sickle cell drugs side effects",
+        "uuid" : "bf1a6f44-1ca2-46a6-9527-ee3277a5f2c4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Diarrhea",
+          "uuid" : "1e4600dc-afa7-417c-8a7a-97ad5f063c67",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Loss of appetite",
+          "uuid" : "ac46c5fd-93d6-4998-95d8-bbdde0e4a6e1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Constipation",
+          "uuid" : "3cfe5fce-6f75-4208-bc92-8ce6bf2250ca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Mouth sores",
+          "uuid" : "5dd60c14-3cf0-4586-9b18-b9c29906d5cf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Vomitting",
+          "uuid" : "95f7244f-cbfc-4234-8530-cd102551d6b6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Nausea",
+          "uuid" : "2e7bdc81-eb3c-4a31-a909-d02159c4ec76",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reasons for not taking medicines').containsAnswerConceptName('Side effects of drug');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other side effects of drugs",
+      "uuid" : "a04dbbae-e0a9-439a-a6dd-35dc17a4b95a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other side effects of drugs",
+        "uuid" : "cf66bd9d-1a74-47b6-8af8-cbaed18a03b7",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell drugs side effects').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Are you taking medicines correctly?",
+      "uuid" : "c8ea4e36-865b-402f-8829-9b15f9e5163c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Are you taking medicines correctly?",
+        "uuid" : "4ba160bc-9752-4ed2-9dcd-351269ec8231",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "If not taking medicine correctly, why?",
+      "uuid" : "9f8cd456-b522-4b0d-bca6-603e918efbcc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If not taking medicine correctly, why?",
+        "uuid" : "f9370248-89cc-4528-b41e-6a44bbb4708b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Wrong drug",
+          "uuid" : "3862f257-f4a9-480e-8c14-6bd9b1be1e6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Wrong dose",
+          "uuid" : "92ea2630-f541-4080-a21d-d6d506b5afd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Wrong timing",
+          "uuid" : "270e752f-71a8-4d9c-a71b-29d92ba3a869",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are you taking medicines correctly?').containsAnswerConceptName('No');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Specify other problem",
+      "uuid" : "92ce51b9-336c-46d0-b701-1fbd078d0adb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other problem for not taking medicines correctly",
+        "uuid" : "f3995f52-bd72-48ec-9e35-052a9b9c52ce",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n   statusBuilder.show().when.valueInEncounter('If not taking medicine correctly, why?').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Patient treatment status",
+      "uuid" : "d1ad98ea-33d8-49df-9778-ef984e9cf3ab",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Patient Treatment Status",
+        "uuid" : "39bac4c9-d312-490d-8e1c-2c42da978fea",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let displayText = 'Can not calculate yet';\n\n    const encounters = programEncounter.programEnrolment.getEncountersOfType('Sickle cell followup');\n\n\n    let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .nth(0)\n        .value();\n\n    let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value();\n\n\n    let enc1Value = -1, enc2Value = -1;\n    let enc1ComplianceValue, enc2ComplianceValue;\n\n    if (enc1) {\n        enc1Value = enc1.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n    if (enc2) {\n        enc2Value = enc2.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n\n    if (enc1) {\n        enc1ComplianceValue = enc1.getObservationReadableValue('Compliance of previous month');\n    }\n    if (enc2) {\n        enc2ComplianceValue = enc2.getObservationReadableValue('Compliance of previous month');\n    }\n\n    console.log(`'enc1==>' ${enc1Value} 'enc 2 ==>' ${enc2Value} `);\n\n\n    if (enc1Value >= 0 && enc2Value >= 0 ) {\n        if (enc1Value == 0 && enc2Value == 0 ) {\n            displayText = 'Default';\n        }\n    }\n\n \n    if (enc1ComplianceValue !== undefined && enc2ComplianceValue !== undefined ) {\n\n        if (_.isEqual(enc1ComplianceValue, 'Poor') && _.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Break in treatment';\n        else if (!_.isEqual(enc1ComplianceValue, 'Poor') && !_.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Treatment not breaking';\n\n    }\n\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Patient treatment status",
+      "uuid" : "81df3bc5-b29d-4557-91b4-eacda89c13ab",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Patients treatment status",
+        "uuid" : "77a5d630-7c66-4880-94f0-b552b4e8a7d7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Can not calculate yet",
+          "uuid" : "2c93fb82-d24f-4a59-95b4-78b0eda0b926",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Break in treatment",
+          "uuid" : "10275692-2613-4c3a-adea-ad922dee199a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Treatment not breaking",
+          "uuid" : "f5384dac-296c-46c1-b957-294d998f6f5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let displayText = 'Can not calculate yet';\n\n    const encounters = programEncounter.programEnrolment.getEncountersOfType('Sickle cell followup');\n\n\n    let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .nth(0)\n        .value();\n\n    let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value();\n\n\n    let enc1Value = -1, enc2Value = -1;\n    let enc1ComplianceValue, enc2ComplianceValue;\n\n    if (enc1) {\n        enc1Value = enc1.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n    if (enc2) {\n        enc2Value = enc2.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n\n    if (enc1) {\n        enc1ComplianceValue = enc1.getObservationReadableValue('Compliance of previous month');\n    }\n    if (enc2) {\n        enc2ComplianceValue = enc2.getObservationReadableValue('Compliance of previous month');\n    }\n\n    console.log(`'enc1==>' ${enc1Value} 'enc 2 ==>' ${enc2Value} `);\n\n\n    if (enc1Value >= 0 && enc2Value >= 0 ) {\n        if (enc1Value == 0 && enc2Value == 0 ) {\n            displayText = 'Default';\n        }\n    }\n\n \n    if (enc1ComplianceValue !== undefined && enc2ComplianceValue !== undefined ) {\n\n        if (_.isEqual(enc1ComplianceValue, 'Poor') || _.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Break in treatment';\n        else if (!_.isEqual(enc1ComplianceValue, 'Poor') && !_.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Treatment not breaking';\n\n    }\n\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "072b06a7-dbd3-4e36-8d76-1a84178ddf12",
+    "name" : "Symptoms - Pain",
+    "displayOrder" : 4.0,
+    "display" : "Symptoms - Pain",
+    "formElements" : [ {
+      "name" : "Abdominal pain",
+      "uuid" : "df50cbc8-2b3d-4f4f-87bc-8cf0d774c61c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Abdominal pain",
+        "uuid" : "31f2517b-3806-4461-b1a4-fb292782ecbe",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Moderate",
+          "uuid" : "a5183999-791a-4b60-8206-3168bae6e523",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mild",
+          "uuid" : "41c4edd9-4d03-4824-86e4-9431cae8a7fd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No pain",
+          "uuid" : "04ba19f6-bdae-4ebf-9793-47841d8fde08",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Severe",
+          "uuid" : "b45be430-84a2-4aac-b1b4-d06392b11516",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Very Severe",
+          "uuid" : "c8acb0fb-93a3-489f-97e3-e80af6a8f7ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Abdominal pain - how many days in a month",
+      "uuid" : "8ea696e1-c9f1-406f-81f3-f333a7a186da",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Abdominal pain - how many days in a month",
+        "uuid" : "64b52402-2921-41e5-82c3-201b3fd7445e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 1.0,
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Abdominal pain').containsAnswerConceptNameOtherThan('No pain');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Chest pain",
+      "uuid" : "87769bb9-c874-4cc9-a4cf-aa15aa1d459a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Chest pain",
+        "uuid" : "5e999db8-a0ee-43e3-bf59-6a32091af070",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Very Severe",
+          "uuid" : "c8acb0fb-93a3-489f-97e3-e80af6a8f7ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No pain",
+          "uuid" : "04ba19f6-bdae-4ebf-9793-47841d8fde08",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Severe",
+          "uuid" : "b45be430-84a2-4aac-b1b4-d06392b11516",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mild",
+          "uuid" : "41c4edd9-4d03-4824-86e4-9431cae8a7fd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Moderate",
+          "uuid" : "a5183999-791a-4b60-8206-3168bae6e523",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Chest pain - how many days in a month",
+      "uuid" : "753e0616-4b27-4884-8580-7b668a1fc449",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Chest pain - how many days in a month",
+        "uuid" : "0cea4181-fc35-4d22-b90e-9a532508aafe",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 1.0,
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Chest pain').containsAnswerConceptNameOtherThan('No pain');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Join/Bone pain",
+      "uuid" : "6d701b7e-9bee-49f2-b6f6-ac2411e64f4c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Join/Bone pain",
+        "uuid" : "456ae48e-00d0-4cbd-ab3d-06c87b853783",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Severe",
+          "uuid" : "b45be430-84a2-4aac-b1b4-d06392b11516",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mild",
+          "uuid" : "41c4edd9-4d03-4824-86e4-9431cae8a7fd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Very Severe",
+          "uuid" : "c8acb0fb-93a3-489f-97e3-e80af6a8f7ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Moderate",
+          "uuid" : "a5183999-791a-4b60-8206-3168bae6e523",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No pain",
+          "uuid" : "04ba19f6-bdae-4ebf-9793-47841d8fde08",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Joint/bone pain - how many days in a month",
+      "uuid" : "17a2cb50-1b39-447f-9457-1c5a51693fe2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Joint/bone pain - how many days in a month",
+        "uuid" : "abb32bad-e96a-4090-8acc-7054b3b8486f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 1.0,
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Join/Bone pain').containsAnswerConceptNameOtherThan('No pain');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "16a48a18-cc0c-434e-a715-81610ea00a7a",
+    "name" : "Complications",
+    "displayOrder" : 5.0,
+    "display" : "Complications",
+    "formElements" : [ {
+      "name" : "Any complications in last one month?",
+      "uuid" : "d1d05af5-a3a4-4fd2-85be-7c25c174dbd0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sickle cell complications",
+        "uuid" : "32a921fe-c46e-4ef8-a912-fd7dcb006606",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Problem in walking",
+          "uuid" : "e3150c3b-da46-49c1-93ff-093c0542a412",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Cough",
+          "uuid" : "6faa04f7-fa23-4a7d-9b0c-e901ca752b23",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Jaundice",
+          "uuid" : "49adc061-6cac-4d92-9faa-7d3279bb77f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Problem in urinating",
+          "uuid" : "aa656874-bb5e-426b-824a-194ad741da75",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Vision problem",
+          "uuid" : "c741f263-d0c5-44cd-b738-e97a6f59967b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Impeded walk",
+          "uuid" : "6df1e645-de85-4270-92fe-1eac5cfab8ea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ulcers",
+          "uuid" : "7eecc23c-0cff-4a88-855c-8b0ddc927873",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Swelling",
+          "uuid" : "21a6f265-7bcd-4fc6-a8c8-3bf363df0c83",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Stroke",
+          "uuid" : "3df1f936-3407-4a9a-91ae-7eae9e4dc86d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify Other",
+      "uuid" : "9fb565f0-b06c-4684-9175-0c94e91f6a45",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sickle cell other complication",
+        "uuid" : "b820ced4-ace3-4c05-af5d-36a128eee126",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell complications').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "5467ec40-8898-4fe0-9353-e52633276554",
+    "name" : "Physical examination",
+    "displayOrder" : 6.0,
+    "display" : "Physical examination",
+    "formElements" : [ {
+      "name" : "Paleness",
+      "uuid" : "097f827f-d744-4a4f-a77c-70a477d7eb97",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paleness",
+        "uuid" : "2b5e4af6-313f-47ca-82e3-88d0b55ed3dd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Jaundice",
+      "uuid" : "2f58cac5-5d5b-4acb-9db4-c5e5b1e785a9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Physical examination jaundice",
+        "uuid" : "3607c36b-52b9-4a65-a5f7-236e7eab9cf1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Spleen size",
+      "uuid" : "2448d706-e3fb-4867-be5d-7fff5248c52f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Spleen size",
+        "uuid" : "223c2777-1848-4827-bbb1-469826c68535",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Decreasing than before",
+          "uuid" : "1cad98b9-59d7-47cc-8b59-dd251b4e5fd1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Enlarged",
+          "uuid" : "078a2b4f-b65a-4296-9407-675fbc274dac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "6a429408-e567-480a-834f-c6e8ade2d5f2",
+    "name" : "Lab Investigation",
+    "displayOrder" : 7.0,
+    "display" : "Lab Investigation",
+    "formElements" : [ {
+      "name" : "Hb",
+      "uuid" : "db7d372d-ea16-422b-8069-9f31f6d92b57",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell followup')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Hb');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 3)\n        visibility = true;\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "MCV",
+      "uuid" : "ee7ef347-5e51-4bcd-8e8c-492984609fda",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "MCV",
+        "uuid" : "80c5d7b9-2c14-4c9d-bbda-cf84d04d53ca",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 75.0,
+        "highNormal" : 81.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell followup')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'MCV');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 3)\n        visibility = true;\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "TLC",
+      "uuid" : "73560251-c76a-4164-9b6c-ee97c2fb7478",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "TLC",
+        "uuid" : "19020e9c-56ba-4094-aa21-2b16ea08c88e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 4500.0,
+        "highNormal" : 11000.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Sickle cell followup')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'TLC');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 3)\n        visibility = true;\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "942b6fd3-1fb3-43ac-8802-6cb1a87b20bf",
+    "name" : "Medicine",
+    "displayOrder" : 8.0,
+    "display" : "Medicine",
+    "formElements" : [ {
+      "name" : "Medicine status",
+      "uuid" : "094de88d-8601-4541-a05f-bb650a287e38",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine status",
+        "uuid" : "b7d1d14e-bd83-4b46-b087-c2bec4a27ab5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Change in medicine",
+          "uuid" : "3cfed9a0-8e3d-4092-8af9-54313a322e9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Continue same medicines",
+          "uuid" : "63eb4339-92a9-4a11-9767-2a8e3dc76674",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Medicines",
+      "uuid" : "064bfe1b-6cc3-4717-a9d1-c69f23f2ca64",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sickle cell medicines",
+        "uuid" : "52919029-9e98-4968-9c88-435d26a8a0e9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Ibuprofen",
+          "uuid" : "86798209-cdbe-4aa3-8f16-57474c2d1b9a",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "200 mg",
+            "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "400 mg",
+            "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Hydroxyurea",
+          "uuid" : "1fe766fa-177a-4f2e-9e45-1a31ef826f41",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "750 mg",
+            "uuid" : "f3c64b3e-6564-443d-a868-de8a32e319e0",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 8.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "300 mg",
+            "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "200 mg",
+            "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true
+          }, {
+            "name" : "400 mg",
+            "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "250 mg",
+            "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 7.0,
+            "active" : true
+          }, {
+            "name" : "500 mg",
+            "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 5.0,
+            "active" : true
+          }, {
+            "name" : "100 mg",
+            "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "500",
+            "uuid" : "5ea0a3dc-0078-40b8-9b7c-6696cc017ed3",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "1000 mg",
+            "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 6.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Paracetamol",
+          "uuid" : "c8c54559-53e9-4b60-a618-ccd1d6447dc2",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "500 mg",
+            "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "250 mg",
+            "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "1000 mg",
+            "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Folic acid",
+          "uuid" : "e56d5686-082d-4703-b975-ccd81307deba",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "1 mg",
+            "uuid" : "0e54e7b0-5fd1-4c54-877f-0df349011e09",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "2.5 mg",
+            "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "400 mcg",
+            "uuid" : "7ad9a8ec-1c37-49e4-be76-38a2f5d731e2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "5 mg",
+            "uuid" : "e6bf6a8e-3c1a-430f-8f09-a9ada7adaf3f",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "800 mcg",
+            "uuid" : "15756fe0-5b8f-4cce-b68c-b241d1072dd3",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Medicine status').containsAnswerConceptName('Change in medicine');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Hydroxyurea",
+      "uuid" : "8f9078ed-8aba-4608-84bb-af037dbfd767",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hydroxyurea",
+        "uuid" : "1fe766fa-177a-4f2e-9e45-1a31ef826f41",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "750 mg",
+          "uuid" : "f3c64b3e-6564-443d-a868-de8a32e319e0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "300 mg",
+          "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "400 mg",
+          "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "250 mg",
+          "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "100 mg",
+          "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "500",
+          "uuid" : "5ea0a3dc-0078-40b8-9b7c-6696cc017ed3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Hydroxyurea\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Hydroxyurea for how many times a day",
+      "uuid" : "ed219f1b-25fa-42d4-8c38-2ccfd2b8242e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hydroxyurea for how many times a day",
+        "uuid" : "cdf706c1-b25d-4675-8f77-f9e8f1ceadbc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Hydroxyurea\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Hydroxyurea for how many days",
+      "uuid" : "16bdec8e-a2dc-4c44-8cda-8a55d4919fa7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hydroxyurea for how many days",
+        "uuid" : "5f7e5069-2ec5-4a0f-af7a-c91a38df72e5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Hydroxyurea\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Folic acid",
+      "uuid" : "a1307eb6-749d-4616-a8aa-5d17c903f569",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Folic acid",
+        "uuid" : "e56d5686-082d-4703-b975-ccd81307deba",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1 mg",
+          "uuid" : "0e54e7b0-5fd1-4c54-877f-0df349011e09",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2.5 mg",
+          "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "400 mcg",
+          "uuid" : "7ad9a8ec-1c37-49e4-be76-38a2f5d731e2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "5 mg",
+          "uuid" : "e6bf6a8e-3c1a-430f-8f09-a9ada7adaf3f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "800 mcg",
+          "uuid" : "15756fe0-5b8f-4cce-b68c-b241d1072dd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Folic acid\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Folic acid for how many times a day",
+      "uuid" : "dbcdbe43-1cfb-4b4e-b0e8-ef42e9a4b7c5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Folic acid for how many times a day",
+        "uuid" : "43d5d38b-6e47-4f50-9fcc-b5ca66acd179",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Folic acid\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Folic acid for how many days",
+      "uuid" : "22263641-6085-4ce6-9999-c5a5bfe2e618",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Folic acid for how many days",
+        "uuid" : "8ec036a6-3c01-4fb1-b704-3ce2e4c032f8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Folic acid\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Paracetamol",
+      "uuid" : "5b089de2-d08a-4a55-87be-edc0b6393f88",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol",
+        "uuid" : "c8c54559-53e9-4b60-a618-ccd1d6447dc2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "250 mg",
+          "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Paracetamol for how many times a day",
+      "uuid" : "6719cfc5-5349-4ecd-8c5e-4ba2f3adfdcc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol for how many times a day",
+        "uuid" : "d6e75425-39a7-4eb9-a7e4-8b375c48186e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Paracetamol for how many days",
+      "uuid" : "39210859-63ad-4ce2-a43c-6855204cae99",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol for how many days",
+        "uuid" : "0b8c3332-7807-4198-a9af-3b21297fff18",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Ibuprofen",
+      "uuid" : "bac20606-b91c-4c00-afe1-f59b28b29f68",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ibuprofen",
+        "uuid" : "86798209-cdbe-4aa3-8f16-57474c2d1b9a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "400 mg",
+          "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Ibuprofen\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Ibuprofen for how many times a day",
+      "uuid" : "9bb16b15-a48e-4579-a45a-4cb7c66e0d54",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ibuprofen for how many times a day",
+        "uuid" : "39226315-d282-4051-a2bb-4bd0c16b258a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Ibuprofen\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Ibuprofen for how many days",
+      "uuid" : "b216a5e7-6676-435f-8be9-83530d030d43",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ibuprofen for how many days",
+        "uuid" : "902f7ee0-8795-4d0f-8d97-bdde904818ef",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Sickle cell medicines').containsAnswerConceptName(\"Ibuprofen\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Oral penicilin",
+      "uuid" : "22305ac7-5b16-4425-a6e8-ec7619aea9f3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Oral penicilin",
+        "uuid" : "27474f4e-e75f-4e28-9573-ddb7a44527b3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\n  const showCondition =programEncounter.individual.getAgeInYears() < 5;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other medicine",
+      "uuid" : "d538bfed-2802-4c59-9faf-878ca9d715b4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other medicine",
+        "uuid" : "c14b6c69-9136-4a4f-b028-b927b208b02e",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Oral penicilin",
+      "uuid" : "961a1f6a-a093-412b-a603-eb314b3581ff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Oral peni (voided~68996)",
+        "uuid" : "3e1af70f-fb41-4276-a599-0405a4cb13fd",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\n  const showCondition =programEncounter.individual.getAgeInYears() < 5;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Disease status",
+      "uuid" : "859c2122-9951-4761-9b89-92f21a492cbe",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Disease status",
+        "uuid" : "0af91ad2-4e0a-4be4-94d1-4567a5094e06",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "74d88ea3-2cbe-4ccd-8c82-a53f4ba4826d",
+    "name" : "Referral",
+    "displayOrder" : 9.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "Current status of the patient",
+      "uuid" : "14e176db-7596-4234-8b6b-f7a017a10dd1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Current status of the patient",
+        "uuid" : "3323d926-925e-4f1a-9ed4-63f8299a5260",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "On treatment with uncontrolled disease",
+          "uuid" : "63c70a4c-6bc2-4fcf-9ad5-886fa471afca",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "On treatment with controlled disease",
+          "uuid" : "c901bd78-3832-4fd2-b965-44b0fcae5e91",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Does patient require referral?",
+      "uuid" : "4e4b7e63-f142-4ef2-93bf-1de26385e92a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does patient require referral",
+        "uuid" : "7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "f4549f1c-e23f-4792-b738-5a86ce026bd3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "sickle cell place of referral",
+        "uuid" : "b42693b0-0112-41d1-9bbf-94bdc6f07925",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "PHC",
+          "uuid" : "43449534-1e2b-45de-8a5d-d99d13f3321f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS subcenter",
+          "uuid" : "b704eaf7-3cfb-4016-a884-456e1f0b7e62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS Mobile clinic",
+          "uuid" : "af7205fb-a2c5-45cd-8738-5baec4c02c98",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Community Health Center",
+          "uuid" : "0067bf8d-2e59-4db0-9b24-17bcddf7afa7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Ganiyari Hospital",
+          "uuid" : "e9a08867-baca-43ea-85ac-34c06811190b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "47965471-dda6-45a2-ab26-5d1fe5b657dc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of referral for NCD",
+        "uuid" : "75b9819a-0725-4c7e-94c2-5b5e72e2a2e3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "JSS subcenter",
+          "uuid" : "b704eaf7-3cfb-4016-a884-456e1f0b7e62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS Mobile clinic",
+          "uuid" : "af7205fb-a2c5-45cd-8738-5baec4c02c98",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "PHC",
+          "uuid" : "43449534-1e2b-45de-8a5d-d99d13f3321f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ganiyari Hospital",
+          "uuid" : "e9a08867-baca-43ea-85ac-34c06811190b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "c149b79d-e145-4ccd-aebf-f0673451fae1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of referral for NCD').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "73981ecf-36fd-4b3f-b282-33a465dacadc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral reason NCD",
+        "uuid" : "aa21f9e8-3ed8-4f83-8427-a95a68635380",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Admission",
+          "uuid" : "397c8d3a-9711-4750-88cf-f709b54f8da8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Lab and other investigation work up",
+          "uuid" : "f02354c0-780a-4996-bb37-9cfbaa0fe931",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Annual check",
+          "uuid" : "d8e670a1-55e2-4ea0-9a8e-73f1034fb947",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Consultation with specialist",
+          "uuid" : "da91746d-cc9b-4112-801f-ec3fec719886",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Doctors consultation",
+          "uuid" : "6aa41619-2316-4f1a-b908-c07c04008f4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "47adca96-a0e4-4216-aff5-0b62f6966b78",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason NCD').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Notes",
+      "uuid" : "32c12946-1bc5-474d-b6cb-d36529ec5d55",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Notes for sickle cell followup",
+        "uuid" : "216eca35-ed73-481a-89df-ce98706f3d99",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "92a3ea30-0b10-431d-8eb7-f5e50a6b9b7c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"7a1d6893-f96b-4647-b274-bb78fd369185\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    }, {
+      "name" : "d",
+      "uuid" : "7786ebd4-65fa-42c6-8dc5-59373afcdb2c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "duration",
+        "uuid" : "d267b586-fc68-4e80-8810-54fbe7128722",
+        "dataType" : "Duration",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n\n    const medComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Sickle cell medicines'\n    });\n    const medTaken = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Sickle cell medicines');\n\n    _.forEach(medTaken.getReadableValue(), med => {\n        medComplicationsBuilder\n            .addComplication(med).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n\n    });\n\n    const hydroxComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Hydroxyurea'\n    });\n\n    const hydroxDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Hydroxyurea');\n\n    if (!_.isEqual(hydroxDose, undefined) && _.includes(medTaken.getReadableValue(), 'Hydroxyurea')) {\n        hydroxComplicationsBuilder\n            .addComplication(hydroxDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(hydroxComplicationsBuilder.getComplications());\n    }\n\n    const hydroxTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Hydroxyurea for how many times a day'\n    });\n\n    const hydroxTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Hydroxyurea for how many times a day');\n\n    if (!_.isEqual(hydroxTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Hydroxyurea')) {\n        hydroxTimesComplicationsBuilder\n            .addComplication(hydroxTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(hydroxTimesComplicationsBuilder.getComplications());\n    }\n\n    const hydroxDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Hydroxyurea for how many days'\n    });\n\n    const hydroxDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Hydroxyurea for how many days');\n\n    if (!_.isEqual(hydroxDays, undefined) && _.includes(medTaken.getReadableValue(), 'Hydroxyurea')) {\n        hydroxDayComplicationsBuilder\n            .addComplication(hydroxDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(hydroxDayComplicationsBuilder.getComplications());\n    }\n\n    // Folic acid----------------------\n\n    const folicComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Folic acid'\n    });\n\n\n    const folicDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Carbamezepine dose');\n\n    if (!_.isEqual(folicDose, undefined) && _.includes(medTaken.getReadableValue(), 'Folic acid')) {\n        folicComplicationsBuilder\n            .addComplication(folicDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(folicComplicationsBuilder.getComplications());\n    }\n\n    const folicTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Folic acid for how many times a day'\n    });\n\n    const folicTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Folic acid for how many times a day');\n\n    if (!_.isEqual(folicTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Folic acid')) {\n        folicTimesComplicationsBuilder\n            .addComplication(folicTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(folicTimesComplicationsBuilder.getComplications());\n    }\n\n    const folicDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Folic acid for how many days'\n    });\n\n    const folicDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Folic acid for how many days');\n\n    if (!_.isEqual(folicDays, undefined) && _.includes(medTaken.getReadableValue(), 'Folic acid')) {\n        folicDayComplicationsBuilder\n            .addComplication(folicDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(folicDayComplicationsBuilder.getComplications());\n    }\n\n\n    // Paracetamol----------------\n\n    const paracetComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Paracetamol'\n    });\n\n\n    const paracetDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Paracetamol');\n\n    if (!_.isEqual(paracetDose, undefined) && _.includes(medTaken.getReadableValue(), 'Paracetamol')) {\n        paracetComplicationsBuilder\n            .addComplication(paracetDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(paracetComplicationsBuilder.getComplications());\n    }\n\n    const paracetTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Paracetamol for how many times a day'\n    });\n\n    const paracetTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Paracetamol for how many times a day');\n\n    if (!_.isEqual(paracetTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Paracetamol')) {\n        paracetTimesComplicationsBuilder\n            .addComplication(paracetTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(paracetTimesComplicationsBuilder.getComplications());\n    }\n\n    const paracetDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Paracetamol for how many days'\n    });\n\n    const paracetDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Paracetamol for how many days');\n\n    if (!_.isEqual(paracetDays, undefined) && _.includes(medTaken.getReadableValue(), 'Paracetamol')) {\n        paracetDayComplicationsBuilder\n            .addComplication(paracetDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(paracetDayComplicationsBuilder.getComplications());\n    }\n\n// ---------Ibuprofen\n\n\n    const ibupComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Ibuprofen'\n    });\n\n\n    const ibupDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Valproic acid dose');\n\n    if (!_.isEqual(ibupDose, undefined) && _.includes(medTaken.getReadableValue(), 'Ibuprofen')) {\n        ibupComplicationsBuilder\n            .addComplication(ibupDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(ibupComplicationsBuilder.getComplications());\n    }\n\n    const ibupTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Ibuprofen for how many times a day'\n    });\n\n    const ibupTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Ibuprofen for how many times a day');\n\n    if (!_.isEqual(ibupTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Ibuprofen')) {\n        ibupTimesComplicationsBuilder\n            .addComplication(ibupTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(ibupTimesComplicationsBuilder.getComplications());\n    }\n\n    const ibupDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Ibuprofen for how many days'\n    });\n\n    const ibupDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Ibuprofen for how many days');\n\n    if (!_.isEqual(ibupDays, undefined) && _.includes(medTaken.getReadableValue(), 'Ibuprofen')) {\n        ibupDayComplicationsBuilder\n            .addComplication(ibupDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(ibupDayComplicationsBuilder.getComplications());\n    }\n\n\n    decisions.encounterDecisions.push(medComplicationsBuilder.getComplications());\n\n\n    return decisions;\n};",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter\n    });\n\n    const nextVisitDate = programEncounter.getObservationValue('Date of next visit');\n    const isReferralRequired = programEncounter.getObservationReadableValue('Does patient require referral');\n\n    if (programEncounter.earliestVisitDateTime) {\n        scheduleBuilder\n            .add({\n                name: \"Sickle cell followup\",\n                encounterType: \"Sickle cell followup\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n            }).whenItem(!_.isEmpty(nextVisitDate))\n            .is.not.truthy;\n\n        scheduleBuilder\n            .add({\n                name: \"Lab test form\",\n                encounterType: \"Sickle cell lab test\",\n                earliestDate: imports.moment(programEncounter.encounterDateTime).add(2, 'days').toDate(),\n                maxDate: imports.moment(programEncounter.encounterDateTime).add(7, 'days').toDate()\n            });\n        \n        if (isReferralRequired) {\n            scheduleBuilder\n                .add({\n                    name: \"Referral Status-1\",\n                    encounterType: \"Sickle cell referral status\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).add(3, 'days').toDate(),\n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(5, 'days').toDate()\n                }).whenItem(isReferralRequired == 'Yes')\n                .is.truthy;\n        }\n      \n    }\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

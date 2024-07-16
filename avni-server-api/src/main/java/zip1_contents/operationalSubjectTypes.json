@@ -1,0 +1,51 @@
+{
+  "operationalSubjectTypes" : [ {
+    "uuid" : "e7551ff0-c19f-45f9-861f-7e9513f7919d",
+    "subjectType" : {
+      "uuid" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "voided" : false
+    },
+    "name" : "Individual",
+    "voided" : false
+  }, {
+    "uuid" : "34547e5c-fe07-4941-afcb-8dba56d67d52",
+    "subjectType" : {
+      "uuid" : "a2eee202-b440-4120-ada1-f3a820820f9c",
+      "voided" : false
+    },
+    "name" : "Household",
+    "voided" : false
+  }, {
+    "uuid" : "7e1f45bb-75fd-4c58-a0c0-1a18f47a4933",
+    "subjectType" : {
+      "uuid" : "771bba5d-e4ad-4dbd-afb4-37fb36edc220",
+      "voided" : false
+    },
+    "name" : "Phulwari",
+    "voided" : false
+  }, {
+    "uuid" : "04b6c6fa-5d43-4a62-8178-d6fd9a835536",
+    "subjectType" : {
+      "uuid" : "161956c9-a26a-4b4e-9939-a096f2c84cad",
+      "voided" : false
+    },
+    "name" : "SHG",
+    "voided" : false
+  }, {
+    "uuid" : "4e0831ee-8ba6-49e6-b3c6-7e7c4236fdd1",
+    "subjectType" : {
+      "uuid" : "660a0d04-53fc-4e42-bf60-7b95e2efc2e7",
+      "voided" : false
+    },
+    "name" : "SHG member (voided~495)",
+    "voided" : true
+  }, {
+    "uuid" : "01486269-853f-46a1-86b9-810f75c3c9be",
+    "subjectType" : {
+      "uuid" : "6b4a3f82-1de6-4743-a380-0d3d1bbe7a45",
+      "voided" : false
+    },
+    "name" : "Monthly Monitoring",
+    "voided" : false
+  } ]
+}

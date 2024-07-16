@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "72ddfc20-fa6a-4e64-9167-c9bbc28f21fc",
+    "type" : "EncounterType"
+  },
+  "entityUUID" : "72ddfc20-fa6a-4e64-9167-c9bbc28f21fc",
+  "entityType" : "EncounterType",
+  "type" : "EncounterEligibilityCheck",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "AlbendazoleEligibility",
+  "uuid" : "95ae1508-caed-4ec8-8fe3-431ea1ee1e81",
+  "fnName" : "AlbendazoleEligibility"
+}

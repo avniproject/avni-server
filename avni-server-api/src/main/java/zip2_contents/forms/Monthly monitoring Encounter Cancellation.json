@@ -1,0 +1,7 @@
+{
+  "name" : "Monthly monitoring Encounter Cancellation",
+  "uuid" : "e8c0e023-8a22-4d18-b163-c90d6a916f6a",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

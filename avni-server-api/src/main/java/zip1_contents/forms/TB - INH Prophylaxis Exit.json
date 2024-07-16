@@ -1,0 +1,77 @@
+{
+  "name" : "TB - INH Prophylaxis Exit",
+  "uuid" : "b3ed08c4-cc46-4223-8589-0fd8aca040c7",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "b0bbf4c6-c14c-4a45-a594-b857ad1b7721",
+    "name" : "Exit Basic Details",
+    "displayOrder" : 1.0,
+    "display" : "Exit Basic Details",
+    "formElements" : [ {
+      "name" : "Reason for exit",
+      "uuid" : "febc8f05-d035-48ad-8a72-6621c2f4baa3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for exit",
+        "uuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completion",
+          "uuid" : "bafe149e-dbf8-4c80-8c13-fc5b1274f0ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Shifted to other geographical area",
+          "uuid" : "0c46f359-eb0f-4a5e-8fe7-f86bd706d1d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason for Program exit",
+      "uuid" : "ab004959-1ec7-4304-b204-c79c9f640881",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for Program exit",
+        "uuid" : "63390533-9229-4e7d-816d-d07c23fba826",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Other', null);;\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

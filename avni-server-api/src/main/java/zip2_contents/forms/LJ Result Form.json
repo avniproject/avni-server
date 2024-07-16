@@ -1,0 +1,170 @@
+{
+  "name" : "LJ Result Form",
+  "uuid" : "acb3ac70-a21a-45ce-95f2-0e3c911fe06b",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "bb0d43df-6ca2-4fa3-9ddf-b3a03eaeb449",
+    "name" : "Result",
+    "displayOrder" : 1.0,
+    "display" : "Result",
+    "formElements" : [ {
+      "name" : "LJ Result",
+      "uuid" : "aa795a50-a678-467b-abbd-7d894e11cef2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "LJ",
+        "uuid" : "40bf14fd-fa1c-42cf-b552-4968ebd5785e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "LJ",
+      "uuid" : "afd7ade4-e1d0-406c-9104-b323081148c6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "tb lab test result LJ",
+        "uuid" : "d843f06d-ddea-4f5b-8d85-3ea117212677",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Growth positive",
+          "uuid" : "bc959c58-6a89-4cce-8130-6fc1e15ac384",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No growth",
+          "uuid" : "2166790e-5d9c-4930-a7d0-7f3ec5fd5f05",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Growth positive",
+      "uuid" : "987cfcf2-cbd1-4ec6-8275-72a789c597ff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Positive growth LJ",
+        "uuid" : "1f9246a4-08c6-4a5f-a631-1af13d4e5a9f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Streptomycine sensitive",
+          "uuid" : "8788545c-41d5-4392-8e4f-fc658e463599",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Ethambutol Sensitive",
+          "uuid" : "eaf10486-0875-4c42-8f03-95f5a9b3b935",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pyrezinamide resistance",
+          "uuid" : "046f74b8-17b1-4949-8b6a-a6b46632eeee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ethambutol resitance",
+          "uuid" : "432aa58a-b80f-4d56-972e-cb40db5d0654",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pyrezinamide sensitive",
+          "uuid" : "eb805f5a-3aca-4870-ac62-bc7d6c5a01b2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "INH Sensitive",
+          "uuid" : "a432c869-c3f4-4e16-bb43-c485a6780c86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "INH Resistance",
+          "uuid" : "582a0e00-3cd4-430e-b355-677cbf211cef",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Streptomycine resistance",
+          "uuid" : "76093f32-ded6-4872-b3f8-ed0b765942ea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result LJ').containsAnswerConceptName('Growth positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

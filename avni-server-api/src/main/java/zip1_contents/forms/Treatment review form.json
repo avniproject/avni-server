@@ -1,0 +1,179 @@
+{
+  "name" : "Treatment review form",
+  "uuid" : "61b04bcc-2767-4c4b-83d9-2d0dea6ead24",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "971536f0-7ffe-4c65-bced-ad165a9d4319",
+    "name" : "Labs Endline/Treatment review at Ganiyari",
+    "displayOrder" : 1.0,
+    "display" : "Labs Endline/Treatment review at Ganiyari",
+    "formElements" : [ {
+      "name" : "Is treatment extended",
+      "uuid" : "dce25c1c-040c-416b-9903-8ba5369fd184",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is treatment extended",
+        "uuid" : "def88d35-b18d-4b9f-b404-600e24939c6c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "For how many months",
+      "uuid" : "ae98dab4-b215-424d-b685-64b147c8e0f3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "For how many months",
+        "uuid" : "6922ce87-1510-4b21-b2df-8ea39a54d940",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "9",
+          "uuid" : "86468891-3070-47db-98bf-36f21c2778fe",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "6",
+          "uuid" : "97e8482b-8884-4683-a59c-a0f90ba7720b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is treatment extended').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Reasons for extention of treatment",
+      "uuid" : "522cadb7-ebb6-4374-9555-4e4809ab273a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reasons for extention of treatment",
+        "uuid" : "87fa876b-2054-430d-9f93-06fee76970dd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Break in the treatment",
+          "uuid" : "40cdd146-ea0e-4472-930a-43602b525686",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Sputum positive",
+          "uuid" : "ed76d34a-b06a-46c2-b769-30f954f6e8bf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No improvement in the symptoms",
+          "uuid" : "e1f3e314-6025-4e28-9a92-c7285b2c4ebb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is treatment extended').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Specify other reasons for extention of treatment",
+      "uuid" : "3cc42329-164c-4990-b385-90ed90cd91c4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other reasons for extention of treatment",
+        "uuid" : "5de87f1f-83e7-4f1c-aa25-63ed8891a8d2",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reasons for extention of treatment').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Expected treatment completion date",
+      "uuid" : "263aed0c-0432-41f2-803f-cb3fce95b32b",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Expected treatment completion date",
+        "uuid" : "f1069c69-a2b5-489f-b1e1-dd66a51a18ca",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n\n    let completionDate = programEncounter.programEnrolment.getObservationReadableValue(\"Expected treatment completion date\");\n    let month=programEncounter.getObservationReadableValue('For how many months');\n    let value = '';\n    let visibility= false;\n    let treatment= programEncounter.getObservationReadableValue('Is treatment extended');\n    if(_.isEqual(treatment,'Yes')){\n         visibility= true;\n    }\n    if (month) {\n        value = new Date(imports.moment(completionDate).add(month, 'months').toDate());\n          \n         return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n    }\n\n    \n};",
+      "mandatory" : false
+    }, {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "b3acdc36-70bf-402a-991a-3862dd245fde",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is treatment extended').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n   let isTreatmentExtedned = programEncounter.getObservationReadableValue('Is treatment extended');\n   \n   if(_.isEqual(isTreatmentExtedned,'Yes')){\n\n   let treatmentEndDate = programEncounter.getObservationReadableValue('Expected treatment completion date');\n   const tbFollowupEncounters = programEncounter.programEnrolment.getEncountersOfType('TB followup');\n   const lastTBFollowup = tbFollowupEncounters.pop();\n    \n  const nextVisitDate = programEncounter.getObservationValue('Date of next visit');\n  let currentVisitNumber = _.split(lastTBFollowup.name, '-', 2);\n  let visitNumber = currentVisitNumber[1];\n  let nextVisitNumber = ++visitNumber;\n  console.log('visitNumber',nextVisitNumber);\n  \n  scheduleBuilder\n            .add({\n                name: \"TB followup-\" + nextVisitNumber,\n                encounterType: \"TB followup\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(3, 'days').toDate()\n            }).whenItem((imports.moment(nextVisitDate).isAfter(treatmentEndDate, 'date') == false))\n        .is.truthy;   \n  }\n\n\n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

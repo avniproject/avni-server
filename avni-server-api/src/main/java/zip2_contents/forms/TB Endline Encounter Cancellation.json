@@ -1,0 +1,7 @@
+{
+  "name" : "TB Endline Encounter Cancellation",
+  "uuid" : "2e055e29-63dd-42a7-b258-7811655c8f31",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

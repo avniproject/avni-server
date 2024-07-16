@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "09d3039f-b881-4a87-ba6c-d0354ea8f9c2",
+    "type" : "Form"
+  },
+  "entityUUID" : "09d3039f-b881-4a87-ba6c-d0354ea8f9c2",
+  "entityType" : "Form",
+  "type" : "Decision",
+  "executionOrder" : 1.0,
+  "data" : { },
+  "name" : "JSSCP ChildPNCDecisions",
+  "uuid" : "79a9f14a-1e8c-40b1-850c-1ff39923b2fd",
+  "fnName" : "ChildPNCDecisions"
+}

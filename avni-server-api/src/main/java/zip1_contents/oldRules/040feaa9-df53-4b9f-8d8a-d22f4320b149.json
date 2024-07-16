@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "14585999-3bd3-47cd-998c-fa7f3e3f9252",
+    "type" : "Form"
+  },
+  "entityUUID" : "14585999-3bd3-47cd-998c-fa7f3e3f9252",
+  "entityType" : "Form",
+  "type" : "ViewFilter",
+  "executionOrder" : 10.0,
+  "data" : { },
+  "name" : "JSSCP ChildEnrolmentViewFilter",
+  "uuid" : "040feaa9-df53-4b9f-8d8a-d22f4320b149",
+  "fnName" : "ChildEnrolmentViewFilter"
+}

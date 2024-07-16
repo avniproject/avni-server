@@ -1,0 +1,95 @@
+{
+  "name" : "Monthly monitoring Encounter",
+  "uuid" : "cde939ac-ec73-4c09-9b88-4c4e55949fc9",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "a502b09c-ace9-457f-bbb3-049f04e0cdad",
+    "name" : "Type of illnesses treated",
+    "displayOrder" : 1.0,
+    "display" : "Type of illnesses treated",
+    "formElements" : [ {
+      "name" : "Fever, cough, cold",
+      "uuid" : "3de93716-c3bb-4386-a0b9-c5d262e6ba4a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever, cough, cold",
+        "uuid" : "3570d9d3-ac3c-4105-aa52-808bed3687f9",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "No of fever patients being followed up",
+      "uuid" : "9691e84f-673b-4b1f-9a62-559eef467217",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of fever patients being followed up",
+        "uuid" : "85ac3f1a-de44-4219-baec-d3dc0b282953",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "No of fever patients cured/improved",
+      "uuid" : "6080f154-2c47-4c3c-a9e0-be9656635c86",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of fever patients cured/improved",
+        "uuid" : "18dbe95f-85d4-4149-9620-1e48da0e2e8c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "No of fever patients referred to subcenter/Ganiyari",
+      "uuid" : "ba49b27c-d8d0-4546-8ef8-754c7a0f7d21",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of fever patients referred to subcenter/Ganiyari",
+        "uuid" : "4f043036-fac3-454d-b84a-9b7a440fd641",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fcf9d888-91ab-4ac5-964a-a2b85cf5164b",
+    "name" : "Communicable diseases",
+    "displayOrder" : 2.0,
+    "display" : "Communicable diseases",
+    "formElements" : [ {
+      "name" : "Number of malaria positive slides",
+      "uuid" : "d1e447f1-92d7-4bf0-b057-7f93ad1aadfa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of malaria positive slides",
+        "uuid" : "92908070-f66b-4aff-b12c-43f3a1027d42",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "//SAMPLE RULE EXAMPLE\n//SAMPLE RULE EXAMPLE\n\"use strict\";\n({ params, imports }) => {\nconst individual = params.entity;\nconst scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({individual});\n\nconst earliestDate = imports.moment().date(25).toDate();\nconst maxDate = imports.moment(earliestDate).add(8,'days').toDate();\nscheduleBuilder.add({name: \"Monthly Village Health worker report\", encounterType: \"Monthly Village Health worker report\", earliestDate: earliestDate, maxDate: maxDate});\n\nreturn scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

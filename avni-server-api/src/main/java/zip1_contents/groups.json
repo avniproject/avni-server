@@ -1,0 +1,58 @@
+[ {
+  "uuid" : "9c3ad20e-8d39-4291-8935-386a5e3f4f90",
+  "id" : 37,
+  "name" : "Everyone",
+  "notEveryoneGroup" : false
+}, {
+  "uuid" : "4164283b-b515-4585-b39e-0144831bd9ab",
+  "id" : 98,
+  "name" : "Phulwari"
+}, {
+  "uuid" : "3bb007c2-7acb-43b7-be40-5ad6c1595a98",
+  "id" : 185,
+  "name" : "NCD"
+}, {
+  "uuid" : "484dfe09-287e-4646-bcb9-785f7b37bf9a",
+  "id" : 99,
+  "name" : "MCH"
+}, {
+  "uuid" : "0dfec97a-b264-4086-b6bf-325c30f2db89",
+  "id" : 294,
+  "name" : "Supervisor"
+}, {
+  "uuid" : "8e319f29-bee6-4fbb-b745-1bd20de3f16f",
+  "id" : 295,
+  "name" : "Data Entry Operator"
+}, {
+  "uuid" : "9c9e8f2c-9f11-4885-a358-281a080fd924",
+  "id" : 403,
+  "name" : "Doctor"
+}, {
+  "uuid" : "e5e07d0d-31dd-4723-930c-b311a8e96c39",
+  "id" : 696,
+  "name" : "First level field workers"
+}, {
+  "uuid" : "bd116441-3e7d-49c7-bc7a-a611c32e4f1c",
+  "id" : 699,
+  "name" : "Cluster coordinator"
+}, {
+  "uuid" : "b1714d96-3c92-4a04-995d-afd5f6586eee",
+  "id" : 701,
+  "name" : "SHG Supervisor"
+}, {
+  "uuid" : "b25764fd-8af8-4d96-9371-092160192603",
+  "id" : 702,
+  "name" : "Animal Health worker"
+}, {
+  "uuid" : "a7c68593-67ed-4f43-9ebd-ebb8bc90b17b",
+  "id" : 697,
+  "name" : "MCH"
+}, {
+  "uuid" : "a8dc3c65-2bd8-413c-bdf8-09589f263de3",
+  "id" : 698,
+  "name" : "NCD"
+}, {
+  "uuid" : "1282f197-2d00-4259-b003-15c2a8cc31c2",
+  "id" : 700,
+  "name" : "Dev"
+} ]

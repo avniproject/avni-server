@@ -1,0 +1,438 @@
+{
+  "name" : "Death form (voided~630)",
+  "uuid" : "9b98a34b-9910-428f-bc3d-170dae27b4e4",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "a073b709-dae0-44f5-8811-e2186bc738fe",
+    "name" : "Place and Date of death",
+    "displayOrder" : 1.0,
+    "display" : "Place and Date of death",
+    "formElements" : [ {
+      "name" : "Date of Death",
+      "uuid" : "d57ccfd9-797d-4573-a68d-0145b5e1a426",
+      "keyValues" : [ {
+        "key" : "datePickerMode",
+        "value" : "Calendar"
+      } ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Place of death",
+      "uuid" : "05608417-2c2e-497b-9fec-bc4ffd3b6b29",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of death",
+        "uuid" : "93c4be55-8953-4cf0-bf35-182042a3bccb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "On the way to health facility",
+          "uuid" : "c4286b04-2545-4e27-bceb-2c647b390d22",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Pvt. Hospital",
+          "uuid" : "a251776a-2d2a-4bc6-9578-74481c4a9727",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "JSS Ganiyari hospital/subcenter",
+          "uuid" : "1e1c6598-7542-41ee-8c45-71646ee02499",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Hospital",
+          "uuid" : "e763cad4-722a-4c37-b5a0-5c17428f1089",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Outside home (non work place)",
+          "uuid" : "2f2dec98-7266-4329-bd41-12e108b8a0f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Govt. Hospital",
+          "uuid" : "5402f256-869f-4999-83c1-35e00eeb9453",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Workplace",
+          "uuid" : "dbd55a29-8666-4891-88f5-59dc013d2b9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "On the way to Health Facility",
+          "uuid" : "95bf036d-7edc-4ca6-8ba3-16cc098cc357",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "SC/PHC/CHC/Rural hospital",
+          "uuid" : "4a29543e-9c71-4821-bb90-9a377367c44e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Ambulance",
+          "uuid" : "6948293d-8f64-4958-b022-b69af64cdcde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Other place",
+          "uuid" : "781c225d-7f2c-49a9-b600-a95cd36d60c5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Village/City name where individual died",
+      "uuid" : "43604577-178c-4871-805c-778d260fbf84",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village/City name where individual died",
+        "uuid" : "46b8467f-6ac1-43aa-a230-f72064a53ba2",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Village name where individual died",
+      "uuid" : "19f0d217-2fa4-4070-86da-5acf40684a43",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village/City name where individual died",
+        "uuid" : "46b8467f-6ac1-43aa-a230-f72064a53ba2",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Source of information for death",
+      "uuid" : "971328a5-aa6f-4117-bbb9-5b2fecfd54af",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Source of information for death",
+        "uuid" : "ae1a5edc-f785-4059-a0f1-3e7570008cf3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other JSS field staff",
+          "uuid" : "6727f55e-0c15-418e-ae22-aaecd639c771",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "VHW/TBA (JSS)",
+          "uuid" : "a3d68bdc-2f75-4b39-8b3b-1bf1b0968f8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Source of Information",
+      "uuid" : "846bfe0a-8790-43a1-8d0b-db577441ce32",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Source of Information (voided~19542)",
+        "uuid" : "ecf7b42b-a722-4200-914c-806f27b38cc1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other (detailed text)",
+          "uuid" : "f8eead43-21c5-4da4-9a42-02ed3046ed94",
+          "dataType" : "Text",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "JSS staff",
+          "uuid" : "4ee1e87a-28a0-4bf0-b077-b95a4b375fe0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Hospital/Health personnel",
+          "uuid" : "287126d7-eff2-4155-9334-4a841a754d33",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Villager",
+          "uuid" : "73d57a34-cacf-416f-a7d0-d7bd52d023e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Probable cause of death",
+      "uuid" : "19c6c9c6-559a-493e-b07f-39ea5de60901",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Probable cause of death",
+        "uuid" : "18e660ff-7c12-4c1b-9924-2035e17e0532",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Accident",
+          "uuid" : "1aa4bb12-ca66-4a3e-8fc0-9d566ad6aa93",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Know chronic illness",
+          "uuid" : "c8c369dd-dad4-4a0b-a4f6-a16566a95efc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Known chronic illness",
+          "uuid" : "ff41e99d-dcbd-4e79-b315-3d3a572d4fc6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown chronic illness",
+          "uuid" : "388c6749-bf36-4afc-b32e-144457c721c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Suicide",
+          "uuid" : "f82b2a30-c4a4-4c0e-96c5-b79eb8aac485",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Homicide",
+          "uuid" : "69dfc6a5-1e4f-494e-98c1-16ec1b3d1fde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Acute illness",
+          "uuid" : "8a02ac9d-ebe4-4cca-bc68-7e858c53aba3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "7de2135b-2d44-4799-b84a-abb3adc8facc",
+    "name" : "Cause of death",
+    "displayOrder" : 2.0,
+    "display" : "Cause of death",
+    "formElements" : [ {
+      "name" : "Probable cause of death",
+      "uuid" : "ee045113-dcbe-43b3-85fe-4fc165a20974",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Probable cause of death",
+        "uuid" : "18e660ff-7c12-4c1b-9924-2035e17e0532",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Accident",
+          "uuid" : "1aa4bb12-ca66-4a3e-8fc0-9d566ad6aa93",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Know chronic illness",
+          "uuid" : "c8c369dd-dad4-4a0b-a4f6-a16566a95efc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Known chronic illness",
+          "uuid" : "ff41e99d-dcbd-4e79-b315-3d3a572d4fc6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Unknown chronic illness",
+          "uuid" : "388c6749-bf36-4afc-b32e-144457c721c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Suicide",
+          "uuid" : "f82b2a30-c4a4-4c0e-96c5-b79eb8aac485",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Homicide",
+          "uuid" : "69dfc6a5-1e4f-494e-98c1-16ec1b3d1fde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Acute illness",
+          "uuid" : "8a02ac9d-ebe4-4cca-bc68-7e858c53aba3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

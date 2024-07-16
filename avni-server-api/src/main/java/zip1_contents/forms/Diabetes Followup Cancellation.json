@@ -1,0 +1,130 @@
+{
+  "name" : "Diabetes Followup Cancellation",
+  "uuid" : "474cff35-c3d9-4647-94d7-cb414e025fde",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ {
+    "uuid" : "c0726570-5683-4b00-9ddc-a56106202f6b",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Reason of cancel",
+      "uuid" : "8ec5f272-b5f3-40ab-94f7-af7efc991986",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason of cancel",
+        "uuid" : "641a2e3c-6ce3-45d4-a691-7000cae82ed2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Patient is absent",
+          "uuid" : "3c99608d-564a-4fb5-9885-97bc94c60592",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient is migrated",
+          "uuid" : "3906acc2-4dd7-4730-bcfc-e35193d05897",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Program exit",
+          "uuid" : "f302bb7d-84f4-46fc-a80d-05f961bb9a35",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Hospitalization",
+          "uuid" : "edde15f4-4905-4218-bb64-cd291fd264ab",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Health worker absent",
+          "uuid" : "86a084a4-5a36-493c-822f-34e91eabb530",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "4231ad85-79ad-4ace-94e6-26172ef72812",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for cancelling",
+        "uuid" : "d038a9c4-fe96-4c09-b883-c80691427b60",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const _ = imports.lodash;\n    \nconst cancelReasonObs = programEncounter.findCancelEncounterObservation('Reason of cancel');\nconst answer = _.isNil(cancelReasonObs) ? undefined : cancelReasonObs.getReadableValue();  \n\nlet isVisible = false;\nif (answer == 'Other') \n  isVisible = true;\n \n        \n      return new imports.rulesConfig.FormElementStatus(formElement.uuid, isVisible);\n  };",
+      "mandatory" : true
+    }, {
+      "name" : "Date of next visit",
+      "uuid" : "acd71c2b-933d-4218-b62f-d5cb75d71de3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "5905ba49-8795-4511-8987-bf9f51826798",
+    "name" : "Next Visit Details",
+    "displayOrder" : 2.0,
+    "display" : "Next Visit Details",
+    "formElements" : [ {
+      "name" : "Date of next visit",
+      "uuid" : "e77c2cd3-4e04-45c5-a141-85d571bf91d4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"7a1d6893-f96b-4647-b274-bb78fd369185\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter\n    });\n\n    const hasExitedProgram = programEncounter => programEncounter.programEnrolment.programExitDateTime;\n    if (!hasExitedProgram(programEncounter)) {\n\n        const nextVisitDate = programEncounter.findCancelEncounterObservation('Date of next visit').getReadableValue();\n\n        scheduleBuilder\n            .add({\n                name: \"Diabetes Followup\",\n                encounterType: \"Diabetes Followup\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n            }).whenItem(!_.isEmpty(nextVisitDate))\n            .is.not.truthy;\n    }\n\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

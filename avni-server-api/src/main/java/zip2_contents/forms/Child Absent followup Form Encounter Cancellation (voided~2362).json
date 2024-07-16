@@ -1,0 +1,8 @@
+{
+  "name" : "Child Absent followup Form Encounter Cancellation (voided~2362)",
+  "uuid" : "ea81598f-c632-4c5c-b8ab-4c61a695ae11",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

@@ -1,0 +1,367 @@
+[ {
+  "name" : "TB Family Screening Form",
+  "uuid" : "2f777a69-d5f2-46ca-99a1-d26281a36b48",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Diabetes lab test",
+  "uuid" : "2026de58-fa2f-4549-a982-09de55053e7c",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Birth",
+  "uuid" : "596691e8-7b2d-4b27-b7d6-17a6e1d74f9c",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Mother PNC",
+  "uuid" : "e35551ec-811b-4291-8eb3-f36dbaa79c48",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Abortion",
+  "uuid" : "9c7d7e6a-d4ee-49c8-b798-bfa2ee16343b",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Abortion followup",
+  "uuid" : "0619e2bc-5f08-4553-b9fc-a059bd847a9f",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "ANC Clinic Visit",
+  "uuid" : "84e99d1e-de73-41aa-85c6-3e1b780dd52b",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "USG Report",
+  "uuid" : "1d8ccbb2-f4bb-4b19-979e-730ccd1514d2",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Lab Investigations",
+  "uuid" : "86ab0906-ec4c-49b7-adbc-da75197a7f6b",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "ANC Home Visit",
+  "uuid" : "307197bf-6b71-49b1-9a1b-b2c12532e34f",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Referral Status",
+  "uuid" : "0345e233-479c-4dff-a7b9-c1325a5c0493",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Child PNC",
+  "uuid" : "bb2ea3b7-55c8-4bab-8ee5-b71eec633408",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Child Birth",
+  "uuid" : "ab963eab-805d-4714-ad78-1e8a5fa164b2",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Delivery",
+  "uuid" : "856c06ea-1f1a-4316-80e3-23cd8eea810f",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Lab Investigations Results for pregnancy induced diabetes",
+  "uuid" : "98dc3b51-c3d6-4e40-aebc-58e6ec051200",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Epilepsy followup",
+  "uuid" : "73ae0c92-8689-4fde-980e-5cd1fed4bfc1",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Ganiyari lab result",
+  "uuid" : "a97ade35-b146-4e51-8387-37ad93b66d13",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Sickle cell followup",
+  "uuid" : "78ca4a5c-d845-4de8-bdbc-2b3e1387d8ce",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Hypertension referral status",
+  "uuid" : "eb6193a9-fbfe-4689-a492-36e7d89f2553",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "TB family member screening form",
+  "uuid" : "f32313e1-1113-4308-9b97-83243b1db064",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "TB Mantoux test result",
+  "uuid" : "3e40f9ee-bb00-4dfc-a6e8-eb4789ef6ec0",
+  "entityEligibilityCheckRule" : "'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  return individual.getAgeInYears() <= 5;\n};",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "INH Prophylaxis follow up",
+  "uuid" : "160c1a4b-1d62-4cc3-b450-f5494da852b9",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Treatment review",
+  "uuid" : "67a215b8-c0c8-4efd-83b1-ec154d65ed29",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "TB Endline (voided~602)",
+  "uuid" : "3e62a668-aa37-4661-86c5-9ae60b46b54d",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false,
+  "voided" : true
+}, {
+  "name" : "TB Lab test results",
+  "uuid" : "714fa006-e71d-4fb5-85e6-78ecab2d6204",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Death (voided~404)",
+  "uuid" : "02844fa4-528d-4f36-9a88-780c13812216",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false,
+  "voided" : true
+}, {
+  "name" : "Death",
+  "uuid" : "4427abc6-a7a3-4571-98e4-b16b742254d2",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Verbal autopsy newborn",
+  "uuid" : "21b9968d-4ec1-405b-bde6-69a5b8dfe615",
+  "entityEligibilityCheckRule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  return individual.getAgeInMonths() < 1;\n};",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Verbal autopsy maternal",
+  "uuid" : "b751dbf5-fa3a-4ffb-9bfd-8ffded1c38a4",
+  "entityEligibilityCheckRule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  return individual.isFemale() && individual.getAgeInYears() > 15;\n};",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Hypertension Followup",
+  "uuid" : "5e7a2ebd-6add-4cdf-b9ff-8014e5ce30b9",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Lab test",
+  "uuid" : "fb8fd0d2-565d-46a6-bf8c-2ee405cad407",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Diabetes Followup",
+  "uuid" : "f28b8bf7-62f6-4b4f-ba2a-650241f54fe7",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Sickle cell lab test",
+  "uuid" : "a1149416-7ff8-4a52-bcf2-cacb13ce4413",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "CBNAAT result",
+  "uuid" : "05305675-9177-4137-9fed-f9bfb9c0ef79",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "LPA result",
+  "uuid" : "7c6ad90b-6f4f-4f5e-92a8-67d6e193c830",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "LJ result",
+  "uuid" : "97ecb126-4a12-4298-82a8-83fb39caad55",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Clinic lab result",
+  "uuid" : "01e5d6f4-d4d0-49a4-8dc6-b2e8ef8bc806",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Diabetes referral status",
+  "uuid" : "4c883a18-6d64-4c43-8a86-2c79613580ed",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "SHG monthly data collection",
+  "uuid" : "95e98913-4e87-4418-a0dc-5e8aac493660",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "TB followup",
+  "uuid" : "335c35ba-9de4-4e08-9494-2975e3f046c9",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Child PNC",
+  "uuid" : "8aa68bd2-1fd8-46e8-b475-a2dafb4b177b",
+  "active" : true,
+  "immutable" : false,
+  "voided" : true
+}, {
+  "name" : "NCD Followup (voided~268)",
+  "uuid" : "fa988057-0a78-4bd2-b4de-b4c9cf0e8055",
+  "active" : true,
+  "immutable" : false,
+  "voided" : true
+}, {
+  "name" : "Monthly Village Health worker report",
+  "uuid" : "c7df7da8-8c29-438c-9947-3ea75ea6b826",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Verbal autopsy child",
+  "uuid" : "4e4e9ff7-a977-4224-ad75-6fd80fd4578a",
+  "entityEligibilityCheckRule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  return individual.getAgeInMonths() >= 1 && individual.getAgeInYears() < 14;\n};",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Daily Attendance Form",
+  "uuid" : "bc2c8ec9-a79b-4f67-b924-6b3b5386a789",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Child Absent followup Form",
+  "uuid" : "f9497943-a647-4746-ac9d-c6cdde30192a",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Observation Checklist",
+  "uuid" : "6634c90d-ebe8-42ef-bfb5-585ab8615fdc",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Albendazole",
+  "uuid" : "72ddfc20-fa6a-4e64-9167-c9bbc28f21fc",
+  "entityEligibilityCheckRule" : "'use strict';\n({params, imports}) => {\n  return false;\n};",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Growth Monitoring",
+  "uuid" : "e9aa15b8-e9b5-4b5d-9fbb-4d7a89283741",
+  "entityEligibilityCheckRule" : "'use strict';\n({params, imports}) => {\n  return false;\n};",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Monthly monitoring",
+  "uuid" : "2077f95f-cab4-4cca-aa0d-c10dc5a491fb",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Senior Health Worker Weekly Reporting",
+  "uuid" : "bf3b3dcc-1666-4a7a-9015-84d4bb07aceb",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Epilepsy referral status",
+  "uuid" : "6e14b2e8-60be-4178-94b4-856a3960cce9",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Sickle cell referral status",
+  "uuid" : "3499ff8f-e16f-4d30-be6b-d22103a335e0",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "TB referral status",
+  "uuid" : "44ba3d85-4843-464a-aeb5-79ea8254fbd2",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Monthly Cluster monitoring",
+  "uuid" : "cd176afd-6cca-4ee8-88c9-24b6541b4f70",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Senior Health Worker Monthly Reporting",
+  "uuid" : "508512b7-8e18-4bc2-bcdf-8f574b71b6d7",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Weekly Village Health Worker Reporting",
+  "uuid" : "d4817671-1cf0-489e-9c1f-8bd451491abf",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Monthly Animal Health Worker Reporting form",
+  "uuid" : "55ef468a-b5bb-40f8-849d-aeafdb850d46",
+  "entityEligibilityCheckRule" : "",
+  "active" : true,
+  "immutable" : false
+}, {
+  "name" : "Verbal Autopsy Adult",
+  "uuid" : "ebaa59f0-ae44-4f62-9e91-ab444494c2b3",
+  "entityEligibilityCheckRule" : "'use strict';\n({params, imports}) => {\n  const individual = params.entity;\n  const moment = imports.moment;\n  let eligibility = true;\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({individual}).when.gender.defined.matches();\n  \n  eligibility = !(condition11 );\n  \n  return eligibility;\n};",
+  "active" : true,
+  "entityEligibilityCheckDeclarativeRule" : [ {
+    "actions" : [ {
+      "actionType" : "hideEncounterType"
+    } ],
+    "conditions" : [ {
+      "compoundRule" : {
+        "rules" : [ {
+          "lhs" : {
+            "type" : "gender"
+          },
+          "rhs" : { },
+          "operator" : "defined"
+        } ]
+      }
+    } ]
+  } ],
+  "immutable" : false
+} ]

@@ -1,0 +1,7 @@
+{
+  "name" : "TB Mantoux test result Encounter Cancellation",
+  "uuid" : "284c9cbd-2724-46fd-b99b-2ad26d13b604",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

@@ -1,0 +1,215 @@
+{
+  "name" : "Referral Status",
+  "uuid" : "06116860-2c71-4a7e-94f1-be53f653f0f3",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "acb56d44-dab1-4e68-b1cf-015b48197654",
+    "name" : "Referral Status-1 Details",
+    "displayOrder" : 1.0,
+    "display" : "Referral Status-1 Details",
+    "formElements" : [ {
+      "name" : "Status of referral -1",
+      "uuid" : "882b826d-549f-4cca-9922-9f12228a2b6c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Status of referral -1",
+        "uuid" : "4671094b-4fe9-42d4-a933-6cc7d0320209",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Seen by SHW (Subcenter)",
+          "uuid" : "0f21f146-9a78-4674-b861-67dd1816583f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to traditional healer",
+          "uuid" : "e3bb03ee-2d89-4d4d-9111-ce238057a83a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to private practitioner/Hospital",
+          "uuid" : "3d53ba30-634f-48ff-ad34-9f7122928866",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient did not go to facility",
+          "uuid" : "e94a781a-462d-4706-b12c-ca6d421b0f4c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seen by VHW",
+          "uuid" : "a9896521-fa89-49d4-b892-a3a134e312a3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to Govt. facility",
+          "uuid" : "2608f417-118f-4fab-a619-068c304601ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Seen by Doctor at Ganiyari",
+          "uuid" : "3e941fcf-fca0-43e2-ab52-af159ad68ca8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to Jholachap",
+          "uuid" : "c796a08a-9b79-4e63-a999-ab3b41a67111",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seen by SHW (Home visit)",
+          "uuid" : "3f763c22-1fb7-4421-811c-787f5b82d149",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().whenItem(programEncounter.name == 'Referral Status-1').is.truthy;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other status of referral -1",
+      "uuid" : "08e818cc-2330-4063-802c-4e410676c938",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other status of referral -1",
+        "uuid" : "e76c8b20-7de0-4cdb-ab9f-3df35452ad27",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Status of referral -1').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "b74b3408-5035-4525-ade0-a7defc9d2bd7",
+    "name" : "Referral Status-2 Details",
+    "displayOrder" : 2.0,
+    "display" : "Referral Status-2 Details",
+    "formElements" : [ {
+      "name" : "Status of referral -2",
+      "uuid" : "0d96c705-7247-4587-b32b-5b33f5a1c2d1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Status of referral -2",
+        "uuid" : "9c049865-30c3-4a1f-958f-76e39714e1cd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Taking treatment at treaditional healer",
+          "uuid" : "a83931d8-23d0-40b6-bd52-1c26a4273b01",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Patient does not want to go any facility",
+          "uuid" : "f5edc6d4-2b76-4e3c-b8e8-cd18e4fa2781",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient is on treatment",
+          "uuid" : "9e147cf6-577a-46a7-8f88-2ae6420519d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Taking treatment at Jholachap",
+          "uuid" : "2fed2671-8103-457d-911e-06c0839f2551",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().whenItem(programEncounter.name == 'Referral Status-2')\n                .is.truthy;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other status of referral -2",
+      "uuid" : "20737708-f780-4bee-aa55-b89c872eca55",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other status of referral -2",
+        "uuid" : "35a163f3-8632-48d9-9a8c-1b369839942c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Status of referral -2').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\nconst followupDate = imports.moment(programEncounter.encounterDateTime).add(4, 'days').toDate();\n  scheduleBuilder\n    .add({\n      name: \"Referral Status-2\",\n      encounterType: \"Referral Status\",\n      earliestDate: followupDate,\n      maxDate: imports.moment(followupDate).add(2, 'days').toDate()\n    }).whenItem(programEncounter.name == 'Referral Status-1')\n    .is.truthy;\n    \n    \n    \n    \n    \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

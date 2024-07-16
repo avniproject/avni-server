@@ -1,0 +1,180 @@
+{
+  "name" : "INH Prophylaxis follow up",
+  "uuid" : "8b4fd40d-a6dd-4d87-a779-39ae0a5922ec",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "66c5551a-d2c8-4c2e-83bc-f5f98ed77882",
+    "name" : "History and Examination",
+    "displayOrder" : 1.0,
+    "display" : "History and Examination",
+    "formElements" : [ {
+      "name" : "Is child having TB related symptoms like weight loss, loss of appetite, lymph-node growth etc",
+      "uuid" : "94c780bb-bd8f-49e5-b1c3-36c4539d60f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is child having TB related symptoms like weight loss, loss of appetite, lymph-node growth etc",
+        "uuid" : "da51069e-ac16-44a8-a454-42fe5cc7c344",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Weight",
+      "uuid" : "f89416f3-503c-4d21-88c0-80eb65e68357",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "c84b4c0a-1800-4491-a543-0c886ecdec93",
+    "name" : "Follow up details",
+    "displayOrder" : 2.0,
+    "display" : "Follow up details",
+    "formElements" : [ {
+      "name" : "Is child taking the medicine?",
+      "uuid" : "4c28626c-13e8-4061-a9b1-02bf5eb60dac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is child taking the medicine?",
+        "uuid" : "b58b48d8-490e-4fbd-8fde-22fdd7a40680",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Reasons for not taking the medicine",
+      "uuid" : "71d2a726-9479-4872-9508-b40e9eb34ead",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reasons for not taking the medicine",
+        "uuid" : "11535338-813e-4192-a74e-8465f6b4ba0f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Parents are not ensuring/dont want to continue the medication",
+          "uuid" : "517c78f5-445d-4d09-be60-4b68ab21045d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Migration",
+          "uuid" : "899e33d1-a54b-4ce5-8efd-2efc255129b6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Side effects of drug",
+          "uuid" : "8efb4e0c-2344-4947-a056-267b9f9499f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is child taking the medicine?').containsAnswerConceptName('No');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason for not taking the medicine",
+      "uuid" : "685c24f3-e884-4184-a0dd-048e7ebf2ca9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for not taking the medicine",
+        "uuid" : "16815825-5816-4cd2-a438-72b680394bac",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reasons for not taking the medicine').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "04bfade6-4e1b-4ecd-b4c7-8cdfe4428b8d",
+    "name" : "Next visit details",
+    "displayOrder" : 3.0,
+    "display" : "Next visit details",
+    "formElements" : [ {
+      "name" : "Next visit date",
+      "uuid" : "68927d87-a467-4524-a894-57c74364f164",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Next visit date",
+        "uuid" : "26ca2feb-d6b5-4eae-9e3c-b0302646fc73",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"26ca2feb-d6b5-4eae-9e3c-b0302646fc73\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n  const nextVisitDate = programEncounter.getObservationValue('Next visit date');\n  let currentVisitNumber = _.split(programEncounter.name, '-', 2);\n  let visitNumber = currentVisitNumber[1];\n  let nextVisitNumber = ++visitNumber;\n  console.log('visitNumber',nextVisitNumber);\n  \n   let treatmentEndDate = programEncounter.programEnrolment.getObservationReadableValue('Treatment end date of INH prophylaxis');\n \n  \n  if(nextVisitNumber <= 6 || (imports.moment(nextVisitDate).isAfter(treatmentEndDate, 'date') == false)){\n  scheduleBuilder\n            .add({\n                name: \"INH Prophylaxis follow up -\" + nextVisitNumber,\n                encounterType: \"INH Prophylaxis follow up\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(7, 'days').toDate()\n            });\n  }\n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

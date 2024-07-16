@@ -1,0 +1,90 @@
+{
+  "uuid" : "e2c8b297-1b6f-491a-b6de-aa97b215fcc8",
+  "settings" : {
+    "languages" : [ "en", "hi_IN" ],
+    "customRegistrationLocations" : [ {
+      "subjectTypeUUID" : "6b4a3f82-1de6-4743-a380-0d3d1bbe7a45",
+      "locationTypeUUIDs" : [ "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04" ]
+    }, {
+      "subjectTypeUUID" : "161956c9-a26a-4b4e-9939-a096f2c84cad",
+      "locationTypeUUIDs" : [ "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04" ]
+    } ],
+    "showDueChecklistOnDashboard" : true,
+    "searchFilters" : [ {
+      "type" : "Name",
+      "widget" : "Default",
+      "titleKey" : "Name",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Gender",
+      "widget" : "Default",
+      "titleKey" : "Gender",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "SearchAll",
+      "widget" : "Default",
+      "titleKey" : "Search all",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Address",
+      "widget" : "Default",
+      "titleKey" : "Address",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Age",
+      "widget" : "Default",
+      "titleKey" : "Age",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Concept",
+      "scope" : "programEnrolment",
+      "widget" : "Default",
+      "titleKey" : "Phulwari",
+      "conceptName" : "Phulwari",
+      "conceptUUID" : "178acfbe-b7e1-4ef5-a48a-0f4b1beabb80",
+      "conceptDataType" : "Coded",
+      "scopeParameters" : {
+        "programUUIDs" : [ "eb4d392a-87a0-4673-9176-dbd4101505ab" ],
+        "encounterTypeUUIDs" : [ ]
+      },
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Name",
+      "titleKey" : "Household",
+      "subjectTypeUUID" : "a2eee202-b440-4120-ada1-f3a820820f9c"
+    } ],
+    "myDashboardFilters" : [ {
+      "type" : "Address",
+      "widget" : "Default",
+      "titleKey" : "Address",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Concept",
+      "scope" : "programEnrolment",
+      "widget" : "Default",
+      "titleKey" : "Phulwari",
+      "conceptName" : "Phulwari",
+      "conceptUUID" : "178acfbe-b7e1-4ef5-a48a-0f4b1beabb80",
+      "conceptDataType" : "Coded",
+      "scopeParameters" : {
+        "programUUIDs" : [ "eb4d392a-87a0-4673-9176-dbd4101505ab" ],
+        "encounterTypeUUIDs" : [ ]
+      },
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    }, {
+      "type" : "Concept",
+      "scope" : "programEncounter",
+      "widget" : "Default",
+      "titleKey" : "WFA Grade",
+      "conceptName" : "Weight for age Grade",
+      "conceptUUID" : "b23561f2-d3c4-40f6-a38d-a30fae484fd9",
+      "conceptDataType" : "Numeric",
+      "scopeParameters" : {
+        "programUUIDs" : [ "eb4d392a-87a0-4673-9176-dbd4101505ab" ],
+        "encounterTypeUUIDs" : [ "e9aa15b8-e9b5-4b5d-9fbb-4d7a89283741" ]
+      },
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251"
+    } ]
+  },
+  "worklistUpdationRule" : ""
+}

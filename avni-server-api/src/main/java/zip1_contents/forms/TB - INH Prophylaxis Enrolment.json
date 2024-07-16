@@ -1,0 +1,69 @@
+{
+  "name" : "TB - INH Prophylaxis Enrolment",
+  "uuid" : "fe36ec7e-b245-4ea5-b2c9-d75ded4ebb03",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "e3dba47d-b907-42cc-af55-2c2384847f08",
+    "name" : "Treatment details",
+    "displayOrder" : 1.0,
+    "display" : "Treatment details",
+    "formElements" : [ {
+      "name" : "Start date of INH prophylaxis",
+      "uuid" : "3f3518e2-e2b8-4582-a857-66908ead327c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Start date of INH prophylaxis",
+        "uuid" : "aba431af-0276-4ea2-8571-9dcb8376d217",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n   let treatmentStartDate = programEnrolment.getObservationReadableValue('Start date of INH prophylaxis');\n \n if(imports.moment(treatmentStartDate).isAfter(programEnrolment.enrolmentDateTime, 'date'))\n statusBuilder.validationError(\"Treatment Start Date cannot be in future\");\n\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Treatment end date of INH prophylaxis",
+      "uuid" : "d332a698-816e-4052-bc69-84110173c1ce",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Treatment end date of INH prophylaxis",
+        "uuid" : "f6b125e6-184c-4452-9d97-a65414c1b379",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n    const startDate = programEnrolment.getObservationValue('Start date of INH prophylaxis');\n    const value =  imports.moment(startDate).add(6, 'months').toDate();\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Weight",
+      "uuid" : "e93c0e0c-09e0-42f9-a840-5f450f6f15b4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEnrolment = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEnrolment\n  });\n  \n  if(!programEnrolment.hasEncounterOfType('INH Prophylaxis follow up'))\n   scheduleBuilder\n            .add({\n                name: \"INH Prophylaxis Followup-1\",\n                encounterType: \"INH Prophylaxis follow up\",\n                earliestDate: imports.moment(programEnrolment.enrolmentDateTime).toDate(),\n                maxDate: imports.moment(programEnrolment.enrolmentDateTime).add(3, 'days').toDate()\n            });\n\n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

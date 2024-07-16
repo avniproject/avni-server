@@ -1,0 +1,11 @@
+[ {
+  "uuid" : "87a38796-fc5b-4392-bca5-347024812941",
+  "id" : 76,
+  "name" : "Village",
+  "level" : 1.0
+}, {
+  "uuid" : "4ebe1751-8ab4-4e6e-aa69-f7d2a75a2d04",
+  "id" : 128,
+  "name" : "Cluster",
+  "level" : 2.0
+} ]

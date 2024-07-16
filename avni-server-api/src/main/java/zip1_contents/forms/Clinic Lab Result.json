@@ -1,0 +1,115 @@
+{
+  "name" : "Clinic Lab Result",
+  "uuid" : "e1095d66-6e80-4386-b6a6-6d392b9123a3",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "0e162723-23a8-463c-ac7a-83fc97cf7329",
+    "name" : "Results",
+    "displayOrder" : 1.0,
+    "display" : "Results",
+    "formElements" : [ {
+      "name" : "Sputum AFB",
+      "uuid" : "d416f5d3-6e72-4fc9-97cf-e30b485b493c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sputum AFB",
+        "uuid" : "616f9638-375a-477d-b5a0-3e660edeba8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Sputum AFB');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Hb",
+      "uuid" : "560270e6-7b26-4b4f-9397-b472690e8215",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('HB');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "RBS",
+      "uuid" : "21b6f9a5-885c-4492-92b7-359668b44fb1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "RBS",
+        "uuid" : "6926107f-5793-4ef8-98e1-4a3cc1e2725f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 160.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('RBS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "PP2BS",
+      "uuid" : "992d0f4b-541b-4f4f-8595-3f1997de2fb1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "PP2BS",
+        "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('PP2BS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "FBS",
+      "uuid" : "d9b23198-da88-4d95-b9dc-d29942e8067f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "FBS",
+        "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('FBS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "//SAMPLE RULE EXAMPLE\n  \"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n   const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: \"New TB comorbidity\"\n    });\n     complicationsBuilder\n      .addComplication(\"Diabetes\")\n        .when.valueInEncounter(\"FBS\").is.greaterThan(120);\n    \n   decisions.encounterDecisions.push(complicationsBuilder.getComplications());\n    return decisions;\n};",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

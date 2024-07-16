@@ -1,0 +1,8 @@
+{
+  "name" : "Death Encounter Encounter Cancellation (voided~891)",
+  "uuid" : "0b060cc7-64d6-488e-a56e-96355cc61334",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

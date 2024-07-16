@@ -1,0 +1,3805 @@
+{
+  "name" : "Diabetes Enrolment",
+  "uuid" : "b572ea7f-38f3-4e7f-83de-0fce3711dc56",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "e2de37f3-334d-45a3-87a4-75b043187218",
+    "name" : "Anthropometry",
+    "displayOrder" : 1.0,
+    "display" : "Anthropometry",
+    "formElements" : [ {
+      "name" : "Height (in Cms)",
+      "uuid" : "15c4d1ba-08e8-4b83-945d-2645004bce1a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Height",
+        "uuid" : "23bcad9f-ec16-46ec-92f5-e144411e5dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 21.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 30.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Weight",
+      "uuid" : "01fee20d-891c-49d3-a3ef-87cdd45f48b2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "BMI",
+      "uuid" : "e2bf6d11-8f4b-48d3-937e-b4b96c879279",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "BMI",
+        "uuid" : "a205563d-0ac2-4955-93ac-e2e7adebb56e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 18.5,
+        "highNormal" : 24.9,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n    let height = programEnrolment.findLatestObservationInEntireEnrolment(\"Height\", programEnrolment);\n    let weight = programEnrolment.findObservation(\"Weight\");\n    height = height && height.getValue();\n    weight = weight && weight.getValue();\n    let value = '';\n    if (_.isFinite(weight) && _.isFinite(height)) {\n        value = imports.common.calculateBMI(weight, height);\n    }\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Waist measeurement",
+      "uuid" : "45ead884-a264-4de5-8654-0f9fca62c222",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Waist circumference",
+        "uuid" : "64427511-b331-495d-81eb-8f8e51e5b5e8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Hip Measurement",
+      "uuid" : "9281a00f-2020-40c7-9cbd-46ab2adb4e13",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hip Measurement",
+        "uuid" : "e36d341d-1a4f-444c-af82-d06c5e78d189",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Waist hip ratio",
+      "uuid" : "1198dedb-158f-4387-85be-d6b5b3183a91",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Waist hip ratio",
+        "uuid" : "3a4b0a77-1d36-43de-aee2-29802a2ce5d3",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const formElement = params.formElement;\n    let waist = programEnrolment.findObservation(\"Waist circumference\");\n    let hip = programEnrolment.findObservation(\"Hip Measurement\");\n    let value = '';\n    waist = waist && waist.getValue();\n    hip = hip && hip.getValue();\n    console.log('waist',waist);\n    console.log('hip',hip);\n    \n    if(waist && hip ){\n       value = (waist/hip).toFixed(2);\n    }\n   \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n    \n};",
+      "mandatory" : false
+    }, {
+      "name" : "Blood Pressure (systolic) at diagnosis",
+      "uuid" : "0238c67f-2fc3-4739-b597-c97f9adf2892",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (systolic) at diagnosis",
+        "uuid" : "fcb49d22-952f-432a-91dc-bbd933d4d4e1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 20.0,
+        "highAbsolute" : 190.0,
+        "lowNormal" : 90.0,
+        "highNormal" : 140.0,
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Blood Pressure (Diastolic) at diagnosis",
+      "uuid" : "3a12f40e-f884-4f11-91f2-8cfb6f7823b6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (Diastolic) at diagnosis",
+        "uuid" : "04ca1079-0f13-4ae4-9a1e-547802024a64",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 10.0,
+        "highAbsolute" : 120.0,
+        "lowNormal" : 50.0,
+        "highNormal" : 90.0,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Any addiction",
+      "uuid" : "6ced88e2-3f2e-4ef7-85d2-f6b63ec95fb3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any addiction",
+        "uuid" : "a336ebcc-dec5-4cf3-8a7c-580394dc66cb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Tobacco",
+          "uuid" : "8d607aa8-c8a8-4fcd-9fc7-06d83c323b3a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Others",
+          "uuid" : "f3ef9337-b2d9-4e33-9a69-e7692b66f045",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Alcohol",
+          "uuid" : "cfa99d0a-ae0e-410f-8475-3d9d6674d8dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "f82269c7-6a86-4c9f-93e8-4ee5aabfb5db",
+    "name" : "Disease",
+    "displayOrder" : 2.0,
+    "display" : "Disease",
+    "formElements" : [ {
+      "name" : "Date of Diagnosis",
+      "uuid" : "528b254c-84fa-4265-b297-e73b4a83bc56",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Type of patient",
+      "uuid" : "1826ff04-7e43-4683-8ef7-77d5d1e1a17f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of patient",
+        "uuid" : "f6687886-13fc-466e-bdab-07bfd0c8a2b6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New",
+          "uuid" : "8f799ad2-a01c-4325-b01c-5d395a68e17c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Existing Complications",
+      "uuid" : "d6d63df4-34ca-48e3-89af-f54d4fc1f06e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diabetes existing complications",
+        "uuid" : "656a6817-b193-4964-8286-36b4abc1a05c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Cardiomyopathy",
+          "uuid" : "914b2bc6-fc13-40e8-8376-f37c9740c036",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Neuropathy",
+          "uuid" : "0425d34f-f8c2-4cab-bf1b-1fec69fd4e7f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Nepropathy",
+          "uuid" : "7737167f-f770-4662-ba9d-e58c223ec796",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Infection",
+          "uuid" : "e668ceed-92ee-4b2f-8714-72838f11264b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "HTN",
+          "uuid" : "b718b8ed-f794-430f-a9e9-f7296cfb054b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "MI",
+          "uuid" : "a7227284-3384-413c-b6a9-57c3bba2ec29",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Retinopathy",
+          "uuid" : "6f051f8d-876e-4be4-8896-374f774381c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Gastropathy",
+          "uuid" : "e17eab12-23fa-4514-a628-989074cf8ea0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "TB",
+          "uuid" : "7943642f-c96f-4de6-a470-b9cb0b45feb0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "CVA (Stroke)",
+          "uuid" : "5c0585f8-632d-4639-91f2-d08331ada0a9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Diabetic foot",
+          "uuid" : "28bfec4f-5a47-4a46-9f85-6e41f731eb40",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "ebdb2c34-12f3-43a7-836a-0e80749b3c15",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other existing complications",
+        "uuid" : "b89790d9-0b57-4a60-8151-0d6da89f61a5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes existing complications').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Eye status",
+      "uuid" : "5dbde051-3262-4edb-8c88-ae4215352c6a",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "None" ]
+      } ],
+      "concept" : {
+        "name" : "Eye status",
+        "uuid" : "72700872-c2ee-4e7e-8d9c-7ba874dd34df",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Early prolifertive diabetic retinopathy",
+          "uuid" : "7f048c87-e138-4361-b589-6e434116a2e3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal vision (Rt eye)",
+          "uuid" : "f340c218-3038-469a-8ce3-7499eacc0e60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Severe nonproliferative diabetic retinopathy",
+          "uuid" : "883d2a8f-7ee4-40a8-bd6a-e07b2d04acbc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Severe prolifertive diabetic retinopathy",
+          "uuid" : "5e3ca7cd-a454-498a-907d-cee6c9a971b1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Abnormal vision (Rt. eye)",
+          "uuid" : "6efc5566-4bf5-4687-bf75-431660d3ff4a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Abnormal vision (Lt. eye)",
+          "uuid" : "3f944a3f-d72d-4085-a1dd-6a530c8e7d12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Moderate nonproliferative diabetic retinopathy",
+          "uuid" : "ccb6dbf2-fa91-4aa2-a375-e15296e761ce",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mild nonproliferative diabetic retinopathy",
+          "uuid" : "1cc7ecf9-098b-4a54-a9d4-43ff1a3f453e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal vision (Left and Right eye)",
+          "uuid" : "aa16ec9d-909c-42a2-bbf1-95f656cc9c87",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Normal vision (Lt eye)",
+          "uuid" : "3955a4b0-5c45-44e4-8ff7-1e11c606dd51",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Clinically significant macular edema",
+          "uuid" : "bccf099f-cf47-4521-a2b3-cf8197f1f569",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "High-risk prolifertive diabetic retinopathy",
+          "uuid" : "9eef6b0e-66e8-4ddc-948d-b4ac27481800",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Teeth Status",
+      "uuid" : "4209b61e-de6f-4ecf-ae8f-445a7cecf3c9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Teeth Status",
+        "uuid" : "650d5e5c-3c2f-4c31-b54f-dbea726a9b71",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Caries",
+          "uuid" : "17335e01-a950-456d-bbdf-b4ae62386041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Gum swelling",
+          "uuid" : "416132ec-d498-484d-987a-a27410aaed6f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Nail Status",
+      "uuid" : "7d44c41d-091f-47c0-ba94-c1bb8d158f4a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Nail Status",
+        "uuid" : "5eec64bb-3cfb-4d9e-bd59-4e8344fd9be0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Abscess",
+          "uuid" : "5db21d9a-6ca7-4102-a72e-9e8b4f3dc3c0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ingrown nail",
+          "uuid" : "ff1710e0-66ed-4761-a383-e045a595fe56",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "fungle infection",
+          "uuid" : "5f17189a-c21d-4547-92f9-e28340e24db7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Radial, dorsalis pedis",
+      "uuid" : "ccedbfad-b94b-4801-b9cd-81cd5e0fca3c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Radial, dorsalis pedis",
+        "uuid" : "5f904bfd-c71f-42f3-9ce0-c985ecd54cc6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Absent",
+          "uuid" : "4d6cf097-ea82-4b4d-ba8f-2bd51132f04d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Equal",
+          "uuid" : "585b3af1-f6e1-498b-a762-dd227064bb36",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not equal",
+          "uuid" : "53c08a7b-d82e-4517-85da-2bef7c79773c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Sensory charting",
+      "uuid" : "354df4f3-4ce0-488c-a8c8-948aec31c3d0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sensory charting",
+        "uuid" : "b9364c46-9f4b-45e3-8c49-997c5e1ce168",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sensory neuropathy",
+          "uuid" : "a0933188-ad82-4c3c-b292-ccc6cd1ce9ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Foot",
+      "uuid" : "d507f8a4-c498-40db-bb3f-7624b54f8214",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Foot",
+        "uuid" : "2bf7f201-58d9-4fe0-8d2a-a958a650cef9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Cracks",
+          "uuid" : "d27bdeb2-9f13-4653-8951-942c00936e69",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Callosities",
+          "uuid" : "ded8542f-d84d-4351-91ca-138b41703058",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Ulcer",
+          "uuid" : "99bbb17e-375f-46ee-bc55-a9ff1971cf5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Specify other",
+      "uuid" : "f31af6e9-0e77-4384-bfa7-d3e0390bf420",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Foot specify other",
+        "uuid" : "9c80f8fb-784f-4a33-8c0e-ecadd372a2b5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Foot').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "95d32271-3fd7-4695-a5a2-0bc15f829b45",
+    "name" : "ECG",
+    "displayOrder" : 3.0,
+    "display" : "ECG",
+    "formElements" : [ {
+      "name" : "ECG Findings",
+      "uuid" : "771a4a57-e6c0-4a4c-9fbc-0203ddb6bcce",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ECG findings",
+        "uuid" : "04e08029-0676-42a4-808a-f8767fceb52c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "ECG not done",
+          "uuid" : "82ce9872-d147-41ef-a413-d451b8f61530",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Abnormal",
+          "uuid" : "6d2136fe-6561-45c0-936e-37bcb316277a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Any heart condition?",
+      "uuid" : "6ab61ab6-3b3d-467b-b467-4a648cae33c1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Heart condition",
+        "uuid" : "09101b0e-d0a1-4ba6-8f05-9d0c90e4565f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "IHD",
+          "uuid" : "be72a069-c521-4bd0-9b1c-49e4f2f127b7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Heart failure",
+          "uuid" : "4c2d8a76-f84e-47b5-a974-860c9f860637",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Arrhythmia",
+          "uuid" : "19adc2c2-c535-4890-ae78-7e0564ff8947",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Left ventricular hypertrophy (LVH)",
+          "uuid" : "bb1ebc6b-1003-42c5-be9a-f52479d387f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "CHD",
+          "uuid" : "6c97b195-9898-4013-8619-a94bb1bd99c1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other heart condition",
+          "uuid" : "48df3bdb-28e5-4d3a-a5f9-d75fd7116606",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('ECG findings').containsAnswerConceptName(\"Abnormal\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other heart condition",
+      "uuid" : "37aad45b-f51d-4375-a94c-81455b80cfc6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "other heart condition",
+        "uuid" : "b6114ce6-41a5-44a6-9f05-e42db0ab682b",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Heart condition').containsAnswerConceptName(\"Other heart condition\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "ec5f4fae-2566-4439-9e8e-c8db6c8b6889",
+    "name" : "Lab",
+    "displayOrder" : 4.0,
+    "display" : "Lab",
+    "formElements" : [ {
+      "name" : "Baseline RBS",
+      "uuid" : "01bfc37e-f898-4552-9f6b-f142c2d1929b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Baseline RBS",
+        "uuid" : "e5089cc6-27a7-42fe-b0e2-da507b3970a5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 160.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Baseline RBS",
+      "uuid" : "2939c992-fbbd-4e00-bc85-7f743c12f080",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "RBS",
+        "uuid" : "6926107f-5793-4ef8-98e1-4a3cc1e2725f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 160.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Baseline FBS",
+      "uuid" : "719cb09f-02f0-4796-8c9d-5089e1e656f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Baseline FBS",
+        "uuid" : "ec3869cd-8e01-4793-b38f-c0087714ebe0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Baseline PP2BS",
+      "uuid" : "0d3253ff-4a3e-4087-8873-513832010246",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Baseline PP2BS",
+        "uuid" : "11de2463-e7f0-4d1f-844a-cdbd0c8d8184",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "HbA1C",
+      "uuid" : "c98167d2-d6b6-43b9-85e8-ab4687f8cd77",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HbA1C",
+        "uuid" : "f11d4eca-f6ca-4471-9a6b-e1f5d742bc22",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highNormal" : 7.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "HB1AC",
+      "uuid" : "165c847c-e5cd-439b-8c8f-4694fdc90998",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HB1AC",
+        "uuid" : "9cdceb1a-d909-457a-a77f-830ceef4b9f1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 7.0,
+        "highNormal" : 8.0,
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Hb",
+      "uuid" : "9957f87e-a733-4cdc-9734-6b4d20ab4baf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Baseline serum creatinine",
+      "uuid" : "4fe9d4cf-45a8-44a4-b6b6-bd87db291c7a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sr. Creatinin",
+        "uuid" : "e9818326-a526-4a6c-aaaa-ae6a90323fd0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 0.6,
+        "highNormal" : 1.2,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Urine albumin",
+      "uuid" : "358505de-31d5-42ef-b68a-0696156b92c5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Urin albumin",
+        "uuid" : "974fac7b-1294-4e29-bc30-56444e7f3619",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Trace",
+          "uuid" : "ae92d882-9ca4-448b-9cbf-f7459548bd55",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "+3",
+          "uuid" : "f9636cd1-4dcb-4739-b378-83e9c56990e2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "0",
+          "uuid" : "e4588a0c-c75a-4580-83d1-8fe3a20d4b00",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "+2",
+          "uuid" : "aa1fb88e-faa6-40ad-adb1-1e1a49d31c62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "+1",
+          "uuid" : "4340f289-e3e6-4877-97e5-278152076dde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "lowNormal" : 20.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Urine albumin",
+      "uuid" : "40ed66a1-3248-42ca-804a-4c59d6b0b4bf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Urine albumin",
+        "uuid" : "37697db5-6071-40e6-8ecb-fd67938d9427",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "0",
+          "uuid" : "e4588a0c-c75a-4580-83d1-8fe3a20d4b00",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "+2",
+          "uuid" : "aa1fb88e-faa6-40ad-adb1-1e1a49d31c62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "+1",
+          "uuid" : "4340f289-e3e6-4877-97e5-278152076dde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Trace",
+          "uuid" : "ae92d882-9ca4-448b-9cbf-f7459548bd55",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "+3",
+          "uuid" : "f9636cd1-4dcb-4739-b378-83e9c56990e2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Cholesterol",
+      "uuid" : "7f822704-772a-43b9-b36f-62cd13be2f0b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cholesterol",
+        "uuid" : "0dc4fc3f-9f15-4c90-8986-af1b9c2e5171",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 150.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "ECG",
+      "uuid" : "71d382ae-7dfd-41cd-8685-af7316753f4c",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "ECG not done" ]
+      } ],
+      "concept" : {
+        "name" : "ECG findings",
+        "uuid" : "04e08029-0676-42a4-808a-f8767fceb52c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "ECG not done",
+          "uuid" : "82ce9872-d147-41ef-a413-d451b8f61530",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Abnormal",
+          "uuid" : "6d2136fe-6561-45c0-936e-37bcb316277a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Changes in ECG",
+      "uuid" : "041935a9-3a9e-49b1-bb35-a7a200ed12d8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ECG changes",
+        "uuid" : "ac6e0e0b-d71f-4a3a-9fbb-719085e49944",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('ECG findings').containsAnswerConceptName(\"Abnormal\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "168a474f-e029-4399-beb9-1334fee17b05",
+    "name" : "Medicine",
+    "displayOrder" : 5.0,
+    "display" : "Medicine",
+    "formElements" : [ {
+      "name" : "Medicines",
+      "uuid" : "4a8c7e1e-e9c8-4e7f-bae3-12cc5acfbcd9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diabetes medicines",
+        "uuid" : "39e2c825-b2e8-41dc-842c-4009fe5ac2bd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Saxagliptin",
+          "uuid" : "59e7e22a-117f-4f7a-874b-65873b9cdee7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 23.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Spironolactone",
+          "uuid" : "7ad5a4ad-2f6b-48b4-a340-ba37c513bbdd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 19.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Omeprazole",
+          "uuid" : "54323fc3-e6e7-45c8-ac2b-cabc4e2140d5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 25.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Iron (Fersifol)",
+          "uuid" : "1a86c03c-416e-4603-a0d0-2407bc837253",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 16.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "pyoglitazone",
+          "uuid" : "9ee73b61-99f6-4851-b1bc-4734a0c44601",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "glimeperide",
+          "uuid" : "18e18724-82bb-4867-90c3-920d1d7e3327",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "glibenclamide",
+          "uuid" : "69d02e53-7590-4dea-9249-4b1f585bd146",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "B-complex",
+          "uuid" : "26d436dc-96a3-4db4-9b36-183d68094e8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 14.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "tolbutamide",
+          "uuid" : "1d003b60-7759-4472-a24f-5b57956a8b4c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Furoseide",
+          "uuid" : "836ac756-fdc6-4249-87b8-f24bda9daf47",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 18.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "losartan",
+          "uuid" : "c1568e82-86e3-419d-90fa-2bc25a8e8694",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Atorvastatin",
+          "uuid" : "f86acb3f-53d2-44a7-a55b-1ef91914a997",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "ripaglinide",
+          "uuid" : "6bb7bb07-f88b-4bd0-86d1-5158a2c1725d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "gliclazide",
+          "uuid" : "b45199c3-0a88-4b71-9e8e-47b58a8c980c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "rosiglitazone",
+          "uuid" : "82b1a12b-b5a0-45f5-a118-ae4104f8c8fb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "metformin",
+          "uuid" : "38341ce8-9797-4fc8-be7a-fed00e347d03",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Calcium",
+          "uuid" : "a90a1a76-c5fe-4020-924e-0e0e9f5b0f9f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 20.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "nateglinide",
+          "uuid" : "9df60333-8ca4-495c-bbdd-5141f114f5f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Enalapril",
+          "uuid" : "43a75fca-4064-4cf6-b214-506c3665ea89",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Linagliptin",
+          "uuid" : "b3f0d313-f4de-4d12-b35b-db624c1cc35f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 24.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Becadex (multivitamin)",
+          "uuid" : "74182b4d-b305-4621-b0fa-2bde06295f50",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 15.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Aspirin",
+          "uuid" : "d9692956-c0b9-443c-9dbc-d51e5a04973a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "paracetamol",
+          "uuid" : "956c10a2-907b-429e-9ed2-4db66f1c8d70",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 17.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Famotidin",
+          "uuid" : "ff34199b-db41-444d-828a-d30a779446fc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 21.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "glipizide",
+          "uuid" : "498836b3-9f98-4070-99d5-5b20a80232d6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sitagliptin",
+          "uuid" : "42967a86-0842-4a82-9f86-318ec0b4732a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 22.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Metformin",
+      "uuid" : "78fb3691-d478-453a-98a9-0ff411f19b5f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Metformin",
+        "uuid" : "d0fbc4d4-943f-46ac-9175-3500245d2a5c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "500",
+          "uuid" : "5ea0a3dc-0078-40b8-9b7c-6696cc017ed3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1000",
+          "uuid" : "a24f9bfc-9674-4a6f-841a-c47b32e911fa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2000",
+          "uuid" : "7f84416a-c344-40d9-900a-dce4a10b2fda",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1500",
+          "uuid" : "d7a64d5c-48b7-4f5f-82bb-20155f42a232",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"metformin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Metformin tablet for how many times a day",
+      "uuid" : "311bb6d4-d7a6-41c5-b9f1-0b283a7918d8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Metformin tablet for how many times a day",
+        "uuid" : "41c27748-f777-43ca-87b3-10551ed560bd",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"metformin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Metformin tablet for how many days",
+      "uuid" : "6ee270f4-25f7-4bb5-a9ae-0c5becf5d20f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Metformin tablet for how many days",
+        "uuid" : "783b44ef-be94-4f67-930e-80793adeec7b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"metformin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Glipizide",
+      "uuid" : "71818f11-91c9-4f5d-bd1e-e46489e1931c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glipizide",
+        "uuid" : "1fc97791-4ee1-4ece-952f-d7aefd740c2f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "15",
+          "uuid" : "0b1a26c5-f32b-4ec0-aa95-341cdd6459a3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "5",
+          "uuid" : "05ebb004-c21c-4c41-933d-9c2e8b164fea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "10",
+          "uuid" : "c5aff454-4e9d-46bd-a91f-5d098ecbba40",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "20",
+          "uuid" : "89c21517-4fed-4abc-afee-79d9b18e5fa7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glipizide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Glipizide tablet for how many times a day",
+      "uuid" : "99578c92-c243-4e0f-9e46-e9c503b41567",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glipizide tablet for how many times a day",
+        "uuid" : "17d3ca96-f549-4889-99be-87fee2aec17f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glipizide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Glipizide tablet for how many days",
+      "uuid" : "90bb5ee0-7612-4f3a-a1fc-632413882f6a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glipizide tablet for how many days",
+        "uuid" : "01a78d61-5cde-4b37-bb99-fdc1d58e1af1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glipizide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Tolbutamide",
+      "uuid" : "27f9d1e9-3042-453d-8f91-eec6a15d5ed9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tolbutamide",
+        "uuid" : "4b6fd526-bd98-4131-b642-2fabb3ead8a4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2.5",
+          "uuid" : "12b57dab-12de-4020-b22c-68605e2b40cf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "0.5",
+          "uuid" : "1ed70bfd-37b8-4d1b-8fb5-102e3a9daf83",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1.5",
+          "uuid" : "f4c5cdb7-8c76-410f-837e-52a0e7bcf198",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"tolbutamide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Tolbutamide tablet for how many times a day",
+      "uuid" : "61c66e28-b952-4fe7-9c20-2b716f415620",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tolbutamide tablet for how many times a day",
+        "uuid" : "a180507a-03aa-40bb-bd52-8ba15c197737",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"tolbutamide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Tolbutamide tablet for how many days",
+      "uuid" : "a1c19b1a-8f6f-4999-bb54-86f8ca667c2d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tolbutamide tablet for how many days",
+        "uuid" : "a73e120f-86b1-4cb9-9a04-4733b734c8ec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"tolbutamide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Gliclazide",
+      "uuid" : "aea149ef-c858-4453-b451-2155d826ba8c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gliclazide",
+        "uuid" : "7ce80a12-333c-4aee-82ab-79c94e008738",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "40",
+          "uuid" : "27a77c0b-7b0e-4b6d-9315-c912a5030d7b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "240",
+          "uuid" : "43302348-9258-40c1-9fcf-bd30df26b0c5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "160",
+          "uuid" : "6176ac66-f887-4ffb-87b2-dde576aa8e58",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2000",
+          "uuid" : "7f84416a-c344-40d9-900a-dce4a10b2fda",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "120",
+          "uuid" : "9d32c9fe-f35f-4a9d-989a-3a278ab28fc4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "280",
+          "uuid" : "53e49652-9b3d-4c5f-a511-abb2cb72f9e4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "80",
+          "uuid" : "49fa1ba5-ba22-430a-bd06-84ad89e63440",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200",
+          "uuid" : "82aeaa0e-2f45-448c-a705-ff41eafe251c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"gliclazide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Gliclazide tablet for how many times a day",
+      "uuid" : "b35a3ea5-3350-4175-b315-d79acb2c774b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gliclazide tablet for how many times a day",
+        "uuid" : "6fa57b52-ab30-4ec4-be2e-4f1d324cb3a1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"gliclazide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Gliclazide tablet for how many days",
+      "uuid" : "8d7fed3a-98ad-4fa0-b026-6f3738b4c1f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Gliclazide tablet for how many days",
+        "uuid" : "77fe272b-9dd1-4593-bd91-7fbe70f6c9e4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"gliclazide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Glibenclamide",
+      "uuid" : "0f92db11-b97e-4b96-9454-5016b9e4f986",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glibenclamide",
+        "uuid" : "01fc8c9d-af91-41ce-9df1-5819acded3e9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "5",
+          "uuid" : "05ebb004-c21c-4c41-933d-9c2e8b164fea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "10",
+          "uuid" : "c5aff454-4e9d-46bd-a91f-5d098ecbba40",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "15",
+          "uuid" : "0b1a26c5-f32b-4ec0-aa95-341cdd6459a3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "20",
+          "uuid" : "89c21517-4fed-4abc-afee-79d9b18e5fa7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glibenclamide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Glibenclamide tablet for how many times a day",
+      "uuid" : "3f80695c-676a-4325-b49d-fb891edcd6fb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glibenclamide tablet for how many times a day",
+        "uuid" : "36cf7448-d3a6-410f-91f1-f7d8c66395dc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glibenclamide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Glibenclamide tablet for how many days",
+      "uuid" : "024b3f52-c5fb-43d0-acb3-775e863bd5ff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glibenclamide tablet for how many days",
+        "uuid" : "26f7e262-0db8-4eca-8129-69db3f8b726c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glibenclamide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Glimeperide",
+      "uuid" : "5e9b4c11-9c82-4409-a538-10f9e9510ef5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glimeperide",
+        "uuid" : "eb58f9d3-f7aa-43bc-ba22-aa81959e0c28",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "6",
+          "uuid" : "97e8482b-8884-4683-a59c-a0f90ba7720b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "5",
+          "uuid" : "05ebb004-c21c-4c41-933d-9c2e8b164fea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glimeperide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Glimeperide tablet for how many times a day",
+      "uuid" : "3bec490b-cdb2-4a25-af50-4ce0b4324598",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glimeperide tablet for how many times a day",
+        "uuid" : "ec0e7aad-d67e-44c4-a6eb-a37f7ceddc59",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glimeperide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Glimeperide tablet for how many days",
+      "uuid" : "1bdc05b1-663c-43f3-b1e7-8dd704de0c3d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Glimeperide tablet for how many days",
+        "uuid" : "3c569e77-d6df-4e91-bbc0-45a4f07c208b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"glimeperide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Pyoglitazone",
+      "uuid" : "80a26332-f5a2-47d4-823b-d845fd05e4e8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pyoglitazone",
+        "uuid" : "893f5c62-6a60-40ce-a9e1-4184a9f3fe26",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "15",
+          "uuid" : "0b1a26c5-f32b-4ec0-aa95-341cdd6459a3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "30",
+          "uuid" : "aceb0588-506a-4341-8cc9-697d41982b37",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "45",
+          "uuid" : "a3b9df18-1aca-41ec-9829-8fec3f69d2ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "60",
+          "uuid" : "6fceafad-d106-479b-827f-8f991ad93246",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 20.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"pyoglitazone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pyoglitazone tablet for how many times a day",
+      "uuid" : "b0bf1574-aee4-4d5c-8106-0168c5724488",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pyoglitazone tablet for how many times a day",
+        "uuid" : "8875748b-f3d0-4087-af72-829f2835a078",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 21.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"pyoglitazone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Pyoglitazone tablet for how many days",
+      "uuid" : "e7c0e7ff-2c22-4bb1-8a53-865a9b2fd111",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pyoglitazone tablet for how many days",
+        "uuid" : "8d39dc3f-2d89-4e1f-a2d9-8b7ef0881857",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 22.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"pyoglitazone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Rosiglitazone",
+      "uuid" : "a92fd382-eb72-48e5-9506-b85dea3c2449",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Rosiglitazone",
+        "uuid" : "ed22e195-218b-486c-9789-d0686e0c9f3f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "16",
+          "uuid" : "6a5497d3-c523-49da-b22b-402efdc0a8e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "8",
+          "uuid" : "563e3ba2-6749-48ec-b3f2-23c06e85a4ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "12",
+          "uuid" : "0985bbe3-3803-4f38-801c-5d2fc8abef39",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 23.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"rosiglitazone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Rosiglitazone tablet for how many times a day",
+      "uuid" : "d30b108e-f377-4cad-9a73-9a31ebad1706",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Rosiglitazone tablet for how many times a day",
+        "uuid" : "1f7bca76-2e88-434d-84d4-41b66cdcba84",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 24.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"rosiglitazone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Rosiglitazone tablet for how many days",
+      "uuid" : "77289d30-705b-41db-b522-ac4997bf94b3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Rosiglitazone tablet for how many days",
+        "uuid" : "9ebe6fc3-10e0-4669-b8c0-ac2c6109b223",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 25.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"rosiglitazone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Ripaglinide",
+      "uuid" : "91b4040d-8fdc-42f2-aad8-b1bc637f9933",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ripaglinide",
+        "uuid" : "02ed08ca-ff74-44b0-9f59-018c2776b401",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1.5",
+          "uuid" : "f4c5cdb7-8c76-410f-837e-52a0e7bcf198",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "6",
+          "uuid" : "97e8482b-8884-4683-a59c-a0f90ba7720b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "8",
+          "uuid" : "563e3ba2-6749-48ec-b3f2-23c06e85a4ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4.5",
+          "uuid" : "00357415-f1cf-4ca0-982c-e83f15238854",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 26.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"ripaglinide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Ripaglinide tablet for how many times a day",
+      "uuid" : "94ae53c4-9697-4776-987a-01c2b8340a74",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ripaglinide tablet for how many times a day",
+        "uuid" : "15fd7ab6-7c71-4265-b2c2-a504ace84758",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 27.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"ripaglinide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Ripaglinide tablet for how many days",
+      "uuid" : "72e5101d-b6ac-4a5a-b201-2a0c4daa7dbe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ripaglinide tablet for how many days",
+        "uuid" : "f5dfe184-1cd7-4193-8a54-6a90119e5254",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 28.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"ripaglinide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Nateglinide",
+      "uuid" : "bebab74e-26dd-493c-ab3f-192a6d36dadb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Nateglinide",
+        "uuid" : "d477aa49-db1a-4e62-9a1f-def41e29adda",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "480",
+          "uuid" : "53fd8ce6-f65d-4a75-8f40-7ae78e9c8756",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "360",
+          "uuid" : "6c11a8cf-c920-4a75-9995-8af6e2d4ca4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "180",
+          "uuid" : "8252783e-dd50-4bff-b682-90b2ae01968a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "420",
+          "uuid" : "4fdd5bc6-547f-4a68-989d-2a1f1cb603f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 29.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"nateglinide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Nateglinide tablet for how many times a day",
+      "uuid" : "1b813321-74b0-4c13-9ad5-3c301bfae0d6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Nateglinide tablet for how many times a day",
+        "uuid" : "9cdc9acd-a385-4513-8652-a4ee09408c28",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 30.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"nateglinide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Nateglinide tablet for how many days",
+      "uuid" : "5aaf07af-2cc1-4e84-bcaa-841881540dff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Nateglinide tablet for how many days",
+        "uuid" : "4a2eae52-229d-4e15-a4eb-908303120f3e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 31.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"nateglinide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Aspirin",
+      "uuid" : "af13dbbe-f0c9-4b6b-bdc8-89a119506b1f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diabetes aspirin",
+        "uuid" : "56d918dc-bb81-48b9-8a7d-f40794e14b96",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "125",
+          "uuid" : "c6897acc-cedd-43bf-9e23-bdc8e548b273",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "100",
+          "uuid" : "5f2817b2-4cf1-4dec-870a-2f89667c1b8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "150",
+          "uuid" : "15a1472b-9182-40b4-bbc2-70c16704d07f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "25",
+          "uuid" : "0987b8e1-6e8b-4475-9533-5da712db88c4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200",
+          "uuid" : "82aeaa0e-2f45-448c-a705-ff41eafe251c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "50",
+          "uuid" : "e34bdde2-e78a-4a14-975f-32a52157e32f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "75",
+          "uuid" : "21a93891-2945-4f69-997e-471523a86caf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "175",
+          "uuid" : "468cdc42-2cbf-41d4-919d-32b741917554",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 32.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Aspirin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Aspirin tablet for how many times a day",
+      "uuid" : "6f71da91-a7ac-4fc6-8b20-81141de6a6c1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Aspirin tablet for how many times a day",
+        "uuid" : "12f07672-2062-4c14-9a50-71b80bf4f1d2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 33.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Aspirin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Aspirin tablet for how many days",
+      "uuid" : "fae17f6c-6250-4f99-94ad-0c2430b1f5d0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Aspirin tablet for how many days",
+        "uuid" : "35c8047b-2a33-49ff-a784-2bbd8262c593",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 34.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Aspirin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Atorvastatin",
+      "uuid" : "846b27d3-c5d2-44b5-b0f5-591d8c175eda",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diabetes atorvastatin",
+        "uuid" : "eaec610c-2bfb-4029-b67d-ea962d7254ce",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "10",
+          "uuid" : "c5aff454-4e9d-46bd-a91f-5d098ecbba40",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "30",
+          "uuid" : "aceb0588-506a-4341-8cc9-697d41982b37",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "50",
+          "uuid" : "e34bdde2-e78a-4a14-975f-32a52157e32f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "60",
+          "uuid" : "6fceafad-d106-479b-827f-8f991ad93246",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "20",
+          "uuid" : "89c21517-4fed-4abc-afee-79d9b18e5fa7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "80",
+          "uuid" : "49fa1ba5-ba22-430a-bd06-84ad89e63440",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "70",
+          "uuid" : "ed244f32-0c35-4f94-ad6f-e85376dfc484",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "40",
+          "uuid" : "27a77c0b-7b0e-4b6d-9315-c912a5030d7b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 35.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Atorvastatin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Atorvastatin tablet for how many times a day",
+      "uuid" : "c9d821a0-9da3-45a4-998f-36803b73cc94",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Atorvastatin tablet for how many times a day",
+        "uuid" : "bb565c11-6734-4fa8-b414-7f380a81505a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 36.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Atorvastatin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Atorvastatin tablet for how many days",
+      "uuid" : "5e831ea5-0a0b-4e32-9f34-d18d8eae7fe4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Atorvastatin tablet for how many days",
+        "uuid" : "7c8f1f32-c436-428b-bd9d-1f7ea47d010e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 37.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Atorvastatin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Enalapril",
+      "uuid" : "509649a5-25c9-4792-9539-1d59073e51cf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diabetes enalapril",
+        "uuid" : "c3ba40f2-2b52-4088-a490-7d3e0e8f6230",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "2.5",
+          "uuid" : "12b57dab-12de-4020-b22c-68605e2b40cf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "10",
+          "uuid" : "c5aff454-4e9d-46bd-a91f-5d098ecbba40",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "20",
+          "uuid" : "89c21517-4fed-4abc-afee-79d9b18e5fa7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "5",
+          "uuid" : "05ebb004-c21c-4c41-933d-9c2e8b164fea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 38.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Enalapril\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Enalapril tablet for how many times a day",
+      "uuid" : "a3657682-adc3-4ca5-b5b0-6719e41e73c7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Enalapril tablet for how many times a day",
+        "uuid" : "a798eba4-1913-46c1-a7dd-a637c72b6dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 39.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Enalapril\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Enalapril tablet for how many days",
+      "uuid" : "f21dcf3b-4590-4da8-a0eb-3954889b9710",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Enalapril tablet for how many days",
+        "uuid" : "6f7f693c-c892-4cc1-b40a-328b61043e84",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 40.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Enalapril\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Losartan",
+      "uuid" : "8f338c31-ee7e-4702-a91f-b7fdca1c7381",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Losartan",
+        "uuid" : "d0b906ec-8922-42fd-a6f7-53b2008db3da",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "50",
+          "uuid" : "e34bdde2-e78a-4a14-975f-32a52157e32f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "25",
+          "uuid" : "0987b8e1-6e8b-4475-9533-5da712db88c4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "100",
+          "uuid" : "5f2817b2-4cf1-4dec-870a-2f89667c1b8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "75",
+          "uuid" : "21a93891-2945-4f69-997e-471523a86caf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 41.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"losartan\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Losartan tablet how many times a day",
+      "uuid" : "a293798d-1fb6-44f1-a6a9-e1fcd96ad8f2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Losartan tablet how many times a day",
+        "uuid" : "a1ed40d7-08f0-44c4-ba1e-d0f2f92986eb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 42.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"losartan\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Losartan tablet for how many days",
+      "uuid" : "33fda8ef-183b-440e-b448-41d0a476471f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Losartan tablet for how many days",
+        "uuid" : "fd6f2d07-04f0-4a4b-b04d-402f14da636b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 43.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"losartan\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Insulin needed",
+      "uuid" : "ed91148d-b5bb-4e45-80b9-9443d106ec7a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Insulin needed",
+        "uuid" : "8c7c621d-caed-4f7f-bd05-88645881714c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 44.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Type of Insuline",
+      "uuid" : "5ab3b8e0-9b84-45c5-b50f-28ca7e7a35ca",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of Insuline",
+        "uuid" : "28435511-5d28-476b-8683-22781974cc9a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Mixtard",
+          "uuid" : "a3e5439e-d918-4378-95a0-7a4d170f61e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Plain",
+          "uuid" : "54b5a865-3b06-483d-9487-b8173bdb945a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 45.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Insulin needed').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Insuline for how many times a day",
+      "uuid" : "067fb037-3189-4aab-a554-5dec2195f659",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Insuline for how many times a day (voided~72093)",
+        "uuid" : "1f725c69-45f4-4db5-9075-19cf59a23f4e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 46.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Insulin needed').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Insuline for how many times a day",
+      "uuid" : "aafcf5a3-5ab8-4274-b495-6fee7460a691",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Insuline for how many times a day",
+        "uuid" : "6f8466b0-b47b-41c9-85ed-eb23cf9e4aa4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Twice a day",
+          "uuid" : "377ba051-ce74-41ec-86f0-e1ef45392048",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Once a day",
+          "uuid" : "8aeda69b-1fce-49f8-b6f3-91a4358f652d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 47.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Insulin needed').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Frequency of Insulin dose",
+      "uuid" : "20cc7963-8fff-4a4a-a630-e56e8b473fe2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Frequency of Insulin dose",
+        "uuid" : "e92e55b8-c4fe-49b7-a3d9-28c2b86c7c3a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Twice a day",
+          "uuid" : "377ba051-ce74-41ec-86f0-e1ef45392048",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Once a day",
+          "uuid" : "8aeda69b-1fce-49f8-b6f3-91a4358f652d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 48.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Insulin needed').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "1st dose of Insuline",
+      "uuid" : "8eafc207-0707-4338-9fd4-9aa4e5bf1666",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "1st dose of Insuline",
+        "uuid" : "bb9f5b14-8887-4247-8f8c-a848310e86f7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 49.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Frequency of Insulin dose').containsAnyAnswerConceptName(\"Once a day\",\"Twice a day\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "2nd dose of Insuline",
+      "uuid" : "a257c30a-9152-4ac3-be1c-a503abe39036",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "2nd dose of Insuline",
+        "uuid" : "c98962c7-ec44-407f-8d07-e4513ff09fb1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 50.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Frequency of Insulin dose').containsAnswerConceptName(\"Twice a day\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Insuline for how many days",
+      "uuid" : "e5f75cce-6572-4d50-917d-eef92aac0b59",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Insuline for how many days",
+        "uuid" : "21ea761f-9b8d-4cc1-8a35-7d71ba2e5e56",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 51.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Insulin needed').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "B-complex Strength",
+      "uuid" : "60d55b7b-9302-454b-8a15-26fb6f6c856f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "B-complex Strength",
+        "uuid" : "a5ed1d52-4b5a-4c79-974b-0adf2bf9ccb5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 52.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"B-complex\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "B-complex tablet for how times per day",
+      "uuid" : "efa544a6-06b9-4376-80fa-6b5558ee43f5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "B-complex tablet for how times per day",
+        "uuid" : "8d0a9149-a1a6-4deb-89b9-dcbdfa21fa04",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 53.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"B-complex\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "B-complex tablet for how many days",
+      "uuid" : "b68143db-1806-483d-be57-a7a00e3ef219",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "B-complex tablet for how many days",
+        "uuid" : "e4fcbd27-8b23-46ba-a59e-1aed275f690b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 54.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"B-complex\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Becadex (multivitamin) Strength",
+      "uuid" : "9a490c2f-bff4-4ac9-8a80-671e86333aba",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Becadex (multivitamin) Strength",
+        "uuid" : "6e96f709-dc8e-4e10-a79f-e908a790d719",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 55.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Becadex (multivitamin)\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Becadex (multivitamin) tablet for how times per day",
+      "uuid" : "9c102c74-3f38-4f39-961a-2a996623b562",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Becadex (multivitamin) tablet for how times per day",
+        "uuid" : "9b8e1c45-8286-4ad3-b20e-bfae7d3e212e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 56.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Becadex (multivitamin)\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Becadex (multivitamin) tablet for how many days",
+      "uuid" : "c92d4952-09a2-487e-b007-3f9d936acc83",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Becadex (multivitamin) tablet for how many days",
+        "uuid" : "5bd89916-3af1-4af7-a79e-9fc795a7c475",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 57.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Becadex (multivitamin)\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Iron (Fersifol) Strength",
+      "uuid" : "1134e62c-b7ef-42be-907b-755179449992",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron (Fersifol) Strength",
+        "uuid" : "524abcfb-d2b0-46e4-9c18-c5c380adb862",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "50 mg",
+          "uuid" : "d2cc3b6c-bbde-4840-9ef9-bf76fe1f7fd0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "60 mg",
+          "uuid" : "95c823e7-27e0-454e-8e51-fc5362c573bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "360 mg",
+          "uuid" : "46360e77-0cae-4b03-aa2a-5390ecb56f0d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "25 mg",
+          "uuid" : "beadf3cf-f434-4015-9ad2-c84d438f6d90",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "160 mg",
+          "uuid" : "b2279a5c-4a97-4348-bca8-3a040c1d185a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "150 mg",
+          "uuid" : "7ed903d7-4766-46e4-ae90-3cc00683ee53",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 58.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Iron (Fersifol)\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Iron (Fersifol) tablet for how times per day",
+      "uuid" : "4dd3340b-25b5-47c5-8b52-5c88b5c45128",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron (Fersifol) tablet for how times per day",
+        "uuid" : "2e827b9e-76cb-45bd-8207-a85653d6f4af",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 59.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Iron (Fersifol)\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Iron (Fersifol) tablet for how many days",
+      "uuid" : "df742e13-9ecb-4702-b3f0-c390695014af",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Iron (Fersifol) tablet for how many days",
+        "uuid" : "c74fd564-30b7-4b4b-a7e7-b93cb189f359",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 60.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Iron (Fersifol)\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Paracetamol Strength",
+      "uuid" : "dfe8dd95-7570-4736-96ec-ba9e0fc0cfe6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol Strength",
+        "uuid" : "6b3c1744-f643-499d-8581-8b0b4a4017bd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "250 mg",
+          "uuid" : "a8194f24-bbfd-4af2-b8e0-323b0fa37b12",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 61.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Paracetamol tablet for how times per day",
+      "uuid" : "206f1660-92c6-4ffe-a07d-2731e3c89da3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol tablet for how times per day",
+        "uuid" : "f91a06d7-69c5-443f-b97e-60bb981afca7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 62.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Paracetamol tablet for how many days",
+      "uuid" : "94d3acef-f6fa-4f3f-8816-c52277102309",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Paracetamol tablet for how many days",
+        "uuid" : "4aab6b40-dfc4-4bcb-b413-36689b651a42",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 63.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"paracetamol\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Furosemide Strength",
+      "uuid" : "16f31c6a-a08c-44eb-9ea7-c28a2dbc738a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Furosemide Strength",
+        "uuid" : "feec4205-8f1e-4b8e-929f-f8c0664e34d4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "100 mg",
+          "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "80 mg",
+          "uuid" : "d4e7f96f-ad03-4a39-85da-92ccd8baaab0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "40 mg",
+          "uuid" : "39efffa4-84ab-4551-9bd8-527d262ff469",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "60 mg",
+          "uuid" : "95c823e7-27e0-454e-8e51-fc5362c573bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 64.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Furoseide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Furosemide tablet for how times per day",
+      "uuid" : "b2c0790a-7441-46ca-8e11-c7823e36dd95",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Furosemide tablet for how times per day",
+        "uuid" : "42c7dc3a-8600-4a56-90b6-09d66ae06c8a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 65.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Furoseide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Furosemide tablet for how many days",
+      "uuid" : "2aea13ae-abcd-478f-8179-c2a6ec10e714",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Furosemide tablet for how many days",
+        "uuid" : "8e7106bd-d9ab-48e4-8200-60707101f34f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 66.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Furoseide\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Spironolactone Strength",
+      "uuid" : "09a62677-5a19-4315-8a13-d4ba01ce49fd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Spironolactone Strength",
+        "uuid" : "43ee5933-ba92-4a53-8d51-95423a293302",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "100 mg",
+          "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "25 mg",
+          "uuid" : "beadf3cf-f434-4015-9ad2-c84d438f6d90",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "50 mg",
+          "uuid" : "d2cc3b6c-bbde-4840-9ef9-bf76fe1f7fd0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "75 mg",
+          "uuid" : "534aae61-ef77-4bd0-8fd4-8d6aefd4ec5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 67.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Spironolactone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Spironolactone tablet for how times per day",
+      "uuid" : "13c6ca04-afee-4ba6-820c-6bc4791efb4c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Spironolactone tablet for how times per day",
+        "uuid" : "0da77abb-d8ab-4aa1-9b4d-34ec2e81d14a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 68.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Spironolactone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Spironolactone tablet for how many days",
+      "uuid" : "de35ecc1-0607-4f26-87f4-fd787a0ae34a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Spironolactone tablet for how many days",
+        "uuid" : "b3ae0b19-a4b1-4a80-aba4-510bef92fc6b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 69.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Spironolactone\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Calcium Strength",
+      "uuid" : "4e0e55f4-f243-47e9-b7b3-c6ebf0f2b050",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Calcium Strength",
+        "uuid" : "d6e1be9d-0937-4708-869f-19c816c11d7c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1000 mg",
+          "uuid" : "f52b5de1-63a5-4665-9fa2-be0ff018122a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "500 mg",
+          "uuid" : "814dd7c5-9945-4be1-84a0-14f6577698c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 70.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Calcium\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Calcium tablet for how times per day",
+      "uuid" : "a5db8da7-54f9-4402-8f32-63738531250e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Calcium tablet for how times per day",
+        "uuid" : "d38544e2-77f3-4f83-ac43-db76e38593b6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 3.0,
+        "active" : true
+      },
+      "displayOrder" : 71.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Calcium\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Calcium tablet for how many days",
+      "uuid" : "2b79fefa-1b3f-46ae-9c2e-7c1cb5365f6d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Calcium tablet for how many days",
+        "uuid" : "95ca8c1b-c012-428b-83d8-c9a210e19d57",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 72.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Calcium\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Famotidin Strength",
+      "uuid" : "b729afe7-3413-48e3-9cfc-7e6622e09bfd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Famotidin Strength",
+        "uuid" : "a7f6bc7b-5cd0-444f-9892-a923d2468b69",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "40 mg",
+          "uuid" : "39efffa4-84ab-4551-9bd8-527d262ff469",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "10 mg",
+          "uuid" : "2a51c67b-2726-42d1-bf8b-0bbbe0a8da6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 73.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Famotidin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Famotidin tablet for how times per day",
+      "uuid" : "2746b985-4710-48da-90e8-7b8a66e2276f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Famotidin tablet for how times per day",
+        "uuid" : "04459837-ec31-4a40-aed3-d721ab0c8a7a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 74.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Famotidin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Famotidin tablet for how many days",
+      "uuid" : "fe9fdfb8-03dc-4c75-a308-45af102f34bf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Famotidin tablet for how many days",
+        "uuid" : "478caac9-3fba-4fe3-809a-d2d11fdb64d6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 75.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Famotidin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Omeprazole Strength",
+      "uuid" : "1e436d16-92a8-4359-97a5-80817fdd6c6d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Omeprazole Strength",
+        "uuid" : "74f118f7-60e9-4ea7-b671-894f49e2fd70",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "45 mg",
+          "uuid" : "cd67e213-cdeb-4c66-99bd-7b371bae1da3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "10 mg",
+          "uuid" : "2a51c67b-2726-42d1-bf8b-0bbbe0a8da6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "60 mg",
+          "uuid" : "95c823e7-27e0-454e-8e51-fc5362c573bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "2.5 mg",
+          "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 76.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Omeprazole\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Omeprazole tablet for how times per day",
+      "uuid" : "4232d310-b29a-42f4-9d74-42d268929da5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Omeprazole tablet for how times per day",
+        "uuid" : "79ac62a8-4355-4fe8-ad6f-beb5b4faa5c7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 77.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Omeprazole\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Omeprazole tablet for how many days",
+      "uuid" : "b0ae3cee-1131-4082-8da6-ab6acf2c830a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Omeprazole tablet for how many days",
+        "uuid" : "5e319446-80eb-499b-bac7-5687f34609ce",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 78.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Omeprazole\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Sitagliptin Strength",
+      "uuid" : "7749195c-03a1-41c0-a066-7bb78af8ec80",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sitagliptin Strength",
+        "uuid" : "93a77494-4a97-4bd7-8bb1-560f0abd7c2d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "200 mg",
+          "uuid" : "42521250-beb8-4407-8a54-591736c499e7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "400 mg",
+          "uuid" : "a437d78f-e5f3-4b96-9ed4-8b2b7e5a5a74",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "100 mg",
+          "uuid" : "632a7ca9-6296-4a57-9875-1d2679dc4a60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "150 mg",
+          "uuid" : "7ed903d7-4766-46e4-ae90-3cc00683ee53",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "300 mg",
+          "uuid" : "f278101f-69f6-4c34-aca1-52b7af0daecd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "50 mg",
+          "uuid" : "d2cc3b6c-bbde-4840-9ef9-bf76fe1f7fd0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 79.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Sitagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Sitagliptin tablet for how times per day",
+      "uuid" : "d1e9acee-468e-4a58-a7a4-b35e9865315f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sitagliptin tablet for how times per day",
+        "uuid" : "a173836e-a0f8-4210-bc02-06aeebef2e8b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 80.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Sitagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Sitagliptin tablet for how many days",
+      "uuid" : "0ee94638-b6ed-4e9d-9055-fafdc86f7d4f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sitagliptin tablet for how many days",
+        "uuid" : "5cd8d685-030c-45c8-aa20-cd169ea0dd6f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 81.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Sitagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Saxagliptin Strength",
+      "uuid" : "d4f1b279-3835-4b63-ab06-b19db0557240",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Saxagliptin Strength",
+        "uuid" : "5016912d-5d2e-4bee-82f3-0c4f08fbd0b6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "40 mg",
+          "uuid" : "39efffa4-84ab-4551-9bd8-527d262ff469",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "2.5 mg",
+          "uuid" : "4c184f2c-a390-4a64-a999-95aae33078ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "7.5 mg",
+          "uuid" : "010f90ef-b346-46fb-9f7b-63c98e5efd79",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "5 mg",
+          "uuid" : "e6bf6a8e-3c1a-430f-8f09-a9ada7adaf3f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "10 mg",
+          "uuid" : "2a51c67b-2726-42d1-bf8b-0bbbe0a8da6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 82.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Saxagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Saxagliptin tablet for how times per day",
+      "uuid" : "4ed727a4-799e-4fcf-80bd-bee3438fe87b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Saxagliptin tablet for how times per day",
+        "uuid" : "2b22c914-d355-49b0-833e-21125ab0c430",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 83.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Saxagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Saxagliptin tablet for how many days",
+      "uuid" : "7b585a64-2201-401e-bf22-35a49fc0dd4e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Saxagliptin tablet for how many days",
+        "uuid" : "95b86823-329e-4cc8-8d97-d477d7fc0cc0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 84.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Saxagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Linagliptin Strength",
+      "uuid" : "c3ce72af-2d09-4fb5-9505-04edc1fc9629",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Linagliptin Strength",
+        "uuid" : "6ad0f77b-6a81-4b68-987c-8e291c1e067a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "20 mg",
+          "uuid" : "c7332542-ebac-41d1-baf4-e60089f5e46f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "15 mg",
+          "uuid" : "cca549ff-e217-4cfd-a4b6-d045ef33972c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "10 mg",
+          "uuid" : "2a51c67b-2726-42d1-bf8b-0bbbe0a8da6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "5 mg",
+          "uuid" : "e6bf6a8e-3c1a-430f-8f09-a9ada7adaf3f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 85.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Linagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Linagliptin tablet for how times per day",
+      "uuid" : "e271f646-a482-4058-9778-8c329ef4ed56",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Linagliptin tablet for how times per day",
+        "uuid" : "174b4a7a-4922-4ddf-bac3-2df700791320",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 86.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Linagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Linagliptin tablet for how many days",
+      "uuid" : "e47f763e-926d-4465-bd99-8543e49d7ba5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Linagliptin tablet for how many days",
+        "uuid" : "744a2050-a0f0-4018-86df-60aec8dbdf04",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 87.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Diabetes medicines').containsAnswerConceptName(\"Linagliptin\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Counselling points",
+      "uuid" : "45b56608-6633-4623-8fd8-80001ce68ae3",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Yes" ]
+      } ],
+      "concept" : {
+        "name" : "Counselling points of diabetes enrolment",
+        "uuid" : "670d4217-bba4-4a2f-be76-ab387f688c8f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 88.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "88ce7b5a-1932-4d72-8a08-37b1dc10eb2f",
+    "name" : "Counselling",
+    "displayOrder" : 6.0,
+    "display" : "Counselling",
+    "formElements" : [ {
+      "name" : "Diabetes enrolment counselling points",
+      "uuid" : "c7d09737-974f-4817-83d2-ac671bf83741",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Yes" ]
+      } ],
+      "concept" : {
+        "name" : "Counselling points of diabetes enrolment",
+        "uuid" : "670d4217-bba4-4a2f-be76-ab387f688c8f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Initial counselling done",
+      "uuid" : "5917e775-a8d3-47d7-9472-c985f0108713",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Initial counselling done",
+        "uuid" : "ce040acc-8cb2-4d31-990d-ffc52d90949c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "194eee69-3507-49d3-a8c0-773d387c651f",
+    "name" : "Next visit date",
+    "displayOrder" : 7.0,
+    "display" : "Next visit date",
+    "formElements" : [ {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "e1841da6-ace3-4a59-a6a7-138f32775c57",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Next visit date",
+        "uuid" : "26ca2feb-d6b5-4eae-9e3c-b0302646fc73",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInEnrolment(\"26ca2feb-d6b5-4eae-9e3c-b0302646fc73\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEnrolment\n    });\n\n    const nextVisitDate = programEnrolment.getObservationValue('Next visit date');\n\n    scheduleBuilder\n        .add({\n            name: \"Diabetes Followup\",\n            encounterType: \"Diabetes Followup\",\n            earliestDate: imports.moment(nextVisitDate).toDate(),\n            maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n        }).whenItem(!_.isEmpty(nextVisitDate))\n        .is.not.truthy;\n\n        \n  \n    //return scheduleBuilder.getAll();\n     return scheduleBuilder.getAllUnique(\"encounterType\", true);\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

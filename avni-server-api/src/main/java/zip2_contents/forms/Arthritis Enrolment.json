@@ -1,0 +1,47 @@
+{
+  "name" : "Arthritis Enrolment",
+  "uuid" : "648ee6a7-7a66-4c3c-be04-471382d1b228",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "12a71b7a-7caf-4eae-9d5d-b9d18733204d",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of diagnosis",
+      "uuid" : "18fa8eec-d9cc-4d2c-b660-51da2f835d2d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n  const diagnosisDate = programEnrolment.getObservationReadableValue('Date of diagnosis');\n  let visitDate = programEnrolment.enrolmentDateTime;\n \n if(imports.moment(diagnosisDate).isAfter(visitDate, 'date'))\n statusBuilder.validationError(\"Diagnosis Date cannot be after visit date\");\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Name of subcategory of disease",
+      "uuid" : "50b8b193-c375-4525-8a4b-e887f5175433",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of subcategory of disease",
+        "uuid" : "677b90f4-aba1-47d0-8f8a-4d0ead1288b0",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

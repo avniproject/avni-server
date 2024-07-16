@@ -1,0 +1,7 @@
+{
+  "name" : "Ganiyari lab result Encounter Cancellation",
+  "uuid" : "54aa3fd6-f369-4b48-adde-6136d5628a1a",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

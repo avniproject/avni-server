@@ -1,0 +1,810 @@
+{
+  "name" : "Epilepsy Enrolment",
+  "uuid" : "bcdb57b0-eb4a-43b8-bc8b-8aba68238a91",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "5ff9d6ce-9477-4259-8e47-5aef8095e074",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of Diagnosis",
+      "uuid" : "4517031e-ae9f-499d-98f4-14bdb5cce3a7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Weight (in Kgs) at diagnosis",
+      "uuid" : "141b75be-9b4c-4093-a937-280293865186",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Height (in cms) at diagnosis",
+      "uuid" : "7d9219e1-1d2f-4629-a866-0c62d438559e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Height",
+        "uuid" : "23bcad9f-ec16-46ec-92f5-e144411e5dec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 21.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 30.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Type of disease",
+      "uuid" : "716ba89a-8d05-46d5-9469-3e45264f1131",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Not answered" ]
+      } ],
+      "concept" : {
+        "name" : "Type of epilepsy disease",
+        "uuid" : "ef46e589-1c58-4752-8788-f17d51371d8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Focal and generalized",
+          "uuid" : "244ef52a-9183-42bf-98c5-16c86fca560c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Generalized- atonic",
+          "uuid" : "4a7506c0-74ad-49bd-9cd4-8135f2f86da2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Focal- automatic",
+          "uuid" : "f8fbbf89-d498-4904-b6d9-9c0b01eb4b11",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Generalized-Absence (typical and atypical)",
+          "uuid" : "cc8dacbe-34b1-4b5a-9140-e7bb50614022",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Focal- other fiture",
+          "uuid" : "91bd19f8-0b79-4853-a3f7-78b547ed5b41",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Focal- cognitive",
+          "uuid" : "df8c200d-40af-49c3-a956-98530a2c650f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Generalized- clonic",
+          "uuid" : "f3371569-5ffb-4504-b328-24be1939a311",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Focal- motor",
+          "uuid" : "deba234a-a1b1-4849-8137-76363831d5f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Unclear",
+          "uuid" : "6edcf245-c94f-495c-b543-620d6ce1dd8e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Generalized- tonic clonic",
+          "uuid" : "4969394e-b44c-4312-a7a1-790ffa8f2159",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Generalized- tonic",
+          "uuid" : "74bb85b5-185d-4c3a-8711-0ac3f278a77d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Focal- sensory",
+          "uuid" : "ecd4a966-b44e-466d-9441-42c7a5411278",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Generalized- myoclonic",
+          "uuid" : "66a31761-df51-439b-bd3d-b9a256410a34",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not answered",
+          "uuid" : "ae021fdc-9767-4fae-9b17-410e7d32e218",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : false
+    }, {
+      "name" : "Any physical injury due to seizures?",
+      "uuid" : "be2547ee-a5d6-487b-a262-7fbe3a17f5fd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any physical injury due to seizures?",
+        "uuid" : "d3940621-9c0f-4875-b6d0-d343cf64f37f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Member of peer support",
+      "uuid" : "9c06b0d3-8878-48e6-bf1a-439d33e55d4e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Member of peer support",
+        "uuid" : "6c7bd0b2-849e-446c-b5eb-a725f8c53296",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "School going children",
+      "uuid" : "3a202dc8-4b9e-47e9-84b4-bbb2f3884858",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "School going children",
+        "uuid" : "02914dc8-9066-43ae-86e7-d2b20c40920f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "School drop out due to seizure disorder?",
+      "uuid" : "77cf8cf6-bea6-41bd-9e3d-4e11c9ff99e4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "School drop out due to seizure disorder?",
+        "uuid" : "a6a3e335-7b37-4579-a63c-06e060de0679",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "3405e0e4-7605-4007-ae21-fadd6e75e31f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "216722eb-712c-4aeb-bef8-290502f43fbb",
+    "name" : "Medicines",
+    "displayOrder" : 2.0,
+    "display" : "Medicines",
+    "formElements" : [ {
+      "name" : "Medicines",
+      "uuid" : "230d5edf-6ed7-4e70-82b0-35a4228b8a8c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Epilepsy medicines",
+        "uuid" : "f3ffd64d-d7a3-4106-9762-75823c2de597",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Phenobarbitone",
+          "uuid" : "ee8238a1-0d1a-4ab5-8a93-f4d227aff375",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Carbamezepine",
+          "uuid" : "96dafb68-4f93-4a47-874d-383a3a797835",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Phenytoin",
+          "uuid" : "fcd61765-353b-490d-9b67-1ad6407af009",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Valproic acid",
+          "uuid" : "798e63d4-2c5a-4ed6-9ef1-6864b06eb975",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Phenobarbitone dose",
+      "uuid" : "95ed387d-1b30-4e4f-b8c2-15b636f1a852",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone dose",
+        "uuid" : "af513564-2a90-4ae5-b778-a06a3ea92837",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Phenobarbitone for how many times a day",
+      "uuid" : "1dc685c6-b2c7-4d78-ae68-4370f0344344",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone for how many times a day (voided~73755)",
+        "uuid" : "d6ae9295-bde6-4795-85a1-97939aa50e05",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Phenobarbitone for how many times a day",
+      "uuid" : "aece0d99-e7ff-49cb-83b8-e90446733c13",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone for how many times a days",
+        "uuid" : "96a67ccd-42ee-4d7c-b344-cab395d06a4b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Phenobarbitone for how many days",
+      "uuid" : "fffb9cbb-dbb6-4f26-8ef5-05e32519d32c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone for how many days",
+        "uuid" : "c633aee6-6792-4b25-9fd8-dcb018d2a655",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Carbamezepine dose",
+      "uuid" : "66e77c50-42c6-40b1-88d7-fd7216469a8c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine dose",
+        "uuid" : "a1f42a41-31e2-4522-9901-56d691299a50",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Carbamezepine for how many times a day",
+      "uuid" : "6212ec34-fea0-47b6-85ac-4e2242009746",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine for how many times a day (voided~73757)",
+        "uuid" : "5b3a7a49-89e0-4346-a7df-323072d923b2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Carbamezepine for how many times a day",
+      "uuid" : "b5cf4e1c-d0f0-4912-9f62-095fece43aff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine for how many times a days",
+        "uuid" : "c6a22993-d14d-44c3-8eb6-dd55eefe744d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Carbamezepine for how many days",
+      "uuid" : "3a8c50e1-227f-4376-bf94-02f99c03d211",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine for how many days",
+        "uuid" : "884b130f-bc81-458a-be2e-07b057cfffe7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Phenytoin dose",
+      "uuid" : "16bd7464-6ca0-474e-a1ab-02c24387d18e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin dose",
+        "uuid" : "7866634b-f02b-402f-85d3-cf52965b9149",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Phenytoin for how many times a day",
+      "uuid" : "a685491c-c19d-49e2-ae6e-0be8e87c7fa4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin for how many times a day (voided~73759)",
+        "uuid" : "5d7d8dff-4a34-43a4-a9a6-dee6341fcd22",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Phenytoin for how many times a day",
+      "uuid" : "241b72d3-3658-484e-9f36-4030a8cec159",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin for how many times a days",
+        "uuid" : "af33a4be-556e-4fa0-82ca-a9810f19865f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Phenytoin for how many days",
+      "uuid" : "afabd2c1-3c54-431f-b6da-eb7b4e24dfd8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin for how many days",
+        "uuid" : "8af0e4cd-5669-42ad-8df5-4fc7e36705e9",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Valproic acid dose",
+      "uuid" : "7e4d1552-786b-49ef-b3f1-ac7ca11aa9cc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid dose",
+        "uuid" : "ead21767-26dc-47bc-a29c-d4881ff99698",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Valproic acid for how many times a day",
+      "uuid" : "a47ac5fd-1daa-4601-bd1b-66b77e0088e6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid for how many times a day",
+        "uuid" : "32673efe-b22b-46e9-9000-86e049f0c16f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Valproic acid for how many times a day",
+      "uuid" : "f784adef-32a9-4a31-814b-d8e9f6b79d56",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid for how many times a days",
+        "uuid" : "fcafb97e-2b45-4d64-9d7a-5abd7bd73eb5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Valproic acid for how many days",
+      "uuid" : "05775893-0b70-4204-b213-f631d7b46127",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid for how many days",
+        "uuid" : "73682180-cc42-4742-b27a-7b5177a80223",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  statusBuilder.show().when.valueInEnrolment('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "e415a2a0-5c0c-4c6e-b6d6-e8d51940c395",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "f224a6ec-a9f9-4cba-8652-30c970ecabfa",
+    "name" : "Next Visit",
+    "displayOrder" : 3.0,
+    "display" : "Next Visit",
+    "formElements" : [ {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "131347f4-3424-46cc-90cc-12d09723d5e0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"7a1d6893-f96b-4647-b274-bb78fd369185\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEnrolment = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEnrolment\n    });\n\n    const nextVisitDate = programEnrolment.getObservationValue('Date of next visit');\n\n    scheduleBuilder\n        .add({\n            name: \"Epilepsy followup\",\n            encounterType: \"Epilepsy followup\",\n            earliestDate: imports.moment(nextVisitDate).toDate(),\n            maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n        }).whenItem(!_.isEmpty(nextVisitDate))\n        .is.not.truthy;\n\n   \n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

@@ -1,0 +1,360 @@
+{
+  "name" : "Ganiyari Lab Result Form",
+  "uuid" : "5730883f-6c77-4ff9-bddc-cb93328fc1c6",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "14f8980b-b365-4467-8448-98fdec1b1847",
+    "name" : "Results",
+    "displayOrder" : 1.0,
+    "display" : "Results",
+    "formElements" : [ {
+      "name" : "ALT",
+      "uuid" : "fe0b03b9-c4c0-44ff-b857-91cadb57200b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ALT",
+        "uuid" : "28640bfd-8186-4596-a648-46b15e86ef11",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 5.0,
+        "highNormal" : 35.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('ALT');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Serum Albumin",
+      "uuid" : "7a0fcaaa-0ead-456a-ad88-185eb5af43c5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Serum Albumin",
+        "uuid" : "e663c9f6-d587-4c33-925b-37d92c6b86a2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 6.5,
+        "highNormal" : 8.5,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Serum Albumin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "HIV",
+      "uuid" : "67b3744b-cbd3-4c93-883e-4897487430b2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HIV/AIDS Test",
+        "uuid" : "a8be8aeb-bfbf-4ae5-9158-a307b2e135f0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('HIV/AIDS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "HIV Elisa",
+      "uuid" : "2ccd4952-af93-4b9c-aada-6c449fad7662",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HIV (Elisa)",
+        "uuid" : "b3e8a85a-c7ca-49b8-9c6f-8bd5ee6bfad1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('HIV (Elisa)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Serum Creatinin",
+      "uuid" : "d787c1ed-07a9-4f38-9fd2-7d4ae70d05a8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Serum Creatinin",
+        "uuid" : "4696cc76-ce42-41b8-a837-18ab32ca3a1d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 0.6,
+        "highNormal" : 1.2,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Serum Creatinin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid colour",
+      "uuid" : "9d5e4fcc-ae2d-4caa-9c72-84bc6d0a0b8c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid colour",
+        "uuid" : "76f6ae61-d138-4be4-8a08-b50df5fd3f2a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Transudate",
+          "uuid" : "970a4bd9-722e-48fd-96cf-1fcd4e027f3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Exudate",
+          "uuid" : "b400f012-f162-4473-a4cd-49611211601b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnyAnswerConceptName('Pleural fuild protien','Pleural fluid ADA','Pleural fuild cells');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid cells",
+      "uuid" : "63feffb2-c698-4778-87f6-2a3386602260",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid cells",
+        "uuid" : "a0d7fdb2-c4d0-40ec-8080-aaf8b9b28f1c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Pleural fuild cells');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid protein",
+      "uuid" : "7a948b23-8690-4c46-96ca-b13fa9fba4bb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid protein",
+        "uuid" : "5fb97dda-0144-4ee1-a5f0-2d6d9ed1933e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Pleural fuild protien');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid ADA",
+      "uuid" : "53335b06-3589-48b2-a136-891348d64c1f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid ADA",
+        "uuid" : "95b6e401-836a-4c83-bc66-8b1fd363572a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Pleural fluid ADA');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Lymphnode biopsy/FNAC",
+      "uuid" : "21884d4a-a6d6-43b9-bdbc-8e668ae6ba9a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymphnode biopsy/FNAC",
+        "uuid" : "368da433-da3d-4f14-94ed-e0b39bada0c1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Biopsy/FNAC not done",
+          "uuid" : "8b48b931-939d-4a9e-b3fa-53514e39080a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Biopsy/FNAC not required",
+          "uuid" : "30d5a363-d3da-409c-b724-13422159f5dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Biopsy/FNAC done",
+          "uuid" : "2276fa97-10cd-4c2a-8da8-81c7a7fe2bd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('Lymphnode biopsy/FNAC');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "X-Ray",
+      "uuid" : "f993316f-45fe-4fde-a06e-c74824265536",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "X-Ray",
+        "uuid" : "da9dd015-9113-4e42-9f08-3ac191472c25",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Not required",
+          "uuid" : "011b0b14-a8e5-4d32-a628-efa459f845d1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New changes",
+          "uuid" : "0485267b-2321-44a8-a71b-ab1c153ab41c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Extensive",
+          "uuid" : "975ebd10-9f09-4d0c-80e9-c27599d0461d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Cavitary",
+          "uuid" : "350003d9-60cb-4be3-bdb6-752d3bb8adcb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Improved than previous x-ray",
+          "uuid" : "637fe631-29c8-4869-9b42-e092f91aef84",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Limited",
+          "uuid" : "acf0110b-d2e6-4e41-a564-203df561a6e4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Non cavitary",
+          "uuid" : "38fc25fd-1bd5-4400-b56b-13157c25c50d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInAllEncounters('What lab investigations?').containsAnswerConceptName('X-Ray');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other X-ray",
+      "uuid" : "16d18cb7-fa8f-492c-8f47-14de4d323dac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other X-ray",
+        "uuid" : "c5789f65-0ebc-43a6-b425-475e52320c70",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('X-Ray').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "//SAMPLE RULE EXAMPLE\n\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: \"New TB comorbidities\"\n    });\n\n    var hiv = programEncounter.getObservationReadableValue('HIV (Elisa)');\n    var alt = programEncounter.getObservationReadableValue('ALT');\n    var creatinin = programEncounter.getObservationReadableValue('Serum Creatinin');\n    var comorbities = [];\n    if (hiv && _.isEqual(hiv, 'Positive')) {\n        comorbities.push('HIV/AIDS');\n    }\n    if (alt && alt > 35) {\n        comorbities.push('Liver disease');\n    }\n    if (creatinin && creatinin > 1.2) {\n        comorbities.push('Kidney disease');\n    }\n    _.forEach(comorbities, comob => {\n        complicationsBuilder.addComplication(comob);\n    })\n\n    decisions.encounterDecisions.push(complicationsBuilder.getComplications());\n    return decisions;\n};",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

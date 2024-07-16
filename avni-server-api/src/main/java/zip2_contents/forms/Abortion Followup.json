@@ -1,0 +1,1452 @@
+{
+  "name" : "Abortion Followup",
+  "uuid" : "e38e9e5a-ebad-473c-920a-f308a940b0c5",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "3bab0ef9-333d-4dcc-9212-ffbeee0e11f5",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "How many times a day does mother change the clothes?",
+      "uuid" : "14454cec-8d6a-4665-931c-93f6dff88bf8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many times a day does mother change the clothes?",
+        "uuid" : "0f3c0b07-0014-468d-b01d-9fa1fb60801a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "validFormat" : {
+        "regex" : "^[0-9]$",
+        "descriptionKey" : "Required1Digit"
+      },
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "e292ae45-0c3a-4d93-9924-973029b37835",
+    "name" : "Woman's examination",
+    "displayOrder" : 2.0,
+    "display" : "Woman's examination",
+    "formElements" : [ {
+      "name" : "Temperature",
+      "uuid" : "87d37243-1d3d-4a40-80c2-98ea0690acad",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature",
+        "uuid" : "544438f2-4eeb-41a6-9017-d2895d4d76ef",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 97.0,
+        "highNormal" : 99.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Temperature",
+      "uuid" : "9dea43cf-b8e2-4de2-946a-58e8809def57",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature(celcius)",
+        "uuid" : "0c6d2587-382d-4762-8871-b6890d854505",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 36.1,
+        "highNormal" : 37.8,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "validFormat" : {
+        "regex" : "^[0-9]{1,2}(\\.[0-9])??$",
+        "descriptionKey" : "requiredFormatxxDotx"
+      },
+      "mandatory" : false
+    }, {
+      "name" : "Pulse",
+      "uuid" : "f1fa81bb-6bd0-43df-a1c7-b2cef26ee2ca",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pulse",
+        "uuid" : "630c0fa3-38f7-427d-a8dd-f1417cf1b7dc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Blood Pressure (systolic)",
+      "uuid" : "63db4e9f-398f-4bd5-be3e-bc0d2a1f5c2f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (systolic)",
+        "uuid" : "6874d48e-8c2f-4009-992c-1d3ca1678cc6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 20.0,
+        "highAbsolute" : 190.0,
+        "lowNormal" : 90.0,
+        "highNormal" : 140.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Blood Pressure (Diastolic)",
+      "uuid" : "f3843757-7dd8-4961-8262-fd6e7fa4f989",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Blood Pressure (Diastolic)",
+        "uuid" : "da871f6c-cef0-4191-b307-6751b31ac9ec",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 10.0,
+        "highAbsolute" : 120.0,
+        "lowNormal" : 50.0,
+        "highNormal" : 90.0,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Is there foul smelling discharge PV",
+      "uuid" : "10669a3f-4d89-44b8-9509-fe01c6ab2a75",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is there foul smelling discharge PV",
+        "uuid" : "7764a974-7ba8-4a13-9ba9-6d8d580f3c99",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Does mother has seizures?",
+      "uuid" : "4e485aa3-8cdf-41f1-a936-05e81e9e0491",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does mother has seizures?",
+        "uuid" : "74c618b3-a4e0-4382-9486-70dbf5752d9d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Does mother has any breast related issue like swelling, cracked nipple etc?",
+      "uuid" : "655197db-f98e-4b6a-a23e-1a35307a6fd0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does mother has any breast related issue like swelling, cracked nipple etc?",
+        "uuid" : "43567d78-ad97-46bc-afa1-8522ec9e0180",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "8a01e7e4-e1ac-4397-982c-55a65acb67bb",
+    "name" : "Maternal death",
+    "displayOrder" : 3.0,
+    "display" : "Maternal death",
+    "formElements" : [ {
+      "name" : "Did mother die?",
+      "uuid" : "a9c70ad9-f55d-4076-8698-2ff4935db838",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did mother die?",
+        "uuid" : "49cdf65a-a0a8-40f4-b5a6-55c405038891",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Date of death",
+      "uuid" : "f8654d5f-45d9-4549-b861-47ce608f163f",
+      "keyValues" : [ {
+        "key" : "datePickerMode",
+        "value" : "Calendar"
+      } ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "75f33f74-3ac6-4472-aba6-f0c69dd971b3",
+    "name" : "Referral",
+    "displayOrder" : 4.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "Referral needed to mother?",
+      "uuid" : "e4a1171c-3e5a-461a-831e-16a013dfa8b0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral needed to mother?",
+        "uuid" : "c75a610f-27c3-4fad-9c26-04887c15436e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  //read the value of form element using programEncounter.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.falsy;\n  //for form element validation error\n  statusBuilder.validationError(\"Values are not equal\").whenItem(showCondition).is.falsy;\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Does woman require referral?",
+      "uuid" : "9ecffce6-2044-4e2c-bfc5-cb8ad1a80452",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does woman require referral?",
+        "uuid" : "77d122e8-0620-4754-8375-b0cbe329003c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "02fdcd57-7c6c-4ebc-a1f6-37fd3ee8d39e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of referral",
+        "uuid" : "80fccb06-a62f-43e8-92eb-358bdb600079",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ganiyari",
+          "uuid" : "41f067f3-48a0-4f95-aee5-dcee95a8b9de",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "SHW",
+          "uuid" : "7ac0d9a2-ff82-41e6-9f38-134904d476f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does woman require referral?').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "fd12a431-c922-4235-842e-79c8241b730b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of referral').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "5e7134c4-9c9c-4ff1-89ce-24646b3a703f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral reason",
+        "uuid" : "8a56f008-a910-4d6f-b028-a95db330dbf2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sonography",
+          "uuid" : "1a893a89-4984-43e1-85cc-b64fb582824c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "infec",
+          "uuid" : "8293fa19-4fd6-4942-bc93-032bc3d39e68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "voided" : true
+        }, {
+          "name" : "Admission at Referral centre",
+          "uuid" : "dad7f494-99ec-42ce-b50b-07a7450be30c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Delivery/LACS",
+          "uuid" : "7d0d495a-e733-4ea8-93ca-c57bf42c6ee9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seizure",
+          "uuid" : "cbc1b5b1-e4f9-4c0e-abe6-cc03362ff08d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Bleeding",
+          "uuid" : "0aeb893c-34ba-49f0-bd6f-0696fce74458",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Consultation with specialist at referral centre",
+          "uuid" : "f1ecf77c-122f-4462-8bc8-812013c80fa3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Infection",
+          "uuid" : "e668ceed-92ee-4b2f-8714-72838f11264b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does woman require referral?').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other referral reason",
+      "uuid" : "033e0c8c-8a25-45f6-b18b-ddcf9a04e76e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "2d925f93-95b8-4300-b797-4054d48c8ed8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of referral",
+        "uuid" : "80fccb06-a62f-43e8-92eb-358bdb600079",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ganiyari",
+          "uuid" : "41f067f3-48a0-4f95-aee5-dcee95a8b9de",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "SHW",
+          "uuid" : "7ac0d9a2-ff82-41e6-9f38-134904d476f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Status of referral -1?",
+      "uuid" : "fbc0c070-6b1a-4a0d-918b-6bbcce8f4e0b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Status of referral -1",
+        "uuid" : "4671094b-4fe9-42d4-a933-6cc7d0320209",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Seen by SHW (Subcenter)",
+          "uuid" : "0f21f146-9a78-4674-b861-67dd1816583f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to traditional healer",
+          "uuid" : "e3bb03ee-2d89-4d4d-9111-ce238057a83a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to private practitioner/Hospital",
+          "uuid" : "3d53ba30-634f-48ff-ad34-9f7122928866",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient did not go to facility",
+          "uuid" : "e94a781a-462d-4706-b12c-ca6d421b0f4c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seen by VHW",
+          "uuid" : "a9896521-fa89-49d4-b892-a3a134e312a3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to Govt. facility",
+          "uuid" : "2608f417-118f-4fab-a619-068c304601ee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Seen by Doctor at Ganiyari",
+          "uuid" : "3e941fcf-fca0-43e2-ab52-af159ad68ca8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient went to Jholachap",
+          "uuid" : "c796a08a-9b79-4e63-a999-ab3b41a67111",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seen by SHW (Home visit)",
+          "uuid" : "3f763c22-1fb7-4421-811c-787f5b82d149",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "MultiSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Status of referral -2?",
+      "uuid" : "c3183e0e-f1f2-497d-967b-38c72557a9db",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Status of referral -2",
+        "uuid" : "9c049865-30c3-4a1f-958f-76e39714e1cd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Taking treatment at treaditional healer",
+          "uuid" : "a83931d8-23d0-40b6-bd52-1c26a4273b01",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Patient does not want to go any facility",
+          "uuid" : "f5edc6d4-2b76-4e3c-b8e8-cd18e4fa2781",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Patient is on treatment",
+          "uuid" : "9e147cf6-577a-46a7-8f88-2ae6420519d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Taking treatment at Jholachap",
+          "uuid" : "2fed2671-8103-457d-911e-06c0839f2551",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "MultiSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Status of referred patients",
+      "uuid" : "68da1045-3dcf-4804-b3ec-cf5fdb95dcf3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Status of referred patients",
+        "uuid" : "d920a7c4-a8a9-4dd0-8e09-b5ab3de63565",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Got complicated",
+          "uuid" : "2dc7cd1e-6cec-4fba-a624-abae670ec7af",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Cured",
+          "uuid" : "ca055965-5f64-4ca9-ba22-13763b9eb5f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Hospitalized",
+          "uuid" : "abbda623-2565-4c95-86cb-21ce2f7e32a8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "8632126a-fc83-4d00-93f4-4bbd057101ea",
+    "name" : "Counselling",
+    "displayOrder" : 5.0,
+    "display" : "Counselling ",
+    "formElements" : [ {
+      "name" : "Counselling done",
+      "uuid" : "b0c9e877-9de5-4f86-8f76-8c36360037fe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Counselling",
+        "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "833264a9-53f6-4851-8e28-d12cba14dd71",
+    "name" : "Counselling details",
+    "displayOrder" : 6.0,
+    "display" : "Counselling details",
+    "formElements" : [ {
+      "name" : "Counselling done",
+      "uuid" : "d7e1de37-e08f-4bbe-927e-ee0325ff018b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Counselling",
+        "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Family Planning Benefits for Women",
+      "uuid" : "9ff41c26-3e8f-4fc7-962e-c46743dee5de",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Family Planning Benefits for Women",
+        "uuid" : "dfe26772-b418-4741-a80b-30fcbe452b5f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "The benefits of family planning to the child",
+      "uuid" : "a375f1ff-ee2a-4190-b395-d9b6a858c0e3",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "The benefits of family planning to the child",
+        "uuid" : "af57d463-f260-4a58-8b08-18f754d0a5e2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Risks of not adopting family planning",
+      "uuid" : "edaaf0c2-a699-42b5-8929-0a34cfe3c60b",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Risks of not adopting family planning",
+        "uuid" : "99593b34-a7f6-445f-aa59-7550f8c0f648",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "The time and interval of pregnancy",
+      "uuid" : "1ae5b100-6479-4dcb-9844-43eebe69c58d",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "The exact time and interval of pregnancy",
+        "uuid" : "9aa87afd-8d1f-4870-9638-7a3b6aefa36d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When is the possibility of the next pregnancy after delivery?",
+      "uuid" : "b95712ce-68af-468c-ad8e-e24d5ecb37de",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "When is the possibility of the next pregnancy after delivery?",
+        "uuid" : "2e5288f0-1f4b-4c72-bd6d-ae4fa072a1d9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Have you thought about using any contraceptive?",
+      "uuid" : "a3f1da87-eaf6-4eda-8a3b-f9c11a3d668d",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Have you thought about using any contraceptive",
+        "uuid" : "d833658b-ce1f-412d-bc34-086f8d1ba50d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If she had not thought about any contraceptive method, then tell about different methods.",
+      "uuid" : "6433a8ad-6253-4b4a-a57b-956271f5e6e6",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "If she had not thought about any contraceptive method, then tell about different methods.",
+        "uuid" : "1d7ed26e-17f8-4d27-b5e5-a0fc61336032",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Provide detailed information about the chosen contraceptive method",
+      "uuid" : "10937170-3f70-41b1-af79-2cafb2a06a9c",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Provide detailed information about the chosen contraceptive method",
+        "uuid" : "35829406-7047-40a4-a970-17d029f49562",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Repeat key points once again",
+      "uuid" : "b4919860-7672-43cb-80a1-550a90533418",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Repeat key points once again",
+        "uuid" : "65cf7297-98ff-4405-b1df-336325f4d96e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Give information about misconception of contraceptive methods",
+      "uuid" : "d6b0ddb6-ce07-4ba0-9379-e984c5e1b4da",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Give information about misconception of contraceptive methods",
+        "uuid" : "3eeb5be5-a74b-4cf4-805f-3b8549a5daef",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Motivate men to adopt contraceptive method",
+      "uuid" : "9f94fe77-7df8-4191-babb-eb0c4bc2830f",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling" ]
+      } ],
+      "concept" : {
+        "name" : "Motivate men to adopt contraceptive method",
+        "uuid" : "48b372a3-b491-4c45-8d14-b99e5515daf2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling",
+          "uuid" : "0ac30adc-5107-4e30-9b8a-c3ef65904cf5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "refer the mother to subcenter or ask SHW to visit her to see for sign of sepsis",
+      "uuid" : "eca88559-4daf-42e7-a975-6e4433a03439",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the mother to subcenter or ask SHW to visit her to see for sign of sepsis",
+        "uuid" : "338bf574-680c-4d8b-94f9-aa2b768dadeb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('How many times a day does mother change the clothes?').is.greaterThan(5);\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false
+    }, {
+      "name" : "refer the woman to SC or ask the SHW to make a home visit",
+      "uuid" : "d73ed67b-dd9c-42cb-996c-661c6c3cd5e2",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the woman to SC or ask the SHW to make a home visit",
+        "uuid" : "ca2af807-ec9f-4b33-8ffa-e17075979996",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is there foul smelling discharge PV').containsAnswerConceptName(\"Yes\")\n  .and.when.valueInEncounter(\"Temperature(celcius)\").is.greaterThan(37.5);\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false
+    }, {
+      "name" : "refer the mother to SC/Ganiyari",
+      "uuid" : "8c33c003-0990-446c-b80e-7fa8b2fa89fb",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the mother to SC/Ganiyari",
+        "uuid" : "c3f8600a-aebf-44ea-967e-ff93c11a5946",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does mother has seizures?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};\n",
+      "mandatory" : false
+    }, {
+      "name" : "Whether woman want to use any method for family planning",
+      "uuid" : "c3f4d1a9-094d-4d15-a4aa-628cd1abc928",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Womane want to use any family plannig",
+        "uuid" : "1ade5184-6907-4187-9186-abd12caacf05",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n  \n  const visitDate = programEncounter.encounterDateTime; \n  const dateOfAbortion = programEncounter.getObservationValue('Date and time of abortion');\n  const encounterScheduleAbortion = [\n    {\"name\": \"Abortion followup-2\", \"earliest\": 7, \"max\": 11 },\n    {\"name\": \"Abortion followup-3\", \"earliest\": 15, \"max\": 19}    \n];\n   \n var schedule = _.chain(encounterScheduleAbortion).filter(e => imports.moment(visitDate).isSameOrBefore(imports.moment(dateOfAbortion).add(e.earliest, 'days'), 'date') === true).filter(e => (programEncounter.programEnrolment.hasEncounter('Abortion followup', e.name)) === false).first().value();\n  \n  if (!_.isEmpty(schedule)) {\n  scheduleBuilder\n    .add({\n      name: schedule.name,\n      encounterType: \"Abortion followup\",\n      earliestDate:  imports.moment(dateOfAbortion).add(schedule.earliest, 'days').toDate() ,\n      maxDate: imports.moment(dateOfAbortion).add(schedule.max, 'days').toDate() \n    });\n  }\n  \n  const ifReferral = programEncounter.getObservationReadableValue('Does woman require referral?');\n    console.log(\"====>ifReferral\", ifReferral); \n\n    scheduleBuilder\n    .add({\n      name: \"Referral Status-1\",\n      encounterType: \"Referral Status\",\n      earliestDate: imports.moment(programEncounter.encounterDateTime).add(3, 'days').toDate(),\n      maxDate: imports.moment(programEncounter.encounterDateTime).add(5, 'days').toDate()\n    }).whenItem(ifReferral == 'Yes')\n    .is.truthy;\n  \n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "8ffd8274-ca88-449f-857d-9638b7db792f",
+    "type" : "Form"
+  },
+  "entityUUID" : "8ffd8274-ca88-449f-857d-9638b7db792f",
+  "entityType" : "Form",
+  "type" : "ViewFilter",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP CancellationFormFilters",
+  "uuid" : "17b68675-f261-47d4-8d93-414ac37bf330",
+  "fnName" : "CancellationFormFilters"
+}

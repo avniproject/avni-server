@@ -1,0 +1,117 @@
+{
+  "name" : "Cancer Enrolment",
+  "uuid" : "7ce27568-d7b5-451c-8d1c-3619bb0d9e3e",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "65033ebd-4a71-4078-9ba7-74abeff95283",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of diagnosis",
+      "uuid" : "064e9173-0ae6-4124-8e97-869cfcfb2688",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n  const diagnosisDate = programEnrolment.getObservationReadableValue('Date of diagnosis');\n  let visitDate = programEnrolment.enrolmentDateTime;\n \n if(imports.moment(diagnosisDate).isAfter(visitDate, 'date'))\n statusBuilder.validationError(\"Diagnosis Date cannot be after visit date\");\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Type of Cancer",
+      "uuid" : "4e2f9895-8940-46c4-a40c-a098f6dfefb9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of Cancer",
+        "uuid" : "b63d9cb2-0dc2-41fe-8782-a38db5d0756e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Kidney & Bladder",
+          "uuid" : "70cbc612-b726-489d-b6b3-f124d69fb0ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Oral",
+          "uuid" : "fc681158-5657-4798-9df8-23f02c60fd34",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "GI tract",
+          "uuid" : "e566b56f-a9a5-4933-a99b-b73a5ca258a6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Cervical",
+          "uuid" : "6cc9d642-d58e-40d6-8995-10e722d104ea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Lung",
+          "uuid" : "61265548-2a32-444c-9606-8e2358c931bb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Breast",
+          "uuid" : "37b877c7-a499-47d6-807a-7a4c597102e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Prostate",
+          "uuid" : "c608ad99-3631-44fe-a2f5-7746cc855cec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Name of subcategory of disease",
+      "uuid" : "304fde1c-e959-4f0e-9a3c-be1d8608007e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of subcategory of disease",
+        "uuid" : "677b90f4-aba1-47d0-8f8a-4d0ead1288b0",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

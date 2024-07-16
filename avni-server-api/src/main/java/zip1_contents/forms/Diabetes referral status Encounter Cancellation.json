@@ -1,0 +1,7 @@
+{
+  "name" : "Diabetes referral status Encounter Cancellation",
+  "uuid" : "32c2b94f-e488-4f4a-8c13-08a41d62a448",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

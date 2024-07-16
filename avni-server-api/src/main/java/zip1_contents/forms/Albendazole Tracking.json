@@ -1,0 +1,32 @@
+{
+  "name" : "Albendazole Tracking",
+  "uuid" : "6ca17f07-781c-4161-94ed-bb571218322b",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "fde46648-ee59-48fa-a483-5af0c5c37cf3",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of Dose given",
+      "uuid" : "b3dc26e4-814d-452e-b51b-0b466dbca0e7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of Albendazole dosage",
+        "uuid" : "e3293f2d-1fa0-4d64-b135-5bda1a2dcd19",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const moment = imports.moment;\n    const FEB = 1;\n    const AUG = 7;\n    const findSlot = (anyDate) => {\n        anyDate = moment(anyDate).startOf('day').toDate();\n        if (moment(anyDate).month() < FEB) {\n            return moment(anyDate).startOf('month').month(FEB).toDate();\n        }\n        if (moment(anyDate).month() === FEB) {\n            return anyDate;\n        }\n        if (moment(anyDate).month() < AUG) {\n            return moment(anyDate).startOf('month').month(AUG).toDate();\n        }\n        if (moment(anyDate).month() === AUG) {\n            return anyDate;\n        }\n        return moment(anyDate).add(1, 'year').month(FEB).startOf('month').toDate();\n    };\n\n    const getVisitSchedule = (_earliestDate) => {\n        let earliestDate = moment(_earliestDate).startOf('day').toDate();\n        let maxDate = moment(earliestDate).endOf('month').toDate();\n        if (moment(_earliestDate).month() === FEB) {\n            return {\n                name: 'Albendazole FEB',\n                encounterType: 'Albendazole',\n                earliestDate,\n                maxDate,\n            }\n        }\n        return {\n            name: 'Albendazole AUG',\n            encounterType: 'Albendazole',\n            earliestDate,\n            maxDate,\n        }\n    };\n\n    const findNextSlot = (currentVisitScheduledDate) => {\n        let guessedDate = moment(currentVisitScheduledDate).startOf('month').add(1, 'months').startOf('day').toDate();\n        return findSlot(guessedDate);\n    };\n\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter,\n        programEnrolment: programEncounter.programEnrolment\n    });\n    const visitSchedule = getVisitSchedule(findNextSlot(programEncounter.earliestVisitDateTime));\n    if (moment().isSameOrBefore(visitSchedule.maxDate, 'day')) {\n        scheduleBuilder.add(visitSchedule);\n    }\n    return scheduleBuilder.getAllUnique(\"encounterType\");\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

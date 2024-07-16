@@ -1,0 +1,8 @@
+{
+  "name" : "Diabetes lab test Encounter Cancellation (voided~1174)",
+  "uuid" : "07709b8b-5d35-4531-80a0-fe409c0fb1f8",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

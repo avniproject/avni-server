@@ -1,0 +1,163 @@
+{
+  "name" : "TB Endline/Exit",
+  "uuid" : "d2da2819-5734-4b13-a303-e54e86d1190d",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "af5f7c79-cc1a-44d0-bb47-5f532e6dff4a",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Result of treatment",
+      "uuid" : "c207b176-7d22-4e4c-ade6-1661727bcff7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Result of treatment",
+        "uuid" : "8cc66da0-b652-4587-bdb8-ea8b8bd8f28c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Cured",
+          "uuid" : "ca055965-5f64-4ca9-ba22-13763b9eb5f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Treatment failure",
+          "uuid" : "15839493-6e41-42d0-ad7f-0dad96d72392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Migration",
+          "uuid" : "899e33d1-a54b-4ce5-8efd-2efc255129b6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Completed",
+          "uuid" : "e5b37f65-cc1c-4174-81e9-f1a293facd68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Death during treatment",
+          "uuid" : "d5db8603-1099-4ae5-a8f2-12181753debe",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Specify other",
+      "uuid" : "ed0c251a-b17d-4911-9e41-3432d12dc627",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other result of treatment",
+        "uuid" : "bc5bf8a0-677e-4ba1-811e-a2f9ac4ae10a",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const exitReason = programExit.findExitObservation('Result of treatment');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Other', null);;\n};",
+      "mandatory" : false
+    }, {
+      "name" : "6 minute walking test",
+      "uuid" : "c9613832-2a4e-4d5c-9d8b-aac6a4492e22",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "6 minute walking test",
+        "uuid" : "e6d82047-e23a-469b-b192-5f3ad3dceb1f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Walk without dyspnea",
+          "uuid" : "1494aa07-39a9-4965-9b70-3b8ba46e4b94",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Walk with dyspnea",
+          "uuid" : "730ebfda-4fbd-4cb9-ae90-2bbe8542c06d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const exitReason = programExit.findExitObservation('Result of treatment');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Completed', null);;\n};",
+      "mandatory" : true
+    }, {
+      "name" : "6 minute walking test distance covered (in meters)",
+      "uuid" : "07bc488e-933f-4022-8da4-1bc892216bcd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "6 minute walking test distance covered",
+        "uuid" : "871521ca-b504-4faa-8246-e68b2a8db376",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const exitReason = programExit.findExitObservation('Result of treatment');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Completed', null);;\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Date of death",
+      "uuid" : "74a67c2f-22f9-415e-b697-7938e1990d37",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const exitReason = programExit.findExitObservation('Result of treatment');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Death during treatment', null);;\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

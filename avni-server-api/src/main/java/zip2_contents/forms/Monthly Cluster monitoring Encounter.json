@@ -1,0 +1,2601 @@
+{
+  "name" : "Monthly Cluster monitoring Encounter",
+  "uuid" : "bd6aa4cc-aa3c-4244-8172-1bbad7b34efb",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "97f3dcb2-3f50-411b-b0ad-9c654a848315",
+    "name" : "Subcenter reporting",
+    "displayOrder" : 1.0,
+    "display" : "Subcenter reporting",
+    "formElements" : [ {
+      "name" : "All the OPD equipment/instruments are available and working in OPD",
+      "uuid" : "0696c94e-4c85-4560-8150-fb9caa3e267d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the OPD equipment/instruments are available and working in OPD",
+        "uuid" : "6ba4c109-6f47-4d06-a944-728ec6edf4c2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "All the OPD equipments/instruments are available and working in OPD",
+      "uuid" : "40e17d9d-a28a-4e0f-8ed8-6299c6e5ae49",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the OPD equipments/instruments are available and working in OPD (voided~119775)",
+        "uuid" : "b2c4ce0e-9ca4-4729-ab69-bc1afe1ecc0c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Subcenter reporting",
+      "uuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Subcenter reporting",
+        "uuid" : "a0de9c70-4b51-4f84-9753-034144b122f7",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "All things for audiometry are available and functional",
+      "uuid" : "4b5bab2c-f6f1-4e81-8bea-56226e602290",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All things for audiometry are available and functional (voided~119779)",
+        "uuid" : "b4d575b6-9622-4dd9-ba54-cc7029b45c1d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Exam tables, stool, chair, mattress bedsheet etc available and in good condiction in OPD & LR",
+      "uuid" : "588787b3-d6cf-40f8-ae14-a2710888c504",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Exam tables, stool, chair, mattress bedsheet etc available and in good condiction in OPD & LR (voided~119776)",
+        "uuid" : "cdddfb15-5440-45e9-a121-d4e9c106f05f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "All the things required for refractive error are available and functional.",
+      "uuid" : "c8359586-bc4a-4ce5-b44e-0e37bc8e8ee5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the things required for refractive error are available and functional. (voided~119778)",
+        "uuid" : "bee56d4d-353f-45df-94c5-642dadda9613",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "All trays are ready for use all the time",
+      "uuid" : "f0207f53-c26d-4e15-ab14-56533dae5275",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All trays are ready for use all the time (voided~119777)",
+        "uuid" : "27f4658c-aeb2-423b-a196-0cc6e486629c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "All the OPD equipments/instruments are available and working in OPD",
+      "uuid" : "f90228c3-e363-4e6c-890c-c246ac877c72",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the OPD equipments/instruments are available and working in OPD",
+        "uuid" : "3e24ecd2-b20a-419d-a6dc-fc8bf32e0301",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All things for audiometry are available and functional",
+      "uuid" : "bb72dc18-f1dc-4658-a431-e37fd5b9a799",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All things for audiometry are available and functional",
+        "uuid" : "c7679da4-a44a-4315-9822-4141da4d9081",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Exam tables, stool, chair, mattress bedsheet etc available and in good condiction in OPD & LR",
+      "uuid" : "5ba2e50c-ae17-47e1-acad-a6e0aff5ea4e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Exam tables, stool, chair, mattress bedsheet etc available and in good condiction in OPD & LR",
+        "uuid" : "31fccb91-be2f-4721-8d63-2dd1db2c7f90",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All the things required for refractive error are available and functional.",
+      "uuid" : "dfb58e71-0185-43f0-9e7a-b0471ffe9f37",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the things required for refractive error are available and functional.",
+        "uuid" : "9e7d85c7-b034-452d-b669-b321d943b723",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All trays are ready for use all the time",
+      "uuid" : "008f7a00-c13d-4f7f-b710-8642347e82b7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All trays are ready for use all the time",
+        "uuid" : "f51e34b9-b311-4e47-bfd0-93f844b78971",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All the things for VIA are available and functional",
+      "uuid" : "445f990a-00ff-4cf8-8ac4-e0d6f361e805",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the things for VIA are available and functional",
+        "uuid" : "0218421e-5ec9-4ed8-b5b4-5d5f6ee74126",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All the things are available and funcitonal as per labour room checklist",
+      "uuid" : "dfd57814-da54-4622-841b-eeb76546a3bd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the things are available and funcitonal as per labour room checklist",
+        "uuid" : "eebb897a-f6ac-4fbb-ae44-ae0faa453935",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All the equipment/instrument, reagents etc for lab are available and functional",
+      "uuid" : "f987e4ae-0be9-44b8-8adc-246e9bf77ea5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the equipment/instrument, reagents etc for lab are available and functional",
+        "uuid" : "a6415457-5616-42dc-a53c-693cb77af839",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All the medicines and consumables are available and has not expired",
+      "uuid" : "9717a10e-3d76-4d1e-a086-36d2b18a5702",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the medicines and consumables are available and has not expired",
+        "uuid" : "b37c6697-a5f5-4320-8e56-bbc6b22ddffc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "SHWs has updated the stock register",
+      "uuid" : "e9e03bd8-7b7f-4ad1-ac82-b6a52b24f93e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHWs has updated the stock register",
+        "uuid" : "a1b8e980-f0f4-4d97-aed3-9f93e7a67590",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Expired drugs/consumables found",
+      "uuid" : "5b6b7d02-ce21-4760-a7d7-5d6ef9c95db4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Expired drugs/consumables found",
+        "uuid" : "45dc8767-216b-444b-8581-4c5bfee3a43d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Fridge is available and functional, temp charting is done, and medicines stored as per norms",
+      "uuid" : "b40f9102-ee70-461f-9d29-0ba16bd68114",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fridge is available and functional, temp charting is done, and medicines stored as per norms",
+        "uuid" : "f1ed3805-4e9e-4d9d-81fa-aa9f3dbf942c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Patient cards are maintained properly and kept village wise/disease wise",
+      "uuid" : "f94368d5-8968-401d-aee2-6482fdcdc4ed",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Patient cards are maintained properly and kept village wise/disease wise",
+        "uuid" : "270f0a7a-a03c-41aa-b167-cf17ed8d003e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 20.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "System for biomedical waste is in place and staff are using/following it",
+      "uuid" : "5b3e00cd-8d2a-41ef-92a7-117fd77b5cde",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "System for biomedical waste is in place and staff are using/following it",
+        "uuid" : "d8e68db0-d93b-4237-9f19-d90e66b15343",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 21.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Cleaniliness - all the rooms, equipment/instrument, campus is clean and cleaned periodically",
+      "uuid" : "f3df388d-3253-4fa2-a9a8-1dbb7b4e5c4e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cleaniliness - all the rooms, equipment/instrument, campus is clean and cleaned periodically",
+        "uuid" : "158b5b26-4218-4114-a473-c4f92062b14d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 22.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Electricity, fans, cooler, light etc is available and functional",
+      "uuid" : "4964d005-d93c-4b28-9867-9a31681dc748",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Electricity, fans, cooler, light etc is available and functional",
+        "uuid" : "7e4db034-68fd-45b7-bb89-08859ec8c8ca",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 23.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Drinking water facility is available for staff and patients",
+      "uuid" : "f2f2cfa1-763d-40ec-bbdc-30d992c0d566",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Drinking water facility is available for staff and patients",
+        "uuid" : "8f768500-5108-426d-a914-66d4bc4e4a77",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 24.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Toilet is available, functional for staff and patients",
+      "uuid" : "928ac072-bdcb-4895-bb75-dcb926d9fefc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Toilet is available, functional for staff and patients",
+        "uuid" : "1e4bff59-fe44-41a3-9f74-c2cc5e1a70ed",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 25.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Accommodation arrangement and functional for staff and trainee",
+      "uuid" : "86a605e3-a509-462a-a497-71617e8cffc4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Accommodation arrangement and functional for staff and trainee",
+        "uuid" : "0485002b-d11f-4958-a90b-b142d5538594",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 26.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Kitchen is functional and all the utensils are available in the kitchen",
+      "uuid" : "17559368-5b02-470a-95c1-c17e5cf570d7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Kitchen is functional and all the utensils are available in the kitchen",
+        "uuid" : "5ec46aca-3fba-465d-a05a-ceefa6903ff8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 27.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Sub centre building is maintained",
+      "uuid" : "534d9885-c2e4-4710-a4d4-ed330a3fa421",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sub centre building is maintained",
+        "uuid" : "9664d1f5-9c0a-4e59-b558-9f2c95967af5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 28.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Centre manager maintains the stock of all the things in sub centre",
+      "uuid" : "1a9b85c8-556b-4a76-a2b0-d14d80012cb4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Centre manager maintains the stock of all the things in sub centre",
+        "uuid" : "6fbb4afc-9c32-4892-99c8-fd05325fef58",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 29.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Centre manager submits the bill on time (weekly)",
+      "uuid" : "0ebcfab9-b84a-440c-8ba7-1cfb1d9b85bf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Centre manager submits the bill on time (weekly)",
+        "uuid" : "d0a32087-8ab8-4022-950a-ac702589b2d9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 30.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Centre manager has no credit pending for various purchases",
+      "uuid" : "034b281f-cba5-4ea2-b8e8-17e395e7a1b4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Centre manager has no credit pending for various purchases",
+        "uuid" : "82829650-29dc-4dcf-b0cf-16a38b50219c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 31.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "Cluster coordinator has filled the checklist and submitted to in charge",
+      "uuid" : "dbbb1217-57ad-48ac-9022-51b7ad7a6906",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cluster coordinator has filled the checklist and submitted to in charge",
+        "uuid" : "e138c28b-c4f5-4fe3-a272-54e6382cb07b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 32.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e136cd45-a120-493b-b7ee-9458217f20a9",
+      "mandatory" : true
+    }, {
+      "name" : "All the things for VIA are available and functional",
+      "uuid" : "c903d99f-9070-4a5c-8b62-50ac6ff055c0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the things for VIA are available and functional (voided~119780)",
+        "uuid" : "b9c26499-a358-48fe-8911-ee06bb14e614",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 33.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "All the things are available and funcitonal as per labour room checklist",
+      "uuid" : "2f90e16c-0791-4c55-a5fb-22e3a0a5fd63",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the things are available and funcitonal as per labour room checklist (voided~119781)",
+        "uuid" : "84b170c0-b5fb-4323-85a2-c57288791eef",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 34.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "All the equipment/instrument, reagents etc for lab are available and functional",
+      "uuid" : "fa66c957-e0d8-41a0-b360-cb124b69cec6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the equipment/instruments, reagents etc for lab are available and functional (voided~119783)",
+        "uuid" : "2b6e06d8-1cbc-49f4-8fe6-cf5e25886d2c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 35.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "All the medicines and consumables are available and has not expired",
+      "uuid" : "f16c99f0-ae80-46b3-aa12-93f3fa514745",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the medicines and consumables are available and has not expired (voided~119784)",
+        "uuid" : "6eb1165a-10b2-4517-87a7-641ed083d394",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 36.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "SHWs has updated the stock register",
+      "uuid" : "a4a27117-f880-4aba-8103-6a578c45af4f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHWs has updated the stock register (voided~119785)",
+        "uuid" : "3c338156-574a-43d3-a8a8-2d18e5d7ea3c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 37.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Expired drugs/consumables found",
+      "uuid" : "294e87e8-0236-42e3-98a0-6bab9ce30ec8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Expired drugs/consumables found (voided~119786)",
+        "uuid" : "a16632f6-6970-4246-98c3-b495a1bffb59",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 38.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Fridge is available and functional, temp charting is done, and medicines stored as per norms",
+      "uuid" : "ec46d12b-ae85-46c7-b9b4-acbe45ee02ae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fridge is available and functional, temp charting is done, and medicines stored as per norms (voided~119787)",
+        "uuid" : "17c6bde3-499a-4d72-a6a1-2110db28e01a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 39.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Patient cards are maintained properly and kept village wise/disease wise",
+      "uuid" : "9ca410e6-e922-4c77-ae18-b170b39d0a52",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Patient cards are maintained properly and kept village wise/disease wise (voided~119788)",
+        "uuid" : "bed9b8fa-2d9b-4cea-af76-d1a0cb251277",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 40.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "System for biomedical waste is in place and staff are using/following it",
+      "uuid" : "391f36ea-c0da-4c9f-a4e7-5f0269c2252a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "System for biomedical waste is in place and staff are using/following it (voided~119789)",
+        "uuid" : "8c21a274-7890-4ff2-afa0-74648f69adee",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 41.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Cleaniliness - all the rooms, equipment/instrument, campus is clean and cleaned periodically",
+      "uuid" : "a78fa0fe-30f1-49af-988c-17a43158a406",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cleaniliness - all the rooms, equipment/instrument, campus is clean and cleaned periodically (voided~119790)",
+        "uuid" : "fe2b93df-5609-4aa2-bc11-181c9f41eee6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 42.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Electricity, fans, cooler, light etc is available and functional",
+      "uuid" : "97cc6aa5-e0c7-4fa9-84fa-95005972a8a7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Electricity, fans, cooler, light etc is available and functional (voided~119791)",
+        "uuid" : "9e6585e5-450a-4f97-b64b-9e5c0cba57ef",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 43.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Drinking water facility is available for staff and patients",
+      "uuid" : "244062e0-728e-4bf0-a1f9-328e2adf84d3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Drinking water facility is available for staff and patients (voided~119792)",
+        "uuid" : "183dd93c-9335-4cf6-93dc-acd71f7ff98d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 44.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Toilet is available, functional for staff and patients",
+      "uuid" : "b666b91a-aa8d-4fa3-84ca-df53c186069d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Toilet is available, functional for staff and patients (voided~119793)",
+        "uuid" : "5688feae-3852-4e41-b7a3-6d7208f76678",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 45.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Accommodation arrangement and functional for staff and trainee",
+      "uuid" : "cc02909a-f8f5-4729-80d5-503e38b3f68e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Accommodation arrangement and functional for staff and trainee (voided~119794)",
+        "uuid" : "6ccff837-b492-47a9-946b-b5eee843cc76",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 46.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Kitchen is functional and all the utensils are available in the kitchen",
+      "uuid" : "44c8d50b-a02d-4882-ad0a-e083b19cf128",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Kitchen is functional and all the utensils are available in the kitchen (voided~119795)",
+        "uuid" : "13911248-c5b7-460c-b1a3-6ae65f003822",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 47.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Sub centre building is maintained",
+      "uuid" : "d103fb42-2dc8-4fa2-939f-595fb2ec3046",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sub centre building is maintained (voided~119796)",
+        "uuid" : "0432df2c-6d1f-4c94-b259-5cdc59c07ef9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 48.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Centre manager maintains the stock of all the things in sub centre",
+      "uuid" : "7ee5cda3-a1b4-46ec-a9b4-93654e8c3384",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Centre manager maintains the stock of all the things in sub centre (voided~119797)",
+        "uuid" : "45621078-a724-4e72-bd40-07910fa43591",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 49.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Centre manager submits the bill on time (weekly)",
+      "uuid" : "035573af-5d5d-4d04-bb31-749b58f3e998",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Centre manager submits the bill on time (weekly) (voided~119798)",
+        "uuid" : "d9859f33-c4ab-4284-ae39-aaea771596f4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 50.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Centre manager has no credit pending for various purchases",
+      "uuid" : "9f73890b-db16-4042-a10e-70d31c99b788",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Centre manager has no credit pending for various purchases (voided~119799)",
+        "uuid" : "dc8f9cd2-7604-481a-b2c6-36dd76e2f919",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 51.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Cluster coordinator has filled the checklist and submitted to in charge",
+      "uuid" : "9a10f612-da08-49fc-9618-1d35fa3babc2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cluster coordinator has filled the checklist and submitted to in charge (voided~119800)",
+        "uuid" : "ab9a52c9-0f96-4bb7-b45e-dbf6916e56ec",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partial",
+          "uuid" : "e4d6424a-0991-43bd-8148-2baebcc1f53e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 52.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Exam tables, stool, chair, mattress bedsheets etc available and in good condiction in OPD & LR",
+      "uuid" : "1cc3c481-f96a-42b5-9cac-450f6ffb1cd2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Exam tables, stool, chair, mattress bedsheets etc available and in good condiction in OPD & LR",
+        "uuid" : "12a0b72c-8e0b-4b17-b5e0-ea3f3dfd2294",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 53.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "All the trays are ready for use all the time",
+      "uuid" : "7701d4e1-65d3-4f70-9128-00a92ab1f809",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "All the trays are ready for use all the time",
+        "uuid" : "b1a45353-c2e4-4fa9-90d9-900edaf1d1ff",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 54.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "1c3a703c-5b28-4805-a248-e8732ebcd2a0",
+    "name" : "Village health Worker reporting",
+    "displayOrder" : 2.0,
+    "display" : "Village health Worker reporting",
+    "formElements" : [ {
+      "name" : "Village health worker reporting",
+      "uuid" : "3dbbe74d-4731-423c-8ccf-8815eb67495b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Village health worker reporting",
+        "uuid" : "bfc3e2a5-80c7-4cf9-87ca-df890656fef1",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Target VHW monitoring this month",
+      "uuid" : "68c56ac8-3043-4f65-9d1a-cc5ed18ff81b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Target VHW monitoring this month",
+        "uuid" : "eb9ff006-5b99-4617-a6ac-909dd3b8709e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "3dbbe74d-4731-423c-8ccf-8815eb67495b",
+      "mandatory" : false
+    }, {
+      "name" : "No of VHWs monitored",
+      "uuid" : "5d42a566-3970-4eca-9464-a55c60e365b3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of VHWs monitored",
+        "uuid" : "d26de25f-d2b9-4610-a070-6ca2ec78068a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "3dbbe74d-4731-423c-8ccf-8815eb67495b",
+      "mandatory" : false
+    }, {
+      "name" : "No of VHWs performing well out of total monitored for patient care",
+      "uuid" : "e01d352b-70ee-40c2-a521-b3917441cd5c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of VHWs performing well out of total monitored for patient care",
+        "uuid" : "3b3caa52-2248-4aee-8bc1-6c2b02351023",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "3dbbe74d-4731-423c-8ccf-8815eb67495b",
+      "mandatory" : false
+    }, {
+      "name" : "No of VHWs have functional equipment/instrument",
+      "uuid" : "f9f0b300-3907-4ab7-b0d1-31fcba022e88",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of VHWs have functional equipment/instrument",
+        "uuid" : "d025c86f-c2c4-4299-9dbd-c54dfb9ec040",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "3dbbe74d-4731-423c-8ccf-8815eb67495b",
+      "mandatory" : false
+    }, {
+      "name" : "No of VHWs performing well out of total monitored for keeping records, medicines",
+      "uuid" : "81c0597f-e9b9-4be8-a53b-1787457f5a9a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of VHWs performing well out of total monitored for keeping records, medicines",
+        "uuid" : "340e54f9-e13a-4d17-a510-38fc855431b0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "3dbbe74d-4731-423c-8ccf-8815eb67495b",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "39aac681-4fcc-48d0-9aa6-781851120e2e",
+    "name" : "Program- MCH reporting",
+    "displayOrder" : 3.0,
+    "display" : "Program- MCH reporting",
+    "formElements" : [ {
+      "name" : "Program- MCH reporting",
+      "uuid" : "35e5b023-fc2a-4664-bae1-65b6666d38ea",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Program- MCH reporting",
+        "uuid" : "e03bf640-31b7-4eba-b78f-024951c23b0f",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "No of household visited to crosscheck the services provided by VHWs, MCHWs & SHWs related to MCH programme",
+      "uuid" : "9ca02bdf-2cf0-4e8c-8826-1919f3bbe928",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of household visited to crosscheck the services provided by VHWs, MCHWs & SHWs related to MCH programme",
+        "uuid" : "8b112e41-2d52-4e9f-b420-cadacf6d651d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "35e5b023-fc2a-4664-bae1-65b6666d38ea",
+      "mandatory" : false
+    }, {
+      "name" : "Percentage of planned visits cancelled by MCHWs in this month out of total visits",
+      "uuid" : "46d19bb0-1a87-4a27-ba89-3a8ebb40a79b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Percentage of planned visits cancelled by MCHWs in this month out of total visits",
+        "uuid" : "3ce0d1bc-231e-48b7-acf3-3f076a2886de",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "35e5b023-fc2a-4664-bae1-65b6666d38ea",
+      "mandatory" : false
+    }, {
+      "name" : "What is the overall status of MCH programme in your cluster?",
+      "uuid" : "35cd54f8-97bc-456c-8709-68208d73cc37",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the overall status of MCH programme in your cluster?",
+        "uuid" : "87063285-c5d2-4d16-b996-84cdb4b89181",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Need improvement",
+          "uuid" : "d9ca97b8-480e-46be-b480-85a539f07ec0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Good",
+          "uuid" : "f28aa90b-d8ae-49d4-91dd-d89d229a80b5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Better",
+          "uuid" : "fe2618b9-8a25-40d5-bec2-4291e1706c97",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "35e5b023-fc2a-4664-bae1-65b6666d38ea",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "5b162fb5-473e-4a03-b64b-9ec7516da750",
+    "name" : "Program - Chronic disease reporting",
+    "displayOrder" : 4.0,
+    "display" : "Program - Chronic disease reporting",
+    "formElements" : [ {
+      "name" : "Program - Chronic disease reporting",
+      "uuid" : "a48ff780-6c03-4f88-8630-e5837bb839fe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Program - Chronic disease reporting",
+        "uuid" : "9ec47a7d-ef34-4135-a494-f3d99b83f865",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "No of household visited to crosscheck the services provided by VHWs, SHWs, Facilitators for alcohol deaddictions, related to chronic disease care programme",
+      "uuid" : "c4f364bf-b0d1-42c2-bf7d-16c8d7cb3464",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of household visited to crosscheck the services provided by VHWs, SHWs, Facilitators for alcohol deaddictions, related to chronic disease care programme",
+        "uuid" : "4b090da7-1329-42ba-83b5-7a0b4a2b9b7e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "a48ff780-6c03-4f88-8630-e5837bb839fe",
+      "mandatory" : false
+    }, {
+      "name" : "Percentage of patients (enrolled in Avni) not followed up by SHWs in this month",
+      "uuid" : "432601ab-45b3-44f8-a8f0-30186511cb9b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Percentage of patients (enrolled in Avni) not followed up by SHWs in this month",
+        "uuid" : "8055ddad-2f84-42a6-9dbb-d37b15d04ebe",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "a48ff780-6c03-4f88-8630-e5837bb839fe",
+      "mandatory" : false
+    }, {
+      "name" : "No of patients are not under control in this month",
+      "uuid" : "943ecee6-6034-49ca-979d-fb0b46954770",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of patients are not under control in this month",
+        "uuid" : "e481ed7a-8237-4085-a38d-e2bb3f3eaf4b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "a48ff780-6c03-4f88-8630-e5837bb839fe",
+      "mandatory" : false
+    }, {
+      "name" : "What is the overall status of Chronic disease care programme in your cluster?",
+      "uuid" : "ba379ef3-e9a4-48bf-98b7-c1c4dd5dd934",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the overall status of Chronic disease care programme in your cluster?",
+        "uuid" : "e18418ba-f5b3-48cc-9f04-2040a096c445",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Good",
+          "uuid" : "f28aa90b-d8ae-49d4-91dd-d89d229a80b5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Need improvement",
+          "uuid" : "d9ca97b8-480e-46be-b480-85a539f07ec0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Better",
+          "uuid" : "fe2618b9-8a25-40d5-bec2-4291e1706c97",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "a48ff780-6c03-4f88-8630-e5837bb839fe",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "e90b838c-0b29-4c17-852a-05640769626a",
+    "name" : "Program -  Phulwari reporting",
+    "displayOrder" : 5.0,
+    "display" : "Program -  Phulwari reporting",
+    "formElements" : [ {
+      "name" : "Program -  Phulwari reporting",
+      "uuid" : "14c0dcfd-aeb1-451c-9987-a9f1583a9486",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Program -  Phulwari reporting",
+        "uuid" : "e0473069-6cba-438e-bc91-61a015bc9cad",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "No of Phulwaris visited this month to crosscheck the services provided by Phulwari workers, Phulwari supervisors",
+      "uuid" : "83b4fefb-b5f3-4c18-93fe-cad90ffd86c5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of Phulwaris visited this month to crosscheck the services provided by Phulwari workers, Phulwari supervisors",
+        "uuid" : "a4751a2d-29ce-4db5-a465-112a875e9a43",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "14c0dcfd-aeb1-451c-9987-a9f1583a9486",
+      "mandatory" : false
+    }, {
+      "name" : "No of Phulwaris not functioning as per the criteria",
+      "uuid" : "cdd0f973-f077-492f-8b3d-04f4e907b86b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of Phulwaris not functioning as per the criteria",
+        "uuid" : "99eba879-9077-4aec-922a-0008a668d081",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "14c0dcfd-aeb1-451c-9987-a9f1583a9486",
+      "mandatory" : false
+    }, {
+      "name" : "Has all the Phulwaris received eggs minimum 12 times in this month?",
+      "uuid" : "274e2def-08ce-4f02-ab32-e5bc9e20932c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Has all the Phulwaris received eggs minimum 12 times in this month?",
+        "uuid" : "fe281f16-92e1-4731-81fe-29f03678857e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "14c0dcfd-aeb1-451c-9987-a9f1583a9486",
+      "mandatory" : false
+    }, {
+      "name" : "What is the overall status of Phulawri programme in your cluster?",
+      "uuid" : "afd595c6-16c7-4004-ace1-eef9ad7bb2a3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the overall status of Phulawri programme in your cluster?",
+        "uuid" : "0e792321-6a4b-44fb-a76d-2285cfbb0661",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Need improvement",
+          "uuid" : "d9ca97b8-480e-46be-b480-85a539f07ec0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Good",
+          "uuid" : "f28aa90b-d8ae-49d4-91dd-d89d229a80b5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Better",
+          "uuid" : "fe2618b9-8a25-40d5-bec2-4291e1706c97",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "14c0dcfd-aeb1-451c-9987-a9f1583a9486",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "e223d892-78e0-4e57-a162-29ed7ede8619",
+    "name" : "Program- SHG and Livelihood reporting",
+    "displayOrder" : 6.0,
+    "display" : "Program- SHG and Livelihood reporting",
+    "formElements" : [ {
+      "name" : "No of household visited to crosscheck the services provided by SHG supervisors related to SHG and livelihood programme",
+      "uuid" : "1df1671a-44d6-4731-8b92-00513c1e2ec9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of household visited to crosscheck the services provided by SHG supervisors related to SHG and livelihood programme (voided~119819)",
+        "uuid" : "57af7fa8-5113-4159-af13-9d8a2d5b9e9d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "No of SHG meetings not conducted this month",
+      "uuid" : "a2e14cf1-3c72-4543-81b1-b5c75c8582f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of SHG meetings not conducted this month (voided~119820)",
+        "uuid" : "2abd82dc-2e11-45e3-bee3-17204e4dbd8e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "What is the overall status of SHG and livelihood programme in your cluster?",
+      "uuid" : "4a927ff6-4cf7-4928-812b-8fd1e3de512a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the overall status of SHG and livelihood programme in your cluster? (voided~119821)",
+        "uuid" : "c583b262-cee3-4989-b7e3-db324175b5af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Better",
+          "uuid" : "fe2618b9-8a25-40d5-bec2-4291e1706c97",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Need improvement",
+          "uuid" : "d9ca97b8-480e-46be-b480-85a539f07ec0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Good",
+          "uuid" : "f28aa90b-d8ae-49d4-91dd-d89d229a80b5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Program- SHG and Livelihood reporting",
+      "uuid" : "2fd35cbe-c03e-4500-ab9b-055824b03f81",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Program- SHG and Livelihood reporting",
+        "uuid" : "8ec029aa-e23b-497f-8519-f280e0211a8f",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "No of household visited to crosscheck the services provided by SHG supervisors related to SHG and livelihood programme",
+      "uuid" : "91f31e07-f8f9-475b-8b74-cd9aa8a9d08b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of household visited to crosscheck the services provided by SHG supervisors related to SHG and livelihood programme",
+        "uuid" : "f818ca54-b22c-40af-bc82-16644a1d14c8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2fd35cbe-c03e-4500-ab9b-055824b03f81",
+      "mandatory" : true
+    }, {
+      "name" : "No of SHG meetings not conducted this month",
+      "uuid" : "ff0e26c0-b5d2-4ba3-9b63-53f9051f4c17",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of SHG meetings not conducted this month",
+        "uuid" : "1bcf66bb-8f24-4d68-99bb-5bae3fbd7923",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2fd35cbe-c03e-4500-ab9b-055824b03f81",
+      "mandatory" : true
+    }, {
+      "name" : "What is the overall status of SHG and livelihood programme in your cluster?",
+      "uuid" : "ba2a157a-407a-4fda-b3bd-a14772926df0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the overall status of SHG and livelihood programme in your cluster?",
+        "uuid" : "248c5919-3060-4d2f-9c3a-90b59053705b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Good",
+          "uuid" : "f28aa90b-d8ae-49d4-91dd-d89d229a80b5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Better",
+          "uuid" : "fe2618b9-8a25-40d5-bec2-4291e1706c97",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Need improvement",
+          "uuid" : "d9ca97b8-480e-46be-b480-85a539f07ec0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "2fd35cbe-c03e-4500-ab9b-055824b03f81",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n    const encounter = params.entity;\n    const moment = imports.moment;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({ encounter });\n\n\n    if (moment(encounter.earliestVisitDateTime).date() === 25) {\n\n        const earliestDate = moment(encounter.earliestVisitDateTime).date(25).add(1, 'month').toDate();\n        const maxDate = moment(earliestDate).add(8, 'days').toDate();\n\n        scheduleBuilder.add({\n            name: \"Monthly Cluster monitoring\",\n            encounterType: \"Monthly Cluster monitoring\",\n            earliestDate,\n            maxDate\n        });\n    } else if (moment(encounter.earliestVisitDateTime).date() > 25) {\n        const earliestDate = moment(encounter.earliestVisitDateTime).add(15, 'days').date(25).toDate();\n        const maxDate = moment(earliestDate).add(8, 'days').toDate();\n        scheduleBuilder.add({\n            name: \"Monthly Cluster monitoring\",\n            encounterType: \"Monthly Cluster monitoring\",\n            earliestDate,\n            maxDate\n        });\n    } else {\n\n        const earliestDate = moment(encounter.earliestVisitDateTime).date(25).add(1,'month').toDate();\n        const maxDate = moment(earliestDate).add(8, 'days').toDate();\n\n        scheduleBuilder.add({\n            name: \"Monthly Cluster monitoring\",\n            encounterType: \"Monthly Cluster monitoring\",\n            earliestDate,\n            maxDate\n        });\n    }\n\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

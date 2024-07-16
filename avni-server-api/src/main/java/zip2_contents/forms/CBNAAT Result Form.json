@@ -1,0 +1,114 @@
+{
+  "name" : "CBNAAT Result Form",
+  "uuid" : "bd8396ce-ab32-4ff4-9fc8-e2dc7effd3d6",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "0adec6b2-ee11-438a-b27a-1c822febfb55",
+    "name" : "Result",
+    "displayOrder" : 1.0,
+    "display" : "Result",
+    "formElements" : [ {
+      "name" : "CBNAAT",
+      "uuid" : "3e43ae63-30e8-4e2a-9519-bf43f5c129fc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "CBNAAT",
+        "uuid" : "7a10b895-cea7-4c69-983c-ef8ef7664fb2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "CBNAAT",
+      "uuid" : "931df318-7039-46c4-b4d9-9044e40e0701",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "tb lab test result CBNAAT",
+        "uuid" : "1b319717-1a60-4a6b-907e-141b66c8982c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Invalid",
+          "uuid" : "ee946167-9218-4e8c-8090-1f2656f306a0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "MTB not detected",
+          "uuid" : "dfd79a9b-ff60-4b43-91b8-171a8e95d0b1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "MTB detected",
+          "uuid" : "0af63722-233d-4f51-97ad-7caa130fdd27",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "MTB",
+      "uuid" : "4355cf58-28ab-4207-91c5-df0f6c84fd6b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "MTB",
+        "uuid" : "9495f4f9-bbf4-46ad-8e86-c051c18dea98",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result CBNAAT').containsAnswerConceptName('MTB detected');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

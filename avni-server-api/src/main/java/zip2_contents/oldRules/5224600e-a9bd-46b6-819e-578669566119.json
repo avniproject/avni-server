@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "14585999-3bd3-47cd-998c-fa7f3e3f9252",
+    "type" : "Form"
+  },
+  "entityUUID" : "14585999-3bd3-47cd-998c-fa7f3e3f9252",
+  "entityType" : "Form",
+  "type" : "VisitSchedule",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "JSSCP ChildEnrolmentVisitSchedules",
+  "uuid" : "5224600e-a9bd-46b6-819e-578669566119",
+  "fnName" : "ChildEnrolmentVisitSchedules"
+}

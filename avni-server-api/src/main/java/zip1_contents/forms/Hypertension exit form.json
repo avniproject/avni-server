@@ -1,0 +1,123 @@
+{
+  "name" : "Hypertension exit form",
+  "uuid" : "48d021fd-7140-4fcb-8450-467bbcd48c22",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "5b2f3192-c359-457c-893e-1f5f5c219c15",
+    "name" : "Exit Basic Details",
+    "displayOrder" : 1.0,
+    "display" : "Basic Details",
+    "formElements" : [ {
+      "name" : "Reason for exit",
+      "uuid" : "84a6e86c-fabe-4cfe-8805-d330d4d6838e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for exit",
+        "uuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completion",
+          "uuid" : "bafe149e-dbf8-4c80-8c13-fc5b1274f0ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Shifted to other geographical area",
+          "uuid" : "0c46f359-eb0f-4a5e-8fe7-f86bd706d1d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Date of Death",
+      "uuid" : "243d943b-f45b-4151-94bb-4c578773e087",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Death', null);;\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Cause of Death",
+      "uuid" : "3d3ae924-2db6-4c8e-b6bc-f925715c6d66",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cause of person's death",
+        "uuid" : "305187df-3490-424b-a60d-25dc98da799e",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Death', null);;\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Place of Death",
+      "uuid" : "953e6253-62e4-4e9d-baff-1165b2464e9e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of child's death",
+        "uuid" : "51f5b692-a46b-4ff3-801c-0e79dd1b8ce5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Death', null);;\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other reason (Please specify)",
+      "uuid" : "950a35c4-55c6-4006-838f-2c44be6c3d5b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for Program exit",
+        "uuid" : "63390533-9229-4e7d-816d-d07c23fba826",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Other', null);;\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

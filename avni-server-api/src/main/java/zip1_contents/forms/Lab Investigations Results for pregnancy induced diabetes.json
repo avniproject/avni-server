@@ -1,0 +1,65 @@
+{
+  "name" : "Lab Investigations Results for pregnancy induced diabetes",
+  "uuid" : "730987c7-93bc-44e7-b976-872208b9effd",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "dbdb305e-835e-4cd0-87c8-e504d90a7a6f",
+    "name" : "Test details",
+    "displayOrder" : 1.0,
+    "display" : "Test details",
+    "formElements" : [ {
+      "name" : "FBS",
+      "uuid" : "e8a1721c-84c5-4ad0-86bc-b3c264958181",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "FBS",
+        "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "PP2BS",
+      "uuid" : "8129be34-07a2-4066-9f71-f23ea4aff429",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "PP2BS",
+        "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "HbA1C",
+      "uuid" : "20da9e0e-2a9b-4436-b9dc-5dacc432d718",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HbA1C",
+        "uuid" : "f11d4eca-f6ca-4471-9a6b-e1f5d742bc22",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highNormal" : 7.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: \"High Risk Conditions\"\n    });\n       \n    complicationsBuilder\n        .addComplication(\"Pregnancy induced diabetes\")        \n        .when.valueInEncounter('FBS').is.greaterThan(120);\n       \n      complicationsBuilder\n        .addComplication(\"Pregnancy induced diabetes\")        \n        .when.valueInEncounter('PP2BS').is.greaterThan(150);\n        \n      \n      complicationsBuilder\n        .addComplication(\"Pregnancy induced diabetes\")        \n        .when.valueInEncounter('HbA1C').is.greaterThan(8);\n            \n                  \n    decisions.encounterDecisions.push(complicationsBuilder.getComplications());\n   \n    return decisions;\n};",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

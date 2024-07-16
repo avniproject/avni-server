@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "854b221a-aa9f-431e-89be-9b65f7e6727d",
+    "type" : "Form"
+  },
+  "entityUUID" : "854b221a-aa9f-431e-89be-9b65f7e6727d",
+  "entityType" : "Form",
+  "type" : "Checklists",
+  "executionOrder" : 1.0,
+  "data" : { },
+  "name" : "JSSCP ChildVaccinationChecklist",
+  "uuid" : "fb060d4f-6b75-434e-b398-587d04e765bf",
+  "fnName" : "ChildVaccinationChecklist"
+}

@@ -1,0 +1,8 @@
+{
+  "name" : "Sickle cell lab test Encounter Cancellation (voided~1398)",
+  "uuid" : "eeed5def-a48f-47d1-8af5-a274b3f782ea",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

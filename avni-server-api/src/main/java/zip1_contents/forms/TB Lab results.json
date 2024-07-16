@@ -1,0 +1,1183 @@
+{
+  "name" : "TB Lab results",
+  "uuid" : "4d114cd0-333c-4c00-ba56-897d56f69870",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "c2abbbcd-2be6-4d80-a53f-573062395b4d",
+    "name" : "Test details",
+    "displayOrder" : 1.0,
+    "display" : "Test details",
+    "formElements" : [ {
+      "name" : "Test results available",
+      "uuid" : "1c4b6888-1f97-45d4-8c7e-f2cd256de664",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "LPA", "CBNAAT", "LJ" ]
+      } ],
+      "concept" : {
+        "name" : "Test results available",
+        "uuid" : "c3cae7a3-76ab-4426-870b-fd184fe1b68e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "HIV/AIDS",
+          "uuid" : "0b5a9a9a-bbfb-4bd2-a87d-bc53aa316c80",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "CBNAAT",
+          "uuid" : "7a10b895-cea7-4c69-983c-ef8ef7664fb2",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "RIF resistant",
+            "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "RIF sensitive",
+            "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          } ],
+          "order" : 16.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fluid colour",
+          "uuid" : "76f6ae61-d138-4be4-8a08-b50df5fd3f2a",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Transudate",
+            "uuid" : "970a4bd9-722e-48fd-96cf-1fcd4e027f3d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Exudate",
+            "uuid" : "b400f012-f162-4473-a4cd-49611211601b",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 13.0,
+          "active" : true
+        }, {
+          "name" : "X-Ray",
+          "uuid" : "da9dd015-9113-4e42-9f08-3ac191472c25",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Extensive",
+            "uuid" : "975ebd10-9f09-4d0c-80e9-c27599d0461d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Cavitary",
+            "uuid" : "350003d9-60cb-4be3-bdb6-752d3bb8adcb",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Non cavitary",
+            "uuid" : "38fc25fd-1bd5-4400-b56b-13157c25c50d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 3.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Not done",
+            "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 6.0,
+            "unique" : true,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Limited",
+            "uuid" : "acf0110b-d2e6-4e41-a564-203df561a6e4",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Improved than previous x-ray",
+            "uuid" : "637fe631-29c8-4869-9b42-e092f91aef84",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 4.0,
+            "active" : true
+          }, {
+            "name" : "Not required",
+            "uuid" : "011b0b14-a8e5-4d32-a628-efa459f845d1",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 7.0,
+            "unique" : true,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "New changes",
+            "uuid" : "0485267b-2321-44a8-a71b-ab1c153ab41c",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 8.0,
+            "active" : true
+          }, {
+            "name" : "Normal",
+            "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 5.0,
+            "active" : true
+          }, {
+            "name" : "Other",
+            "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 9.0,
+            "active" : true
+          } ],
+          "order" : 15.0,
+          "active" : true
+        }, {
+          "name" : "LPA",
+          "uuid" : "892e68cc-a726-4628-8e5d-fde5996ad62c",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "RIF resistant",
+            "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "RIF sensitive",
+            "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          } ],
+          "order" : 17.0,
+          "active" : true
+        }, {
+          "name" : "PP2BS",
+          "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 9.0,
+          "lowNormal" : 120.0,
+          "highNormal" : 150.0,
+          "active" : true
+        }, {
+          "name" : "LJ",
+          "uuid" : "40bf14fd-fa1c-42cf-b552-4968ebd5785e",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "RIF sensitive",
+            "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "RIF resistant",
+            "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 18.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fluid cells",
+          "uuid" : "a0d7fdb2-c4d0-40ec-8080-aaf8b9b28f1c",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Sputum AFB",
+          "uuid" : "616f9638-375a-477d-b5a0-3e660edeba8d",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Positive",
+            "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "Negative",
+            "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Hb",
+          "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 2.0,
+          "lowNormal" : 12.0,
+          "highNormal" : 15.5,
+          "active" : true
+        }, {
+          "name" : "Serum Albumin",
+          "uuid" : "e663c9f6-d587-4c33-925b-37d92c6b86a2",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 3.0,
+          "lowNormal" : 6.5,
+          "highNormal" : 8.5,
+          "active" : true
+        }, {
+          "name" : "RBS",
+          "uuid" : "6926107f-5793-4ef8-98e1-4a3cc1e2725f",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 5.0,
+          "lowNormal" : 60.0,
+          "highNormal" : 160.0,
+          "active" : true
+        }, {
+          "name" : "ALT",
+          "uuid" : "28640bfd-8186-4596-a648-46b15e86ef11",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 0.0,
+          "lowNormal" : 5.0,
+          "highNormal" : 35.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fluid protein",
+          "uuid" : "5fb97dda-0144-4ee1-a5f0-2d6d9ed1933e",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Serum Creatinin",
+          "uuid" : "4696cc76-ce42-41b8-a837-18ab32ca3a1d",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 4.0,
+          "lowNormal" : 0.6,
+          "highNormal" : 1.2,
+          "active" : true
+        }, {
+          "name" : "Lymphnode biopsy/FNAC",
+          "uuid" : "368da433-da3d-4f14-94ed-e0b39bada0c1",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Biopsy/FNAC not done",
+            "uuid" : "8b48b931-939d-4a9e-b3fa-53514e39080a",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Biopsy/FNAC not required",
+            "uuid" : "30d5a363-d3da-409c-b724-13422159f5dc",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          }, {
+            "name" : "Biopsy/FNAC done",
+            "uuid" : "2276fa97-10cd-4c2a-8da8-81c7a7fe2bd3",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 14.0,
+          "active" : true
+        }, {
+          "name" : "Pleural fuild ADA",
+          "uuid" : "9683862c-9008-4d41-b60c-eb1bb852a482",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "FBS",
+          "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+          "dataType" : "Numeric",
+          "answers" : [ ],
+          "order" : 8.0,
+          "lowNormal" : 80.0,
+          "highNormal" : 120.0,
+          "active" : true
+        }, {
+          "name" : "HIV (Elisa)",
+          "uuid" : "b3e8a85a-c7ca-49b8-9c6f-8bd5ee6bfad1",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Positive",
+            "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "active" : true
+          }, {
+            "name" : "Negative",
+            "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "Not done",
+            "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 2.0,
+            "active" : true,
+            "keyValues" : [ ]
+          } ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "3378440b-81b5-4e97-8b54-6276c48148d5",
+    "name" : "Lab test results",
+    "displayOrder" : 2.0,
+    "display" : "Lab test results",
+    "formElements" : [ {
+      "name" : "ALT",
+      "uuid" : "0adde94b-4867-41c3-b29c-b5f669d745fa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ALT",
+        "uuid" : "28640bfd-8186-4596-a648-46b15e86ef11",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 5.0,
+        "highNormal" : 35.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('ALT');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Sputum AFB",
+      "uuid" : "c3051438-d4e3-4563-add2-90fd9a05093d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sputum AFB",
+        "uuid" : "616f9638-375a-477d-b5a0-3e660edeba8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Sputum AFB');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Serum Albumin",
+      "uuid" : "ef94d38b-f269-46f8-a8f9-a9c8cfe411d8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Serum Albumin",
+        "uuid" : "e663c9f6-d587-4c33-925b-37d92c6b86a2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 6.5,
+        "highNormal" : 8.5,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Serum Albumin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Hb",
+      "uuid" : "521fc463-b628-4210-bc50-aea2e0a27f09",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Hb');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "RBS",
+      "uuid" : "7de0e200-11ed-4f6f-be4f-0fe4b7fc18b5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "RBS",
+        "uuid" : "6926107f-5793-4ef8-98e1-4a3cc1e2725f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 60.0,
+        "highNormal" : 160.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('RBS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "HIV/AIDS Test",
+      "uuid" : "5ab231c4-5c60-492f-9062-d93855eb1588",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HIV/AIDS Test",
+        "uuid" : "a8be8aeb-bfbf-4ae5-9158-a307b2e135f0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('HIV/AIDS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "HIV (Elisa)",
+      "uuid" : "c1e31a83-7c70-414b-921f-3dadb7cbf657",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HIV (Elisa)",
+        "uuid" : "b3e8a85a-c7ca-49b8-9c6f-8bd5ee6bfad1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Positive",
+          "uuid" : "6f6458f7-ce0b-46c2-bd03-0fa30943d75d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Negative",
+          "uuid" : "0fe2ae63-332a-40bf-82c7-371ef7b66494",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('HIV (Elisa)');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Serum Creatinin",
+      "uuid" : "248d0ad6-2325-4cb9-91d5-f935d1eb99d3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Serum Creatinin",
+        "uuid" : "4696cc76-ce42-41b8-a837-18ab32ca3a1d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 0.6,
+        "highNormal" : 1.2,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Serum Creatinin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "FBS",
+      "uuid" : "1b173aaa-125e-422e-894b-dcb36ced4346",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "FBS",
+        "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('FBS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "PP2BS",
+      "uuid" : "d04c98bd-4b7f-4d37-bad9-b0330369d6c8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "PP2BS",
+        "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('PP2BS');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid colour",
+      "uuid" : "b4ee74d3-95ad-434c-8602-2f6fc294e2d7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid colour",
+        "uuid" : "76f6ae61-d138-4be4-8a08-b50df5fd3f2a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Transudate",
+          "uuid" : "970a4bd9-722e-48fd-96cf-1fcd4e027f3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Exudate",
+          "uuid" : "b400f012-f162-4473-a4cd-49611211601b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Pleural fluid colour');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid cells",
+      "uuid" : "82c21b2f-06e2-42ec-b46b-a407d446190e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid cells",
+        "uuid" : "a0d7fdb2-c4d0-40ec-8080-aaf8b9b28f1c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Pleural fluid cells');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid protien",
+      "uuid" : "c7990bc2-3465-4f2d-a200-20f6bebd40c1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid protein",
+        "uuid" : "5fb97dda-0144-4ee1-a5f0-2d6d9ed1933e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Pleural fluid protein');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Pleural fluid ADA",
+      "uuid" : "7c639ebc-213c-44bb-8519-3e2d1c3023cd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pleural fluid ADA",
+        "uuid" : "95b6e401-836a-4c83-bc66-8b1fd363572a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Pleural fuild ADA');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Lymphnode biopsy/FNAC",
+      "uuid" : "44a10d55-175a-4795-a78e-d41edbaa93ec",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Lymphnode biopsy/FNAC",
+        "uuid" : "368da433-da3d-4f14-94ed-e0b39bada0c1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Biopsy/FNAC not done",
+          "uuid" : "8b48b931-939d-4a9e-b3fa-53514e39080a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Biopsy/FNAC not required",
+          "uuid" : "30d5a363-d3da-409c-b724-13422159f5dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Biopsy/FNAC done",
+          "uuid" : "2276fa97-10cd-4c2a-8da8-81c7a7fe2bd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('Lymphnode biopsy/FNAC');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "X-Ray",
+      "uuid" : "7080c76d-cd1f-4d15-8063-139fca42a023",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "X-Ray",
+        "uuid" : "da9dd015-9113-4e42-9f08-3ac191472c25",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Extensive",
+          "uuid" : "975ebd10-9f09-4d0c-80e9-c27599d0461d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Cavitary",
+          "uuid" : "350003d9-60cb-4be3-bdb6-752d3bb8adcb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Non cavitary",
+          "uuid" : "38fc25fd-1bd5-4400-b56b-13157c25c50d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not done",
+          "uuid" : "5826df5f-d771-4559-b2be-2f1391805076",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Limited",
+          "uuid" : "acf0110b-d2e6-4e41-a564-203df561a6e4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Improved than previous x-ray",
+          "uuid" : "637fe631-29c8-4869-9b42-e092f91aef84",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Not required",
+          "uuid" : "011b0b14-a8e5-4d32-a628-efa459f845d1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New changes",
+          "uuid" : "0485267b-2321-44a8-a71b-ab1c153ab41c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('X-Ray');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other X-ray",
+      "uuid" : "ac7216d8-c403-4c26-bae0-9499de95ae68",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other X-ray",
+        "uuid" : "c5789f65-0ebc-43a6-b425-475e52320c70",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('X-Ray').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "CBNAAT",
+      "uuid" : "c2a21042-2fb7-42ed-85dc-5a4fb197cc50",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "CBNAAT",
+        "uuid" : "7a10b895-cea7-4c69-983c-ef8ef7664fb2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('CBNAAT');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "CBNAAT",
+      "uuid" : "4b672219-ef85-44d5-877f-02166e220eaa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "tb lab test result CBNAAT",
+        "uuid" : "1b319717-1a60-4a6b-907e-141b66c8982c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "MTB detected",
+          "uuid" : "0af63722-233d-4f51-97ad-7caa130fdd27",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Invalid",
+          "uuid" : "ee946167-9218-4e8c-8090-1f2656f306a0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "MTB not detected",
+          "uuid" : "dfd79a9b-ff60-4b43-91b8-171a8e95d0b1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('CBNAAT');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "CBNAAT",
+      "uuid" : "80eb225c-bc8f-48da-86c8-641654285228",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "CBNAAT",
+        "uuid" : "7a10b895-cea7-4c69-983c-ef8ef7664fb2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 20.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result CBNAAT').containsAnswerConceptName('MTB detected');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "LPA",
+      "uuid" : "b65de5ab-876b-4216-9210-4b0787a47510",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "tb lab test result LPA",
+        "uuid" : "a3f3eea3-c299-4d4d-b7f0-af8b401e0fe6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No growth",
+          "uuid" : "2166790e-5d9c-4930-a7d0-7f3ec5fd5f05",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Growth positive",
+          "uuid" : "bc959c58-6a89-4cce-8130-6fc1e15ac384",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 21.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('LPA');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "LPA",
+      "uuid" : "d31f5c15-fa28-4b26-800f-99593476ed6b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "LPA",
+        "uuid" : "892e68cc-a726-4628-8e5d-fde5996ad62c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 22.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result LPA').containsAnswerConceptName('Growth positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "LPA",
+      "uuid" : "e4e5edbe-2809-4b6e-a730-0f54995e9ca4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Positive growth LPA",
+        "uuid" : "9ec5cbdc-7ea4-4dff-88af-b1adb109723a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "INH Sensitive",
+          "uuid" : "a432c869-c3f4-4e16-bb43-c485a6780c86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "INH Resistance",
+          "uuid" : "582a0e00-3cd4-430e-b355-677cbf211cef",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 23.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result LPA').containsAnswerConceptName('Growth positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "LJ",
+      "uuid" : "503f7c3c-7635-45f1-8951-6552754488ff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "tb lab test result LJ",
+        "uuid" : "d843f06d-ddea-4f5b-8d85-3ea117212677",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No growth",
+          "uuid" : "2166790e-5d9c-4930-a7d0-7f3ec5fd5f05",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Growth positive",
+          "uuid" : "bc959c58-6a89-4cce-8130-6fc1e15ac384",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 24.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Test results available').containsAnswerConceptName('LJ');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "LJ",
+      "uuid" : "dd9b4aea-1766-4b63-9c0c-a1bc350c4615",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "LJ",
+        "uuid" : "40bf14fd-fa1c-42cf-b552-4968ebd5785e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 25.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result LJ').containsAnswerConceptName('Growth positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "LJ",
+      "uuid" : "7df0c5a3-9894-471e-85cc-ae674e800224",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Positive growth LJ",
+        "uuid" : "1f9246a4-08c6-4a5f-a631-1af13d4e5a9f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Streptomycine sensitive",
+          "uuid" : "8788545c-41d5-4392-8e4f-fc658e463599",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ethambutol resitance",
+          "uuid" : "432aa58a-b80f-4d56-972e-cb40db5d0654",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ethambutol Sensitive",
+          "uuid" : "eaf10486-0875-4c42-8f03-95f5a9b3b935",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "RIF resistant",
+          "uuid" : "b2584708-fbe9-4b39-ab60-f2bf8f23bc48",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Streptomycine resistance",
+          "uuid" : "76093f32-ded6-4872-b3f8-ed0b765942ea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pyrezinamide sensitive",
+          "uuid" : "eb805f5a-3aca-4870-ac62-bc7d6c5a01b2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "INH Sensitive",
+          "uuid" : "a432c869-c3f4-4e16-bb43-c485a6780c86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "RIF sensitive",
+          "uuid" : "b5f17c02-86ff-44fe-a3ef-274831a57005",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Pyrezinamide resistance",
+          "uuid" : "046f74b8-17b1-4949-8b6a-a6b46632eeee",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "INH Resistance",
+          "uuid" : "582a0e00-3cd4-430e-b355-677cbf211cef",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 26.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('tb lab test result LJ').containsAnswerConceptName('Growth positive');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

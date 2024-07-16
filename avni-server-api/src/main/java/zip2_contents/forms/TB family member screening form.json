@@ -1,0 +1,456 @@
+{
+  "name" : "TB family member screening form",
+  "uuid" : "f6447882-4a94-416e-9c90-769938ac3a5b",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "4adf25ad-0b94-417f-b6a9-acee045eba48",
+    "name" : "Addiction",
+    "displayOrder" : 1.0,
+    "display" : "Addiction",
+    "formElements" : [ {
+      "name" : "Any addiction?",
+      "uuid" : "cd0485c9-227e-4520-9e9b-5efb1b011c07",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is there any addiction",
+        "uuid" : "41dd4636-1340-4a51-b625-d3e5a87d2b97",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Addiction",
+      "uuid" : "67ea9a4d-a7a7-42c7-a1f6-3ad54c23f61a",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Others", "None" ]
+      } ],
+      "concept" : {
+        "name" : "Addiction",
+        "uuid" : "fc01f8b8-0c05-4bea-b740-c55571353272",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Bidi",
+          "uuid" : "0e425d00-d6b4-4564-ace6-7ec6ef0e83bd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Alcohol",
+          "uuid" : "cfa99d0a-ae0e-410f-8475-3d9d6674d8dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Cigarette",
+          "uuid" : "1dc73953-f93c-4cd8-93d7-950c1c3aaaac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Others",
+          "uuid" : "f3ef9337-b2d9-4e33-9a69-e7692b66f045",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Ganja",
+          "uuid" : "e22c2842-b1f0-45d9-9192-000e21b486f6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Tobacco",
+          "uuid" : "8d607aa8-c8a8-4fcd-9fc7-06d83c323b3a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Is there any addiction').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Addicted to Tobacco/Ganja/Sigarate/Bidi since how many years?",
+      "uuid" : "09187415-024a-44e9-8024-8de7a422d61a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Addicted to Tobacco/Ganja/Sigarate/Bidi since how many years",
+        "uuid" : "f26f4a88-8944-4422-8333-611242948aab",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Addiction').containsAnswerConceptNameOtherThan('Alcohol');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Addicted to alcohol since how many years?",
+      "uuid" : "b8df419e-3751-4250-abd4-21607c208a66",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Addicted to alcohol since how many years",
+        "uuid" : "75d11959-8397-45a6-9ece-d213d28f2f58",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Addiction').containsAnswerConceptName('Alcohol');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "961d4e50-dd94-4b2d-aa3f-064c13b3534e",
+    "name" : "TB History",
+    "displayOrder" : 2.0,
+    "display" : "TB History",
+    "formElements" : [ {
+      "name" : "Were you diagnosed with TB in the past?",
+      "uuid" : "0614f4e5-a315-41d4-a43d-e0c9122650c5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diagnosed with TB in the past",
+        "uuid" : "7a04aa03-d6af-4376-a194-a993c487a47e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Year in which TB was diagnosed?",
+      "uuid" : "ca19f140-b891-4e77-963e-64b3496f5b5a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Year in which TB was diagnosed",
+        "uuid" : "4d272114-3ee2-468e-8b9a-7425cab8890b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Diagnosed with TB in the past').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "validFormat" : {
+        "regex" : "^(19|20)\\d{2}$",
+        "descriptionKey" : "EnterAValidYear"
+      },
+      "mandatory" : true
+    }, {
+      "name" : "Whether treatment taken?",
+      "uuid" : "4aad2c1f-864e-4635-b6a4-3ececc2d6205",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether treatment taken",
+        "uuid" : "f4c8469e-7605-4147-856a-e8c758a5b443",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Diagnosed with TB in the past').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Where did you take the treatment?",
+      "uuid" : "27185816-494f-4876-abbc-29db6c05b719",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Treatment was taken at",
+        "uuid" : "1b1b041d-2174-4de7-91b1-ffdd714bf17f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Government Hospital",
+          "uuid" : "7c6b80e5-4119-4730-b4d6-37f80f797b78",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Non government",
+          "uuid" : "47a06236-eb1f-4c6f-86f6-50242e978253",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether treatment taken').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "What was the duration of treatment?",
+      "uuid" : "4bf581d0-d816-421e-a3fb-e71c17cabbf8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Duration of treatment",
+        "uuid" : "4bde47dd-1b1a-4ca4-8bcf-aca4962e36be",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether treatment taken').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "If the patient default the treatment, cause of treatment default",
+      "uuid" : "2173fed3-d6a5-44c3-ae04-b2d0f3b77293",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If the patient default the treatment, cause of treatment default",
+        "uuid" : "b5ce547c-4580-46d2-be4b-46b0ead3a849",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Distance of health facility",
+          "uuid" : "c0426576-b62d-436f-862c-bb3360c8e06b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No money for treatment",
+          "uuid" : "c1971e5c-9365-411e-9998-c60fee312c34",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Side effects of drugs",
+          "uuid" : "015a352d-fa43-41a9-999e-9aaf4ed4c2b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether treatment taken').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other cause of treatment default",
+      "uuid" : "4b792acd-c27a-48d5-9016-3cb5034e3fa3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other cause of treatment default",
+        "uuid" : "b7d9ec7b-b0c6-4b9a-b963-6813c541f5d5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  statusBuilder.show().when.valueInEncounter('If the patient default the treatment, cause of treatment default').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "a21d89c0-9baa-48a4-9009-439435ee7549",
+    "name" : "TB symptoms",
+    "displayOrder" : 3.0,
+    "display" : "TB symptoms",
+    "formElements" : [ {
+      "name" : "Do you have any of the following symptoms?",
+      "uuid" : "a54ba78c-c5cb-4f61-b439-3376f15edd65",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Do you have any of the following symptoms?",
+        "uuid" : "5a90f040-61b1-4916-8cef-2ff7bb2e7ee4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Cough more than 2 weeks",
+          "uuid" : "a97618e1-2e5c-4cf9-904f-b872b52e5e4a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Loss of appettite",
+          "uuid" : "60ddd128-dbb9-470a-86e6-71b54228453a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Low grade fever in the evening/night",
+          "uuid" : "d2cfcc65-4877-433c-bd07-fb6524a838fa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Weight loss or Getting thin",
+          "uuid" : "6f918f2b-0cea-4ac2-8118-d937a4ddff1f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Send them to mobile clinic if two or more symptoms are present",
+      "uuid" : "fcab0c7f-c09a-48e9-b6f8-3807e0cb0483",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Send them to mobile clinic if two or more symptoms are present",
+        "uuid" : "3fdc228a-cec5-4224-80d3-ef346a003bba",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  const symptoms = encounter.getObservationReadableValue('Do you have any of the following symptoms?');\n  //console.log('symptoms',symptoms);\n  //console.log('symptoms.length',symptoms.length);\n  \n  if(symptoms)\n   statusBuilder.show().whenItem(symptoms.length > 1).is.truthy.and.valueInEncounter('Do you have any of the following symptoms?').containsAnswerConceptNameOtherThan('None');\n  //statusBuilder.show().when.valueInEncounter('Do you have any of the following symptoms?').containsAnswerConceptName('Yes');\n\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "daf3d33b-967a-410f-aca8-514ae08dc975",
+    "name" : "Mantoux Test",
+    "displayOrder" : 4.0,
+    "display" : "Mantoux Test",
+    "formElements" : [ {
+      "name" : "Is mantoux test done?",
+      "uuid" : "6ecdb52f-0ac0-4bf5-b0b7-5eb074953c31",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Is mantoux test done",
+        "uuid" : "77c1ecfd-ef0d-4cfa-ab8a-859380d7be48",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n\n  const age = encounter.individual.getAgeInYears();\n\n  statusBuilder.show().whenItem(age <= 5).is.truthy;\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "//SAMPLE RULE EXAMPLE\n\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    encounter\n  });\n  console.log('age is ', encounter.individual.getAgeInYears());\n  \n  if(encounter.individual.getAgeInYears() <= 5){\n  const isMantouxDone = encounter.getObservationReadableValue('Is mantoux test done');\n\n    scheduleBuilder\n            .add({\n                name: \"TB Mantoux test result\",\n                encounterType: \"TB Mantoux test result\",\n                earliestDate: imports.moment(encounter.encounterDateTime).add(3, 'days').toDate(),\n                maxDate: imports.moment(encounter.encounterDateTime).add(5, 'days').toDate()\n            }).whenItem(_.isEqual(isMantouxDone,'Yes'))\n            .is.truthy;       \n    }\n  \n   \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

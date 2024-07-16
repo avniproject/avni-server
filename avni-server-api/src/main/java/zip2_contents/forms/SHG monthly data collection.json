@@ -1,0 +1,2076 @@
+{
+  "name" : "SHG monthly data collection",
+  "uuid" : "a700992b-b886-4f3d-b66f-e0236bc47737",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "e634c49b-6a22-45dd-b368-e50cb682642e",
+    "name" : "Meeting Details",
+    "displayOrder" : 1.0,
+    "display" : "Meeting Details",
+    "formElements" : [ {
+      "name" : "Total meetings",
+      "uuid" : "eca73ee1-c926-4864-9537-a884b17dd399",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total meetings",
+        "uuid" : "60587e0c-6757-45fe-af3a-2130c3cf5a32",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "f385ed84-486f-4342-9a31-2156394bacb1",
+    "name" : "SHG strengthening trainings",
+    "displayOrder" : 2.0,
+    "display" : "SHG strengthening trainings",
+    "formElements" : [ {
+      "name" : "SHG strenghtening training sessions conducted?",
+      "uuid" : "072e1b90-ba51-4ce8-912c-b4127aeeda4f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHG strenghtening training sessions conducted",
+        "uuid" : "a20a5bf8-ed3b-4b67-b562-67becbcb2685",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of SHG strenghtening training sessions",
+      "uuid" : "419fd443-16f0-44f1-b4de-7f1affa00f81",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of SHG strenghtening training sessions",
+        "uuid" : "1caed65f-62fb-4abf-8933-85e5f79828c3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"a20a5bf8-ed3b-4b67-b562-67becbcb2685\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "SHG strenghtening training sessions conducted",
+                "conceptUuid" : "a20a5bf8-ed3b-4b67-b562-67becbcb2685",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "SHG management training sessions conducted?",
+      "uuid" : "5000ae3d-7b3e-474b-b678-e90559923575",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHG management training sessions conducted",
+        "uuid" : "9a339444-3205-4e0c-9c2e-007e9f3812db",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "SHG management training sessions conducted?",
+      "uuid" : "f62fc5c9-61c3-4e4d-84cf-da4ed08ca90e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHG management training sessions conducted (voided~118280)",
+        "uuid" : "85695df6-f21b-4d09-a19b-da0e9635e9a1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Number of SHG management training sessions conducted",
+      "uuid" : "428d818a-ae2f-4a93-b08e-553faf2cd2a0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of SHG management training sessions conducted",
+        "uuid" : "3db808ad-3b11-432a-b9e4-45af95195a57",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"9a339444-3205-4e0c-9c2e-007e9f3812db\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "SHG management training sessions conducted?",
+                "conceptUuid" : "9a339444-3205-4e0c-9c2e-007e9f3812db",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Leadership skills training sessions conducted?",
+      "uuid" : "b716dda2-da71-46d7-9b1b-c904ebca7248",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Leadership skills training sessions conducted",
+        "uuid" : "7d1fc7c8-e01c-46b2-9f6f-4a650d64f598",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of leadership skills training sessions conducted",
+      "uuid" : "50893cf9-7d7d-4e89-95f5-97ed805e013b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of leadership skills training sessions conducted",
+        "uuid" : "df5db73d-978f-483a-90ff-f301efdfb310",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"7d1fc7c8-e01c-46b2-9f6f-4a650d64f598\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Leadership skills training sessions conducted",
+                "conceptUuid" : "7d1fc7c8-e01c-46b2-9f6f-4a650d64f598",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Bookkeeping related training sessions conducted?",
+      "uuid" : "17fab002-60e8-4ccb-95cc-d42d31ab6169",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Bookkeeping related training sessions conducted",
+        "uuid" : "a34c955c-b02c-4801-8dc4-84dbc9722cb9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of bookkeeping related training sessions conducted",
+      "uuid" : "c841f162-c40c-4c68-8af6-f444710cc995",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of bookkeeping related training sessions conducted",
+        "uuid" : "3c32851e-f18b-4a75-a6a7-8a7e36fe8f6a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"a34c955c-b02c-4801-8dc4-84dbc9722cb9\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Bookkeeping related training sessions conducted",
+                "conceptUuid" : "a34c955c-b02c-4801-8dc4-84dbc9722cb9",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "99ae23ea-5d01-4671-ad75-24fa20923b0f",
+    "name" : "Government schemes related training",
+    "displayOrder" : 3.0,
+    "display" : "Government schemes related training",
+    "formElements" : [ {
+      "name" : "Government schemes training sessions conducted",
+      "uuid" : "7e3a9abc-094e-4612-902d-5be14efe6cbe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Government schemes training sessions conducted",
+        "uuid" : "4339dbd5-09e9-4d23-8449-0d11f95a949c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of government schemes training sessions conducted",
+      "uuid" : "78ac4066-ee81-4552-965d-dc6c8482e460",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of government schemes training sessions conducted",
+        "uuid" : "9a472984-4626-43d2-aa30-1887d4ef8815",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"4339dbd5-09e9-4d23-8449-0d11f95a949c\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Government schemes training sessions conducted",
+                "conceptUuid" : "4339dbd5-09e9-4d23-8449-0d11f95a949c",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Information session on financial institutions conducted?",
+      "uuid" : "5b65798d-5765-4c2c-ad86-d79ddf7a76a6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Information session on financial institutions conducted",
+        "uuid" : "28846316-75e7-4cc7-90f7-b4ee397b05cb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of information session on financial institutions conducted",
+      "uuid" : "fdb012b0-8b01-42b3-8ccf-b8092a1ca473",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of information session on financial institutions conducted",
+        "uuid" : "a87ac1df-c491-4f82-a1ed-c1d5f272b1b8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"28846316-75e7-4cc7-90f7-b4ee397b05cb\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Information session on financial institutions conducted",
+                "conceptUuid" : "28846316-75e7-4cc7-90f7-b4ee397b05cb",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Number of government schemes training sessions conducted",
+      "uuid" : "83083422-f75d-4a6d-9346-b79ec11f29b8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Govt schemes training sessions conducted (voided~118287)",
+        "uuid" : "252919e9-2461-4f4f-ba88-7ccc2925b898",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "dd5e52b2-27f7-4817-a388-e715fa5224bf",
+    "name" : "Vocational trainings",
+    "displayOrder" : 4.0,
+    "display" : "Vocational trainings",
+    "formElements" : [ {
+      "name" : "Vocational training sessions conducted?",
+      "uuid" : "e5117d0b-0709-4712-ad03-e669b56a680a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Vocational training sessions conducted",
+        "uuid" : "dab2a1ba-c828-43e3-b39a-0a9c62e9f93e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Number of vocational training sessions conducted",
+      "uuid" : "94c8a83f-baf6-4d3a-80b6-08376c095bcf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of vocational training sessions conducted",
+        "uuid" : "d06a2d5a-1d54-43fc-bf89-a06ddc283ace",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"dab2a1ba-c828-43e3-b39a-0a9c62e9f93e\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Vocational training sessions conducted?",
+                "conceptUuid" : "dab2a1ba-c828-43e3-b39a-0a9c62e9f93e",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Type of Vocational training",
+      "uuid" : "26668306-25ff-489d-83e1-36d77b6eae29",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of Vocational training",
+        "uuid" : "32c3c9d9-7cca-4666-bd6f-5feb42f4d34f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Milk product related",
+          "uuid" : "256e21f3-e4a0-4192-a46a-3347785229af",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Vegetables",
+          "uuid" : "eb5ef3b5-f4cb-4e71-b1f2-855991bf75f7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Animal husbandry",
+          "uuid" : "0ce395ca-a122-4a14-bc42-4befff840125",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Shops/store",
+          "uuid" : "05e08d31-9d5b-49f9-b71e-d4d89643d59b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Forest produce",
+          "uuid" : "f3d707c9-e299-45d6-8117-e0d946db8f54",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Kitchen gardening",
+          "uuid" : "e78ece23-d2ce-40b3-a36d-705103f1f251",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Soap/ditergent/Finile etc",
+          "uuid" : "15e4378d-55f7-45c4-b560-d7369cbc3d67",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"dab2a1ba-c828-43e3-b39a-0a9c62e9f93e\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Vocational training sessions conducted",
+                "conceptUuid" : "dab2a1ba-c828-43e3-b39a-0a9c62e9f93e",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ],
+            "conjunction" : "and"
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Please specify, the other type of training",
+      "uuid" : "c03bc80b-4b65-4c95-9b35-fdefb7611f67",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other type of training",
+        "uuid" : "03bb0f71-9a0b-41e2-a901-f68ae70eae1c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"32c3c9d9-7cca-4666-bd6f-5feb42f4d34f\").containsAnswerConceptName(\"798b7942-cf58-4d4e-a529-5972942e0a7e\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Type of Vocational training",
+                "conceptUuid" : "32c3c9d9-7cca-4666-bd6f-5feb42f4d34f",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Other" ],
+                "answerConceptUuids" : [ "798b7942-cf58-4d4e-a529-5972942e0a7e" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "2427b1c3-27f3-4d75-87f4-b1f1dd67a329",
+    "name" : "Savings/Loan Details",
+    "displayOrder" : 5.0,
+    "display" : "Savings/Loan Details",
+    "formElements" : [ {
+      "name" : "Total saving",
+      "uuid" : "20afb12e-e692-437a-8e6d-193f7fc2e4ba",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total saving",
+        "uuid" : "69e78c55-4203-4f5e-a80b-6be77d9b066a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Total Interest",
+      "uuid" : "003520ec-c9c0-4a35-b779-fcc2e84d315a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total Interest",
+        "uuid" : "97347665-493f-47e0-9672-6b40ec82b708",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Amount in the bank",
+      "uuid" : "9dad6a13-8d2d-4c73-a836-532166661871",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Amount in the bank",
+        "uuid" : "6bc22623-96c3-4abf-8aa4-d7b238a3316a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Amount in the box",
+      "uuid" : "2f7b453d-5780-4c9b-bdcd-a7d7e6dd60d3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Amount in the box",
+        "uuid" : "989d7cfb-52aa-417d-ac2f-5dc9015ac5b5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan distribution among the members",
+      "uuid" : "fef9e439-678d-4fe2-a533-608ad3a83de6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan distribution among the members",
+        "uuid" : "f7ba9b88-ffc0-43aa-9961-c93306129112",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan distribution outside SHG",
+      "uuid" : "990a2b50-15d4-491b-8ef4-63a63b2b151f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan distribution outside SHG",
+        "uuid" : "8995dc7b-3bb6-44be-8772-de820dc0a382",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Total loan distribution",
+      "uuid" : "74fdbd95-bfbe-43fd-9f37-5ae3b9e5da1d",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total loan distribution",
+        "uuid" : "a903680c-dd3c-456c-aff5-1037e983d741",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const firstCount = encounter.getObservationValue('Loan distribution among the members') ;\n  const secondCount = encounter.getObservationValue('Loan distribution outside SHG');\n  \n  const value = secondCount && firstCount   && _.sum([_.toNumber(firstCount), _.toNumber(secondCount)]) || 0; \n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, true,value );\n\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "da790058-6203-47f3-b515-53fa4c65489b",
+    "name" : "Loan from SHG",
+    "displayOrder" : 6.0,
+    "display" : "Loan from SHG",
+    "formElements" : [ {
+      "name" : "Total SHG members who took loan for livelihood",
+      "uuid" : "5ee35c02-1b52-463d-a44e-2fb740d9d3ae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for livelihood",
+        "uuid" : "23394304-d040-4c64-8693-5727fd3a04d4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for livelihood",
+      "uuid" : "858be5f1-52a9-4c87-a8b4-c10f7c331314",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for livelihood",
+        "uuid" : "975945d8-cd24-4637-b3f1-ace63c6b4716",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"23394304-d040-4c64-8693-5727fd3a04d4\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for livelihood",
+                "conceptUuid" : "23394304-d040-4c64-8693-5727fd3a04d4",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for Education",
+      "uuid" : "9b7f2405-7495-4b1e-b932-dfc3cbc8cadc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for Education",
+        "uuid" : "848f6171-5ce0-4fdf-b3f8-3f2d2b809eb8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for Education",
+      "uuid" : "c193b984-8c04-4188-9089-4c2ed05ab308",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for Education",
+        "uuid" : "44de7a0f-5abd-4bd7-beaf-629aae153639",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"848f6171-5ce0-4fdf-b3f8-3f2d2b809eb8\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for Education",
+                "conceptUuid" : "848f6171-5ce0-4fdf-b3f8-3f2d2b809eb8",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for Health",
+      "uuid" : "3aeb9af5-242c-41f1-84e6-a1df507099a4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for Health",
+        "uuid" : "99ba984a-49cc-40a0-b86a-016cf59d421c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for Health",
+      "uuid" : "e4be22b4-172c-4bfd-b461-ccd3e2347704",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for Health",
+        "uuid" : "30911b28-2187-41ac-a9fb-cf8c30c3a3d1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"99ba984a-49cc-40a0-b86a-016cf59d421c\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for Health",
+                "conceptUuid" : "99ba984a-49cc-40a0-b86a-016cf59d421c",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for Agriculture",
+      "uuid" : "6f10483c-32a6-4dea-8c63-c5f67508426c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for Agriculture",
+        "uuid" : "b85efb2d-1fbe-4581-88f8-e30e5ba1600b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for Agriculture",
+      "uuid" : "d5e587a6-ea41-47f6-a8f4-bb8e0ce73e58",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for Agriculture",
+        "uuid" : "64136f46-6d41-4dcf-a2b5-ed6fa8b78e7b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"b85efb2d-1fbe-4581-88f8-e30e5ba1600b\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for Agriculture",
+                "conceptUuid" : "b85efb2d-1fbe-4581-88f8-e30e5ba1600b",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for Social activities",
+      "uuid" : "0782bae5-84b3-409d-be2d-3c3a287ce676",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for Social activities",
+        "uuid" : "6e20c4d1-c774-4db5-9a71-80d064baff09",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for Social activities",
+      "uuid" : "60376994-e883-47a3-9800-107694dbfc9a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for Social activities",
+        "uuid" : "6eb3e644-2fb6-4b2e-9ab8-b26ca7e8dd8b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"6e20c4d1-c774-4db5-9a71-80d064baff09\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for Social activities",
+                "conceptUuid" : "6e20c4d1-c774-4db5-9a71-80d064baff09",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for Cultural/religious work",
+      "uuid" : "13fce29b-067f-4efd-9e93-ef39f0fbba5f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for Cultural/religious work",
+        "uuid" : "cd4025f4-7fd7-42b7-80ae-d85a1300252b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for Cultural/religious work",
+      "uuid" : "27b55c0a-93f2-4199-9b03-edd0ab048632",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for Cultural/religious work",
+        "uuid" : "9c83c162-28cf-44b9-ac97-ac162a514573",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"cd4025f4-7fd7-42b7-80ae-d85a1300252b\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for Cultural/religious work",
+                "conceptUuid" : "cd4025f4-7fd7-42b7-80ae-d85a1300252b",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for other household work",
+      "uuid" : "4da5fabf-dc06-44a5-a5b2-d9fd7d2dccac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for other household work",
+        "uuid" : "30f782e6-8cbe-4a2a-8cd9-3cc5e6223a09",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for household work",
+      "uuid" : "8dc217af-59e8-436c-8a3b-32cf5136a678",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for household work",
+        "uuid" : "2c7a5a1e-e192-44a5-baf2-f1882146abf3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"30f782e6-8cbe-4a2a-8cd9-3cc5e6223a09\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for other household work",
+                "conceptUuid" : "30f782e6-8cbe-4a2a-8cd9-3cc5e6223a09",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Total SHG members who took loan for other purpose",
+      "uuid" : "806bfb6b-0501-4309-9139-9b43d6272835",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan for other purpose",
+        "uuid" : "c87657f8-55ba-40e2-86e2-2bbd530110a3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Loan amount for other purpose",
+      "uuid" : "a3907f97-bfa0-4d13-a438-119924f60f67",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Loan amount for other purpose",
+        "uuid" : "9c2b653e-e88b-4a75-ad0a-5df0130e3142",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"c87657f8-55ba-40e2-86e2-2bbd530110a3\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan for other purpose",
+                "conceptUuid" : "c87657f8-55ba-40e2-86e2-2bbd530110a3",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fbbeb672-4bee-4a49-b3c9-ed7d19c80a57",
+    "name" : "Loan from Outside SHG",
+    "displayOrder" : 7.0,
+    "display" : "Loan from Outside SHG",
+    "formElements" : [ {
+      "name" : "Total SHG members who took loan outside SHG",
+      "uuid" : "c5e4d85a-0086-49f8-a970-e11d78bd1751",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total SHG members who took loan outside SHG",
+        "uuid" : "51393ed6-6cf5-47ec-8863-e07e17a40d26",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "From whom the loan was taken?",
+      "uuid" : "03b9ee95-5724-43c8-920e-2fa79077ffc8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "From whom the loan was taken",
+        "uuid" : "7fe5958d-cbcd-47b4-ade0-2de79e42ead1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Financial institution",
+          "uuid" : "cc8f6961-1f3c-42a6-846a-07fa8eee783c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Money lenders",
+          "uuid" : "dd3775e4-adaf-49fb-bf77-cdbb9b6a3daf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"51393ed6-6cf5-47ec-8863-e07e17a40d26\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total SHG members who took loan outside SHG",
+                "conceptUuid" : "51393ed6-6cf5-47ec-8863-e07e17a40d26",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "2085d5b5-dc6e-411a-9572-e504c678765d",
+    "name" : "Loan for livelihood activties received by SHG/SHG Members",
+    "displayOrder" : 8.0,
+    "display" : "Loan for livelihood activties received by SHG/SHG Members",
+    "formElements" : [ {
+      "name" : "Did SHG recieve the loan for group livelihood activities?",
+      "uuid" : "e32e487f-d2e7-4204-a17a-c45d78998480",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHG recieve the loan for group livelihood activities?",
+        "uuid" : "c8798414-20a4-4cd3-9f44-e872538fb019",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "From whom did SHG receive the loan for group livelihood activities",
+      "uuid" : "165703ca-42c9-4d94-890d-edd95b0d388d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "From whom did SHG receive the loan for group livelihood activities",
+        "uuid" : "16273d95-1a54-4008-a19a-a479e31bcb5e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "SHG",
+          "uuid" : "3f57125a-f2e2-4767-9faf-0a9d42341510",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Government Schemes",
+          "uuid" : "84631499-406f-4ff6-9edc-903bfdc34d76",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Financial institution",
+          "uuid" : "cc8f6961-1f3c-42a6-846a-07fa8eee783c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Money lenders",
+          "uuid" : "dd3775e4-adaf-49fb-bf77-cdbb9b6a3daf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"c8798414-20a4-4cd3-9f44-e872538fb019\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "SHG recieve the loan for group livelihood activities?",
+                "conceptUuid" : "c8798414-20a4-4cd3-9f44-e872538fb019",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Did SHG members receive the loan for livelihood activities",
+      "uuid" : "dad4b57b-3b76-447d-b2a2-0c78748a7537",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did SHG members receive the loan for livelihood activities",
+        "uuid" : "fcdafe60-aac8-4652-87c4-2fb6b8c80763",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "From whom did SHG members receive the loan for livelihood activities?",
+      "uuid" : "3e12371e-4a93-4d88-99ae-0eede9ff5c50",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "From whom did SHG members receive the loan for livelihood activities",
+        "uuid" : "4cee61f7-0c73-4606-b3ad-5fc7ed8c8c3a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Financial institution",
+          "uuid" : "cc8f6961-1f3c-42a6-846a-07fa8eee783c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Money lenders",
+          "uuid" : "dd3775e4-adaf-49fb-bf77-cdbb9b6a3daf",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "SHG",
+          "uuid" : "3f57125a-f2e2-4767-9faf-0a9d42341510",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Government Schemes",
+          "uuid" : "84631499-406f-4ff6-9edc-903bfdc34d76",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"fcdafe60-aac8-4652-87c4-2fb6b8c80763\").containsAnswerConceptName(\"57e20de7-10de-4391-b7ce-87b2f40d19a2\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Did SHG members receive the loan for livelihood activities",
+                "conceptUuid" : "fcdafe60-aac8-4652-87c4-2fb6b8c80763",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Yes" ],
+                "answerConceptUuids" : [ "57e20de7-10de-4391-b7ce-87b2f40d19a2" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "27ea9dce-bae4-4bc1-b63d-d4b6aa5f3240",
+    "name" : "SHG members linked with any livelihood activity",
+    "displayOrder" : 9.0,
+    "display" : "SHG members linked with any livelihood activity",
+    "formElements" : [ {
+      "name" : "Fishery",
+      "uuid" : "d21d75d3-a19b-4dc1-869f-1b071c935bc2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fishery",
+        "uuid" : "bd003a03-947e-4a56-91ba-04164dcf2fbd",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Poultry",
+      "uuid" : "6581039b-19bf-4eaf-9f7b-dd85a1051e31",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Poultry",
+        "uuid" : "777c3ebf-99d4-4c5b-911a-fbb62d078af5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Pig farming",
+      "uuid" : "a1479501-218c-481a-a150-d157526b5f48",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pig farming",
+        "uuid" : "035b62c1-ee7b-4710-a8d1-2a03e6a4689a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Goat farming",
+      "uuid" : "beb1b7c4-57c4-48cb-941d-0c63eee69a37",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Goat farming",
+        "uuid" : "d99c407a-90ac-47e8-9071-7c946d30ef70",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Cow/Buffalo",
+      "uuid" : "2c2e8441-7e16-4666-9869-13f3e72c1ee3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cow/Buffalo",
+        "uuid" : "cea53290-6822-4c2e-95ce-5060222dedcf",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Forest produce",
+      "uuid" : "b9336ea8-8e58-499b-8b60-a0809425e920",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Forest Produce",
+        "uuid" : "3599bdc3-f009-48d4-9819-b744af09cce6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Hygiene related products",
+      "uuid" : "ac63f67f-0650-4f0a-bcc0-55c14d2c862d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hygiene related products",
+        "uuid" : "c01985be-0d83-4af4-a67c-413c389c293c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Fruits, vegetables",
+      "uuid" : "5bb3660d-a583-497c-8e8f-ba7092f3f003",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fruits, vegetables",
+        "uuid" : "d76001a7-7291-4f03-bd50-55bc7859725f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Agriculture",
+      "uuid" : "1648ac07-83b2-4c94-b162-c3963ec3ffd9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Agricultural activity",
+        "uuid" : "9954f897-d3b0-46eb-8e35-0876e6f8e063",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other activity",
+      "uuid" : "73dabf49-7ed9-4f5f-85a7-d60fe8129d15",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other activity",
+        "uuid" : "1354971f-297a-4ac3-91ef-1e0d57812761",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "c5c4f6f1-c12d-4955-9671-55060f16bd99",
+    "name" : "SHG as a group engaged with any livelihood activity",
+    "displayOrder" : 10.0,
+    "display" : "SHG as a group engaged with any livelihood activity",
+    "formElements" : [ {
+      "name" : "Fishery activity",
+      "uuid" : "4a4e38ae-0a2a-4ad2-ba68-c40d37cc6a67",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fishery activity",
+        "uuid" : "fc78751d-68eb-4ad4-b779-74eafe54d7c1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Poultry activity",
+      "uuid" : "0ca590bc-2fd3-4199-b8a3-1062af28979e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Poultry activity",
+        "uuid" : "a0068e11-3017-44f0-bb3f-49c2c671ffba",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Pig farming activity",
+      "uuid" : "cb5d745d-606b-4eb3-891f-251735fd5350",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pig farming activity",
+        "uuid" : "8a8b992f-8206-4430-b3f8-74d1192f7a4a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Goat farming activity",
+      "uuid" : "f83ef076-c61e-4c76-947a-a94cfdb3dbc9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Goat farming activity",
+        "uuid" : "e3e81c13-4695-42eb-8e86-640a6e447f03",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Cow/Buffalo activity",
+      "uuid" : "4ad1bcd5-c818-4b69-bac1-9817669b4694",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cow/Buffalo activity",
+        "uuid" : "f7b8607b-f34b-4c93-b115-0fb5abb705d0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Forest produce activity",
+      "uuid" : "7acd60a3-b7dd-4fc5-9747-0cd78d9194d3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Forest produce activity",
+        "uuid" : "66f6fd3e-f33b-45b5-af80-1a45194ee53c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Hygiene related products activity",
+      "uuid" : "96f63ce7-4a0a-46c7-acf0-5413944ec366",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hygiene related products activity",
+        "uuid" : "481f9444-1f5f-4e08-a7cb-80bf22bd8c80",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Fruits, vegetables activity",
+      "uuid" : "9d21b2ba-774d-4312-a697-6348c68284af",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fruits, vegetables activity",
+        "uuid" : "02c466e9-cab4-41f8-aead-af301455d621",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Agriculture activity",
+      "uuid" : "6959bbcd-cd0a-4942-95c1-be7a227c9263",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Agriculture activity",
+        "uuid" : "82eac034-4895-446d-901e-388206523287",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other activities",
+      "uuid" : "1dac2130-4c01-4b67-9445-1f1f7a29c94e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other activities",
+        "uuid" : "058ea028-2f49-4d85-96b8-efa96b8fc91d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "2b0649c3-1d89-498a-b0ab-982f89f14bed",
+    "name" : "Migration",
+    "displayOrder" : 11.0,
+    "display" : "Migration",
+    "formElements" : [ {
+      "name" : "Total members migrated in the month",
+      "uuid" : "858326c8-71f9-4b79-8276-23c450a93cfd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total members migrated in the month",
+        "uuid" : "01728ba3-f34b-4482-9782-9d6f4492f9d2",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "How many SHG members' relatives migrated this month?",
+      "uuid" : "c823ab83-6178-492a-a0c3-691226f21442",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "SHG member's relatives migrated this month",
+        "uuid" : "dd9e89e4-c704-45b5-9cc2-7663cb32a242",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({encounter, formElement}).when.valueInEncounter(\"01728ba3-f34b-4482-9782-9d6f4492f9d2\").greaterThan(0).matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "encounter",
+                "conceptName" : "Total members migrated in the month",
+                "conceptUuid" : "01728ba3-f34b-4482-9782-9d6f4492f9d2",
+                "conceptDataType" : "Numeric"
+              },
+              "rhs" : {
+                "type" : "value",
+                "value" : 0
+              },
+              "operator" : "greaterThan"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "//SAMPLE RULE EXAMPLE\n\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    encounter\n  });\n  //add new visit schedule object to scheduleBuilder\n  let visitDate = imports.moment(encounter.earliestVisitDateTime).add(1, 'months').toDate();\n  scheduleBuilder\n                .add({\n                    name: \"SHG monthly data collection\",\n                    encounterType: \"SHG monthly data collection\",\n                    earliestDate: visitDate,\n                    maxDate: imports.moment(visitDate).add(3, 'days').toDate()\n                });\n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

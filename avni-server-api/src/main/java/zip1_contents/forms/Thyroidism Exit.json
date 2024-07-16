@@ -1,0 +1,293 @@
+{
+  "name" : "Thyroidism Exit",
+  "uuid" : "8a886576-3405-4c78-b296-fd759d52fe52",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "a32bfdd2-0e9d-46ae-980c-41efbc03bb2e",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Reason for exit",
+      "uuid" : "2f291a94-1af1-4a4c-aecc-80b7c26b261f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for exit",
+        "uuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completion",
+          "uuid" : "bafe149e-dbf8-4c80-8c13-fc5b1274f0ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Shifted to other geographical area",
+          "uuid" : "0c46f359-eb0f-4a5e-8fe7-f86bd706d1d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason for Program exit",
+      "uuid" : "ab0eef85-c57f-40fb-9c97-82d2901b0565",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for Program exit",
+        "uuid" : "63390533-9229-4e7d-816d-d07c23fba826",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"798b7942-cf58-4d4e-a529-5972942e0a7e\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "declarativeRule" : [ {
+        "actions" : [ {
+          "actionType" : "showFormElement"
+        } ],
+        "conditions" : [ {
+          "compoundRule" : {
+            "rules" : [ {
+              "lhs" : {
+                "type" : "concept",
+                "scope" : "exit",
+                "conceptName" : "Reason for exit",
+                "conceptUuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+                "conceptDataType" : "Coded"
+              },
+              "rhs" : {
+                "type" : "answerConcept",
+                "answerConceptNames" : [ "Other" ],
+                "answerConceptUuids" : [ "798b7942-cf58-4d4e-a529-5972942e0a7e" ]
+              },
+              "operator" : "containsAnswerConceptName"
+            } ]
+          }
+        } ]
+      } ],
+      "mandatory" : true
+    }, {
+      "name" : "Date of Death",
+      "uuid" : "31c9392b-469f-4465-b10e-b6d26affb46e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"c125eec0-2bc4-4add-b1d0-7531e5ffa9c8\").matches();\n  \n  visibility = condition11 ;\n  \n  const deathDate = programEnrolment.findExitObservation('Date of Death');\n  let exitDate = programEnrolment.programExitDateTime;\n  \n  if(deathDate != undefined){\n  if(imports.moment(deathDate.getReadableValue()).isAfter(exitDate, 'date'))\n  validationErrors.push(\"Date of death cannot be after exit date\");\n  }\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Cause of Death",
+      "uuid" : "192ab447-e0ad-4427-8eaf-b911cdee824b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cause of Death",
+        "uuid" : "5781acfc-92b5-43b9-a73e-fdfa7812a4d4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Accident",
+          "uuid" : "1aa4bb12-ca66-4a3e-8fc0-9d566ad6aa93",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Suicide",
+          "uuid" : "f82b2a30-c4a4-4c0e-96c5-b79eb8aac485",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Illness",
+          "uuid" : "9d4a81bf-67c2-4b6c-bec9-e9ccbe376799",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"c125eec0-2bc4-4add-b1d0-7531e5ffa9c8\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Place of death",
+      "uuid" : "e3b36c30-69e7-4db9-9acb-d784b870911b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of death",
+        "uuid" : "93c4be55-8953-4cf0-bf35-182042a3bccb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Pvt. Hospital",
+          "uuid" : "a251776a-2d2a-4bc6-9578-74481c4a9727",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "SC/PHC/CHC/Rural hospital",
+          "uuid" : "4a29543e-9c71-4821-bb90-9a377367c44e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "On the way to health facility",
+          "uuid" : "c4286b04-2545-4e27-bceb-2c647b390d22",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Ambulance",
+          "uuid" : "6948293d-8f64-4958-b022-b69af64cdcde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Other place",
+          "uuid" : "781c225d-7f2c-49a9-b600-a95cd36d60c5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Govt. Hospital",
+          "uuid" : "5402f256-869f-4999-83c1-35e00eeb9453",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Workplace",
+          "uuid" : "dbd55a29-8666-4891-88f5-59dc013d2b9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "On the way to Health Facility",
+          "uuid" : "95bf036d-7edc-4ca6-8ba3-16cc098cc357",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "JSS Ganiyari hospital/subcenter",
+          "uuid" : "1e1c6598-7542-41ee-8c45-71646ee02499",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Outside home (non work place)",
+          "uuid" : "2f2dec98-7266-4329-bd41-12e108b8a0f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Hospital",
+          "uuid" : "e763cad4-722a-4c37-b5a0-5c17428f1089",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"c125eec0-2bc4-4add-b1d0-7531e5ffa9c8\").matches();\n  \n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

@@ -1,0 +1,2063 @@
+{
+  "name" : "Child Program PNC",
+  "uuid" : "b0c9a800-d6d6-49f1-b647-9bc3d95d2718",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "aa47a567-a25d-4208-b3a6-6c8ca979b75d",
+    "name" : "Information within 6 hours of birth",
+    "displayOrder" : 1.0,
+    "display" : "Information within 6 hours of birth",
+    "formElements" : [ {
+      "name" : "Whether newborn fed other that exclusive breastfeeding",
+      "uuid" : "bf0f038f-1df0-40b0-be5e-50c832bb2116",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether newborn fed other that exclusive breastfeeding",
+        "uuid" : "918c6eaf-b7ab-4958-aa42-4b0280a3c5e8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Whether newborn fed other that exclusive breastfeeding').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "How was breastfeedig",
+      "uuid" : "b0509c85-e121-46f4-900d-d9d342baece7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How was breastfeedig",
+        "uuid" : "761a5ddc-fe17-4393-bb28-ecd45de68f58",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No breastfeeding and no spoon feeding",
+          "uuid" : "75bf14b7-a4b0-408b-afb4-1d79d8668c6a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Breastfeded properly (good signs of latching)",
+          "uuid" : "f561cb5e-bf5e-48ca-b595-603028b53fc4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Could not suck properly",
+          "uuid" : "aea257ab-726a-46c0-8554-9dd0deb5a671",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Spoon feeding",
+          "uuid" : "5a06eeb7-489d-4b50-9c04-dc39827a36e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('How was breastfeedig').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Time of breastfedding after delivery",
+      "uuid" : "6e93fdfe-7baf-4056-a8f9-3c6e25e58bd0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Time of breastfedding after delivery",
+        "uuid" : "373c7bb6-f5e4-4797-a4e2-6a73ab821447",
+        "dataType" : "Time",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Time of breastfedding after delivery').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Time of breastfedding after delivery",
+      "uuid" : "9da99457-0647-48a8-bdaf-3dc6f5ec4a1f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date time of breastfedding after delivery",
+        "uuid" : "30f5bc1c-72b9-438a-8a41-8732e52ca0bf",
+        "dataType" : "DateTime",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Date time of breastfedding after delivery').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Whether mother have any problem in breastfeeding",
+      "uuid" : "8c848f88-a174-4f5a-96da-9855d1b220a8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether mother have any problem in breastfeeding",
+        "uuid" : "ba69923c-e451-41a5-8ed0-62d2078411b9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "breast related problem (swelling, sepsis, etc)",
+          "uuid" : "bdf00248-52e2-4d01-b02d-70c5e480c604",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not enough breast milk",
+          "uuid" : "69b4816e-a58d-4afa-a635-37d38e44d2cc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No issues/problems",
+          "uuid" : "5cd37a0c-8271-4fc7-845b-0e97c018d4ea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No breast milk at all",
+          "uuid" : "90502bf9-8178-44e7-b60f-86e92cb32de3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "C-section",
+          "uuid" : "6984e037-93fc-4df0-9bce-ea7e8f44d1aa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Whether mother have any problem in breastfeeding').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Was temperature recorded",
+      "uuid" : "32053c17-8ac8-4fd1-9e07-2caa5bf1ab92",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was temperature recorded?",
+        "uuid" : "de3329dd-47a0-463c-ab48-03f1199639d8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Was temperature recorded?').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Temperature of newborn",
+      "uuid" : "7adce38c-92b0-46dd-ba6b-a10b613da191",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature of newborn (celcius)",
+        "uuid" : "d6d8f9d9-d0c5-4574-b779-a8aa08604771",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 36.1,
+        "highNormal" : 37.8,
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Was temperature recorded?').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "validFormat" : {
+        "regex" : "^[0-9]{1,2}(\\.[0-9])??$",
+        "descriptionKey" : "requiredFormatxxDotx"
+      },
+      "mandatory" : true
+    }, {
+      "name" : "Temperature of newborn",
+      "uuid" : "42db1623-85a5-46c2-9faf-d1775445f7e1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Child Temperature",
+        "uuid" : "fc367cf1-69e0-43d9-82d8-0ace18ba4b3c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 97.5,
+        "highNormal" : 99.5,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Eye of newborn",
+      "uuid" : "0aec3884-ca9a-4c58-9941-d33c19eb6603",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Eye of newborn",
+        "uuid" : "1c675de4-83eb-471f-9b55-6b8a0d48c55e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Any deformity",
+          "uuid" : "2ebba1d0-7bbb-4550-9896-3a679512f673",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Pus in the eyes",
+          "uuid" : "c8cae940-7ac8-4b09-892c-aebca10d9ab1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Normal",
+          "uuid" : "ec89cb1f-491b-46de-95c1-3009effa9041",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Sweeling",
+          "uuid" : "a5b9c5d5-4ad1-4acd-97bf-fd761c11c210",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Eye of newborn').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Specify, other condition of newborn eye",
+      "uuid" : "abed87bc-6731-41e9-96f9-f3a526a03d9a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other condition of newborn eye",
+        "uuid" : "8fcbe2ba-80a9-4a32-8573-dbecc62f96f5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Eye of newborn').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Bleeding from chord",
+      "uuid" : "74d5cbc5-38cc-4c46-99b2-7255320ef52e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Bleeding from chord",
+        "uuid" : "6be64524-a223-464f-8c68-787c5d6f7e7c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Bleeding from chord').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Look for birth defects",
+      "uuid" : "e6525c33-13bc-4bc5-99b7-68838075be8a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Look for birth defects",
+        "uuid" : "81744917-f99b-41a1-80e9-8057b90073d0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Birth defect in hands/legs",
+          "uuid" : "d5a8d43f-f2af-4cb8-a0b5-93d3fabd394c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Birth defect in eyes",
+          "uuid" : "faa9149f-4500-4feb-941d-7aa35262d41d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No birth defect",
+          "uuid" : "75c3e255-7a3a-499c-b6d2-fe64458c9214",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Birth defect in other body parts",
+          "uuid" : "a5bbfe88-fbf0-49f3-905a-680772c8e874",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Birth defect in lips",
+          "uuid" : "91a8067a-02e0-47b4-b2c7-5b3b0e56b779",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Birth defect in genital/anus",
+          "uuid" : "2ab61aed-c62a-4870-8c86-5c5f7452d264",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Look for birth defects').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Look for any danger signs of sepsis within 6 hours",
+      "uuid" : "3e59f334-50a1-4d6a-a7e4-5572106e31b5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Look for any danger signs of sepsis within 6 hours",
+        "uuid" : "c0e51a98-9689-4963-9c29-b8be89053116",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Any other",
+          "uuid" : "dbcb0035-9a59-45e1-9b3e-68b292c329e9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Pus in or around the umbilicus",
+          "uuid" : "7338a25a-a8dd-4363-ac67-20706827eedd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No any danger sign",
+          "uuid" : "aae2d05d-ff39-4e02-9502-95c8035d8992",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mother says baby is cold or temp. is more than 37.2 DC",
+          "uuid" : "6bbe35ab-90bc-4aea-b9b2-d298d48b1e25",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Difficulty in breathing",
+          "uuid" : "cc710839-9b8c-4d52-944e-8ba21ad3de72",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Anyother",
+          "uuid" : "772e27c1-87c4-441a-bcec-aa9f74e1bfa5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Reduced or stopped breastfeeding",
+          "uuid" : "ce7a0737-7770-4eb7-a4b2-0b4fdcc4b381",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Distended abdomen of mother says baby vomits frequently",
+          "uuid" : "4023f51f-e9ec-4976-99da-934aec36d917",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak cry or stopped crying",
+          "uuid" : "06697930-4d4d-425a-8edc-d081d944b1d7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak and flaccid legs and hands",
+          "uuid" : "709f2b19-f4a4-4029-ab10-3575e2e47380",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Chest indrawing",
+          "uuid" : "536afd11-f8cd-4526-87de-ced171f37c99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 13.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.latestValueInPreviousEncounters('Look for any danger signs of sepsis within 6 hours').is.notDefined;\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other danger signs of sepsis within 6 hours",
+      "uuid" : "34e29b58-e3e5-445c-8a9e-7de008a0af1f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other danger signs of sepsis within 6 hours",
+        "uuid" : "e8194331-8da1-4eba-85b6-95c704209025",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Look for any danger signs of sepsis within 6 hours').containsAnswerConceptName(\"Any other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "rule" : "",
+    "timed" : false
+  }, {
+    "uuid" : "7242cf27-4ddb-4a0e-86be-39c75daf643c",
+    "name" : "Information after 6 hours of birth",
+    "displayOrder" : 2.0,
+    "display" : "Information after 6 hours of birth",
+    "formElements" : [ {
+      "name" : "Whether mother wraps the baby in clothes in cold whether",
+      "uuid" : "19d74125-b7ee-48f5-88c3-a9f0cb9c2bb3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether mother wraps the baby in clothes in cold whether",
+        "uuid" : "94b7ee05-e0d2-4b9b-92b0-3e8f4ad666da",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Whether mother gives skin to skin warmth to baby  (Continuous for at least one hour)",
+      "uuid" : "c38e15ff-29a8-44ac-9295-d9ba715ddb32",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether mother gives skin to skin warmth to baby",
+        "uuid" : "1bfdc70a-475d-487b-b87b-9f8c422bdadd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Whether mother breastfed her child for min 8 times a day",
+      "uuid" : "7ce10ea6-e275-45eb-9f5e-7125d18d717c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether mother breastfed her child for min 8 times a day",
+        "uuid" : "cec9ce0f-d40a-4a8e-ac8b-60e90259c003",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Whether baby cries too much or urinate less than 6 time a day",
+      "uuid" : "84c275a9-766e-40be-a01d-3389b651e413",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether baby cries too much or urinate less than 6 time a day",
+        "uuid" : "1d052667-3622-4934-9343-7127729c3aa3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Look for any danger signs of sepsis after 6 hours",
+      "uuid" : "c727a166-cf9e-4440-8d48-611ef9583929",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Look for any danger signs of sepsis after 6 hours",
+        "uuid" : "d5b8e6fc-f5cc-45e3-a753-141c9677a491",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Mother says baby is cold or temp. is more than 37.2 DC",
+          "uuid" : "6bbe35ab-90bc-4aea-b9b2-d298d48b1e25",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Distended abdomen of mother says baby vomits frequently",
+          "uuid" : "4023f51f-e9ec-4976-99da-934aec36d917",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Any other",
+          "uuid" : "dbcb0035-9a59-45e1-9b3e-68b292c329e9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Reduced or stopped breastfeeding",
+          "uuid" : "ce7a0737-7770-4eb7-a4b2-0b4fdcc4b381",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak cry or stopped crying",
+          "uuid" : "06697930-4d4d-425a-8edc-d081d944b1d7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Difficulty in breathing",
+          "uuid" : "cc710839-9b8c-4d52-944e-8ba21ad3de72",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak and flaccid legs and hands",
+          "uuid" : "709f2b19-f4a4-4029-ab10-3575e2e47380",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Chest indrawing",
+          "uuid" : "536afd11-f8cd-4526-87de-ced171f37c99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "No any danger sign",
+          "uuid" : "aae2d05d-ff39-4e02-9502-95c8035d8992",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Pus in or around the umbilicus",
+          "uuid" : "7338a25a-a8dd-4363-ac67-20706827eedd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other danger signs of sepsis after 6 hours",
+      "uuid" : "8f63841d-aedf-436d-b9bf-151f057dff78",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other danger signs of sepsis after 6 hours",
+        "uuid" : "1a68a35d-ad9c-45f3-b3dd-62c04f26be0f",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Look for any danger signs of sepsis after 6 hours').containsAnswerConceptName(\"Any other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Whether newborn has swolen eyes or discharge from eyes",
+      "uuid" : "8903937e-0473-4e5f-8928-19ea43facebd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether newborn has swolen eyes or discharge from eyes",
+        "uuid" : "e46f457d-6d84-46b6-9fa6-30e87537154b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n    const formElementGroup = params.formElementGroup;\n    return formElementGroup.formElements.map(({uuid}) => {\n        return new imports.rulesConfig.FormElementStatus(uuid, true, null);\n    });\n};",
+    "timed" : false
+  }, {
+    "uuid" : "e0ab8b6e-8d3d-49b9-8b29-d22f3af0c3ff",
+    "name" : "Newborn's examination",
+    "displayOrder" : 3.0,
+    "display" : "Newborn's examination",
+    "formElements" : [ {
+      "name" : "Whether newborn has swolen eyes or discharge from eyes",
+      "uuid" : "4aeb178c-2737-41eb-91dd-9c989cf0a20d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether newborn has swolen eyes or discharge from eyes",
+        "uuid" : "e46f457d-6d84-46b6-9fa6-30e87537154b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Weight",
+      "uuid" : "d0cb9517-e43c-4657-ba09-5f0ee54711a7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weight",
+        "uuid" : "8d947379-7a1d-48b2-8760-88fff6add987",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 300.0,
+        "lowNormal" : 1.0,
+        "highNormal" : 100.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Was temperature recorded",
+      "uuid" : "1b3e85e6-62e5-441c-ae0a-570cc72d142a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was temperature recorded?",
+        "uuid" : "de3329dd-47a0-463c-ab48-03f1199639d8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Don't know",
+          "uuid" : "c483c8de-1e93-40e7-9e9a-dbe1c7e705a1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Temperature",
+      "uuid" : "268835c9-6c20-4225-bcff-c73467ab5928",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature(celcius)",
+        "uuid" : "0c6d2587-382d-4762-8871-b6890d854505",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 36.1,
+        "highNormal" : 37.8,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "validFormat" : {
+        "regex" : "^[0-9]{1,2}(\\.[0-9])??$",
+        "descriptionKey" : "requiredFormatxxDotx"
+      },
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Temperature",
+      "uuid" : "6fbfccec-5aaa-498e-b224-84ac3b2504f9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature",
+        "uuid" : "544438f2-4eeb-41a6-9017-d2895d4d76ef",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 97.0,
+        "highNormal" : 99.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Temperature",
+      "uuid" : "a9ec06ef-b611-4ef4-b142-29fea2049a89",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Temperature(celcius)",
+        "uuid" : "0c6d2587-382d-4762-8871-b6890d854505",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 36.1,
+        "highNormal" : 37.8,
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "validFormat" : {
+        "regex" : "^[0-9]{1,2}(\\.[0-9])??$",
+        "descriptionKey" : "requiredFormatxxDotx"
+      },
+      "mandatory" : false
+    }, {
+      "name" : "Skin - pus filled rashes/boils",
+      "uuid" : "e14d5bc9-6ac2-4131-b38a-1d5c7b191c0f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Skin - pus filled rashes/boils",
+        "uuid" : "9359a427-d6de-4f1d-b21e-a55b4aaef0b5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Skin - Redness/crack in skin fold",
+      "uuid" : "58c0d421-20d2-4db3-ab03-7100f0cc4e61",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Skin - Redness/crack in skin fold",
+        "uuid" : "b9961b58-b54e-4329-8f40-fc42a1a5981a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Yellowing of skin/eye",
+      "uuid" : "1898a0fd-cb09-482c-95b6-adcb6dc1d773",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Yellowing of skin/eye",
+        "uuid" : "bbc18a0f-996a-4e3b-b4bf-703cfba2f9df",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Respiratory rate",
+      "uuid" : "8683115e-b991-4dbe-a68f-40bac1719064",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Respiratory Rate",
+        "uuid" : "80c5cefe-804d-45f3-b5b6-93db8b758a96",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 30.0,
+        "highNormal" : 60.0,
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Diagnosis of sepsis",
+      "uuid" : "57e8a35e-f161-41bb-a6f6-9cb3c84d2965",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diagnosis of sepsis",
+        "uuid" : "23664b77-05e2-4baa-8522-68c02314ec21",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Pus in or around the umbilicus",
+          "uuid" : "7338a25a-a8dd-4363-ac67-20706827eedd",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "None",
+          "uuid" : "8b77f487-c885-4b54-8925-153733913b10",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Skin - pus filled rashes/boils",
+          "uuid" : "9359a427-d6de-4f1d-b21e-a55b4aaef0b5",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "abnormal" : true,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 12.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Reduced breastfeeding/no breast feeding",
+          "uuid" : "0b1e4b07-1d06-442b-8c14-c8da9d28f706",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Mother says baby is cold or temp. is more than 37.2 DC",
+          "uuid" : "6bbe35ab-90bc-4aea-b9b2-d298d48b1e25",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Skin - Redness/crack in skin fold",
+          "uuid" : "b9961b58-b54e-4329-8f40-fc42a1a5981a",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          }, {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "abnormal" : true,
+            "active" : true
+          } ],
+          "order" : 11.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak and flaccid legs and hands",
+          "uuid" : "709f2b19-f4a4-4029-ab10-3575e2e47380",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 17.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Distended abdomen of mother says baby vomits frequently",
+          "uuid" : "4023f51f-e9ec-4976-99da-934aec36d917",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "High Temperature",
+          "uuid" : "e2053b42-8d26-482f-a87e-0660d3cf68cb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 13.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Difficulty in breathing",
+          "uuid" : "cc710839-9b8c-4d52-944e-8ba21ad3de72",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 15.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak and flaccid hands and legs",
+          "uuid" : "15958028-0fe1-4aa5-85f9-7b213e260877",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weak cry or stopped crying",
+          "uuid" : "06697930-4d4d-425a-8edc-d081d944b1d7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Chest indrawing",
+          "uuid" : "536afd11-f8cd-4526-87de-ced171f37c99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Reduced or stopped breastfeeding",
+          "uuid" : "ce7a0737-7770-4eb7-a4b2-0b4fdcc4b381",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 16.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Yellowing of skin/eye",
+          "uuid" : "bbc18a0f-996a-4e3b-b4bf-703cfba2f9df",
+          "dataType" : "Coded",
+          "answers" : [ {
+            "name" : "Yes",
+            "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 0.0,
+            "abnormal" : true,
+            "active" : true
+          }, {
+            "name" : "No",
+            "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+            "dataType" : "NA",
+            "answers" : [ ],
+            "order" : 1.0,
+            "active" : true
+          } ],
+          "order" : 10.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Low Temperature",
+          "uuid" : "4bd2944f-1eaa-48ee-bced-c1ff5d6baf03",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 14.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Respiratory rate >60/min",
+          "uuid" : "b035a519-7760-4d4a-9371-18dfe697d9bb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "abnormal" : true,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 11.0,
+      "type" : "MultiSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sepcify, other diagnosis of sepsis",
+      "uuid" : "54de059a-1103-4c7f-ad51-a3252f8a43f6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other danger signs of sepsis after 6 hours",
+        "uuid" : "1a68a35d-ad9c-45f3-b3dd-62c04f26be0f",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Diagnosis of sepsis').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n    const formElementGroup = params.formElementGroup;\n    return formElementGroup.formElements.map(({uuid}) => {\n        return new imports.rulesConfig.FormElementStatus(uuid, true, null);\n    });\n};",
+    "timed" : false
+  }, {
+    "uuid" : "aae8d27a-e3a5-4dff-bcb8-a5b9d95c15a8",
+    "name" : "Death Details",
+    "displayOrder" : 4.0,
+    "display" : "Death Details",
+    "formElements" : [ {
+      "name" : "Whether baby die",
+      "uuid" : "c075d34b-d8f1-4c8a-a67b-b19e2faaaadc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Whether baby die",
+        "uuid" : "1f35def8-d31d-4f66-80de-625003c9412c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Date of Death",
+      "uuid" : "2dbe0950-2b1a-457b-9a4c-9fe4a40b6b0d",
+      "keyValues" : [ {
+        "key" : "datePickerMode",
+        "value" : "Calendar"
+      } ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether baby die').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n    const formElementGroup = params.formElementGroup;\n    return formElementGroup.formElements.map(({uuid}) => {\n        return new imports.rulesConfig.FormElementStatus(uuid, true, null);\n    });\n};",
+    "timed" : false
+  }, {
+    "uuid" : "cb1f4ce1-152f-46d0-bba2-dc4b2f8cae52",
+    "name" : "Referral",
+    "displayOrder" : 5.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "Referral needed to newborn",
+      "uuid" : "fed99dff-7d4e-4f3a-a3dc-aa5d17cc039a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral needed to newborn",
+        "uuid" : "1680e20a-1bf9-4396-ae01-94bb361983c1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "e3534e89-cd83-42c1-95fa-683ee439e545",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "VHW", "SHW" ]
+      } ],
+      "concept" : {
+        "name" : "Place of referral",
+        "uuid" : "80fccb06-a62f-43e8-92eb-358bdb600079",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "VHW",
+          "uuid" : "355143bf-b812-4ec8-93e6-6795fe4f7dc9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ganiyari",
+          "uuid" : "41f067f3-48a0-4f95-aee5-dcee95a8b9de",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "SHW",
+          "uuid" : "7ac0d9a2-ff82-41e6-9f38-134904d476f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral needed to newborn').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "36ea6844-483a-4052-a5b9-1f905d6c3ee5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of referral').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason for newborn",
+      "uuid" : "67075db3-57ce-4894-af57-01503d8c72dd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral reason for newborn",
+        "uuid" : "bed53b48-5e3e-4442-9137-0f2b182fabe5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Consultation with specialist at referral center",
+          "uuid" : "9ff107d9-1b97-44d6-b3ba-2a111385c415",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Consultation with SHW",
+          "uuid" : "a3946e87-7e9d-4774-b4b9-7865da4d8a68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Sepsis",
+          "uuid" : "d4d85e62-247e-4725-8e85-fdcbcdf2d409",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Feeding problems",
+          "uuid" : "9d1a8bfa-de11-4e73-a868-a7e7e7bb3977",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Consultation with doctor",
+          "uuid" : "84223a75-65e1-4ced-8335-cf82f787d4a5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Admission at Referral center",
+          "uuid" : "44f3f4eb-0d64-4a75-8315-5d017dbaa621",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral needed to newborn').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "483e3f21-1d10-490c-975e-8f339598beeb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral reason",
+        "uuid" : "8a56f008-a910-4d6f-b028-a95db330dbf2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sonography",
+          "uuid" : "1a893a89-4984-43e1-85cc-b64fb582824c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "infec",
+          "uuid" : "8293fa19-4fd6-4942-bc93-032bc3d39e68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "voided" : true
+        }, {
+          "name" : "Admission at Referral centre",
+          "uuid" : "dad7f494-99ec-42ce-b50b-07a7450be30c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Delivery/LACS",
+          "uuid" : "7d0d495a-e733-4ea8-93ca-c57bf42c6ee9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Seizure",
+          "uuid" : "cbc1b5b1-e4f9-4c0e-abe6-cc03362ff08d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Bleeding",
+          "uuid" : "0aeb893c-34ba-49f0-bd6f-0696fce74458",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Consultation with specialist at referral centre",
+          "uuid" : "f1ecf77c-122f-4462-8bc8-812013c80fa3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Infection",
+          "uuid" : "e668ceed-92ee-4b2f-8714-72838f11264b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral needed to newborn').containsAnswerConceptName('Yes');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Other referral reason",
+      "uuid" : "4bf5ef52-f59a-47a5-a2a5-539f30ae45f3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new \n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason for newborn').containsAnswerConceptName('Other');\n  \nreturn statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n    const formElementGroup = params.formElementGroup;\n    return formElementGroup.formElements.map(({uuid}) => {\n        return new imports.rulesConfig.FormElementStatus(uuid, true, null);\n    });\n};",
+    "timed" : false
+  }, {
+    "uuid" : "b8adc779-9cb1-462d-a47a-bb8a3ff8c5b3",
+    "name" : "Counselling",
+    "displayOrder" : 6.0,
+    "display" : "Counselling ",
+    "formElements" : [ {
+      "name" : "Counselling Done",
+      "uuid" : "fddd0867-45ed-4aeb-871f-eab24066bdcb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Counselling Done",
+        "uuid" : "fa031cca-7264-420a-b657-0d3d5fc58a9c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n    const formElementGroup = params.formElementGroup;\n    return formElementGroup.formElements.map(({uuid}) => {\n        return new imports.rulesConfig.FormElementStatus(uuid, true, null);\n    });\n};",
+    "timed" : false
+  }, {
+    "uuid" : "0c0dd3b1-74ee-4977-bc5c-4cdb07ba434a",
+    "name" : "Counselling Details",
+    "displayOrder" : 7.0,
+    "display" : "Counselling Details",
+    "formElements" : [ {
+      "name" : "Counselling Done",
+      "uuid" : "3e55ba83-1275-4f77-948f-aca72fd29aa3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Counselling Done",
+        "uuid" : "fa031cca-7264-420a-b657-0d3d5fc58a9c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Tight the tread if there is bleeding",
+      "uuid" : "c099d696-9f91-4bbd-a681-1f068a727a0e",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Tight the tread if there is bleeding",
+        "uuid" : "5f577e35-7d23-4cfd-9495-d7442839e3df",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Bleeding from chord').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Show her how to wrap the baby in clothe",
+      "uuid" : "2e80bfb8-503e-4f06-b199-939b2b5c96f3",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "Show her how to wrap the baby in clothe",
+        "uuid" : "8f82651a-36a0-4eb6-a7ea-408230d44cd7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether mother wraps the baby in clothes in cold whether').containsAnswerConceptName(\"No\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "counsell her about giving kangaroo mother care",
+      "uuid" : "116e4ed9-f10e-4f15-bf2c-c2cfcde8a87b",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "counsell her about giving kangaroo mother care",
+        "uuid" : "6bcecb5c-5142-4ab4-a563-0c6c7cf0ddf7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether mother gives skin to skin warmth to baby').containsAnswerConceptName(\"No\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "counsel mother for 2 hourly breast feeding including at least 3 feed in the night even if baby is not crying/hungry",
+      "uuid" : "d2161b36-c5e7-4b1c-82d7-3d2b505df38d",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "counsel mother for 2 hourly breast feeding",
+        "uuid" : "c6c42ef8-1731-410d-ab63-19ca22aec519",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether mother breastfed her child for min 8 times a day').containsAnswerConceptName(\"No\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "counsel mother for 2 hourly breastfeeding",
+      "uuid" : "58466e96-6807-4e70-92ed-cf95376c45b6",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "counsel mother for 2 hourly breastfeeding",
+        "uuid" : "70d55d5d-aed6-46fc-bf3a-9d3ba68d6bc1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether baby cries too much or urinate less than 6 time a day').containsAnswerConceptName(\"No\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "ask mother to take Tetracycline medicine from VHW to apply in eyes, two times a day for 5 days",
+      "uuid" : "6c98397f-5fba-47c2-95a8-5419a13cc7d3",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "ask mother to take Tetracycline medicine from VHW to apply in eyes, two times a day for 5 days",
+        "uuid" : "66f49885-2429-4fe2-b8d9-5ce1426e20b2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Whether newborn has swolen eyes or discharge from eyes').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "give PCM",
+      "uuid" : "03180116-c50c-4041-b72c-fa5f9c5c9933",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "give PCM",
+        "uuid" : "7effc9b6-29c0-499c-9c78-2cf6fe796a25",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Temperature(celcius)').is.greaterThan(37.2);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "tell mother to keep the baby warm and breastfeed more frequently",
+      "uuid" : "bbacd0b2-5a5c-4794-b298-8623538d2cc6",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "tell mother to keep the baby warm and breastfeed more frequently",
+        "uuid" : "dced742e-74bc-4016-83d0-3e0020bedd17",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Temperature(celcius)').is.lessThan(36.1)\n  .and.when.valueInEncounter('Temperature(celcius)').is.greaterThan(35.1);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "start the treatment of hypothermia and also look for sign of sepsis",
+      "uuid" : "9579ed96-20fd-4cd1-bc27-dcf0327eaa27",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "start the treatment of hypothermia and also look for sign of sepsis",
+        "uuid" : "dde1da1e-56c5-42ad-8577-6b3096948330",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Temperature(celcius)').is.lessThan(36);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "apply GV paint",
+      "uuid" : "b5a0e4cf-964b-42c8-8484-427d573909c9",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "apply GV paint",
+        "uuid" : "b5c8113e-ea16-414c-8d67-82fa0177a909",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Skin - pus filled rashes/boils').containsAnswerConceptName(\"Yes\")\n  .or.when.valueInEncounter('Skin - Redness/crack in skin fold').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "refer the baby to Subcenter for yellow skin or eyes",
+      "uuid" : "71a8b355-6774-43d3-8e8a-b063d3a8ad9a",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Counselling point" ]
+      } ],
+      "concept" : {
+        "name" : "refer the baby to Subcenter for yellow skin or eyes",
+        "uuid" : "c3046ee8-0992-4459-b713-555a947ab6f3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Counselling point",
+          "uuid" : "38e42408-3f81-4e26-87dd-563a9718a6f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Yellowing of skin/eye').containsAnswerConceptName(\"Yes\");\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n    const formElementGroup = params.formElementGroup;\n    return formElementGroup.formElements.map(({uuid}) => {\n        return new imports.rulesConfig.FormElementStatus(uuid, true, null);\n    });\n};",
+    "timed" : false
+  } ],
+  "decisionRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n    const complicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: \"Diagnosis of sepsis\"\n    });\n      \n      complicationsBuilder\n        .addComplication(\"Respiratory rate >60/min\")\n        .when.valueInEncounter(\"Child Respiratory Rate\").is.greaterThan(60);\n      \n      complicationsBuilder\n        .addComplication(\"Yellowing of skin/eye\")\n        .when.valueInEncounter(\"Yellowing of skin/eye\").containsAnswerConceptName('Yes');\n      \n      complicationsBuilder\n        .addComplication(\"Skin - Redness/crack in skin fold\")\n        .when.valueInEncounter(\"Skin - Redness/crack in skin fold\").containsAnswerConceptName('Yes');\n      \n      complicationsBuilder\n        .addComplication(\"Skin - pus filled rashes/boils\")\n        .when.valueInEncounter(\"Skin - pus filled rashes/boils\").containsAnswerConceptName('Yes');\n        \n     complicationsBuilder\n        .addComplication(\"High Temperature\")\n        .when.valueInEncounter(\"Temperature of newborn (celcius)\").is.greaterThan(37.8);\n    \n    complicationsBuilder\n        .addComplication(\"Low Temperature\")\n        .when.valueInEncounter(\"Temperature of newborn (celcius)\").is.lessThan(36.1);\n    \n    \n    //Look for any danger signs of sepsis within 6 hours\n    //Look for any danger signs of sepsis after 6 hours\n    \n     //Weak and flaccid legs and hands\n     \n    complicationsBuilder.addComplication(\"Weak and flaccid legs and hands\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Weak and flaccid legs and hands').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Weak and flaccid legs and hands');\n   \n    //Weak cry or stopped crying\n        \n    complicationsBuilder.addComplication(\"Weak cry or stopped crying\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Weak cry or stopped crying').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Weak cry or stopped crying');\n\n    \n    //Difficulty in breathing\n     complicationsBuilder.addComplication(\"Difficulty in breathing\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Difficulty in breathing').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Difficulty in breathing');\n\n    \n    //Reduced or stopped breastfeeding\n     complicationsBuilder.addComplication(\"Reduced or stopped breastfeeding\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Reduced or stopped breastfeeding').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Reduced or stopped breastfeeding');\n\n    \n    //Distended abdomen of mother says baby vomits frequently\n     complicationsBuilder.addComplication(\"Distended abdomen of mother says baby vomits frequently\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Distended abdomen of mother says baby vomits frequently').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Distended abdomen of mother says baby vomits frequently');\n\n    \n    //Mother says baby is cold or temp. is more than 37.2 DC\n     complicationsBuilder.addComplication(\"Mother says baby is cold or temp. is more than 37.2 DC\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Mother says baby is cold or temp. is more than 37.2 DC').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Mother says baby is cold or temp. is more than 37.2 DC');\n\n    \n    //Chest indrawing\n     complicationsBuilder.addComplication(\"Chest indrawing\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Chest indrawing').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Chest indrawing');\n\n    \n    //Pus in or around the umbilicus\n     complicationsBuilder.addComplication(\"Pus in or around the umbilicus\").when.valueInEncounter(\"Look for any danger signs of sepsis within 6 hours\").containsAnswerConceptName('Pus in or around the umbilicus').or.when.valueInEncounter(\"Look for any danger signs of sepsis after 6 hours\").containsAnswerConceptName('Pus in or around the umbilicus');\n\n        \n    decisions.encounterDecisions.push(complicationsBuilder.getComplications());\n    return decisions;\n};",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const programEncounter = params.entity;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n    programEncounter\n  });\n  const dateOfBirth = programEncounter.individual.dateOfBirth;\n   console.log('dateOfBirth ====>',dateOfBirth);\n\n  const encounterSchedulePNC = [\n        {\"name\": \"PNC 2\", \"earliest\": 1, \"max\": 4},\n        {\"name\": \"PNC 3\", \"earliest\": 2, \"max\": 5},\n        {\"name\": \"PNC 4\", \"earliest\": 6, \"max\": 9},\n        {\"name\": \"PNC 5\", \"earliest\": 14, \"max\": 17},\n        {\"name\": \"PNC 6\", \"earliest\": 28, \"max\": 31},\n        {\"name\": \"PNC 7\", \"earliest\": 41, \"max\": 44}\n];\n  \n  const visitDate = programEncounter.encounterDateTime; \n  const deathStatus=programEncounter.getObservationReadableValue('Whether baby die');\n  console.log('deathStatus ====>',deathStatus);\n   var schedule = _.chain(encounterSchedulePNC).filter(e => imports.moment(visitDate).isSameOrBefore(imports.moment(dateOfBirth).add(e.earliest, 'days'), 'date') === true)\n            .filter(e => (programEncounter.programEnrolment.hasEncounter('Child PNC', e.name)) === false)\n            .first()\n            .value();\n  \n  if (!_.isEmpty(schedule) && deathStatus == 'No') {\n  scheduleBuilder\n    .add({\n      name: schedule.name,\n      encounterType: \"Child PNC\",\n      earliestDate:  imports.moment(dateOfBirth).add(schedule.earliest, 'days').toDate() ,\n      maxDate: imports.moment(dateOfBirth).add(schedule.max, 'days').toDate() \n    });\n  }\n  \n  const referralAns =programEncounter.getObservationReadableValue('Referral needed to newborn');\n  const earliestDate=imports.moment(programEncounter.encounterDateTime).add(3,'days').toDate();\n  \n  if(referralAns)\n  scheduleBuilder\n    .add({\n      name: \"Referral Status-1\",\n      encounterType: \"Referral Status\",\n      earliestDate: earliestDate,\n      maxDate: imports.moment(earliestDate).add(2, 'days').toDate()\n    }).whenItem(referralAns == 'Yes')\n    .is.truthy;\n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

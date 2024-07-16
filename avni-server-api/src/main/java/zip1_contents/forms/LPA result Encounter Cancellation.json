@@ -1,0 +1,7 @@
+{
+  "name" : "LPA result Encounter Cancellation",
+  "uuid" : "77833c72-6ceb-4028-91d0-561a767d1619",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "18e3c655-94ec-4ca0-9eb6-ac15eb3e0b58",
+  "entity" : {
+    "uuid" : "4b23dc0e-3ae0-4d41-8546-35797063e123",
+    "type" : "Form"
+  },
+  "entityUUID" : "4b23dc0e-3ae0-4d41-8546-35797063e123",
+  "entityType" : "Form",
+  "type" : "ViewFilter",
+  "executionOrder" : 1.0,
+  "data" : { },
+  "name" : "JSSCP Registration View Filter",
+  "uuid" : "3f3fe5fa-b331-4ce5-8a10-a29fd6ba8f36",
+  "fnName" : "RegistrationViewFilter"
+}

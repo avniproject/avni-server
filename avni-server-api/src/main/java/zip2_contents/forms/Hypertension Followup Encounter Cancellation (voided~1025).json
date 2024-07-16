@@ -1,0 +1,8 @@
+{
+  "name" : "Hypertension Followup Encounter Cancellation (voided~1025)",
+  "uuid" : "220b0dc3-7e6b-47b3-933d-c9c176837c27",
+  "formType" : "ProgramEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ],
+  "voided" : true
+}

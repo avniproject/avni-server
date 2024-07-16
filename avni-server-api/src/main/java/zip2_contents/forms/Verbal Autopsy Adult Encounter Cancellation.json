@@ -1,0 +1,7 @@
+{
+  "name" : "Verbal Autopsy Adult Encounter Cancellation",
+  "uuid" : "83a4b47c-601a-4790-83bd-3befc7e2f84d",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

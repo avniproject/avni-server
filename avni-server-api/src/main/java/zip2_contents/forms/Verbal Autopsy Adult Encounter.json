@@ -1,0 +1,5277 @@
+{
+  "name" : "Verbal Autopsy Adult Encounter",
+  "uuid" : "4146f2e9-edda-45be-a3d2-51a341020fc9",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "7791ebdb-a559-48ba-a63e-95d8c738c15e",
+    "name" : "Details of respondent",
+    "displayOrder" : 1.0,
+    "display" : "Details of respondent",
+    "formElements" : [ {
+      "name" : "Name of respondent",
+      "uuid" : "6208b756-f85a-4809-a135-5fe753fcbf8f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of respondents",
+        "uuid" : "826d8397-8793-42c7-91ee-ca89e41b7793",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Relationship of respondent with deceased",
+      "uuid" : "a2387570-ad53-429d-bcc9-fd38cf9470de",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Relationship of Respondent with deceased",
+        "uuid" : "2c32cbdd-57a4-4aad-bb5d-396066bc77c4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Neighbour/No relation",
+          "uuid" : "e8e6f3c5-04aa-4366-9659-cefc1fc2bd4f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Son-in-law/Daughter-in-law",
+          "uuid" : "a93c7e62-60ad-439d-8db8-6ae3d141fac7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Brother-in-law/Sister-in-law",
+          "uuid" : "17879a81-eaf6-40ed-adaa-dff5d3e3e339",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Mother/Father",
+          "uuid" : "7c46e04d-4be4-43e1-b0ae-bc3963edcb07",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Parent-in-law",
+          "uuid" : "1a2f8520-829c-41ac-8c5e-cb338be63d9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Grandchild",
+          "uuid" : "d92438ba-9f8f-4b56-8351-f0a653c1c025",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Brother/Sister",
+          "uuid" : "5f97759e-9cc0-431b-9aeb-eb5f8a55af49",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Wife/Husband",
+          "uuid" : "fba1b474-d502-49a4-861e-c1ea5986ceef",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Son/Daughter",
+          "uuid" : "5289ae58-51c8-4285-bd10-ffb76acd92e0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Grandfather/Grandmother",
+          "uuid" : "cfca3488-6300-414e-8426-5fe7b4ed714e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Other Relative",
+          "uuid" : "be07b655-4a54-4b42-8cf4-a1a78b41a0d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Did the respondent live with the deceased during the events that led to death?",
+      "uuid" : "94cf179f-a564-4244-bf3e-3fed4d64a73f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did the respondent live with the deceased during the events that led to death",
+        "uuid" : "9ad8d23f-5d21-4829-94b8-d6aefc800613",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Respondent's age in completed years",
+      "uuid" : "412841c5-ae33-48a9-9863-820f2602e719",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Respondent's age in completed years",
+        "uuid" : "05e74d86-b758-4498-b332-f5335d97abb4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Respondent's  sex",
+      "uuid" : "db7ae680-7a25-43b4-94bd-99c11e9b8bdb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Respondent's  sex",
+        "uuid" : "c58990c1-219a-4a7c-9155-79ea79b2cf43",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Male",
+          "uuid" : "9be76824-e7c8-4145-b6c1-7f0b006f1b3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Female",
+          "uuid" : "7030fea5-05e1-4abb-982a-7ceb2712adf4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "aae425a2-bcd8-4ef5-ae80-268716cd5d17",
+    "name" : "Details of deceased",
+    "displayOrder" : 2.0,
+    "display" : "Details of deceased ",
+    "formElements" : [ {
+      "name" : "Deceased’s Sex",
+      "uuid" : "6f7a35cf-41de-40cc-90be-035a371cc63d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Deceased’s Sex",
+        "uuid" : "4e1b0251-c3f4-4aee-a679-eea652b65eb3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Male",
+          "uuid" : "9be76824-e7c8-4145-b6c1-7f0b006f1b3d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Female",
+          "uuid" : "7030fea5-05e1-4abb-982a-7ceb2712adf4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Age of Deceased",
+      "uuid" : "f4116f57-4ed8-46fe-a0bd-c81f5f1330e3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Age of Deceased",
+        "uuid" : "d4d7734e-bfe0-4f6a-845f-b9e374c7e67c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Marital status",
+      "uuid" : "4db3731c-cf71-4d62-a4b7-3c8d7979f624",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Marital status",
+        "uuid" : "9e995ea6-a5f7-410f-adc2-2d2ce6d5e19b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Widow(er)",
+          "uuid" : "9329d91a-385b-4633-a788-c10ccb7d1143",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Remarried",
+          "uuid" : "c219f819-db31-4a13-a895-fe67155e284b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Currently married",
+          "uuid" : "ba48e389-23df-43e4-89a6-85f392d4312e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Divorced",
+          "uuid" : "1bc8befa-49b7-4a70-8203-8ec5d0660783",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Unmarried",
+          "uuid" : "4a4cc0eb-25c0-47b8-b9dd-de2dbefc1425",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Separated",
+          "uuid" : "568a29bd-40fc-4261-bb85-9f9366b9be1b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Was deceased living on other village for job/work",
+      "uuid" : "1e87c6ad-66b2-4037-90dd-d6ab233e6122",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was deceased living in other village for job/work?",
+        "uuid" : "511c2903-33fd-4633-b934-d728fa8bf5f8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Relationship of the deceased with the head of the household",
+      "uuid" : "cb372084-2237-427b-9674-59f7133bd39b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Relationship of  the deceased with the head of the household",
+        "uuid" : "4e52d4fd-daf3-4099-88a2-2d6a1f20836a",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Brother-in-law/Sister-in-law",
+          "uuid" : "17879a81-eaf6-40ed-adaa-dff5d3e3e339",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "Son/Daughter",
+          "uuid" : "5289ae58-51c8-4285-bd10-ffb76acd92e0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other Relative",
+          "uuid" : "be07b655-4a54-4b42-8cf4-a1a78b41a0d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Son-in-law/Daughter-in-law",
+          "uuid" : "a93c7e62-60ad-439d-8db8-6ae3d141fac7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Mother/Father",
+          "uuid" : "7c46e04d-4be4-43e1-b0ae-bc3963edcb07",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Grandchild",
+          "uuid" : "d92438ba-9f8f-4b56-8351-f0a653c1c025",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Self",
+          "uuid" : "03c3c21c-6e8c-4210-a15e-fbb181c266b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Grandfather/Grandmother",
+          "uuid" : "cfca3488-6300-414e-8426-5fe7b4ed714e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Wife/Husband",
+          "uuid" : "fba1b474-d502-49a4-861e-c1ea5986ceef",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Parent-in-law",
+          "uuid" : "1a2f8520-829c-41ac-8c5e-cb338be63d9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Neighbour/No relation",
+          "uuid" : "e8e6f3c5-04aa-4366-9659-cefc1fc2bd4f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Brother/Sister",
+          "uuid" : "5f97759e-9cc0-431b-9aeb-eb5f8a55af49",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of death",
+      "uuid" : "65264689-bb59-4b50-9cbc-78810e28020c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of death",
+        "uuid" : "93c4be55-8953-4cf0-bf35-182042a3bccb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "On the way to health facility",
+          "uuid" : "c4286b04-2545-4e27-bceb-2c647b390d22",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Pvt. Hospital",
+          "uuid" : "a251776a-2d2a-4bc6-9578-74481c4a9727",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "JSS Ganiyari hospital/subcenter",
+          "uuid" : "1e1c6598-7542-41ee-8c45-71646ee02499",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Hospital",
+          "uuid" : "e763cad4-722a-4c37-b5a0-5c17428f1089",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Outside home (non work place)",
+          "uuid" : "2f2dec98-7266-4329-bd41-12e108b8a0f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Govt. Hospital",
+          "uuid" : "5402f256-869f-4999-83c1-35e00eeb9453",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Private hospital",
+          "uuid" : "05d34f29-d6fa-4cc2-bc33-32bfaf2fc140",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Workplace",
+          "uuid" : "dbd55a29-8666-4891-88f5-59dc013d2b9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "On the way to Health Facility",
+          "uuid" : "95bf036d-7edc-4ca6-8ba3-16cc098cc357",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "SC/PHC/CHC/Rural hospital",
+          "uuid" : "4a29543e-9c71-4821-bb90-9a377367c44e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Unknown",
+          "uuid" : "64fbf07a-d5d2-4bd7-a309-4fb88f4a71f2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Ambulance",
+          "uuid" : "6948293d-8f64-4958-b022-b69af64cdcde",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Other place",
+          "uuid" : "781c225d-7f2c-49a9-b600-a95cd36d60c5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Hypertension?",
+      "uuid" : "95348e50-18bf-4b54-9cca-13227d3654f2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Hypertension?",
+        "uuid" : "71f97b86-80b5-4872-a3ca-e1446ca9c449",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Heart disease",
+      "uuid" : "3271e953-b3e9-419b-91a5-04fd05e80f5f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Heart disease?",
+        "uuid" : "62e89b71-224a-4cff-bdd6-8a51728257da",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Stroke?",
+      "uuid" : "ca600618-2531-445b-b5a1-1c72a40ec615",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Stroke?",
+        "uuid" : "dba08c37-c370-4d19-826b-2de6696d17ba",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Diabetes?",
+      "uuid" : "09fc213e-ec66-40d2-beb6-4f0994216899",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Diabetes?",
+        "uuid" : "728d1be9-1c45-4772-80df-33b248365161",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Typhoid?",
+      "uuid" : "9369a119-72dd-4728-af00-9ff6f0a251f3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Typhoid?",
+        "uuid" : "0e89ee40-da7e-4aa2-8d8b-2da6cbb0248c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had HIV?",
+      "uuid" : "5e53a27c-eea4-45cd-8554-b119c247362b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had HIV?",
+        "uuid" : "a35e7967-f41a-4f9d-a1f0-988b914b1f15",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Cancer?",
+      "uuid" : "12bef163-ae02-4450-a56f-34d9de84f29a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Cancer?",
+        "uuid" : "eb962084-d8b8-4a15-8dbf-6077e943930e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had a doctor EVER stated that the deceased had Asthma?",
+      "uuid" : "404a6d3e-cfd8-4313-85fa-26f3c0821d5f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had a doctor EVER stated that the deceased had Asthma?",
+        "uuid" : "12516fc3-16ca-4a2b-91d7-68fbb0c9e501",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Had anyother chronic illness which lasted for more than 3 months?",
+      "uuid" : "f6e6ce01-bf84-4624-84a2-0a00142c7012",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Had anyother chronic illness which lasted for more than 3 months?",
+        "uuid" : "c53e9b7d-678c-493f-b497-d6a197125b52",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If yes, write the names of chronic illnesses",
+      "uuid" : "f74e2289-117c-4f1b-9bd0-801b25589e4c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, write the names of chronic illnesses",
+        "uuid" : "f266b72c-f2b2-42f7-992e-c10251fb9d58",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "In the last one year, did the deceased loss his/her weight drastically?",
+      "uuid" : "f6f9e2b2-2167-499b-adf8-c5c4193662bc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "In the last one year, did the deceased loss his/her weight drastically?",
+        "uuid" : "393984fc-5431-45a4-a4f3-514c45226387",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes, there was weight loss",
+          "uuid" : "84fb33eb-0f22-4765-8661-18de16fcd7b9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "No change in the weight",
+          "uuid" : "e13113e1-dbf1-4cd2-a980-5451e64bede7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Some weight loss but not much",
+          "uuid" : "3c4503c3-13e7-41eb-bac8-3e3b655eb7e9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "In the last five years, did the deceased was taking medicine/s regularly?",
+      "uuid" : "0ac322c2-974b-49c7-b946-c204ca0c97be",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "In the last five years, did the deceased was taking medicine/s regularly?",
+        "uuid" : "348aee41-7341-4235-9ff4-b036bd252047",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If yes, write the names of at least 3 medicines",
+      "uuid" : "d7afcb16-19e3-40b7-8304-f87fce080bbc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, write the names of at least 3 medicines",
+        "uuid" : "7321bd2e-bfb2-4606-90a2-d3598798b9ad",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "1337b24e-8076-4f25-adc6-0cae4d2e544c",
+    "name" : "Addictions information of deceased",
+    "displayOrder" : 3.0,
+    "display" : "Addictions information of deceased",
+    "formElements" : [ {
+      "name" : "Did deceased smoke tobacco within the last 5 years?",
+      "uuid" : "c50348a3-c94f-4ddd-a5ce-ce2bd17c5961",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did deceased smoke tobacco within the last 5 years?",
+        "uuid" : "8c860ea3-ceec-4b48-8abf-d318ef807d70",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If yes, how many bidi per day? (Deceased)",
+      "uuid" : "9bed2e6c-583f-4553-8b7e-f4926a8889b3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, how many bidi per day? (Deceased)",
+        "uuid" : "ee070c20-53fe-4951-b544-6b1c782bdf17",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If yes, how many cigarettes per day? (Deceased)",
+      "uuid" : "d7d6cc04-7ef7-4125-a608-0f8c0e39eab3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, how many cigarettes per day? (Deceased)",
+        "uuid" : "5f34656f-d4e3-4bc4-97cd-3f9b216d45ab",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other tobacco smoked? (deceased)",
+      "uuid" : "00b7d78b-c82b-4444-8992-9bfbe24e6e9c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other tobacco smoked? (deceased)",
+        "uuid" : "18170ab3-29bd-4962-9f65-5afdcd9e400c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did deceased chew tobacco within the last 5 years?",
+      "uuid" : "550dd788-684a-4fc7-a040-748fa1e19047",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did deceased chew tobacco within the last 5 years?",
+        "uuid" : "3b0ffd09-fc97-4ab3-a366-43ea875bc233",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did deceased apply tobacco within the last 5 years?",
+      "uuid" : "d59d68d2-073c-4c14-ab92-e1c3b3815e47",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did deceased apply tobacco within the last 5 years?",
+        "uuid" : "63ce472f-48f5-4342-86e2-2cb2b7ce5d71",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "In the last few days did deceased drink alcohol even once a week?",
+      "uuid" : "15790fed-5795-43f4-b463-ed43faa73043",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "In the last few days did deceased drink alcohol even once a week?",
+        "uuid" : "722035f9-3977-4757-9808-e9b8f269e887",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was deceased vegetarian for last few years? (Egg, fish, meat was not consumed)",
+      "uuid" : "552e9cf2-eca4-45b2-9c1e-f566d14fee71",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was deceased vegetarian for last few years? (Egg, fish, meat was not consumed)",
+        "uuid" : "a2d583d9-2f73-4439-b292-ede493ea0845",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did deceased normally drink alcohol (use local term) at least once a week during most weeks in the last 5 years?",
+      "uuid" : "4896d8a5-fb36-442d-8843-1b883fb17ccd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did deceased normally drink alcohol (use local term) at least once a week during most weeks in the last 5 years?",
+        "uuid" : "9cf82c02-92de-4b49-a921-9bbd8138c407",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "If yes, what was the average no. of days per week deceased drank? (write 99 in case of quantity not known)",
+      "uuid" : "4caa462a-b281-4202-a6ae-0373ea75172b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, what was the average no. of days per week deceased drank? (write 99 in case of quantity not known)",
+        "uuid" : "17c10f2e-d658-43a7-be05-3b9b562b4eff",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "8b7309fd-1e8f-4993-aa58-af499383067e",
+    "name" : "Addiction information of respondent",
+    "displayOrder" : 4.0,
+    "display" : "Addiction information of respondent",
+    "formElements" : [ {
+      "name" : "Did respondent smoke tobacco within the last 5 years?",
+      "uuid" : "001ff556-5843-4c46-a1aa-d2b45549750a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did respondent smoke tobacco within the last 5 years?",
+        "uuid" : "f9bb409e-8d62-477d-89c3-826c0a50a9be",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If yes, how many bidi per day? (Respondent)",
+      "uuid" : "92cfb070-9436-4e24-b21f-4189862a309f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, how many bidi per day? (Respondent)",
+        "uuid" : "ce6cd97b-8cef-4caf-a18a-be9ee89c74e4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If yes, how many cigarettes per day? (Respondents)",
+      "uuid" : "72a5915b-2cec-4726-aea6-1cdd10eb5d3a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, how many cigarettes per day? (Respondents)",
+        "uuid" : "8b39c7a9-ab07-457b-9254-99d70f6a654c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other tobacco smoked? (Respondent)",
+      "uuid" : "7143731e-eb59-48ed-b3e6-503373853e20",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other tobacco smoked? (Respondent)",
+        "uuid" : "c550169f-198e-4a7f-8985-cd48576cc694",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did respondent chew tobacco within the last 5 years?",
+      "uuid" : "521b6b33-3d29-42ac-9372-0ea3a78c1a2d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did respondent chew tobacco within the last 5 years?",
+        "uuid" : "3b766fed-eee2-410e-b8d7-903c5d507484",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did respondent apply tobacco within the last 5 years?",
+      "uuid" : "5f6c4d74-793f-459f-84f3-2312b278221f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did respondent apply tobacco within the last 5 years?",
+        "uuid" : "02fa2e73-2905-4307-a2ac-e0d4e93269f0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "In the last few days did respondent drink alcohol even once a week?",
+      "uuid" : "dc9098a1-97fe-4f80-aeec-fea3650e6643",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "In the last few days did respondent drink alcohol even once a week?",
+        "uuid" : "c77628ad-8694-422a-bf4e-9cf3e74e865e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was respondent vegetarian for last few years? (Egg, fish, meat was not consumed)",
+      "uuid" : "98bf508c-ebfa-4901-a5b3-e2dad7648a1b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was respondent vegetarian for last few years? (Egg, fish, meat was not consumed)",
+        "uuid" : "49d46040-c1f6-4e54-b2b6-72b2e7cbf450",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did respondent normally drink alcohol (use local term) at least once a week during most weeks in the last 5 years?",
+      "uuid" : "31dadb7c-64c8-45a4-a524-fc7127adc57b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did respondent normally drink alcohol  (use local term) at least once a week during most weeks in the last 5 years?",
+        "uuid" : "6a5dac80-48db-447f-af1b-e1ab1616d320",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Definite Yes",
+          "uuid" : "66b40505-e212-493f-85db-2eb49eefdeb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Definite No",
+          "uuid" : "12f19732-bd23-450b-9a75-5d312f1eb956",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "unknown",
+          "uuid" : "12894e4d-2ff2-42da-a000-0ef2ef16b351",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "If yes, what was the average no. of days per week respondent drank? (write 99 in case days not known)",
+      "uuid" : "cb579589-1caa-40d8-9ad3-cc93be26bd79",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, what was the average no. of days per week respondent drank? (write 99 in case days not known)",
+        "uuid" : "b7f53b78-5b06-4d4a-b760-04a792c9c591",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "546908df-b344-47ae-bfdb-f2df2666e44a",
+    "name" : "Information of women of 15-49 age group",
+    "displayOrder" : 5.0,
+    "display" : "Information of women of 15-49 age group ",
+    "formElements" : [ {
+      "name" : "Was she pregnant or suspected pregnant?",
+      "uuid" : "95fcaed7-6425-48ee-8733-530441483fbb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was she pregnant or suspected pregnant?",
+        "uuid" : "30792594-68a0-4c65-aeea-3a0e645839f3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was she dead within the 42 days of delivery?",
+      "uuid" : "95bca0fb-aa96-4cbf-bedc-86ef24b9bd27",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was she dead within the 42 days of delivery?",
+        "uuid" : "de0baa38-f27d-4528-9632-074215e6d624",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was she dead within the 42 days of abortion?",
+      "uuid" : "8f20884d-ec23-4082-b283-3e6c1af3063c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was she dead within the 42 days of abortion?",
+        "uuid" : "1ff53245-51c4-432d-8c3a-fb6f1266288d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "8d4071c9-4393-4fe2-a090-66eecce22c10",
+    "name" : "Key symptoms",
+    "displayOrder" : 6.0,
+    "display" : "Key symptoms",
+    "formElements" : [ {
+      "name" : "Did the deceased has any of following symptoms?",
+      "uuid" : "1f677ff6-eb1f-4996-a6e5-5acdf7031afe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did the deceased had any of following symptoms?",
+        "uuid" : "163fe26b-cae4-4c0d-a5ac-88d59797219e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Related to abdomen",
+          "uuid" : "006f79c5-9e0e-4e9a-9517-8449f1124f21",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Stroke/Paralysis",
+          "uuid" : "2d155e28-4424-47e7-a739-65493e5dc520",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "diarrhoea",
+          "uuid" : "295da566-69ce-4233-ba3e-2c29ab98b970",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Chest Pain",
+          "uuid" : "3b583322-ab97-4650-9802-8328b21144be",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Jaundice",
+          "uuid" : "49adc061-6cac-4d92-9faa-7d3279bb77f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Convulsions/Epilepsy",
+          "uuid" : "b0f450bc-8979-4dd2-95ed-f6dc046de7ff",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Cough",
+          "uuid" : "6faa04f7-fa23-4a7d-9b0c-e901ca752b23",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "swelling",
+          "uuid" : "1d8e5666-ae0b-4c81-b6df-74c36700092a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Related to urinary tract",
+          "uuid" : "3e82b8d0-47cc-4019-83f2-a7a73e87fc85",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Loss of weight",
+          "uuid" : "9369150e-064b-4d5a-8d2a-8becd196f4ae",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Rashes on skin",
+          "uuid" : "52a227be-00e1-48c5-94d1-156c9a61f168",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there fever?",
+      "uuid" : "883668b6-d102-4ade-bbe8-42d443fc3d1a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there fever?",
+        "uuid" : "eff5968e-c87a-4f31-892d-81b2ccebc6d2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How was fever?",
+      "uuid" : "c7a053b1-f52c-49ca-978f-b0eeb878978c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How was fever?",
+        "uuid" : "aee65762-3ef4-462c-a05d-4c0b9731660f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Low grade",
+          "uuid" : "8adc1652-484b-48c4-b138-790920d6f5e1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "severe",
+          "uuid" : "27741368-2fe8-4725-a57b-b5c2edd79317",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "High grade",
+          "uuid" : "e132e3a1-70e0-47c5-b01b-0c7b100558d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "mild",
+          "uuid" : "7fce8d85-0e05-43b9-9216-9eebd9a3d6a6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  //read the value of form element using encounter.getObservationValue(CONCEPT_NAME);\n  const formElementValue1 = \"1\";\n  const formElementValue2 = \"1\";\n  //form element will be shown only when below condition is true\n  const showCondition = formElementValue1 === formElementValue2;\n  statusBuilder.show().whenItem(showCondition).is.truthy;\n  //for form element validation error\n  statusBuilder.validationError(\"Values are not equal\").whenItem(showCondition).is.falsy;\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "For how many days fever was?",
+      "uuid" : "5c654161-9760-4316-bcfb-24b83ee59c78",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "For how many days fever was?",
+        "uuid" : "8ddb9e7e-03b1-42be-8bef-31005969854d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Less than 30 days",
+          "uuid" : "9142d1d2-224b-4a5b-a883-07a0f523cc96",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "More than 30 days",
+          "uuid" : "8a699a9b-6781-4e85-b9f2-0904fe559c33",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was fever increasing every day compared to previous day?",
+      "uuid" : "6022c224-ff7d-4d2c-a138-c57ec8cacdc6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was fever increasing every day compared to previous day?",
+        "uuid" : "99253205-e815-4dcb-b7e5-5fd87cca40d0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was fever off and on and along with chill?",
+      "uuid" : "d537e839-585c-4dfa-82f7-e3a8185938a7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was fever off and on and along with chill?",
+        "uuid" : "dad1edfb-f0f0-4d5c-94d7-d5126692e662",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health issue along with fever? Please tick all which present and also ask seperatly",
+      "uuid" : "ecc19a27-69c8-45c3-9687-e45bf153ed9f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health issue along with fever? Please tick all which present and also ask seperatly",
+        "uuid" : "dce96755-2cac-4bc8-a672-791a18ae94e9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Convulsion",
+          "uuid" : "8876538b-a316-4e60-b58e-465ea1600007",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Altered Sensorium",
+          "uuid" : "e712e34f-11f6-4826-92bb-497480ee3ab0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Rashes on skin after fever",
+          "uuid" : "4c19f18e-3280-4033-b225-030a57604be1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Diarrhoes",
+          "uuid" : "c83423d3-0b44-48bf-afd1-ac68f4d88169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Burning micturition",
+          "uuid" : "aa43a1cd-faa2-45cc-be26-1a19b0bc9580",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Jaundice",
+          "uuid" : "49adc061-6cac-4d92-9faa-7d3279bb77f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Neck rigidity",
+          "uuid" : "6fbca59d-f3d0-4c1f-a24c-07d9a687e9fb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Photo phobia/Phonophobia",
+          "uuid" : "225ee57e-36a2-4472-ac47-a9111354618f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Headache",
+          "uuid" : "44683953-68ed-4498-81e8-924879c59117",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Cough",
+          "uuid" : "6faa04f7-fa23-4a7d-9b0c-e901ca752b23",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Chest Pain",
+          "uuid" : "3b583322-ab97-4650-9802-8328b21144be",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there cough?",
+      "uuid" : "b9549c00-0e0d-4fab-be70-0d37003b39fc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there cough?",
+        "uuid" : "2efb26ff-46f3-48d5-b3a2-777deed5f8cb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How was cough?",
+      "uuid" : "02ef64de-0b14-432f-81bc-e7d99d8490ed",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How was cough?",
+        "uuid" : "5527bd77-8efa-4aee-a9af-9d15b12efede",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "With sputum",
+          "uuid" : "4a412ae1-6aa0-492f-b944-a3d8b047aa49",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Dry (without sputum)",
+          "uuid" : "2ec5ef23-6b32-4a5b-9da7-eb405e4523ac",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If the cough was productive (with sputum), please select below.",
+      "uuid" : "b617693a-0440-4b32-a6ec-f2c63427816e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If the cough was productive (with sputum), please select below.",
+        "uuid" : "5199cea8-aae2-49e8-a51c-0917aafd394d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Bad smell in sputum",
+          "uuid" : "a2063436-b852-4b71-888c-6aa4fea41388",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Blood in the sputum",
+          "uuid" : "d283f51b-ee23-4362-8ec7-cbb2cbfe322c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Both not present",
+          "uuid" : "f6999279-1b53-480f-bd85-5ccb7f94bb26",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "What was the colour of sputum?",
+      "uuid" : "ef9c734e-f558-42ae-990d-ecfb16aadf0b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What was the colour of sputum?",
+        "uuid" : "02bcb94b-dfd3-4476-b14e-098745310c78",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Redish",
+          "uuid" : "3e7a243c-b924-400f-afc3-a351196cfcec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "White",
+          "uuid" : "81c9ae87-0a98-4f4f-a7a6-3069091e1b18",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yellow",
+          "uuid" : "cb2dae11-b62b-479e-8ee9-4b88d09291da",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If the cough is more than 30 days, had there weight loss?",
+      "uuid" : "45918914-e19b-4095-a9bb-955a2759ef43",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If the cough is more than 30 days, had there weight loss?",
+        "uuid" : "fdec3a0f-cfe9-46cc-8460-9b3af178b1e5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How long was the cough for?",
+      "uuid" : "eb2b8572-6034-4fe1-abb2-a2cb6521a086",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How long was the cough for?",
+        "uuid" : "8b51d114-dc1c-4bd8-8b46-cb40789d7b7d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Less than 30 days",
+          "uuid" : "9142d1d2-224b-4a5b-a883-07a0f523cc96",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "More than 30 days",
+          "uuid" : "8a699a9b-6781-4e85-b9f2-0904fe559c33",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When was cough increases?",
+      "uuid" : "3a8f9f4e-09ed-4abc-80bf-d280beab0de1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When was cough increases?",
+        "uuid" : "89cde2ee-9651-4233-9f16-ba2d480a6321",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "During day time",
+          "uuid" : "26dc17e2-f119-41ec-bf6a-f4f485cf57b4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Only during night time",
+          "uuid" : "cb6c26af-3d86-455b-b2f0-665020157bcc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "During night time",
+          "uuid" : "863dbb4c-a6c4-484c-9f3a-87d1eb96ec2f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Increases in both time",
+          "uuid" : "2e49f071-3c92-4893-8e50-3daccd316196",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there whistling sound from the chest along with cough?",
+      "uuid" : "4807c1e7-d0a2-4908-99be-ad1e80963115",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there whistling sound from the chest along with cough?",
+        "uuid" : "ebda0afd-879e-457b-a0c2-ad89ebfca5e0",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there chest indrawing?",
+      "uuid" : "d8a83a77-6610-4163-80ea-046d40ae1c44",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there chest indrawing?",
+        "uuid" : "f8153b0e-de41-431b-a5d2-73c11e7c9463",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Cough (problem) increase when lie down and feels ok when sit?",
+      "uuid" : "0d4d951b-811a-400f-95bf-017243082f60",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cough (problem) increase when lie down and feels ok when sit?",
+        "uuid" : "685a4119-1c25-4c9d-a547-2b6e552ec5d8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there pain chest wall?",
+      "uuid" : "850eaf95-48e4-4972-88a0-af96118a42b0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there pain chest wall?",
+        "uuid" : "4eca7852-4696-492f-88ec-d2c1f2051121",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there pain while coughing or breathing?",
+      "uuid" : "415b9192-6e1c-47f9-92a2-eacd5493408b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there pain while coughing or breathing?",
+        "uuid" : "9efe3c8f-560d-44d4-b675-0e6df42c194b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Were there any other health problem along with cough? (tick mark all applicable)",
+      "uuid" : "e0723aff-3e2f-416f-9bb2-52048f9b653e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there any other health problem along with cough? (tick mark all applicable)",
+        "uuid" : "2e05be77-2398-4366-b45c-dcc154dd60ec",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sweating during night",
+          "uuid" : "08c0e30f-43b6-41df-bf90-8441aa4661ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Fever during evening",
+          "uuid" : "fbf0685a-a920-4878-bf75-bf631cf02ce9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Weight loss",
+          "uuid" : "9c9cf2e8-aa1e-4813-ae12-b64f6d78e42e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Sore throat",
+          "uuid" : "b17abe76-88b9-4b22-954f-8cb91729b8c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 20.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there breathing difficulty?",
+      "uuid" : "7e5b7a24-1998-46a9-bc4b-728f57ee4360",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there breathing difficulty?",
+        "uuid" : "0d82049a-b640-4669-aa9c-ad1c3fda3483",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 21.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there difficulty in breathing?",
+      "uuid" : "7479479f-083c-447c-9881-f0ef0eeb3d02",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there difficulty in breathing? (voided~210260)",
+        "uuid" : "19161649-a8ed-4a26-891f-d35cfc3aec7c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 22.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "How breathing difficulty started? (initially during work but later while resting)",
+      "uuid" : "7dfd79e6-b812-4650-9867-d87443bbdab9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How breathing difficulty started? (initially during work but later while resting)",
+        "uuid" : "6eca338d-b9ad-4ea7-b7d9-153b375d1993",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 23.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Breathlessness increase while lying down and ok while siting?",
+      "uuid" : "f287b3d8-2a6c-47df-bd0d-a29f528d58d5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Breathlessness increase while lying down and ok while siting?",
+        "uuid" : "46582181-da60-4b55-bb8e-aefa56d2d0ed",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 24.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Breathlessness increase because of?",
+      "uuid" : "ae134965-193f-46e7-9f57-4cc1444f4950",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Breathlessness increase because of?",
+        "uuid" : "b7cac4f8-57d7-4fcb-88dd-4bfab11fdc88",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Chest infection",
+          "uuid" : "8a4044ac-7b85-41b4-a503-41831f801bb2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Allergy",
+          "uuid" : "20c19494-d10d-4ab1-b8ac-0912492790a0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Dust",
+          "uuid" : "123bf152-c964-487a-9baa-b30de30b3c23",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 25.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Are there episodes of breathlessness?",
+      "uuid" : "31c112ed-17e1-4c5b-96fb-5e8256099832",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Are there episodes of breathlessness?",
+        "uuid" : "5826fb3b-3aeb-4041-88fb-3e77cd009c4c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 26.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with breathlessness (Asthma)?",
+      "uuid" : "97e1045e-9fd1-4379-8d07-7d041e702807",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with breathlessness (Asthma)?",
+        "uuid" : "88d06d76-08dc-4926-adea-88fecc374072",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Swelling in hands and legs",
+          "uuid" : "34517b2e-8d81-4cd4-97f1-bf33208e674e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Fever during evening",
+          "uuid" : "fbf0685a-a920-4878-bf75-bf631cf02ce9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Swelling on body or abdomen",
+          "uuid" : "eb136d09-8411-4f2e-9e03-f6e5f06b5811",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Sweating during night",
+          "uuid" : "08c0e30f-43b6-41df-bf90-8441aa4661ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Weight loss",
+          "uuid" : "9c9cf2e8-aa1e-4813-ae12-b64f6d78e42e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Sore throat",
+          "uuid" : "b17abe76-88b9-4b22-954f-8cb91729b8c6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 27.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there diarrhoea?",
+      "uuid" : "474ac4ee-702c-4fc5-b399-599869d2bc31",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there diarrhoea?",
+        "uuid" : "d85922bd-d2de-4198-9f32-e4fe31e76d9f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 28.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How was the diarrhoea?",
+      "uuid" : "f266c386-4439-405c-a0cb-a81801181d35",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Types of diarrhoea",
+        "uuid" : "c755039f-0c40-48ef-b2f1-5b148b2edcc1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Mucus of blood",
+          "uuid" : "60a2830e-558c-4148-b88f-d14680ea2b17",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Water",
+          "uuid" : "3e9c341e-e55f-43da-bd7f-3e3d36855181",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Like rice water",
+          "uuid" : "cfc2b3d8-cfa6-4e5a-ba75-99883c616379",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Mucus or blook",
+          "uuid" : "7bc0d9da-1bb0-4e3c-985d-f011f88bfe19",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 29.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Diarrhoea for how many days?",
+      "uuid" : "a8be90e4-d7c4-465a-bbd8-d19a4cde31c6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diarrhoea for how many days?",
+        "uuid" : "c75e4e41-1ffc-4041-87b9-76d41251a895",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 30.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If the diarrhoea is for more than 30 days, had there weight loss?",
+      "uuid" : "d700629c-4075-4b99-b275-67e3435d6943",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If the diarrhoea is for more than 30 days, had there weight loss?",
+        "uuid" : "958e4c77-cffd-4af2-a853-4fae567c5b33",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 31.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there only diarrhoea and no abdominal pain at the same time?",
+      "uuid" : "7fa3d587-af2e-4a8a-b0d4-7b6edf68f757",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there only diarrhoea and no abdominal pain at the same time?",
+        "uuid" : "77d4f619-bc53-4c8f-b017-595a8d787fb3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 32.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there blood in the stool or stool colour was red or black?",
+      "uuid" : "38030dc6-d026-4eed-8fbf-fd62d529c581",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there blood in the stool or stool colour was red or black?",
+        "uuid" : "3097c4e3-e2f1-41a6-9f03-78a84fbb7792",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 33.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How many time a day did deceased passed the loose stool?",
+      "uuid" : "25ea0968-565f-46b9-b8fb-7fa48a128c5e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many time a day did deceased passed the loose stool?",
+        "uuid" : "d28b474e-a342-4433-8085-cbe3aaa39c1b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 34.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with diarrhoea?",
+      "uuid" : "e9c9c180-cdf4-4bee-94a1-646ffe388128",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with diarrhoea?",
+        "uuid" : "3d0b8859-394d-4370-bf02-6dc044d4a42d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Sunken eye balls",
+          "uuid" : "314c58dd-5811-40b7-979d-569cd8d538e1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Dry throate",
+          "uuid" : "9845b20a-b080-48c6-9b49-93c2b0b8baed",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Less or no urine",
+          "uuid" : "61e50fae-efe0-4c2e-9c22-45cbe49225e1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 35.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there weight loss?",
+      "uuid" : "350b1bc6-2a66-4ce0-8aa4-f57d120318b7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there weight loss?",
+        "uuid" : "c6d07061-2466-411d-8b58-77abb4a9621c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 36.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "In past 2-3 months had there any weight loss?",
+      "uuid" : "4106b8e4-4f58-4ce1-af60-b4945bb27e87",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "In past 2-3 months had there any weight loss?",
+        "uuid" : "f9cf0abc-8181-458d-80f2-9d4bbeca9969",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 37.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Along with weight loss, was there cough for more than one month?",
+      "uuid" : "b5477200-d45e-4baf-a2bb-866d7e465534",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Along with weight loss, was there cough for more than one month?",
+        "uuid" : "d10a934d-e2f0-4a77-ab78-16725c834d7f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 38.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Were there any lymph nodes in neck, axilla and in groin region?",
+      "uuid" : "0d24086d-f3c5-4c1e-bf66-a671d50097bc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there any lymph nodes in neck, axilla and in groin region?",
+        "uuid" : "6a9cf909-bbb8-4b43-8fc3-b4914df4fd87",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 39.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Were there white patches or injury in mouth?",
+      "uuid" : "162a12d8-2ae6-4d60-b6e8-b22f9c58efbc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there white patches or injury in mouth?",
+        "uuid" : "ea1bb314-7dfe-4c8c-90b2-bfb646cbec37",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 40.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was deceased aver suffered from TB disease?",
+      "uuid" : "d9f604a9-311c-48c7-a8fa-b7a6c340f512",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there TB disease ever to deceased?",
+        "uuid" : "b17d5c02-08d2-4f92-b028-3a12bc92187f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 41.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there chest pain?",
+      "uuid" : "3578dafe-aee5-46d2-89a2-e82fb5c09804",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there chest pain?",
+        "uuid" : "3c3851f5-b9b1-4bcd-ad88-7a7016b3c1d2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 42.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How chest pain was started?",
+      "uuid" : "298af3f4-9483-4284-9b80-585f246599a7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How chest pain was started?",
+        "uuid" : "892a78b6-4b99-42b2-9be8-c19997b572a4",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sudden",
+          "uuid" : "41021c80-4016-4db0-a981-cad45da18960",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Slowly",
+          "uuid" : "ecec7d32-6d6d-442f-8091-19807b7afc4a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 43.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Once started, how long chest pain last for?",
+      "uuid" : "6c3de650-f098-48e9-b948-5639e9722296",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Once started, how long chest pain last for?",
+        "uuid" : "dab6fd33-de7d-4276-8367-1141694a1b35",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Lasts for less than 24 hours",
+          "uuid" : "36acbc74-220d-446c-b345-a8a050f1f81f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Lasts for more than 24 hours",
+          "uuid" : "963686f6-73b8-4015-b3a4-84f3d1173def",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 44.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Place of pain in the chest?",
+      "uuid" : "7f60da99-4165-46be-b100-d2dcda9f71b4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of pain in the chest?",
+        "uuid" : "89efb283-de2c-45c0-8589-da9f52898634",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Chest",
+          "uuid" : "bb022e74-10ab-4eea-8771-85d5f67c9424",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Back",
+          "uuid" : "bf80436f-a20e-48bc-8edd-eb147cca9f66",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Upper part of abdomen",
+          "uuid" : "6363508d-9e72-4e1f-81a1-3b9cb2256736",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 45.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was chest pain radiating to other parts of body?",
+      "uuid" : "f6985a24-41c1-4014-89ac-654deeb6e20c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was chest pain radiating to other parts of body?",
+        "uuid" : "aa5bbc24-64b7-4d4d-94d3-99bc74f9114f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Shoulder",
+          "uuid" : "a36826d8-8463-432b-a618-45123c7a77c0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Inside the chest",
+          "uuid" : "db714755-2c66-4a51-b387-93a13a5fbf5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Palm",
+          "uuid" : "8b9fa01f-42a2-438c-ac78-96facb5cb900",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Back",
+          "uuid" : "bf80436f-a20e-48bc-8edd-eb147cca9f66",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Left hand",
+          "uuid" : "27461f01-f9be-4120-8d7e-8aed4d6dc761",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 46.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When chest pain was increasing?",
+      "uuid" : "7f504715-3261-4464-98df-e0ca8719f05a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When chest pain was increasing?",
+        "uuid" : "b84d5ad4-222d-46e4-9540-59b2bcfd504d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "After eating or after eating anything",
+          "uuid" : "de00f181-1d04-4c51-b384-b10b59930e1b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Coughing",
+          "uuid" : "43023722-4f70-4429-8ccf-c2109ed2b162",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Touching chest",
+          "uuid" : "0e3c24ff-ae0f-453a-a327-31e3a3af00f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Walking",
+          "uuid" : "97cd08ed-f77f-43bd-a193-dfc8d88ab772",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Breathing",
+          "uuid" : "d5cffe05-3d9d-44c9-bc02-124f22f1a113",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Working",
+          "uuid" : "31b6a4e6-bf3c-4045-8cf0-69525c3544dc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 47.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Anyother problem along with chest pain?",
+      "uuid" : "619dc0f2-13cc-4df8-949f-29f1de6517f9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Anyother problem along with chest pain?",
+        "uuid" : "f5d11e45-5235-400e-95d0-b39ab0980641",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Sweating",
+          "uuid" : "f23f87db-d05e-4051-8631-8df0c0e77019",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Sudden death",
+          "uuid" : "98976c04-a718-48b9-a54d-57802e956c45",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 48.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there stroke?",
+      "uuid" : "9d659686-a236-4e39-86bc-f1331b7ef780",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there stroke?",
+        "uuid" : "4b144b79-47b0-4256-b4b9-43a5af3d27ef",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 49.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How stroke was started?",
+      "uuid" : "792f2abe-047e-40fd-a4bc-01dfa4b55019",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How stroke was started?",
+        "uuid" : "0cec33c5-8a3c-4c66-9411-8799d8675c74",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Within minutes",
+          "uuid" : "3b1dbc30-ee0e-4373-807a-1ba2daa971f5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Found stroke when woke up from sleep",
+          "uuid" : "4cfeaab6-2c92-49c3-9644-f394a3ab6671",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Within hours",
+          "uuid" : "123d2dc5-ea8b-4016-9047-36e2c5e31565",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 50.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was deceased suffered from hypertension?",
+      "uuid" : "b9107393-e7fc-4213-bc09-b0455ba3ba10",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was deceased suffered from hypertension?",
+        "uuid" : "213599d5-9247-459a-9dcc-a8aa3d08724e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 51.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If deceased was suffered from hypertension, for how many years?",
+      "uuid" : "8d83e718-af10-48aa-ba95-cbc73e2851df",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If deceased was suffered from hypertension, for how many years?",
+        "uuid" : "7a7b6560-4cfc-4367-9ac2-888e97ead66c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 52.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Did deceased get unconscious during stroke?",
+      "uuid" : "5f6f189b-b115-4182-834e-0586dda8e42c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Did deceased get unconscious during stroke?",
+        "uuid" : "3d7ea576-b4bd-4421-9d16-f64534adef0b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 53.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Which body part affected the stroke?",
+      "uuid" : "263a3394-fb72-4539-afee-8e038367c94c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Which body part affected the stroke?",
+        "uuid" : "388b753d-fb62-4f81-a3e3-dd4a080e564d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Half bpdy parts",
+          "uuid" : "e0120fad-2c82-4d09-829d-8964918ed9c1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Left side of face",
+          "uuid" : "501208f3-2022-4390-8d6c-acb2cde53a8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "One hand",
+          "uuid" : "62af77ad-4202-4966-a23d-6a1468375669",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "One leg",
+          "uuid" : "6fb35c53-b871-43c2-b28a-d39669bfe66a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Right side of face",
+          "uuid" : "2df301f0-badd-495a-a68f-d6b2cc86be15",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 54.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When stroke came?",
+      "uuid" : "8bcd4db2-eb77-422b-804f-262c5bc16952",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When stroke came?",
+        "uuid" : "2e91c61b-86db-45fc-9943-7a2c22e544b8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "While working",
+          "uuid" : "f29f0c52-0016-4fc2-8c21-e6c0fbf893aa",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "While resting or not working",
+          "uuid" : "2285e0b2-5285-43a3-bcd4-4d08a835d7ff",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "During sleep",
+          "uuid" : "f71a0d14-622b-43f8-8bf1-658a9d15ae2c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 55.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there stroke before?",
+      "uuid" : "f35d46d6-da2a-43b6-abaf-b9e07a2cc437",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there stroke before?",
+        "uuid" : "86c96224-3b9f-4968-b7b8-ae32f6b80271",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 56.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If stroke was there, since when? (write number of years)",
+      "uuid" : "56b5bfcd-7548-4862-aa24-2be3dab51fbe",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If stroke was there, since when? (write number of years)",
+        "uuid" : "8ca3e8bc-b740-40bc-90a2-ec037328508e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 57.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with stroke?",
+      "uuid" : "95cb07e5-1170-4ef4-8555-d78cef0e11a1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with stroke?",
+        "uuid" : "16dd03ef-4c86-4a3c-ac7e-6d5dd65ba933",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Loss of sight / Not able to speak",
+          "uuid" : "5ef3a314-dd8e-4653-a5d6-e5069c4b31c7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "dementia",
+          "uuid" : "15bce06a-2df2-4f7a-9b37-2d1e846ac363",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Neck stiffness",
+          "uuid" : "bc37e579-2a57-4d6b-9baa-17301cd5266c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Loss of control/losing control on urine",
+          "uuid" : "bf7371b0-ee4c-4303-906f-9e61f3ec9af4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Cant feel the touch on body part",
+          "uuid" : "573b9b00-678f-4f25-8ded-23f4121812e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 58.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there any swelling in the body? (Fill this checklist if a person died from Jaundice, Liver disease, kidney disease, alcoholic, breathing difficulty)",
+      "uuid" : "1e4aaa61-0981-4da5-a59f-dfddaeb0bec9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there any swelling in the body?",
+        "uuid" : "6fa264e3-a4bb-4a65-9c16-55652bedacb7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 59.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Swelling was on which body part?",
+      "uuid" : "82731b17-2943-4a41-8859-b0f41e304e24",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Swelling was on which body part?",
+        "uuid" : "8ac60255-660b-41d9-ac63-e9e2015d4398",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Face",
+          "uuid" : "4b228992-6d31-4e7a-bbcb-e319ffe672f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Hand and legs",
+          "uuid" : "f5b20952-99d8-4b3f-8837-d882dbcb607a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Only abdomen",
+          "uuid" : "b8ea45b7-97bf-4ada-8046-490e31d5210c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 60.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How swelling was increases?",
+      "uuid" : "774e998d-83fe-4203-b054-36168bc179a1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How swelling was increases?",
+        "uuid" : "b81b6699-cc7d-4b5d-92e3-538d1939c080",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Slowly",
+          "uuid" : "ecec7d32-6d6d-442f-8091-19807b7afc4a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Sudden",
+          "uuid" : "41021c80-4016-4db0-a981-cad45da18960",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 61.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When swelling was more?",
+      "uuid" : "cfc3eab2-0fda-4a0b-9cd4-2a3917cbeffa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When swelling was more?",
+        "uuid" : "8c84c041-29f2-4519-afe6-d21d07785d5f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "More in the morning",
+          "uuid" : "2ab75111-4e58-4eb3-82ad-9c5a7faccae5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "More during night",
+          "uuid" : "1f16353b-f139-4232-b9b7-c9a924d0d963",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 62.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with swelling?",
+      "uuid" : "0724bab0-787e-4ed5-885a-120c227a52c9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with swelling?",
+        "uuid" : "c4034262-b1ec-45a1-a147-5ab09a99b2c8",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Breathing difficulty during at rest",
+          "uuid" : "7e3ca215-0b71-461b-84e4-0c6423cc0098",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "nausea",
+          "uuid" : "723e0b60-7596-4c74-bb13-688d1eacbdf2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Increasing heartbeats/palpitations",
+          "uuid" : "518276d0-a1ad-4e85-9a62-e9692ef4e04b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Swelling increases while walking",
+          "uuid" : "bf4d2b1e-3dfb-48ba-b046-bcaac970e59e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Urine related problem",
+          "uuid" : "a0523b95-0d8e-494a-be7b-5ff11be2591c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Loss of Appettite",
+          "uuid" : "ef3dcb75-69a4-4ddd-9fed-5e0382b4ce4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "weakness",
+          "uuid" : "909687a9-dd88-4c66-8300-a4f203e0412c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Jaundice",
+          "uuid" : "49adc061-6cac-4d92-9faa-7d3279bb77f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 63.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there any health problem related to urnie?",
+      "uuid" : "cddc3ea8-637a-4505-a890-ee3ae3a7a6a8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there any health problem related to urnie?",
+        "uuid" : "9c03a769-eeb3-4936-8e74-57334db32cde",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 64.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Little urination was happening?",
+      "uuid" : "030bb49a-19ac-4c4d-870e-ef9b41a5c90b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Little urination was happening?",
+        "uuid" : "4203142f-2b51-4a94-95a1-bcb0827d6fcd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 65.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there burning micturition?",
+      "uuid" : "bc2617a9-6caf-4395-8ae7-11060a7891ed",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there burning micturition?",
+        "uuid" : "8063126d-870a-4c48-8361-9f176aeb017b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 66.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there blood or pus in the urine?",
+      "uuid" : "07c4c7cc-e50c-4d88-a2ff-f961ab85b0a7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there blood or pus in the urine?",
+        "uuid" : "0855832c-b872-4544-915c-9e44d7ed63c9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 67.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there frequency of urination?",
+      "uuid" : "f5174c14-d9cb-4324-908a-2508795f1307",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there frequency of urination?",
+        "uuid" : "5ec55786-d16f-4f6a-8088-594c9d89cc58",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 68.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there strong feeling of urination after urination?",
+      "uuid" : "2d8e41af-018e-4ac3-bc1f-8f33e11722cd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there strong feeling of urination after urination?",
+        "uuid" : "80261f5f-4c3a-4679-ae0b-685336014265",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 69.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with urine problem?",
+      "uuid" : "2d523d91-8b90-4dc3-ae28-eb2b9fa32f00",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with urine problem?",
+        "uuid" : "b4e9e1be-3743-4a0a-8d45-f389f3b2bad3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sudden pain at one or both side of abdomen",
+          "uuid" : "6a822c8d-5ce6-4514-b8b8-7050f4ce94e6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Feeling sleepy or unconsciousness",
+          "uuid" : "6b6eabb4-ccaa-49b9-8511-c1779327ffd9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Pain in lower abdomen",
+          "uuid" : "9a1f5b08-9038-4bf5-a154-4df37d97b14a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Swelling on hand, legs or abdomen",
+          "uuid" : "1b343f42-4a2a-4266-b827-817deca741fe",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "Vomiting",
+          "uuid" : "9ad19f3b-3a8c-4e7e-81d8-12f796763291",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "nausea",
+          "uuid" : "723e0b60-7596-4c74-bb13-688d1eacbdf2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "No enthusiasm",
+          "uuid" : "750e8c26-c06a-4378-bee7-1e59ea23feb7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Pain below the ribs - side to abdomen",
+          "uuid" : "55d27de6-51a7-441b-b964-12ce9d258492",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Swelling on eyelids or face (especially in morning)",
+          "uuid" : "ccaf4db9-471a-44ab-8756-e9c4dc722e51",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 70.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there any health problem related to abdomen?",
+      "uuid" : "f8d12db7-a9c7-47f5-bca9-42a07f5b9c9e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there any health problem related to abdomen?",
+        "uuid" : "5703d0cf-ca4e-4600-bf04-4f0f4d052590",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 71.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Type of abdominal pain?",
+      "uuid" : "09246999-6d29-42c8-9eb0-cd7889d60f14",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of abdominal pain?",
+        "uuid" : "ac22f23b-f761-4dbc-a5c3-6851866b5e16",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Entire abdomen",
+          "uuid" : "541ada7a-9988-44c4-a6f1-4bd604f26d5e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Localised",
+          "uuid" : "b4612ce6-ba44-4857-9d1c-101c9e432396",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Burning in the abdomen",
+          "uuid" : "3b63cf9d-30cc-4ee9-997e-3d302da72ef3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 72.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How abdominal pain started?",
+      "uuid" : "91124d8d-61b0-4dda-bbbc-79dff8b0509b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How abdominal pain started?",
+        "uuid" : "7f8ccfb6-4eee-4a4c-bfad-b9eac449c060",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Sudden",
+          "uuid" : "41021c80-4016-4db0-a981-cad45da18960",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Slowly",
+          "uuid" : "ecec7d32-6d6d-442f-8091-19807b7afc4a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 73.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there more pain during empty stomach?",
+      "uuid" : "ff84bf9c-d293-4b17-8e9f-c112e796de87",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there more pain during empty stomach?",
+        "uuid" : "d946efc8-d6bc-47f6-a949-f7a2899bf05f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 74.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there more pain after eating food?",
+      "uuid" : "19ff0312-d9f8-4b1b-ac03-32ea63123b27",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there more pain after eating food?",
+        "uuid" : "85348a8b-f67b-4128-875e-ae3194b09bfa",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 75.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was pain relived after having food?",
+      "uuid" : "120cf43b-5b8b-4df0-9d91-773591b9beb7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was pain relived after having food?",
+        "uuid" : "cf800039-bfa2-4446-ac32-f834d3f9ecb3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 76.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there pain while swallowing?",
+      "uuid" : "bf36cfae-fc6f-4360-8565-81af0db74a8c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there pain while swallowing?",
+        "uuid" : "77ea54ab-e07a-4633-a49b-0ad5b6fc01b9",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 77.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "What was the place of abdominal pain?",
+      "uuid" : "77f91a50-23f4-4c68-a586-429b2ac54c98",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What was the place of abdominal pain?",
+        "uuid" : "3e2933d6-fee7-4941-8e30-c24157c3ff67",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Above umbilicus in the center",
+          "uuid" : "3202ce72-2f92-440b-87c9-e0eedb2ae14b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Pain radiating towards chest",
+          "uuid" : "5c8bc1ed-b52e-4ef0-935b-42e40b305a13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 78.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was deceased used to wake up from sleep due to abdominal pain?",
+      "uuid" : "b67617b7-65b4-400a-ab15-4b55245ca76a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was deceased used to wake up from sleep due to abdominal pain?",
+        "uuid" : "aaabbf59-20fd-4dc9-870d-692f5e3c0732",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 79.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Were there episodes of pain? (colics)",
+      "uuid" : "caafb07c-786f-4b2f-9fec-7e6048a70ae1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there episodes of pain? (colics)",
+        "uuid" : "5236843d-1f6c-453e-849d-20caf5613beb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 80.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Once pain started, was it lasting for 1-3 weeks?",
+      "uuid" : "6d87fafb-5a33-4f1a-b319-2056fea72b4a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Once pain started, was it lasting for 1-3 weeks?",
+        "uuid" : "d61940f4-2e81-4660-8f58-da7c4a929576",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 81.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Like this was there abdominal pain 3-4 times a year?",
+      "uuid" : "5494dfca-32f1-4f04-9f61-f3ce4c7aafcf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Like this was there abdominal pain 3-4 times a year?",
+        "uuid" : "9e2c746d-961c-4541-b51b-21face606498",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 82.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there abdominal distention?",
+      "uuid" : "990b01ea-8e16-4999-ab39-546432eaf747",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there abdominal distention?",
+        "uuid" : "a5cec3b9-c334-4af7-9504-c8e5ccef255b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Sudden distention",
+          "uuid" : "69a971fd-86b6-43cd-86b0-003d27fc817c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Slow distention",
+          "uuid" : "38017c60-317c-4798-8d9b-6907bdf6ae68",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 83.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with abdominal pain?",
+      "uuid" : "b7e12ccc-ec3b-4e5d-a821-501272bd8d61",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with abdominal pain?",
+        "uuid" : "22e8113b-eebd-43f5-87c3-9c0b12cb1ae1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Alcoholics",
+          "uuid" : "1eee28f9-b51c-40bb-8670-74185b5639b5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 12.0,
+          "active" : true
+        }, {
+          "name" : "nausea",
+          "uuid" : "723e0b60-7596-4c74-bb13-688d1eacbdf2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Blood in vomiting",
+          "uuid" : "68eb2d82-70d9-4636-b6ce-c8fabe82abff",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "constipation",
+          "uuid" : "0d5379f6-4c20-4461-bff2-06a5186dbd2a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Any swelling in abdomen",
+          "uuid" : "d80b408d-e827-48fb-801c-906e5acb2d64",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 11.0,
+          "active" : true
+        }, {
+          "name" : "Abdominal cancer",
+          "uuid" : "e2bfd280-01bf-4f63-8503-0f2109aec915",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        }, {
+          "name" : "Abdominal injury",
+          "uuid" : "acfad69e-d4b7-42f4-a6b1-740901c3c381",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true
+        }, {
+          "name" : "Black coloured stool",
+          "uuid" : "81d22d5e-4b09-4fdc-9780-352656ff9248",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Sweating",
+          "uuid" : "f23f87db-d05e-4051-8631-8df0c0e77019",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Jaundice",
+          "uuid" : "49adc061-6cac-4d92-9faa-7d3279bb77f4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Loss of Appettite",
+          "uuid" : "ef3dcb75-69a4-4ddd-9fed-5e0382b4ce4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Abdominal surgery",
+          "uuid" : "339c5118-670a-434b-ae1a-28aeb211ba8c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 84.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there jaundice to deceased? (fill this information for alcoholics, or person with liver problem)",
+      "uuid" : "93811dca-c60d-404b-b702-5b2413acbca8",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there jaundice to deceased? (fill this information for alcoholics, or person with liver problem)",
+        "uuid" : "6a83461c-6eb7-4bc4-9d04-41665dfa0dbc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 85.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Which body part became yellow?",
+      "uuid" : "8f2f886f-0891-4453-9ba4-09b8613283f5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Which body part became yellow?",
+        "uuid" : "04490711-3a74-4dce-b5f8-f2bdebac6a5c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Eyes",
+          "uuid" : "90fecfb4-6a5c-4a98-9774-dcc04d034364",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Skin",
+          "uuid" : "e79b0da1-3a1c-4be8-90b9-3db9b4471e1d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Urine",
+          "uuid" : "354c561c-88cc-4ab5-8423-cd9172360a3f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 86.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When was jaundice came?",
+      "uuid" : "32ee63b3-52cc-4122-b91c-312a4d5da832",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When was jaundice came?",
+        "uuid" : "356be974-2b1e-4d43-b25b-d039cdf6780b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "At the end of illness",
+          "uuid" : "149b6e38-288a-42f4-a4aa-ed16f8431900",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "At the beginning of illness",
+          "uuid" : "c9d870ad-b88b-427e-a343-3d07cad5b8fe",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 87.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with Jaundice?",
+      "uuid" : "bc06a021-8bc5-4526-80e1-95d9116163f2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with Jaundice?",
+        "uuid" : "92ff363b-db13-44ea-8f21-4ac343d15882",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Swelling on abdomen",
+          "uuid" : "752b70b8-37ce-4f8c-b97b-4b688ead1014",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Swelling on hand, legs and then face",
+          "uuid" : "5ad10884-f5ed-486e-8f12-542ed80034b7",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Breathing difficulty",
+          "uuid" : "a72d4345-9ff2-410b-9c2f-ed61e4ea464b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Alcoholic",
+          "uuid" : "cecfb0f3-5211-4472-9da1-3be5b586e489",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "History of cancer",
+          "uuid" : "f92f9217-4ffc-457d-9a17-5be42d807eb8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Weight loss",
+          "uuid" : "9c9cf2e8-aa1e-4813-ae12-b64f6d78e42e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 88.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Were there convulsions? (fill the forms for person whose death was sudden, due to heart attack, stroke, fever)",
+      "uuid" : "3b97f039-7072-430f-a602-36bca1fab6f3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there convulsions?",
+        "uuid" : "5ca6c23d-b04c-4000-ba0b-fd99fb13eaa5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 89.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Sudden convulsion to hands, legs?",
+      "uuid" : "9111f6da-a08a-49d8-ad3d-7281be77cdf7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sudden convulsion to hands, legs?",
+        "uuid" : "b6454b8a-c9eb-402f-9e54-befeecab8b50",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 90.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was deceased Conscious unconscious between two convulsion?",
+      "uuid" : "07fdfe0d-a006-43e4-a686-afb572422203",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was deceased conscious or unconscious between two convulsion?",
+        "uuid" : "1d9792f7-fdb5-453b-9618-899d61c37e4c",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "unconscious",
+          "uuid" : "1148c388-5064-4d59-853d-dd2172f3d15d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Conscious",
+          "uuid" : "5c4695f6-547b-4a47-aee9-598676d11bc5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 91.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any other health problem along with epilepsy?",
+      "uuid" : "061e9428-327b-4cd9-b675-9e3840651622",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any other health problem along with epilepsy?",
+        "uuid" : "bb7cbbb0-9163-43d9-a9a7-4d47188e0d15",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Fever",
+          "uuid" : "232ae0c9-533f-48cf-8439-79aa03e23e6b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Tongue bite",
+          "uuid" : "7c84b3f1-b23c-46e4-a274-282a4c3e562a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Froth from mouth",
+          "uuid" : "aec053c6-7950-47fa-85e1-9b3673ec6d77",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "stroke",
+          "uuid" : "bbb432d7-8e8b-42b6-90c4-1ae1cf8039da",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Confusion",
+          "uuid" : "09677ecb-b3e3-4bfe-90ef-031da3d490ea",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "Head injury in past",
+          "uuid" : "4655324b-4437-4478-800d-33d1d1e7273f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        }, {
+          "name" : "dementia",
+          "uuid" : "15bce06a-2df2-4f7a-9b37-2d1e846ac363",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Eyes moving round",
+          "uuid" : "14a4ce2d-694b-493d-b329-ac1167769434",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Urination in clothes",
+          "uuid" : "c448ad86-9e37-4fba-8118-c5007c399708",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 92.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Were there rashes on skin?",
+      "uuid" : "97d4dd5d-bb8b-4395-9ac0-3caa2d4bd9aa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Were there rashes on skin?",
+        "uuid" : "94aa6226-8d97-4dbd-b7ed-ec50937f1f4e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 93.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How rashes started on skin?",
+      "uuid" : "94c93288-2ae6-46da-b819-5c68db653d49",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How rashes started on skin?",
+        "uuid" : "9403349f-11d0-4846-a64b-766e41650f51",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Existing rash",
+          "uuid" : "8b30c3d4-72ec-44c5-b6b0-b50acceeae39",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Rash slowly increased",
+          "uuid" : "e909ae6d-1ed0-493f-acc2-9ea9e008a39d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 94.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there swelling along with rash?",
+      "uuid" : "8cbf5cc8-fbc9-426c-adda-3eec5d7ae6fc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there swelling along with rash?",
+        "uuid" : "c830c9b4-ffab-4830-b609-16114c987a3e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 95.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If swelling, how was it started?",
+      "uuid" : "66bc4052-4253-427e-be5e-22e118675f51",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If swelling, how was it started?",
+        "uuid" : "f2b8704d-0754-4f6e-a907-bd889ef57b6b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Slowly",
+          "uuid" : "ecec7d32-6d6d-442f-8091-19807b7afc4a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Sudden",
+          "uuid" : "41021c80-4016-4db0-a981-cad45da18960",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 96.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "How many days swelling was?",
+      "uuid" : "ad585f5d-528c-4c00-9d0a-5a8335a3dc3e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many days swelling was?",
+        "uuid" : "1f201f7c-5036-4904-966c-0d138799571f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Some days",
+          "uuid" : "589d6853-d3fb-454d-8770-2a6d331587d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Some months",
+          "uuid" : "f1826f65-bd5a-40a5-b0c1-e1122df3d3fe",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 97.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Where was the swelling?",
+      "uuid" : "58db23eb-d857-4ea1-bfcb-686793f1f53c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Where was the swelling?",
+        "uuid" : "af203567-3fe6-4088-ad9c-c09c44f1fa63",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Calf",
+          "uuid" : "0bfb2500-95a2-4919-be9c-b83c2e05eff8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "All the joints",
+          "uuid" : "08db1fd1-9432-4fa1-8db6-b051262f7ad0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Face",
+          "uuid" : "4b228992-6d31-4e7a-bbcb-e319ffe672f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 98.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "When was swelling increases?",
+      "uuid" : "c94b2e4f-233a-4b42-97f4-0d018d80db45",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "When was swelling increases?",
+        "uuid" : "0156def9-e0bc-4dc0-a4cb-dad7b252d0e2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Morning",
+          "uuid" : "aba2787d-a581-4ab2-9019-ce6e141b658d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Evening",
+          "uuid" : "60634efe-abaf-4ee3-ba29-9ce5f840f4a9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 99.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Was there weight loss during rashes and swelling?",
+      "uuid" : "97b85b2f-b1fc-489f-a55a-f616ec15cc02",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Was there weight loss during rashes and swelling?",
+        "uuid" : "2d2a14b3-5d94-4ddc-9b25-22c385b750eb",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 100.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "If weight loss, in how many days weight loss happened?",
+      "uuid" : "5ab7e951-0a8a-44e6-8823-c302781eeb75",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If weight loss, in how many days weight loss happened?",
+        "uuid" : "046f14c9-e4b0-4b2e-9fc7-5f884cf03f4b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 101.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "066ce6ec-1fd2-4901-8c95-0e094e5551a4",
+    "name" : "Written narrative in local language",
+    "displayOrder" : 7.0,
+    "display" : "Written narrative in local language",
+    "formElements" : [ {
+      "name" : "Please describe the symptoms in order of appearance, doctor consulted or hospitalization, history of similar episodes, enter the results from reports of the investigations if available. Use attached symptoms list. Please upload the written narrative.",
+      "uuid" : "161ca5ad-b2f0-438d-af44-5c3f4f93a754",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Upload the written narrative",
+        "uuid" : "59dca7f7-0be7-4b19-a601-1f1938ee1691",
+        "dataType" : "Image",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Please write kind of information given by informant?",
+      "uuid" : "947516e0-d45f-46f1-9d1a-d4b02e9764dc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Please write kind of information given by informant?",
+        "uuid" : "05cfeddd-bb05-4af7-ae72-d970e269f1bd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "good",
+          "uuid" : "aa1dc3a6-3fec-40c0-8ef8-c50fe8f09ebc",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Incomplete",
+          "uuid" : "2d5c6aa8-0344-4277-83a0-79ace8f57156",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Ok",
+          "uuid" : "e8e1e699-7a61-4ad5-a1c2-bfd315d18e5a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

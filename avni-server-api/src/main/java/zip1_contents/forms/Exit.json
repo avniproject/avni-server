@@ -1,0 +1,138 @@
+{
+  "name" : "Exit",
+  "uuid" : "c2c8cdc1-dee6-435f-956e-e2e05b659ac2",
+  "formType" : "ProgramExit",
+  "formElementGroups" : [ {
+    "uuid" : "f98c6b36-2f21-42df-a26c-38b0deb471b5",
+    "name" : "Exit Basic Details",
+    "displayOrder" : 1.0,
+    "display" : "Basic Details",
+    "formElements" : [ {
+      "name" : "Reason for exit",
+      "uuid" : "387aa1e3-48b8-402f-8a21-3bc2d2539c00",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for exit",
+        "uuid" : "9518f70d-351a-44f0-b3f8-9af412db74af",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Completion",
+          "uuid" : "bafe149e-dbf8-4c80-8c13-fc5b1274f0ad",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "abnormal" : true,
+          "active" : true
+        }, {
+          "name" : "Shifted to other geographical area",
+          "uuid" : "0c46f359-eb0f-4a5e-8fe7-f86bd706d1d4",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "abnormal" : true,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Dummy field  for testing",
+      "uuid" : "82038a44-7c09-444c-a420-54d3be47a4e0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dummy field  for testing",
+        "uuid" : "83de42e3-0405-48e6-bbe8-08c827ec8f6c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Date of Death",
+      "uuid" : "b88c9870-cf9b-4447-98f5-19952b6bd964",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of Death",
+        "uuid" : "338953ea-6d7e-423e-96d6-f52d5aa37072",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"c125eec0-2bc4-4add-b1d0-7531e5ffa9c8\").matches();\n\n  const condition12 = new imports.rulesConfig.RuleCondition({programEnrolment, formElement}).when.valueInExit(\"338953ea-6d7e-423e-96d6-f52d5aa37072\").greaterThan(moment().toDate()).matches();\n  \n  if(condition12 ){\n    validationErrors.push(\"Date cannot be in the future\");  \n}\n\n  visibility = condition11 ;\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Cause of Death",
+      "uuid" : "531a1216-7010-4b76-8721-bd4117c44aa7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cause of person's death",
+        "uuid" : "305187df-3490-424b-a60d-25dc98da799e",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Death', null);;\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Place of Death",
+      "uuid" : "b6439007-9099-4ea5-b34b-fc19e0bc8577",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of child's death",
+        "uuid" : "51f5b692-a46b-4ff3-801c-0e79dd1b8ce5",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Death', null);;\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other reason (Please specify)",
+      "uuid" : "d43d875b-5535-4e4b-9a76-94fec98c3beb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for Program exit",
+        "uuid" : "63390533-9229-4e7d-816d-d07c23fba826",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programExit = params.entity;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  const exitReason = programExit.findExitObservation('Reason for exit');\n  const readableValue = _.isNil(exitReason) ? undefined : exitReason.getReadableValue();\n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, readableValue === 'Other', null);;\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n\n({ params, imports }) => {\n  console.log(\"Entered exit form\");\n  const programEnrolment = params.entity;\n  const moment = imports.moment;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({programEnrolment});\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEnrolment}).when.valueInExit(\"9518f70d-351a-44f0-b3f8-9af412db74af\").containsAnswerConceptName(\"c125eec0-2bc4-4add-b1d0-7531e5ffa9c8\").matches();\n  \n  if(condition11 ){\n    const earliestDate = moment(programEnrolment.programExitDateTime).add(20, 'days').toDate();\n    const maxDate = moment(programEnrolment.programExitDateTime).add(23, 'days').toDate();\n    scheduleBuilder.add({name: \"Verbal autopsy maternal\", encounterType: \"Verbal autopsy maternal\", earliestDate, maxDate});  \n}\n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

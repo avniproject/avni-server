@@ -1,0 +1,459 @@
+{
+  "operationalEncounterTypes" : [ {
+    "uuid" : "a28f1b18-a300-4694-8321-b36c003ef98c",
+    "encounterType" : {
+      "uuid" : "2026de58-fa2f-4549-a982-09de55053e7c",
+      "voided" : false
+    },
+    "name" : "Diabetes lab test",
+    "voided" : false
+  }, {
+    "uuid" : "f4ad3eb8-84c3-4b2e-a37b-2d4d689fe0e6",
+    "encounterType" : {
+      "uuid" : "78ca4a5c-d845-4de8-bdbc-2b3e1387d8ce",
+      "voided" : false
+    },
+    "name" : "Sickle cell followup",
+    "voided" : false
+  }, {
+    "uuid" : "0ba1a2a9-f29a-488d-9408-9df393d04390",
+    "encounterType" : {
+      "uuid" : "73ae0c92-8689-4fde-980e-5cd1fed4bfc1",
+      "voided" : false
+    },
+    "name" : "Epilepsy followup",
+    "voided" : false
+  }, {
+    "uuid" : "a1021d7f-7d93-4fa2-b766-09ec2733c9ff",
+    "encounterType" : {
+      "uuid" : "1d8ccbb2-f4bb-4b19-979e-730ccd1514d2",
+      "voided" : false
+    },
+    "name" : "USG Report",
+    "voided" : false
+  }, {
+    "uuid" : "ff14932a-d7d9-4475-adfb-f7ab78e6bce9",
+    "encounterType" : {
+      "uuid" : "86ab0906-ec4c-49b7-adbc-da75197a7f6b",
+      "voided" : false
+    },
+    "name" : "Lab Investigations",
+    "voided" : false
+  }, {
+    "uuid" : "74224415-cd48-4906-b539-86e60bd0afef",
+    "encounterType" : {
+      "uuid" : "72ddfc20-fa6a-4e64-9167-c9bbc28f21fc",
+      "voided" : false
+    },
+    "name" : "Albendazole",
+    "voided" : false
+  }, {
+    "uuid" : "7fb04b68-1dc6-4a45-a342-f7bf40087f70",
+    "encounterType" : {
+      "uuid" : "e9aa15b8-e9b5-4b5d-9fbb-4d7a89283741",
+      "voided" : false
+    },
+    "name" : "Growth Monitoring",
+    "voided" : false
+  }, {
+    "uuid" : "1a46cad4-e81a-4170-8161-2c3f66526e62",
+    "encounterType" : {
+      "uuid" : "84e99d1e-de73-41aa-85c6-3e1b780dd52b",
+      "voided" : false
+    },
+    "name" : "ANC Clinic Visit",
+    "voided" : false
+  }, {
+    "uuid" : "331bbb69-4847-46be-bd72-7593ab31ea81",
+    "encounterType" : {
+      "uuid" : "e35551ec-811b-4291-8eb3-f36dbaa79c48",
+      "voided" : false
+    },
+    "name" : "Mother PNC",
+    "voided" : false
+  }, {
+    "uuid" : "c05ea806-1704-422f-a6e1-97c577fc95cc",
+    "encounterType" : {
+      "uuid" : "856c06ea-1f1a-4316-80e3-23cd8eea810f",
+      "voided" : false
+    },
+    "name" : "Delivery",
+    "voided" : false
+  }, {
+    "uuid" : "d4c47c9a-8f1d-42bf-8238-18cf37f5b2c1",
+    "encounterType" : {
+      "uuid" : "9c7d7e6a-d4ee-49c8-b798-bfa2ee16343b",
+      "voided" : false
+    },
+    "name" : "Abortion",
+    "voided" : false
+  }, {
+    "uuid" : "15357ea0-b858-430f-9001-6effa4b76414",
+    "encounterType" : {
+      "uuid" : "0619e2bc-5f08-4553-b9fc-a059bd847a9f",
+      "voided" : false
+    },
+    "name" : "Abortion followup",
+    "voided" : false
+  }, {
+    "uuid" : "91c5548e-12e4-4240-9eda-cb99bdd1821a",
+    "encounterType" : {
+      "uuid" : "2f777a69-d5f2-46ca-99a1-d26281a36b48",
+      "voided" : false
+    },
+    "name" : "TB Family Screening Form",
+    "voided" : false
+  }, {
+    "uuid" : "4f8e0835-ab29-4f6f-8ec9-aa6f1ec50692",
+    "encounterType" : {
+      "uuid" : "307197bf-6b71-49b1-9a1b-b2c12532e34f",
+      "voided" : false
+    },
+    "name" : "ANC Home Visit",
+    "voided" : false
+  }, {
+    "uuid" : "f346a977-cc22-478a-9237-a08c4219e592",
+    "encounterType" : {
+      "uuid" : "0345e233-479c-4dff-a7b9-c1325a5c0493",
+      "voided" : false
+    },
+    "name" : "Referral Status",
+    "voided" : false
+  }, {
+    "uuid" : "89c40e01-acb2-4c52-aaba-d8c82eb27011",
+    "encounterType" : {
+      "uuid" : "bb2ea3b7-55c8-4bab-8ee5-b71eec633408",
+      "voided" : false
+    },
+    "name" : "Child PNC",
+    "voided" : false
+  }, {
+    "uuid" : "86a2d0cb-62d0-4277-ba07-7a7e8b6c67ce",
+    "encounterType" : {
+      "uuid" : "ab963eab-805d-4714-ad78-1e8a5fa164b2",
+      "voided" : false
+    },
+    "name" : "Child Birth",
+    "voided" : false
+  }, {
+    "uuid" : "49e7dad5-dc1c-4068-9cc9-cc31f11652b3",
+    "encounterType" : {
+      "uuid" : "98dc3b51-c3d6-4e40-aebc-58e6ec051200",
+      "voided" : false
+    },
+    "name" : "Lab Investigations Results for pregnancy induced diabetes",
+    "voided" : false
+  }, {
+    "uuid" : "d4affc58-e23a-4b5d-b9a8-5c6260ba3c02",
+    "encounterType" : {
+      "uuid" : "f32313e1-1113-4308-9b97-83243b1db064",
+      "voided" : false
+    },
+    "name" : "TB family member screening form",
+    "voided" : false
+  }, {
+    "uuid" : "7dfd3ce9-c4ea-412b-8f7f-a3cf67b2679f",
+    "encounterType" : {
+      "uuid" : "3e40f9ee-bb00-4dfc-a6e8-eb4789ef6ec0",
+      "voided" : false
+    },
+    "name" : "TB Mantoux test result",
+    "voided" : false
+  }, {
+    "uuid" : "d21e73ea-8276-4d2a-a6b4-f52288ec0787",
+    "encounterType" : {
+      "uuid" : "160c1a4b-1d62-4cc3-b450-f5494da852b9",
+      "voided" : false
+    },
+    "name" : "INH Prophylaxis follow up",
+    "voided" : false
+  }, {
+    "uuid" : "af2333d6-ffe4-4a52-bd5d-ef9d37e017a0",
+    "encounterType" : {
+      "uuid" : "67a215b8-c0c8-4efd-83b1-ec154d65ed29",
+      "voided" : false
+    },
+    "name" : "Treatment review",
+    "voided" : false
+  }, {
+    "uuid" : "578eb9f4-31b0-4b4e-b453-7569a908a6df",
+    "encounterType" : {
+      "uuid" : "3e62a668-aa37-4661-86c5-9ae60b46b54d",
+      "voided" : false
+    },
+    "name" : "TB Endline (voided~616)",
+    "voided" : true
+  }, {
+    "uuid" : "80c7b772-c4e0-4519-848e-5489bba9fbb7",
+    "encounterType" : {
+      "uuid" : "714fa006-e71d-4fb5-85e6-78ecab2d6204",
+      "voided" : false
+    },
+    "name" : "TB Lab test results",
+    "voided" : false
+  }, {
+    "uuid" : "5c235aa2-0a54-4d4a-bfc2-246b91216c2d",
+    "encounterType" : {
+      "uuid" : "05305675-9177-4137-9fed-f9bfb9c0ef79",
+      "voided" : false
+    },
+    "name" : "CBNAAT result",
+    "voided" : false
+  }, {
+    "uuid" : "caa4e764-52b0-47fb-ba42-9847dbdc475b",
+    "encounterType" : {
+      "uuid" : "7c6ad90b-6f4f-4f5e-92a8-67d6e193c830",
+      "voided" : false
+    },
+    "name" : "LPA result",
+    "voided" : false
+  }, {
+    "uuid" : "f94602c0-8e65-407c-a478-37681a65197d",
+    "encounterType" : {
+      "uuid" : "97ecb126-4a12-4298-82a8-83fb39caad55",
+      "voided" : false
+    },
+    "name" : "LJ result",
+    "voided" : false
+  }, {
+    "uuid" : "417e31ca-9ca4-4d31-a084-abdc0184f803",
+    "encounterType" : {
+      "uuid" : "01e5d6f4-d4d0-49a4-8dc6-b2e8ef8bc806",
+      "voided" : false
+    },
+    "name" : "Clinic lab result",
+    "voided" : false
+  }, {
+    "uuid" : "8d6a3b09-468c-4ce8-b4a4-e167c97db5e2",
+    "encounterType" : {
+      "uuid" : "4c883a18-6d64-4c43-8a86-2c79613580ed",
+      "voided" : false
+    },
+    "name" : "Diabetes referral status",
+    "voided" : false
+  }, {
+    "uuid" : "54eb50ea-d8e0-4603-98fd-22250718ae39",
+    "encounterType" : {
+      "uuid" : "21b9968d-4ec1-405b-bde6-69a5b8dfe615",
+      "voided" : false
+    },
+    "name" : "Verbal autopsy newborn",
+    "voided" : false
+  }, {
+    "uuid" : "dd121587-088d-4a82-b822-1a85e62559a9",
+    "encounterType" : {
+      "uuid" : "b751dbf5-fa3a-4ffb-9bfd-8ffded1c38a4",
+      "voided" : false
+    },
+    "name" : "Verbal autopsy maternal",
+    "voided" : false
+  }, {
+    "uuid" : "a352d8de-867a-4546-9f96-c08c9b63dc19",
+    "encounterType" : {
+      "uuid" : "4e4e9ff7-a977-4224-ad75-6fd80fd4578a",
+      "voided" : false
+    },
+    "name" : "Verbal autopsy child",
+    "voided" : false
+  }, {
+    "uuid" : "f36e77d9-54eb-4abd-bb10-56c38071ebab",
+    "encounterType" : {
+      "uuid" : "02844fa4-528d-4f36-9a88-780c13812216",
+      "voided" : false
+    },
+    "name" : "Death (voided~427)",
+    "voided" : true
+  }, {
+    "uuid" : "85c49f22-325a-4067-bdb4-91d583ccf308",
+    "encounterType" : {
+      "uuid" : "4427abc6-a7a3-4571-98e4-b16b742254d2",
+      "voided" : false
+    },
+    "name" : "Death",
+    "voided" : false
+  }, {
+    "uuid" : "8fb508c2-5527-423c-a823-9d2b4a0b2cca",
+    "encounterType" : {
+      "uuid" : "5e7a2ebd-6add-4cdf-b9ff-8014e5ce30b9",
+      "voided" : false
+    },
+    "name" : "Hypertension Followup",
+    "voided" : false
+  }, {
+    "uuid" : "4a03ed1a-26af-4487-a539-f62aea65c8ba",
+    "encounterType" : {
+      "uuid" : "a97ade35-b146-4e51-8387-37ad93b66d13",
+      "voided" : false
+    },
+    "name" : "Ganiyari lab result",
+    "voided" : false
+  }, {
+    "uuid" : "d130c0d6-0a8f-48a0-b698-2fa5e5346a99",
+    "encounterType" : {
+      "uuid" : "fb8fd0d2-565d-46a6-bf8c-2ee405cad407",
+      "voided" : false
+    },
+    "name" : "Lab test",
+    "voided" : false
+  }, {
+    "uuid" : "e851deab-a825-4cc1-8bfe-949df15d5893",
+    "encounterType" : {
+      "uuid" : "a1149416-7ff8-4a52-bcf2-cacb13ce4413",
+      "voided" : false
+    },
+    "name" : "Sickle cell lab test",
+    "voided" : false
+  }, {
+    "uuid" : "a286f569-5105-4635-8e3a-9514c9e51d76",
+    "encounterType" : {
+      "uuid" : "eb6193a9-fbfe-4689-a492-36e7d89f2553",
+      "voided" : false
+    },
+    "name" : "Hypertension referral status",
+    "voided" : false
+  }, {
+    "uuid" : "46a4b5b3-e7e1-4e49-9b2d-3d095de63dd4",
+    "encounterType" : {
+      "uuid" : "f28b8bf7-62f6-4b4f-ba2a-650241f54fe7",
+      "voided" : false
+    },
+    "name" : "Diabetes Followup",
+    "voided" : false
+  }, {
+    "uuid" : "4e9267f4-b90e-4ad2-aaee-04b82c6d7036",
+    "encounterType" : {
+      "uuid" : "6e14b2e8-60be-4178-94b4-856a3960cce9",
+      "voided" : false
+    },
+    "name" : "Epilepsy referral status",
+    "voided" : false
+  }, {
+    "uuid" : "e12d07ee-b8ca-493b-b271-56951c063d9e",
+    "encounterType" : {
+      "uuid" : "3499ff8f-e16f-4d30-be6b-d22103a335e0",
+      "voided" : false
+    },
+    "name" : "Sickle cell referral status",
+    "voided" : false
+  }, {
+    "uuid" : "d8f5c3e7-9447-4a41-bfdc-74f22555cc3d",
+    "encounterType" : {
+      "uuid" : "44ba3d85-4843-464a-aeb5-79ea8254fbd2",
+      "voided" : false
+    },
+    "name" : "TB referral status",
+    "voided" : false
+  }, {
+    "uuid" : "46ecf17d-0fa0-4ba0-98c6-4cceff9610c5",
+    "encounterType" : {
+      "uuid" : "fa988057-0a78-4bd2-b4de-b4c9cf0e8055",
+      "voided" : false
+    },
+    "name" : "NCD Followup (voided~295)",
+    "voided" : true
+  }, {
+    "uuid" : "fe040c94-5287-47ed-ba22-2791fc84912b",
+    "encounterType" : {
+      "uuid" : "335c35ba-9de4-4e08-9494-2975e3f046c9",
+      "voided" : false
+    },
+    "name" : "TB followup (voided~294)",
+    "voided" : true
+  }, {
+    "uuid" : "682a5cc0-9a81-43ca-8795-37e03a93ab17",
+    "encounterType" : {
+      "uuid" : "bc2c8ec9-a79b-4f67-b924-6b3b5386a789",
+      "voided" : false
+    },
+    "name" : "Daily Attendance Form",
+    "voided" : false
+  }, {
+    "uuid" : "cfa8b388-ceea-4dcd-ac03-c5bc76dda5ed",
+    "encounterType" : {
+      "uuid" : "f9497943-a647-4746-ac9d-c6cdde30192a",
+      "voided" : false
+    },
+    "name" : "Child Absent followup Form",
+    "voided" : false
+  }, {
+    "uuid" : "7f06b33a-1d67-4144-88e3-86ce7dc80253",
+    "encounterType" : {
+      "uuid" : "6634c90d-ebe8-42ef-bfb5-585ab8615fdc",
+      "voided" : false
+    },
+    "name" : "Observation Checklist",
+    "voided" : false
+  }, {
+    "uuid" : "37509ae5-20fc-4998-a0e2-a9af8264ec69",
+    "encounterType" : {
+      "uuid" : "95e98913-4e87-4418-a0dc-5e8aac493660",
+      "voided" : false
+    },
+    "name" : "SHG monthly data collection",
+    "voided" : false
+  }, {
+    "uuid" : "42505f13-09d5-45d8-9bd8-00448f68a0c9",
+    "encounterType" : {
+      "uuid" : "c7df7da8-8c29-438c-9947-3ea75ea6b826",
+      "voided" : false
+    },
+    "name" : "Monthly Village Health worker report",
+    "voided" : false
+  }, {
+    "uuid" : "8d04dac4-f930-4d6c-bea0-02659083c5b6",
+    "encounterType" : {
+      "uuid" : "2077f95f-cab4-4cca-aa0d-c10dc5a491fb",
+      "voided" : false
+    },
+    "name" : "Monthly monitoring",
+    "voided" : false
+  }, {
+    "uuid" : "a3cbfda0-a56e-4d1d-8c55-aea5203f651b",
+    "encounterType" : {
+      "uuid" : "bf3b3dcc-1666-4a7a-9015-84d4bb07aceb",
+      "voided" : false
+    },
+    "name" : "Senior Health Worker Weekly Reporting",
+    "voided" : false
+  }, {
+    "uuid" : "81ea9aaa-358d-45f1-807e-815d3bfb201b",
+    "encounterType" : {
+      "uuid" : "cd176afd-6cca-4ee8-88c9-24b6541b4f70",
+      "voided" : false
+    },
+    "name" : "Monthly Cluster monitoring",
+    "voided" : false
+  }, {
+    "uuid" : "198328e2-eb31-494e-9558-6be46a970281",
+    "encounterType" : {
+      "uuid" : "508512b7-8e18-4bc2-bcdf-8f574b71b6d7",
+      "voided" : false
+    },
+    "name" : "Senior Health Worker Monthly Reporting",
+    "voided" : false
+  }, {
+    "uuid" : "61e618b3-87d8-4e33-b5bf-be7d67ec17e7",
+    "encounterType" : {
+      "uuid" : "d4817671-1cf0-489e-9c1f-8bd451491abf",
+      "voided" : false
+    },
+    "name" : "Weekly Village Health Worker Reporting",
+    "voided" : false
+  }, {
+    "uuid" : "7e133515-adcc-4eb1-bdeb-188c5e7245d3",
+    "encounterType" : {
+      "uuid" : "55ef468a-b5bb-40f8-849d-aeafdb850d46",
+      "voided" : false
+    },
+    "name" : "Monthly Animal Health Worker Reporting form",
+    "voided" : false
+  }, {
+    "uuid" : "8b2e1783-0a6f-4c8f-b0e7-3ea2476f6344",
+    "encounterType" : {
+      "uuid" : "ebaa59f0-ae44-4f62-9e91-ab444494c2b3",
+      "voided" : false
+    },
+    "name" : "Verbal Autopsy Adult",
+    "voided" : false
+  } ]
+}

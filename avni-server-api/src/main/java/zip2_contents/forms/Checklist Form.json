@@ -1,0 +1,110 @@
+{
+  "name" : "Checklist Form",
+  "uuid" : "c04b2361-7bfa-4224-8051-68d048e61407",
+  "formType" : "ChecklistItem",
+  "formElementGroups" : [ {
+    "uuid" : "9249a8c6-ce81-49b3-8e8e-48979ccd5664",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Place of Vaccination",
+      "uuid" : "9cc37e51-a34b-40ba-9516-4b21ba9e91ff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of Vaccination",
+        "uuid" : "92d7f012-fe52-41eb-bbf0-1f0e366f14a1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Anganwadi Center",
+          "uuid" : "4bcb89ea-ec7d-4124-a3c6-f93d58ee4edb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "DH",
+          "uuid" : "56016db5-fd30-40be-a420-9c12e4b2b56b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "PHC",
+          "uuid" : "43449534-1e2b-45de-8a5d-d99d13f3321f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "CHC",
+          "uuid" : "8d91333e-0942-44bf-904b-6cdd30d54817",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Sub Center",
+          "uuid" : "31a0f7f1-7b23-4436-ae0a-0a982c11077c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify Other",
+      "uuid" : "05979687-9240-410e-b7d7-16c84b1ef42a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify Other place of vaccination",
+        "uuid" : "30ccf52f-f0c6-4a45-baa7-c65600516110",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new\n  imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of Vaccination').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};\n",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

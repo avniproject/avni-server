@@ -1,0 +1,7 @@
+{
+  "name" : "Observation Checklist Encounter Cancellation",
+  "uuid" : "827875a2-7a72-4aa7-b0f8-00a9404f9cae",
+  "formType" : "IndividualEncounterCancellation",
+  "formElementGroups" : [ ],
+  "decisionConcepts" : [ ]
+}

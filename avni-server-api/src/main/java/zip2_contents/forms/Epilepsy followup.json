@@ -1,0 +1,1977 @@
+{
+  "name" : "Epilepsy followup",
+  "uuid" : "bd166587-917e-40c2-aa21-03aa843eb557",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "859d708c-a492-43c1-8d6c-2a926bc3f843",
+    "name" : "General",
+    "displayOrder" : 1.0,
+    "display" : "General",
+    "formElements" : [ {
+      "name" : "Place of follow up",
+      "uuid" : "d26cc145-da4e-4082-ba2f-096df0d9eb59",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Followup not done" ]
+      } ],
+      "concept" : {
+        "name" : "Place of follow up",
+        "uuid" : "5b570434-5ef2-4933-8dc7-0e809dbdc2fd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Ganiyari Hospital",
+          "uuid" : "e9a08867-baca-43ea-85ac-34c06811190b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Mobile clinic",
+          "uuid" : "b2802bbd-ebc7-4002-a8d8-c068f5eb22da",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Home",
+          "uuid" : "1a4f9d04-3dfd-4851-8dfa-62a83f6cf169",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "PSG Meeting",
+          "uuid" : "a9ed1d6e-fec3-4bc1-b9c6-946688f1e2cb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Subcenter OPD",
+          "uuid" : "352c714d-0a55-4e46-81ee-c14159dbb636",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Followup not done",
+          "uuid" : "84c5f730-0152-4974-8105-ede182f82dae",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Have you filled the epilepsy diary?",
+      "uuid" : "652be91f-8c4b-48c0-a54d-be23a50af864",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Have you filled the epilepsy diary?",
+        "uuid" : "3e7dc6b6-bd6f-48c5-9e81-e74eb7124777",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "NA",
+          "uuid" : "7efbfba4-66d1-4510-9024-aaaedf439392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Do not have diary",
+          "uuid" : "fceef6f1-0e0f-417a-bc7d-01e661963742",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Give epilepsy diary to this patient",
+      "uuid" : "917b8f8e-4626-4cf6-89c4-3cd7c560609f",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Yes" ]
+      } ],
+      "concept" : {
+        "name" : "Give epilepsy diary to this patient",
+        "uuid" : "c5a718d2-7032-4498-a383-45062c5eab44",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Have you filled the epilepsy diary?').containsAnswerConceptName('Do not have diary');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "How many seizures in last month (see the diary and write)",
+      "uuid" : "231e3ad3-e8fa-41ae-8920-a790bf6378e7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How many seizures in last month",
+        "uuid" : "847893f2-d852-4ed9-bb68-0fecf3948e07",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true
+    }, {
+      "name" : "Any injury during the seizures?",
+      "uuid" : "219c555a-43d3-4e3b-9ffe-516c143ba7eb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any injury during the seizures?",
+        "uuid" : "a2127604-d3b9-42f3-a757-5ef5bad19cf1",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('How many seizures in last month').is.greaterThan(0);\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Refer the patient to subcenter for injury centre and counsell the patient to take care during seizures",
+      "uuid" : "53f2900c-b786-4303-8801-91f78ca94984",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Yes" ]
+      } ],
+      "concept" : {
+        "name" : "Counselling/Referral tip for seizure",
+        "uuid" : "cdea637d-2614-4212-904d-324e2fd9193f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Any injury during the seizures?').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "How is sleep?",
+      "uuid" : "b49d2c06-f2ea-4876-aa43-6fe5ea0c21dc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "How is sleep?",
+        "uuid" : "33602e32-748e-4d35-9b1a-c41d1825aa9f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Poor sleep",
+          "uuid" : "93971ac2-1802-4ed4-ab53-5d7bff0c1f4c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Good sleep",
+          "uuid" : "b360effb-5e95-4f18-a43f-11c7665bc01a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Member of peer support",
+      "uuid" : "224f4185-0e67-420b-a811-c4d571427ad5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Member of peer support",
+        "uuid" : "6c7bd0b2-849e-446c-b5eb-a725f8c53296",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "No.of days Medicine taken previous month",
+      "uuid" : "286b5f96-7fe0-4e42-8b23-5c23f209ff9a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No.of days medicine taken previous month",
+        "uuid" : "9a839d5e-b113-4168-83a8-f47b76bff0cb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 31.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Compliance of previous month",
+      "uuid" : "93b33f2c-9007-4976-a0ac-e870c93a187a",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Compliance of previous month",
+        "uuid" : "e32c3092-b22c-4320-95aa-3fcd51a3e5d3",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \n    const medsTaken = programEncounter.getObservationReadableValue('No.of days medicine taken previous month');\n   \n    let displayText = '';\n    if(medsTaken && medsTaken >= 20){    \n       displayText = 'Good';\n    }else if (medsTaken && medsTaken < 20){  \n       displayText = 'Poor';\n    }\n         \n    \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "566fee81-d349-4880-a25e-df29bba940f0",
+    "name" : "History",
+    "displayOrder" : 2.0,
+    "display" : "History",
+    "formElements" : [ {
+      "name" : "Doing well?",
+      "uuid" : "f907e2b5-7607-4312-bd54-4a2c91d73041",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Doing well?",
+        "uuid" : "e4721a46-8949-4268-bb29-8cf8a91b7599",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Any new complaint",
+      "uuid" : "464f0212-6b0a-4576-b5b9-212610aab0ef",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Any new complaint",
+        "uuid" : "7b9129a5-b168-4afb-91f4-4eacefcb3a90",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Specify complaint",
+      "uuid" : "cc47a103-1d98-497b-bcb3-69f27fb17650",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "If yes, what complaint",
+        "uuid" : "fb34a579-8778-4ea4-a04c-56d5bd61758a",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Any new complaint').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "No.of days Medicine taken previous month",
+      "uuid" : "b783ab54-be6b-463e-b0f2-59eb7da8e22b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No.of days medicine taken previous month",
+        "uuid" : "9a839d5e-b113-4168-83a8-f47b76bff0cb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowAbsolute" : 0.0,
+        "highAbsolute" : 31.0,
+        "lowNormal" : 0.0,
+        "highNormal" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Compliance of previous month",
+      "uuid" : "f09e94cc-bcaa-4b94-acf9-07140df80b78",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Compliance of previous month",
+        "uuid" : "e32c3092-b22c-4320-95aa-3fcd51a3e5d3",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \n    const medsTaken = programEncounter.getObservationReadableValue('No.of days medicine taken previous month');\n   \n    let displayText = '';\n    if(medsTaken && medsTaken >= 29){    \n       displayText = 'Good';\n    }else if (medsTaken && medsTaken < 29){  \n       displayText = 'Poor';\n    }\n         \n    \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Compliance poor, reasons for not taking medicines",
+      "uuid" : "e0a8f9cd-36c7-4cdb-b44d-20ce9bcb3a1b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reasons for not taking medicines",
+        "uuid" : "455f8f23-7e78-45b1-97d2-b0a6bb048f3d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Taking medicine from govt/private hospital/dispensary",
+          "uuid" : "7dfb6b50-46ed-4de0-ba3b-ea4271c27fb2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong dose",
+          "uuid" : "92ea2630-f541-4080-a21d-d6d506b5afd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Forgotten to take medicines",
+          "uuid" : "07421483-1b84-49a4-8ea2-2c86474f2f45",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong timing",
+          "uuid" : "270e752f-71a8-4d9c-a71b-29d92ba3a869",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Patient dont want to continue medicines from JSS",
+          "uuid" : "146cc7de-d124-4e6f-9715-25553adef09f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Side effects of drug",
+          "uuid" : "8efb4e0c-2344-4947-a056-267b9f9499f8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Wrong drug",
+          "uuid" : "3862f257-f4a9-480e-8c14-6bd9b1be1e6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Not answered",
+          "uuid" : "ae021fdc-9767-4fae-9b17-410e7d32e218",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Taking medicine from traditional healer",
+          "uuid" : "e377c779-96ff-4277-8e6f-a6370462847e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('No.of days medicine taken previous month').is.lessThan(20);\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Specify other reasons for not taking medicines",
+      "uuid" : "e9147116-bad0-4cdd-9c2a-ca7859a4057f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reasons for not taking medicines",
+        "uuid" : "09cc4da8-3b67-42dc-88b4-ebd91bc495ea",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Reasons for not taking medicines').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Are you taking medicines correctly?",
+      "uuid" : "015a2386-8060-44a2-bb9a-a6b4c51fd9c1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Are you taking medicines correctly?",
+        "uuid" : "4ba160bc-9752-4ed2-9dcd-351269ec8231",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "What is the problem for not taking medicines correctly",
+      "uuid" : "6e54ce9e-a6a4-4c0f-b78e-811d1f5bf47a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "What is the problem for not taking medicines correctly",
+        "uuid" : "d86a7171-0afe-4292-84ef-b264ffeba632",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Wrong dose",
+          "uuid" : "92ea2630-f541-4080-a21d-d6d506b5afd3",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Wrong timing",
+          "uuid" : "270e752f-71a8-4d9c-a71b-29d92ba3a869",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Wrong drug",
+          "uuid" : "3862f257-f4a9-480e-8c14-6bd9b1be1e6c",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are you taking medicines correctly?').containsAnswerConceptName('No');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Specify other problem",
+      "uuid" : "9c455582-c265-4f81-8cbe-987453050e59",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Specify other problem for not taking medicines correctly",
+        "uuid" : "f3995f52-bd72-48ec-9e35-052a9b9c52ce",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n   statusBuilder.show().when.valueInEncounter('What is the problem for not taking medicines correctly').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "d09f7992-b5dd-42ca-8d97-cbfd9a0919f8",
+    "name" : "Medicine side effects",
+    "displayOrder" : 3.0,
+    "display" : "Medicine side effects",
+    "formElements" : [ {
+      "name" : "Are there any medicine side effects",
+      "uuid" : "dfa2032e-6780-4d33-8551-79b34272940d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Are there any medicine side effects",
+        "uuid" : "be75a1aa-04d1-4316-bca2-4fc262762fb6",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Tremor in legs/hands",
+          "uuid" : "5ce311a6-354a-46ff-b44b-376304ad771e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weight gain/Weigh loss",
+          "uuid" : "4e33bc57-4efa-4177-84c1-e23920388457",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Gum hypertrophy",
+          "uuid" : "29f2582e-f4c5-4b3f-8825-1c478ab2e392",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 9.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Gets angry",
+          "uuid" : "52165161-f248-4418-a771-3b752aafc3f5",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "unique" : true,
+          "active" : true
+        }, {
+          "name" : "Issues in menstrual cycle",
+          "uuid" : "f7b02f4d-69fc-4636-a41e-918279940f41",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 8.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Vision problem",
+          "uuid" : "c741f263-d0c5-44cd-b738-e97a6f59967b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Giddiness",
+          "uuid" : "da135cc5-aa1e-4e49-b1aa-f3c8eaa9f374",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Loss of hair/Hair growth",
+          "uuid" : "d5947e7e-f0d8-4053-a299-5e7533e5c0c0",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Weakness",
+          "uuid" : "a347dfa4-9e51-4ab4-9a7f-759379b46390",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 10.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Weakness",
+      "uuid" : "0d124f5d-0ba0-43cc-9cdf-d8b926dd6205",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect weakness",
+        "uuid" : "01c5f5ee-c479-4813-a5c5-e3c46393191f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Weakness');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Giddiness",
+      "uuid" : "927c4585-29d5-4a46-828f-446305b6dee1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect Giddiness",
+        "uuid" : "2af9be4d-d2b1-4c4f-82f4-4bb171e67990",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Giddiness');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Gets angry",
+      "uuid" : "ba802c27-354d-437e-8944-fbce9fab53a4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect gets angry",
+        "uuid" : "7bf1e72a-0af5-4b13-aae8-5a80a4cec305",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Gets angry');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Vision problem",
+      "uuid" : "88a59b97-d60b-4172-a627-559dcb102b12",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect vision problem",
+        "uuid" : "4d4c0fe8-7eda-48ba-aab9-34ea976e841e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Vision problem');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Tremor in legs/hands",
+      "uuid" : "f02a0b66-1e25-4271-993d-3e286c7607a6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect tremor in legs/hands",
+        "uuid" : "8cdb8d18-dd6e-425b-98b7-ab0cabf08ebd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Tremor in legs/hands');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Weight gain/Weigh loss",
+      "uuid" : "1bf0cc2b-5cbe-496d-b972-bea50b272070",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect weight gain/Weigh loss",
+        "uuid" : "fb8cbd13-8209-4ffb-b63a-12e9030322fd",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Weight gain/Weigh loss');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Loss of hair/Hair growth",
+      "uuid" : "cb9acbb8-1f0e-4115-81b0-8991e16cd801",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect loss of hair/Hair growth",
+        "uuid" : "93e81654-77c0-4fde-96d4-2cd114353cd7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Loss of hair/Hair growth');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Issues in menstrual cycle",
+      "uuid" : "00a58b3b-41bc-4f90-9a6f-5c6d8b3d4ada",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect issues in menstrual cycle",
+        "uuid" : "8742f81a-af70-46c5-9637-0fce4df16c8e",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Issues in menstrual cycle');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Gum hypertrophy",
+      "uuid" : "6df6f955-5039-44e8-bd52-d15ac6fa55b0",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine side effect gum hypertrophy",
+        "uuid" : "48cde37c-e034-4280-b405-8a9ad357a8cc",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Decreased",
+          "uuid" : "dd14086c-77ca-47d0-9593-d1a1bbfde905",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "As it is",
+          "uuid" : "64238ece-a3d6-4bfe-b666-a2d09b9360d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "New side effect",
+          "uuid" : "c508fa89-d189-4e6e-a6f1-ad4045ef3512",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Increased",
+          "uuid" : "f9001edc-0f9a-4eb3-949c-3238ee8adecb",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Gum hypertrophy');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other medicine side effect",
+      "uuid" : "d8cbef53-2764-4379-bc1a-8580046fb54c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other medicine side effect",
+        "uuid" : "1fb432f3-5c76-430f-8aa3-cb10caf3eb13",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Are there any medicine side effects').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Patient treatment status",
+      "uuid" : "972611e4-c301-42a9-b5c6-ec8a4099a41d",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Patient Treatment Status",
+        "uuid" : "39bac4c9-d312-490d-8e1c-2c42da978fea",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let displayText = 'Can not calculate yet';\n\n    const encounters = programEncounter.programEnrolment.getEncountersOfType('Epilepsy followup');\n\n\n    let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .nth(0)\n        .value();\n\n    let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value();\n\n\n    let enc1Value = -1, enc2Value = -1;\n    let enc1ComplianceValue, enc2ComplianceValue;\n\n    if (enc1) {\n        enc1Value = enc1.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n    if (enc2) {\n        enc2Value = enc2.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n\n    if (enc1) {\n        enc1ComplianceValue = enc1.getObservationReadableValue('Compliance of previous month');\n    }\n    if (enc2) {\n        enc2ComplianceValue = enc2.getObservationReadableValue('Compliance of previous month');\n    }\n\n    console.log(`'enc1==>' ${enc1Value} 'enc 2 ==>' ${enc2Value} `);\n\n\n    if (enc1Value >= 0 && enc2Value >= 0 ) {\n        if (enc1Value == 0 && enc2Value == 0 ) {\n            displayText = 'Default';\n        }\n    }\n\n    //  else if (enc1Value < 20 &&  enc2Value < 20 &&  enc3Value < 20) {\n    //    displayText = 'Break in treatment';\n    //   }\n    // else if ( enc1Value > 20 &&  enc2Value > 20 &&  enc3Value > 20){\n    //     displayText = 'Treatment not breaking';\n    //   }\n    // }\n    if (enc1ComplianceValue !== undefined && enc2ComplianceValue !== undefined ) {\n\n        if (_.isEqual(enc1ComplianceValue, 'Poor') && _.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Break in treatment';\n        else if (!_.isEqual(enc1ComplianceValue, 'Poor') && !_.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Treatment not breaking';\n\n    }\n\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Patient treatment status",
+      "uuid" : "9684929a-c6c2-48ef-a261-ba46afead25e",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Patients treatment status",
+        "uuid" : "77a5d630-7c66-4880-94f0-b552b4e8a7d7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Can not calculate yet",
+          "uuid" : "2c93fb82-d24f-4a59-95b4-78b0eda0b926",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Break in treatment",
+          "uuid" : "10275692-2613-4c3a-adea-ad922dee199a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Default",
+          "uuid" : "01de3d31-cdc7-48da-8d6d-6409e74a452a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Treatment not breaking",
+          "uuid" : "f5384dac-296c-46c1-b957-294d998f6f5f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let displayText = 'Can not calculate yet';\n\n    const encounters = programEncounter.programEnrolment.getEncountersOfType('Epilepsy followup');\n\n\n    let enc1 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .nth(0)\n        .value();\n\n    let enc2 = _.chain(encounters)\n        .filter((enc) => enc.encounterDateTime)\n        .filter((enc) => enc.encounterDateTime < programEncounter.encounterDateTime)\n        .filter((enc) => !_.isNil(enc.encounterDateTime))\n        .nth(1)\n        .value();\n\n\n    let enc1Value = -1, enc2Value = -1;\n    let enc1ComplianceValue, enc2ComplianceValue;\n\n    if (enc1) {\n        enc1Value = enc1.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n    if (enc2) {\n        enc2Value = enc2.getObservationReadableValue('No.of days medicine taken previous month');\n    }\n\n    if (enc1) {\n        enc1ComplianceValue = enc1.getObservationReadableValue('Compliance of previous month');\n    }\n    if (enc2) {\n        enc2ComplianceValue = enc2.getObservationReadableValue('Compliance of previous month');\n    }\n\n    console.log(`'enc1==>' ${enc1Value} 'enc 2 ==>' ${enc2Value} `);\n\n\n    if (enc1Value >= 0 && enc2Value >= 0 ) {\n        if (enc1Value == 0 && enc2Value == 0 ) {\n            displayText = 'Default';\n        }\n    }\n\n    //  else if (enc1Value < 20 &&  enc2Value < 20 &&  enc3Value < 20) {\n    //    displayText = 'Break in treatment';\n    //   }\n    // else if ( enc1Value > 20 &&  enc2Value > 20 &&  enc3Value > 20){\n    //     displayText = 'Treatment not breaking';\n    //   }\n    // }\n    if (enc1ComplianceValue !== undefined && enc2ComplianceValue !== undefined ) {\n\n        if (_.isEqual(enc1ComplianceValue, 'Poor') || _.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Break in treatment';\n        else if (!_.isEqual(enc1ComplianceValue, 'Poor') && !_.isEqual(enc2ComplianceValue, 'Poor'))\n            displayText = 'Treatment not breaking';\n\n    }\n\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Control over seizures",
+      "uuid" : "b5b5babe-688e-4e7a-a47a-6c1f40d4a364",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Control over seizures",
+        "uuid" : "d71de3d4-3ae6-44a7-8322-a1b4e74ab979",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \n    const medsTaken = programEncounter.getObservationReadableValue('How many seizures in last month');\n   \n    let displayText = '';\n    if(medsTaken == 0){    \n       displayText = 'Yes';\n    }else if (medsTaken > 0){  \n       displayText = 'No';\n    }\n         \n    \n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, displayText);\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "fc22612b-dfa0-4ae2-8ff3-a82f919d1da9",
+    "name" : "Medicine",
+    "displayOrder" : 4.0,
+    "display" : "Medicine",
+    "formElements" : [ {
+      "name" : "Medicine status",
+      "uuid" : "2559f64d-de0d-4c75-a424-d3bac0d7eccd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Medicine status",
+        "uuid" : "b7d1d14e-bd83-4b46-b087-c2bec4a27ab5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Change in medicine",
+          "uuid" : "3cfed9a0-8e3d-4092-8af9-54313a322e9a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Continue same medicines",
+          "uuid" : "63eb4339-92a9-4a11-9767-2a8e3dc76674",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Medicines",
+      "uuid" : "2c21f0dc-ecb9-4af9-8ca0-1c094e9878e6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Epilepsy medicines",
+        "uuid" : "f3ffd64d-d7a3-4106-9762-75823c2de597",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Phenytoin",
+          "uuid" : "fcd61765-353b-490d-9b67-1ad6407af009",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Carbamezepine",
+          "uuid" : "96dafb68-4f93-4a47-874d-383a3a797835",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Phenobarbitone",
+          "uuid" : "ee8238a1-0d1a-4ab5-8a93-f4d227aff375",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Valproic acid",
+          "uuid" : "798e63d4-2c5a-4ed6-9ef1-6864b06eb975",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n\n   statusBuilder.show().when.valueInEncounter('Medicine status').containsAnswerConceptName('Change in medicine');\n   return statusBuilder.build();\n  \n };",
+      "mandatory" : true
+    }, {
+      "name" : "Phenobarbitone",
+      "uuid" : "926d5922-abdd-47fa-bc78-fd46a1f67373",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone dose",
+        "uuid" : "af513564-2a90-4ae5-b778-a06a3ea92837",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Phenobarbitone for how many times a days",
+      "uuid" : "2ca5425c-b8c5-47dd-80ad-f61ea7f7304c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone for how many times a days",
+        "uuid" : "96a67ccd-42ee-4d7c-b344-cab395d06a4b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Phenobarbitone for how many days",
+      "uuid" : "92b8ff0c-7efd-42c7-9923-4199bae8f4dc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenobarbitone for how many days",
+        "uuid" : "c633aee6-6792-4b25-9fd8-dcb018d2a655",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "\n'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Phenobarbitone');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Carbamezepine",
+      "uuid" : "5e863337-9cf8-444f-b953-a9ee9fde65ba",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine dose",
+        "uuid" : "a1f42a41-31e2-4522-9901-56d691299a50",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Carbamezepine for how many times a days",
+      "uuid" : "a3ee4fb4-89fe-47e2-8c71-5fb359611808",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine for how many times a days",
+        "uuid" : "c6a22993-d14d-44c3-8eb6-dd55eefe744d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Carbamezepine for how many days",
+      "uuid" : "95d6f82a-f642-4ca6-bdd2-ab1d0cc14272",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Carbamezepine for how many days",
+        "uuid" : "884b130f-bc81-458a-be2e-07b057cfffe7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Carbamezepine');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Phenytoin",
+      "uuid" : "de666a4e-1b85-40de-bee1-88e9fd5b365d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin dose",
+        "uuid" : "7866634b-f02b-402f-85d3-cf52965b9149",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Phenytoin for how many times a days",
+      "uuid" : "c32b11ae-f9c4-487d-aca8-3c1474d2bb71",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin for how many times a days",
+        "uuid" : "af33a4be-556e-4fa0-82ca-a9810f19865f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Phenytoin for how many days",
+      "uuid" : "4522e814-3a3d-4f2e-9267-f663ca005e26",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Phenytoin for how many days",
+        "uuid" : "8af0e4cd-5669-42ad-8df5-4fc7e36705e9",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Phenytoin');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Valproic acid",
+      "uuid" : "469c54be-5b86-40a0-8ef1-2a8e6714ddf1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid dose",
+        "uuid" : "ead21767-26dc-47bc-a29c-d4881ff99698",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Valproic acid for how many times a days",
+      "uuid" : "15daa96c-f2db-46c0-b98f-91a551d06677",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid for how many times a days",
+        "uuid" : "fcafb97e-2b45-4d64-9d7a-5abd7bd73eb5",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "3",
+          "uuid" : "1985c593-f9b7-4367-b4d9-77cb65b2ae13",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "2",
+          "uuid" : "d35bbce2-8ed3-4512-a9e7-74a8e878b87a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "1",
+          "uuid" : "89c74357-1f8f-40bf-b090-e34a991cf49a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "4",
+          "uuid" : "7aaf3d11-fa64-403e-b7be-ba8f106f0414",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Valproic acid for how many days",
+      "uuid" : "0ca0f31f-b647-4e5b-bf09-8e5fde303941",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Valproic acid for how many days",
+        "uuid" : "73682180-cc42-4742-b27a-7b5177a80223",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highAbsolute" : 31.0,
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Epilepsy medicines').containsAnswerConceptName('Valproic acid');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Need to change medicine/dose",
+      "uuid" : "214530c1-3902-4b18-bf95-97a989b0fb6f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Need to change medicine/dose",
+        "uuid" : "5794324d-94c4-4162-80d7-9cdcd4f8dd36",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Ask doctor which medicine to prescribe",
+      "uuid" : "41079743-f5f1-4908-a709-db4da53a9b9c",
+      "keyValues" : [ {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Yes" ]
+      } ],
+      "concept" : {
+        "name" : "Ask doctor which medicine to prescribe",
+        "uuid" : "ade14847-c41e-47d9-9850-f06f7abd19a7",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Need to change medicine/dose').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "c91e0fdb-64c9-40de-8064-10a4a7649eca",
+    "name" : "Referral",
+    "displayOrder" : 5.0,
+    "display" : "Referral",
+    "formElements" : [ {
+      "name" : "Does patient require referral",
+      "uuid" : "114d0380-072b-41de-939a-b769c2fda06a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Does patient require referral",
+        "uuid" : "7583d0ca-15c6-4e4a-9cd3-acfaca7e7b6d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "No",
+          "uuid" : "f88da2e8-6ab4-44b5-b762-233485cd25f9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Yes",
+          "uuid" : "57e20de7-10de-4391-b7ce-87b2f40d19a2",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Place of referral",
+      "uuid" : "11b2d982-21ac-41e8-959e-5f60d1e13cb9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Place of referral for NCD",
+        "uuid" : "75b9819a-0725-4c7e-94c2-5b5e72e2a2e3",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "JSS subcenter",
+          "uuid" : "b704eaf7-3cfb-4016-a884-456e1f0b7e62",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "JSS Mobile clinic",
+          "uuid" : "af7205fb-a2c5-45cd-8738-5baec4c02c98",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "District Hospital",
+          "uuid" : "602e1362-0c44-49d8-ac94-42a741c6273b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Medical college",
+          "uuid" : "3ab10f93-7267-4469-b81d-1f3d6c6bdc99",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 6.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 7.0,
+          "active" : true
+        }, {
+          "name" : "PHC",
+          "uuid" : "43449534-1e2b-45de-8a5d-d99d13f3321f",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Ganiyari Hospital",
+          "uuid" : "e9a08867-baca-43ea-85ac-34c06811190b",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Community Health Centre",
+          "uuid" : "9699d4fd-a67f-4f45-8d3c-df491f27db60",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Other place of referral",
+      "uuid" : "fba6be95-248b-4eb1-91de-845fab3aafbf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other place of referral",
+        "uuid" : "d169efa9-49af-4c84-ae09-b1b7296c62da",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Place of referral for NCD').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Referral reason",
+      "uuid" : "e4d09482-7da0-4049-b2f3-d1960cf77cb9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Referral reason NCD",
+        "uuid" : "aa21f9e8-3ed8-4f83-8427-a95a68635380",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Other",
+          "uuid" : "798b7942-cf58-4d4e-a529-5972942e0a7e",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Admission",
+          "uuid" : "397c8d3a-9711-4750-88cf-f709b54f8da8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        }, {
+          "name" : "Lab and other investigation work up",
+          "uuid" : "f02354c0-780a-4996-bb37-9cfbaa0fe931",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Annual check",
+          "uuid" : "d8e670a1-55e2-4ea0-9a8e-73f1034fb947",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Consultation with specialist",
+          "uuid" : "da91746d-cc9b-4112-801f-ec3fec719886",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Doctors consultation",
+          "uuid" : "6aa41619-2316-4f1a-b908-c07c04008f4d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "MultiSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Does patient require referral').containsAnswerConceptName('Yes');\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Other referral reason",
+      "uuid" : "67600fe4-a1a8-4848-9d02-5b16d8d6ff4b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other referral reason",
+        "uuid" : "e048675e-eb86-41c2-a47b-aecfa9a3bb8c",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n  statusBuilder.show().when.valueInEncounter('Referral reason NCD').containsAnswerConceptName('Other');\n  return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Notes",
+      "uuid" : "41523766-09b5-4a3d-b6c3-bc32fe3282cb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Notes for epilepsy followup",
+        "uuid" : "21a67cd4-2b31-4496-aac5-af8c067d7cb2",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Date of next visit (Support or Mobile)",
+      "uuid" : "07e414bc-62dd-4c5d-bd67-add2ef3c0f35",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of next visit",
+        "uuid" : "7a1d6893-f96b-4647-b274-bb78fd369185",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEncounter = params.entity;\n  const moment = imports.moment;\n  const formElement = params.formElement;\n  const _ = imports.lodash;\n  let visibility = true;\n  let value = null;\n  let answersToSkip = [];\n  let validationErrors = [];\n  \n  const condition11 = new imports.rulesConfig.RuleCondition({programEncounter, formElement}).when.valueInEncounter(\"7a1d6893-f96b-4647-b274-bb78fd369185\").lessThan(moment().startOf('day').toDate()).matches();\n  \n  if(condition11 ){\n    validationErrors.push(\"Date cannot be in the past\");  \n}\n  \n  return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value, answersToSkip, validationErrors);\n};",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const decisions = params.decisions;\n    const medComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Epilepsy medicines'\n    });\n    const medTaken = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Epilepsy medicines');\n   \n    _.forEach(medTaken.getReadableValue(), med => {\n        medComplicationsBuilder\n            .addComplication(med).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n    });\n    decisions.encounterDecisions.push(medComplicationsBuilder.getComplications());\n\n\n    const phenobComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Phenobarbitone dose'\n    });\n\n\n    const phenobDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Phenobarbitone dose');\n\n    if (!_.isEqual(phenobDose, undefined) && _.includes(medTaken.getReadableValue(), 'Phenobarbitone')) {\n        phenobComplicationsBuilder\n            .addComplication(phenobDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(phenobComplicationsBuilder.getComplications());\n    }\n\n    const phenobTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Phenobarbitone for how many times a days'\n    });\n\n    const phenobTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Phenobarbitone for how many times a days');\n\n    if (!_.isEqual(phenobTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Phenobarbitone')) {\n        phenobTimesComplicationsBuilder\n            .addComplication(phenobTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(phenobTimesComplicationsBuilder.getComplications());\n    }\n\n    const phenobDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Phenobarbitone for how many days'\n    });\n\n    const phenobDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Phenobarbitone for how many days');\n\n    if (!_.isEqual(phenobDays, undefined) && _.includes(medTaken.getReadableValue(), 'Phenobarbitone')) {\n        phenobDayComplicationsBuilder\n            .addComplication(phenobDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(phenobDayComplicationsBuilder.getComplications());\n    }\n\n    // Carbamezepine----------------------\n\n    const carbaComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Carbamezepine dose'\n    });\n\n\n    const carbaDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Carbamezepine dose');\n\n    if (!_.isEqual(carbaDose, undefined) && _.includes(medTaken.getReadableValue(), 'Carbamezepine')) {\n        carbaComplicationsBuilder\n            .addComplication(carbaDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(carbaComplicationsBuilder.getComplications());\n    }\n\n    const carbaTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Carbamezepine for how many times a days'\n    });\n\n    const carbaTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Carbamezepine for how many times a days');\n\n    if (!_.isEqual(carbaTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Carbamezepine')) {\n        carbaTimesComplicationsBuilder\n            .addComplication(carbaTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(carbaTimesComplicationsBuilder.getComplications());\n    }\n\n    const carbaDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Carbamezepine for how many days'\n    });\n\n    const carbaDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Carbamezepine for how many days');\n\n    if (!_.isEqual(carbaDays, undefined) && _.includes(medTaken.getReadableValue(), 'Carbamezepine')) {\n        carbaDayComplicationsBuilder\n            .addComplication(carbaDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(carbaDayComplicationsBuilder.getComplications());\n    }\n\n\n    // Phenytoin----------------\n\n    const phenyComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Phenytoin dose'\n    });\n\n\n    const phenyDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Phenobarbitone dose');\n\n    if (!_.isEqual(phenyDose, undefined) && _.includes(medTaken.getReadableValue(), 'Phenytoin')) {\n        phenyComplicationsBuilder\n            .addComplication(phenyDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(phenyComplicationsBuilder.getComplications());\n    }\n\n    const phenyTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Phenytoin for how many times a days'\n    });\n\n    const phenyTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Phenytoin for how many times a days');\n\n    if (!_.isEqual(phenyTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Phenytoin')) {\n        phenyTimesComplicationsBuilder\n            .addComplication(phenyTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(phenyTimesComplicationsBuilder.getComplications());\n    }\n\n    const phenyDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Phenytoin for how many days'\n    });\n\n    const phenyDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Phenytoin for how many days');\n\n    if (!_.isEqual(phenyDays, undefined) && _.includes(medTaken.getReadableValue(), 'Phenytoin')) {\n        phenyDayComplicationsBuilder\n            .addComplication(phenyDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(phenyDayComplicationsBuilder.getComplications());\n    }\n\n// ---------Valproic acid\n\n\n    const valproComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Valproic acid dose'\n    });\n\n\n    const valproDose = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Valproic acid dose');\n\n    if (!_.isEqual(valproDose, undefined) && _.includes(medTaken.getReadableValue(), 'Valproic acid')) {\n        valproComplicationsBuilder\n            .addComplication(valproDose.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(valproComplicationsBuilder.getComplications());\n    }\n\n    const valproTimesComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Valproic acid for how many times a days'\n    });\n\n    const valproTimes = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Valproic acid for how many times a days');\n\n    if (!_.isEqual(valproTimes, undefined) && _.includes(medTaken.getReadableValue(), 'Valproic acid')) {\n        valproTimesComplicationsBuilder\n            .addComplication(valproTimes.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(valproTimesComplicationsBuilder.getComplications());\n    }\n\n    const valproDayComplicationsBuilder = new imports.rulesConfig.complicationsBuilder({\n        programEncounter: programEncounter,\n        complicationsConcept: 'Valproic acid for how many days'\n    });\n\n    const valproDays = programEncounter.programEnrolment.findLatestObservationInEntireEnrolment('Valproic acid for how many days');\n\n    if (!_.isEqual(valproDays, undefined) && _.includes(medTaken.getReadableValue(), 'Valproic acid')) {\n        valproDayComplicationsBuilder\n            .addComplication(valproDays.getReadableValue()).when.valueInEncounter('Medicine status').containsAnswerConceptName('Continue same medicines');\n        decisions.encounterDecisions.push(valproDayComplicationsBuilder.getComplications());\n    }\n\n\n    return decisions;\n};",
+  "visitScheduleRule" : "\"use strict\";\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({\n        programEncounter\n    });\n\n    const nextVisitDate = programEncounter.getObservationValue('Date of next visit');\n    const isReferralRequired = programEncounter.getObservationReadableValue('Does patient require referral');\n\n    if (programEncounter.earliestVisitDateTime) {\n        scheduleBuilder\n            .add({\n                name: \"Epilepsy followup\",\n                encounterType: \"Epilepsy followup\",\n                earliestDate: imports.moment(nextVisitDate).toDate(),\n                maxDate: imports.moment(nextVisitDate).add(8, 'days').toDate()\n            }).whenItem(!_.isEmpty(nextVisitDate))\n            .is.not.truthy;\n\n              \n        if (isReferralRequired) {\n            scheduleBuilder\n                .add({\n                    name: \"Referral Status-1\",\n                    encounterType: \"Epilepsy referral status\",\n                    earliestDate: imports.moment(programEncounter.encounterDateTime).add(3, 'days').toDate(),\n                    maxDate: imports.moment(programEncounter.encounterDateTime).add(5, 'days').toDate()\n                }).whenItem(isReferralRequired == 'Yes')\n                .is.truthy;\n        }\n\n    }\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

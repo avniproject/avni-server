@@ -1,0 +1,103 @@
+{
+  "name" : "Child Absent followup Form Encounter",
+  "uuid" : "51b905fb-cae2-4b44-94aa-6721b7f7fae2",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "a472646e-40ec-4d0e-a99a-7e8535a61aa1",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Reason for being absent",
+      "uuid" : "35723482-786c-4592-8439-835d2288e02a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Reason for being absent",
+        "uuid" : "7b45ae71-29fd-447b-b1ef-60d7934a6a8d",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Away from village",
+          "uuid" : "d233d6a3-bbbb-4e68-b6e0-e72b231d221a",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true
+        }, {
+          "name" : "Migration",
+          "uuid" : "899e33d1-a54b-4ce5-8efd-2efc255129b6",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Other reason for being absent",
+          "uuid" : "71337b40-0815-4359-a7b3-e609d0c6f304",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 5.0,
+          "active" : true
+        }, {
+          "name" : "Sick",
+          "uuid" : "5d16aa00-e90c-4f11-9cda-9764f01a2aec",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        }, {
+          "name" : "Death",
+          "uuid" : "c125eec0-2bc4-4add-b1d0-7531e5ffa9c8",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true
+        }, {
+          "name" : "Exit",
+          "uuid" : "c96eb76c-18cd-4410-bb2e-bd2df1ee0424",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 4.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "MultiSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Other reason for remaining absent",
+      "uuid" : "b12927ca-5fb9-4a30-8956-7f5bd66600a9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other reason for remaining absent",
+        "uuid" : "fcd36a1d-0d52-441c-b7f3-79bba5409a9b",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n   statusBuilder.show().when.valueInEncounter('Reason for being absent').containsAnswerConceptName(\"Other\");\n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Date of phulwari resume",
+      "uuid" : "78c725f8-9211-4023-af96-a0ce6ca3eb42",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of phulwari resume",
+        "uuid" : "3f757e0d-ed66-4ed7-81b3-576041eb8ec1",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

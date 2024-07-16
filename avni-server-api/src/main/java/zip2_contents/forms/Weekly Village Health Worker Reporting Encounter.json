@@ -1,0 +1,177 @@
+{
+  "name" : "Weekly Village Health Worker Reporting Encounter",
+  "uuid" : "109642be-07e5-4f74-9b92-5e7f20821da3",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "f3d29541-391e-4fbc-9817-195d2a96caf2",
+    "name" : "Type of illness treated",
+    "displayOrder" : 1.0,
+    "display" : "Type of illness treated",
+    "formElements" : [ {
+      "name" : "Fever, cough, cold",
+      "uuid" : "1a478dbd-4319-4bcb-bae9-49c65ce77840",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever, Cough, Cold (voided~120191)",
+        "uuid" : "68bb255c-ca95-4999-b5eb-1dc022ed3d7c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "No. of fever patients being followed up",
+      "uuid" : "42df2aab-0344-417c-9626-c5861468ea74",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of fever patients being followed up (voided~120192)",
+        "uuid" : "d00bea09-03e6-474c-9f85-7ad0d23fbeb7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "No. of fever patients cured/improved",
+      "uuid" : "b5b45a44-064f-4e89-a1aa-aed16d632c7c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of fever patients cured/improved (voided~120193)",
+        "uuid" : "27db1b26-47c5-4156-8614-29bf49e8ee6f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "No. of fever patients referred to subcenter/Ganiyari",
+      "uuid" : "f22386a4-d32a-44c4-ab1f-332e2c556890",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of fever patients referred to subcenter/Ganiyari (voided~120194)",
+        "uuid" : "3408853d-e692-4356-8877-97710b6df83e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Type of illness treated",
+      "uuid" : "fbe25a50-ed4f-4a15-bee9-874dfdc37809",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of illness Treated",
+        "uuid" : "9cda0a72-8106-4d6f-8e29-0cc25eafe6c8",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Fever, Cough, Cold",
+      "uuid" : "bb2230e4-4065-4b1d-833e-bd55faf2cef2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever, Cough, Cold",
+        "uuid" : "870bd7ad-1648-400f-8ecc-fbe8594ee10f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "fbe25a50-ed4f-4a15-bee9-874dfdc37809",
+      "mandatory" : true
+    }, {
+      "name" : "No. of fever patients being followed up",
+      "uuid" : "76d34fd0-d1fb-4f0b-865f-5719dc7cf173",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of fever patients being followed up",
+        "uuid" : "c1e43bb6-1577-4616-9907-b97967f73841",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "fbe25a50-ed4f-4a15-bee9-874dfdc37809",
+      "mandatory" : true
+    }, {
+      "name" : "No. of fever patients cured/improved",
+      "uuid" : "18b65ffb-07cc-42fc-93c9-d1c0d883ae86",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of fever patients cured/improved",
+        "uuid" : "eb247058-6137-4503-95e1-9a98f45ea129",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "fbe25a50-ed4f-4a15-bee9-874dfdc37809",
+      "mandatory" : true
+    }, {
+      "name" : "No. of fever patients referred to subcenter/Ganiyari",
+      "uuid" : "ebe98708-85ab-4323-9de9-da40e5fb6e1a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of fever patients referred to subcenter/Ganiyari",
+        "uuid" : "28c40399-ecc5-465a-a6b4-f656bd58edca",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "fbe25a50-ed4f-4a15-bee9-874dfdc37809",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "ee603f7a-e222-4a5a-b503-b7b63351aa10",
+    "name" : "Communicable diseases",
+    "displayOrder" : 2.0,
+    "display" : "Communicable diseases",
+    "formElements" : [ {
+      "name" : "No. of malaria positives slides",
+      "uuid" : "b38227e2-1e2e-4338-8643-3f992c998158",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No. of malaria positives slides",
+        "uuid" : "80ed2f77-d2a7-46a2-8c03-1e67a6379cbb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n  const encounter = params.entity;\n  const moment = imports.moment;\n  const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({encounter});\n  \n  if(moment(encounter.earliestVisitDateTime).format('dddd') === 'Saturday' ){\n    const earliestDate = moment(encounter.earliestVisitDateTime).day(6).add(7,'days').toDate();\n    const maxDate = moment(earliestDate).add(1, 'days').toDate();\n    scheduleBuilder.add({name: \"Weekly Village Health Worker Reporting\", encounterType: \"Weekly Village Health Worker Reporting\", earliestDate, maxDate});  \n} else {\n    \n    const earliestDate = moment(encounter.earliestVisitDateTime).day(6).toDate();\n    const maxDate = moment(earliestDate).add(1, 'days').toDate();\n    scheduleBuilder.add({name: \"Weekly Village Health Worker Reporting\", encounterType: \"Weekly Village Health Worker Reporting\", earliestDate, maxDate});  \n}\n  \n  return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

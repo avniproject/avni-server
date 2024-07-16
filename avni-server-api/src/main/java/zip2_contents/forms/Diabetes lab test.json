@@ -1,0 +1,348 @@
+{
+  "name" : "Diabetes lab test",
+  "uuid" : "832d6fe9-a6b6-4c1e-92ed-e72d786eaddd",
+  "formType" : "ProgramEncounter",
+  "formElementGroups" : [ {
+    "uuid" : "75a0377e-020b-48f2-9fa2-9ca3dd26c927",
+    "name" : "Labs",
+    "displayOrder" : 1.0,
+    "display" : "Labs",
+    "formElements" : [ {
+      "name" : "FBS",
+      "uuid" : "391d3188-448a-4937-8337-30fdd2d781aa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "FBS",
+        "uuid" : "eb771b86-8c5b-461f-a9f4-4a4815ebeeb3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 80.0,
+        "highNormal" : 120.0,
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "PP2BS",
+      "uuid" : "13577d45-4d8d-4910-a614-31d2d04eac4d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "PP2BS",
+        "uuid" : "04806ab3-426b-4909-b2c0-65b590f8250c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 120.0,
+        "highNormal" : 150.0,
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "HbA1C",
+      "uuid" : "6a3c5a7e-e561-4eb7-a783-a5945e840629",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "HbA1C",
+        "uuid" : "f11d4eca-f6ca-4471-9a6b-e1f5d742bc22",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "highNormal" : 7.0,
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n    let HbA1C = programEncounter.programEnrolment.getObservationReadableValue('HbA1C');\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Diabetes lab test')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'HbA1C');\n        if (lastEncounterWithConcept) {\n        HbA1C = lastEncounterWithConcept.getObservationReadableValue('HbA1C');\n        lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n        }       \n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true);\n\n      if (HbA1C <= 6) {\n        console.log('1HbA1C---->', HbA1C);\n        if (lastConceptDataCollected >= 6) {\n            visibility = true;\n        }\n    } else if (lastConceptDataCollected >= 3) {\n        visibility = true;\n    }\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Hb",
+      "uuid" : "1be9c026-a397-4abf-975e-505daf2207bf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hb",
+        "uuid" : "a240115e-47a2-4244-8f74-d13d20f087df",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 12.0,
+        "highNormal" : 15.5,
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n    let HbA1C = programEncounter.programEnrolment.getObservationReadableValue('HbA1C');\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Diabetes lab test')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'HbA1C');\n        if (lastEncounterWithConcept) {\n        HbA1C = lastEncounterWithConcept.getObservationReadableValue('HbA1C');\n        lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n        }    \n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true);\n\n    if (HbA1C <= 6) {\n        console.log('1HbA1C---->', HbA1C);\n        if (lastConceptDataCollected >= 6) {\n            visibility = true;\n        }\n    } else if (lastConceptDataCollected >= 3) {\n        visibility = true;\n    }\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Sr. Creatinin",
+      "uuid" : "97a197c7-0071-4387-9e91-c868384af442",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sr. Creatinin",
+        "uuid" : "e9818326-a526-4a6c-aaaa-ae6a90323fd0",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 0.6,
+        "highNormal" : 1.2,
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Diabetes lab test')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Sr. Creatinin');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 12)\n        visibility = true;\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Cholesterol",
+      "uuid" : "faef775c-f110-45a2-8bf0-55773cd7c09c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cholesterol",
+        "uuid" : "0dc4fc3f-9f15-4c90-8986-af1b9c2e5171",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "lowNormal" : 150.0,
+        "highNormal" : 200.0,
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEncounter, formElement});\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Diabetes lab test')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Cholesterol');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n    }\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 12)\n        visibility = true;\n\n\n    statusBuilder.show().whenItem(visibility).is.truthy;\n    return statusBuilder.build();\n};",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "b89680e2-e52b-44f0-a982-20364d5106e9",
+    "name" : "Assessment",
+    "displayOrder" : 2.0,
+    "display" : "Assessment",
+    "formElements" : [ {
+      "name" : "Sugar control 1",
+      "uuid" : "ae7109dd-89fb-448e-9479-33c4369d9c62",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "sugar  1",
+        "uuid" : "8df5671b-1f60-48b8-ad33-69969c23aae2",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Controlled",
+          "uuid" : "6c5c489f-0d19-4207-aea2-08fd5c4dc7d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not controlled",
+          "uuid" : "f1f315f7-7a1f-4e6e-9eae-8ae950b5ba86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Partially controlled",
+          "uuid" : "4e9fab77-33cf-4c68-86e2-02ed30abbd14",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sugar control 1",
+      "uuid" : "76fd6147-cf9b-4b4c-85f8-2adde743529a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sugar control 1",
+        "uuid" : "b1c44241-bee3-462c-858a-7a27a0a8f643",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Diabetes lab test')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Sugar control 1');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n\n    }\n\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 6)\n        visibility = true;\n\n    const hb1ac = programEncounter.getObservationReadableValue('HbA1C');\n    let value = '';\n    if (hb1ac < 6) {\n        value = 'Good control';\n    } else if (hb1ac > 6 && hb1ac <= 8) {\n        value = 'Partial controlled'\n    } else {\n        value = 'Uncontrolled'\n    }\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sugar Control 1",
+      "uuid" : "454d8d37-921d-4308-9a95-5b11decc06d4",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      }, {
+        "key" : "ExcludedAnswers",
+        "value" : [ "Not calculated" ]
+      } ],
+      "concept" : {
+        "name" : "Sugar Control 1",
+        "uuid" : "c538894e-3a06-4214-af21-0b781307a560",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Uncontrolled",
+          "uuid" : "bead2101-7dc0-4106-a5aa-3023e16798f1",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not calculated",
+          "uuid" : "430d741d-d449-497b-8c52-21314ebad717",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 3.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Good control",
+          "uuid" : "2a23cbe4-798b-4d4b-a642-9298aa126a8d",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Partial controlled",
+          "uuid" : "7183a5b5-d084-4d57-91e6-bebfaf787c42",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true,
+        "keyValues" : [ ]
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    let visibility = false;\n    let lastEncounterDateTime = programEncounter.programEnrolment.enrolmentDateTime;\n\n    if (programEncounter.programEnrolment.hasCompletedEncounterOfType('Diabetes lab test')) {\n\n        let lastEncounterWithConcept = programEncounter.programEnrolment.findLatestPreviousEncounterWithObservationForConcept(programEncounter, 'Sugar control 1');\n\n        if (lastEncounterWithConcept)\n            lastEncounterDateTime = lastEncounterWithConcept.encounterDateTime;\n\n\n    }\n\n    let lastConceptDataCollected = imports.moment(programEncounter.encounterDateTime)\n        .diff(imports.moment(lastEncounterDateTime), 'months', true)\n    if (lastConceptDataCollected >= 6)\n        visibility = true;\n\n    const hb1ac = programEncounter.getObservationReadableValue('HbA1C');\n    let value = '';\n    if (hb1ac < 6) {\n        value = 'Good control';\n    } else if (hb1ac > 6 && hb1ac <= 8) {\n        value = 'Partial controlled'\n    } else {\n        value = 'Uncontrolled'\n    }\n\n    return new imports.rulesConfig.FormElementStatus(formElement.uuid, visibility, value);\n\n};",
+      "mandatory" : false
+    }, {
+      "name" : "Sugar control 2",
+      "uuid" : "0bf0c1c4-0391-4001-9f3b-1c9bc4270b21",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sugar  2",
+        "uuid" : "e378c1d9-076d-4cba-a4dc-42defaae8e95",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Controlled",
+          "uuid" : "6c5c489f-0d19-4207-aea2-08fd5c4dc7d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Partially controlled",
+          "uuid" : "4e9fab77-33cf-4c68-86e2-02ed30abbd14",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not controlled",
+          "uuid" : "f1f315f7-7a1f-4e6e-9eae-8ae950b5ba86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sugar control 2",
+      "uuid" : "abfc288e-d5c1-4819-aaca-f38d869ac4e5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sugar control 2 not",
+        "uuid" : "2cea3285-928d-4635-8f01-220d51203dda",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : false
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \n\n    const fbs = programEncounter.getObservationReadableValue('FBS');\n    let value = '';\n      if (fbs <= 110) {\n        value = 'Good control';\n    } else if (fbs >= 111 && fbs <= 125) {\n        value = 'Partial controlled'\n    } else if(fbs > 125) {\n        value = 'Uncontrolled'\n    }\n    \n     return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n\n};",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sugar control 3",
+      "uuid" : "3607f5a7-afbf-4f94-9807-3fb5a47bb4a6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sugar 3",
+        "uuid" : "0d9123c6-0af4-4e44-9cb2-a953ebf2955f",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Partially controlled",
+          "uuid" : "4e9fab77-33cf-4c68-86e2-02ed30abbd14",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 2.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Not controlled",
+          "uuid" : "f1f315f7-7a1f-4e6e-9eae-8ae950b5ba86",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true,
+          "keyValues" : [ ]
+        }, {
+          "name" : "Controlled",
+          "uuid" : "6c5c489f-0d19-4207-aea2-08fd5c4dc7d9",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true,
+          "keyValues" : [ ]
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sugar control 3",
+      "uuid" : "9647857a-fdf6-46a9-82b8-fa8a8e1ef88e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sugar control 3.",
+        "uuid" : "8846cf0d-fd52-4721-a8dd-ccb2e4a28d12",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n    const programEncounter = params.entity;\n    const formElement = params.formElement;\n    \n\n    const pp = programEncounter.getObservationReadableValue('PP2BS');\n    let value = '';\n      if (pp <= 140) {\n        value = 'Good control';\n    } else if (pp >= 141 && pp <= 180) {\n        value = 'Partial controlled'\n    } else if(pp > 180) {\n        value = 'Uncontrolled'\n    }\n    \n     return new imports.rulesConfig.FormElementStatus(formElement.uuid, true, value);\n\n};",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

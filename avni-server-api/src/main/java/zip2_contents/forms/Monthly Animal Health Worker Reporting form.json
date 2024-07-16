@@ -1,0 +1,1739 @@
+{
+  "name" : "Monthly Animal Health Worker Reporting form",
+  "uuid" : "e24a0f25-4b03-4367-813a-217df4a102ee",
+  "formType" : "Encounter",
+  "formElementGroups" : [ {
+    "uuid" : "33e5241b-64c1-475f-89f9-2e36908278ab",
+    "name" : "Number of Animals treated",
+    "displayOrder" : 1.0,
+    "display" : "Number of Animals treated",
+    "formElements" : [ {
+      "name" : "Number of Animals treated",
+      "uuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of Animals treated",
+        "uuid" : "09288602-8386-4cc6-90ca-daa8fd728c3e",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Cow",
+      "uuid" : "19248f44-4677-43e8-9dc6-2c9651758aa6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cow",
+        "uuid" : "af082793-c761-481c-8150-aaf6bc8f3fc9",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Bull",
+      "uuid" : "e6fc4cb1-cecb-4a0f-950e-d7ee47b13f85",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Bull",
+        "uuid" : "b409ef91-7e82-4942-ae37-86e791f7e499",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Buffalo (Male)",
+      "uuid" : "a00240c1-bbab-4234-9a03-2f9065479765",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Buffalo (Male)",
+        "uuid" : "fda3524e-2a10-4657-ac14-57353699aba4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Buffalo (Female)",
+      "uuid" : "63fb58e9-d0de-42ed-9054-db6610e05032",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Buffalo (Female)",
+        "uuid" : "c473fd58-6653-4fe6-a678-982ee6c83c54",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Goat (Male)",
+      "uuid" : "ef25ec87-8bac-4e58-88bf-171029215400",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Goat (Male)",
+        "uuid" : "57a07785-9307-480c-84a7-f96d353d45d6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Goat (Female)",
+      "uuid" : "3adc3bf9-2bd9-4b82-8621-e8c8547e3fbb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Goat (Female)",
+        "uuid" : "5db82a8c-3b86-4ef8-ad97-71f58b26d416",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Chicken",
+      "uuid" : "6c151c87-7cf4-4233-8988-4a5d4ba8d8ad",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Chicken",
+        "uuid" : "15dc5ccb-9bdd-4f92-bff4-626d5863630e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Dog",
+      "uuid" : "e8538ccf-3ff0-4e9e-84a1-960f1ab39499",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "dog",
+        "uuid" : "7a639538-0905-44d1-9469-2f1783ac2024",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Dog",
+      "uuid" : "ec76c609-c62c-453a-a7dc-6e49971092c3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dog (voided~119754)",
+        "uuid" : "3b04aeac-4b2b-4d06-adb0-3d0f0a072375",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Pig",
+      "uuid" : "2d0043f2-bc28-482b-90af-ebfdb62845ab",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pig",
+        "uuid" : "8f5adbd6-fb0a-46f8-be6f-a375468320b3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Other",
+      "uuid" : "52e5c4e9-7b2a-46ac-9d40-e296b0dcfc8f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other (animal)",
+        "uuid" : "1c1e7613-f0f5-4a83-b5a8-93d9010e243b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : true
+    }, {
+      "name" : "Total animals treated",
+      "uuid" : "b1b99904-efcd-4213-aa79-81382207a2ca",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total animals treated",
+        "uuid" : "ae755072-b268-4d26-a9eb-308828efc867",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  const _ = imports.lodash;\n\n  const numberOfCows = encounter.getObservationReadableValue('Cow','Number of Animals treated');\n  const numberOfBulls = encounter.getObservationReadableValue('Bull','Number of Animals treated');\n  const maleBuffalos = encounter.getObservationReadableValue('Buffalo (Male)','Number of Animals treated');\n  const femaleBuffalos = encounter.getObservationReadableValue('Buffalo (Female)','Number of Animals treated');\n  const maleGoats = encounter.getObservationReadableValue('Goat (Male)','Number of Animals treated');\n  const femaleGoats = encounter.getObservationReadableValue('Goat (Female)','Number of Animals treated');\n  const chicken = encounter.getObservationReadableValue('Chicken','Number of Animals treated');\n  const dog = encounter.getObservationReadableValue('dog','Number of Animals treated');\n  const pig = encounter.getObservationReadableValue('Pig','Number of Animals treated');\n  const otherAnimal = encounter.getObservationReadableValue('Other (animal)','Number of Animals treated');\n  \n  const totalTreatedAnimal = _.toNumber( numberOfCows || 0 ) + _.toNumber( numberOfBulls || 0 ) + _.toNumber( maleBuffalos || 0 ) + _.toNumber( \nfemaleBuffalos || 0 ) + _.toNumber( maleGoats || 0 ) + _.toNumber( femaleGoats || 0 ) + _.toNumber( chicken || 0 ) + _.toNumber( dog || 0 ) + _.toNumber( pig || 0 ) + _.toNumber( otherAnimal || 0 );\n\n  statusBuilder.value(totalTreatedAnimal)\n  \n  return statusBuilder.build();\n};",
+      "parentFormElementUuid" : "e23f0f1e-0acf-4756-b118-c4a6a1f990d1",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "470a0e39-a8a9-42f2-bdb8-462a8cb27dad",
+    "name" : "Number of Animals vaccinated",
+    "displayOrder" : 2.0,
+    "display" : "Number of Animals vaccinated",
+    "formElements" : [ {
+      "name" : "Number of animals vaccinated",
+      "uuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of animals vaccinated",
+        "uuid" : "a81dfc99-b3c5-4e81-a45e-0a0ac30fda98",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Cow",
+      "uuid" : "541e39f9-f92c-4456-9862-5623d7571f22",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cow (vaccinated)",
+        "uuid" : "eb94a616-a729-4342-b4f5-af234f8565aa",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Bull",
+      "uuid" : "65bbe283-c338-4fa5-a43e-d9a349b69fa4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Bull (vaccinated)",
+        "uuid" : "16c205e1-735d-4428-a080-f676012cf983",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Buffalo (Male)",
+      "uuid" : "f34fc493-8f44-4fb6-8fc1-a15f67668d1c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Buffalo (Male) vaccinated",
+        "uuid" : "2217a260-64d4-43ce-a0a6-cb2f35e5262f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Buffalo (Female)",
+      "uuid" : "56b3d8ba-91ab-4f8c-beb8-7eb6a9e84042",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Buffalo (Female) vaccinated",
+        "uuid" : "c10f8ef7-dc96-49d8-8456-a6e31dbf35a7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Goat (Male)",
+      "uuid" : "d40d7d0e-bec5-482a-b360-91e3a46d6b22",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Goat (Male) vaccinated",
+        "uuid" : "4436f2cb-588a-4b51-bb9f-754197a8a167",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Goat (Female)",
+      "uuid" : "d9ba8904-ac7d-4caf-a009-6344cec44948",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Goat (Female) vaccinated",
+        "uuid" : "bd7f20da-561a-4bdb-b9ee-8132615a4843",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Chicken",
+      "uuid" : "52ea9e95-63eb-45b1-bd25-e4356847d733",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Chicken (vaccinated)",
+        "uuid" : "5b7652d4-20a4-464d-a33f-e7323f0ba55b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Dog",
+      "uuid" : "f10afa7e-7b04-4e28-906f-a27e97d4b203",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dog (vaccinated)",
+        "uuid" : "765c0bb7-daac-412c-ba83-008a4d2a0709",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Pig",
+      "uuid" : "65d6aa5d-d4fd-478e-9f0e-18a8b20cdfac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Pig (vaccinated)",
+        "uuid" : "ea149f09-7920-4e21-a4aa-7427c01bf8f1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Other",
+      "uuid" : "45e3a2b3-d5a8-4387-a979-02cfd906bab6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other (vaccinated)",
+        "uuid" : "6e4adcf9-de9a-4167-8a60-b5a998e61d56",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    }, {
+      "name" : "Total animals vaccinated",
+      "uuid" : "62c82ed1-9068-408a-8973-c1039aebd2ae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Total animals vaccinated",
+        "uuid" : "6725f989-8777-408c-8926-891eb94926e4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE Cow (vaccinated)\n\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  const _ = imports.lodash;\n\n  const numberOfCows = encounter.getObservationReadableValue('Cow (vaccinated)','Number of animals vaccinated');\n  const numberOfBulls = encounter.getObservationReadableValue('Bull (vaccinated)','Number of animals vaccinated');\n  const maleBuffalos = encounter.getObservationReadableValue('Buffalo (Male) vaccinated','Number of animals vaccinated');\n  const femaleBuffalos = encounter.getObservationReadableValue('Buffalo (Female) vaccinated','Number of animals vaccinated');\n  const maleGoats = encounter.getObservationReadableValue('Goat (Male) vaccinated','Number of animals vaccinated');\n  const femaleGoats = encounter.getObservationReadableValue('Goat (Female) vaccinated','Number of animals vaccinated');\n  const chicken = encounter.getObservationReadableValue('Chicken (vaccinated)','Number of animals vaccinated');\n  const dog = encounter.getObservationReadableValue('Dog (vaccinated)','Number of animals vaccinated');\n  const pig = encounter.getObservationReadableValue('Pig (vaccinated)','Number of animals vaccinated');\n  const otherAnimal = encounter.getObservationReadableValue('Other (vaccinated)','Number of animals vaccinated');\n  \n  const totalVaccinatedAnimal = _.toNumber( numberOfCows || 0 ) + _.toNumber( numberOfBulls || 0 ) + _.toNumber( maleBuffalos || 0 ) + _.toNumber( femaleBuffalos || 0 ) + _.toNumber( maleGoats || 0 ) + _.toNumber( femaleGoats || 0 ) + _.toNumber( chicken || 0 ) + _.toNumber( dog || 0 ) + _.toNumber( pig || 0 ) + _.toNumber( otherAnimal || 0 );\n\n  statusBuilder.value(totalVaccinatedAnimal)\n  \n  return statusBuilder.build();\n};",
+      "parentFormElementUuid" : "e4de8e01-c155-4f13-9490-d043d5498cc3",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "cd4f4e23-5e96-45a2-9668-4b90f8fc91fd",
+    "name" : "Treatment result",
+    "displayOrder" : 3.0,
+    "display" : "Treatment result",
+    "formElements" : [ {
+      "name" : "Treatment result",
+      "uuid" : "d761d579-da96-4c4e-8f0b-b07d5fa1bfb4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Treatment result",
+        "uuid" : "af78ff55-ad7c-48b7-bfba-548f89252983",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Animals cured/improved after treatment",
+      "uuid" : "b041e567-88df-4cc7-a593-fa79f5137f7f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animals cured/improved after treatment",
+        "uuid" : "36aa2a33-7634-4c17-9ab6-059ec6d7afab",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d761d579-da96-4c4e-8f0b-b07d5fa1bfb4",
+      "mandatory" : true
+    }, {
+      "name" : "Animals not cured/Not improved after treatment",
+      "uuid" : "c43636b5-e2c6-416a-b580-b079ba3a0984",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Animals not cured/not improved after treatment",
+        "uuid" : "674463d9-3405-4801-a987-e50cdd640514",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d761d579-da96-4c4e-8f0b-b07d5fa1bfb4",
+      "mandatory" : true
+    }, {
+      "name" : "No of animals died after treatment",
+      "uuid" : "d47ef23b-3179-4b67-85ec-8d949af5787e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "No of animals died after treatment",
+        "uuid" : "2a65905e-8127-46bb-b3c3-5002c68881d1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "d761d579-da96-4c4e-8f0b-b07d5fa1bfb4",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "0956d6c9-dc16-414e-937c-a6be5a35aa43",
+    "name" : "Diseases/Health conditions treated",
+    "displayOrder" : 4.0,
+    "display" : "Diseases/Health conditions treated",
+    "formElements" : [ {
+      "name" : "Diseases/Health conditions treated",
+      "uuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diseases/Health Conditions Treated",
+        "uuid" : "c0361bd9-4ba7-4bcd-bb71-84aeaa4d2ea2",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Cough/Cold/Fever",
+      "uuid" : "03f146f7-603c-4e93-b8b2-63914308d4aa",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cough/Cold/Fever",
+        "uuid" : "46f5f753-5097-4e9e-90dc-fc7f9d5a627c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Dysentry/Blood in dysentry",
+      "uuid" : "3ea1d005-b027-4e2d-8e89-5a2b8237c3cd",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dysentry/Blood in dysentry",
+        "uuid" : "9d3c7ab1-43dd-440f-97f9-3f80d6808416",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Fever",
+      "uuid" : "935e1347-b630-4439-8b7d-35b4e1dda7a4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever (treated)",
+        "uuid" : "49f8ffde-634b-4ab5-83cb-dfa86538ccc3",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Indigestion/Gas formation",
+      "uuid" : "5695ceb2-2866-44dd-8fda-021ce86570d3",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Indigestion/Gas formation",
+        "uuid" : "feaa2c04-b425-465e-85e1-3a8141347c01",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Injury/Ulcer/Abscess",
+      "uuid" : "9ca839c3-9896-4770-a84f-70cd4319ffff",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Injury/Ulcer/Abscess",
+        "uuid" : "dd403e9b-647e-4d90-a197-177bcd682fa1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Sprain/Lameness",
+      "uuid" : "40ef3465-94f3-496b-8cc8-a01fd75e72e2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sprain/Lameness",
+        "uuid" : "7daab856-bf39-4bd5-a86d-97d8d210c7e5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Weakness",
+      "uuid" : "3588aef9-398a-4038-821c-c131d35e6d0d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weakness (treated)",
+        "uuid" : "14e60e64-b24d-438f-b77a-d6cb66c3f5af",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Worms",
+      "uuid" : "fb047e11-5a9d-4c50-8201-4928dc62c79b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Worms (treated)",
+        "uuid" : "0b9277d6-63cb-447b-a2be-b4cff30d4d88",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Anaemia/Ticks",
+      "uuid" : "ddd309b9-19d5-42ac-b53b-6b80e07251d2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Anaemia/Ticks",
+        "uuid" : "6ca9ece1-d443-444b-9c9b-e184ba0ba80c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Eye diseases",
+      "uuid" : "9c32b654-389a-4c0f-8daa-d6bd32338413",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Eye diseases",
+        "uuid" : "9a8efa59-8b6d-45c8-a1e7-2d5c4bca9299",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    }, {
+      "name" : "Ear diseases",
+      "uuid" : "8ec2ecb0-41c5-4174-b1bf-11cc1476ccd4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ear diseases",
+        "uuid" : "d85dd53f-c5fe-4fe7-842b-6c2de26f5484",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "1e02f700-4e46-49ec-9f13-b31873a6da43",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "eed1476b-5f83-4124-b3af-3be792cabecf",
+    "name" : "Diseases/Health conditions treated sample",
+    "displayOrder" : 5.0,
+    "display" : "Diseases/Health conditions treated sample",
+    "formElements" : [ {
+      "name" : "Kidney related disease",
+      "uuid" : "32522dfa-5d04-4e1d-8214-0cc8b27dcf61",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Kidney related disease (voided~123387)",
+        "uuid" : "2e069e04-85e3-4f75-9ba2-b99ece8ffb2b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Diphtheria",
+      "uuid" : "d08739ea-41f0-4a3c-9aac-fa99c3e39e5f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diphtheria (voided~123388)",
+        "uuid" : "39d283f4-654c-408b-bb1d-5e064e70c7ca",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Khuraha/Munha",
+      "uuid" : "9ec97cba-2f6d-4ca9-a0bf-d823d2ea9b7f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Khuraha/Munha (voided~123389)",
+        "uuid" : "29655bc3-5f08-49aa-b5bb-de669fb5468a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Charmrog/Khaura",
+      "uuid" : "413130bd-0c12-46ca-80a2-741c5c68db41",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Charmrog/Khaura (voided~123390)",
+        "uuid" : "36d2f697-6835-43ca-b242-2d99f29f8149",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Thanaila Rog",
+      "uuid" : "8b9ca64e-84a7-4f79-a815-7008c9641abb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Thanaila Rog (voided~123391)",
+        "uuid" : "6e8a677f-29c8-40b7-823d-c19742947870",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Jahar Khurani/Sarpdansh",
+      "uuid" : "09779567-e12c-43f3-8bca-bba7c4863f3d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Jahar Khurani/Sarpdansh (voided~123392)",
+        "uuid" : "24081d46-ffba-48f3-9ce3-36bdd338838a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Trypanosomiasis",
+      "uuid" : "4f860a5d-b4df-4058-98d1-bf86d9c3905c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Trypanosomiasis (voided~123393)",
+        "uuid" : "a6a72609-7b0c-435c-a181-a4b6da973f19",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Naal pakana/Naval ill",
+      "uuid" : "3f5f5ccb-a841-4f6a-9870-a3651b3d5e38",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Naal pakana/Naval ill (voided~123394)",
+        "uuid" : "fb56002f-ca24-4e4d-9251-7a84e66dacca",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "ROP/Jer Fansana",
+      "uuid" : "ca7b1b9e-f193-494f-bb0a-785ad1682746",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ROP/Jer Fansana (voided~123395)",
+        "uuid" : "883ebc47-08b3-444b-adba-0dab0a90a7ae",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Fracture",
+      "uuid" : "9568ac69-11b8-4fb1-8dac-805b5d589ee1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fracture (voided~123396)",
+        "uuid" : "7fd7a16c-e030-4091-b187-879b26b55757",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Badhiyakaran",
+      "uuid" : "9b4060eb-fbc7-4abc-abe8-743cdc8a34f1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Badhiyakaran (voided~123397)",
+        "uuid" : "47da7aeb-f692-4dd1-9b30-1196b13304ed",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Diseases/Health conditions treated",
+      "uuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diseases/Health conditions treated (voided~126870)",
+        "uuid" : "459fedba-7ae0-400d-bf6b-41a528a605e5",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Diseases/Health conditions treated",
+      "uuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diseases/Health Conditions treated",
+        "uuid" : "094d3aad-7159-4c22-8653-ba66e3a45665",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "Kidney related disease",
+      "uuid" : "f43be3bd-6ee5-48b5-8ef3-6ce99e43672c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Kidney related disease (voided~126875)",
+        "uuid" : "58dc6ad0-923e-48e8-b8c8-83432b84ed7d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Diphtheria",
+      "uuid" : "9ab307ab-eae0-4cb7-b2f1-e4fa1d756c91",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diphtheria",
+        "uuid" : "f37cf169-8de0-434b-8099-3d456ffc1a00",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Khuraha/Munha",
+      "uuid" : "7dcbcbbb-69f2-4a51-b101-7bc912234ead",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Khuraha/Munha (voided~126877)",
+        "uuid" : "5ee3b83c-6c39-43bd-9a32-61f20bf44f4b",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 16.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Charmrog/Khaura",
+      "uuid" : "8efc4c56-a556-4628-9f6d-47a5a6572dac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Charmrog/Khaura (voided~126878)",
+        "uuid" : "cdbcdf01-0945-405f-9d99-54006485870f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 17.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Thanaila Rog",
+      "uuid" : "cd571cc0-24c1-42bf-bb71-3587b10f0117",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Thanaila Rog (voided~126879)",
+        "uuid" : "4aaf4707-65b2-491a-b2c7-2642f86e4473",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 18.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Jahar Khurani/Sarpdansh",
+      "uuid" : "26aa6d86-ab3a-4f7b-a23a-2fc1bd1e63a2",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Jahar Khurani/Sarpdansh (voided~126880)",
+        "uuid" : "89745ac7-88ff-47eb-883c-dc348ffac5cc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 19.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Trypanosomiasis",
+      "uuid" : "1d43bb7b-726c-4cd3-80ea-e47f78efcbba",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Trypanosomiasis",
+        "uuid" : "7c7e108c-aaa4-4041-bdbf-a57d822e7e84",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 20.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Naal pakana/Naval ill",
+      "uuid" : "33d447ba-3331-410d-b00e-761701e44fa5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Naal pakana/Naval ill (voided~126882)",
+        "uuid" : "e485e471-2ca3-47c5-a09c-023cf5f6747c",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 21.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "ROP/Jer Fansana",
+      "uuid" : "e7fe1182-6e73-4983-a8a0-5f9dfe5eb267",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ROP/Jer Fansana (voided~126883)",
+        "uuid" : "80df664c-f97e-4a08-a89d-3d5e1a59d957",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 22.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Fracture",
+      "uuid" : "0cc93a67-0882-4f9b-9165-0f05fde4c644",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fracture (voided~126884)",
+        "uuid" : "84185392-3ce9-4259-85dd-beb985462a00",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 23.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Badhiyakaran",
+      "uuid" : "872a25ea-692f-4b26-902b-32dc63a767d1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Badhiyakaran (voided~126885)",
+        "uuid" : "21bc329b-41c0-44f4-be87-bf0f196b2ef8",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 24.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "c624898f-9205-4ce1-8f1c-feabc1004a90",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Dysentery/Blood in dysentery",
+      "uuid" : "a27378d2-8486-4742-9bfd-36d66805820a",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Dysentery/Blood in dysentery",
+        "uuid" : "a4e63632-df33-46c2-9484-9501b4053d56",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 25.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Cough/Cold/Fever",
+      "uuid" : "02925179-15f0-4952-93f4-50f5aba46511",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Cough/Cold/Fever (voided~123377)",
+        "uuid" : "bb457f60-9697-4a84-996f-fcf14f3d7010",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 26.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Fever",
+      "uuid" : "4a578e2d-9ce5-4b24-b634-0e1a051cdce9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fever (treated) (voided~123378)",
+        "uuid" : "39707fc4-82df-4d4b-8faf-03b568938829",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 27.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Indigestion/Gas formation",
+      "uuid" : "afc97dab-0c37-4747-baac-8bbf390bf560",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Indigestion/Gas formation (voided~123379)",
+        "uuid" : "b77ffce9-2983-4b55-a302-f1cce099dec4",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 28.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Injury/Ulcer/Abscess",
+      "uuid" : "e42ba93f-f38c-4b13-8dd2-7cd6eced1978",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Injury/Ulcer/Abscess (voided~123380)",
+        "uuid" : "7adeb43c-d90d-4171-90a6-a0998edd5766",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 29.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Sprain/Lameness",
+      "uuid" : "d5f55d54-7cc1-452c-8ffd-fb82c497bb68",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sprain/Lameness (voided~123381)",
+        "uuid" : "d51efb96-2365-466c-bc76-29a61616a37e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 30.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Weakness",
+      "uuid" : "dda22891-0c97-4eba-9106-06f3cb796636",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Weakness (treated) (voided~123382)",
+        "uuid" : "ddccd52a-be30-4680-8f3e-a8b8d252f197",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 31.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Worms",
+      "uuid" : "6e7a8259-decc-4693-b239-1055773fe8ac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Worms (treated) (voided~123383)",
+        "uuid" : "cbc8072e-243c-40a1-bc94-8965befaf003",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 32.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Anaemia/Ticks",
+      "uuid" : "bb3fbca5-0687-4f8c-8cab-39c5bdd73a90",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Anaemia/Ticks (voided~123384)",
+        "uuid" : "6b0bc1b4-e2fb-435f-9e33-e8b53c3fa850",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 33.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Eye diseases",
+      "uuid" : "72cb021a-7b31-4cd7-b5ec-cedb92d964b4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Eye diseases (voided~123385)",
+        "uuid" : "266a9bc3-f0c1-4a4c-9d08-a64211f17b58",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 34.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    }, {
+      "name" : "Ear diseases",
+      "uuid" : "e1b3bf43-b14d-41bf-86a0-405955f5eedf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Ear diseases (voided~123386)",
+        "uuid" : "c4e65f4f-3325-422c-8183-45b198b30d97",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 35.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "32124806-1938-4ba5-b09f-7ddf602a27cc",
+      "mandatory" : true,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "a3a4e9ed-c909-49b9-b39d-3ef36e99bad3",
+    "name" : "abc",
+    "displayOrder" : 6.0,
+    "display" : "abc",
+    "formElements" : [ {
+      "name" : "Diseases/Health conditions treated",
+      "uuid" : "3be26888-048c-4df4-b0ed-126d13c7297d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diseases/Health conditions treated (voided~126870)",
+        "uuid" : "459fedba-7ae0-400d-bf6b-41a528a605e5",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true,
+        "voided" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false,
+      "voided" : true
+    }, {
+      "name" : "d",
+      "uuid" : "10ebf2d4-27af-4ca7-ac6e-9d0561c0eeac",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "d",
+        "uuid" : "f22bbd57-88d7-4f3c-b9c5-b7f998c3cbfe",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "3be26888-048c-4df4-b0ed-126d13c7297d",
+      "mandatory" : false,
+      "voided" : true
+    } ],
+    "voided" : true,
+    "timed" : false
+  }, {
+    "uuid" : "db48d92f-410d-43e6-b517-f05e49d9b5d9",
+    "name" : "Diseases/Health conditions treated",
+    "displayOrder" : 7.0,
+    "display" : "Diseases/Health conditions treated",
+    "formElements" : [ {
+      "name" : "Diseases/Health conditions treated",
+      "uuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diseases/Health Conditions treated",
+        "uuid" : "094d3aad-7159-4c22-8653-ba66e3a45665",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "Kidney related disease",
+      "uuid" : "ebfc5e61-9a5c-4bfe-9d64-ceeb09d0ea70",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Kidney related disease",
+        "uuid" : "3ef2c16d-291c-47d2-a9fd-5bda03c576d1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Diptheria",
+      "uuid" : "dfc1050c-8a11-4a57-9d6a-907e3108fd6e",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Diptheria",
+        "uuid" : "1528f55f-6707-41e7-b94e-929d0ade67cb",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Khuraha/Munha",
+      "uuid" : "8e4aa231-4d28-4e0c-973b-e0963798c0fb",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Khuraha/Munha",
+        "uuid" : "1edb3a61-5259-4773-a3cc-032c10f688af",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Charmrog/Khaura",
+      "uuid" : "78d00dad-8784-477b-837e-a190e7f741e6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Charmrog/Khaura",
+        "uuid" : "1854a44b-56a9-450e-a089-fdc73cc4f164",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Thanaila Rog",
+      "uuid" : "61a32627-eec0-4063-98d9-dcae06fed6b5",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Thanaila Rog",
+        "uuid" : "e3e5c514-d611-4cad-91b8-4248560c92e1",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Jahar Khurani/Sarpdansh",
+      "uuid" : "f56d7cab-8010-487f-8cb8-d4e1f0f22735",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Jahar Khurani/Sarpdansh",
+        "uuid" : "ad64f1a3-2358-4863-bdef-93be4315c38e",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Trypnosomiasis",
+      "uuid" : "00691fbe-8ac8-40e6-98da-ec4ce3e951fc",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Trypnosomiasis",
+        "uuid" : "6ede7e7f-a56f-4b54-a5ad-933ba4fe0f17",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Naal pakana/Naval ill",
+      "uuid" : "7bac794c-d572-4dab-b4da-108c5bf835bf",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Naal pakana/Naval ill",
+        "uuid" : "b51f09ee-3a23-4d50-ad6f-a1b11e072590",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "ROP/Jer Fansana",
+      "uuid" : "99a0e0f7-2729-4ad9-a43a-0934d4b0b8a4",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "ROP/Jer Fansana",
+        "uuid" : "b83c4403-fceb-4d81-8a27-7eb9428cf97f",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Fracture",
+      "uuid" : "dc8ab638-8076-44ed-91c5-1ce7cc43dd3c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fracture",
+        "uuid" : "6ffdc425-6c74-45db-8b6d-45fbe1b2dad5",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    }, {
+      "name" : "Badhiyakaran",
+      "uuid" : "f0d6b196-2b19-454d-bb18-8553fcac3ac9",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Badhiyakaran",
+        "uuid" : "cdfe2604-8771-40f0-ac24-d1ec666643c6",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "13ded0ca-f35f-4134-9767-a310285be90b",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "a280a3ec-8690-4682-a640-fbb8929763a2",
+    "name" : "Number of Surgeries done",
+    "displayOrder" : 8.0,
+    "display" : "Number of Surgeries done",
+    "formElements" : [ {
+      "name" : "Number of Surgeries done",
+      "uuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Number of Surgeries done",
+        "uuid" : "9c29553d-7b6d-41fc-83ca-f67a94e9865b",
+        "dataType" : "QuestionGroup",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : false
+    }, {
+      "name" : "C-section",
+      "uuid" : "ee7f7f97-5c48-470c-a84f-fa11d712fd00",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "C- section",
+        "uuid" : "8c053237-40d2-403a-9a95-f845ddbe7dc7",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Rumenotomy",
+      "uuid" : "084d83a4-71a9-4311-8f36-42a045222e73",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Rumenotomy",
+        "uuid" : "651c6635-44e4-47eb-a81d-8b07b88237be",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Fracture related surgery",
+      "uuid" : "3e2f49cf-7adf-4cae-a554-ce069d74c6ae",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Fracture related surgery",
+        "uuid" : "49c9f97c-2bc2-4681-9a09-04b9ca3100cc",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 4.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Horn breakdown/horn cancer",
+      "uuid" : "a246a215-95c7-41d9-9334-9cf593289724",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Horn breakdown/horn cancer",
+        "uuid" : "4de3be33-18cc-4883-afa0-07ba4285ec66",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 5.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Tumour",
+      "uuid" : "ad50c29b-a502-40f4-b062-952cb44c7a67",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tumour",
+        "uuid" : "8db28f78-75dc-4182-b1b2-282b8ede21ff",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 6.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Hernia",
+      "uuid" : "7f1ebeef-3fb8-40ef-8d61-5de29d9c9092",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Hernia",
+        "uuid" : "e0b460e6-f9a6-4db5-bbf0-b363e4f6e884",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 7.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Tail Gangrene/Tail amputation",
+      "uuid" : "66e1cf10-cb2b-4a72-b97e-a6f03d29bae7",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Tail Gangrene/Tail amputation",
+        "uuid" : "2e59f768-9d5a-42e6-9b64-b294c484c197",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 8.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Choke/Eosophagotomy",
+      "uuid" : "18d9a550-0da6-4ba9-a3cc-328ef411adb6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Choke/Eosophagotomy",
+        "uuid" : "6ed5d95c-6670-44d6-bc32-482d7d878f0a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 9.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Stone",
+      "uuid" : "0761fc15-a8c4-442e-b64a-27dd79b34180",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Stone",
+        "uuid" : "aef63bb4-b59f-4a42-b8b0-22ffb37d92af",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 10.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Sterilization in dogs",
+      "uuid" : "314161ff-f55f-4f9c-b47d-d3eefd52328c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Sterilization in dogs",
+        "uuid" : "62f42732-8991-4ebb-acfa-559c25f04740",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 11.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Jhankaha",
+      "uuid" : "467ea4e9-3fc7-4dc0-a751-4ba736729444",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Jhankaha",
+        "uuid" : "19af7562-c141-491e-86b1-a935beefaf76",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 12.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Atresia-Anal",
+      "uuid" : "45715070-e9b1-4086-8820-636b20107be1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Atresia-Anal",
+        "uuid" : "47dd7c04-10eb-4edb-a527-79c039816eac",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 13.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Other",
+      "uuid" : "5e95b2eb-233b-49d0-adba-34b4d53c682f",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Other surgeries done",
+        "uuid" : "315f0dd9-7b73-44e6-a1cb-b9635e96ae4a",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 14.0,
+      "type" : "SingleSelect",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : true
+    }, {
+      "name" : "Total surgeries",
+      "uuid" : "43d781f9-2357-48a9-b65c-09687101fb17",
+      "keyValues" : [ {
+        "key" : "editable",
+        "value" : false
+      } ],
+      "concept" : {
+        "name" : "Total surgeries",
+        "uuid" : "f96184d5-d212-4dad-8ece-0475ec8cdb4d",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 15.0,
+      "type" : "SingleSelect",
+      "rule" : "//SAMPLE RULE EXAMPLE Cow (vaccinated)\n\n'use strict';\n({params, imports}) => {\n  const encounter = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({encounter, formElement});\n  const _ = imports.lodash;\n\n  const cSection = encounter.getObservationReadableValue('C- section','Number of Surgeries done');\n  const rumenotomy = encounter.getObservationReadableValue('Rumenotomy','Number of Surgeries done');\n  const fracture = encounter.getObservationReadableValue('Fracture related surgery','Number of Surgeries done');\n  const hornBreakdown = encounter.getObservationReadableValue('Horn breakdown/horn cancer','Number of Surgeries done');\n  const tumour = encounter.getObservationReadableValue('Tumour','Number of Surgeries done');\n  const hernia = encounter.getObservationReadableValue('Hernia','Number of Surgeries done');\n  const tailAmputation = encounter.getObservationReadableValue('Tail Gangrene/Tail amputation','Number of Surgeries done');\n  const choke = encounter.getObservationReadableValue('Choke/Eosophagotomy','Number of Surgeries done');\n  const stone = encounter.getObservationReadableValue('Stone','Number of Surgeries done');\n  const sterilizationInDogs = encounter.getObservationReadableValue('Sterilization in dogs','Number of Surgeries done');\n  const jhankaha = encounter.getObservationReadableValue('Jhankaha','Number of Surgeries done');\n  const artesiaAnal = encounter.getObservationReadableValue('Atresia-Anal','Number of Surgeries done');\n  const other = encounter.getObservationReadableValue('Other surgeries done','Number of Surgeries done');  \n  \n  const totalSurgeriesDone = _.toNumber( cSection || 0 ) + _.toNumber( rumenotomy || 0 ) + _.toNumber( fracture || 0 ) + _.toNumber( \nhornBreakdown || 0 ) + _.toNumber( tumour || 0 ) + _.toNumber( hernia || 0 ) + _.toNumber( tailAmputation || 0 ) + _.toNumber( choke || 0 ) + _.toNumber( stone || 0 ) + _.toNumber( sterilizationInDogs || 0 ) + _.toNumber( jhankaha || 0 ) + _.toNumber( artesiaAnal || 0 ) + _.toNumber( other || 0 );\n\n  statusBuilder.value(totalSurgeriesDone)\n  \n  return statusBuilder.build();\n};",
+      "parentFormElementUuid" : "40b27075-d0c3-4a8a-898f-ac912588d2be",
+      "mandatory" : false
+    } ],
+    "timed" : false
+  }, {
+    "uuid" : "5a95df48-ff31-4591-a537-37ff71e3e397",
+    "name" : "Recovery details",
+    "displayOrder" : 9.0,
+    "display" : "Recovery details",
+    "formElements" : [ {
+      "name" : "Money recovered from treatment",
+      "uuid" : "672b574e-972f-48cb-8352-5f542937f0d6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Money recovered from treatment",
+        "uuid" : "cd9b24e2-fcba-49ac-bf34-2505bff7c333",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Amount deposited from treatment",
+      "uuid" : "c3b05017-7eca-4142-a4b6-61ccc73f975c",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Amount deposited from treatment",
+        "uuid" : "fdf3e430-e7c6-4cff-9006-4973388bc416",
+        "dataType" : "Numeric",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "\"use strict\";\n({ params, imports }) => {\n    const encounter = params.entity;\n    const moment = imports.moment;\n    const scheduleBuilder = new imports.rulesConfig.VisitScheduleBuilder({ encounter });\n\n\n    if (moment(encounter.earliestVisitDateTime).date() === 25) {\n\n        const earliestDate = moment(encounter.earliestVisitDateTime).date(25).add(1, 'month').toDate();\n        const maxDate = moment(earliestDate).add(8, 'days').toDate();\n\n        scheduleBuilder.add({\n            name: \"Monthly Animal Health Worker Reporting form\",\n            encounterType: \"Monthly Animal Health Worker Reporting form\",\n            earliestDate,\n            maxDate\n        });\n    } else if (moment().date(encounter.earliestVisitDateTime) > 25) {\n        const earliestDate = moment(encounter.earliestVisitDateTime).add(15, 'days').date(25).toDate();\n        const maxDate = moment(earliestDate).add(8, 'days').toDate();\n        scheduleBuilder.add({\n            name: \"Monthly Animal Health Worker Reporting form\",\n            encounterType: \"Monthly Animal Health Worker Reporting form\",\n            earliestDate,\n            maxDate\n        });\n    } else {\n\n        const earliestDate = moment(encounter.earliestVisitDateTime).date(25).add(1, 'month').toDate();\n        const maxDate = moment(earliestDate).add(8, 'days').toDate();\n\n        scheduleBuilder.add({\n            name: \"Monthly Animal Health Worker Reporting form\",\n            encounterType: \"Monthly Animal Health Worker Reporting form\",\n            earliestDate,\n            maxDate\n        });\n    }\n\n    return scheduleBuilder.getAll();\n};",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

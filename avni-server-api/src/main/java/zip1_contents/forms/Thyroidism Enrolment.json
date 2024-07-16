@@ -1,0 +1,75 @@
+{
+  "name" : "Thyroidism Enrolment",
+  "uuid" : "ecf3ad8b-e560-46b9-840c-67c496afd455",
+  "formType" : "ProgramEnrolment",
+  "formElementGroups" : [ {
+    "uuid" : "5d90c6c6-0063-4b3b-9166-565019e6cedd",
+    "name" : "Details",
+    "displayOrder" : 1.0,
+    "display" : "Details",
+    "formElements" : [ {
+      "name" : "Date of diagnosis",
+      "uuid" : "fd7092b0-b537-4dcf-a6ae-c0e413ef61d1",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Date of diagnosis",
+        "uuid" : "cb549d98-5890-4182-a930-70939b0c0e33",
+        "dataType" : "Date",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 1.0,
+      "type" : "SingleSelect",
+      "rule" : "'use strict';\n({params, imports}) => {\n  const programEnrolment = params.entity;\n  const formElement = params.formElement;\n  const statusBuilder = new imports.rulesConfig.FormElementStatusBuilder({programEnrolment, formElement});\n  \n  const diagnosisDate = programEnrolment.getObservationReadableValue('Date of diagnosis');\n  let visitDate = programEnrolment.enrolmentDateTime;\n \n if(imports.moment(diagnosisDate).isAfter(visitDate, 'date'))\n statusBuilder.validationError(\"Diagnosis Date cannot be after visit date\");\n \n  return statusBuilder.build();\n};",
+      "mandatory" : true
+    }, {
+      "name" : "Type of Thyroidism",
+      "uuid" : "608c1244-9cad-4250-b668-33b9049f9eb6",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Type of Thyroidism",
+        "uuid" : "17c36d6b-15e9-467e-9aa8-0ccc5903a80b",
+        "dataType" : "Coded",
+        "answers" : [ {
+          "name" : "Hyperthyroidism",
+          "uuid" : "f20ffb73-ed74-4c5b-b3f8-b59330a18003",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 0.0,
+          "active" : true
+        }, {
+          "name" : "Hypothyroidism",
+          "uuid" : "1ecdea7e-a2f8-41ac-afbf-c87931f73174",
+          "dataType" : "NA",
+          "answers" : [ ],
+          "order" : 1.0,
+          "active" : true
+        } ],
+        "active" : true
+      },
+      "displayOrder" : 2.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    }, {
+      "name" : "Name of subcategory of disease",
+      "uuid" : "82a7586f-fd99-4de6-8a06-45454083ec8d",
+      "keyValues" : [ ],
+      "concept" : {
+        "name" : "Name of subcategory of disease",
+        "uuid" : "677b90f4-aba1-47d0-8f8a-4d0ead1288b0",
+        "dataType" : "Text",
+        "answers" : [ ],
+        "active" : true
+      },
+      "displayOrder" : 3.0,
+      "type" : "SingleSelect",
+      "mandatory" : true
+    } ],
+    "timed" : false
+  } ],
+  "decisionRule" : "",
+  "visitScheduleRule" : "",
+  "validationRule" : "",
+  "checklistsRule" : "",
+  "decisionConcepts" : [ ]
+}

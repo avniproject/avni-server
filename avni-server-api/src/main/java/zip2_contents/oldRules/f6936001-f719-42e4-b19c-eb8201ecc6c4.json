@@ -1,0 +1,15 @@
+{
+  "ruleDependencyUUID" : "e75bb1d7-6a6b-4beb-bf33-57bfb6077b9e",
+  "entity" : {
+    "uuid" : "e9aa15b8-e9b5-4b5d-9fbb-4d7a89283741",
+    "type" : "EncounterType"
+  },
+  "entityUUID" : "e9aa15b8-e9b5-4b5d-9fbb-4d7a89283741",
+  "entityType" : "EncounterType",
+  "type" : "EncounterEligibilityCheck",
+  "executionOrder" : 100.0,
+  "data" : { },
+  "name" : "MonthlyMonitoringEligibility",
+  "uuid" : "f6936001-f719-42e4-b19c-eb8201ecc6c4",
+  "fnName" : "MonthlyMonitoringEligibility"
+}
