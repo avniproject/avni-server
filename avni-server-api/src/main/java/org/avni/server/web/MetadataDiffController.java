@@ -1,11 +1,23 @@
-package org.avni.web;
+package org.avni.server.web;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import javax.transaction.Transactional;
 import java.io.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@RestController
 public class MetadataDiffController {
+
+    @PostMapping("/metadata/diff")
+    @Transactional
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public String compareMetadata() {
+        return "I am good";
+    }
 
     public static Map<String, Object> compareZipJsonFiles(String zip1Path, String zip2Path) throws IOException {
         String extractDir1 = "zip1_contents";
