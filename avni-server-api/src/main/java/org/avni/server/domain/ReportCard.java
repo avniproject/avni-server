@@ -41,7 +41,7 @@ public class ReportCard extends OrganisationAwareEntity {
 
     @Column
     @Type(type = "jsonObject")
-    private JsonObject standardReportCardInput;
+    private JsonObject standardReportCardInput = new JsonObject(new HashMap<>());
 
     public String getName() {
         return name;
@@ -121,7 +121,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public void setStandardReportCardInputSubjectTypes(List<String> subjectTypes) {
-        safeSetterForStandardReportCardInput("subjectTypes", subjectTypes);
+        standardReportCardInput.with("subjectTypes", subjectTypes);
     }
 
     public List<String> getStandardReportCardInputPrograms() {
@@ -129,7 +129,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public void setStandardReportCardInputPrograms(List<String> programs) {
-        safeSetterForStandardReportCardInput("programs", programs);
+        standardReportCardInput.with("programs", programs);
     }
 
     public List<String> getStandardReportCardInputEncounterTypes() {
@@ -137,24 +137,14 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public void setStandardReportCardInputEncounterTypes(List<String> encounterTypes) {
-        safeSetterForStandardReportCardInput("encounterTypes", encounterTypes);
+        standardReportCardInput.with("encounterTypes", encounterTypes);
     }
 
     private List safeGetterForStandardReportCardInput(String key) {
         return standardReportCardInput == null ? new ArrayList() : standardReportCardInput.getList(key);
     }
 
-    private void safeSetterForStandardReportCardInput(String key, List<String> value) {
-        if (standardReportCardInput == null) {
-            standardReportCardInput = new JsonObject(new HashMap<>());
-        }
-        standardReportCardInput.with(key, value);
-    }
-
     private void safeSetterForStandardReportCardInput(String key, String value) {
-        if (standardReportCardInput == null) {
-            standardReportCardInput = new JsonObject(new HashMap<>());
-        }
         standardReportCardInput.with(key, value);
     }
 
