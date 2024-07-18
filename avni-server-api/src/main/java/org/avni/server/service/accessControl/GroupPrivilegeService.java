@@ -184,8 +184,9 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         List<Group> groups = groupRepository.findAll();
 
         Arrays.stream(requests).filter(grpPrivyConWebRequest -> !grpPrivyConWebRequest.isVoided()).forEach(request -> {
+            Group targetedGroup = getGroup(request, organisation, groups);
             GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
-                Objects.equals(request.getGroupUUID(), gp.getGroupUuid())
+                Objects.equals(targetedGroup.getUuid(), gp.getGroupUuid())
                 && Objects.equals(request.getPrivilegeUUID(), gp.getPrivilegeUuid())
                 && Objects.equals(request.getSubjectTypeUUID(), gp.getSubjectTypeUuid())
                 && Objects.equals(request.getProgramUUID(), gp.getProgramUuid())
@@ -203,7 +204,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                 groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getEncounterTypeUUID()));
                 groupPrivilege.setProgramEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getProgramEncounterTypeUUID()));
                 groupPrivilege.setChecklistDetail(CollectionUtil.findByUuid(checklistDetails, request.getChecklistDetailUUID()));
-                groupPrivilege.setGroup(getGroup(request, organisation, groups));
+                groupPrivilege.setGroup(targetedGroup);
             }
 
             groupPrivilege.setAllow(request.isAllow());
