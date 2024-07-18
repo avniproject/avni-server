@@ -25,6 +25,7 @@ public class GroupPrivilegeContractWeb extends CHSRequest {
         groupPrivilegeContractWeb.setEncounterTypeUUID(groupPrivilege.getEncounterTypeUuid());
         groupPrivilegeContractWeb.setChecklistDetailUUID(groupPrivilege.getChecklistDetailUuid());
         groupPrivilegeContractWeb.setAllow(groupPrivilege.isAllow());
+        groupPrivilegeContractWeb.setVoided(groupPrivilege.isVoided());
         groupPrivilegeContractWeb.setNotEveryoneGroup(!groupPrivilege.getGroup().isEveryone());
         return groupPrivilegeContractWeb;
     }

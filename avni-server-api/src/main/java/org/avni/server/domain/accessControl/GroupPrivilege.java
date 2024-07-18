@@ -218,4 +218,13 @@ public class GroupPrivilege extends OrganisationAwareEntity {
     public void setImplVersion(int implVersion) {
         this.implVersion = implVersion;
     }
+
+    /**
+     *
+     * @return For GroupPrivileges with IMPL_VERSION == 1 return FALSE, otherwise return actual db isVoided value .
+     */
+    @Override
+    public boolean isVoided() {
+        return getImplVersion() == GroupPrivilege.IMPL_VERSION ? false : super.isVoided();
+    }
 }
