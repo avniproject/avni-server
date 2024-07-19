@@ -183,7 +183,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         List<ChecklistDetail> checklistDetails = checklistDetailRepository.findAll();
         List<Group> groups = groupRepository.findAll();
 
-        Arrays.stream(requests).filter(grpPrivyConWebRequest -> !grpPrivyConWebRequest.isVoided()).forEach(request -> {
+        Arrays.stream(requests).forEach(request -> {
             Group targetedGroup = getGroup(request, organisation, groups);
             GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
                 Objects.equals(targetedGroup.getUuid(), gp.getGroupUuid())
