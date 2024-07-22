@@ -148,6 +148,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("AddressLevelType with id %d not found", id)));
         }
         catchment.setVoided(true);
+        catchment.setName(ReactAdminUtil.getVoidedName(catchment.getName(),catchment.getId()));
         catchmentRepository.save(catchment);
         return new ResponseEntity<>(CatchmentContract.fromEntity(catchment), HttpStatus.OK);
     }
