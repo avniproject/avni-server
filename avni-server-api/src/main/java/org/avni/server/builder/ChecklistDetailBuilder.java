@@ -1,9 +1,6 @@
 package org.avni.server.builder;
 
 import org.avni.server.application.Form;
-
-import java.util.Map;
-
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.domain.ChecklistItemDetail;
@@ -14,6 +11,7 @@ import org.avni.server.web.request.application.ChecklistItemDetailRequest;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChecklistDetailBuilder extends BaseBuilder<ChecklistDetail, ChecklistDetailBuilder> {
 
@@ -51,7 +49,6 @@ public class ChecklistDetailBuilder extends BaseBuilder<ChecklistDetail, Checkli
                     .withVoided(item.isVoided())
                     .withform(form)
                     .withConcept(concept)
-                    .withLeadItem(builtItems.get(item.getDependentOn()))
                     .withScheduleOnExpiryOfDependency(item.getScheduleOnExpiryOfDependency())
                     .withMinDaysFromStartDate(item.getMinDaysFromStartDate())
                     .withMinDaysFromDependent(item.getMinDaysFromDependent())
@@ -59,6 +56,10 @@ public class ChecklistDetailBuilder extends BaseBuilder<ChecklistDetail, Checkli
                     .build();
             builtItems.put(builtItemDetail.getUuid(), builtItemDetail);
         });
+        //set dependentOn after all items in request have been processed so order of items in request does not matter for dependents
+        items.forEach(item -> new ChecklistItemDetailBuilder(this.get(), getExistingChecklistItemDetail(this.get(), item))
+                .withLeadItem(builtItems.get(item.getDependentOn()))
+                .build());
         return this;
     }
 
