@@ -57,9 +57,7 @@ public class ChecklistDetailBuilder extends BaseBuilder<ChecklistDetail, Checkli
             builtItems.put(builtItemDetail.getUuid(), builtItemDetail);
         });
         //set dependentOn after all items in request have been processed so order of items in request does not matter for dependents
-        items.forEach(item -> new ChecklistItemDetailBuilder(this.get(), getExistingChecklistItemDetail(this.get(), item))
-                .withLeadItem(builtItems.get(item.getDependentOn()))
-                .build());
+        items.forEach(item -> getExistingChecklistItemDetail(this.get(), item).setLeadChecklistItemDetail(builtItems.get(item.getDependentOn())));
         return this;
     }
 
