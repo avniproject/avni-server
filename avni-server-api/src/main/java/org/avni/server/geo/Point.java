@@ -11,9 +11,12 @@ import java.util.Map;
  * @version $Id$
  */
 public class Point implements Serializable, Cloneable {
+    private double x;
+    private double y;
 
-    private final double x;
-    private final double y;
+    // Required for deserialization
+    private Point() {
+    }
 
     public Point(double x, double y) {
         this.x = x;

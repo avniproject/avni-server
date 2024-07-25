@@ -12,9 +12,8 @@ import org.avni.server.web.validation.ValidationException;
 import java.util.UUID;
 
 public class LocationBuilder extends BaseBuilder<AddressLevel, LocationBuilder> {
-
     private final AddressLevelType type;
-    private LocationRepository locationRepository;
+    private final LocationRepository locationRepository;
 
     public LocationBuilder(AddressLevel existingEntity, AddressLevelType type) {
         super(existingEntity, new AddressLevel());
@@ -28,6 +27,8 @@ public class LocationBuilder extends BaseBuilder<AddressLevel, LocationBuilder> 
         get().setType(type);
         get().setLegacyId(locationRequest.getLegacyId());
         get().setVoided(locationRequest.isVoided());
+        get().setGpsCoordinates(locationRequest.getGpsCoordinates());
+        get().setLocationProperties(locationRequest.getLocationProperties());
         withParentLocation(locationRequest);
         return this;
     }

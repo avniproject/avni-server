@@ -41,12 +41,10 @@ public class ObservationServiceTest {
 
     private ObservationService observationService;
 
-    private String INDIVIDUAL_UUID = "0a1bf764-4576-4d71-b8ec-25895a113e81";
-
     @Before
     public void setup() {
         initMocks(this);
-        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, formRepository, Optional.of(enhancedValidationService));
+        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, Optional.of(enhancedValidationService));
     }
 
     @Test

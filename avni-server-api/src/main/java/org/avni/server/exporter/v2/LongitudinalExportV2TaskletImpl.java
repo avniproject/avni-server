@@ -91,7 +91,7 @@ public class LongitudinalExportV2TaskletImpl implements LongitudinalExportTaskle
     }
 
     private void writeToFile(List<LongitudinalExportItemRow> rows) throws Exception {
-        if (rows.size() == 0) return;
+        if (rows.isEmpty()) return;
         writer.write(rows);
     }
 

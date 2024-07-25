@@ -122,7 +122,7 @@ public class LocationWriter implements ItemWriter<Row> {
         }
     }
 
-    private void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) throws Exception {
+    private void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) {
         location.setGpsCoordinates(locationCreator.getLocation(row, LocationHeaders.gpsCoordinates, allErrorMsgs));
         location.setLocationProperties(observationCreator.getObservations(row, headers, allErrorMsgs, FormType.Location, location.getLocationProperties()));
         locationRepository.save(location);
