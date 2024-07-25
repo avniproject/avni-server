@@ -89,7 +89,7 @@ public class LocationWriter implements ItemWriter<Row> {
             updateExistingLocation(existingLocation, parent, row, allErrorMsgs, id);
         } else {
             AddressLevel location = createAddressLevel(row, parent, locationEntry.getKey());
-            updateLocationProperties(row, allErrorMsgs, location, locationEntry.getKey());
+            updateLocationProperties(row, allErrorMsgs, location);
         }
     }
 
@@ -106,12 +106,12 @@ public class LocationWriter implements ItemWriter<Row> {
                 parent = location;
             } //This will get called only when location have extra properties
             if (location != null && !this.locationTypeNames.contains(header)) {
-                updateLocationProperties(row, allErrorMsgs, location, header);
+                updateLocationProperties(row, allErrorMsgs, location);
             }
         }
     }
 
-    private void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location, String header) throws Exception {
+    private void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) {
         location.setGpsCoordinates(locationCreator.getLocation(row, headers.gpsCoordinates, allErrorMsgs));
         location.setLocationProperties(observationCreator.getObservations(row, headers, allErrorMsgs, FormType.Location, location.getLocationProperties()));
         locationRepository.save(location);
@@ -153,7 +153,7 @@ public class LocationWriter implements ItemWriter<Row> {
         location.setParent(parent);
         location.setLegacyId(id);
         location.setLineage(lineage);
-        updateLocationProperties(row, allErrorMsgs, location, header);
+        updateLocationProperties(row, allErrorMsgs, location);
     }
 
     private Map.Entry<String, String> ensureAllParentsExist(List<String> allErrorMsgs, List<Map.Entry<String, String>> allNonEmptyLocations) throws Exception {

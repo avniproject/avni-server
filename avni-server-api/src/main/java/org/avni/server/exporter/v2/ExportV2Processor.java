@@ -36,7 +36,7 @@ public class ExportV2Processor implements ItemProcessor<Object, LongitudinalExpo
     }
 
     @Override
-    public LongitudinalExportItemRow process(Object exportItem) throws Exception {
+    public LongitudinalExportItemRow process(Object exportItem) {
         LongitudinalExportItemRow exportItemRow = new LongitudinalExportItemRow();
         Individual individual = initIndividual((Individual) exportItem, exportItemRow);
         initGeneralEncounters(exportItemRow, individual);

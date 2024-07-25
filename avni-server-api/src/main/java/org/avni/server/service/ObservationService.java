@@ -36,16 +36,14 @@ public class ObservationService {
     private final IndividualRepository individualRepository;
     private final LocationRepository locationRepository;
     private final NamedParameterJdbcTemplate jdbcTemplate;
-    private final FormRepository formRepository;
     private final EnhancedValidationService enhancedValidationService;
 
     @Autowired
-    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, FormRepository formRepository, Optional<EnhancedValidationService> enhancedValidationService) {
+    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, Optional<EnhancedValidationService> enhancedValidationService) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.jdbcTemplate = jdbcTemplate;
-        this.formRepository = formRepository;
         this.enhancedValidationService = enhancedValidationService.orElse(null);
     }
 

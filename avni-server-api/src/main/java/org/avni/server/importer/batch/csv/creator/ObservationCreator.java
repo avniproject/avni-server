@@ -98,10 +98,10 @@ public class ObservationCreator {
 
     public ObservationCollection getObservations(Row row,
                                                  Headers headers,
-                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) throws Exception {
+                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations);
-        if (errorMsgs.size() > 0) {
-            throw new Exception(String.join(", ", errorMsgs));
+        if (!errorMsgs.isEmpty()) {
+            throw new RuntimeException(String.join(", ", errorMsgs));
         }
         return observationCollection;
     }
@@ -131,7 +131,7 @@ public class ObservationCreator {
         return row.get(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) throws Exception {
+    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         for (Concept concept : getConceptHeaders(headers, row.getHeaders())) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
@@ -205,10 +205,10 @@ public class ObservationCreator {
         }).collect(Collectors.toList());
     }
 
-    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType) throws Exception {
+    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType)  {
         List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(formType);
-        if (applicableForms.size() == 0)
-            throw new Exception(String.format("No forms of type %s found", formType));
+        if (applicableForms.isEmpty())
+            throw new RuntimeException(String.format("No forms of type %s found", formType));
 
         return applicableForms.stream()
                 .map(f -> {
@@ -219,7 +219,7 @@ public class ObservationCreator {
                 .flatMap(List::stream)
                 .filter(fel -> fel.getConcept().equals(concept))
                 .findFirst()
-                .orElseThrow(() -> new Exception("No form element linked to concept found"));
+                .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
 
     private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, Headers headers, ObservationCollection oldObservations) throws Exception {

@@ -48,6 +48,12 @@ public class TestGroupService {
         });
     }
 
+    public void giveEditSubjectPrivilegeTo(Group group, SubjectType ... subjectTypes) {
+        Arrays.stream(subjectTypes).forEach(subjectType -> {
+            this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).build(), PrivilegeType.EditSubject);
+        });
+    }
+
     public void giveViewProgramPrivilegeTo(Group group, SubjectType subjectType, Program... programs) {
         Arrays.stream(programs).forEach(program -> {
             this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).setProgram(program).build(), PrivilegeType.ViewEnrolmentDetails);

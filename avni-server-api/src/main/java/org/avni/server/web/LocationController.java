@@ -46,7 +46,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     private final LocationService locationService;
     private final ScopeBasedSyncService<AddressLevel> scopeBasedSyncService;
     private final AccessControlService accessControlService;
-    private LocationSyncRepository locationSyncRepository;
+    private final LocationSyncRepository locationSyncRepository;
 
     @Autowired
     public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService, AccessControlService accessControlService, LocationSyncRepository locationSyncRepository) {
@@ -141,7 +141,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
         if (location == null)
             return ResponseEntity.badRequest().body(String.format("Location with id '%d' not found", id));
 
-        if (location.getNonVoidedSubLocations().size() > 0)
+        if (!location.getNonVoidedSubLocations().isEmpty())
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(
                     String.format("Cannot delete location '%s' until all sub locations are deleted", location.getTitle()))
             );
