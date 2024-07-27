@@ -1,4 +1,4 @@
-package org.avni.server.service;
+package org.avni.server.service.metabase;
 
 import org.avni.server.dao.metabase.CollectionPermissionsRepository;
 import org.avni.server.dao.metabase.CollectionRepository;
@@ -6,6 +6,7 @@ import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.dao.metabase.GroupPermissionsRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;

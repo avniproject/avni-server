@@ -1,9 +1,9 @@
 package org.avni.server.web;
-import org.avni.server.service.DatabaseService;
+import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.dao.metabase.MetabaseConnector;
 import org.avni.server.dao.metabase.DatabaseRepository;
-import org.avni.server.service.MetabaseService;
+import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.web.bind.annotation.*;
@@ -30,5 +30,10 @@ public class MetabaseController {
     @PostMapping("/create-questions")
     public void createQuestions() {
         databaseService.createQuestionsForSubjectTypes();
+    }
+
+    @GetMapping("/sync-status")
+    public String getSyncStatus() {
+        return databaseService.getInitialSyncStatus(metabaseService.getGlobalDatabaseId());
     }
 }

@@ -1,4 +1,4 @@
-package org.avni.server.service;
+package org.avni.server.service.metabase;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,21 +56,6 @@ public class DatabaseService {
         return -1;
     }
 
-    public void waitForSyncCompletion(int databaseId) {
-        while (true) {
-            String syncStatus = getInitialSyncStatus(databaseId);
-            if ("complete".equals(syncStatus)) {
-                return;
-            }
-            try {
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Thread was interrupted while waiting for sync completion", e);
-            }
-        }
-    }
-
     public String getInitialSyncStatus(int databaseId) {
         JsonNode responseBody = databaseRepository.getInitialSyncStatus(databaseId);
         return responseBody.path("initial_sync_status").asText();
@@ -100,7 +85,10 @@ public class DatabaseService {
         int databaseId = metabaseService.getGlobalDatabaseId();
         int collectionId = metabaseService.getGlobalCollectionId();
 
-        waitForSyncCompletion(databaseId);
+        String syncStatus = getInitialSyncStatus(databaseId);
+        if (!"complete".equals(syncStatus)) {
+            throw new RuntimeException("Database initial sync is not complete.");
+        }
 
         List<String> subjectTypeNames = getSubjectTypeNames(databaseId);
 
