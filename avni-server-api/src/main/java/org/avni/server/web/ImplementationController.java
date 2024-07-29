@@ -3,7 +3,7 @@ package org.avni.server.web;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;

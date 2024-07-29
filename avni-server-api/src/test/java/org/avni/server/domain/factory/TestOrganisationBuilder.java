@@ -2,7 +2,7 @@ package org.avni.server.domain.factory;
 
 import org.avni.server.domain.Account;
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 
 import java.util.UUID;
 

@@ -1,7 +1,7 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 
 public class OrganisationContract extends ETLContract {
     private Long parentOrganisationId;

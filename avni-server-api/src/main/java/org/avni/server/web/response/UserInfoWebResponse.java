@@ -3,7 +3,7 @@ package org.avni.server.web.response;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.web.request.UserInfoContract;
 
 import java.util.List;
