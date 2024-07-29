@@ -204,3 +204,11 @@ else
 	-psql -p $(dbPort) -U ${su} -d avni_metabase -c 'create extension if not exists "hstore"';
 	psql -U reporting_user -d avni_metabase < $(dumpFile)
 endif
+
+backup-org-db:
+ifndef orgName
+	@echo "Provde the orgName variable"
+	exit 1
+else
+	sudo -u $(su) pg_dump avni_org > ../avni-db-dumps/local-$(orgName).sql
+endif

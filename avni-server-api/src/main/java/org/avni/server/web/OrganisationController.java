@@ -51,6 +51,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         org.setDbUser(request.getDbUser());
         org.setSchemaName(request.getSchemaName());
         org.setCategory(request.getCategory());
+        org.setStatus(request.getStatus());
         setAttributesOnOrganisation(request, org);
         setOrgAccountByIdOrDefault(org, request.getAccountId());
 
@@ -96,7 +97,6 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         return organisationRepository.save(organisation);
     }
 
-
     @RequestMapping(value = "/organisation/search/find", method = RequestMethod.GET)
     @ResponseBody
     public Page<OrganisationContract> find(@RequestParam(value = "name", required = false) String name,
@@ -115,7 +115,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
             }
             List<Predicate> predicates = new ArrayList<>();
             ownedAccounts.forEach(account -> predicates.add(builder.equal(root.get("account"), account)));
-            Predicate accountPredicate = builder.or(predicates.toArray(new Predicate[predicates.size()]));
+            Predicate accountPredicate = builder.or(predicates.toArray(new Predicate[0]));
             return builder.and(accountPredicate, predicate);
         }, pageable);
         return organisations.map(OrganisationContract::fromEntity);
@@ -137,6 +137,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         organisation.setMediaDirectory(request.getMediaDirectory());
         organisation.setVoided(request.isVoided());
         organisation.setCategory(request.getCategory());
+        organisation.setStatus(request.getStatus());
     }
 
     private void setOrgAccountByIdOrDefault(Organisation organisation, Long accountId) {
