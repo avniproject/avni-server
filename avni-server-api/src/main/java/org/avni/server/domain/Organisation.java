@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationStatus;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
@@ -27,6 +28,10 @@ public class Organisation extends ETLEntity {
     @NotNull
     @Enumerated(EnumType.STRING)
     private OrganisationCategory category;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private OrganisationStatus status;
 
     public Organisation() {
     }
@@ -89,4 +94,11 @@ public class Organisation extends ETLEntity {
         this.category = organisationCategory;
     }
 
+    public OrganisationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrganisationStatus status) {
+        this.status = status;
+    }
 }

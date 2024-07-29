@@ -2,6 +2,7 @@ package org.avni.server.web.request;
 
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationStatus;
 
 public class OrganisationContract extends ETLContract {
     private Long parentOrganisationId;
@@ -9,6 +10,7 @@ public class OrganisationContract extends ETLContract {
     private String usernameSuffix;
     private Long accountId;
     private OrganisationCategory category;
+    private OrganisationStatus status;
     private String region;
 
     public static OrganisationContract fromEntity(Organisation organisation) {
@@ -20,6 +22,7 @@ public class OrganisationContract extends ETLContract {
         organisationContract.setUsernameSuffix(organisation.getEffectiveUsernameSuffix());
         organisationContract.setAccountId(organisation.getAccount() == null ? null : organisation.getAccount().getId());
         organisationContract.setCategory(organisation.getCategory());
+        organisationContract.setStatus(organisation.getStatus());
         organisationContract.region = organisation.getAccount().getRegion();
         mapEntity(organisationContract, organisation);
         return organisationContract;
@@ -71,5 +74,13 @@ public class OrganisationContract extends ETLContract {
 
     public void setRegion(String region) {
         this.region = region;
+    }
+
+    public OrganisationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrganisationStatus status) {
+        this.status = status;
     }
 }
