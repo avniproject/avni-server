@@ -36,6 +36,7 @@ public class GroupRoleService implements NonScopeAwareService {
         groupRole.setPrimary(groupRoleRequest.getPrimary());
         groupRole.setMaximumNumberOfMembers(groupRoleRequest.getMaximumNumberOfMembers());
         groupRole.setMinimumNumberOfMembers(groupRoleRequest.getMinimumNumberOfMembers());
+        groupRole.setVoided(groupRoleRequest.isVoided());
         return groupRoleRepository.save(groupRole);
     }
 

@@ -21,6 +21,7 @@ import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepo
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.task.TaskRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.mapper.dashboard.DashboardMapper;
@@ -376,6 +377,7 @@ public class OrganisationService {
     public void addGroupPrivilegeJson(ZipOutputStream zos) throws IOException {
         List<GroupPrivilegeContractWeb> groupPrivileges = groupPrivilegeRepository.findAll().stream()
                 .filter(groupPrivilege -> !groupPrivilege.getGroup().isAdministrator())
+                .filter(groupPrivilege -> groupPrivilege.getImplVersion() == GroupPrivilege.IMPL_VERSION)
                 .map(GroupPrivilegeContractWeb::fromEntity).collect(Collectors.toList());
         if (!groupPrivileges.isEmpty()) {
             addFileToZip(zos, "groupPrivilege.json", groupPrivileges);

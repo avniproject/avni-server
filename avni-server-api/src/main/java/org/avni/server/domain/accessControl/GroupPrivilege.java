@@ -2,7 +2,6 @@ package org.avni.server.domain.accessControl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.domain.*;
-import org.avni.server.domain.accessControl.Privilege;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
@@ -13,6 +12,7 @@ import javax.validation.constraints.NotNull;
 @JsonIgnoreProperties({"group", "privilege", "subjectType", "program", "programEncounterType", "encounterType", "checklistDetail"})
 @BatchSize(size = 100)
 public class GroupPrivilege extends OrganisationAwareEntity {
+    public static final int IMPL_VERSION = 1;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,6 +45,9 @@ public class GroupPrivilege extends OrganisationAwareEntity {
     private ChecklistDetail checklistDetail;
 
     private boolean allow;
+
+    @Column
+    private int implVersion;
 
     public Group getGroup() {
         return group;
@@ -206,5 +209,22 @@ public class GroupPrivilege extends OrganisationAwareEntity {
                 (checklistDetail != null ? ", checklistDetail=" + checklistDetail.getName() : "") +
                 ", allow=" + allow +
                 '}';
+    }
+
+    public int getImplVersion() {
+        return implVersion;
+    }
+
+    public void setImplVersion(int implVersion) {
+        this.implVersion = implVersion;
+    }
+
+    /**
+     *
+     * @return For GroupPrivileges with IMPL_VERSION == 1 return FALSE, otherwise return actual db isVoided value .
+     */
+    @Override
+    public boolean isVoided() {
+        return getImplVersion() == GroupPrivilege.IMPL_VERSION ? false : super.isVoided();
     }
 }

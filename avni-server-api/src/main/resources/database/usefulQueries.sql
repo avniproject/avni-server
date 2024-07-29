@@ -419,7 +419,8 @@ select pid as process_id,
        application_name,
        backend_start,
        state,
-       state_change
+       state_change,
+       query
 from pg_stat_activity;
 
 

@@ -58,6 +58,7 @@ public class IndividualRelationService implements NonScopeAwareService {
             individualRelation.setUuid(uuid == null ? UUID.randomUUID().toString() : uuid);
         }
         individualRelation.setName(name); //Update name if changed
+        individualRelation.setVoided(individualRelationContract.isVoided());
         IndividualRelation savedRelation = individualRelationRepository.save(individualRelation);
         saveGenderMappings(individualRelationContract, savedRelation);
     }

@@ -31,6 +31,7 @@ public class GroupsService implements NonScopeAwareService {
         } else {
             group = groupRepository.findByNameAndOrganisationId(Group.Everyone, organisation.getId());
         }
+        group.setVoided(groupContract.isVoided());
         group.setHasAllPrivileges(groupContract.isHasAllPrivileges());
         return groupRepository.save(group);
     }

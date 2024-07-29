@@ -52,8 +52,8 @@ public class UserService implements NonScopeAwareService {
         String idPrefix = UserSettings.getIdPrefix(user.getSettings());
         if (StringUtils.hasLength(idPrefix)) {
             synchronized (String.format("%d-USER-ID-PREFIX-%s", user.getOrganisationId(), idPrefix).intern()) {
-                List<User> usersWithSameIdPrefix = userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
-                if (usersWithSameIdPrefix.size() == 0) {
+                List<User> usersWithSameIdPrefix = user.isNew() ? userRepository.getUsersWithSameIdPrefix(idPrefix) : userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
+                if (usersWithSameIdPrefix.isEmpty()) {
                     return createUpdateUser(user);
                 } else {
                     throw new ValidationException(String.format("There is another user %s with same prefix: %s", usersWithSameIdPrefix.get(0).getUsername(), idPrefix));
