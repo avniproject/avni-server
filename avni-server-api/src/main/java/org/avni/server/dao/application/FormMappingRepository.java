@@ -8,12 +8,10 @@ import org.avni.server.dao.ReferenceDataRepository;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
-import org.avni.server.domain.ValidationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
-import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

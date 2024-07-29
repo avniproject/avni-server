@@ -16,7 +16,6 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "groupPrivilege", path = "groupPrivilege")
-
 public interface GroupPrivilegeRepository extends ReferenceDataRepository<GroupPrivilege> {
     default GroupPrivilege findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in GroupPrivilege.");
