@@ -1,7 +1,7 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;

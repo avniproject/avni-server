@@ -1,7 +1,6 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.metadata.OrganisationCategory;
 import org.springframework.hateoas.core.Relation;
 
 import java.util.List;
