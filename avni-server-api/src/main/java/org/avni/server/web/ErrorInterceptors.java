@@ -5,11 +5,14 @@ import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.framework.rest.RestControllerErrorResponse;
+import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.util.ErrorBodyBuilder;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -89,6 +92,14 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = {MaxUploadSizeExceededException.class, SizeLimitExceededException.class})
     public ResponseEntity fileUploadSizeLimitExceededError(Exception e) {
         return ResponseEntity.badRequest().body(String.format("Maximum upload file size exceeded; ensure file size is less than %s.", maxFileSize));
+    }
+
+    @ExceptionHandler(value = {DataIntegrityViolationException.class, ConstraintViolationException.class, ConstraintViolationExceptionAcrossOrganisations.class})
+    public ResponseEntity entityUpsertErrorDueToDataConstraintViolation(Exception e) {
+        bugsnagReporter.logAndReportToBugsnag(e);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                String.format("Entity create or update failed due to constraint violation: %s",
+                        errorBodyBuilder.getErrorMessageBody(e)));
     }
 
     @ExceptionHandler(value = {Exception.class})

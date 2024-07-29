@@ -5,7 +5,10 @@ import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
 import org.avni.server.util.JsonObjectUtil;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
@@ -16,6 +19,7 @@ import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("rawtypes")
 @NoRepositoryBean
@@ -174,6 +178,17 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
             predicates.add(inClause);
         } else {
             predicates.add(cb.equal(from.get("id"), cb.literal(0)));
+        }
+    }
+
+    default <S extends T> S saveEntity(S entity) {
+        try {
+            return save(entity);
+        } catch (DataIntegrityViolationException dive) {
+            if (Objects.isNull(entity.getId()) && dive.getCause() != null && dive.getCause().getClass().equals(ConstraintViolationException.class)) {
+                throw new ConstraintViolationExceptionAcrossOrganisations(String.format("Entity=> ID: %d, UUID: %s, Type:%s, User:%s, Msg: %s", entity.getId(), entity.getUuid(), entity.getClass().getCanonicalName(), entity.getLastModifiedByName(), dive.getMessage()), (ConstraintViolationException) dive.getCause());
+            }
+            throw dive;
         }
     }
 }
