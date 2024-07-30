@@ -102,6 +102,10 @@ public class LocationContract extends ReferenceDataContract {
         return locationProperties;
     }
 
+    public void setLocationProperties(ObservationCollection locationProperties) {
+        this.locationProperties = locationProperties;
+    }
+
     public static LocationContract fromAddressLevel(AddressLevel addressLevel) {
         LocationContract contract = new LocationContract();
         if (addressLevel == null) return contract;
