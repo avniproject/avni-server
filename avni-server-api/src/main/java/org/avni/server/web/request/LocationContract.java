@@ -117,7 +117,7 @@ public class LocationContract extends ReferenceDataContract {
         contract.setVoided(addressLevel.isVoided());
         contract.setLegacyId(addressLevel.getLegacyId());
         contract.setGpsCoordinates(addressLevel.getGpsCoordinates());
-        contract.locationProperties = addressLevel.getLocationProperties();
+        contract.setLocationProperties(addressLevel.getLocationProperties());
         AddressLevel parent = addressLevel.getParent();
         if (parent != null) {
             ReferenceDataContract parentContract = new ReferenceDataContract();
