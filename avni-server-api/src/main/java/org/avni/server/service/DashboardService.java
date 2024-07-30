@@ -11,6 +11,7 @@ import org.avni.server.web.contract.reports.DashboardSectionCardMappingBundleCon
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.reports.DashboardSectionCardMappingRequest;
 import org.avni.server.web.request.reports.DashboardSectionWebRequest;
+import org.avni.server.web.response.reports.DashboardFilterConfigResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.joda.time.DateTime;
@@ -54,6 +55,22 @@ public class DashboardService implements NonScopeAwareService {
         dashboard.setVoided(dashboardContract.isVoided());
         Dashboard savedDashboard = dashboardRepository.save(dashboard);
         uploadDashboardSections(dashboardContract, savedDashboard);
+        uploadDashboardFilters(dashboardContract, savedDashboard);
+    }
+
+    private void uploadDashboardFilters(DashboardBundleContract bundleContract, Dashboard dashboard) {
+        List<DashboardFilterResponse> filters = bundleContract.getFilters();
+        for (DashboardFilterResponse bundleFilter : filters) {
+            DashboardFilter dashboardFilter = dashboardFilterRepository.findByUuid(bundleFilter.getUuid());
+            if (dashboardFilter == null) {
+                dashboardFilter = new DashboardFilter();
+                dashboardFilter.setUuid(bundleFilter.getUuid());
+            }
+            dashboardFilter.setName(bundleFilter.getName());
+            DashboardFilterConfigResponse bundleFilterConfig = bundleFilter.getFilterConfig();
+            dashboardFilter.setFilterConfig(bundleFilterConfig.toJsonObject());
+            dashboard.addUpdateFilter(dashboardFilter);
+        }
     }
 
     private void uploadDashboardSections(DashboardBundleContract dashboardContract, Dashboard dashboard) {

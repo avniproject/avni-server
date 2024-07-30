@@ -1,6 +1,5 @@
 package org.avni.server.domain;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.web.contract.ValueUnit;
 import org.hibernate.annotations.BatchSize;
@@ -8,7 +7,6 @@ import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -117,7 +115,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public List<String> getStandardReportCardInputSubjectTypes() {
-        return safeGetterForStandardReportCardInput("subjectTypes");
+        return standardReportCardInput.getList("subjectTypes");
     }
 
     public void setStandardReportCardInputSubjectTypes(List<String> subjectTypes) {
@@ -125,7 +123,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public List<String> getStandardReportCardInputPrograms() {
-        return safeGetterForStandardReportCardInput("programs");
+        return standardReportCardInput.getList("programs");
     }
 
     public void setStandardReportCardInputPrograms(List<String> programs) {
@@ -133,19 +131,11 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public List<String> getStandardReportCardInputEncounterTypes() {
-        return safeGetterForStandardReportCardInput("encounterTypes");
+        return standardReportCardInput.getList("encounterTypes");
     }
 
     public void setStandardReportCardInputEncounterTypes(List<String> encounterTypes) {
         standardReportCardInput.with("encounterTypes", encounterTypes);
-    }
-
-    private List safeGetterForStandardReportCardInput(String key) {
-        return standardReportCardInput == null ? new ArrayList() : standardReportCardInput.getList(key);
-    }
-
-    private void safeSetterForStandardReportCardInput(String key, String value) {
-        standardReportCardInput.with(key, value);
     }
 
     public String getStandardReportCardInputRecentDuration() {
@@ -153,6 +143,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
-        safeSetterForStandardReportCardInput("recentDuration", standardReportCardInputRecentDuration.toJSONString());
+        String value = standardReportCardInputRecentDuration.toJSONString();
+        standardReportCardInput.with("recentDuration", value);
     }
 }

@@ -5,7 +5,6 @@ import org.avni.server.web.request.ConceptContract;
 
 public class ObservationBasedFilterResponse extends ObservationBasedFilterContract {
     private ConceptContract concept;
-    private String scope;
 
     public ConceptContract getConcept() {
         return concept;
@@ -15,11 +14,8 @@ public class ObservationBasedFilterResponse extends ObservationBasedFilterContra
         this.concept = concept;
     }
 
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
+    @Override
+    protected String getConceptUUID() {
+        return concept.getUuid();
     }
 }

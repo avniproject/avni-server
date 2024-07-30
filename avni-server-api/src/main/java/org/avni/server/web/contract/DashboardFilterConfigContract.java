@@ -3,7 +3,7 @@ package org.avni.server.web.contract;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 
-public class DashboardFilterConfigContract {
+public abstract class DashboardFilterConfigContract {
     private String type;
     private String subjectTypeUUID;
     private String widget;
@@ -56,4 +56,19 @@ public class DashboardFilterConfigContract {
             return new JsonObject().with(DashboardFilter.DashboardFilterConfig.SubjectTypeFieldName, subjectTypeUUID);
         }
     }
+
+    public JsonObject toJsonObject() {
+        JsonObject jsonObject = new JsonObject();
+        DashboardFilter.FilterType filterType = DashboardFilter.FilterType.valueOf(this.getType());
+        jsonObject.with(DashboardFilter.DashboardFilterConfig.TypeFieldName, this.getType())
+                .with(DashboardFilter.DashboardFilterConfig.SubjectTypeFieldName, this.getSubjectTypeUUID())
+                .with(DashboardFilter.DashboardFilterConfig.WidgetFieldName, this.getWidget());
+        if (filterType.equals(DashboardFilter.FilterType.GroupSubject))
+            jsonObject.put(DashboardFilter.DashboardFilterConfig.GroupSubjectTypeFilterName, getGroupSubjectTypeFilter().getJsonObject());
+        else if (filterType.equals(DashboardFilter.FilterType.Concept))
+            jsonObject.put(DashboardFilter.DashboardFilterConfig.ObservationBasedFilterName, getObsverationTypeFilterJsonObject());
+        return jsonObject;
+    }
+
+    protected abstract Object getObsverationTypeFilterJsonObject();
 }
