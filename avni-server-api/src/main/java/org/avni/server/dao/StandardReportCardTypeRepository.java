@@ -14,7 +14,6 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "standardReportCardType", path = "standardReportCardType")
-
 public interface StandardReportCardTypeRepository extends AvniJpaRepository<StandardReportCardType, Long> {
     StandardReportCardType findByUuid(String uuid);
 

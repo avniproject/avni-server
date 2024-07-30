@@ -2,7 +2,6 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
-import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.web.request.api.RequestUtils;
 import org.springframework.data.domain.Page;
@@ -11,11 +10,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
 import org.joda.time.DateTime;
@@ -136,5 +133,5 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
     List<User> getUsersWithSameIdPrefix(String prefix, long exceptUserId);
 
     @Query(value = "select * from users where lower(users.settings->>'idPrefix') = lower(:prefix)", nativeQuery = true)
-    List<User> getUsersWithSameIdPrefix(String prefix);
+    List<User> getAllUsersWithSameIdPrefix(String prefix);
 }
