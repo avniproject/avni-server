@@ -56,7 +56,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
-        if (identifierUserAssignment.isVoided())
+        if (identifierUserAssignment == null || identifierUserAssignment.isVoided())
             return ResponseEntity.notFound().build();
         return new ResponseEntity<>(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment), HttpStatus.OK);
     }
@@ -101,12 +101,12 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @Transactional
     public ResponseEntity voidIdentifierUserAssignment(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
-        IdentifierUserAssignment identifierSource = identifierUserAssignmentRepository.findOne(id);
-        if (identifierSource == null)
+        IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
+        if (identifierUserAssignment == null)
             return ResponseEntity.notFound().build();
 
-        identifierSource.setVoided(true);
-        identifierUserAssignmentRepository.save(identifierSource);
+        identifierUserAssignment.setVoided(true);
+        identifierUserAssignmentRepository.save(identifierUserAssignment);
         return ResponseEntity.ok(null);
     }
 
