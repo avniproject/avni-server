@@ -7,6 +7,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -157,11 +158,11 @@ public class AvniFiles {
     public static void validateFile(MultipartFile file, List<String> expectedMimeTypes) throws IOException {
         String fileExtension = fileExtensionMap.getOrDefault(expectedMimeTypes.get(0), "");
         validateFileName(file.getOriginalFilename(), fileExtension);
-
         validateMimeTypes(file, expectedMimeTypes);
     }
 
     public static void validateFileName(String fileName, String extension) {
+        assertTrue(!StringUtils.isEmpty(fileName), "File name is empty");
         assertTrue(fileName.split("[.]").length == 2, "Double extension file detected");
         assertTrue(fileName.endsWith("." + extension), format("Expected file extension: %s, Got %s", extension, fileName.split("[.]")[1]));
     }
@@ -251,7 +252,7 @@ public class AvniFiles {
         return normalizePath;
     }
 
-    private static void assertTrue(boolean value, String errorMessage) {
+    public static void assertTrue(boolean value, String errorMessage) {
         if (!value) {
             throw new BadRequestError(errorMessage);
         }

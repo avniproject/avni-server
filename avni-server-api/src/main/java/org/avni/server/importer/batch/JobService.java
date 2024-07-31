@@ -81,7 +81,7 @@ public class JobService {
                 .addString("locationUploadMode", locationUploadMode)
                 .addString("locationHierarchy", locationHierarchy)
                 .toJobParameters();
-        logger.info(format("Bulkupload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));
+        logger.info(format("Bulk upload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));
 
         return type.equals("metadataZip") ? bgJobLauncher.run(importZipJob, parameters) : bgJobLauncher.run(importJob, parameters);
     }

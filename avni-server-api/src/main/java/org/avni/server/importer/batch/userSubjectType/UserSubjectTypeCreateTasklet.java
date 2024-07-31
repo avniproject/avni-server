@@ -21,9 +21,7 @@ import java.util.List;
 @JobScope
 public class UserSubjectTypeCreateTasklet implements Tasklet {
     private final SubjectTypeRepository subjectTypeRepository;
-    private final IndividualRepository individualRepository;
     private final UserRepository userRepository;
-    private final UserSubjectRepository userSubjectRepository;
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserSubjectTypeCreateTasklet.class);
 
@@ -32,13 +30,10 @@ public class UserSubjectTypeCreateTasklet implements Tasklet {
 
     @Autowired
     public UserSubjectTypeCreateTasklet(SubjectTypeRepository subjectTypeRepository,
-                                        IndividualRepository individualRepository,
                                         UserRepository userRepository,
-                                        UserSubjectRepository userSubjectRepository, UserService userService) {
+                                        UserService userService) {
         this.subjectTypeRepository = subjectTypeRepository;
-        this.individualRepository = individualRepository;
         this.userRepository = userRepository;
-        this.userSubjectRepository = userSubjectRepository;
         this.userService = userService;
     }
 

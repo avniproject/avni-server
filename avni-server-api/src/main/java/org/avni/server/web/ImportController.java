@@ -104,14 +104,19 @@ public class ImportController {
     }
 
     @PostMapping("/import/new")
-    public ResponseEntity<?> doit(@RequestParam MultipartFile file,
-                                  @RequestParam String type,
-                                  @RequestParam boolean autoApprove,
-                                  @RequestParam String locationUploadMode,
-                                  @RequestParam String locationHierarchy) throws IOException {
-                          
+    public ResponseEntity<?> importFile(@RequestParam MultipartFile file,
+                                        @RequestParam String type,
+                                        @RequestParam boolean autoApprove,
+                                        @RequestParam String locationUploadMode,
+                                        @RequestParam String locationHierarchy) throws IOException {
+
         accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-        validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
+        try {
+            assertTrue(!StringUtils.isEmpty(type), "File type not provided");
+            validateFile(file, type.equals("metadataZip") ? ZipFiles : Collections.singletonList("text/csv"));
+        } catch (BadRequestError e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
 
         String uuid = UUID.randomUUID().toString();
         User user = UserContextHolder.getUserContext().getUser();
@@ -120,13 +125,13 @@ public class ImportController {
             ObjectInfo storedFileInfo = type.equals("metadataZip") ? bulkUploadS3Service.uploadZip(file, uuid) : bulkUploadS3Service.uploadFile(file, uuid);
             jobService.create(uuid, type, file.getOriginalFilename(), storedFileInfo, user.getId(), organisation.getUuid(), autoApprove, locationUploadMode, locationHierarchy);
         } catch (JobParametersInvalidException | JobExecutionAlreadyRunningException | JobInstanceAlreadyCompleteException | JobRestartException e) {
-            logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
+            logger.error(format("Bulk upload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         } catch (IOException e) {
-            logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
+            logger.error(format("Bulk upload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(format("Unable to process file. %s", e.getMessage())));
         } catch (Exception e) {
-            logger.error(format("Bulkupload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
+            logger.error(format("Bulk upload initiation failed. file:'%s', user:'%s'", file.getOriginalFilename(), user.getUsername()), e);
             if (!type.equals("metadataZip")) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("%s does not appear to be a valid .csv file.", file.getOriginalFilename()));
             }

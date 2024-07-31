@@ -98,7 +98,7 @@ public class OrganisationService {
     private final VideoRepository videoRepository;
     private final VideoService videoService;
     private final CardService cardService;
-    private final DashboardService dashboardService;
+    private final DashboardFilterRepository dashboardFilterRepository;
     private final MenuItemService menuItemService;
 
     private final MessagingService messagingService;
@@ -224,7 +224,8 @@ public class OrganisationService {
                                OrganisationRepository organisationRepository,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               UserSubjectRepository userSubjectRepository) {
+                               UserSubjectRepository userSubjectRepository,
+                               DashboardFilterRepository dashboardFilterRepository) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -259,7 +260,7 @@ public class OrganisationService {
         this.videoRepository = videoRepository;
         this.videoService = videoService;
         this.cardService = cardService;
-        this.dashboardService = dashboardService;
+        this.dashboardFilterRepository = dashboardFilterRepository;
         this.menuItemService = menuItemService;
         this.messagingService = messagingService;
         this.cardRepository = cardRepository;
@@ -732,6 +733,7 @@ public class OrganisationService {
                 cardRepository,
                 dashboardSectionRepository,
                 groupDashboardRepository,
+                dashboardFilterRepository,
                 dashboardRepository,
                 msg91ConfigRepository,
                 genderRepository,
