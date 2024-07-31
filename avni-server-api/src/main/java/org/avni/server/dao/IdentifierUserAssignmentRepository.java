@@ -46,4 +46,13 @@ public interface IdentifierUserAssignmentRepository extends ReferenceDataReposit
         User assignedTo = identifierUserAssignment.getAssignedTo();
         return getOverlappingAssignmentWithSamePrefix(assignedTo.getUserSettings().getIdPrefix(), identifierUserAssignment.getIdentifierSource().getId(), identifierUserAssignment.getIdentifierStart(), identifierUserAssignment.getIdentifierEnd(), assignedTo.getId());
     }
+
+    default IdentifierUserAssignment updateExistingWithNew(IdentifierUserAssignment existingIdentifierUserAssignment, IdentifierUserAssignment newIdentifierUserAssignment) {
+        existingIdentifierUserAssignment.setAssignedTo(newIdentifierUserAssignment.getAssignedTo());
+        existingIdentifierUserAssignment.setIdentifierSource(newIdentifierUserAssignment.getIdentifierSource());
+        existingIdentifierUserAssignment.setIdentifierStart(newIdentifierUserAssignment.getIdentifierStart());
+        existingIdentifierUserAssignment.setIdentifierEnd(newIdentifierUserAssignment.getIdentifierEnd());
+        existingIdentifierUserAssignment.setVoided(newIdentifierUserAssignment.isVoided());
+        return save(existingIdentifierUserAssignment);
+    }
 }

@@ -102,6 +102,10 @@ public class LocationContract extends ReferenceDataContract {
         return locationProperties;
     }
 
+    public void setLocationProperties(ObservationCollection locationProperties) {
+        this.locationProperties = locationProperties;
+    }
+
     public static LocationContract fromAddressLevel(AddressLevel addressLevel) {
         LocationContract contract = new LocationContract();
         if (addressLevel == null) return contract;
@@ -113,7 +117,7 @@ public class LocationContract extends ReferenceDataContract {
         contract.setVoided(addressLevel.isVoided());
         contract.setLegacyId(addressLevel.getLegacyId());
         contract.setGpsCoordinates(addressLevel.getGpsCoordinates());
-        contract.locationProperties = addressLevel.getLocationProperties();
+        contract.setLocationProperties(addressLevel.getLocationProperties());
         AddressLevel parent = addressLevel.getParent();
         if (parent != null) {
             ReferenceDataContract parentContract = new ReferenceDataContract();
