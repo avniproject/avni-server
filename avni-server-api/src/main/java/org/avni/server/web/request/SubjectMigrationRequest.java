@@ -1,18 +1,20 @@
 package org.avni.server.web.request;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public class SubjectMigrationRequest {
+public class SubjectMigrationRequest implements Serializable {
+    private List<String> subjectUuids;
     private Map<String, String> destinationAddresses;
-    private List<Long> subjectTypeIds;
+    private Map<String, String> destinationSyncConcepts;
 
-    public List<Long> getSubjectTypeIds() {
-        return subjectTypeIds;
+    public List<String> getSubjectUuids() {
+        return subjectUuids;
     }
 
-    public void setSubjectTypeIds(List<Long> subjectTypeIds) {
-        this.subjectTypeIds = subjectTypeIds;
+    public void setSubjectUuids(List<String> subjectUuids) {
+        this.subjectUuids = subjectUuids;
     }
 
     public Map<String, String> getDestinationAddresses() {
@@ -21,5 +23,13 @@ public class SubjectMigrationRequest {
 
     public void setDestinationAddresses(Map<String, String> destinationAddresses) {
         this.destinationAddresses = destinationAddresses;
+    }
+
+    public Map<String, String> getDestinationSyncConcepts() {
+        return destinationSyncConcepts;
+    }
+
+    public void setDestinationSyncConcepts(Map<String, String> destinationSyncConcepts) {
+        this.destinationSyncConcepts = destinationSyncConcepts;
     }
 }

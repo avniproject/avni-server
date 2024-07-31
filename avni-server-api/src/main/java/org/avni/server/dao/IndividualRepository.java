@@ -1,6 +1,5 @@
 package org.avni.server.dao;
 
-import org.apache.poi.ss.formula.functions.T;
 import org.avni.server.application.projections.WebSearchResultProjection;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
@@ -52,6 +51,8 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
     }
 
     Page<Individual> findByIdIn(Long[] ids, Pageable pageable);
+
+    List<Individual> findByUuidInAndAddressLevel(List<String> uuids, AddressLevel addressLevel);
 
     default Specification<Individual> getFilterSpecForName(String value) {
         return (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
