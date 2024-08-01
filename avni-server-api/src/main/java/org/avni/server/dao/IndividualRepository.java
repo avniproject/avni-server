@@ -52,8 +52,6 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
 
     Page<Individual> findByIdIn(Long[] ids, Pageable pageable);
 
-    List<Individual> findByUuidInAndAddressLevel(List<String> uuids, AddressLevel addressLevel);
-
     default Specification<Individual> getFilterSpecForName(String value) {
         return (Root<Individual> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             if (value != null && !value.isEmpty()) {

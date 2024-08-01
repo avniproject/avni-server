@@ -8,7 +8,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
-import org.springframework.batch.core.listener.ExecutionContextPromotionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -53,17 +52,9 @@ public class BulkSubjectMigrationBatchConfiguration {
     }
 
     @Bean
-    public ExecutionContextPromotionListener promotionListener() {
-        ExecutionContextPromotionListener listener = new ExecutionContextPromotionListener();
-        listener.setKeys(new String[] {"data"});
-        return listener;
-    }
-
-    @Bean
     public Step bulkSubjectMigrationStep(BulkSubjectMigrationTasklet bulkSubjectMigrationTasklet) {
         return stepBuilderFactory.get("bulkSubjectMigrationStep")
                 .tasklet(bulkSubjectMigrationTasklet)
-                .listener(promotionListener())
                 .build();
     }
 }

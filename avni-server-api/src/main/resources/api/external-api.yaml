@@ -1203,7 +1203,7 @@ paths:
     post:
       tags:
         - Subject, Subject Migration, Program Encounter, Program Enrolment, Encounter, Group Subject
-      summary: Migrate subjects and its descendant data (like encounter etc) from one location to another, belonging to specified subject types. If you have a lot of addresses then the request may timeout, but the server will continue to process the API. Each source to destination mapping for each subject type, will be done in its own transaction. So for the example request given there will be 6 transactions (3 address mapping multiplied by 2 subject types).
+      summary: Migrate specified subjects and its descendant data (like encounter etc) from one location to another or from one sync concept(s) to another. Processing happens as a batch job.
       parameters:
         - name: auth-token
           in: header
@@ -1221,6 +1221,15 @@ paths:
           schema:
             type: string
             default: 1
+        - name: mode
+          in: query
+          description: "Mode for the migration"
+          required: false
+          explode: false
+          schema:
+            type: string
+            enum: ["byAddress", "bySyncConcept"]
+            default: "byAddress"
       requestBody:
         content:
           application/json:
@@ -1233,15 +1242,60 @@ paths:
                       "334657": "335043",
                       "331106": "331466"
                   },
-                  "subjectTypeIds": [
-                      672,
-                      671
+                  "destinationSyncConcepts": {
+                      "e5c37dc0-7660-49c2-abf1-87a7d2b3c5ef": "Maharashtra",
+                      "5ecbc89b-3d06-4911-95c3-8227e9f78790": "Karnataka"
+                  },
+                  "subjectIds": [
+                      "c47cc708-5707-42ee-8f27-098a567c3229",
+                      "329760fe-aa7e-448a-9b48-2a3aaba7ffa5"
                   ]
               }
         required: true
       responses:
         "200":
           description: successful
+  /api/subjectMigration/bulk/status/{jobId}:
+    get:
+      tags:
+        - Subject, Subject Migration
+      summary: Get status of a bulk subject migration job
+      description: |
+        Provide the ID of the job for which status needs to be checked. The ID is in UUID format.
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+            format: uuid
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+        - name: version
+          in: query
+          description: "Version of the API to be called"
+          required: false
+          explode: false
+          schema:
+            type: string
+            default: 1
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusBody'
+        "400":
+          description: bad input parameter
   /api/subjectTree:
     delete:
       tags:
@@ -1875,12 +1929,36 @@ components:
       properties:
         destinationAddresses:
           type: object
-          description: "as key value pairs. key is string and value is of type string. key is source address id and value is destination address id"
-        subjectTypeIds:
+          description: "Required if mode is byAddress. As key value pairs. key is string and value is of type string. key is source address id and value is destination address id"
+        destinationSyncConcepts:
+          type: object
+          description: "Required if mode is bySyncConcept. As key value pairs. key is string and value is of type string. key is sync concept uuid and value is destination value"
+        subjectIds:
           type: array
-          description: "array of numeric values. each item in array is the id of subject type"
+          description: "Required. array of long values. each item in array is the id of a subject to be migrated."
           items:
-            type: number
+            type: integer
+    JobStatusBody:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: "uuid of the job"
+        status:
+          type: string
+          description: "job status"
+        exitStatus:
+          type: string
+          description: "job exit status"
+        createTime:
+          type: string
+          description: "job create time"
+        startTime:
+          type: string
+          description: "job start time"
+        endTime:
+          type: string
+          description: "job end time"
     VoidSubjectCriteriaBody:
       type: object
       properties:

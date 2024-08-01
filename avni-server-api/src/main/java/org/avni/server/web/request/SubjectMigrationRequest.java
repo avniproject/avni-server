@@ -5,16 +5,16 @@ import java.util.List;
 import java.util.Map;
 
 public class SubjectMigrationRequest implements Serializable {
-    private List<String> subjectUuids;
+    private List<Long> subjectIds;
     private Map<String, String> destinationAddresses;
     private Map<String, String> destinationSyncConcepts;
 
-    public List<String> getSubjectUuids() {
-        return subjectUuids;
+    public List<Long> getSubjectIds() {
+        return subjectIds;
     }
 
-    public void setSubjectUuids(List<String> subjectUuids) {
-        this.subjectUuids = subjectUuids;
+    public void setSubjectIds(List<Long> subjectIds) {
+        this.subjectIds = subjectIds;
     }
 
     public Map<String, String> getDestinationAddresses() {

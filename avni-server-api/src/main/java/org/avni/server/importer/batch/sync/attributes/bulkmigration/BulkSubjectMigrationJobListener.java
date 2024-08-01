@@ -20,6 +20,9 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
     @Value("#{jobParameters['uuid']}")
     private String uuid;
 
+    @Value("#{jobParameters['mode']}")
+    private String mode;
+
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
@@ -36,7 +39,13 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
-        logger.info("Starting bulk subject migration job with uuid {}", jobExecution.getJobParameters().getString("uuid"));
+        logger.info("Starting Bulk Subject Migration Job {} mode: {}. Migrating {} subjects", uuid, mode, bulkSubjectMigrationParameters.getSubjectIds().size());
         authService.authenticateByUserId(userId, organisationUUID);
+    }
+
+    @Override
+    public void afterJob(JobExecution jobExecution) {
+        logger.info("Finished Bulk Subject Migration Job {} mode: {} exitStatus: {} createTime: {} startTime: {} endTime: {}",
+                uuid, mode, jobExecution.getExitStatus(), jobExecution.getCreateTime(), jobExecution.getStartTime(), jobExecution.getEndTime());
     }
 }

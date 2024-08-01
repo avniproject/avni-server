@@ -1,9 +1,6 @@
 package org.avni.server.web;
 
-import org.avni.server.dao.IndividualRepository;
-import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.SubjectMigrationRepository;
-import org.avni.server.dao.SubjectTypeRepository;
+import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -28,9 +25,7 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
@@ -58,9 +53,10 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     private final AccessControlService accessControlService;
     private final Job bulkSubjectMigrationJob;
     private final JobLauncher bulkSubjectMigrationJobLauncher;
+    private final AvniJobRepository avniJobRepository;
 
     @Autowired
-    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, Job bulkSubjectMigrationJob, JobLauncher bulkSubjectMigrationJobLauncher) {
+    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, Job bulkSubjectMigrationJob, JobLauncher bulkSubjectMigrationJobLauncher, AvniJobRepository avniJobRepository) {
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
         this.individualRepository = individualRepository;
@@ -72,6 +68,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.userService = userService;
+        this.avniJobRepository = avniJobRepository;
     }
 
     @RequestMapping(value = "/subjectMigrations/v2", method = RequestMethod.GET)
@@ -121,6 +118,9 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     public ResponseEntity migrate(@RequestParam(value = "mode", defaultValue = "byAddress") SubjectMigrationService.BulkSubjectMigrationModes mode,
                                   @RequestBody SubjectMigrationRequest subjectMigrationRequest) {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
+        if (subjectMigrationRequest.getSubjectIds() == null) {
+            throw new BadRequestError("subjectIds is required");
+        }
         if (mode == SubjectMigrationService.BulkSubjectMigrationModes.byAddress && subjectMigrationRequest.getDestinationAddresses() == null) {
             throw new BadRequestError("destinationAddresses is required for mode: byAddress");
         }
@@ -149,5 +149,14 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         }
 
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(jobUUID);
+    }
+
+    @RequestMapping(value = "/api/subjectMigration/bulk/status/{jobUuid}", method = RequestMethod.GET)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    public JobStatus migrationStatus(@PathVariable("jobUuid") String jobUuid) {
+        accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
+        String jobFilterCondition = " and uuid = '" + jobUuid + "'";
+        Page<JobStatus> jobStatuses = avniJobRepository.getJobStatuses(UserContextHolder.getUser(), jobFilterCondition, PageRequest.of(0, 1));
+        return jobStatuses != null ? jobStatuses.getContent().get(0) : null;
     }
 }
