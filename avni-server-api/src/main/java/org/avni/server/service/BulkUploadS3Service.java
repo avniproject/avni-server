@@ -37,6 +37,10 @@ public class BulkUploadS3Service {
         return s3Service.uploadFile(tempSourceFile, format("%s.csv", uuid), "bulkuploads/error");
     }
 
+    public ObjectInfo uploadFile(File localFile, String filename, String directory) throws IOException {
+        return s3Service.uploadFile(localFile, filename, directory);
+    }
+
     public File getLocalErrorFile(String uuid) {
         File errorDir = new File(format("%s/bulkuploads/error", System.getProperty("java.io.tmpdir")));
         errorDir.mkdirs();

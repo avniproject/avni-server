@@ -8,7 +8,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.IndividualController;
-import org.avni.server.web.request.SubjectMigrationRequest;
+import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -155,11 +155,11 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         individualService.save(subject);
     }
 
-    public Map<String, String> bulkMigrate(BulkSubjectMigrationModes mode, SubjectMigrationRequest subjectMigrationRequest) {
+    public Map<String, String> bulkMigrate(BulkSubjectMigrationModes mode, BulkSubjectMigrationRequest bulkSubjectMigrationRequest) {
         if (mode == BulkSubjectMigrationModes.byAddress) {
-            return bulkMigrateByAddress(subjectMigrationRequest.getSubjectIds(), subjectMigrationRequest.getDestinationAddresses());
+            return bulkMigrateByAddress(bulkSubjectMigrationRequest.getSubjectIds(), bulkSubjectMigrationRequest.getDestinationAddresses());
         } else {
-            return bulkMigrateBySyncConcept(subjectMigrationRequest.getSubjectIds(), subjectMigrationRequest.getDestinationSyncConcepts());
+            return bulkMigrateBySyncConcept(bulkSubjectMigrationRequest.getSubjectIds(), bulkSubjectMigrationRequest.getDestinationSyncConcepts());
         }
     }
 
@@ -219,18 +219,20 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     }
 
     private String validateSyncConcept(String subjectTypeSyncConceptUuid, String currentValue, Map<String, String> destinationSyncConcepts) {
+        String destinationSyncConceptValue = destinationSyncConcepts.get(subjectTypeSyncConceptUuid);
+        if (subjectTypeSyncConceptUuid != null && destinationSyncConceptValue == null) {
+            return null; // No migration required for this sync concept.
+        }
         if (subjectTypeSyncConceptUuid == null) {
             throw new RuntimeException("No sync concept configured for subject type");
         }
         Concept syncConcept = conceptRepository.findByUuid(subjectTypeSyncConceptUuid);
 
-        String destinationSyncConceptValue = destinationSyncConcepts.get(subjectTypeSyncConceptUuid);
-
         if (Objects.equals(currentValue, destinationSyncConceptValue)) {
             throw new RuntimeException("Source value and Destination value are the same");
         }
 
-        if (destinationSyncConceptValue != null && syncConcept.isCoded()) {
+        if (syncConcept.isCoded()) {
             ConceptAnswer conceptAnswer = syncConcept.findConceptAnswerByConceptUUID(destinationSyncConceptValue);
             if (conceptAnswer == null || conceptAnswer.isVoided()) {
                 throw new RuntimeException(String.format("Invalid value '%s' for coded sync concept", destinationSyncConceptValue));

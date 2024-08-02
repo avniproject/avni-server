@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
-public class SubjectMigrationRequest implements Serializable {
+public class BulkSubjectMigrationRequest implements Serializable {
     private List<Long> subjectIds;
     private Map<String, String> destinationAddresses;
     private Map<String, String> destinationSyncConcepts;

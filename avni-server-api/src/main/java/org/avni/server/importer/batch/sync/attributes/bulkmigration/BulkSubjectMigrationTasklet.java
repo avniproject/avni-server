@@ -1,10 +1,8 @@
 package org.avni.server.importer.batch.sync.attributes.bulkmigration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.avni.server.service.S3Service;
+import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.service.SubjectMigrationService;
-import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.web.request.SubjectMigrationRequest;
+import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
@@ -16,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.util.Map;
 
 @Component
@@ -24,7 +21,7 @@ import java.util.Map;
 public class BulkSubjectMigrationTasklet implements Tasklet {
     private static final Logger logger = LoggerFactory.getLogger(BulkSubjectMigrationTasklet.class);
     private final SubjectMigrationService subjectMigrationService;
-    private final S3Service s3Service;
+
     @Value("#{jobParameters['uuid']}")
     String uuid;
 
@@ -32,23 +29,17 @@ public class BulkSubjectMigrationTasklet implements Tasklet {
     String mode;
 
     @Value("#{jobParameters['bulkSubjectMigrationParameters']}")
-    SubjectMigrationRequest bulkSubjectMigrationParameters;
+    BulkSubjectMigrationRequest bulkSubjectMigrationParameters;
 
     @Autowired
-    public BulkSubjectMigrationTasklet(SubjectMigrationService subjectMigrationService, S3Service s3Service) {
+    public BulkSubjectMigrationTasklet(SubjectMigrationService subjectMigrationService, BulkUploadS3Service s3Service) {
         this.subjectMigrationService = subjectMigrationService;
-        this.s3Service = s3Service;
     }
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         Map<String, String> failedMigrations = subjectMigrationService.bulkMigrate(SubjectMigrationService.BulkSubjectMigrationModes.valueOf(mode), bulkSubjectMigrationParameters);
-        ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
-        String fileName = uuid + ".json";
-        File failedMigrationsFile = new File("/tmp/" + fileName);
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(failedMigrationsFile, failedMigrations);
-//        TODO upload file to S3
-//        s3Service.uploadFile(failedMigrationsFile, fileName, "bulkuploads/subjectmigrations");
+        chunkContext.getStepContext().getStepExecution().getJobExecution().getExecutionContext().put("failedMigrations", failedMigrations);
         return RepeatStatus.FINISHED;
     }
 }

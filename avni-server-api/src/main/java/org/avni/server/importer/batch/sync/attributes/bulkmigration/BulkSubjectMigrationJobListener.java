@@ -1,7 +1,10 @@
 package org.avni.server.importer.batch.sync.attributes.bulkmigration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.framework.security.AuthService;
-import org.avni.server.web.request.SubjectMigrationRequest;
+import org.avni.server.service.BulkUploadS3Service;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.JobExecution;
@@ -11,11 +14,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
+
+import static java.lang.String.format;
+
 @Component
 @JobScope
 public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport {
     private static final Logger logger = LoggerFactory.getLogger(BulkSubjectMigrationJobListener.class);
     private final AuthService authService;
+    private final BulkUploadS3Service s3Service;
 
     @Value("#{jobParameters['uuid']}")
     private String uuid;
@@ -29,12 +39,16 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
     @Value("#{jobParameters['userId']}")
     private Long userId;
 
+    @Value("#{jobParameters['fileName']}")
+    private String fileName;
+
     @Value("#{jobParameters['bulkSubjectMigrationParameters']}")
-    private SubjectMigrationRequest bulkSubjectMigrationParameters;
+    private BulkSubjectMigrationRequest bulkSubjectMigrationParameters;
 
     @Autowired
-    public BulkSubjectMigrationJobListener(AuthService authService) {
+    public BulkSubjectMigrationJobListener(AuthService authService, BulkUploadS3Service s3Service) {
         this.authService = authService;
+        this.s3Service = s3Service;
     }
 
     @Override
@@ -45,7 +59,21 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        logger.info("Finished Bulk Subject Migration Job {} mode: {} exitStatus: {} createTime: {} startTime: {} endTime: {}",
-                uuid, mode, jobExecution.getExitStatus(), jobExecution.getCreateTime(), jobExecution.getStartTime(), jobExecution.getEndTime());
+        Map<String, String> failedMigrations = (Map<String, String>) jobExecution.getExecutionContext().get("failedMigrations");
+        logger.info("Finished Bulk Subject Migration Job {} mode: {} failedCount: {} exitStatus: {} waitTime: {}ms processingTime: {}ms fileName: {}",
+                uuid, mode, failedMigrations.size(), jobExecution.getExitStatus(), jobExecution.getStartTime().getTime() - jobExecution.getCreateTime().getTime(), jobExecution.getEndTime().getTime() - jobExecution.getStartTime().getTime(), fileName);
+        try {
+            writeFailuresToFileAndUploadToS3(failedMigrations);
+        } catch (Exception e) {
+            logger.error("Failed to write bulk subject migration failures to file and upload", e);
+        }
+
+    }
+
+    private void writeFailuresToFileAndUploadToS3(Map<String, String> failedMigrations) throws IOException {
+        ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
+        File failedMigrationsFile = new File(format("%s/%s", System.getProperty("java.io.tmpdir"), fileName));
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(failedMigrationsFile, failedMigrations);
+        s3Service.uploadFile(failedMigrationsFile, fileName, "bulksubjectmigrations");
     }
 }

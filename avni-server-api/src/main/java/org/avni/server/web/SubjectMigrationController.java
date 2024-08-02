@@ -11,7 +11,7 @@ import org.avni.server.service.SubjectMigrationService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.web.request.SubjectMigrationRequest;
+import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collections;
 import java.util.UUID;
 
+import static java.lang.String.format;
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
 @RestController
@@ -116,15 +117,15 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     @RequestMapping(value = "/api/subjectMigration/bulk", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity migrate(@RequestParam(value = "mode", defaultValue = "byAddress") SubjectMigrationService.BulkSubjectMigrationModes mode,
-                                  @RequestBody SubjectMigrationRequest subjectMigrationRequest) {
+                                  @RequestBody BulkSubjectMigrationRequest bulkSubjectMigrationRequest) {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
-        if (subjectMigrationRequest.getSubjectIds() == null) {
+        if (bulkSubjectMigrationRequest.getSubjectIds() == null) {
             throw new BadRequestError("subjectIds is required");
         }
-        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.byAddress && subjectMigrationRequest.getDestinationAddresses() == null) {
+        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.byAddress && bulkSubjectMigrationRequest.getDestinationAddresses() == null) {
             throw new BadRequestError("destinationAddresses is required for mode: byAddress");
         }
-        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.bySyncConcept && subjectMigrationRequest.getDestinationSyncConcepts() == null) {
+        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.bySyncConcept && bulkSubjectMigrationRequest.getDestinationSyncConcepts() == null) {
             throw new BadRequestError("destinationSyncConcepts is required for mode: bySyncConcepts");
         }
 
@@ -132,13 +133,15 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();
         String jobUUID = UUID.randomUUID().toString();
+        String fileName = format("%s-%s-%s.%s", jobUUID, mode, user.getUsername(), "json");
         JobParameters jobParameters =
                 new JobParametersBuilder()
                         .addString("uuid", jobUUID)
                         .addString("organisationUUID", organisation.getUuid())
                         .addLong("userId", user.getId(), false)
                         .addString("mode", String.valueOf(mode))
-                        .addParameter("bulkSubjectMigrationParameters", new CustomJobParameter<>(subjectMigrationRequest))
+                        .addString("fileName", fileName)
+                        .addParameter("bulkSubjectMigrationParameters", new CustomJobParameter<>(bulkSubjectMigrationRequest))
                         .toJobParameters();
 
         try {
@@ -148,7 +151,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
             throw new RuntimeException(String.format("Error while starting the bulk subject migration job, %s", e.getMessage()), e);
         }
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(jobUUID);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(migrationStatus(jobUUID));
     }
 
     @RequestMapping(value = "/api/subjectMigration/bulk/status/{jobUuid}", method = RequestMethod.GET)
@@ -157,6 +160,6 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
         String jobFilterCondition = " and uuid = '" + jobUuid + "'";
         Page<JobStatus> jobStatuses = avniJobRepository.getJobStatuses(UserContextHolder.getUser(), jobFilterCondition, PageRequest.of(0, 1));
-        return jobStatuses != null ? jobStatuses.getContent().get(0) : null;
+        return (jobStatuses != null && !jobStatuses.getContent().isEmpty()) ? jobStatuses.getContent().get(0) : null;
     }
 }
