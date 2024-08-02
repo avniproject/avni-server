@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.builder.ChecklistDetailBuilder;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.ChecklistItemDetailRepository;
 import org.avni.server.domain.ChecklistDetail;
@@ -74,5 +75,15 @@ public class ChecklistDetailService implements NonScopeAwareService {
 
     public List<ChecklistDetail> getAll() {
         return checklistDetailRepository.findAllByIsVoidedFalse();
+    }
+
+    public void saveChecklists(ChecklistDetailRequest[] checklistDetailRequests) {
+        for (ChecklistDetailRequest checklistDetailRequest : checklistDetailRequests) {
+            try {
+                saveChecklist(checklistDetailRequest);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(checklistDetailRequest, e);
+            }
+        }
     }
 }

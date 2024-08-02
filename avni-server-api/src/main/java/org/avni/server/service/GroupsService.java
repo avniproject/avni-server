@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
@@ -39,5 +40,15 @@ public class GroupsService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return groupRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveGroups(GroupContract[] groupContracts, Organisation organisation) {
+        for (GroupContract groupContract : groupContracts) {
+            try {
+                saveGroup(groupContract, organisation);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(groupContract, e);
+            }
+        }
     }
 }

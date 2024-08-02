@@ -59,4 +59,11 @@ public class IndividualRelationContract {
     public void setVoided(boolean voided) {
         this.voided = voided;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "uuid='" + uuid + '\'' +
+                '}';
+    }
 }

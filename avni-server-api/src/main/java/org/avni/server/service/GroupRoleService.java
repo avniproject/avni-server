@@ -1,7 +1,10 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.GroupRoleRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.GroupRole;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.GroupRoleContract;
 import org.slf4j.Logger;
@@ -16,10 +19,12 @@ import java.util.UUID;
 public class GroupRoleService implements NonScopeAwareService {
     private final GroupRoleRepository groupRoleRepository;
     private final Logger logger;
+    private final SubjectTypeRepository subjectTypeRepository;
 
     @Autowired
-    public GroupRoleService(GroupRoleRepository groupRoleRepository) {
+    public GroupRoleService(GroupRoleRepository groupRoleRepository, SubjectTypeRepository subjectTypeRepository) {
         this.groupRoleRepository = groupRoleRepository;
+        this.subjectTypeRepository = subjectTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -43,5 +48,17 @@ public class GroupRoleService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return groupRoleRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveGroupRoles(GroupRoleContract[] groupRoleContracts, Organisation organisation) {
+        for (GroupRoleContract groupRoleContract : groupRoleContracts) {
+            try {
+                SubjectType groupSubjectType = subjectTypeRepository.findByUuid(groupRoleContract.getGroupSubjectTypeUUID());
+                SubjectType memberSubjectType = subjectTypeRepository.findByUuid(groupRoleContract.getMemberSubjectTypeUUID());
+                this.saveGroupRole(groupRoleContract, groupSubjectType, memberSubjectType);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(groupRoleContract, e);
+            }
+        }
     }
 }

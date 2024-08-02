@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.application.FormMapping;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -9,6 +10,7 @@ import org.avni.server.domain.OperationalEncounterType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.web.request.EntityTypeContract;
 import org.avni.server.web.request.OperationalEncounterTypeContract;
+import org.avni.server.web.request.OperationalEncounterTypesContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,5 +85,25 @@ public class EncounterTypeService implements NonScopeAwareService {
 
     public Stream<EncounterType> getAllProgramEncounter() {
         return formMappingRepository.findByProgramNotNullAndEncounterTypeNotNullAndIsVoidedFalse().stream().map(FormMapping::getEncounterType);
+    }
+
+    public void saveEncounterTypes(EntityTypeContract[] entityTypeContracts) {
+        for (EntityTypeContract entityTypeContract : entityTypeContracts) {
+            try {
+                this.createEncounterType(entityTypeContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(entityTypeContract, e);
+            }
+        }
+    }
+
+    public void saveOperationalEncounterTypes(OperationalEncounterTypesContract operationalEncounterTypesContract, Organisation organisation) {
+        for (OperationalEncounterTypeContract operationalEncounterTypeContract : operationalEncounterTypesContract.getOperationalEncounterTypes()) {
+            try {
+                this.createOperationalEncounterType(operationalEncounterTypeContract, organisation);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(operationalEncounterTypeContract, e);
+            }
+        }
     }
 }

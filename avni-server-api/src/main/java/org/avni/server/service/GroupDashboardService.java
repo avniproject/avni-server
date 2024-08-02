@@ -55,12 +55,12 @@ public class GroupDashboardService implements NonScopeAwareService {
             Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
             GroupDashboard groupDashboard = EntityHelper.newOrExistingEntity(groupDashboardRepository, contract.getUuid(), null, new GroupDashboard());
             Group group = null;
-            if(contract.isGroupOneOfTheDefaultGroups() && !StringUtils.isEmpty(contract.getGroupName())) {
+            if (contract.isGroupOneOfTheDefaultGroups() && !StringUtils.isEmpty(contract.getGroupName())) {
                 group = groupRepository.findByNameAndOrganisationId(contract.getGroupName(), organisationId);
             } else {
                 group = groupRepository.findByUuid(contract.getGroupUUID());
             }
-            if(group == null) {
+            if (group == null) {
                 throw new RuntimeException("Unable to process import of Group Dashboards, due to missing mandatory details."
                         + "\nPlease download a newer version of the bundle from the source organisation and try uploading again.");
             }

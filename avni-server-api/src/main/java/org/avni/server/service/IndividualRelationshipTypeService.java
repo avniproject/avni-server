@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -70,5 +70,15 @@ public class IndividualRelationshipTypeService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return individualRelationshipTypeRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveRelationshipTypes(IndividualRelationshipTypeContract[] individualRelationshipTypeContracts) {
+        for (IndividualRelationshipTypeContract individualRelationshipTypeContract : individualRelationshipTypeContracts) {
+            try {
+                saveRelationshipType(individualRelationshipTypeContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(individualRelationshipTypeContract, e);
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
@@ -170,5 +171,15 @@ public class CardService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return cardRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveCards(ReportCardBundleRequest[] cardContracts) {
+        for (ReportCardBundleRequest cardContract : cardContracts) {
+            try {
+                uploadCard(cardContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(cardContract, e);
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.common.EntityHelper;
 import org.avni.server.dao.task.TaskStatusRepository;
 import org.avni.server.dao.task.TaskTypeRepository;
@@ -62,4 +63,13 @@ public class TaskStatusService implements NonScopeAwareService {
         return taskStatus;
     }
 
+    public void saveTaskStatuses(TaskStatusContract[] taskStatusContracts) {
+        for (TaskStatusContract taskStatusContract : taskStatusContracts) {
+            try {
+                saveTaskStatus(taskStatusContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(taskStatusContract, e);
+            }
+        }
+    }
 }

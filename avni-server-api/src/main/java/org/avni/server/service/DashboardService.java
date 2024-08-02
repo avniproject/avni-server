@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
@@ -197,5 +198,15 @@ public class DashboardService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return dashboardRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveDashboards(DashboardBundleContract[] dashboardContracts) {
+        for (DashboardBundleContract dashboardContract : dashboardContracts) {
+            try {
+                uploadDashboard(dashboardContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(dashboardContract, e);
+            }
+        }
     }
 }

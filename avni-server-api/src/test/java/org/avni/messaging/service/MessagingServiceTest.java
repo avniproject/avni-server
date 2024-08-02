@@ -11,6 +11,7 @@ import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.EntityTypeRetrieverService;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
@@ -60,6 +61,9 @@ public class MessagingServiceTest {
     @Mock
     private IndividualMessagingService individualMessagingService;
 
+    @Mock
+    private EntityTypeRetrieverService entityTypeRetrieverService;
+
     @Captor
     ArgumentCaptor<MessageReceiver> messageReceiver;
 
@@ -73,7 +77,7 @@ public class MessagingServiceTest {
         initMocks(this);
         messagingService = new MessagingService(messageRuleRepository, messageReceiverService,
                 messageRequestService, messageRequestQueueRepository,
-                manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null);
+                manualMessageRepository, ruleService, groupMessagingService, individualMessagingService, null, entityTypeRetrieverService);
         scheduledSinceDays = "4";
     }
 

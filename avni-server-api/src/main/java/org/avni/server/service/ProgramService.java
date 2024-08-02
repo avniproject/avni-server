@@ -2,12 +2,14 @@ package org.avni.server.service;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.OperationalProgramRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.request.OperationalProgramContract;
+import org.avni.server.web.request.OperationalProgramsContract;
 import org.avni.server.web.request.ProgramRequest;
 import org.avni.server.web.request.rules.response.EligibilityRuleEntity;
 import org.avni.server.web.request.rules.response.EligibilityRuleResponseEntity;
@@ -141,5 +143,25 @@ public class ProgramService implements NonScopeAwareService {
                 .collect(Collectors.toList());
 
         return eligiblePrograms;
+    }
+
+    public void savePrograms(ProgramRequest[] programRequests) {
+        for (ProgramRequest programRequest : programRequests) {
+            try {
+                this.saveProgram(programRequest);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(programRequest, e);
+            }
+        }
+    }
+
+    public void saveOperationalPrograms(OperationalProgramsContract operationalProgramsContract, Organisation organisation) {
+        for (OperationalProgramContract opc : operationalProgramsContract.getOperationalPrograms()) {
+            try {
+                this.createOperationalProgram(opc, organisation);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(opc, e);
+            }
+        }
     }
 }

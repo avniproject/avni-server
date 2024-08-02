@@ -3,7 +3,6 @@ package org.avni.server.web.request;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 
 public class GroupPrivilegeContractWeb extends CHSRequest {
-
     private String groupUUID;
     private String privilegeUUID;
     private String subjectTypeUUID;

@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.application.Subject;
 import org.avni.server.application.SubjectTypeSettingKey;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
@@ -9,6 +10,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
+import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
@@ -273,8 +275,31 @@ public class SubjectTypeService implements NonScopeAwareService {
         }
     }
 
+    @Transactional
+    public void saveSubjectTypes(SubjectTypeContract[] subjectTypeContracts) {
+        for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
+            try {
+                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract);
+                if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
+                    this.launchUserSubjectTypeJob(response.getSubjectType());
+                }
+            } catch (Exception e) {
+                throw new BulkItemSaveException(subjectTypeContract, e);
+            }
+        }
+    }
 
-    public class SubjectTypeUpsertResponse {
+    public void saveOperationalSubjectTypes(OperationalSubjectTypesContract operationalSubjectTypesContract, Organisation organisation) {
+        for (OperationalSubjectTypeContract ostc : operationalSubjectTypesContract.getOperationalSubjectTypes()) {
+            try {
+                this.createOperationalSubjectType(ostc, organisation);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(ostc, e);
+            }
+        }
+    }
+
+    public static class SubjectTypeUpsertResponse {
         boolean isSubjectTypeNotPresentInDB;
         SubjectType subjectType;
 

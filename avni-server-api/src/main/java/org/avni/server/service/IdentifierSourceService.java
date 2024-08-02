@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.CHSEntity;
@@ -61,5 +62,15 @@ public class IdentifierSourceService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return identifierSourceRepository.existsByLastModifiedDateTimeGreaterThan(CHSEntity.toDate(lastModifiedDateTime));
+    }
+
+    public void saveIdSources(IdentifierSourceContractWeb[] identifierSourceContractWebs) {
+        for (IdentifierSourceContractWeb identifierSourceContractWeb : identifierSourceContractWebs) {
+            try {
+                saveIdSource(identifierSourceContractWeb);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(identifierSourceContractWeb, e);
+            }
+        }
     }
 }
