@@ -1253,8 +1253,14 @@ paths:
               }
         required: true
       responses:
-        "200":
-          description: successful
+        "202":
+          description: accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusBody'
+        "400":
+          description: bad request
   /api/subjectMigration/bulk/status/{jobId}:
     get:
       tags:
@@ -1959,6 +1965,9 @@ components:
         endTime:
           type: string
           description: "job end time"
+        fileName:
+          type: string
+          description: "Filename containing result of the migration process available on S3"
     VoidSubjectCriteriaBody:
       type: object
       properties:
