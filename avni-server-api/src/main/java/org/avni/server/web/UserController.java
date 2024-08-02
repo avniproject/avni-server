@@ -124,7 +124,7 @@ public class UserController {
             throw new EntityNotFoundException(String.format("User not found with id %d", id));
         }
         UserContract userContract = UserContract.fromEntity(user);
-        userContract.setSyncSettings(UserSyncSettings.fromUserSyncSettings(user.getSyncSettings(), subjectTypeRepository));
+        userContract.setSyncSettings(UserSyncSettings.toWebResponse(user.getSyncSettings(), subjectTypeRepository));
         return userContract;
     }
 

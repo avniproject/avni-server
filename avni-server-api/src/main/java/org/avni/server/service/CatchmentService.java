@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.VirtualCatchmentRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Organisation;
@@ -26,15 +27,15 @@ import static java.util.Objects.isNull;
 @Service
 public class CatchmentService {
     private final CatchmentRepository catchmentRepository;
-    private final UserService userService;
     private final LocationRepository locationRepository;
+    private final VirtualCatchmentRepository virtualCatchmentRepository;
     private final Logger logger;
 
     @Autowired
-    public CatchmentService(CatchmentRepository catchmentRepository, UserService userService, LocationRepository locationRepository) {
+    public CatchmentService(CatchmentRepository catchmentRepository, LocationRepository locationRepository, VirtualCatchmentRepository virtualCatchmentRepository) {
         this.catchmentRepository = catchmentRepository;
-        this.userService = userService;
         this.locationRepository = locationRepository;
+        this.virtualCatchmentRepository = virtualCatchmentRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -113,5 +114,9 @@ public class CatchmentService {
     private boolean catchmentExistsWithSameNameAndDifferentUUID(CatchmentContract catchmentRequest) {
         Catchment catchment = catchmentRepository.findByName(catchmentRequest.getName());
         return catchment != null && !catchment.getUuid().equals(catchmentRequest.getUuid());
+    }
+
+    public boolean hasLocation(AddressLevel addressLevel, Catchment catchment) {
+        return virtualCatchmentRepository.existsByAddressLevelAndCatchment(addressLevel, catchment);
     }
 }

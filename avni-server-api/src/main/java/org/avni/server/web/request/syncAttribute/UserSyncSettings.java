@@ -56,7 +56,7 @@ public class UserSyncSettings implements Serializable {
         return syncSettings.containsKey(keyName) && !S.isEmpty((String) syncSettings.get(keyName));
     }
 
-    public static JsonObject fromUserSyncSettings(JsonObject syncSettings, SubjectTypeRepository subjectTypeRepository) {
+    public static JsonObject toWebResponse(JsonObject syncSettings, SubjectTypeRepository subjectTypeRepository) {
         JsonObject response = new JsonObject();
         if (!syncSettings.containsKey(User.SyncSettingKeys.subjectTypeSyncSettings.name())) {
             return response;
@@ -118,5 +118,13 @@ public class UserSyncSettings implements Serializable {
 
     public void setSyncConcept2Values(List<String> syncConcept2Values) {
         this.syncConcept2Values = syncConcept2Values;
+    }
+
+    public boolean hasSync1Value(String value) {
+        return this.getSyncConcept1Values().contains(value);
+    }
+
+    public boolean hasSync2Value(String value) {
+        return this.getSyncConcept2Values().contains(value);
     }
 }
