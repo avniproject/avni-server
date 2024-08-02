@@ -64,10 +64,11 @@ public class CHSRequest {
 
     @Override
     public String toString() {
-        return "{" +
-                "uuid='" + uuid + '\'' +
-                ", id=" + id +
-                ", isVoided=" + isVoided +
-                '}';
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("uuid='").append(uuid).append('\'');
+        if (id != null && id != 0)
+            sb.append(", id=").append(id);
+        sb.append('}');
+        return sb.toString();
     }
 }
