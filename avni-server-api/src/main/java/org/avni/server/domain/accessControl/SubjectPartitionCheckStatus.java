@@ -22,4 +22,12 @@ public class SubjectPartitionCheckStatus {
     public static SubjectPartitionCheckStatus failed(String message) {
         return new SubjectPartitionCheckStatus(false, message);
     }
+
+    public boolean isPassed() {
+        return passed;
+    }
+
+    public String getMessage() {
+        return message;
+    }
 }

@@ -5,6 +5,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.CatchmentService;
+import org.avni.server.service.UserService;
 import org.avni.server.service.UserSubjectAssignmentService;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,10 @@ public class AccessControlService {
     private final PrivilegeRepository privilegeRepository;
     private final CatchmentService catchmentService;
     private final UserSubjectAssignmentService userSubjectAssignmentService;
+    private final UserService userService;
 
     @Autowired
-    public AccessControlService(UserRepository userRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, PrivilegeRepository privilegeRepository, CatchmentService catchmentService, UserSubjectAssignmentService userSubjectAssignmentService) {
+    public AccessControlService(UserRepository userRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, PrivilegeRepository privilegeRepository, CatchmentService catchmentService, UserSubjectAssignmentService userSubjectAssignmentService, UserService userService) {
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
@@ -36,6 +38,7 @@ public class AccessControlService {
         this.privilegeRepository = privilegeRepository;
         this.catchmentService = catchmentService;
         this.userSubjectAssignmentService = userSubjectAssignmentService;
+        this.userService = userService;
     }
 
     public void checkPrivilege(PrivilegeType privilegeType) {
@@ -218,16 +221,17 @@ public class AccessControlService {
     }
 
     // Since an Individual can be saved multiple times in a single transaction, the flush can also happen in between, the method expects that the pre-save state is explicitly passed.
-    public SubjectPartitionCheckStatus checkSubjectAccess(Individual subject, User user, SubjectPartitionData previousPartitionState) {
+    public SubjectPartitionCheckStatus checkSubjectAccess(Individual subject, SubjectPartitionData previousPartitionState) {
+        User currentUser = userService.getCurrentUser();
         boolean firstTimeCreation = previousPartitionState == null;
         SubjectType subjectType = subject.getSubjectType();
-        SubjectPartitionData applicablePartitionData = firstTimeCreation ? new SubjectPartitionData(subject) : previousPartitionState;
+        SubjectPartitionData applicablePartitionData = firstTimeCreation ? SubjectPartitionData.create(subject) : previousPartitionState;
 
-        if (subjectType.isShouldSyncByLocation() && !catchmentService.hasLocation(applicablePartitionData.getAddressLevel(), user.getCatchment())) {
+        if (subjectType.isShouldSyncByLocation() && !catchmentService.hasLocation(applicablePartitionData.getAddressLevel(), currentUser.getCatchment())) {
             return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotInThisUsersCatchment);
         }
 
-        if (subjectType.isDirectlyAssignable() && !firstTimeCreation && !userSubjectAssignmentService.isAssignedToUser(subject, user)) {
+        if (subjectType.isDirectlyAssignable() && !firstTimeCreation && !userSubjectAssignmentService.isAssignedToUser(subject, currentUser)) {
             return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotDirectlyAssignedToThisUser);
         }
 
@@ -237,7 +241,7 @@ public class AccessControlService {
                 return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.SubjectTypeNotConfigured);
             }
 
-            List<UserSyncSettings> syncSettingsList = user.getSyncSettingsList();
+            List<UserSyncSettings> syncSettingsList = currentUser.getSyncSettingsList();
             UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
             if (userSyncSettingsForSubjectType == null) {
                 return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.UserSyncAttributeNotConfigured);

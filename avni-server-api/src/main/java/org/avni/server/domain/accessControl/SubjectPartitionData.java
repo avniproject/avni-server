@@ -9,7 +9,7 @@ public class SubjectPartitionData {
     private final String sync1ConceptValue;
     private final String sync2ConceptValue;
 
-    public SubjectPartitionData(AddressLevel addressLevel, String sync1ConceptValue, String sync2ConceptValue) {
+    private SubjectPartitionData(AddressLevel addressLevel, String sync1ConceptValue, String sync2ConceptValue) {
         if (addressLevel == null && StringUtils.isEmpty(sync1ConceptValue)) {
             throw new IllegalArgumentException("AddressLevel or sync1ConceptValue must be provided");
         }
@@ -18,8 +18,9 @@ public class SubjectPartitionData {
         this.sync2ConceptValue = sync2ConceptValue;
     }
 
-    public SubjectPartitionData(Individual subject) {
-        this(subject.getAddressLevel(), subject.getSyncConcept1Value(), subject.getSyncConcept2Value());
+    public static SubjectPartitionData create(Individual subject) {
+        if (subject == null) return null;
+        return new SubjectPartitionData(subject.getAddressLevel(), subject.getSyncConcept1Value(), subject.getSyncConcept2Value());
     }
 
     public AddressLevel getAddressLevel() {

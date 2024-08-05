@@ -11,23 +11,22 @@ import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.projection.ProgramEnrolmentProjection;
 import org.avni.server.service.*;
-import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.ProgramEnrolmentRequest;
 import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
-import org.springframework.hateoas.PagedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
+import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +36,6 @@ import javax.transaction.Transactional;
 import java.util.Collections;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
-import static org.avni.server.web.resourceProcessors.ResourceProcessor.addUserFields;
 
 @RestController
 public class ProgramEnrolmentController extends AbstractController<ProgramEnrolment> implements RestControllerResourceProcessor<ProgramEnrolment> {
@@ -50,9 +48,10 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     private final ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService;
     private final FormMappingService formMappingService;
     private final EntityApprovalStatusService entityApprovalStatusService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService) {
+    public ProgramEnrolmentController(ProgramRepository programRepository, ProgramEnrolmentRepository programEnrolmentRepository, UserService userService, ProjectionFactory projectionFactory, ProgramEnrolmentService programEnrolmentService, ScopeBasedSyncService<ProgramEnrolment> scopeBasedSyncService, FormMappingService formMappingService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.userService = userService;
         this.projectionFactory = projectionFactory;
@@ -61,6 +60,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.formMappingService = formMappingService;
         this.entityApprovalStatusService = entityApprovalStatusService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @RequestMapping(value = "/programEnrolments", method = RequestMethod.POST)
@@ -76,6 +76,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @Transactional
     public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) {
         ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
+        txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
 
         //Assuming that EnrollmentDetails will not be edited when exited
         FormMapping formMapping = programEnrolmentService.getFormMapping(programEnrolment);
@@ -159,6 +160,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
         if (programEnrolment == null) {
             return ResponseEntity.notFound().build();
         }
+        txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
         programEnrolmentService.voidEnrolment(programEnrolment);
         return ResponseEntity.ok().build();
     }

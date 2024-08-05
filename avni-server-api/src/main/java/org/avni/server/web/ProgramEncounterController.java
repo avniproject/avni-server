@@ -43,9 +43,10 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     private final FormMappingService formMappingService;
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService) {
+    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.userService = userService;
@@ -54,6 +55,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @GetMapping(value = "/web/programEncounter/{uuid}")
@@ -72,7 +74,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody ProgramEncounterRequest request) {
         programEncounterService.saveProgramEncounter(request);
-        if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
+        if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
             programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
         }
     }
@@ -82,7 +84,8 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void saveForWeb(@RequestBody ProgramEncounterRequest request) {
         ProgramEncounter programEncounter = programEncounterService.saveProgramEncounter(request);
-        if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
+        txDataControllerHelper.checkSubjectAccess(programEncounter.getProgramEnrolment().getIndividual());
+        if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
             programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
         }
 
@@ -153,6 +156,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         if (programEncounter == null) {
             return ResponseEntity.notFound().build();
         }
+        txDataControllerHelper.checkSubjectAccess(programEncounter.getProgramEnrolment().getIndividual());
         programEncounter.setVoided(true);
         programEncounterService.save(programEncounter);
         return ResponseEntity.ok().build();

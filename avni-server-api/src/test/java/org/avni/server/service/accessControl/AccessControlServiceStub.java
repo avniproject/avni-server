@@ -5,7 +5,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 
 public class AccessControlServiceStub extends AccessControlService {
     public AccessControlServiceStub() {
-        super(null, null, null, null, null, null, null);
+        super(null, null, null, null, null, null, null, null);
     }
 
     @Override

@@ -54,6 +54,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     private final FormMappingService formMappingService;
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
     public EncounterController(IndividualRepository individualRepository,
@@ -62,7 +63,7 @@ public class EncounterController extends AbstractController<Encounter> implement
                                ObservationService observationService,
                                UserService userService,
                                Bugsnag bugsnag,
-                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService) {
+                               EncounterService encounterService, ScopeBasedSyncService<Encounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
         this.individualRepository = individualRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.encounterRepository = encounterRepository;
@@ -74,6 +75,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @GetMapping(value = "/web/encounter/{uuid}")
@@ -102,7 +104,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     public void save(@RequestBody EncounterRequest request) {
         logger.info(String.format("Saving encounter with uuid %s", request.getUuid()));
 
-        createEncounter(request, encounterService);
+        createEncounter(request);
 
         logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
     }
@@ -111,9 +113,11 @@ public class EncounterController extends AbstractController<Encounter> implement
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void saveForWeb(@RequestBody EncounterRequest request) {
-        logger.info("Saving encounter with uuid %s", request.getUuid());
+        logger.info("Saving encounter with uuid {}}", request.getUuid());
 
-        Encounter encounter = createEncounter(request, encounterService);
+        Encounter encounter = createEncounter(request);
+        if (encounter != null) // create encounter method needs fixing. it should not return null in any case
+            txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
         addEntityApprovalStatusIfRequired(encounter);
 
         logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
@@ -125,8 +129,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Encounter, encounter.getId(), ApprovalStatus.Status.Pending, encounter.getEncounterType().getUuid(), formMapping);
     }
 
-    private Encounter createEncounter(EncounterRequest request, EncounterService encounterService) {
-
+    private Encounter createEncounter(EncounterRequest request) {
         checkForSchedulingCompleteConstraintViolation(request);
 
         EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterTypeUUID(), request.getEncounterType());
@@ -138,6 +141,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         }
 
         Encounter encounter = newOrExistingEntity(encounterRepository, request, new Encounter());
+        encounter.setIndividual(individual);
         //Planned visit can not overwrite completed encounter
         if (encounter.isCompleted() && request.isPlanned())
             return null;
@@ -152,9 +156,7 @@ public class EncounterController extends AbstractController<Encounter> implement
             bugsnag.notify(new Exception(errorMessage));
             logger.error(errorMessage);
         }
-
         encounter.setEncounterDateTime(request.getEncounterDateTime(), userService.getCurrentUser());
-        encounter.setIndividual(individual);
         encounter.setEncounterType(encounterType);
         encounter.setObservations(observationService.createObservations(request.getObservations()));
         encounter.setName(request.getName());
@@ -187,7 +189,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         }
         this.encounterService.save(encounter);
 
-        if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
+        if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
             this.encounterService.saveVisitSchedules(individual.getUuid(), request.getVisitSchedules(), request.getUuid());
         }
         return encounter;
@@ -253,6 +255,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         if (encounter == null) {
             return ResponseEntity.notFound().build();
         }
+        txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
         accessControlService.checkEncounterPrivilege(PrivilegeType.VoidVisit, encounter);
         encounter.setVoided(true);
         encounterService.save(encounter);
