@@ -3,6 +3,7 @@ package org.avni.server.dao;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
+import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.TestUserSyncSettingsBuilder;
 import org.avni.server.domain.factory.UserBuilder;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
@@ -24,8 +25,7 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -49,10 +49,13 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
     private SyncController syncController;
     @Autowired
     private TestGroupService testGroupService;
+    @Autowired
+    private TestLocationService testLocationService;
 
     private Concept concept1;
     private Concept concept2;
     private SubjectType subjectType;
+    private SubjectType subjectTypeWithBothSyncRegistrationConcepts;
     private TestDataSetupService.TestCatchmentData catchmentData;
     private TestDataSetupService.TestOrganisationData organisationData;
 
@@ -87,6 +90,17 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
                         .setSyncRegistrationConcept1Usable(true)
                         .setSyncRegistrationConcept1(concept1.getUuid())
                         .build());
+        subjectTypeWithBothSyncRegistrationConcepts = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectTypeWithBothSyncRegistrationConcepts")
+                        .setName("subjectTypeWithBothSyncRegistrationConcepts")
+                        .setSyncRegistrationConcept1(concept1.getUuid())
+                        .setSyncRegistrationConcept1Usable(true)
+                        .setSyncRegistrationConcept2(concept2.getUuid())
+                        .setSyncRegistrationConcept2Usable(true)
+                        .build()
+        );
         testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
         UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(subjectType.getUuid()).setSyncConcept1(concept1.getUuid()).setSyncConcept1Values(Collections.singletonList(concept1.getAnswerConcept("Answer 11").getUuid())).build();
         userRepository.save(new UserBuilder(organisationData.getUser()).withCatchment(catchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
@@ -188,5 +202,93 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         //This should have failed. Check comment on SubjectMigrationService. org.avni.server.service.SubjectMigrationService.markSubjectMigrationIfRequired
         assertTrue(getSyncDetails().contains(EntitySyncStatusContract.createForComparison(SyncEntityName.SubjectMigration.name(), subjectType.getUuid())));
         assertEquals(1, getMigrations(subjectType, DateTime.now().minusDays(1), DateTime.now()).size());
+    }
+
+    @Test
+    public void bulkMigrateTracksFailures() {
+        Individual i = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())).build());
+        AddressLevel voidedAddressLevel = new AddressLevelBuilder().withDefaultValuesForNewEntity().type(catchmentData.getAddressLevelType()).voided(true).build();
+        testLocationService.save(voidedAddressLevel);
+        testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        Map<String, String> destinationAddressLevels = new HashMap<>();
+        destinationAddressLevels.put(String.valueOf(i.getAddressLevel().getId()), String.valueOf(voidedAddressLevel.getId()));
+        Map<String, String> failures = subjectMigrationService.bulkMigrateByAddress(Collections.singletonList(i.getId()), destinationAddressLevels);
+        assertEquals(failures.size(), 1);
+    }
+
+    @Test
+    public void bulkMigrateByAddressLevelSucceedsForValidDestinationAddress() {
+        Individual i = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())).build());
+        Map<String, String> destinationAddressLevels = new HashMap<>();
+        destinationAddressLevels.put(i.getAddressLevel().getId().toString(), catchmentData.getAddressLevel2().getId().toString());
+        testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        Map<String, String> failures = subjectMigrationService.bulkMigrateByAddress(Collections.singletonList(i.getId()), destinationAddressLevels);
+        assertTrue(failures.isEmpty());
+        i = testSubjectService.reload(i);
+        assertEquals(i.getAddressLevel(), catchmentData.getAddressLevel2());
+        assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), i));
+    }
+
+    @Test
+    public void bulkMigrateProcessesAllRecordsEvenIfOneFails() {
+        Individual i1 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())).build());
+        Individual i2 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel2()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 12").getUuid())).build());
+        AddressLevel voidedAddressLevel = new AddressLevelBuilder().withDefaultValuesForNewEntity().type(catchmentData.getAddressLevelType()).voided(true).build();
+        testLocationService.save(voidedAddressLevel);
+        Map<String, String> destinationAddressLevels = new HashMap<>();
+        destinationAddressLevels.put(catchmentData.getAddressLevel1().getId().toString(), voidedAddressLevel.getId().toString());
+        destinationAddressLevels.put(catchmentData.getAddressLevel2().getId().toString(), catchmentData.getAddressLevel1().getId().toString());
+        testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        Map<String, String> failures = subjectMigrationService.bulkMigrateByAddress(Arrays.asList(i1.getId(), i2.getId()), destinationAddressLevels);
+        assertEquals(failures.size(), 1);
+        i1 = testSubjectService.reload(i1);
+        i2 = testSubjectService.reload(i2);
+        assertEquals(i1.getAddressLevel(), catchmentData.getAddressLevel1());
+        assertFalse(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), i1));
+        assertEquals(i2.getAddressLevel(), catchmentData.getAddressLevel1());
+        assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), i2));
+    }
+
+    @Test
+    public void bulkMigrateBySyncConceptMigratesSyncConcept1ValueIfSyncConcept2IsNotConfiguredForSubjectType() {
+        Individual i = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())).build());
+        Map<String, String> destinationSyncConcepts = new HashMap<>();
+        destinationSyncConcepts.put(subjectType.getSyncRegistrationConcept1(), concept1.getAnswerConcept("Answer 12").getUuid());
+        testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectType);
+        Map<String, String> failures = subjectMigrationService.bulkMigrateBySyncConcept(Collections.singletonList(i.getId()), destinationSyncConcepts);
+        assertEquals(failures.size(), 0);
+        i = testSubjectService.reload(i);
+        assertEquals(i.getSyncConcept1Value(), concept1.getAnswerConcept("Answer 12").getUuid());
+        assertNull(i.getSyncConcept2Value());
+    }
+
+    @Test
+    public void bulkMigrateBySyncConceptMigratesSyncConcept2ValueEvenIfSyncConcept1ValueDoesNotNeedToBeMigrated() {
+        Individual i1 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeWithBothSyncRegistrationConcepts)
+                .withLocation(catchmentData.getAddressLevel1())
+                .withObservations(new ObservationCollectionBuilder()
+                        .addObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())
+                        .addObservation(concept2, concept2.getAnswerConcept("Answer 21").getUuid())
+                        .build())
+                .build());
+        Map<String, String> destinationSyncConcepts = new HashMap<>();
+        destinationSyncConcepts.put(subjectTypeWithBothSyncRegistrationConcepts.getSyncRegistrationConcept2(), concept2.getAnswerConcept("Answer 22").getUuid());
+        testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectTypeWithBothSyncRegistrationConcepts);
+        testGroupService.giveEditSubjectPrivilegeTo(organisationData.getGroup(), subjectTypeWithBothSyncRegistrationConcepts);
+        Map<String, String> failures = subjectMigrationService.bulkMigrateBySyncConcept(Collections.singletonList(i1.getId()), destinationSyncConcepts);
+        assertEquals(failures.size(), 0);
+        i1 = testSubjectService.reload(i1);
+        assertEquals(i1.getSyncConcept1Value(), concept1.getAnswerConcept("Answer 11").getUuid());
+        assertEquals(i1.getSyncConcept2Value(), concept2.getAnswerConcept("Answer 22").getUuid());
+        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder().setSubjectTypeUUID(subjectTypeWithBothSyncRegistrationConcepts.getUuid())
+                .setSyncConcept1(concept1.getUuid())
+                .setSyncConcept1Values(Collections.singletonList(concept1.getAnswerConcept("Answer 11").getUuid()))
+                .setSyncConcept2(concept2.getUuid())
+                .setSyncConcept2Values(Collections.singletonList(concept2.getAnswerConcept("Answer 22").getUuid()))
+                .build();
+        userRepository.save(new UserBuilder(organisationData.getUser()).withCatchment(catchmentData.getCatchment()).withOperatingIndividualScope(OperatingIndividualScope.ByCatchment).withSubjectTypeSyncSettings(userSyncSettings).build());
+        setUser(organisationData.getUser().getUsername());
+        assertTrue(hasMigrationFor(subjectTypeWithBothSyncRegistrationConcepts, DateTime.now().minusDays(1), DateTime.now(), i1));
     }
 }

@@ -37,6 +37,11 @@ public class AddressLevelBuilder {
         return this;
     }
 
+    public AddressLevelBuilder voided(boolean voided) {
+        entity.setVoided(voided);
+        return this;
+    }
+
     public AddressLevelBuilder withDefaultValuesForNewEntity() {
         String s = UUID.randomUUID().toString();
         return withUuid(s).title(s);

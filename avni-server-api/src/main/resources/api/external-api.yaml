@@ -1247,8 +1247,8 @@ paths:
                       "5ecbc89b-3d06-4911-95c3-8227e9f78790": "Karnataka"
                   },
                   "subjectIds": [
-                      "c47cc708-5707-42ee-8f27-098a567c3229",
-                      "329760fe-aa7e-448a-9b48-2a3aaba7ffa5"
+                      1234,
+                      1235
                   ]
               }
         required: true
@@ -1300,8 +1300,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobStatusBody'
-        "400":
-          description: bad input parameter
+        "404":
+          description: Job not found
   /api/subjectTree:
     delete:
       tags:
