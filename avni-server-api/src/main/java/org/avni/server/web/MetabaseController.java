@@ -30,10 +30,12 @@ public class MetabaseController {
     @PostMapping("/create-questions")
     public void createQuestions() {
         databaseService.createQuestionsForSubjectTypes();
+        databaseService.createQuestionsForProgramsAndEncounters();
     }
 
     @GetMapping("/sync-status")
     public String getSyncStatus() {
         return databaseService.getInitialSyncStatus(metabaseService.getGlobalDatabaseId());
     }
+
 }
