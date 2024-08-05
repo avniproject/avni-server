@@ -34,6 +34,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final ConceptService conceptService;
     private final Pattern compoundHeaderPattern;
     private final ResetSyncService resetSyncService;
+    private final String METADATA_ROW_START_STRING = "Mandatory field.";
 
     @Autowired
     public UserAndCatchmentWriter(CatchmentService catchmentService,
@@ -62,17 +63,18 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
     private void write(Row row) throws Exception {
         String fullAddress = row.get("Location with full hierarchy");
+        if (fullAddress != null && fullAddress.startsWith(METADATA_ROW_START_STRING)) return;
         String catchmentName = row.get("Catchment Name");
         String nameOfUser = row.get("Full Name of User");
         String username = row.get("Username");
-        String email = row.get("Email");
-        String phoneNumber = row.get("Phone");
-        String language = row.get("Language");
+        String email = row.get("Email Address");
+        String phoneNumber = row.get("Mobile Number");
+        String language = row.get("Preferred Language");
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByName(language);
         Boolean trackLocation = row.getBool("Track Location");
         String datePickerMode = row.get("Date picker mode");
         Boolean beneficiaryMode = row.getBool("Enable Beneficiary mode");
-        String idPrefix = row.get("Beneficiary ID Prefix");
+        String idPrefix = row.get("Identifier Prefix");
         String groupsSpecified = row.get("User Groups");
         JsonObject syncSettings = constructSyncSettings(row);
 
