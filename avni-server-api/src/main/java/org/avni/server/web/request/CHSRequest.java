@@ -68,6 +68,7 @@ public class CHSRequest {
         sb.append("uuid='").append(uuid).append('\'');
         if (id != null && id != 0)
             sb.append(", id=").append(id);
+        sb.append("isVoided ='").append(isVoided).append('\'');
         sb.append('}');
         return sb.toString();
     }
