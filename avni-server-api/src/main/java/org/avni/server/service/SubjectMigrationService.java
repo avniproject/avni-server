@@ -12,6 +12,8 @@ import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -36,6 +38,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     private final LocationRepository locationRepository;
     private final ConceptRepository conceptRepository;
     private final IndividualService individualService;
+    private final AvniJobRepository avniJobRepository;
 
     public enum BulkSubjectMigrationModes {
         byAddress,
@@ -54,7 +57,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
                                    GroupSubjectRepository groupSubjectRepository, AddressLevelService addressLevelService,
                                    ChecklistRepository checklistRepository,
                                    ChecklistItemRepository checklistItemRepository,
-                                   IndividualRelationshipRepository individualRelationshipRepository, AccessControlService accessControlService, LocationRepository locationRepository, ConceptRepository conceptRepository, IndividualService individualService) {
+                                   IndividualRelationshipRepository individualRelationshipRepository, AccessControlService accessControlService, LocationRepository locationRepository, ConceptRepository conceptRepository, IndividualService individualService, AvniJobRepository avniJobRepository) {
         this.entityApprovalStatusRepository = entityApprovalStatusRepository;
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
@@ -71,6 +74,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         this.locationRepository = locationRepository;
         this.conceptRepository = conceptRepository;
         this.individualService = individualService;
+        this.avniJobRepository = avniJobRepository;
     }
 
     @Override
@@ -155,6 +159,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         individualService.save(subject);
     }
 
+    @Transactional
     public Map<String, String> bulkMigrate(BulkSubjectMigrationModes mode, BulkSubjectMigrationRequest bulkSubjectMigrationRequest) {
         if (mode == BulkSubjectMigrationModes.byAddress) {
             return bulkMigrateByAddress(bulkSubjectMigrationRequest.getSubjectIds(), bulkSubjectMigrationRequest.getDestinationAddresses());
@@ -163,6 +168,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         }
     }
 
+    @Transactional
     public Map<String, String> bulkMigrateByAddress(List<Long> subjectIds, Map<String, String> destinationAddresses) {
         Map<String, String> migrationFailures = new HashMap<>();
         Map<AddressLevel, AddressLevel> addressLevelMap = new HashMap<>();
@@ -197,6 +203,7 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
         return migrationFailures;
     }
 
+    @Transactional
     public Map<String, String> bulkMigrateBySyncConcept(List<Long> subjectIds, Map<String, String> destinationSyncConcepts) {
         Map<String, String> migrationFailures = new HashMap<>();
         subjectIds.forEach(subjectId -> {
@@ -219,16 +226,18 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
     }
 
     private String validateSyncConcept(String subjectTypeSyncConceptUuid, String currentValue, Map<String, String> destinationSyncConcepts) {
-        String destinationSyncConceptValue = destinationSyncConcepts.get(subjectTypeSyncConceptUuid);
-        if (subjectTypeSyncConceptUuid != null && destinationSyncConceptValue == null) {
-            return null; // No migration required for this sync concept.
+        if (subjectTypeSyncConceptUuid == null || //sync concept not configured for subject type
+                !destinationSyncConcepts.containsKey(subjectTypeSyncConceptUuid) //sync concept not included in migration
+        ) {
+            return null;
         }
-        if (subjectTypeSyncConceptUuid == null) {
-            throw new RuntimeException("No sync concept configured for subject type");
+        String destinationSyncConceptValue = destinationSyncConcepts.get(subjectTypeSyncConceptUuid);
+        if (destinationSyncConceptValue == null) {
+            return null;
         }
         Concept syncConcept = conceptRepository.findByUuid(subjectTypeSyncConceptUuid);
 
-        if (Objects.equals(currentValue, destinationSyncConceptValue)) {
+        if (currentValue != null && Objects.equals(currentValue.trim(), destinationSyncConceptValue.trim())) {
             throw new RuntimeException("Source value and Destination value are the same");
         }
 
@@ -243,12 +252,19 @@ public class SubjectMigrationService implements ScopeAwareService<SubjectMigrati
 
     private static ObservationCollection buildSyncConceptValueObservations(Individual subject, String destinationSyncConcept1Value, String destinationSyncConcept2Value) {
         ObservationCollection newObservations = new ObservationCollection();
-        if (destinationSyncConcept1Value != null) {
-            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept1(), destinationSyncConcept1Value.trim());
+        //set observation for unchanged values if sync concept exists so unchanged sync concept values are not overwritten
+        if (subject.getSubjectType().getSyncRegistrationConcept1() != null) {
+            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept1(), destinationSyncConcept1Value != null ? destinationSyncConcept1Value.trim() : subject.getSyncConcept1Value());
         }
-        if (destinationSyncConcept2Value != null) {
-            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept2(), destinationSyncConcept2Value.trim());
+        if (subject.getSubjectType().getSyncRegistrationConcept2() != null) {
+            newObservations.put(subject.getSubjectType().getSyncRegistrationConcept2(), destinationSyncConcept2Value != null ? destinationSyncConcept2Value.trim() : subject.getSyncConcept2Value());
         }
         return newObservations;
+    }
+
+    public JobStatus getBulkSubjectMigrationJobStatus(String jobUuid) {
+        String jobFilterCondition = " and uuid = '" + jobUuid + "'";
+        Page<JobStatus> jobStatuses = avniJobRepository.getJobStatuses(UserContextHolder.getUser(), jobFilterCondition, PageRequest.of(0, 1));
+        return (jobStatuses != null && !jobStatuses.getContent().isEmpty()) ? jobStatuses.getContent().get(0) : null;
     }
 }

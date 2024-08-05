@@ -54,10 +54,9 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     private final AccessControlService accessControlService;
     private final Job bulkSubjectMigrationJob;
     private final JobLauncher bulkSubjectMigrationJobLauncher;
-    private final AvniJobRepository avniJobRepository;
 
     @Autowired
-    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, Job bulkSubjectMigrationJob, JobLauncher bulkSubjectMigrationJobLauncher, AvniJobRepository avniJobRepository) {
+    public SubjectMigrationController(SubjectMigrationRepository subjectMigrationRepository, SubjectTypeRepository subjectTypeRepository, UserService userService, ScopeBasedSyncService<SubjectMigration> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, IndividualRepository individualRepository, LocationRepository locationRepository, AccessControlService accessControlService, Job bulkSubjectMigrationJob, JobLauncher bulkSubjectMigrationJobLauncher) {
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.subjectMigrationService = subjectMigrationService;
         this.individualRepository = individualRepository;
@@ -69,7 +68,6 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         this.subjectMigrationRepository = subjectMigrationRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.userService = userService;
-        this.avniJobRepository = avniJobRepository;
     }
 
     @RequestMapping(value = "/subjectMigrations/v2", method = RequestMethod.GET)
@@ -122,10 +120,12 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         if (bulkSubjectMigrationRequest.getSubjectIds() == null) {
             throw new BadRequestError("subjectIds is required");
         }
-        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.byAddress && bulkSubjectMigrationRequest.getDestinationAddresses() == null) {
+        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.byAddress
+                && (bulkSubjectMigrationRequest.getDestinationAddresses() == null || bulkSubjectMigrationRequest.getDestinationAddresses().isEmpty())) {
             throw new BadRequestError("destinationAddresses is required for mode: byAddress");
         }
-        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.bySyncConcept && bulkSubjectMigrationRequest.getDestinationSyncConcepts() == null) {
+        if (mode == SubjectMigrationService.BulkSubjectMigrationModes.bySyncConcept
+                && (bulkSubjectMigrationRequest.getDestinationSyncConcepts() == null || bulkSubjectMigrationRequest.getDestinationSyncConcepts().isEmpty())) {
             throw new BadRequestError("destinationSyncConcepts is required for mode: bySyncConcepts");
         }
 
@@ -151,15 +151,14 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
             throw new RuntimeException(String.format("Error while starting the bulk subject migration job, %s", e.getMessage()), e);
         }
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(migrationStatus(jobUUID));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(subjectMigrationService.getBulkSubjectMigrationJobStatus(jobUUID));
     }
 
     @RequestMapping(value = "/api/subjectMigration/bulk/status/{jobUuid}", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public JobStatus migrationStatus(@PathVariable("jobUuid") String jobUuid) {
+    public ResponseEntity migrationStatus(@PathVariable("jobUuid") String jobUuid) {
         accessControlService.checkPrivilege(PrivilegeType.MultiTxEntityTypeUpdate);
-        String jobFilterCondition = " and uuid = '" + jobUuid + "'";
-        Page<JobStatus> jobStatuses = avniJobRepository.getJobStatuses(UserContextHolder.getUser(), jobFilterCondition, PageRequest.of(0, 1));
-        return (jobStatuses != null && !jobStatuses.getContent().isEmpty()) ? jobStatuses.getContent().get(0) : null;
+        JobStatus jobStatus = subjectMigrationService.getBulkSubjectMigrationJobStatus(jobUuid);
+        return jobStatus != null ? ResponseEntity.ok(jobStatus) : ResponseEntity.notFound().build();
     }
 }
