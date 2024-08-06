@@ -18,6 +18,7 @@ import org.avni.server.web.request.EncounterRequest;
 import org.avni.server.web.request.PointRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
+import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -112,15 +114,18 @@ public class EncounterController extends AbstractController<Encounter> implement
     @RequestMapping(value = "/web/encounters", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void saveForWeb(@RequestBody EncounterRequest request) {
-        logger.info("Saving encounter with uuid {}}", request.getUuid());
-
-        Encounter encounter = createEncounter(request);
-        if (encounter != null) // create encounter method needs fixing. it should not return null in any case
-            txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
-        addEntityApprovalStatusIfRequired(encounter);
-
-        logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
+    public AvniEntityResponse saveForWeb(@RequestBody EncounterRequest request) {
+        try {
+            logger.info("Saving encounter with uuid {}}", request.getUuid());
+            Encounter encounter = createEncounter(request);
+            if (encounter != null) // create encounter method needs fixing. it should not return null in any case
+                txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
+            addEntityApprovalStatusIfRequired(encounter);
+            logger.info(String.format("Saved encounter with uuid %s", request.getUuid()));
+            return new AvniEntityResponse(encounter);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            return AvniEntityResponse.error(e.getMessage());
+        }
     }
 
     private void addEntityApprovalStatusIfRequired(Encounter encounter) {
@@ -250,16 +255,21 @@ public class EncounterController extends AbstractController<Encounter> implement
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> voidEncounter(@PathVariable String uuid) {
-        Encounter encounter = encounterRepository.findByUuid(uuid);
-        if (encounter == null) {
-            return ResponseEntity.notFound().build();
+    public AvniEntityResponse voidEncounter(@PathVariable String uuid) {
+        try {
+            Encounter encounter = encounterRepository.findByUuid(uuid);
+            if (encounter == null) {
+                return AvniEntityResponse.error("Encounter not found");
+            }
+            txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
+            accessControlService.checkEncounterPrivilege(PrivilegeType.VoidVisit, encounter);
+            encounter.setVoided(true);
+            encounterService.save(encounter);
+            return new AvniEntityResponse(encounter);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
         }
-        txDataControllerHelper.checkSubjectAccess(encounter.getIndividual());
-        accessControlService.checkEncounterPrivilege(PrivilegeType.VoidVisit, encounter);
-        encounter.setVoided(true);
-        encounterService.save(encounter);
-        return ResponseEntity.ok().build();
     }
 
     @Override

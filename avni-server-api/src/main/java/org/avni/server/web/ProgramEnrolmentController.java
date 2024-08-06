@@ -30,6 +30,7 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -75,14 +76,19 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) {
-        ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
-        txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
+        try {
+            ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
+            txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
 
-        //Assuming that EnrollmentDetails will not be edited when exited
-        FormMapping formMapping = programEnrolmentService.getFormMapping(programEnrolment);
-        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEnrolment, programEnrolment.getId(), ApprovalStatus.Status.Pending, programEnrolment.getProgram().getUuid(), formMapping);
+            //Assuming that EnrollmentDetails will not be edited when exited
+            FormMapping formMapping = programEnrolmentService.getFormMapping(programEnrolment);
+            entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEnrolment, programEnrolment.getId(), ApprovalStatus.Status.Pending, programEnrolment.getProgram().getUuid(), formMapping);
 
-        return new AvniEntityResponse(programEnrolment);
+            return new AvniEntityResponse(programEnrolment);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
+        }
     }
 
     @GetMapping(value = {"/programEnrolment/v2"})
@@ -155,14 +161,19 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> voidProgramEnrolment(@PathVariable String uuid) {
-        ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
-        if (programEnrolment == null) {
-            return ResponseEntity.notFound().build();
+    public AvniEntityResponse voidProgramEnrolment(@PathVariable String uuid) {
+        try {
+            ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
+            if (programEnrolment == null) {
+                return AvniEntityResponse.error("Program Enrolment not found");
+            }
+            txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
+            programEnrolmentService.voidEnrolment(programEnrolment);
+            return new AvniEntityResponse(programEnrolment);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
         }
-        txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());
-        programEnrolmentService.voidEnrolment(programEnrolment);
-        return ResponseEntity.ok().build();
     }
 
     @Override

@@ -4,7 +4,6 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.accessControl.SubjectPartitionCheckStatus;
 import org.avni.server.domain.accessControl.SubjectPartitionData;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.BadRequestError;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,14 +14,20 @@ public class TxDataControllerHelper {
         this.accessControlService = accessControlService;
     }
 
-    public void checkSubjectAccess(Individual subject, SubjectPartitionData subjectPartitionData) {
+    public void checkSubjectAccess(Individual subject, SubjectPartitionData subjectPartitionData) throws TxDataPartitionAccessDeniedException {
         SubjectPartitionCheckStatus subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, subjectPartitionData);
         if (!subjectPartitionCheckStatus.isPassed()) {
-            throw new BadRequestError(subjectPartitionCheckStatus.getMessage());
+            throw new TxDataPartitionAccessDeniedException(subjectPartitionCheckStatus.getMessage());
         }
     }
 
-    public void checkSubjectAccess(Individual subject) {
+    public void checkSubjectAccess(Individual subject) throws TxDataPartitionAccessDeniedException {
         this.checkSubjectAccess(subject, SubjectPartitionData.create(subject));
+    }
+
+    public static class TxDataPartitionAccessDeniedException extends Exception {
+        public TxDataPartitionAccessDeniedException(String message) {
+            super(message);
+        }
     }
 }

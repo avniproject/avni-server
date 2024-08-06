@@ -13,6 +13,7 @@ import org.avni.server.geo.Point;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.IndividualRequest;
 import org.avni.server.web.request.PointRequest;
@@ -39,6 +40,7 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -264,15 +266,20 @@ public class IndividualController extends AbstractController<Individual> impleme
     @DeleteMapping("/web/subject/{uuid}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> voidSubject(@PathVariable String uuid) {
-        Individual individual = individualRepository.findByUuid(uuid);
-        txDataControllerHelper.checkSubjectAccess(individual);
-        if (individual == null) {
-            return ResponseEntity.notFound().build();
+    public AvniEntityResponse voidSubject(@PathVariable String uuid) {
+        try {
+            Individual individual = individualRepository.findByUuid(uuid);
+            txDataControllerHelper.checkSubjectAccess(individual);
+            if (individual == null) {
+                return AvniEntityResponse.error("Subject not found");
+            }
+            accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
+            individualService.voidSubject(individual);
+            return new AvniEntityResponse(individual);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException | BadRequestError e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
         }
-        accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
-        individualService.voidSubject(individual);
-        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/subject/search")
@@ -345,20 +352,25 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
-        logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
-        Individual savedIndividual = individualService.getIndividual(individualRequest.getUuid());
-        //Subject is changed after this line, hence the following line cannot be moved down closer to its usage
-        SubjectPartitionData subjectPartitionData = SubjectPartitionData.create(savedIndividual);
+        try {
+            logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
+            Individual savedIndividual = individualService.getIndividual(individualRequest.getUuid());
+            //Subject is changed after this line, hence the following line cannot be moved down closer to its usage
+            SubjectPartitionData subjectPartitionData = SubjectPartitionData.create(savedIndividual);
 
-        Individual individual = createIndividual(individualRequest);
+            Individual individual = createIndividual(individualRequest);
 
-        FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
-        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
-        // Sync attribute values are picked from the field on individual and not from observations, hence this should be done after the individual is saved
-        txDataControllerHelper.checkSubjectAccess(individual, subjectPartitionData);
-        logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
+            FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
+            entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
+            // Sync attribute values are picked from the field on individual and not from observations, hence this should be done after the individual is saved
+            txDataControllerHelper.checkSubjectAccess(individual, subjectPartitionData);
+            logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
 
-        return new AvniEntityResponse(individual);
+            return new AvniEntityResponse(individual);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
+        }
     }
 
     private Individual createIndividual(IndividualRequest individualRequest) {
