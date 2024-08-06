@@ -35,7 +35,7 @@ public class MetabaseController {
 
     @GetMapping("/sync-status")
     public String getSyncStatus() {
-        return databaseService.getInitialSyncStatus(metabaseService.getGlobalDatabaseId());
+        return databaseService.getInitialSyncStatus();
     }
 
 }

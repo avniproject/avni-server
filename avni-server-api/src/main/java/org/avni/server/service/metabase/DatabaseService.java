@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class DatabaseService {
@@ -20,6 +19,8 @@ public class DatabaseService {
     private final DatabaseRepository databaseRepository;
     private final ObjectMapper objectMapper;
     private final MetabaseService metabaseService;
+    private Integer databaseId;
+    private Integer collectionId;
 
     @Value("${metabase.api.url}")
     private String metabaseApiUrl;
@@ -34,8 +35,22 @@ public class DatabaseService {
         this.metabaseService = metabaseService;
     }
 
-    public int getTableIdByName(int databaseId, String tableName) {
-        JsonNode rootNode = databaseRepository.getDatabaseDetails(databaseId);
+    private int getDatabaseId() {
+        if (databaseId == null) {
+            databaseId = metabaseService.getGlobalDatabaseId();
+        }
+        return databaseId;
+    }
+
+    private int getCollectionId() {
+        if (collectionId == null) {
+            collectionId = metabaseService.getGlobalCollectionId();
+        }
+        return collectionId;
+    }
+
+    public int getTableIdByName(String tableName) {
+        JsonNode rootNode = databaseRepository.getDatabaseDetails(getDatabaseId());
         JsonNode tablesArray = rootNode.path("tables");
         for (JsonNode tableNode : tablesArray) {
             if (tableName.equals(tableNode.path("display_name").asText())) {
@@ -45,8 +60,12 @@ public class DatabaseService {
         return -1;
     }
 
-    public int getFieldIdByTableNameAndFieldName(int databaseId, String tableName, String fieldName) {
-        JsonNode fieldsArray = databaseRepository.getFields(databaseId);
+    private String createRequestBodyForDataset(int sourceTableId) {
+        return "{\"database\":" + getDatabaseId() + ",\"query\":{\"source-table\":" + sourceTableId + "},\"type\":\"query\",\"parameters\":[]}";
+    }
+
+    public int getFieldIdByTableNameAndFieldName(String tableName, String fieldName) {
+        JsonNode fieldsArray = databaseRepository.getFields(getDatabaseId());
         String snakeCaseTableName = StringUtils.toSnakeCase(tableName);
         for (JsonNode fieldNode : fieldsArray) {
             if (snakeCaseTableName.equals(fieldNode.path("table_name").asText()) && fieldName.equals(fieldNode.path("name").asText())) {
@@ -56,14 +75,14 @@ public class DatabaseService {
         return -1;
     }
 
-    public String getInitialSyncStatus(int databaseId) {
-        JsonNode responseBody = databaseRepository.getInitialSyncStatus(databaseId);
+    public String getInitialSyncStatus() {
+        JsonNode responseBody = databaseRepository.getInitialSyncStatus(getDatabaseId());
         return responseBody.path("initial_sync_status").asText();
     }
 
-    public List<String> getSubjectTypeNames(int databaseId) {
-        int tableId = getTableIdByName(databaseId, "Subject Type");
-        String requestBody = "{\"database\":" + databaseId + ",\"query\":{\"source-table\":" + tableId + "},\"type\":\"query\",\"parameters\":[]}";
+    public List<String> getSubjectTypeNames() {
+        int tableId = getTableIdByName("Subject Type");
+        String requestBody = createRequestBodyForDataset(tableId);
 
         JsonNode response = databaseRepository.getDataset(requestBody);
 
@@ -81,32 +100,16 @@ public class DatabaseService {
         return subjectTypeNames;
     }
 
-    public void createQuestionsForSubjectTypes() {
-        int databaseId = metabaseService.getGlobalDatabaseId();
-        int collectionId = metabaseService.getGlobalCollectionId();
+    private List<String> getProgramNamesFromOperationalProgramsTable() {
+        int operationalProgramsTableId = getTableIdByName("All Operational Programs");
 
-        String syncStatus = getInitialSyncStatus(databaseId);
-        if (!"complete".equals(syncStatus)) {
-            throw new RuntimeException("Database initial sync is not complete.");
-        }
-
-        List<String> subjectTypeNames = getSubjectTypeNames(databaseId);
-
-        for (String subjectTypeName : subjectTypeNames) {
-            createQuestionForTable(databaseId, collectionId, subjectTypeName, "Address", "id", "address_id");
-        }
-    }
-
-    private List<String> getProgramNamesFromOperationalProgramsTable(int databaseId) {
-        int operationalProgramsTableId = getTableIdByName(databaseId, "All Operational Programs");
-
-        String requestBody = "{\"database\":" + databaseId + ",\"query\":{\"source-table\":" + operationalProgramsTableId + "},\"type\":\"query\",\"parameters\":[]}";
+        String requestBody = createRequestBodyForDataset(operationalProgramsTableId);
         JsonNode response = databaseRepository.getDataset(requestBody);
 
         List<String> programNames = new ArrayList<>();
         JsonNode rows = response.path("data").path("rows");
         for (JsonNode row : rows) {
-            String programName = row.get(1).asText(); 
+            String programName = row.get(1).asText();
             programNames.add(programName);
         }
         return programNames;
@@ -121,14 +124,14 @@ public class DatabaseService {
         return tableNames;
     }
 
-    private void createQuestionForTable(int databaseId, int collectionId, String tableName, String addressTableName, String addressField, String tableField) {
-        int addressTableId = getTableIdByName(databaseId, addressTableName);
-        int joinFieldId1 = getFieldIdByTableNameAndFieldName(databaseId, addressTableName, addressField);
-        int tableId = getTableIdByName(databaseId, tableName);
-        int joinFieldId2 = getFieldIdByTableNameAndFieldName(databaseId, tableName, tableField);
+    private void createQuestionForTable(String tableName, String addressTableName, String addressField, String tableField) {
+        int addressTableId = getTableIdByName(addressTableName);
+        int joinFieldId1 = getFieldIdByTableNameAndFieldName(addressTableName, addressField);
+        int tableId = getTableIdByName(tableName);
+        int joinFieldId2 = getFieldIdByTableNameAndFieldName(tableName, tableField);
 
         ObjectNode datasetQuery = objectMapper.createObjectNode();
-        datasetQuery.put("database", databaseId);
+        datasetQuery.put("database", getDatabaseId());
         datasetQuery.put("type", "query");
 
         ObjectNode query = objectMapper.createObjectNode();
@@ -157,23 +160,34 @@ public class DatabaseService {
         body.put("display", "table");
         body.putNull("description");
         body.set("visualization_settings", objectMapper.createObjectNode());
-        body.put("collection_id", collectionId);
+        body.put("collection_id", getCollectionId());
         body.putNull("collection_position");
         body.putNull("result_metadata");
 
         databaseRepository.postForObject(metabaseApiUrl + "/card", body, JsonNode.class);
     }
 
-    public void createQuestionsForProgramsAndEncounters() {
-        int databaseId = metabaseService.getGlobalDatabaseId();
-        int collectionId = metabaseService.getGlobalCollectionId();
+    public void createQuestionsForSubjectTypes() {
 
-        String syncStatus = getInitialSyncStatus(databaseId);
+        String syncStatus = getInitialSyncStatus();
         if (!"complete".equals(syncStatus)) {
             throw new RuntimeException("Database initial sync is not complete.");
         }
 
-        List<String> programNames = getProgramNamesFromOperationalProgramsTable(databaseId);
+        List<String> subjectTypeNames = getSubjectTypeNames();
+
+        for (String subjectTypeName : subjectTypeNames) {
+            createQuestionForTable(subjectTypeName, "Address", "id", "address_id");
+        }
+    }
+
+    public void createQuestionsForProgramsAndEncounters() {
+        String syncStatus = getInitialSyncStatus();
+        if (!"complete".equals(syncStatus)) {
+            throw new RuntimeException("Database initial sync is not complete.");
+        }
+
+        List<String> programNames = getProgramNamesFromOperationalProgramsTable();
 
         JsonNode databaseDetails = databaseRepository.getDatabaseDetails(databaseId);
         List<String> allTableNames = extractTableNames(databaseDetails);
@@ -181,7 +195,7 @@ public class DatabaseService {
         for (String programName : programNames) {
             for (String tableName : allTableNames) {
                 if (tableName.contains(programName)) {
-                    createQuestionForTable(databaseId, collectionId, tableName, "Address", "id", "address_id");
+                    createQuestionForTable(tableName, "Address", "id", "address_id");
                 }
             }
         }
