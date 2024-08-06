@@ -235,12 +235,7 @@ public class AccessControlService {
             return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotDirectlyAssignedToThisUser);
         }
 
-        boolean checkByObservationValue = !subjectType.isShouldSyncByLocation() && !subjectType.isDirectlyAssignable();
-        if (checkByObservationValue) {
-            if (subjectType.getSyncRegistrationConcept1() == null) {
-                return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.SubjectTypeNotConfigured);
-            }
-
+        if (subjectType.isAnySyncRegistrationConceptUsable()) {
             List<UserSyncSettings> syncSettingsList = currentUser.getSyncSettingsList();
             UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
             if (userSyncSettingsForSubjectType == null) {

@@ -354,6 +354,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
         FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
         entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
+        // Sync attribute values are picked from the field on individual and not from observations, hence this should be done after the individual is saved
         txDataControllerHelper.checkSubjectAccess(individual, subjectPartitionData);
         logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
 

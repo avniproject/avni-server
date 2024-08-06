@@ -3,7 +3,6 @@ package org.avni.server.domain.accessControl;
 public class SubjectPartitionCheckStatus {
     public static final String NotDirectlyAssignedToThisUser = "notDirectlyAssignedToThisUser";
     public static final String NotInThisUsersCatchment = "notInThisUsersCatchment";
-    public static final String SubjectTypeNotConfigured = "subjectTypeNotConfigured";
     public static final String UserSyncAttributeNotConfigured = "userSyncAttributeNotConfigured";
     public static final String SyncAttributeForUserNotValidForUpdate = "syncAttributeForUserNotValidForUpdate";
 

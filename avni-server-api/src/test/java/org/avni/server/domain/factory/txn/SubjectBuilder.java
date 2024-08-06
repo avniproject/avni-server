@@ -67,4 +67,9 @@ public class SubjectBuilder {
         String s = UUID.randomUUID().toString();
         return withUUID(s).withFirstName(s).withRegistrationDate(LocalDate.now()).withObservations(new ObservationCollection());
     }
+
+    public SubjectBuilder withSyncConcept1Value(Object value) {
+        individual.setSyncConcept1Value(value.toString());
+        return this;
+    }
 }
