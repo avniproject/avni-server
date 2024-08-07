@@ -66,9 +66,9 @@ public abstract class DashboardFilterConfigContract {
         if (filterType.equals(DashboardFilter.FilterType.GroupSubject))
             jsonObject.put(DashboardFilter.DashboardFilterConfig.GroupSubjectTypeFilterName, getGroupSubjectTypeFilter().getJsonObject());
         else if (filterType.equals(DashboardFilter.FilterType.Concept))
-            jsonObject.put(DashboardFilter.DashboardFilterConfig.ObservationBasedFilterName, getObsverationTypeFilterJsonObject());
+            jsonObject.put(DashboardFilter.DashboardFilterConfig.ObservationBasedFilterName, getObservationTypeFilterJsonObject());
         return jsonObject;
     }
 
-    protected abstract Object getObsverationTypeFilterJsonObject();
+    protected abstract Object getObservationTypeFilterJsonObject();
 }

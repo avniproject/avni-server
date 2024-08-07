@@ -16,7 +16,7 @@ public class DashboardFilterConfigRequest extends DashboardFilterConfigContract 
     }
 
     @Override
-    protected Object getObsverationTypeFilterJsonObject() {
+    protected Object getObservationTypeFilterJsonObject() {
         return observationBasedFilter.getJsonObject();
     }
 }
