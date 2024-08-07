@@ -1,5 +1,19 @@
 package org.avni.server.domain.organisation;
 
-public enum OrganisationCategory {
-    Production, UAT, Prototype, Temporary, Trial
+import org.avni.server.domain.CHSEntity;
+
+import javax.persistence.Entity;
+
+@Entity
+public class OrganisationCategory extends CHSEntity {
+    public static final String Production = "Production";
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

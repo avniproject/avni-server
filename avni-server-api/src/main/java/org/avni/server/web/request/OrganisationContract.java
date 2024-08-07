@@ -9,8 +9,8 @@ public class OrganisationContract extends ETLContract {
     private String mediaDirectory;
     private String usernameSuffix;
     private Long accountId;
-    private OrganisationCategory category;
-    private OrganisationStatus status;
+    private Long categoryId;
+    private Long statusId;
 
     public static OrganisationContract fromEntity(Organisation organisation) {
         OrganisationContract organisationContract = new OrganisationContract();
@@ -20,10 +20,18 @@ public class OrganisationContract extends ETLContract {
         organisationContract.setMediaDirectory(organisation.getMediaDirectory());
         organisationContract.setUsernameSuffix(organisation.getEffectiveUsernameSuffix());
         organisationContract.setAccountId(organisation.getAccount() == null ? null : organisation.getAccount().getId());
-        organisationContract.setCategory(organisation.getCategory());
-        organisationContract.setStatus(organisation.getStatus());
+        organisationContract.setCategoryId(organisation.getCategory().getId());
+        organisationContract.setStatusId(organisation.getStatus().getId());
         mapEntity(organisationContract, organisation);
         return organisationContract;
+    }
+
+    private void setStatusId(Long id) {
+        this.statusId = id;
+    }
+
+    private void setCategoryId(Long id) {
+        this.categoryId = id;
     }
 
     public Long getParentOrganisationId() {
@@ -58,19 +66,11 @@ public class OrganisationContract extends ETLContract {
         this.mediaDirectory = mediaDirectory;
     }
 
-    public OrganisationCategory getCategory() {
-        return category;
+    public Long getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategory(OrganisationCategory category) {
-        this.category = category;
-    }
-
-    public OrganisationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(OrganisationStatus status) {
-        this.status = status;
+    public Long getStatusId() {
+        return statusId;
     }
 }

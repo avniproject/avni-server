@@ -109,7 +109,7 @@ public class ImplementationController implements RestControllerResourceProcessor
             return new ResponseEntity<>("Super admin cannot delete implementation data", HttpStatus.FORBIDDEN);
         }
         Organisation organisation = organisationService.getCurrentOrganisation();
-        if (OrganisationCategory.Production.equals(organisation.getCategory())) {
+        if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
             return new ResponseEntity<>("Production organisation's data cannot be deleted", HttpStatus.CONFLICT);
         }
 

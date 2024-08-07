@@ -126,7 +126,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
         }
         if (mode == SubjectMigrationService.BulkSubjectMigrationModes.bySyncConcept
                 && (bulkSubjectMigrationRequest.getDestinationSyncConcepts() == null || bulkSubjectMigrationRequest.getDestinationSyncConcepts().isEmpty())) {
-            throw new BadRequestError("destinationSyncConcepts is required for mode: bySyncConcepts");
+            throw new BadRequestError("destinationSyncConcepts is required for mode: bySyncConcept");
         }
 
         UserContext userContext = UserContextHolder.getUserContext();

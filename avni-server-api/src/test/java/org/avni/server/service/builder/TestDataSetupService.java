@@ -36,12 +36,20 @@ public class TestDataSetupService {
     private TestConceptService testConceptService;
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
+    @Autowired
+    private OrganisationCategoryRepository organisationCategoryRepository;
+    @Autowired
+    private OrganisationStatusRepository organisationStatusRepository;
 
     public TestOrganisationData setupOrganisation(String orgSuffix) {
         Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
         User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
         User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user2@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
-        Organisation organisation = new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build();
+        Organisation organisation = new TestOrganisationBuilder()
+                .setCategory(organisationCategoryRepository.findEntity(1L))
+                .withStatus(organisationStatusRepository.findEntity(1L))
+                .withMandatoryFields()
+                .withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user1);
         testOrganisationService.createUser(organisation, user2);
         userRepository.save(new UserBuilder(user1).withAuditUser(user1).build());
