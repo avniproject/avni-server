@@ -9,11 +9,11 @@ import org.avni.server.web.request.UserInfoContract;
 import java.util.List;
 
 public class UserInfoWebResponse extends UserInfoContract {
-    private OrganisationCategory organisationCategory;
     private long lastSessionTime;
     private boolean hasAllPrivileges;
     private List<UserPrivilegeWebResponse> privileges;
     private boolean isAdmin;
+    private String organisationCategoryName;
 
     private UserInfoWebResponse() {
     }
@@ -29,7 +29,7 @@ public class UserInfoWebResponse extends UserInfoContract {
             response.setOrganisationId(contextOrganisation.getId());
             response.setOrganisationName(contextOrganisation.getName());
             response.setUsernameSuffix(contextOrganisation.getEffectiveUsernameSuffix());
-            response.organisationCategory = contextOrganisation.getCategory();
+            response.organisationCategoryName = contextOrganisation.getCategory().getName();
         }
         return response;
     }
@@ -39,7 +39,7 @@ public class UserInfoWebResponse extends UserInfoContract {
         this.privileges = privileges;
         this.hasAllPrivileges = hasAllPrivileges;
         this.lastSessionTime = lastSessionTime;
-        this.organisationCategory = organisationCategory;
+        this.organisationCategoryName = organisationCategory.getName();
     }
 
     public List<UserPrivilegeWebResponse> getPrivileges() {
@@ -62,7 +62,7 @@ public class UserInfoWebResponse extends UserInfoContract {
         this.lastSessionTime = lastSessionTime;
     }
 
-    public OrganisationCategory getOrganisationCategory() {
-        return organisationCategory;
+    public String getOrganisationCategoryName() {
+        return organisationCategoryName;
     }
 }
