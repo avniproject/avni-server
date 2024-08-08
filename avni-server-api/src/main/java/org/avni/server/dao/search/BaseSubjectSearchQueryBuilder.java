@@ -282,7 +282,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 whereClauses.add("(" + codedFilter + ")");
             }
 
-            if (c.getDataType().equalsIgnoreCase("TEXT")) {
+            if (c.getDataType().equalsIgnoreCase("TEXT") || c.getDataType().equalsIgnoreCase("ID")) {
                 String value = "%" + c.getValue() + "%";
                 String param = "textValue" + ci;
                 addParameter(param, value);

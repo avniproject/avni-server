@@ -7,11 +7,13 @@ import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.accessControl.SubjectPartitionData;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.IndividualRequest;
 import org.avni.server.web.request.PointRequest;
@@ -38,6 +40,7 @@ import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -72,6 +75,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     private final EntityApprovalStatusService entityApprovalStatusService;
     private final FormMappingService formMappingService;
     private final Bugsnag bugsnag;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
     public IndividualController(IndividualRepository individualRepository,
@@ -86,7 +90,7 @@ public class IndividualController extends AbstractController<Individual> impleme
                                 IndividualSearchService individualSearchService,
                                 IdentifierAssignmentRepository identifierAssignmentRepository,
                                 IndividualConstructionService individualConstructionService,
-                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService, Bugsnag bugsnag) {
+                                ScopeBasedSyncService<Individual> scopeBasedSyncService, SubjectMigrationService subjectMigrationService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, FormMappingService formMappingService, Bugsnag bugsnag, TxDataControllerHelper txDataControllerHelper) {
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.genderRepository = genderRepository;
@@ -105,6 +109,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         this.entityApprovalStatusService = entityApprovalStatusService;
         this.formMappingService = formMappingService;
         this.bugsnag = bugsnag;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     // used in offline mode hence no access check
@@ -261,14 +266,20 @@ public class IndividualController extends AbstractController<Individual> impleme
     @DeleteMapping("/web/subject/{uuid}")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> voidSubject(@PathVariable String uuid) {
+    public AvniEntityResponse voidSubject(@PathVariable String uuid) {
+        try {
         Individual individual = individualRepository.findByUuid(uuid);
+            txDataControllerHelper.checkSubjectAccess(individual);
         if (individual == null) {
-            return ResponseEntity.notFound().build();
+                return AvniEntityResponse.error("Subject not found");
         }
         accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
         individualService.voidSubject(individual);
-        return ResponseEntity.ok().build();
+            return new AvniEntityResponse(individual);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException | BadRequestError e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
+        }
     }
 
     @GetMapping("/subject/search")
@@ -308,14 +319,14 @@ public class IndividualController extends AbstractController<Individual> impleme
             @Param(value = "programName") String programName,
             @Param(value = "encounterTypeName") String encounterTypeName,
             @RequestParam(value = "entityId") String entityId) {
-        try{
+        try {
             Individual individual = this.individualService.findByMetadata(subjectTypeName, programName, encounterTypeName, Long.parseLong(entityId));
-            if(individual == null) {
+            if (individual == null) {
                 return ResponseEntity.badRequest().build();
             }
             IndividualWebProjection individualWebProjection = this.projectionFactory.createProjection(IndividualWebProjection.class, individual);
             return ResponseEntity.ok(individualWebProjection);
-        }catch(NoSuchElementException e) {
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -341,16 +352,25 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
+        try {
         logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
+            Individual savedIndividual = individualService.getIndividual(individualRequest.getUuid());
+            //Subject is changed after this line, hence the following line cannot be moved down closer to its usage
+            SubjectPartitionData subjectPartitionData = SubjectPartitionData.create(savedIndividual);
 
         Individual individual = createIndividual(individualRequest);
 
         FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
         entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
-
+            // Sync attribute values are picked from the field on individual and not from observations, hence this should be done after the individual is saved
+            txDataControllerHelper.checkSubjectAccess(individual, subjectPartitionData);
         logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
 
         return new AvniEntityResponse(individual);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
+        }
     }
 
     private Individual createIndividual(IndividualRequest individualRequest) {
@@ -362,7 +382,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
         Individual individual = createIndividualWithoutObservations(individualRequest);
 
-        // Temporary fix to
+        // Temporary fix to not allow emptying of observations
         if ((individualRequest.getObservations() == null || individualRequest.getObservations().isEmpty()) && individual.getObservations() != null && !individual.getObservations().isEmpty()) {
             String errorMessage = String.format("Individual Observations not all allowed to be made empty. User: %s, UUID: %s, ", UserContextHolder.getUser().getUsername(), individualRequest.getUuid());
             bugsnag.notify(new Exception(errorMessage));
@@ -375,7 +395,6 @@ public class IndividualController extends AbstractController<Individual> impleme
         Individual savedIndividual = individualService.save(individual);
         saveVisitSchedules(individualRequest);
         saveIdentifierAssignments(savedIndividual, individualRequest);
-
         return savedIndividual;
     }
 

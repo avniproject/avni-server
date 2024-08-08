@@ -3,7 +3,10 @@ package org.avni.server.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
@@ -105,6 +108,11 @@ public class User {
     @JsonIgnore
     public boolean hasAllPrivileges() {
         return getUserGroups().stream().anyMatch(userGroup -> userGroup.getGroup().isHasAllPrivileges());
+    }
+
+    public List<UserSyncSettings> getSyncSettingsList() {
+        User.SyncSettingKeys.subjectTypeSyncSettings.name();
+        return ObjectMapperSingleton.getObjectMapper().convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {});
     }
 
     public enum SyncSettingKeys {

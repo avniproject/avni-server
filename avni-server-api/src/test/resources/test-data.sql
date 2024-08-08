@@ -68,14 +68,14 @@ ALTER SEQUENCE message_receiver_id_seq RESTART WITH 1;
 ALTER SEQUENCE message_request_queue_id_seq RESTART WITH 1;
 ALTER SEQUENCE message_rule_id_seq RESTART WITH 1;
 
-INSERT into organisation(id, name, db_user, uuid, media_directory, parent_organisation_id, schema_name)
-values (1, 'OpenCHS', 'openchs', '3539a906-dfae-4ec3-8fbb-1b08f35c3884', 'openchs_impl', null, 'openchs')
+INSERT into organisation(id, name, db_user, uuid, media_directory, parent_organisation_id, schema_name, category_id, status_id)
+values (1, 'OpenCHS', 'openchs', '3539a906-dfae-4ec3-8fbb-1b08f35c3884', 'openchs_impl', null, 'openchs', 1, 1)
 ON CONFLICT (uuid) DO NOTHING;
 
 select create_db_user('demo', 'password');
 
-INSERT INTO organisation(id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name)
-VALUES (2, 'demo', 'demo', 'demo', 'ae0e4ac4-681d-45f2-8bdd-2b09a5a1a6e5', 1, 'demo')
+INSERT INTO organisation(id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name, category_id, status_id)
+VALUES (2, 'demo', 'demo', 'demo', 'ae0e4ac4-681d-45f2-8bdd-2b09a5a1a6e5', 1, 'demo', 1, 1)
 ON CONFLICT (uuid) DO NOTHING;
 
 insert into organisation_config (uuid, organisation_id, settings, version, is_voided, worklist_updation_rule, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -83,8 +83,8 @@ values ('5bd9c67e-c949-4872-9763-daeab7b48b1b', 1, '{"enableMessaging": true}', 
 
 select create_db_user('a_demo', 'password');
 
-INSERT INTO organisation (id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name)
-VALUES (3, 'a-demo', 'a_demo', 'a-demo', '2734f2ba-610b-49f8-b8d3-4196a460e325', 1, 'a_demo')
+INSERT INTO organisation (id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name, category_id, status_id)
+VALUES (3, 'a-demo', 'a_demo', 'a-demo', '2734f2ba-610b-49f8-b8d3-4196a460e325', 1, 'a_demo', 1, 1)
 ON CONFLICT (uuid) DO NOTHING;
 
 insert into subject_type(id, uuid, name, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)

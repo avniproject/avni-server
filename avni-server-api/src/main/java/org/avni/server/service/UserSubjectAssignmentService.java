@@ -257,4 +257,8 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                 )
                 .forEach(CHSEntity::updateAudit);
     }
+
+    public boolean isAssignedToUser(Individual subject, User user) {
+        return this.userSubjectAssignmentRepository.findByUserAndSubject(user, subject) != null;
+    }
 }

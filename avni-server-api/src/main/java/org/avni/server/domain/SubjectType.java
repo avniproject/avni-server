@@ -333,6 +333,10 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         return isSyncRegistrationConcept2Usable;
     }
 
+    public boolean isAnySyncRegistrationConceptUsable() {
+        return (isSyncRegistrationConcept1Usable != null && isSyncRegistrationConcept1Usable()) || (isSyncRegistrationConcept2Usable != null && isSyncRegistrationConcept2Usable());
+    }
+
     public void setSyncRegistrationConcept2Usable(Boolean syncRegistrationConcept2Usable) {
         isSyncRegistrationConcept2Usable = syncRegistrationConcept2Usable;
     }

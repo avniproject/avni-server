@@ -2,10 +2,12 @@ package org.avni.server.service.accessControl;
 
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
-import org.avni.server.domain.accessControl.AvniAccessException;
-import org.avni.server.domain.accessControl.AvniNoUserSessionException;
-import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.accessControl.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.CatchmentService;
+import org.avni.server.service.UserService;
+import org.avni.server.service.UserSubjectAssignmentService;
+import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +25,20 @@ public class AccessControlService {
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final PrivilegeRepository privilegeRepository;
+    private final CatchmentService catchmentService;
+    private final UserSubjectAssignmentService userSubjectAssignmentService;
+    private final UserService userService;
 
     @Autowired
-    public AccessControlService(UserRepository userRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, PrivilegeRepository privilegeRepository) {
+    public AccessControlService(UserRepository userRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, PrivilegeRepository privilegeRepository, CatchmentService catchmentService, UserSubjectAssignmentService userSubjectAssignmentService, UserService userService) {
         this.userRepository = userRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.privilegeRepository = privilegeRepository;
+        this.catchmentService = catchmentService;
+        this.userSubjectAssignmentService = userSubjectAssignmentService;
+        this.userService = userService;
     }
 
     public void checkPrivilege(PrivilegeType privilegeType) {
@@ -70,7 +78,7 @@ public class AccessControlService {
         subjectTypeUUIDs.forEach(s -> this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, s));
     }
 
-    public void checkSubjectPrivileges(PrivilegeType privilegeType, Individual ... subjects) {
+    public void checkSubjectPrivileges(PrivilegeType privilegeType, Individual... subjects) {
         this.checkSubjectPrivileges(privilegeType, Arrays.stream(subjects).collect(Collectors.toList()));
     }
 
@@ -206,9 +214,43 @@ public class AccessControlService {
 
     public void checkApprovePrivilegeOnEntityApprovalStatuses(List<EntityApprovalStatus> entityApprovalStatuses) {
         Map<List<String>, Long> uniqueEASByTypeAndTypeUuid = entityApprovalStatuses
-            .stream()
-            .collect(Collectors.groupingBy(entityApprovalStatus -> Arrays.asList(String.valueOf(entityApprovalStatus.getEntityType()), entityApprovalStatus.getEntityTypeUuid()), Collectors.counting()));
+                .stream()
+                .collect(Collectors.groupingBy(entityApprovalStatus -> Arrays.asList(String.valueOf(entityApprovalStatus.getEntityType()), entityApprovalStatus.getEntityTypeUuid()), Collectors.counting()));
 
         uniqueEASByTypeAndTypeUuid.keySet().forEach(entity -> checkApprovePrivilegeOnEntityApprovalStatus(entity.get(0), entity.get(1)));
+    }
+
+    // Since an Individual can be saved multiple times in a single transaction, the flush can also happen in between, the method expects that the pre-save state is explicitly passed.
+    public SubjectPartitionCheckStatus checkSubjectAccess(Individual subject, SubjectPartitionData previousPartitionState) {
+        User currentUser = userService.getCurrentUser();
+        boolean firstTimeCreation = previousPartitionState == null;
+        SubjectType subjectType = subject.getSubjectType();
+        SubjectPartitionData applicablePartitionData = firstTimeCreation ? SubjectPartitionData.create(subject) : previousPartitionState;
+
+        if (subjectType.isShouldSyncByLocation() && !catchmentService.hasLocation(applicablePartitionData.getAddressLevel(), currentUser.getCatchment())) {
+            return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotInThisUsersCatchment);
+        }
+
+        if (subjectType.isDirectlyAssignable() && !firstTimeCreation && !userSubjectAssignmentService.isAssignedToUser(subject, currentUser)) {
+            return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotDirectlyAssignedToThisUser);
+        }
+
+        if (subjectType.isAnySyncRegistrationConceptUsable()) {
+            List<UserSyncSettings> syncSettingsList = currentUser.getSyncSettingsList();
+            UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
+            if (userSyncSettingsForSubjectType == null) {
+                return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.UserSyncAttributeNotConfigured);
+            }
+
+            if (subjectType.getSyncRegistrationConcept1() != null && !userSyncSettingsForSubjectType.hasSync1Value(applicablePartitionData.getSync1ConceptValue())) {
+                return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.SyncAttributeForUserNotValidForUpdate);
+            }
+
+            if (subjectType.getSyncRegistrationConcept2() != null && !userSyncSettingsForSubjectType.hasSync1Value(applicablePartitionData.getSync2ConceptValue())) {
+                return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.SyncAttributeForUserNotValidForUpdate);
+            }
+        }
+
+        return SubjectPartitionCheckStatus.passed();
     }
 }

@@ -14,6 +14,8 @@ import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.accessControl.SubjectPartitionCheckStatus;
+import org.avni.server.domain.accessControl.SubjectPartitionData;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.domain.observation.PhoneNumberObservationValue;
@@ -85,13 +87,13 @@ public class IndividualService implements ScopeAwareService<Individual> {
 
     public Individual findByMetadata(String subjectTypeName, String programName, String encounterTypeName, long entityId) {
         Individual individual = null;
-        if(subjectTypeName != null && programName == null && encounterTypeName == null) {
+        if (subjectTypeName != null && programName == null && encounterTypeName == null) {
             individual = individualRepository.findById(entityId).get();
-        } else if(programName == null && encounterTypeName != null) {
+        } else if (programName == null && encounterTypeName != null) {
             individual = encounterRepository.findById(entityId).get().getIndividual();
-        } else if(programName != null && encounterTypeName == null) {
+        } else if (programName != null && encounterTypeName == null) {
             individual = programEnrolmentRepository.findById(entityId).get().getIndividual();
-        } else if(programName != null && encounterTypeName != null) {
+        } else if (programName != null && encounterTypeName != null) {
             individual = programEncounterRepository.findById(entityId).get().getIndividual();
         }
         return individual;

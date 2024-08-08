@@ -5,6 +5,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.factory.*;
 import org.avni.server.domain.factory.access.TestGroupBuilder;
 import org.avni.server.domain.factory.access.TestUserGroupBuilder;
+import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.web.TestWebContextService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,12 +32,24 @@ public class TestDataSetupService {
     private TestLocationService testLocationService;
     @Autowired
     private TestCatchmentService testCatchmentService;
+    @Autowired
+    private TestConceptService testConceptService;
+    @Autowired
+    private TestSubjectTypeService testSubjectTypeService;
+    @Autowired
+    private OrganisationCategoryRepository organisationCategoryRepository;
+    @Autowired
+    private OrganisationStatusRepository organisationStatusRepository;
 
     public TestOrganisationData setupOrganisation(String orgSuffix) {
         Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
         User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
         User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user2@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
-        Organisation organisation = new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build();
+        Organisation organisation = new TestOrganisationBuilder()
+                .setCategory(organisationCategoryRepository.findEntity(1L))
+                .withStatus(organisationStatusRepository.findEntity(1L))
+                .withMandatoryFields()
+                .withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user1);
         testOrganisationService.createUser(organisation, user2);
         userRepository.save(new UserBuilder(user1).withAuditUser(user1).build());
@@ -64,6 +77,36 @@ public class TestDataSetupService {
         Catchment catchment = new TestCatchmentBuilder().withDefaultValuesForNewEntity().build();
         testCatchmentService.createCatchment(catchment, addressLevel1);
         return new TestCatchmentData(addressLevelType, addressLevel1, addressLevel2, catchment);
+    }
+
+    public TestSyncAttributeBasedSubjectTypeData setupSubjectTypeWithSyncAttributes() {
+        Concept conceptForAttributeBasedSync = testConceptService.createCodedConcept("Concept Name 1", "Answer 1", "Answer 2");
+        SubjectType subjectType = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectTypeWithSyncAttributeBasedSync")
+                        .setName("subjectTypeWithSyncAttributeBasedSync")
+                        .setSyncRegistrationConcept1Usable(true)
+                        .setSyncRegistrationConcept1(conceptForAttributeBasedSync.getUuid()).build());
+        return new TestSyncAttributeBasedSubjectTypeData(subjectType, conceptForAttributeBasedSync);
+    }
+
+    public static class TestSyncAttributeBasedSubjectTypeData {
+        private final SubjectType subjectType;
+        private final Concept conceptForAttributeBasedSync;
+
+        public TestSyncAttributeBasedSubjectTypeData(SubjectType subjectType, Concept conceptForAttributeBasedSync) {
+            this.subjectType = subjectType;
+            this.conceptForAttributeBasedSync = conceptForAttributeBasedSync;
+        }
+
+        public SubjectType getSubjectType() {
+            return subjectType;
+        }
+
+        public Concept getSyncConcept() {
+            return conceptForAttributeBasedSync;
+        }
     }
 
     public static class TestCatchmentData {
