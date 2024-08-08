@@ -183,7 +183,7 @@ public class FormElement extends OrganisationAwareEntity {
 
     public List<ValidationResult> validate() {
         ArrayList<ValidationResult> validationResults = new ArrayList<>();
-        if (StringUtils.isEmpty(this.getType())) {
+        if (!StringUtils.isEmpty(this.getType())) {
             try {
                 FormElementType.valueOf(this.getType());
             } catch (IllegalArgumentException | NullPointerException e) {
