@@ -49,7 +49,6 @@ public class ChecklistDetailBuilder extends BaseBuilder<ChecklistDetail, Checkli
                     .withVoided(item.isVoided())
                     .withform(form)
                     .withConcept(concept)
-                    .withLeadItem(builtItems.get(item.getDependentOn()))
                     .withScheduleOnExpiryOfDependency(item.getScheduleOnExpiryOfDependency())
                     .withMinDaysFromStartDate(item.getMinDaysFromStartDate())
                     .withMinDaysFromDependent(item.getMinDaysFromDependent())
@@ -57,6 +56,8 @@ public class ChecklistDetailBuilder extends BaseBuilder<ChecklistDetail, Checkli
                     .build();
             builtItems.put(builtItemDetail.getUuid(), builtItemDetail);
         });
+        //set dependentOn after all items in request have been processed so order of items in request does not matter for dependents
+        items.forEach(item -> getExistingChecklistItemDetail(this.get(), item).setLeadChecklistItemDetail(builtItems.get(item.getDependentOn())));
         return this;
     }
 
