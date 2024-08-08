@@ -7,6 +7,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 import org.avni.server.web.validation.ValidationException;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -182,7 +183,7 @@ public class FormElement extends OrganisationAwareEntity {
 
     public List<ValidationResult> validate() {
         ArrayList<ValidationResult> validationResults = new ArrayList<>();
-        if (this.getType() != null && !this.getType().trim().isEmpty()) {
+        if (StringUtils.isEmpty(this.getType())) {
             try {
                 FormElementType.valueOf(this.getType());
             } catch (IllegalArgumentException | NullPointerException e) {

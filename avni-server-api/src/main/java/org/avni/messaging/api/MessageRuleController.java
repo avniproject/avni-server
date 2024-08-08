@@ -71,6 +71,6 @@ public class MessageRuleController {
     }
 
     private boolean isAString(String s) {
-        return s != null && !s.isEmpty();
+        return !StringUtils.isEmpty(s);
     }
 }

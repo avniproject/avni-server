@@ -13,6 +13,7 @@ import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.*;
@@ -34,7 +35,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final ConceptService conceptService;
     private final Pattern compoundHeaderPattern;
     private final ResetSyncService resetSyncService;
-    private final String METADATA_ROW_START_STRING = "Mandatory field.";
+    private static final String METADATA_ROW_START_STRING = "Mandatory field.";
 
     @Autowired
     public UserAndCatchmentWriter(CatchmentService catchmentService,
@@ -142,7 +143,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         if (headerPatternMatcher.matches()) {
             String conceptName = headerPatternMatcher.group("conceptName");
             String conceptValues = row.get(saHeader);
-            if (conceptValues.isEmpty()) return;
+            if (StringUtils.isEmpty(conceptValues)) return;
             String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
             SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
 
