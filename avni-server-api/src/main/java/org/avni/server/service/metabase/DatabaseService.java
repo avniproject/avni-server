@@ -9,7 +9,7 @@ import org.avni.server.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +54,29 @@ public class DatabaseService {
         JsonNode tablesArray = rootNode.path("tables");
         for (JsonNode tableNode : tablesArray) {
             if (tableName.equals(tableNode.path("display_name").asText())) {
+                return tableNode.path("id").asInt();
+            }
+        }
+        return -1;
+    }
+
+    public int getTableIdByName(String tableName, String schema) {
+        JsonNode rootNode = databaseRepository.getDatabaseDetails(
+            getDatabaseId()
+        );
+        JsonNode tablesArray = rootNode.path("tables");
+
+        for (JsonNode tableNode : tablesArray) {
+            String tableSchema = tableNode.path("schema").asText();
+
+            boolean schemaMatches = schema.equals("public")
+                ? "public".equals(tableSchema)
+                : !"public".equals(tableSchema);
+
+            if (
+                tableName.equals(tableNode.path("display_name").asText()) &&
+                schemaMatches
+            ) {
                 return tableNode.path("id").asInt();
             }
         }
@@ -167,6 +190,34 @@ public class DatabaseService {
         databaseRepository.postForObject(metabaseApiUrl + "/card", body, JsonNode.class);
     }
 
+    private void createQuestionForTable(String tableName, String schema) {
+        int tableId = getTableIdByName(tableName, schema);
+
+        ObjectNode datasetQuery = objectMapper.createObjectNode();
+        datasetQuery.put("database", getDatabaseId());
+        datasetQuery.put("type", "query");
+
+        ObjectNode query = objectMapper.createObjectNode();
+        query.put("source-table", tableId);
+        datasetQuery.set("query", query);
+
+        ObjectNode body = objectMapper.createObjectNode();
+        body.put("name", tableName);
+        body.set("dataset_query", datasetQuery);
+        body.put("display", "table");
+        body.putNull("description");
+        body.set("visualization_settings", objectMapper.createObjectNode());
+        body.put("collection_id", getCollectionId());
+        body.putNull("collection_position");
+        body.putNull("result_metadata");
+
+        databaseRepository.postForObject(
+            metabaseApiUrl + "/card",
+            body,
+            JsonNode.class
+        );
+    }
+
     public void createQuestionsForSubjectTypes() {
 
         String syncStatus = getInitialSyncStatus();
@@ -198,6 +249,18 @@ public class DatabaseService {
                     createQuestionForTable(tableName, "Address", "id", "address_id");
                 }
             }
+        }
+    }
+
+    public void createQuestionsForIndivdualTables() {
+        List<String> tablesToCreateQuestionsFor = Arrays.asList(
+            "Address",
+            "Media",
+            "Sync Telemetry"
+        );
+
+        for (String tableName : tablesToCreateQuestionsFor) {
+            createQuestionForTable(tableName, "!public");
         }
     }
 }

@@ -31,6 +31,7 @@ public class MetabaseController {
     public void createQuestions() {
         databaseService.createQuestionsForSubjectTypes();
         databaseService.createQuestionsForProgramsAndEncounters();
+        databaseService.createQuestionsForIndivdualTables();
     }
 
     @GetMapping("/sync-status")
