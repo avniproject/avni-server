@@ -4,22 +4,22 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.io.IOUtils;
 import org.avni.messaging.contract.MessageRuleContract;
+import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageReceiverRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
+import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.*;
-import org.avni.server.dao.application.FormElementGroupRepository;
-import org.avni.server.dao.application.FormElementRepository;
-import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.dao.application.FormRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationGenderMappingRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
+import org.avni.server.dao.application.*;
+import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.dao.individualRelationship.*;
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.task.TaskRepository;
+import org.avni.server.dao.task.TaskStatusRepository;
+import org.avni.server.dao.task.TaskTypeRepository;
+import org.avni.server.dao.task.TaskUnAssignmentRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.framework.security.UserContextHolder;
@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -101,10 +102,12 @@ public class OrganisationService {
     private final CardRepository cardRepository;
     private final DashboardRepository dashboardRepository;
     private final DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository;
+    private final DashboardFilterRepository dashboardFilterRepository;
     private final DashboardSectionRepository dashboardSectionRepository;
     private final GroupDashboardRepository groupDashboardRepository;
     private final Msg91ConfigRepository msg91ConfigRepository;
     private final S3Service s3Service;
+    private final UserService userService;
 
     //Tx repositories
     private final RuleFailureTelemetryRepository ruleFailureTelemetryRepository;
@@ -140,6 +143,24 @@ public class OrganisationService {
     private final OrganisationRepository organisationRepository;
     private final UserSubjectRepository userSubjectRepository;
     private final Logger logger;
+    private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
+    private final CustomQueryRepository customQueryRepository;
+    private final DocumentationRepository documentationRepository;
+    private final DocumentationItemRepository documentationItemRepository;
+    private final ExportJobParametersRepository exportJobParametersRepository;
+    private final ExternalSystemConfigRepository externalSystemConfigRepository;
+    private final LocationMappingRepository locationMappingRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final ManualMessageRepository manualMessageRepository;
+    private final MessageRuleRepository messageRuleRepository;
+    private final ResetSyncRepository resetSyncRepository;
+    private final RuleFailureLogRepository ruleFailureLogRepository;
+    private final TaskStatusRepository taskStatusRepository;
+    private final TaskTypeRepository taskTypeRepository;
+    private final TaskUnAssignmentRepository taskUnAssignmentRepository;
+    private final UserRepository userRepository;
+
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -182,10 +203,10 @@ public class OrganisationService {
                                CardRepository cardRepository,
                                DashboardRepository dashboardRepository,
                                DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository,
-                               DashboardSectionRepository dashboardSectionRepository,
+                               DashboardFilterRepository dashboardFilterRepository, DashboardSectionRepository dashboardSectionRepository,
                                GroupDashboardRepository groupDashboardRepository,
                                Msg91ConfigRepository msg91ConfigRepository,
-                               S3Service s3Service, RuleFailureTelemetryRepository ruleFailureTelemetryRepository,
+                               S3Service s3Service, UserService userService, RuleFailureTelemetryRepository ruleFailureTelemetryRepository,
                                IdentifierAssignmentRepository identifierAssignmentRepository,
                                SyncTelemetryRepository syncTelemetryRepository,
                                VideoTelemetricRepository videoTelemetricRepository,
@@ -216,7 +237,24 @@ public class OrganisationService {
                                OrganisationConfigService organisationConfigService,
                                GenderRepository genderRepository,
                                OrganisationRepository organisationRepository,
-                               UserSubjectRepository userSubjectRepository) {
+                               UserSubjectRepository userSubjectRepository,
+                               AnswerConceptMigrationRepository answerConceptMigrationRepository,
+                               CustomQueryRepository customQueryRepository,
+                               DocumentationRepository documentationRepository,
+                               DocumentationItemRepository documentationItemRepository,
+                               ExportJobParametersRepository exportJobParametersRepository,
+                               ExternalSystemConfigRepository externalSystemConfigRepository,
+                               LocationMappingRepository locationMappingRepository,
+                               MenuItemRepository menuItemRepository,
+                               ManualMessageRepository manualMessageRepository,
+                               MessageRuleRepository messageRuleRepository,
+                               ResetSyncRepository resetSyncRepository,
+                               RuleFailureLogRepository ruleFailureLogRepository,
+                               TaskStatusRepository taskStatusRepository,
+                               TaskTypeRepository taskTypeRepository,
+                               TaskUnAssignmentRepository taskUnAssignmentRepository,
+                               UserRepository userRepository,
+                               JdbcTemplate jdbcTemplate) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -257,10 +295,12 @@ public class OrganisationService {
         this.cardRepository = cardRepository;
         this.dashboardRepository = dashboardRepository;
         this.dashboardSectionCardMappingRepository = dashboardSectionCardMappingRepository;
+        this.dashboardFilterRepository = dashboardFilterRepository;
         this.dashboardSectionRepository = dashboardSectionRepository;
         this.groupDashboardRepository = groupDashboardRepository;
         this.msg91ConfigRepository = msg91ConfigRepository;
         this.s3Service = s3Service;
+        this.userService = userService;
         this.ruleFailureTelemetryRepository = ruleFailureTelemetryRepository;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
         this.syncTelemetryRepository = syncTelemetryRepository;
@@ -293,6 +333,23 @@ public class OrganisationService {
         this.genderRepository = genderRepository;
         this.organisationRepository = organisationRepository;
         this.userSubjectRepository = userSubjectRepository;
+        this.answerConceptMigrationRepository = answerConceptMigrationRepository;
+        this.customQueryRepository = customQueryRepository;
+        this.documentationRepository = documentationRepository;
+        this.documentationItemRepository = documentationItemRepository;
+        this.exportJobParametersRepository = exportJobParametersRepository;
+        this.externalSystemConfigRepository = externalSystemConfigRepository;
+        this.locationMappingRepository = locationMappingRepository;
+        this.menuItemRepository = menuItemRepository;
+        this.manualMessageRepository = manualMessageRepository;
+        this.messageRuleRepository = messageRuleRepository;
+        this.resetSyncRepository = resetSyncRepository;
+        this.ruleFailureLogRepository = ruleFailureLogRepository;
+        this.taskStatusRepository = taskStatusRepository;
+        this.taskTypeRepository = taskTypeRepository;
+        this.taskUnAssignmentRepository = taskUnAssignmentRepository;
+        this.userRepository = userRepository;
+        this.jdbcTemplate = jdbcTemplate;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -657,7 +714,8 @@ public class OrganisationService {
     }
 
 
-    public void deleteTransactionalData() {
+    public void deleteTransactionalData(Organisation organisation) {
+        deleteNonRepositoryTransactionalData(organisation);
         JpaRepository[] transactionalRepositories = {
             newsRepository,
             commentRepository,
@@ -677,21 +735,27 @@ public class OrganisationService {
             subjectMigrationRepository,
             userSubjectAssignmentRepository,
             subjectProgramEligibilityRepository,
+            taskUnAssignmentRepository,
             taskRepository,
             userSubjectRepository,
-            individualRepository
+            individualRepository,
+            resetSyncRepository,
         };
 
         CrudRepository[] txCrudRepositories = {
+            exportJobParametersRepository,
+            manualMessageRepository,
             messageReceiverRepository,
             messageRequestQueueRepository,
+            ruleFailureLogRepository,
         };
 
         Arrays.asList(txCrudRepositories).forEach(this::deleteAll);
         Arrays.asList(transactionalRepositories).forEach(this::deleteAll);
     }
 
-    public void deleteMetadata() {
+    public void deleteMetadata(Organisation organisation) {
+        deleteNonRepositoryMetadata(organisation);
         JpaRepository[] metadataRepositories = {
                 groupPrivilegeRepository,
                 groupRoleRepository,
@@ -700,11 +764,11 @@ public class OrganisationService {
                 identifierUserAssignmentRepository,
                 identifierSourceRepository,
                 individualRelationGenderMappingRepository,
-                individualRelationshipTypeRepository,
                 individualRelationRepository,
-                formMappingRepository,
+                individualRelationshipTypeRepository,
                 formElementRepository,
                 formElementGroupRepository,
+                formMappingRepository,
                 formRepository,
                 conceptAnswerRepository,
                 conceptRepository,
@@ -725,10 +789,90 @@ public class OrganisationService {
                 msg91ConfigRepository,
                 genderRepository,
                 userGroupRepository,
-                groupRepository
+                groupRepository,
+                answerConceptMigrationRepository,
+                dashboardFilterRepository,
+                documentationRepository,
+                documentationItemRepository,
+                menuItemRepository,
+                ruleRepository,
+                ruleDependencyRepository,
+                taskTypeRepository,
+                taskStatusRepository,
+                translationRepository,
+                userSubjectAssignmentRepository,
+        };
+
+        CrudRepository[] metadataCrudRepositories = {
+                        messageRuleRepository,
+                        customQueryRepository,
         };
 
         Arrays.asList(metadataRepositories).forEach(this::deleteAll);
+        Arrays.asList(metadataCrudRepositories).forEach(this::deleteAll);
+
+    }
+
+public void deleteNonRepositoryTransactionalData(Organisation organisation) {
+    String individualRelativeDeletionQuery = "delete from individual_relative where organisation_id = %d and organisation_id > 1";
+    jdbcTemplate.execute(String.format(individualRelativeDeletionQuery, organisation.getId()));
+}
+
+    public void deleteNonRepositoryMetadata(Organisation organisation) {
+        String decisionConceptsDeletionQuery = "delete from decision_concept dc using concept c where dc.concept_id = c.id and c.organisation_id = %d and c.organisation_id > 1";
+        String nonApplicableFormElementDeletionQuery = "delete from non_applicable_form_element where organisation_id = %d and organisation_id > 1";
+        jdbcTemplate.execute(String.format(decisionConceptsDeletionQuery, organisation.getId()));
+        jdbcTemplate.execute(String.format(nonApplicableFormElementDeletionQuery, organisation.getId()));
+    }
+
+    public void deleteAdminConfigData(Organisation organisation) {
+        deleteNonRepositoryAdminConfigData(organisation);
+        JpaRepository[] adminConfigRepositories = {
+                catchmentRepository,
+                locationMappingRepository,
+                locationRepository,
+                addressLevelTypeRepository,
+                msg91ConfigRepository,
+
+//                organisationCategoryRepository, // Not org specific
+//                organisationStatusRepository, // Not org specific
+//                organisationGroupOrganisationRepository, // Deleting orgGroup Org is out of scope
+//                organisationGroupRepository, // Deleting orgGroup is out of scope
+//                organisationRepository, // Deleting org itself is out of scope
+
+//                batch_job_instance // Not org specific
+//                batch_job_execution // Not org specific
+//                batch_step_execution // Not org specific
+//                batch_job_execution_context // Not org specific
+//                batch_job_execution_params // Not org specific
+//                batch_step_execution_context // Not org specific
+
+//                audit //Deprecated
+//                facility //Deprecated
+//                program_outcome //Deprecated
+//                dashboard_card_mapping //Deprecated
+//                deps_saved_ddl // Not org specific
+//                schema_version // Not org specific
+//                scheduled_job_run // Not org specific
+//                privilegeRepository, // Not org specific
+//                flyway_schema_history // Not org specific
+//                approvalStatusRepository, // Not org specific
+//                platformTranslationRepository, // Not org specific
+//                standardReportCardTypeRepository, // Not org specific
+        };
+
+        CrudRepository[] adminConfigCrudRepositories = {
+                externalSystemConfigRepository,
+        };
+
+        Arrays.asList(adminConfigRepositories).forEach(this::deleteAll);
+        Arrays.asList(adminConfigCrudRepositories).forEach(this::deleteAll);
+        userRepository.findAllByOrganisationId(organisation.getId()).stream().filter(user -> !user.hasAllPrivileges()).forEach(user -> userService.deleteUser(user.getId()));
+    }
+
+    public void deleteNonRepositoryAdminConfigData(Organisation organisation) {
+        String catchmentAddressMappingDeletionQuery = "delete from catchment_address_mapping cam using address_level al where cam.addresslevel_id = al.id and al.organisation_id = %d and al.organisation_id > 1)";
+        jdbcTemplate.execute(String.format(catchmentAddressMappingDeletionQuery, organisation.getId().toString()));
     }
 
     private void deleteAll(JpaRepository repository) {
@@ -743,6 +887,14 @@ public class OrganisationService {
         } catch (Exception e) {
             logger.info("Error while deleting the media files, skipping.");
         }
+    }
+    public void deleteETLData(Organisation organisation) {
+        String baseQuery = "select delete_etl_metadata_for_schema('$impl_schema', '$impl_db_user', '$impl_db_owner')";
+        String query = baseQuery
+                .replace("$impl_schema", organisation.getSchemaName())
+                .replace("$impl_db_user", organisation.getDbUser())
+                .replace("$impl_db_owner", organisation.getDbUser());
+        jdbcTemplate.execute(query);
     }
 
     public void addGroupDashboardJson(ZipOutputStream zos) throws IOException {

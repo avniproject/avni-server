@@ -23,8 +23,6 @@ import javax.transaction.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.util.zip.ZipOutputStream;
 
-import static org.avni.server.domain.accessControl.PrivilegeType.MultiTxEntityTypeUpdate;
-
 @RestController
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
 
@@ -104,7 +102,8 @@ public class ImplementationController implements RestControllerResourceProcessor
 
     @RequestMapping(value = "/implementation/delete", method = RequestMethod.DELETE)
     @Transactional
-    public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata) {
+    public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata,
+                                 @Param("deleteAdminConfig") boolean deleteAdminConfig) {
         if (accessControlService.isSuperAdmin()) {
             return new ResponseEntity<>("Super admin cannot delete implementation data", HttpStatus.FORBIDDEN);
         }
@@ -113,19 +112,49 @@ public class ImplementationController implements RestControllerResourceProcessor
             return new ResponseEntity<>("Production organisation's data cannot be deleted", HttpStatus.CONFLICT);
         }
 
-        accessControlService.checkPrivilege(MultiTxEntityTypeUpdate);
-        organisationService.deleteTransactionalData();
-
-        if (deleteMetadata) {
-            accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
-            organisationService.deleteMetadata();
-        }
-        organisationService.deleteMediaContent(deleteMetadata);
-
-        if (deleteMetadata)
-            organisationService.setupBaseOrganisationData(UserContextHolder.getOrganisation());
+        checkPrivilegeAndDeleteTransactionalData(organisation);
+        checkPrivilegeAndDeleteMetadata(deleteMetadata, organisation);
+        selectivelyCleanupMediaContent(deleteMetadata);
+        checkPrivilegeAndDeleteAdminConfigurationData(deleteAdminConfig, organisation);
+        checkPrivilegeAndRecreateBasicMetadata(deleteMetadata);
 
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private void checkPrivilegeAndRecreateBasicMetadata(boolean deleteMetadata) {
+        if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+            organisationService.setupBaseOrganisationData(UserContextHolder.getOrganisation());
+        }
+    }
+
+    private void checkPrivilegeAndDeleteAdminConfigurationData(boolean deleteAdminConfig, Organisation organisation) {
+        if(deleteAdminConfig){
+            accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
+            organisationService.deleteAdminConfigData(organisation);
+        }
+    }
+
+    private void selectivelyCleanupMediaContent(boolean deleteMetadata) {
+        if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        } else {
+            accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        }
+        organisationService.deleteMediaContent(deleteMetadata);
+    }
+
+    private void checkPrivilegeAndDeleteMetadata(boolean deleteMetadata, Organisation organisation) {
+        if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+            organisationService.deleteMetadata(organisation);
+            organisationService.deleteETLData(organisation);
+        }
+    }
+
+    private void checkPrivilegeAndDeleteTransactionalData(Organisation organisation) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        organisationService.deleteTransactionalData(organisation);
     }
 
     private HttpHeaders getHttpHeaders() {

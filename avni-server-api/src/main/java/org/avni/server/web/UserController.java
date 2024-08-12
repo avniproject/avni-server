@@ -208,17 +208,7 @@ public class UserController {
     @Transactional
     public ResponseEntity deleteUser(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-        try {
-            User user = userRepository.findOne(id);
-            idpServiceFactory.getIdpService(user).deleteUser(user);
-            user.setVoided(true);
-            user.setDisabledInCognito(true);
-            userRepository.save(user);
-            logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
-        } catch (AWSCognitoIdentityProviderException ex) {
-            return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
-        }
+        return userService.deleteUser(id);
     }
 
     @RequestMapping(value = {"/user/{id}/disable", "/user/accountOrgAdmin/{id}/disable"}, method = RequestMethod.PUT)
