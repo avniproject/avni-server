@@ -12,8 +12,7 @@ import java.util.List;
 @Component
 public class AddressLevelCache {
     public static final String ADDRESSES_PER_CATCHMENT = "addressesPerCatchment";
-    public static final String ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS = "addressesPerCatchmentAndMatchingAddrLevels" +
-            "";;
+    public static final String ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS = "addressesPerCatchmentAndMatchingAddrLevels";
 
     private final LocationRepository locationRepository;
 

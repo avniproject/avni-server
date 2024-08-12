@@ -82,8 +82,10 @@ public class DashboardMapper {
         return dashboardContract;
     }
 
-    private void setDashboardSectionCardMappings(DashboardSectionWebResponse response, DashboardSection ds) {
-        List<DashboardSectionCardMappingWebResponse> mappingContracts = ds.getDashboardSectionCardMappings().stream()
+    private void setDashboardSectionCardMappings(DashboardSectionWebResponse response, DashboardSection dashboardSection) {
+        List<DashboardSectionCardMappingWebResponse> mappingContracts = dashboardSection.getDashboardSectionCardMappings()
+                .stream()
+                .filter(dashboardSectionCardMapping -> !dashboardSectionCardMapping.isVoided() && !dashboardSectionCardMapping.getCard().isVoided())
                 .map(dashboardSectionCardMapping -> {
                     DashboardSectionCardMappingWebResponse mappingResponse = new DashboardSectionCardMappingWebResponse();
                     mappingResponse.setUuid(dashboardSectionCardMapping.getUuid());

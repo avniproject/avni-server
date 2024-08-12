@@ -2,16 +2,13 @@ package org.avni.server.importer.batch.zip;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.contract.MessageRuleContract;
-import org.avni.messaging.domain.MessageRule;
 import org.avni.messaging.service.MessagingService;
-import org.avni.server.application.Subject;
-import org.avni.server.application.menu.MenuItem;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFile;
@@ -46,8 +43,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static java.lang.String.format;
 
 @Component
 @JobScope
