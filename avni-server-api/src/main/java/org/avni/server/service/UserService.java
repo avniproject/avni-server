@@ -32,15 +32,17 @@ public class UserService implements NonScopeAwareService {
     private final UserSubjectRepository userSubjectRepository;
     private final IndividualRepository individualRepository;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final AccountAdminRepository accountAdminRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, AccountAdminRepository accountAdminRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
         this.userSubjectRepository = userSubjectRepository;
         this.individualRepository = individualRepository;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.accountAdminRepository = accountAdminRepository;
     }
 
     public User getCurrentUser() {
@@ -192,5 +194,10 @@ public class UserService implements NonScopeAwareService {
             throw new ValidationException(PhoneNumberUtil.getInvalidMessage(phoneNumber, userRegion));
         }
         user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber, userRegion));
+    }
+
+    public boolean isAdmin(User user) {
+        List<AccountAdmin> accountAdmins = accountAdminRepository.findByUser_Id(user.getId());
+        return !accountAdmins.isEmpty();
     }
 }

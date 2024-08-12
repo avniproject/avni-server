@@ -82,6 +82,9 @@ public class User {
     private Set<AccountAdmin> accountAdmin = new HashSet<>();
 
     @Transient
+    /*
+      Using transient field isAdmin is problematic when the user is not the current user. User UserService.isAdmin() instead, except in JDBC interceptor.
+     */
     private boolean isAdmin;
 
     @JsonIgnore
@@ -309,10 +312,16 @@ public class User {
         }
     }
 
+    /**
+     * Using transient field isAdmin is problematic when the user is not the current user. User UserService.isAdmin() instead, except in JDBC interceptor.
+     */
     public boolean isAdmin() {
         return isAdmin;
     }
 
+    /**
+     * Using transient field isAdmin is problematic when the user is not the current user. User UserService.isAdmin() instead, except in JDBC interceptor.
+     */
     public void setAdmin(boolean admin) {
         this.isAdmin = admin;
     }

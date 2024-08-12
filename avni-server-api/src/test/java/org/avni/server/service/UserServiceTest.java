@@ -32,7 +32,7 @@ public class UserServiceTest {
     public void setup() {
         initMocks(this);
 
-        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null);
+        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null, null);
     }
 
     @Test

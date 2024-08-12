@@ -8,6 +8,7 @@ import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.IdpServiceFactory;
+import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.response.UserPrivilegeWebResponse;
 import org.avni.server.web.response.UserInfoWebResponse;
@@ -25,13 +26,15 @@ public class UserInfoWebController {
     private final UserRepository userRepository;
     private final PrivilegeRepository privilegeRepository;
     private final IdpServiceFactory idpServiceFactory;
+    private final UserService userService;
 
     @Autowired
-    public UserInfoWebController(GroupPrivilegeService groupPrivilegeService, UserRepository userRepository, PrivilegeRepository privilegeRepository, IdpServiceFactory idpServiceFactory) {
+    public UserInfoWebController(GroupPrivilegeService groupPrivilegeService, UserRepository userRepository, PrivilegeRepository privilegeRepository, IdpServiceFactory idpServiceFactory, UserService userService) {
         this.groupPrivilegeService = groupPrivilegeService;
         this.userRepository = userRepository;
         this.privilegeRepository = privilegeRepository;
         this.idpServiceFactory = idpServiceFactory;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/web/userInfo", method = RequestMethod.GET)
@@ -39,7 +42,8 @@ public class UserInfoWebController {
         Organisation contextOrganisation = UserContextHolder.getOrganisation();
         User contextUser = UserContextHolder.getUser();
         User user = userRepository.findOne(contextUser.getId());
-        if (UserContextHolder.getUser().isAdmin()) {
+
+        if (userService.isAdmin(user)) {
             List<Privilege> adminPrivileges = privilegeRepository.getAdminPrivileges();
             List<UserPrivilegeWebResponse> groupPrivilegeResponses = adminPrivileges.stream()
                     .map(UserPrivilegeWebResponse::createForAdminUser).collect(Collectors.toList());

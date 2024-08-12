@@ -6,6 +6,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
+import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -27,14 +28,15 @@ import static org.avni.server.domain.accessControl.PrivilegeType.MultiTxEntityTy
 
 @RestController
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
-
     private final OrganisationService organisationService;
     private final AccessControlService accessControlService;
+    private final UserService userService;
 
     @Autowired
-    public ImplementationController(OrganisationService organisationService, AccessControlService accessControlService) {
+    public ImplementationController(OrganisationService organisationService, AccessControlService accessControlService, UserService userService) {
         this.organisationService = organisationService;
         this.accessControlService = accessControlService;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/implementation/export/{includeLocations}", method = RequestMethod.GET)
@@ -105,7 +107,7 @@ public class ImplementationController implements RestControllerResourceProcessor
     @RequestMapping(value = "/implementation/delete", method = RequestMethod.DELETE)
     @Transactional
     public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata) {
-        if (accessControlService.isSuperAdmin()) {
+        if (userService.isAdmin(UserContextHolder.getUser())) {
             return new ResponseEntity<>("Super admin cannot delete implementation data", HttpStatus.FORBIDDEN);
         }
         Organisation organisation = organisationService.getCurrentOrganisation();

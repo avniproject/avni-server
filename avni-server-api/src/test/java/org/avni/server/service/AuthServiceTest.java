@@ -27,6 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -41,6 +42,8 @@ public class AuthServiceTest {
     private CognitoAuthServiceImpl cognitoAuthService;
     @Mock
     private AccountAdminRepository accountAdminRepository;
+    @Mock
+    private UserService userService;
     private User user;
     private AuthService authService;
     private AccountAdmin accountAdmin;
@@ -48,9 +51,8 @@ public class AuthServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-//        cognitoAuthService = new CognitoUserContextServiceImpl(organisationRepository, userRepository, "poolId", "clientId");
         authService = new AuthService(userRepository, organisationRepository, accountAdminRepository,
-                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null));
+                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null, userService), userService);
         String uuid = "9ecc2805-6528-47ee-8267-9368b266ad39";
         user = new User();
         user.setUuid(uuid);
@@ -77,14 +79,8 @@ public class AuthServiceTest {
         when(organisationRepository.findOne(1L)).thenReturn(organisation);
         when(userRepository.findByUuid(user.getUuid())).thenReturn(user);
         when(cognitoAuthService.getUserFromToken("some token")).thenReturn(user);
-//        Algorithm algorithm = Algorithm.HMAC256("not very useful secret");
-//        String token = createForBaseToken(user.getUuid()).sign(algorithm);
         UserContext userContext = authService.authenticateByToken("some token", null);
         assertThat(userContext.getOrganisation(), is(equalTo(organisation)));
-    }
-
-    private JWTCreator.Builder createForBaseToken(String userUuid) {
-        return JWT.create().withClaim("custom:userUUID", userUuid);
     }
 
     @Test
@@ -106,18 +102,18 @@ public class AuthServiceTest {
         assertThat(userContext.getRoles(), containsInAnyOrder(User.USER));
 
         user.setAccountAdmin(accountAdmin);
-        when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(adminUser);
+        when(userService.isAdmin(any())).thenReturn(true);
         userContext = authService.authenticateByToken("some token", null);
         assertThat(userContext.getRoles().size(), is(equalTo(0)));
 
         user.setAccountAdmin(null);
-        when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(new ArrayList<>());
+        when(userService.isAdmin(any())).thenReturn(false);
         userContext = authService.authenticateByToken("some token", null);
         assertThat(userContext.getRoles().size(), is(equalTo(1)));
         assertThat(userContext.getRoles(), contains(User.USER));
 
         user.setAccountAdmin(accountAdmin);
-        when(accountAdminRepository.findByUser_Id(user.getId())).thenReturn(adminUser);
+        when(userService.isAdmin(any())).thenReturn(true);
         userContext = authService.authenticateByToken("some token", null);
         assertThat(userContext.getRoles().size(), is(equalTo(0)));
     }
