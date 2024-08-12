@@ -14,7 +14,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CardService implements NonScopeAwareService {
@@ -109,12 +109,16 @@ public class CardService implements NonScopeAwareService {
         card.setStandardReportCardInputPrograms(programs);
         card.setStandardReportCardInputEncounterTypes(encounterTypes);
 
-        if (type.getName().toLowerCase().contains("recent") && recentDuration == null) {
-            throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
+        if (isRecentStandardReportCard(type.getName())) {
+            if (recentDuration == null) {
+                throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
+            }
         }
-        if (type.getName().toLowerCase().contains("recent")) {
-            card.setStandardReportCardInputRecentDuration(recentDuration);
-        }
+        card.setStandardReportCardInputRecentDuration(recentDuration);
+    }
+
+    private boolean isRecentStandardReportCard(String cardTypeName) {
+        return cardTypeName.toLowerCase().contains("recent");
     }
 
     private void buildCard(ReportCardContract reportCardRequest, ReportCard card) {
@@ -181,5 +185,33 @@ public class CardService implements NonScopeAwareService {
                 throw new BulkItemSaveException(cardContract, e);
             }
         }
+    }
+
+    public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
+        List<String> defaultDashboardStandardCardTypeNames = Arrays.asList("Scheduled visits", "Overdue visits", "Total", "Recent registrations", "Recent enrolments", "Recent visits", "Due checklist");
+        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardStandardCardTypeNames);
+        Map<String, ReportCard> savedCards = new HashMap<>();
+        standardReportCardTypes.forEach(standardReportCardType -> {
+            ReportCard reportCard = new ReportCard();
+            reportCard.setUuid(UUID.randomUUID().toString());
+            reportCard.setStandardReportCardType(standardReportCardType);
+            reportCard.setOrganisationId(organisation.getId());
+            reportCard.setName(standardReportCardType.getName());
+            reportCard.setColour("#ffffff");
+            reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
+            reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
+            reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
+            if (isRecentStandardReportCard(standardReportCardType.getName())) {
+                reportCard.setStandardReportCardInputRecentDuration(new ValueUnit("1", "days"));
+            }
+            if (standardReportCardType.getName().equals("Overdue visits")) {
+                reportCard.setColour("#d32f2f");
+            }
+            if (standardReportCardType.getName().equals("Scheduled visits")) {
+                reportCard.setColour("#388e3c");
+            }
+            savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
+        });
+        return savedCards;
     }
 }

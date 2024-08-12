@@ -4,10 +4,7 @@ import org.avni.server.common.EntityHelper;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.GroupDashboardRepository;
 import org.avni.server.dao.GroupRepository;
-import org.avni.server.domain.Dashboard;
-import org.avni.server.domain.Group;
-import org.avni.server.domain.GroupDashboard;
-import org.avni.server.domain.ValidationException;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.GroupDashboardContract;
@@ -18,6 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class GroupDashboardService implements NonScopeAwareService {
@@ -104,6 +102,16 @@ public class GroupDashboardService implements NonScopeAwareService {
 
     public void delete(GroupDashboard groupDashboard) {
         groupDashboard.setVoided(true);
+        groupDashboardRepository.save(groupDashboard);
+    }
+
+    public void createDefaultGroupDashboardForOrg(Organisation organisation, Group group, Dashboard dashboard) {
+        GroupDashboard groupDashboard = new GroupDashboard();
+        groupDashboard.setOrganisationId(organisation.getId());
+        groupDashboard.setUuid(UUID.randomUUID().toString());
+        groupDashboard.setGroup(group);
+        groupDashboard.setDashboard(dashboard);
+        groupDashboard.setPrimaryDashboard(true);
         groupDashboardRepository.save(groupDashboard);
     }
 

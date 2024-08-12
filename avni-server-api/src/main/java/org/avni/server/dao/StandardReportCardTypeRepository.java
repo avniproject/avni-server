@@ -26,4 +26,6 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
             Pageable pageable);
 
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
+
+    List<StandardReportCardType> findAllByNameIn(List<String> defaultDashboardStandardCardTypeNames);
 }

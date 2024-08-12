@@ -107,6 +107,7 @@ public class OrganisationService {
     private final DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository;
     private final DashboardSectionRepository dashboardSectionRepository;
     private final GroupDashboardRepository groupDashboardRepository;
+    private final DashboardService dashboardService;
     private final Msg91ConfigRepository msg91ConfigRepository;
     private final S3Service s3Service;
 
@@ -146,6 +147,7 @@ public class OrganisationService {
     private final UserSubjectRepository userSubjectRepository;
     private final Logger logger;
     private final DashboardMapper dashboardMapper;
+    private final GroupDashboardService groupDashboardService;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -225,7 +227,7 @@ public class OrganisationService {
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
                                UserSubjectRepository userSubjectRepository,
-                               DashboardFilterRepository dashboardFilterRepository) {
+                               DashboardFilterRepository dashboardFilterRepository, GroupDashboardService groupDashboardService) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -304,7 +306,9 @@ public class OrganisationService {
         this.reportCardMapper = reportCardMapper;
         this.dashboardMapper = dashboardMapper;
         this.userSubjectRepository = userSubjectRepository;
+        this.dashboardService = dashboardService;
         logger = LoggerFactory.getLogger(this.getClass());
+        this.groupDashboardService = groupDashboardService;
     }
 
     public void addOrganisationConfig(Long orgId, ZipOutputStream zos) throws IOException {
@@ -774,14 +778,14 @@ public class OrganisationService {
         genderRepository.save(gender);
     }
 
-    private void addDefaultGroup(Long organisationId, String groupType) {
+    private Group addDefaultGroup(Long organisationId, String groupType) {
         Group group = new Group();
         group.setName(groupType);
         group.setOrganisationId(organisationId);
         group.setUuid(UUID.randomUUID().toString());
         group.setHasAllPrivileges(group.isAdministrator());
         group.setVersion(0);
-        groupRepository.save(group);
+        return groupRepository.save(group);
     }
 
     private void createDefaultGenders(Organisation org) {
@@ -792,9 +796,11 @@ public class OrganisationService {
 
     public void setupBaseOrganisationData(Organisation organisation) {
         createDefaultGenders(organisation);
-        addDefaultGroup(organisation.getId(), Group.Everyone);
+        Group everyoneGroup = addDefaultGroup(organisation.getId(), Group.Everyone);
         addDefaultGroup(organisation.getId(), Group.Administrators);
         organisationConfigService.createDefaultOrganisationConfig(organisation);
+        Dashboard defaultDashboard = dashboardService.createDefaultDashboard(organisation);
+        groupDashboardService.createDefaultGroupDashboardForOrg(organisation, everyoneGroup, defaultDashboard);
     }
 
     public Organisation getCurrentOrganisation() {
