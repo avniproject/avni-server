@@ -122,7 +122,7 @@ public class ImplementationController implements RestControllerResourceProcessor
         //Recreate
         checkPrivilegeAndRecreateBasicAdminConfig(deleteAdminConfig);
         checkPrivilegeAndRecreateBasicMetadata(deleteMetadata);
-
+        //Refer to OrganisationService git history for list of repos and tables excluded from deletion flow due to valid causes
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

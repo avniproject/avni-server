@@ -353,34 +353,6 @@ public class OrganisationService {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    /* Tables that are not part of any org data clean up are as follows:
-     *                 organisationCategoryRepository, // Not org specific
-     *                 organisationStatusRepository, // Not org specific
-     *                 organisationGroupOrganisationRepository, // Deleting orgGroup Org is out of scope
-     *                 organisationGroupRepository, // Deleting orgGroup is out of scope
-     *                 organisationRepository, // Deleting org itself is out of scope
-     *
-     *                 batch_job_instance // Not org specific
-     *                 batch_job_execution // Not org specific
-     *                 batch_step_execution // Not org specific
-     *                 batch_job_execution_context // Not org specific
-     *                 batch_job_execution_params // Not org specific
-     *                 batch_step_execution_context // Not org specific
-     *
-     *                 audit //Deprecated
-     *                 facility //Deprecated
-     *                 program_outcome //Deprecated
-     *                 dashboard_card_mapping //Deprecated
-     *                 deps_saved_ddl // Not org specific
-     *                 schema_version // Not org specific
-     *                 scheduled_job_run // Not org specific
-     *                 privilegeRepository, // Not org specific
-     *                 flyway_schema_history // Not org specific
-     *                 approvalStatusRepository, // Not org specific
-     *                 platformTranslationRepository, // Not org specific
-     *                 standardReportCardTypeRepository, // Not org specific
-     */
-
     private CrudRepository[] getTxCrudRepositories() {
         CrudRepository[] txCrudRepositories = {
                 exportJobParametersRepository,
