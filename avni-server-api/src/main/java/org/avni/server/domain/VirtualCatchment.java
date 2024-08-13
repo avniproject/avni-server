@@ -23,7 +23,7 @@ public class VirtualCatchment {
     @JoinColumn(name = "catchment_id")
     private Catchment catchment;
 
-    @ManyToOne(cascade = {CascadeType.ALL})
+    @ManyToOne
     @JoinColumn(name = "addresslevel_id")
     private AddressLevel addressLevel;
 

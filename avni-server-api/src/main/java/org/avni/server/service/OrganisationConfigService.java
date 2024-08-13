@@ -2,7 +2,6 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.ConceptRepository;
@@ -80,13 +79,18 @@ public class OrganisationConfigService implements NonScopeAwareService {
     }
 
     public OrganisationConfig createDefaultOrganisationConfig(Organisation organisation) {
-        OrganisationConfig organisationConfig = new OrganisationConfig();
-        organisationConfig.assignUUID();
+        OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        if (Objects.isNull(organisationConfig)) {
+            organisationConfig = new OrganisationConfig();
+            organisationConfig.assignUUID();
+            organisationConfig.setOrganisationId(organisation.getId());
+        }
         Map<String, Object> settings = new HashMap<>();
         settings.put("languages", new String[]{"en"});
         JsonObject jsonObject = new JsonObject(settings);
         organisationConfig.setSettings(jsonObject);
-        organisationConfig.setOrganisationId(organisation.getId());
+        organisationConfig.setExportSettings(new JsonObject());
+        organisationConfig.setWorklistUpdationRule(null);
         return organisationConfigRepository.save(organisationConfig);
     }
 
@@ -323,5 +327,30 @@ public class OrganisationConfigService implements NonScopeAwareService {
         savedSettings.remove(name);
         organisationConfigRepository.save(organisationConfig);
         return ResponseEntity.ok().build();
+    }
+
+    public OrganisationConfig deleteMetadataRelatedSettings() {
+        OrganisationConfig organisationConfig = getCurrentOrganisationConfig();
+        organisationConfig.setSettings(updateOrganisationConfigSettings(getMetadataConfigSettingsAfterReset(),
+                organisationConfig.getSettings()));
+        organisationConfig.setExportSettings(new JsonObject());
+        organisationConfig.setWorklistUpdationRule(null);
+        organisationConfig.updateAudit();
+        return organisationConfigRepository.save(organisationConfig);
+    }
+
+    private JsonObject getMetadataConfigSettingsAfterReset() {
+        OrganisationConfigSettingKey[] metadataRelatedConfigSettingKeys = {
+                OrganisationConfigSettingKey.searchFilters,
+                OrganisationConfigSettingKey.customRegistrationLocations,
+                OrganisationConfigSettingKey.myDashboardFilters,
+                OrganisationConfigSettingKey.searchResultFields,
+                OrganisationConfigSettingKey.lowestAddressLevelType
+        };
+        JsonObject settings = new JsonObject();
+        Arrays.asList(metadataRelatedConfigSettingKeys).stream()
+                .forEach(settingKey -> settings.put(String.valueOf(settingKey), Collections.emptyList()));
+        settings.put(OrganisationConfig.Extension.EXTENSION_DIR, Collections.emptyList());
+        return settings;
     }
 }

@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.avni.messaging.domain.Constants.NO_OF_DIGITS_IN_INDIAN_MOBILE_NO;
@@ -200,6 +197,7 @@ public class UserService implements NonScopeAwareService {
             idpServiceFactory.getIdpService(user).deleteUser(user);
             user.setVoided(true);
             user.setDisabledInCognito(true);
+            user.setUserGroups(user.getUserGroups().stream().filter(ug -> ug.getGroup().isEveryone()).collect(Collectors.toList()));
             userRepository.save(user);
             logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);

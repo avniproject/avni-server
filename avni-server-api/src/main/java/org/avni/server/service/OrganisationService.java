@@ -353,6 +353,147 @@ public class OrganisationService {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
+    /* Tables that are not part of any org data clean up are as follows:
+     *                 organisationCategoryRepository, // Not org specific
+     *                 organisationStatusRepository, // Not org specific
+     *                 organisationGroupOrganisationRepository, // Deleting orgGroup Org is out of scope
+     *                 organisationGroupRepository, // Deleting orgGroup is out of scope
+     *                 organisationRepository, // Deleting org itself is out of scope
+     *
+     *                 batch_job_instance // Not org specific
+     *                 batch_job_execution // Not org specific
+     *                 batch_step_execution // Not org specific
+     *                 batch_job_execution_context // Not org specific
+     *                 batch_job_execution_params // Not org specific
+     *                 batch_step_execution_context // Not org specific
+     *
+     *                 audit //Deprecated
+     *                 facility //Deprecated
+     *                 program_outcome //Deprecated
+     *                 dashboard_card_mapping //Deprecated
+     *                 deps_saved_ddl // Not org specific
+     *                 schema_version // Not org specific
+     *                 scheduled_job_run // Not org specific
+     *                 privilegeRepository, // Not org specific
+     *                 flyway_schema_history // Not org specific
+     *                 approvalStatusRepository, // Not org specific
+     *                 platformTranslationRepository, // Not org specific
+     *                 standardReportCardTypeRepository, // Not org specific
+     */
+
+    private CrudRepository[] getTxCrudRepositories() {
+        CrudRepository[] txCrudRepositories = {
+                exportJobParametersRepository,
+                manualMessageRepository,
+                messageReceiverRepository,
+                messageRequestQueueRepository,
+                ruleFailureLogRepository,
+        };
+        return txCrudRepositories;
+    }
+
+    private JpaRepository[] getTxJpaRepositories() {
+        JpaRepository[] transactionalRepositories = {
+                newsRepository,
+                commentRepository,
+                commentThreadRepository,
+                entityApprovalStatusRepository,
+                ruleFailureTelemetryRepository,
+                identifierAssignmentRepository,
+                syncTelemetryRepository,
+                videoTelemetricRepository,
+                groupSubjectRepository,
+                individualRelationshipRepository,
+                checklistItemRepository,
+                checklistRepository,
+                programEncounterRepository,
+                programEnrolmentRepository,
+                encounterRepository,
+                subjectMigrationRepository,
+                userSubjectAssignmentRepository,
+                subjectProgramEligibilityRepository,
+                taskUnAssignmentRepository,
+                taskRepository,
+                userSubjectRepository,
+                individualRepository,
+                resetSyncRepository,
+        };
+        return transactionalRepositories;
+    }
+
+    private CrudRepository[] getMetadataCrudRepositories() {
+        CrudRepository[] metadataCrudRepositories = {
+                messageRuleRepository,
+                customQueryRepository,
+        };
+        return metadataCrudRepositories;
+    }
+
+    private JpaRepository[] getMetadataJpaRepositories() {
+        JpaRepository[] metadataRepositories = {
+                groupPrivilegeRepository,
+                groupRoleRepository,
+                checklistItemDetailRepository,
+                checklistDetailRepository,
+                individualRelationGenderMappingRepository,
+                individualRelationshipTypeRepository,
+                individualRelationRepository,
+                formElementRepository,
+                formElementGroupRepository,
+                formMappingRepository,
+                formRepository,
+                conceptAnswerRepository,
+                conceptRepository,
+                operationalEncounterTypeRepository,
+                encounterTypeRepository,
+                operationalProgramRepository,
+                programRepository,
+                operationalSubjectTypeRepository,
+                subjectTypeRepository,
+                translationRepository,
+                videoRepository,
+                dashboardSectionCardMappingRepository,
+                cardRepository,
+                dashboardSectionRepository,
+                groupDashboardRepository,
+                dashboardRepository,
+                answerConceptMigrationRepository,
+                dashboardFilterRepository,
+                documentationItemRepository,
+                documentationRepository,
+                menuItemRepository,
+                ruleRepository,
+                ruleDependencyRepository,
+                taskTypeRepository,
+                taskStatusRepository,
+                translationRepository,
+                userSubjectAssignmentRepository,
+        };
+        return metadataRepositories;
+    }
+
+    private CrudRepository[] getAdminConfigCrudRepositories() {
+        CrudRepository[] adminConfigCrudRepositories = {
+                externalSystemConfigRepository,
+        };
+        return adminConfigCrudRepositories;
+    }
+
+    private JpaRepository[] getAdminConfigJPARepositories() {
+        JpaRepository[] adminConfigRepositories = {
+                msg91ConfigRepository,
+                identifierUserAssignmentRepository,
+                identifierSourceRepository,
+                genderRepository,
+                catchmentRepository,
+                locationMappingRepository,
+                locationRepository,
+                addressLevelTypeRepository,
+                organisationConfigRepository,
+        };
+        return adminConfigRepositories;
+    }
+
     public void addOrganisationConfig(Long orgId, ZipOutputStream zos) throws IOException {
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(orgId);
         if (organisationConfig != null) {
@@ -595,7 +736,7 @@ public class OrganisationService {
 
     public void addReportCardIcons(ZipOutputStream zos) throws IOException {
         List<Card> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
-            .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
+                .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
         if (cards.size() > 0) {
             addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
@@ -645,6 +786,7 @@ public class OrganisationService {
     public void addApplicationMenus(ZipOutputStream zos) throws IOException {
         addFileToZip(zos, "menuItem.json", menuItemService.findAll().stream().map(MenuItemContract::new).collect(Collectors.toList()));
     }
+
     public void addMessageRules(ZipOutputStream zos) throws IOException {
         addFileToZip(zos, "messageRule.json", messagingService.findAll().stream().map(messageRule -> new MessageRuleContract(messageRule, entityTypeRetrieverService)).collect(Collectors.toList()));
     }
@@ -713,110 +855,23 @@ public class OrganisationService {
         zos.closeEntry();
     }
 
-
     public void deleteTransactionalData(Organisation organisation) {
         deleteNonRepositoryTransactionalData(organisation);
-        JpaRepository[] transactionalRepositories = {
-            newsRepository,
-            commentRepository,
-            commentThreadRepository,
-            entityApprovalStatusRepository,
-            ruleFailureTelemetryRepository,
-            identifierAssignmentRepository,
-            syncTelemetryRepository,
-            videoTelemetricRepository,
-            groupSubjectRepository,
-            individualRelationshipRepository,
-            checklistItemRepository,
-            checklistRepository,
-            programEncounterRepository,
-            programEnrolmentRepository,
-            encounterRepository,
-            subjectMigrationRepository,
-            userSubjectAssignmentRepository,
-            subjectProgramEligibilityRepository,
-            taskUnAssignmentRepository,
-            taskRepository,
-            userSubjectRepository,
-            individualRepository,
-            resetSyncRepository,
-        };
-
-        CrudRepository[] txCrudRepositories = {
-            exportJobParametersRepository,
-            manualMessageRepository,
-            messageReceiverRepository,
-            messageRequestQueueRepository,
-            ruleFailureLogRepository,
-        };
-
-        Arrays.asList(txCrudRepositories).forEach(this::deleteAll);
-        Arrays.asList(transactionalRepositories).forEach(this::deleteAll);
+        Arrays.asList(getTxCrudRepositories()).forEach(this::deleteAll);
+        Arrays.asList(getTxJpaRepositories()).forEach(this::deleteAll);
     }
 
     public void deleteMetadata(Organisation organisation) {
         deleteNonRepositoryMetadata(organisation);
-        JpaRepository[] metadataRepositories = {
-                groupPrivilegeRepository,
-                groupRoleRepository,
-                checklistItemDetailRepository,
-                checklistDetailRepository,
-                identifierUserAssignmentRepository,
-                identifierSourceRepository,
-                individualRelationGenderMappingRepository,
-                individualRelationRepository,
-                individualRelationshipTypeRepository,
-                formElementRepository,
-                formElementGroupRepository,
-                formMappingRepository,
-                formRepository,
-                conceptAnswerRepository,
-                conceptRepository,
-                operationalEncounterTypeRepository,
-                encounterTypeRepository,
-                operationalProgramRepository,
-                programRepository,
-                operationalSubjectTypeRepository,
-                subjectTypeRepository,
-                organisationConfigRepository,
-                translationRepository,
-                videoRepository,
-                dashboardSectionCardMappingRepository,
-                cardRepository,
-                dashboardSectionRepository,
-                groupDashboardRepository,
-                dashboardRepository,
-                msg91ConfigRepository,
-                genderRepository,
-                userGroupRepository,
-                groupRepository,
-                answerConceptMigrationRepository,
-                dashboardFilterRepository,
-                documentationRepository,
-                documentationItemRepository,
-                menuItemRepository,
-                ruleRepository,
-                ruleDependencyRepository,
-                taskTypeRepository,
-                taskStatusRepository,
-                translationRepository,
-                userSubjectAssignmentRepository,
-        };
-
-        CrudRepository[] metadataCrudRepositories = {
-                        messageRuleRepository,
-                        customQueryRepository,
-        };
-
-        Arrays.asList(metadataRepositories).forEach(this::deleteAll);
-        Arrays.asList(metadataCrudRepositories).forEach(this::deleteAll);
-
+        Arrays.asList(getMetadataJpaRepositories()).forEach(this::deleteAll);
+        Arrays.asList(getMetadataCrudRepositories()).forEach(this::deleteAll);
+        userRepository.findAllByOrganisationId(organisation.getId()).stream().forEach(user -> user.setSyncSettings(new JsonObject()));
     }
 
-public void deleteNonRepositoryTransactionalData(Organisation organisation) {
-    String individualRelativeDeletionQuery = "delete from individual_relative where organisation_id = %d and organisation_id > 1";
-    jdbcTemplate.execute(String.format(individualRelativeDeletionQuery, organisation.getId()));
-}
+    public void deleteNonRepositoryTransactionalData(Organisation organisation) {
+        String individualRelativeDeletionQuery = "delete from individual_relative where organisation_id = %d and organisation_id > 1";
+        jdbcTemplate.execute(String.format(individualRelativeDeletionQuery, organisation.getId()));
+    }
 
     public void deleteNonRepositoryMetadata(Organisation organisation) {
         String decisionConceptsDeletionQuery = "delete from decision_concept dc using concept c where dc.concept_id = c.id and c.organisation_id = %d and c.organisation_id > 1";
@@ -826,61 +881,40 @@ public void deleteNonRepositoryTransactionalData(Organisation organisation) {
     }
 
     public void deleteAdminConfigData(Organisation organisation) {
+        removeCatchmentAssignmentAndDeleteNonAdminUsers(organisation);
+        deleteNonDefaultGroupsAndTheirMappings();
         deleteNonRepositoryAdminConfigData(organisation);
-        JpaRepository[] adminConfigRepositories = {
-                catchmentRepository,
-                locationMappingRepository,
-                locationRepository,
-                addressLevelTypeRepository,
-                msg91ConfigRepository,
+        Arrays.asList(getAdminConfigCrudRepositories()).forEach(this::deleteAll);
+        Arrays.asList(getAdminConfigJPARepositories()).forEach(this::deleteAll);
+    }
 
-//                organisationCategoryRepository, // Not org specific
-//                organisationStatusRepository, // Not org specific
-//                organisationGroupOrganisationRepository, // Deleting orgGroup Org is out of scope
-//                organisationGroupRepository, // Deleting orgGroup is out of scope
-//                organisationRepository, // Deleting org itself is out of scope
+    private void deleteNonDefaultGroupsAndTheirMappings() {
+        List<Group> nonDefaultGroups = groupRepository.findAll().stream()
+                .filter(group -> !group.isOneOfTheDefaultGroups())
+                .collect(Collectors.toList());
+        userGroupRepository.deleteAllByGroupIn(nonDefaultGroups);
+        groupRepository.deleteAll(nonDefaultGroups);
+    }
 
-//                batch_job_instance // Not org specific
-//                batch_job_execution // Not org specific
-//                batch_step_execution // Not org specific
-//                batch_job_execution_context // Not org specific
-//                batch_job_execution_params // Not org specific
-//                batch_step_execution_context // Not org specific
-
-//                audit //Deprecated
-//                facility //Deprecated
-//                program_outcome //Deprecated
-//                dashboard_card_mapping //Deprecated
-//                deps_saved_ddl // Not org specific
-//                schema_version // Not org specific
-//                scheduled_job_run // Not org specific
-//                privilegeRepository, // Not org specific
-//                flyway_schema_history // Not org specific
-//                approvalStatusRepository, // Not org specific
-//                platformTranslationRepository, // Not org specific
-//                standardReportCardTypeRepository, // Not org specific
-        };
-
-        CrudRepository[] adminConfigCrudRepositories = {
-                externalSystemConfigRepository,
-        };
-
-        Arrays.asList(adminConfigRepositories).forEach(this::deleteAll);
-        Arrays.asList(adminConfigCrudRepositories).forEach(this::deleteAll);
-        userRepository.findAllByOrganisationId(organisation.getId()).stream().filter(user -> !user.hasAllPrivileges()).forEach(user -> userService.deleteUser(user.getId()));
+    private void removeCatchmentAssignmentAndDeleteNonAdminUsers(Organisation organisation) {
+        userRepository.findAllByOrganisationId(organisation.getId()).stream().forEach(user -> user.removeCatchment());
+        userRepository.findAllByOrganisationId(organisation.getId()).stream()
+                .filter(user -> !user.hasAllPrivileges()).forEach(user -> userService.deleteUser(user.getId()));
     }
 
     public void deleteNonRepositoryAdminConfigData(Organisation organisation) {
-        String catchmentAddressMappingDeletionQuery = "delete from catchment_address_mapping cam using address_level al where cam.addresslevel_id = al.id and al.organisation_id = %d and al.organisation_id > 1)";
-        jdbcTemplate.execute(String.format(catchmentAddressMappingDeletionQuery, organisation.getId().toString()));
+        String catchmentAddressMappingDeletionQuery = "delete from catchment_address_mapping cam using address_level al where cam.addresslevel_id = al.id and al.organisation_id = %d and al.organisation_id > 1";
+        jdbcTemplate.execute(String.format(catchmentAddressMappingDeletionQuery, organisation.getId()));
     }
 
     private void deleteAll(JpaRepository repository) {
         repository.deleteAllInBatch();
     }
+
     private void deleteAll(CrudRepository repository) {
         repository.deleteAll();
     }
+
     public void deleteMediaContent(boolean deleteMetadata) {
         try {
             s3Service.deleteOrgMedia(deleteMetadata);
@@ -888,6 +922,7 @@ public void deleteNonRepositoryTransactionalData(Organisation organisation) {
             logger.info("Error while deleting the media files, skipping.");
         }
     }
+
     public void deleteETLData(Organisation organisation) {
         String baseQuery = "select delete_etl_metadata_for_schema('$impl_schema', '$impl_db_user', '$impl_db_owner')";
         String query = baseQuery
@@ -906,6 +941,9 @@ public void deleteNonRepositoryTransactionalData(Organisation organisation) {
     }
 
     private void createGender(String genderName, Organisation org) {
+        if (Objects.nonNull(genderRepository.findByName(genderName))) {
+            return;
+        }
         Gender gender = new Gender();
         gender.setName(genderName);
         gender.assignUUID();
@@ -913,7 +951,10 @@ public void deleteNonRepositoryTransactionalData(Organisation organisation) {
         genderRepository.save(gender);
     }
 
-    private void addDefaultGroup(Long organisationId, String groupType) {
+    private void addDefaultGroupIfNotPresent(Long organisationId, String groupType) {
+        if (Objects.nonNull(groupRepository.findByNameAndOrganisationId(groupType, organisationId))) {
+            return;
+        }
         Group group = new Group();
         group.setName(groupType);
         group.setOrganisationId(organisationId);
@@ -929,11 +970,14 @@ public void deleteNonRepositoryTransactionalData(Organisation organisation) {
         createGender("Other", org);
     }
 
-    public void setupBaseOrganisationData(Organisation organisation) {
-        createDefaultGenders(organisation);
-        addDefaultGroup(organisation.getId(), Group.Everyone);
-        addDefaultGroup(organisation.getId(), Group.Administrators);
+    public void setupBaseOrganisationAdminConfig(Organisation organisation) {
         organisationConfigService.createDefaultOrganisationConfig(organisation);
+    }
+
+    public void setupBaseOrganisationMetadata(Organisation organisation) {
+        createDefaultGenders(organisation);
+        addDefaultGroupIfNotPresent(organisation.getId(), Group.Everyone);
+        addDefaultGroupIfNotPresent(organisation.getId(), Group.Administrators);
     }
 
     public Organisation getCurrentOrganisation() {

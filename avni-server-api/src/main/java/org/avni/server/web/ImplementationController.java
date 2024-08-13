@@ -5,6 +5,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.OrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +28,13 @@ import java.util.zip.ZipOutputStream;
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
 
     private final OrganisationService organisationService;
+    private final OrganisationConfigService organisationConfigService;
     private final AccessControlService accessControlService;
 
     @Autowired
-    public ImplementationController(OrganisationService organisationService, AccessControlService accessControlService) {
+    public ImplementationController(OrganisationService organisationService, OrganisationConfigService organisationConfigService, AccessControlService accessControlService) {
         this.organisationService = organisationService;
+        this.organisationConfigService = organisationConfigService;
         this.accessControlService = accessControlService;
     }
 
@@ -111,11 +114,13 @@ public class ImplementationController implements RestControllerResourceProcessor
         if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
             return new ResponseEntity<>("Production organisation's data cannot be deleted", HttpStatus.CONFLICT);
         }
-
+        //Delete
         checkPrivilegeAndDeleteTransactionalData(organisation);
-        checkPrivilegeAndDeleteMetadata(deleteMetadata, organisation);
         selectivelyCleanupMediaContent(deleteMetadata);
-        checkPrivilegeAndDeleteAdminConfigurationData(deleteAdminConfig, organisation);
+        checkPrivilegeAndDeleteMetadata(deleteMetadata, organisation);
+        checkPrivilegeAndDeleteAdminConfig(deleteAdminConfig, organisation);
+        //Recreate
+        checkPrivilegeAndRecreateBasicAdminConfig(deleteAdminConfig);
         checkPrivilegeAndRecreateBasicMetadata(deleteMetadata);
 
         return new ResponseEntity<>(HttpStatus.OK);
@@ -124,11 +129,18 @@ public class ImplementationController implements RestControllerResourceProcessor
     private void checkPrivilegeAndRecreateBasicMetadata(boolean deleteMetadata) {
         if (deleteMetadata) {
             accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-            organisationService.setupBaseOrganisationData(UserContextHolder.getOrganisation());
+            organisationService.setupBaseOrganisationMetadata(UserContextHolder.getOrganisation());
         }
     }
 
-    private void checkPrivilegeAndDeleteAdminConfigurationData(boolean deleteAdminConfig, Organisation organisation) {
+    private void checkPrivilegeAndRecreateBasicAdminConfig(boolean deleteAdminConfig) {
+        if (deleteAdminConfig) {
+            accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
+            organisationService.setupBaseOrganisationAdminConfig(UserContextHolder.getOrganisation());
+        }
+    }
+
+    private void checkPrivilegeAndDeleteAdminConfig(boolean deleteAdminConfig, Organisation organisation) {
         if(deleteAdminConfig){
             accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
             organisationService.deleteAdminConfigData(organisation);
@@ -147,8 +159,9 @@ public class ImplementationController implements RestControllerResourceProcessor
     private void checkPrivilegeAndDeleteMetadata(boolean deleteMetadata, Organisation organisation) {
         if (deleteMetadata) {
             accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
-            organisationService.deleteMetadata(organisation);
             organisationService.deleteETLData(organisation);
+            organisationConfigService.deleteMetadataRelatedSettings();
+            organisationService.deleteMetadata(organisation);
         }
     }
 

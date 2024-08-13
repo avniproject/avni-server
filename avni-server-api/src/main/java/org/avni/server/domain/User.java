@@ -195,6 +195,11 @@ public class User {
         this.catchment = catchment;
     }
 
+    public void removeCatchment() {
+        this.catchment = null;
+        this.operatingIndividualScope = OperatingIndividualScope.None;
+    }
+
     public Boolean isVoided() {
         return isVoided;
     }
