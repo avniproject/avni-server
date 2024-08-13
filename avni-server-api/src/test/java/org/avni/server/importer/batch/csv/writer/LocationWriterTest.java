@@ -21,17 +21,14 @@ import java.util.List;
 import static org.mockito.Mockito.*;
 
 public class LocationWriterTest {
-    private AddressLevelTypeRepository addressLevelTypeRepository;
-    private LocationRepository locationRepository;
-    private LocationService locationService;
     private ImportService importService;
     private LocationWriter locationWriter;
 
     @Before
     public void setup() {
-        addressLevelTypeRepository = mock(AddressLevelTypeRepository.class);
-        locationRepository = mock(LocationRepository.class);
-        locationService = mock(LocationService.class);
+        AddressLevelTypeRepository addressLevelTypeRepository = mock(AddressLevelTypeRepository.class);
+        LocationRepository locationRepository = mock(LocationRepository.class);
+        LocationService locationService = mock(LocationService.class);
         importService = mock(ImportService.class);
         locationWriter = new LocationWriter(locationService, locationRepository, addressLevelTypeRepository, mock(ObservationCreator.class), importService, mock(FormService.class));
         when(locationService.save(any())).thenReturn(new AddressLevel());

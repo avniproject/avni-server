@@ -185,9 +185,9 @@ public class ImportService implements ImportLocationsConstants{
         return sampleFileBuilder.toString();
     }
 
-    public List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) throws Exception {
+    public List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) {
         if(!StringUtils.hasText(locationHierarchy)) {
-            throw new Exception(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
+            throw new RuntimeException(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
         }
         List<Long> selectedLocationHierarchy = Arrays.stream(locationHierarchy.split("\\."))
                 .map(Long::parseLong).collect(Collectors.toList());
@@ -388,13 +388,13 @@ public class ImportService implements ImportLocationsConstants{
         return "\"" + conceptName + "\"";
     }
 
-    private String addToResponse(String inputString, List headers) {
+    private String addToResponse(String inputString, List<String> headers) {
         String outputString = addCommaIfNecessary(inputString);
         return outputString.concat(String.join(",", headers));
     }
 
     private String addCommaIfNecessary(String str) {
-        if (str.length() > 0) {
+        if (!str.isEmpty()) {
             return str.concat(",");
         }
         return str;
