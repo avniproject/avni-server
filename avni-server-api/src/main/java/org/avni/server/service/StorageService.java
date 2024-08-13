@@ -13,7 +13,6 @@ import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
-import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.S;

@@ -456,9 +456,9 @@ public class OrganisationService {
                 cardRepository,
                 dashboardSectionRepository,
                 groupDashboardRepository,
+                dashboardFilterRepository,
                 dashboardRepository,
                 answerConceptMigrationRepository,
-                dashboardFilterRepository,
                 documentationItemRepository,
                 documentationRepository,
                 menuItemRepository,
@@ -892,8 +892,10 @@ public class OrganisationService {
         List<Group> nonDefaultGroups = groupRepository.findAll().stream()
                 .filter(group -> !group.isOneOfTheDefaultGroups())
                 .collect(Collectors.toList());
-        userGroupRepository.deleteAllByGroupIn(nonDefaultGroups);
-        groupRepository.deleteAll(nonDefaultGroups);
+        if(nonDefaultGroups != null && !nonDefaultGroups.isEmpty()) {
+            userGroupRepository.deleteAllByGroupIn(nonDefaultGroups);
+            groupRepository.deleteAll(nonDefaultGroups);
+        }
     }
 
     private void removeCatchmentAssignmentAndDeleteNonAdminUsers(Organisation organisation) {
