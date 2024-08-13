@@ -323,3 +323,9 @@ BEGIN
   END;
 END $$
   STABLE;
+
+CREATE OR REPLACE FUNCTION no_op() RETURNS trigger AS $$
+BEGIN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;

@@ -31,6 +31,13 @@ CREATE or replace VIEW virtual_catchment_address_mapping_table AS
 SELECT *
 FROM virtual_catchment_address_mapping_table_function();
 
+DROP TRIGGER IF EXISTS delete_on_virtual_catchment_address_mapping ON virtual_catchment_address_mapping_table CASCADE;
+
+CREATE TRIGGER delete_on_virtual_catchment_address_mapping
+    INSTEAD OF DELETE
+    ON virtual_catchment_address_mapping_table
+    FOR EACH ROW
+EXECUTE FUNCTION no_op();
 
 DROP VIEW if exists address_level_type_view;
 

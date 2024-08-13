@@ -140,6 +140,9 @@ boot_run:
 test_server: rebuild_testdb ## Run tests
 	GRADLE_OPTS="-Xmx256m" ./gradlew clean test
 
+test_server_without_clean_rebuild:  ## Run tests
+	GRADLE_OPTS="-Xmx256m" ./gradlew test
+
 test_server_with_remote_db:
 	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER)
 	OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):5432/openchs_test GRADLE_OPTS="-Xmx256m" ./gradlew clean test
