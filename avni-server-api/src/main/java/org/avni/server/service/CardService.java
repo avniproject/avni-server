@@ -113,8 +113,8 @@ public class CardService implements NonScopeAwareService {
             if (recentDuration == null) {
                 throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
             }
+            card.setStandardReportCardInputRecentDuration(recentDuration);
         }
-        card.setStandardReportCardInputRecentDuration(recentDuration);
     }
 
     private boolean isRecentStandardReportCard(String cardTypeName) {
