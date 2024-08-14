@@ -10,6 +10,12 @@ import org.avni.server.web.TestWebContextService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.mail.Address;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 public class TestDataSetupService {
     @Autowired
@@ -79,6 +85,17 @@ public class TestDataSetupService {
         return new TestCatchmentData(addressLevelType, addressLevel1, addressLevel2, catchment);
     }
 
+    public AddressLevel setupLocationHierarchy(Map<Integer, String> locationTypes, Map<String, String> locations) {
+        List<AddressLevelType> addressLevelTypes = locationTypes.entrySet().stream().map(levelNameEntry -> new AddressLevelTypeBuilder().name(levelNameEntry.getValue()).level(levelNameEntry.getKey().doubleValue()).build()).collect(Collectors.toList());
+        List<AddressLevelType> savedAddressLevelTypes = addressLevelTypeRepository.saveAll(addressLevelTypes);
+
+        locations.forEach((levelName, locationName) -> {
+            AddressLevelType addressLevelType = savedAddressLevelTypes.stream().filter(type -> type.getName().equals(levelName)).findFirst().get();
+            AddressLevel addressLevel = testLocationService.save(new AddressLevelBuilder().type(addressLevelType).title(locationName).build());
+        });
+        return null;
+    }
+
     public TestSyncAttributeBasedSubjectTypeData setupSubjectTypeWithSyncAttributes() {
         Concept conceptForAttributeBasedSync = testConceptService.createCodedConcept("Concept Name 1", "Answer 1", "Answer 2");
         SubjectType subjectType = testSubjectTypeService.createWithDefaults(
@@ -89,6 +106,24 @@ public class TestDataSetupService {
                         .setSyncRegistrationConcept1Usable(true)
                         .setSyncRegistrationConcept1(conceptForAttributeBasedSync.getUuid()).build());
         return new TestSyncAttributeBasedSubjectTypeData(subjectType, conceptForAttributeBasedSync);
+    }
+
+    public static class TestLocation {
+        private final String title;
+        private final String parentTitle;
+
+        public TestLocation(String title, String parentTitle) {
+            this.title = title;
+            this.parentTitle = parentTitle;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getParentTitle() {
+            return parentTitle;
+        }
     }
 
     public static class TestSyncAttributeBasedSubjectTypeData {
