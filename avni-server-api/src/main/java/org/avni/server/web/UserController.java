@@ -56,8 +56,6 @@ public class UserController {
     private final AccountAdminRepository accountAdminRepository;
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
-
-    private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
     private final AccessControlService accessControlService;
 
     @Autowired
@@ -93,14 +91,19 @@ public class UserController {
     public ResponseEntity createUser(@RequestBody UserContract userContract) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
-            if (usernameExists(userContract.getUsername()))
+            if (isUserNameInvalid(userContract.getUsername())) {
+                throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
+            }
+
+            if (usernameExists(userContract.getUsername().trim())) {
                 throw new ValidationException(String.format("Username %s already exists", userContract.getUsername()));
+            }
 
             User user = new User();
             user.setUuid(UUID.randomUUID().toString());
             logger.info(String.format("Creating user with username '%s' and UUID '%s'", userContract.getUsername(), user.getUuid()));
 
-            user.setUsername(userContract.getUsername());
+            user.setUsername(userContract.getUsername().trim());
             user = setUserAttributes(user, userContract, getRegionForUser(userContract));
 
             User savedUser = userService.save(user);
@@ -178,7 +181,7 @@ public class UserController {
     }
 
     private Boolean isNameInvalid(String name) {
-        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
+        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, ValidationUtil.COMMON_INVALID_CHARS_PATTERN);
     }
 
     private User setUserAttributes(User user, UserContract userContract, String userRegion) {
@@ -196,7 +199,7 @@ public class UserController {
             throw new ValidationException(String.format("Invalid name %s", userContract.getName()));
         }
 
-        user.setName(userContract.getName());
+        user.setName(userContract.getName().trim());
         if (userContract.getCatchmentId() != null) {
             user.setCatchment(catchmentRepository.findOne(userContract.getCatchmentId()));
         }
