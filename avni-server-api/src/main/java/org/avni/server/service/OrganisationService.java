@@ -380,10 +380,10 @@ public class OrganisationService {
     }
 
     public void addGroupPrivilegeJson(ZipOutputStream zos) throws IOException {
-        List<GroupPrivilegeContractWeb> groupPrivileges = groupPrivilegeRepository.findAll().stream()
+        List<GroupPrivilegeBundleContract> groupPrivileges = groupPrivilegeRepository.findAll().stream()
                 .filter(groupPrivilege -> !groupPrivilege.getGroup().isAdministrator())
                 .filter(groupPrivilege -> groupPrivilege.getImplVersion() == GroupPrivilege.IMPL_VERSION)
-                .map(GroupPrivilegeContractWeb::fromEntity).collect(Collectors.toList());
+                .map(GroupPrivilegeBundleContract::fromEntity).collect(Collectors.toList());
         if (!groupPrivileges.isEmpty()) {
             addFileToZip(zos, "groupPrivilege.json", groupPrivileges);
         }

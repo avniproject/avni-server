@@ -15,14 +15,14 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.NonScopeAwareService;
 import org.avni.server.util.CollectionUtil;
+import org.avni.server.web.request.GroupPrivilegeBundleContract;
 import org.avni.server.web.request.GroupPrivilegeContractWeb;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class GroupPrivilegeService implements NonScopeAwareService {
@@ -175,44 +175,45 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         return allGroupPrivileges;
     }
 
-    public void savePrivileges(GroupPrivilegeContractWeb[] requests, Organisation organisation) {
+    public void savePrivilegesFromBundle(GroupPrivilegeBundleContract[] groupPrivilegeBundleContracts, Organisation organisation) {
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByImplVersion(GroupPrivilege.IMPL_VERSION);
-        List<Privilege> privileges = privilegeRepository.findAll();
+        Map<PrivilegeType, Privilege> privilegeMapByType = privilegeRepository.findAll().stream().collect(Collectors.toMap(Privilege::getType, Function.identity()));
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll();
         List<Program> programs = programRepository.findAll();
         List<EncounterType> encounterTypes = encounterTypeRepository.findAll();
         List<ChecklistDetail> checklistDetails = checklistDetailRepository.findAll();
         List<Group> groups = groupRepository.findAll();
 
-        Arrays.stream(requests).forEach(request -> {
+        Arrays.stream(groupPrivilegeBundleContracts).forEach(groupPrivilegeBundleContract -> {
             try {
-                Group targetedGroup = getGroup(request, organisation, groups);
+                Group targetedGroup = getGroup(groupPrivilegeBundleContract, organisation, groups);
                 GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
                     Objects.equals(targetedGroup.getUuid(), gp.getGroupUuid())
-                    && Objects.equals(request.getPrivilegeUUID(), gp.getPrivilegeUuid())
-                    && Objects.equals(request.getSubjectTypeUUID(), gp.getSubjectTypeUuid())
-                    && Objects.equals(request.getProgramUUID(), gp.getProgramUuid())
-                    && Objects.equals(request.getProgramEncounterTypeUUID(), gp.getProgramEncounterTypeUuid())
-                    && Objects.equals(request.getEncounterTypeUUID(), gp.getEncounterTypeUuid())
-                    && Objects.equals(request.getChecklistDetailUUID(), gp.getChecklistDetailUuid()))
+                    // rely on type since privilege uuid could be different across different installations
+                    && Objects.equals(groupPrivilegeBundleContract.getPrivilegeType(), gp.getPrivilege().getType())
+                    && Objects.equals(groupPrivilegeBundleContract.getSubjectTypeUUID(), gp.getSubjectTypeUuid())
+                    && Objects.equals(groupPrivilegeBundleContract.getProgramUUID(), gp.getProgramUuid())
+                    && Objects.equals(groupPrivilegeBundleContract.getProgramEncounterTypeUUID(), gp.getProgramEncounterTypeUuid())
+                    && Objects.equals(groupPrivilegeBundleContract.getEncounterTypeUUID(), gp.getEncounterTypeUuid())
+                    && Objects.equals(groupPrivilegeBundleContract.getChecklistDetailUUID(), gp.getChecklistDetailUuid()))
                     .findAny().orElse(null);
                 if (groupPrivilege == null) {
                     groupPrivilege = new GroupPrivilege();
                     //don't use uuid from request for bundle uploads since there could be records with matching uuid with older impl_version in db and unique org_uuid constraint is violated
                     groupPrivilege.assignUUID();
-                    groupPrivilege.setPrivilege(CollectionUtil.findByUuid(privileges, request.getPrivilegeUUID()));
-                    groupPrivilege.setSubjectType(CollectionUtil.findByUuid(subjectTypes, request.getSubjectTypeUUID()));
-                    groupPrivilege.setProgram(CollectionUtil.findByUuid(programs, request.getProgramUUID()));
-                    groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getEncounterTypeUUID()));
-                    groupPrivilege.setProgramEncounterType(CollectionUtil.findByUuid(encounterTypes, request.getProgramEncounterTypeUUID()));
-                    groupPrivilege.setChecklistDetail(CollectionUtil.findByUuid(checklistDetails, request.getChecklistDetailUUID()));
+                    groupPrivilege.setPrivilege(privilegeMapByType.get(groupPrivilegeBundleContract.getPrivilegeType()));
+                    groupPrivilege.setSubjectType(CollectionUtil.findByUuid(subjectTypes, groupPrivilegeBundleContract.getSubjectTypeUUID()));
+                    groupPrivilege.setProgram(CollectionUtil.findByUuid(programs, groupPrivilegeBundleContract.getProgramUUID()));
+                    groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, groupPrivilegeBundleContract.getEncounterTypeUUID()));
+                    groupPrivilege.setProgramEncounterType(CollectionUtil.findByUuid(encounterTypes, groupPrivilegeBundleContract.getProgramEncounterTypeUUID()));
+                    groupPrivilege.setChecklistDetail(CollectionUtil.findByUuid(checklistDetails, groupPrivilegeBundleContract.getChecklistDetailUUID()));
                     groupPrivilege.setGroup(targetedGroup);
                 }
 
-                groupPrivilege.setAllow(request.isAllow());
+                groupPrivilege.setAllow(groupPrivilegeBundleContract.isAllow());
                 groupPrivilegeRepository.saveGroupPrivilege(groupPrivilege);
             } catch (Exception e) {
-                throw new BulkItemSaveException(request, e);
+                throw new BulkItemSaveException(groupPrivilegeBundleContract, e);
             }
         });
     }

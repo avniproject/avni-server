@@ -332,8 +332,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 groupRoleService.saveGroupRoles(groupRoleContracts, organisation);
                 break;
             case "groupPrivilege.json":
-                GroupPrivilegeContractWeb[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeContractWeb[].class);
-                groupPrivilegeService.savePrivileges(groupPrivilegeContracts, organisation);
+                GroupPrivilegeBundleContract[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeBundleContract[].class);
+                groupPrivilegeService.savePrivilegesFromBundle(groupPrivilegeContracts, organisation);
                 break;
             case "groupDashboards.json":
                 GroupDashboardBundleContract[] contracts = convertString(fileData, GroupDashboardBundleContract[].class);
