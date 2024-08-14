@@ -87,19 +87,20 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         User.validateUsername(username, userSuffix);
-        User user = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
         boolean isNewUser = false;
         if (user == null) {
             user = new User();
             user.assignUUIDIfRequired();
-            user.setUsername(username);
+            user.setUsername(username.trim());
             isNewUser = true;
         }
         User.validateEmail(email);
         user.setEmail(email);
         userService.setPhoneNumber(phoneNumber, user, RegionUtil.getCurrentUserRegion());
-        user.setName(nameOfUser);
+        User.validateName(nameOfUser);
+        user.setName(nameOfUser.trim());
         if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);
         user.setCatchment(catchment);
         user.setOperatingIndividualScope(ByCatchment);
