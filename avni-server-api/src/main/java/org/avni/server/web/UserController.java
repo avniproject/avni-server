@@ -58,6 +58,8 @@ public class UserController {
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
 
+    private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
+
     @Autowired
     public UserController(CatchmentRepository catchmentRepository,
                           UserRepository userRepository,
@@ -181,7 +183,7 @@ public class UserController {
     }
 
     private Boolean isNameInvalid(String name) {
-        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, ValidationUtil.COMMON_INVALID_CHARS_PATTERN);
+        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
     }
 
     private User setUserAttributes(User user, UserContract userContract, String userRegion) {
