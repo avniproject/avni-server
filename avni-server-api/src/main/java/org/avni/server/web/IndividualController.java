@@ -354,7 +354,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
         try {
             logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
-            Individual savedIndividual = individualService.getIndividual(individualRequest.getUuid());
+            Individual savedIndividual = individualRepository.findEntity(individualRequest.getUuid());
             //Subject is changed after this line, hence the following line cannot be moved down closer to its usage
             SubjectPartitionData subjectPartitionData = SubjectPartitionData.create(savedIndividual);
 
