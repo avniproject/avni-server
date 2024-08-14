@@ -114,6 +114,9 @@ public class ImplementationController implements RestControllerResourceProcessor
         if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
             return new ResponseEntity<>("Production organisation's data cannot be deleted", HttpStatus.CONFLICT);
         }
+        if(deleteAdminConfig && !deleteMetadata) {
+            return new ResponseEntity<>("You cannot delete admin config data without deleting metadata", HttpStatus.BAD_REQUEST);
+        }
         //Delete
         checkPrivilegeAndDeleteTransactionalData(organisation);
         selectivelyCleanupMediaContent(deleteMetadata);
