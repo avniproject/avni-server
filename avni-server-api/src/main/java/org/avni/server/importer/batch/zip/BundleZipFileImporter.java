@@ -271,7 +271,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "subjectTypes.json":
                 SubjectTypeContract[] subjectTypeContracts = convertString(fileData, SubjectTypeContract[].class);
-                subjectTypeService.saveSubjectTypes(subjectTypeContracts);
+                subjectTypeService.saveSubjectTypesFromBundle(subjectTypeContracts);
                 break;
             case "operationalSubjectTypes.json":
                 OperationalSubjectTypesContract operationalSubjectTypesContract = convertString(fileData, OperationalSubjectTypesContract.class);

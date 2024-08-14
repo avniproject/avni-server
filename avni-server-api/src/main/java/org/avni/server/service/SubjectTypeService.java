@@ -44,6 +44,7 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final ConceptService conceptService;
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final UserService userService;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -54,7 +55,7 @@ public class SubjectTypeService implements NonScopeAwareService {
                               JobLauncher userSubjectTypeCreateJobLauncher,
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService, OrganisationConfigService organisationConfigService,
-                              AddressLevelTypeRepository addressLevelTypeRepository) {
+                              AddressLevelTypeRepository addressLevelTypeRepository, UserService userService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -66,6 +67,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
+        this.userService = userService;
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
@@ -258,12 +260,12 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     @Transactional
-    public void saveSubjectTypes(SubjectTypeContract[] subjectTypeContracts) {
+    public void saveSubjectTypesFromBundle(SubjectTypeContract[] subjectTypeContracts) {
         for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
             try {
                 SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract);
                 if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
-                    this.launchUserSubjectTypeJob(response.getSubjectType());
+                    userService.ensureSubjectsForUserSubjectType(response.getSubjectType());
                 }
             } catch (Exception e) {
                 throw new BulkItemSaveException(subjectTypeContract, e);
