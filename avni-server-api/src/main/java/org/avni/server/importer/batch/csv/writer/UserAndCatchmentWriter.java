@@ -2,17 +2,20 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
+import org.avni.server.web.validation.ValidationException;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -22,6 +25,7 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static org.avni.server.domain.OperatingIndividualScope.ByCatchment;
+import static org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders.*;
 
 @Component
 public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
@@ -60,37 +64,81 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
     @Override
     public void write(List<? extends Row> rows) throws Exception {
-        for (Row row : rows) write(row);
+        if(!CollectionUtils.isEmpty(rows)) {
+            validateHeaders(rows.get(0).getHeaders());
+            for (Row row : rows) write(row);
+        }
+    }
+
+    private void validateHeaders(String[] headers) {
+        List<String> headerList = Arrays.asList(headers);
+        List<String> allErrorMsgs = new ArrayList<>();
+        UsersAndCatchmentsHeaders usersAndCatchmentsHeaders = new UsersAndCatchmentsHeaders();
+        List<String> expectedStandardHeaders = Arrays.asList(usersAndCatchmentsHeaders.getAllHeaders());
+        List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
+        checkForMissingHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
+        checkForUnknownHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
+        if(!allErrorMsgs.isEmpty()) {
+            throw new RuntimeException(String.join(", ", allErrorMsgs));
+        }
+    }
+
+    private void checkForUnknownHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
+        headerList.removeIf(StringUtils::isEmpty);
+        headerList.removeIf(header -> expectedStandardHeaders.contains(header));
+        headerList.removeIf(header -> syncAttributeHeadersForSubjectTypes.contains(header));
+        if (!headerList.isEmpty()) {
+            allErrorMsgs.add("Unknown headers included in file. Please refer to sample file for valid list of headers.");
+        }
+    }
+
+    private void checkForMissingHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
+        if (headerList.isEmpty() || !headerList.containsAll(expectedStandardHeaders) || !headerList.containsAll(syncAttributeHeadersForSubjectTypes)) {
+            allErrorMsgs.add("Mandatory columns are missing from uploaded file. Please refer to sample file for the list of mandatory headers.");
+        }
     }
 
     private void write(Row row) throws Exception {
-        String fullAddress = row.get("Location with full hierarchy");
+        String fullAddress = row.get(LOCATION_WITH_FULL_HIERARCHY);
         if (fullAddress != null && fullAddress.startsWith(METADATA_ROW_START_STRING)) return;
-        String catchmentName = row.get("Catchment Name");
-        String nameOfUser = row.get("Full Name of User");
-        String username = row.get("Username");
-        String email = row.get("Email Address");
-        String phoneNumber = row.get("Mobile Number");
-        String language = row.get("Preferred Language");
+        String catchmentName = row.get(CATCHMENT_NAME);
+        String nameOfUser = row.get(FULL_NAME_OF_USER);
+        String username = row.get(USERNAME);
+        String email = row.get(EMAIL_ADDRESS);
+        String phoneNumber = row.get(MOBILE_NUMBER);
+        String language = row.get(PREFERRED_LANGUAGE);
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByName(language);
-        Boolean trackLocation = row.getBool("Track Location");
-        String datePickerMode = row.get("Date picker mode");
-        Boolean beneficiaryMode = row.getBool("Enable Beneficiary mode");
-        String idPrefix = row.get("Identifier Prefix");
-        String groupsSpecified = row.get("User Groups");
+        Boolean trackLocation = row.getBool(TRACK_LOCATION);
+        String datePickerMode = row.get(DATE_PICKER_MODE);
+        Boolean beneficiaryMode = row.getBool(ENABLE_BENEFICIARY_MODE);
+        String idPrefix = row.get(IDENTIFIER_PREFIX);
+        String groupsSpecified = row.get(USER_GROUPS);
         JsonObject syncSettings = constructSyncSettings(row);
-
-        if(Objects.isNull(locale)) {
-            throw new Exception(format("Provided value '%s' for Preferred Language is invalid;", language));
-        }
-
-        if(Objects.isNull(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode)) {
-            throw new Exception(format("Provided value '%s' for Date picker mode is invalid;", datePickerMode));
-        }
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress)
                 .orElseThrow(() -> new Exception(format(
                         "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'", fullAddress)));
+        if(!StringUtils.hasLength(catchmentName)) {
+            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", CATCHMENT_NAME));
+        }
+        if(!StringUtils.hasLength(username)) {
+            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", USERNAME));
+        }
+        if(!StringUtils.hasLength(nameOfUser)) {
+            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", FULL_NAME_OF_USER));
+        }
+        if(!StringUtils.hasLength(email)) {
+            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", EMAIL_ADDRESS));
+        }
+        if(!StringUtils.hasLength(phoneNumber)) {
+            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", MOBILE_NUMBER));
+        }
+        if(Objects.isNull(locale)) {
+            throw new Exception(format("Provided value '%s' for Preferred Language is invalid;", language));
+        }
+        if(Objects.isNull(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode)) {
+            throw new Exception(format("Provided value '%s' for Date picker mode is invalid;", datePickerMode));
+        }
 
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
@@ -153,7 +201,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         if (headerPatternMatcher.matches()) {
             String conceptName = headerPatternMatcher.group("conceptName");
             String conceptValues = row.get(saHeader);
-            if (StringUtils.isEmpty(conceptValues)) return;
+            if (StringUtils.isEmpty(conceptValues)) {
+                throw new ValidationException(String.format("Invalid or Empty value specified for mandatory field %s", saHeader));
+            }
             String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
             SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
 
