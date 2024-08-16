@@ -36,6 +36,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final Pattern compoundHeaderPattern;
     private final ResetSyncService resetSyncService;
     private static final String METADATA_ROW_START_STRING = "Mandatory field.";
+    private static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList("calendar", "spinner");
 
     @Autowired
     public UserAndCatchmentWriter(CatchmentService catchmentService,
@@ -79,6 +80,14 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String groupsSpecified = row.get("User Groups");
         JsonObject syncSettings = constructSyncSettings(row);
 
+        if(Objects.isNull(locale)) {
+            throw new Exception(format("Provided value '%s' for Preferred Language is invalid;", language));
+        }
+
+        if(Objects.isNull(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode)) {
+            throw new Exception(format("Provided value '%s' for Date picker mode is invalid;", datePickerMode));
+        }
+
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress)
                 .orElseThrow(() -> new Exception(format(
                         "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'", fullAddress)));
@@ -109,9 +118,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setSettings(new JsonObject()
                 .with("locale", locale)
                 .with("trackLocation", trackLocation)
-                .withEmptyCheck("datePickerMode", datePickerMode)
+                .withEmptyCheckAndTrim("datePickerMode", datePickerMode)
                 .with("showBeneficiaryMode", beneficiaryMode)
-                .withEmptyCheck(UserSettings.ID_PREFIX, idPrefix));
+                .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix));
 
         user.setOrganisationId(organisation.getId());
         user.setAuditInfo(currentUser);

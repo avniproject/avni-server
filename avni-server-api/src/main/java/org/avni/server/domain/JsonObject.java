@@ -21,9 +21,9 @@ public class JsonObject extends HashMap<String, Object> implements Serializable 
         return this;
     }
 
-    public JsonObject withEmptyCheck(String key, String value){
+    public JsonObject withEmptyCheckAndTrim(String key, String value){
         if(!S.isEmpty(value)){
-            super.put(key, value);
+            super.put(key, value.trim());
         }
         return this;
     }
