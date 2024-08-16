@@ -234,7 +234,25 @@ public class SubjectTypeService implements NonScopeAwareService {
     }
 
     public List<String> constructSyncAttributeAllowedValuesForSubjectTypes() {
-        return this.constructSyncAttributeHeadersForSubjectTypes();
+        List<SubjectType> subjectTypes = subjectTypeRepository.findByIsVoidedFalse();
+        Predicate<SubjectType> subjectTypeHasSyncAttributes = subjectType ->
+                Objects.nonNull(subjectType.getSyncRegistrationConcept1()) ||
+                        Objects.nonNull(subjectType.getSyncRegistrationConcept2());
+        return subjectTypes.stream().sorted((a,b) -> (int) (a.getId() - b.getId())).
+                filter(subjectTypeHasSyncAttributes).
+                map(this::constructSyncAttributeAllowedValuesForSubjectType).
+                flatMap(Collection::stream).
+                collect(Collectors.toList());
+    }
+
+    private List<String> constructSyncAttributeAllowedValuesForSubjectType(SubjectType subjectTypeWithSyncAttribute) {
+        String[] syncAttributes = new String[]{subjectTypeWithSyncAttribute.getSyncRegistrationConcept1(),
+                subjectTypeWithSyncAttribute.getSyncRegistrationConcept2()};
+
+        return Arrays.stream(syncAttributes).
+                filter(Objects::nonNull).sorted().
+                map(sa -> String.format("\"Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(conceptService.get(sa))))
+                .collect(Collectors.toList());
     }
 
     public JsonObject getDefaultSettings() {
