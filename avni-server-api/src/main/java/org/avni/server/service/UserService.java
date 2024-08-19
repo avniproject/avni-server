@@ -140,7 +140,7 @@ public class UserService implements NonScopeAwareService {
             return;
         }
 
-        String[] groupNames = Strings.split(groupsSpecified, ',');
+        String[] groupNames = splitIntoUserGroupNames(groupsSpecified);
         Arrays.stream(groupNames).distinct().forEach(groupName -> {
             if (!StringUtils.hasLength(groupName.trim())) return;
 
@@ -157,6 +157,10 @@ public class UserService implements NonScopeAwareService {
         if (!Arrays.asList(groupNames).contains(Group.Everyone)) {
             this.addToDefaultUserGroup(user);
         }
+    }
+
+    public String[] splitIntoUserGroupNames(String groupsSpecified) {
+        return groupsSpecified.trim().split("\\s*,\\s*|\\s*\\|\\s*");
     }
 
     public void ensureSubjectsForUserSubjectType(SubjectType subjectType) {
