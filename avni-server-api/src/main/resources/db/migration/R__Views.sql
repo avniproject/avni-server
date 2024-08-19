@@ -39,6 +39,8 @@ CREATE TRIGGER delete_on_virtual_catchment_address_mapping
     FOR EACH ROW
 EXECUTE FUNCTION no_op();
 
+SELECT grant_all_on_views(ARRAY ['virtual_catchment_address_mapping_table'], a.rolname) FROM pg_roles a WHERE pg_has_role('openchs', a.oid, 'member');
+
 DROP VIEW if exists address_level_type_view;
 
 CREATE VIEW address_level_type_view AS
