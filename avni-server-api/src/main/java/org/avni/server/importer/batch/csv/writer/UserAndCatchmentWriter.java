@@ -11,7 +11,6 @@ import org.avni.server.service.*;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
-import org.avni.server.web.validation.ValidationException;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,6 +38,15 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final ConceptService conceptService;
     private final Pattern compoundHeaderPattern;
     private final ResetSyncService resetSyncService;
+
+    private static final String ERR_MSG_MANDATORY_FIELD = "Invalid or Empty value specified for mandatory field %s";
+    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'";
+    private static final String ERR_MSG_LOCALE_FIELD = "Provided value '%s' for Preferred Language is invalid";
+    private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid";
+    private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers included in file. Please refer to sample file for valid list of headers";
+    private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file. Please refer to sample file for the list of mandatory headers.";
+    private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'" +
+            "To input this value, add this as an answer to the coded concept '%s'";
     private static final String METADATA_ROW_START_STRING = "Mandatory field.";
     private static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList("calendar", "spinner");
 
@@ -88,17 +96,18 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         headerList.removeIf(header -> expectedStandardHeaders.contains(header));
         headerList.removeIf(header -> syncAttributeHeadersForSubjectTypes.contains(header));
         if (!headerList.isEmpty()) {
-            allErrorMsgs.add("Unknown headers included in file. Please refer to sample file for valid list of headers.");
+            allErrorMsgs.add(ERR_MSG_UNKNOWN_HEADERS);
         }
     }
 
     private void checkForMissingHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
         if (headerList.isEmpty() || !headerList.containsAll(expectedStandardHeaders) || !headerList.containsAll(syncAttributeHeadersForSubjectTypes)) {
-            allErrorMsgs.add("Mandatory columns are missing from uploaded file. Please refer to sample file for the list of mandatory headers.");
+            allErrorMsgs.add(ERR_MSG_MISSING_MANDATORY_FIELDS);
         }
     }
 
     private void write(Row row) throws Exception {
+        List<String> rowValidationErrorMsgs = new ArrayList<>();
         String fullAddress = row.get(LOCATION_WITH_FULL_HIERARCHY);
         if (fullAddress != null && fullAddress.startsWith(METADATA_ROW_START_STRING)) return;
         String catchmentName = row.get(CATCHMENT_NAME);
@@ -107,43 +116,17 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String email = row.get(EMAIL_ADDRESS);
         String phoneNumber = row.get(MOBILE_NUMBER);
         String language = row.get(PREFERRED_LANGUAGE);
-        Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByName(language);
         Boolean trackLocation = row.getBool(TRACK_LOCATION);
         String datePickerMode = row.get(DATE_PICKER_MODE);
         Boolean beneficiaryMode = row.getBool(ENABLE_BENEFICIARY_MODE);
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
-        JsonObject syncSettings = constructSyncSettings(row);
-
-        AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress)
-                .orElseThrow(() -> new Exception(format(
-                        "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'", fullAddress)));
-        if(!StringUtils.hasLength(catchmentName)) {
-            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", CATCHMENT_NAME));
-        }
-        if(!StringUtils.hasLength(username)) {
-            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", USERNAME));
-        }
-        if(!StringUtils.hasLength(nameOfUser)) {
-            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", FULL_NAME_OF_USER));
-        }
-        if(!StringUtils.hasLength(email)) {
-            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", EMAIL_ADDRESS));
-        }
-        if(!StringUtils.hasLength(phoneNumber)) {
-            throw new Exception(format("Invalid or Empty value specified for mandatory field %s", MOBILE_NUMBER));
-        }
-        if(Objects.isNull(locale)) {
-            throw new Exception(format("Provided value '%s' for Preferred Language is invalid;", language));
-        }
-        if(Objects.isNull(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode)) {
-            throw new Exception(format("Provided value '%s' for Date picker mode is invalid;", datePickerMode));
-        }
-
-        Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
+        AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
+        Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByName(language);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
-        User.validateUsername(username, userSuffix);
+        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix);
+        Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
         boolean isNewUser = false;
@@ -153,11 +136,10 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
             user.setUsername(username.trim());
             isNewUser = true;
         }
-        User.validateEmail(email);
         user.setEmail(email);
         userService.setPhoneNumber(phoneNumber, user, RegionUtil.getCurrentUserRegion());
-        User.validateName(nameOfUser);
         user.setName(nameOfUser.trim());
+        JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
         if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);
         user.setCatchment(catchment);
         user.setOperatingIndividualScope(ByCatchment);
@@ -181,11 +163,61 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private JsonObject constructSyncSettings(Row row) {
+    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix) {
+        addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, CATCHMENT_NAME));
+        addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, USERNAME));
+        addErrMsgIfValidationFails(!StringUtils.hasLength(nameOfUser), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, FULL_NAME_OF_USER));
+        addErrMsgIfValidationFails(!StringUtils.hasLength(email), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, EMAIL_ADDRESS));
+        addErrMsgIfValidationFails(!StringUtils.hasLength(phoneNumber), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, MOBILE_NUMBER));
+
+        addErrMsgIfValidationFails(Objects.isNull(location), rowValidationErrorMsgs, format(ERR_MSG_LOCATION_FIELD, fullAddress));
+        addErrMsgIfValidationFails(Objects.isNull(locale), rowValidationErrorMsgs, format(ERR_MSG_LOCALE_FIELD, language));
+        addErrMsgIfValidationFails(Objects.isNull(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode),
+                rowValidationErrorMsgs, format(ERR_MSG_DATE_PICKER_FIELD, datePickerMode));
+
+        extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
+        extractUserNameValidationErrMsg(rowValidationErrorMsgs, nameOfUser);
+        extractUserEmailValidationErrMsg(rowValidationErrorMsgs, email);
+        if(!rowValidationErrorMsgs.isEmpty()) {
+            throw new RuntimeException(String.join(", ", rowValidationErrorMsgs));
+        }
+    }
+
+    private void extractUserNameValidationErrMsg(List<String> rowValidationErrorMsgs, String nameOfUser) {
+        try {
+            User.validateName(nameOfUser);
+        } catch (Exception exception) {
+            addErrMsgIfValidationFails(true, rowValidationErrorMsgs, exception.getMessage());
+        }
+    }
+
+    private void extractUserEmailValidationErrMsg(List<String> rowValidationErrorMsgs, String email) {
+        try {
+            User.validateEmail(email);
+        } catch (Exception exception) {
+            addErrMsgIfValidationFails(true, rowValidationErrorMsgs, exception.getMessage());
+        }
+    }
+
+    private void extractUserUsernameValidationErrMsg(List<String> rowValidationErrorMsgs, String username, String userSuffix) {
+        try {
+            User.validateUsername(username, userSuffix);
+        } catch (Exception exception) {
+            addErrMsgIfValidationFails(true, rowValidationErrorMsgs, exception.getMessage());
+        }
+    }
+
+    private void addErrMsgIfValidationFails(boolean validationCheckResult, List<String> rowValidationErrorMsgs, String validationErrorMessage) {
+        if(validationCheckResult) {
+            rowValidationErrorMsgs.add(validationErrorMessage);
+        }
+    }
+
+    private JsonObject constructSyncSettings(Row row, List<String> rowValidationErrorMsgs) {
         List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
         Map<String, UserSyncSettings> syncSettingsMap = new HashMap<>();
         for (String saHeader : syncAttributeHeadersForSubjectTypes) {
-            updateSyncSettingsFor(saHeader, row, syncSettingsMap);
+            updateSyncSettingsFor(saHeader, row, syncSettingsMap, rowValidationErrorMsgs);
         }
 
         JsonObject syncSettings = new JsonObject();
@@ -196,20 +228,18 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         return syncSettings;
     }
 
-    private void updateSyncSettingsFor(String saHeader, Row row, Map<String, UserSyncSettings> syncSettingsMap) {
+    private void updateSyncSettingsFor(String saHeader, Row row, Map<String, UserSyncSettings> syncSettingsMap, List<String> rowValidationErrorMsgs) {
         Matcher headerPatternMatcher = compoundHeaderPattern.matcher(saHeader);
         if (headerPatternMatcher.matches()) {
             String conceptName = headerPatternMatcher.group("conceptName");
             String conceptValues = row.get(saHeader);
-            if (StringUtils.isEmpty(conceptValues)) {
-                throw new ValidationException(String.format("Invalid or Empty value specified for mandatory field %s", saHeader));
-            }
+            addErrMsgIfValidationFails(StringUtils.isEmpty(conceptValues), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, saHeader));
             String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
             SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
 
             UserSyncSettings userSyncSettings = syncSettingsMap.getOrDefault(subjectType.getUuid(), new UserSyncSettings());
             updateSyncSubjectTypeSettings(subjectType, userSyncSettings);
-            updateSyncConceptSettings(subjectType, conceptName, conceptValues, userSyncSettings);
+            updateSyncConceptSettings(subjectType, conceptName, conceptValues, userSyncSettings, rowValidationErrorMsgs);
 
             syncSettingsMap.put(subjectType.getUuid(), userSyncSettings);
         }
@@ -220,12 +250,12 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userSyncSettings.setSubjectTypeUUID(subjectTypeUuid);
     }
 
-    private void updateSyncConceptSettings(SubjectType subjectType, String conceptName, String conceptValues, UserSyncSettings userSyncSettings) {
+    private void updateSyncConceptSettings(SubjectType subjectType, String conceptName, String conceptValues, UserSyncSettings userSyncSettings, List<String> rowValidationErrorMsgs) {
         Concept concept = conceptService.getByName(conceptName);
         String conceptUuid = concept.getUuid();
         List<String> syncSettingsConceptRawValues = Arrays.asList(conceptValues.split(","));
         List<String> syncSettingsConceptProcessedValues = concept.isCoded() ?
-                findSyncSettingCodedConceptValues(syncSettingsConceptRawValues, concept) : syncSettingsConceptRawValues;
+                findSyncSettingCodedConceptValues(syncSettingsConceptRawValues, concept, rowValidationErrorMsgs) : syncSettingsConceptRawValues;
 
         String syncRegistrationConcept1 = subjectType.getSyncRegistrationConcept1();
         if (syncRegistrationConcept1.equals(conceptUuid)) {
@@ -237,16 +267,17 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues, Concept concept) {
+    private List<String> findSyncSettingCodedConceptValues(List<String> syncSettingsValues, Concept concept,
+                                                           List<String> rowValidationErrorMsgs) {
         List<String> syncSettingCodedConceptValues = new ArrayList<>();
         for (String syncSettingsValue : syncSettingsValues) {
             Optional<Concept> conceptAnswer = Optional.ofNullable(conceptService.getByName(syncSettingsValue));
-            conceptAnswer.orElseThrow(() -> new RuntimeException(String.format("'%s' is not a valid value for the concept '%s'. " +
-                            "To input this value, add this as an answer to the coded concept '%s'",
-                    syncSettingsValue, concept.getName(), concept.getName())));
-            syncSettingCodedConceptValues.add(conceptAnswer.get().getUuid());
+            if(conceptAnswer.isPresent()) {
+                syncSettingCodedConceptValues.add(conceptAnswer.get().getUuid());
+            } else {
+                rowValidationErrorMsgs.add(format(ERR_MSG_INVALID_CONCEPT_ANSWER, syncSettingsValue, concept.getName(), concept.getName()));
+            }
         }
-
         return syncSettingCodedConceptValues;
     }
 }
