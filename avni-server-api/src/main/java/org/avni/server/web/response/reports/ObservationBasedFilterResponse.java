@@ -13,9 +13,4 @@ public class ObservationBasedFilterResponse extends ObservationBasedFilterContra
     public void setConcept(ConceptContract concept) {
         this.concept = concept;
     }
-
-    @Override
-    protected String getConceptUUID() {
-        return concept.getUuid();
-    }
 }

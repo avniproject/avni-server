@@ -1,7 +1,9 @@
 package org.avni.server.web.request.reports;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.avni.server.domain.JsonObject;
 import org.avni.server.web.contract.DashboardFilterConfigContract;
+import org.avni.server.web.contract.reports.ObservationBasedFilterContract;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashboardFilterConfigRequest extends DashboardFilterConfigContract {
@@ -15,8 +17,12 @@ public class DashboardFilterConfigRequest extends DashboardFilterConfigContract 
         this.observationBasedFilter = observationBasedFilter;
     }
 
+    public JsonObject toJsonObject() {
+        return super.toJsonObject(observationBasedFilter == null ? null : observationBasedFilter.getJsonObject(observationBasedFilter.getConceptUUID()));
+    }
+
     @Override
-    protected Object getObservationTypeFilterJsonObject() {
-        return observationBasedFilter.getJsonObject();
+    public ObservationBasedFilterContract newObservationBasedFilter() {
+        throw new RuntimeException("Not applicable for DashboardFilterConfigRequest, as it constructed via de-serialisation only");
     }
 }

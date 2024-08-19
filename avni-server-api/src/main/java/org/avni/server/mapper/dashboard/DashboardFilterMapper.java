@@ -4,6 +4,9 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.web.contract.DashboardFilterConfigContract;
+import org.avni.server.web.contract.reports.DashboardFilterBundleContract;
+import org.avni.server.web.contract.reports.DashboardFilterContract;
+import org.avni.server.web.contract.reports.ObservationBasedFilterContract;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.DashboardFilterResponse;
 import org.avni.server.web.response.reports.DashboardFilterConfigResponse;
@@ -18,42 +21,47 @@ public class DashboardFilterMapper {
         this.conceptRepository = conceptRepository;
     }
 
-    public DashboardFilterResponse fromEntity(DashboardFilter df) {
-        DashboardFilterResponse dashboardFilterResponse = new DashboardFilterResponse();
-        dashboardFilterResponse.setId(df.getId());
-        dashboardFilterResponse.setUuid(df.getUuid());
-        dashboardFilterResponse.setVoided(df.isVoided());
-        dashboardFilterResponse.setName(df.getName());
+    public DashboardFilterBundleContract toBundle(DashboardFilter dashboardFilter) {
+        return (DashboardFilterBundleContract) toContract(dashboardFilter, new DashboardFilterBundleContract());
+    }
 
-        DashboardFilterConfigResponse filterConfigResponse = new DashboardFilterConfigResponse();
-        DashboardFilter.DashboardFilterConfig filterConfig = df.getFilterConfig();
-        filterConfigResponse.setSubjectTypeUUID(filterConfig.getSubjectTypeUuid());
-        filterConfigResponse.setWidget(filterConfig.getWidget());
-        filterConfigResponse.setType(filterConfig.getType().name());
-        dashboardFilterResponse.setFilterConfig(filterConfigResponse);
+    private DashboardFilterContract toContract(DashboardFilter dashboardFilter, DashboardFilterContract filterContract) {
+        filterContract.setId(dashboardFilter.getId());
+        filterContract.setUuid(dashboardFilter.getUuid());
+        filterContract.setVoided(dashboardFilter.isVoided());
+        filterContract.setName(dashboardFilter.getName());
 
-        DashboardFilter.FilterType filterType = df.getFilterConfig().getType();
+        DashboardFilterConfigContract filterConfigContract = filterContract.newFilterConfig();
+        DashboardFilter.DashboardFilterConfig filterConfig = dashboardFilter.getFilterConfig();
+        filterConfigContract.setSubjectTypeUUID(filterConfig.getSubjectTypeUuid());
+        filterConfigContract.setWidget(filterConfig.getWidget());
+        filterConfigContract.setType(filterConfig.getType().name());
+
+        DashboardFilter.FilterType filterType = dashboardFilter.getFilterConfig().getType();
         if (filterType.equals(DashboardFilter.FilterType.GroupSubject)) {
             DashboardFilter.GroupSubjectTypeFilter groupSubjectTypeFilter = filterConfig.getGroupSubjectTypeFilter();
             DashboardFilterConfigContract.GroupSubjectTypeFilterContract groupSubjectTypeFilterContract = new DashboardFilterConfigContract.GroupSubjectTypeFilterContract();
             groupSubjectTypeFilterContract.setSubjectTypeUUID(groupSubjectTypeFilter.getSubjectTypeUUID());
-            filterConfigResponse.setGroupSubjectTypeFilter(groupSubjectTypeFilterContract);
+            filterConfigContract.setGroupSubjectTypeFilter(groupSubjectTypeFilterContract);
         } else if (filterType.equals(DashboardFilter.FilterType.Concept)) {
             DashboardFilter.ObservationBasedFilter observationBasedFilter = filterConfig.getObservationBasedFilter();
-            ObservationBasedFilterResponse observationBasedFilterResponse = new ObservationBasedFilterResponse();
+            ObservationBasedFilterContract observationBasedFilterContract = filterConfigContract.newObservationBasedFilter();
 
             Concept concept = conceptRepository.findByUuid(observationBasedFilter.getConcept());
             ConceptContract conceptContract = new ConceptContract();
             conceptContract.setUuid(concept.getUuid());
             conceptContract.setName(concept.getName());
             conceptContract.setDataType(concept.getDataType());
-            observationBasedFilterResponse.setConcept(conceptContract);
+            observationBasedFilterContract.setConcept(conceptContract);
 
-            observationBasedFilterResponse.setScope(observationBasedFilter.getScope());
-            observationBasedFilterResponse.setProgramUUIDs(observationBasedFilter.getPrograms());
-            observationBasedFilterResponse.setEncounterTypeUUIDs(observationBasedFilter.getEncounterTypes());
-            filterConfigResponse.setObservationBasedFilter(observationBasedFilterResponse);
+            observationBasedFilterContract.setScope(observationBasedFilter.getScope());
+            observationBasedFilterContract.setProgramUUIDs(observationBasedFilter.getPrograms());
+            observationBasedFilterContract.setEncounterTypeUUIDs(observationBasedFilter.getEncounterTypes());
         }
-        return dashboardFilterResponse;
+        return filterContract;
+    }
+
+    public DashboardFilterResponse toResponse(DashboardFilter dashboardFilter) {
+        return (DashboardFilterResponse) toContract(dashboardFilter, new DashboardFilterResponse());
     }
 }

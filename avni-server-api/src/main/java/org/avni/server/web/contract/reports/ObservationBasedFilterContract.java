@@ -1,7 +1,10 @@
 package org.avni.server.web.contract.reports;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.avni.server.domain.Concept;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
+import org.avni.server.web.request.ConceptContract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,14 +38,15 @@ public abstract class ObservationBasedFilterContract {
         this.scope = scope;
     }
 
-    public JsonObject getJsonObject() {
+    @JsonIgnore
+    public JsonObject getJsonObject(String conceptUUID) {
         JsonObject jsonObject = new JsonObject();
-        jsonObject.put(DashboardFilter.ObservationBasedFilter.ConceptFieldName, this.getConceptUUID());
+        jsonObject.put(DashboardFilter.ObservationBasedFilter.ConceptFieldName, conceptUUID);
         jsonObject.put(DashboardFilter.ObservationBasedFilter.ScopeFieldName, this.getScope());
         jsonObject.put(DashboardFilter.ObservationBasedFilter.ProgramsFieldName, getProgramUUIDs());
         jsonObject.put(DashboardFilter.ObservationBasedFilter.EncounterTypesFieldName, getEncounterTypeUUIDs());
         return jsonObject;
     }
 
-    protected abstract String getConceptUUID();
+    public abstract void setConcept(ConceptContract conceptContract);
 }

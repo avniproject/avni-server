@@ -3,6 +3,7 @@ package org.avni.server.mapper.dashboard;
 import org.avni.server.domain.Dashboard;
 import org.avni.server.domain.DashboardSection;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
+import org.avni.server.web.contract.reports.DashboardFilterBundleContract;
 import org.avni.server.web.contract.reports.DashboardSectionBundleContract;
 import org.avni.server.web.contract.reports.DashboardSectionCardMappingBundleContract;
 import org.avni.server.web.request.*;
@@ -55,17 +56,17 @@ public class DashboardMapper {
         List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
                 .stream()
                 .filter(dashboardFilter -> !dashboardFilter.isVoided())
-                .map(dashboardFilterMapper::fromEntity)
+                .map(dashboardFilterMapper::toResponse)
                 .collect(Collectors.toList());
         dashboardContract.setFilters(list);
     }
 
-    private void setFilters(DashboardBundleContract dashboardContract, Dashboard dashboard) {
-        List<DashboardFilterResponse> list = dashboard.getDashboardFilters()
+    private void setFilters(DashboardBundleContract dashboardBundleContract, Dashboard dashboard) {
+        List<DashboardFilterBundleContract> list = dashboard.getDashboardFilters()
                 .stream()
-                .map(dashboardFilterMapper::fromEntity)
+                .map(dashboardFilterMapper::toBundle)
                 .collect(Collectors.toList());
-        dashboardContract.setFilters(list);
+        dashboardBundleContract.setFilters(list);
     }
 
     private DashboardSectionWebResponse toWebResponse(DashboardSection ds) {

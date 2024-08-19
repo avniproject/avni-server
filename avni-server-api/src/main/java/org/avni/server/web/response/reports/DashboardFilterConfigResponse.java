@@ -2,6 +2,7 @@ package org.avni.server.web.response.reports;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.avni.server.web.contract.DashboardFilterConfigContract;
+import org.avni.server.web.contract.reports.ObservationBasedFilterContract;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashboardFilterConfigResponse extends DashboardFilterConfigContract {
@@ -16,7 +17,8 @@ public class DashboardFilterConfigResponse extends DashboardFilterConfigContract
     }
 
     @Override
-    protected Object getObservationTypeFilterJsonObject() {
-        return observationBasedFilter.getJsonObject();
+    public ObservationBasedFilterContract newObservationBasedFilter() {
+        this.observationBasedFilter = new ObservationBasedFilterResponse();
+        return this.observationBasedFilter;
     }
 }

@@ -6,9 +6,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ReactAdminUtil;
-import org.avni.server.web.contract.reports.DashboardBundleContract;
-import org.avni.server.web.contract.reports.DashboardSectionBundleContract;
-import org.avni.server.web.contract.reports.DashboardSectionCardMappingBundleContract;
+import org.avni.server.web.contract.reports.*;
 import org.avni.server.web.request.DashboardFilterRequest;
 import org.avni.server.web.request.DashboardFilterResponse;
 import org.avni.server.web.request.DashboardWebRequest;
@@ -64,15 +62,15 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     private void uploadDashboardFilters(DashboardBundleContract bundleContract, Dashboard dashboard) {
-        List<DashboardFilterResponse> filters = bundleContract.getFilters();
-        for (DashboardFilterResponse bundleFilter : filters) {
+        List<DashboardFilterBundleContract> filters = bundleContract.getFilters();
+        for (DashboardFilterBundleContract bundleFilter : filters) {
             DashboardFilter dashboardFilter = dashboardFilterRepository.findByUuid(bundleFilter.getUuid());
             if (dashboardFilter == null) {
                 dashboardFilter = new DashboardFilter();
                 dashboardFilter.setUuid(bundleFilter.getUuid());
             }
             dashboardFilter.setName(bundleFilter.getName());
-            DashboardFilterConfigResponse bundleFilterConfig = bundleFilter.getFilterConfig();
+            DashboardFilterConfigBundleContract bundleFilterConfig = bundleFilter.getFilterConfig();
             dashboardFilter.setFilterConfig(bundleFilterConfig.toJsonObject());
             dashboard.addUpdateFilter(dashboardFilter);
         }

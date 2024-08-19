@@ -1,9 +1,9 @@
-package org.avni.server.web.request.reports;
+package org.avni.server.web.response.reports;
 
 import org.avni.server.web.contract.reports.ObservationBasedFilterContract;
 import org.avni.server.web.request.ConceptContract;
 
-public class ObservationBasedFilterRequest extends ObservationBasedFilterContract {
+public class ObservationBasedFilterBundleContract extends ObservationBasedFilterContract {
     private String conceptUUID;
 
     public String getConceptUUID() {
