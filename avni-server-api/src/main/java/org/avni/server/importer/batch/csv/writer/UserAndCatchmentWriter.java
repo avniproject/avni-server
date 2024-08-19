@@ -28,6 +28,7 @@ import static org.avni.server.importer.batch.csv.writer.header.UsersAndCatchment
 
 @Component
 public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
+    public static final String ERR_MSG_DELIMITER = "\",\"";
     private final UserService userService;
     private final CatchmentService catchmentService;
     private final LocationRepository locationRepository;
@@ -87,7 +88,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         checkForMissingHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
         checkForUnknownHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
         if(!allErrorMsgs.isEmpty()) {
-            throw new RuntimeException(String.join(", ", allErrorMsgs));
+            throw new RuntimeException(String.join(ERR_MSG_DELIMITER, allErrorMsgs));
         }
     }
 
@@ -179,7 +180,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         extractUserNameValidationErrMsg(rowValidationErrorMsgs, nameOfUser);
         extractUserEmailValidationErrMsg(rowValidationErrorMsgs, email);
         if(!rowValidationErrorMsgs.isEmpty()) {
-            throw new RuntimeException(String.join(", ", rowValidationErrorMsgs));
+            throw new RuntimeException(String.join(ERR_MSG_DELIMITER, rowValidationErrorMsgs));
         }
     }
 
