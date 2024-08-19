@@ -79,7 +79,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     }
 
     private void validateHeaders(String[] headers) {
-        List<String> headerList = Arrays.asList(headers);
+        List<String> headerList = new ArrayList<>(Arrays.asList(headers));
         List<String> allErrorMsgs = new ArrayList<>();
         UsersAndCatchmentsHeaders usersAndCatchmentsHeaders = new UsersAndCatchmentsHeaders();
         List<String> expectedStandardHeaders = Arrays.asList(usersAndCatchmentsHeaders.getAllHeaders());
