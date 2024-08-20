@@ -52,7 +52,7 @@ public class UserService implements NonScopeAwareService {
 
     public User save(User user) {
         String idPrefix = UserSettings.getIdPrefix(user.getSettings());
-        if (StringUtils.hasLength(idPrefix)) {
+        if (user.getOrganisationId() != null && StringUtils.hasLength(idPrefix) ) { // Not a super-admin and has idPrefix
             synchronized (String.format("%d-USER-ID-PREFIX-%s", user.getOrganisationId(), idPrefix).intern()) {
                 List<User> usersWithSameIdPrefix = user.isNew() ? userRepository.getAllUsersWithSameIdPrefix(idPrefix) : userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
                 if (usersWithSameIdPrefix.isEmpty()) {
@@ -67,16 +67,19 @@ public class UserService implements NonScopeAwareService {
     }
 
     private User createUpdateUser(User user) {
-        SubjectType userSubjectType = subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User);
         User savedUser = userRepository.save(user);
-        if (userSubjectType != null)
-            this.ensureSubjectForUser(user, userSubjectType);
+        if (user.getOrganisationId() != null) { // Not a super-admin
+            SubjectType userSubjectType = subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User);
+            if (userSubjectType != null) {
+                this.ensureSubjectForUser(user, userSubjectType);
+            }
+        }
         return savedUser;
     }
 
     @Transactional
     public void addToDefaultUserGroup(User user) {
-        if (user.getOrganisationId() != null) {
+        if (user.getOrganisationId() != null) { //Not a super-admin
             Group group = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
             if (userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group) == null) {
                 UserGroup userGroup = UserGroup.createMembership(user, group);
