@@ -10,6 +10,8 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
+import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.UserBulkUploadContract;
 import org.avni.server.web.request.UserInfoClientContract;
@@ -159,8 +161,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             user.setOrganisationId(organisationId);
             user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
             user.setSettings(userContract.getSettings());
-            user.setPhoneNumber(userContract.getPhoneNumber());
-            user.setEmail(userContract.getEmail());
+            userService.setPhoneNumber(userContract.getPhoneNumber(), user, RegionUtil.getCurrentUserRegion());
             user.setAuditInfo(userService.getCurrentUser());
             User savedUser = userService.save(user);
             if (newUser) userService.addToDefaultUserGroup(savedUser);

@@ -195,9 +195,7 @@ public class UserController {
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
 
-        if (!phoneNumberIsValid(userContract.getPhoneNumber(), userRegion))
-            throw new ValidationException(String.format("Invalid phone number %s", userContract.getPhoneNumber()));
-        user.setPhoneNumber(userContract.getPhoneNumber());
+        userService.setPhoneNumber(userContract.getPhoneNumber(), user, userRegion);
 
         if (isUserNameInvalid(userContract.getUsername())) {
             throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
