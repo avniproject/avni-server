@@ -11,9 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.mail.Address;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -85,15 +83,29 @@ public class TestDataSetupService {
         return new TestCatchmentData(addressLevelType, addressLevel1, addressLevel2, catchment);
     }
 
-    public AddressLevel setupLocationHierarchy(Map<Integer, String> locationTypes, Map<String, String> locations) {
-        List<AddressLevelType> addressLevelTypes = locationTypes.entrySet().stream().map(levelNameEntry -> new AddressLevelTypeBuilder().name(levelNameEntry.getValue()).level(levelNameEntry.getKey().doubleValue()).build()).collect(Collectors.toList());
-        List<AddressLevelType> savedAddressLevelTypes = addressLevelTypeRepository.saveAll(addressLevelTypes);
+    public TestLocationHierarchyData setupLocationHierarchy(Map<Integer, String> locationTypes, Map<String, String> locations) {
+        Map<String, AddressLevelType> namedLocationTypes = new HashMap<>();
+        List<AddressLevelType> addressLevelTypes = locationTypes.entrySet().stream().map(levelNameEntry ->
+                new AddressLevelTypeBuilder()
+                        .name(levelNameEntry.getValue())
+                        .level(levelNameEntry.getKey().doubleValue())
+                        .withUuid(UUID.randomUUID())
+                        .build()).collect(Collectors.toList());
+        for (AddressLevelType addressLevelType : addressLevelTypes) {
+            AddressLevelType type = addressLevelTypeRepository.save(addressLevelType);
+            namedLocationTypes.put(addressLevelType.getName(), type);
+        }
 
+        HashMap<String, AddressLevel> namedLocations = new HashMap<>();
         locations.forEach((levelName, locationName) -> {
-            AddressLevelType addressLevelType = savedAddressLevelTypes.stream().filter(type -> type.getName().equals(levelName)).findFirst().get();
-            AddressLevel addressLevel = testLocationService.save(new AddressLevelBuilder().type(addressLevelType).title(locationName).build());
+            AddressLevelType addressLevelType = namedLocationTypes.get(levelName);
+            namedLocations.put(levelName, testLocationService.save(new AddressLevelBuilder()
+                    .type(addressLevelType)
+                    .title(locationName)
+                    .withUuid(UUID.randomUUID())
+                    .build()));
         });
-        return null;
+        return new TestLocationHierarchyData(namedLocationTypes, namedLocations);
     }
 
     public TestSyncAttributeBasedSubjectTypeData setupSubjectTypeWithSyncAttributes() {
@@ -108,21 +120,29 @@ public class TestDataSetupService {
         return new TestSyncAttributeBasedSubjectTypeData(subjectType, conceptForAttributeBasedSync);
     }
 
-    public static class TestLocation {
-        private final String title;
-        private final String parentTitle;
+    public static class TestLocationHierarchyData {
+        private final Map<String, AddressLevelType> locationTypes;
+        private final Map<String, AddressLevel> locations;
 
-        public TestLocation(String title, String parentTitle) {
-            this.title = title;
-            this.parentTitle = parentTitle;
+        public TestLocationHierarchyData(Map<String, AddressLevelType> locationTypes, Map<String, AddressLevel> locations) {
+            this.locationTypes = locationTypes;
+            this.locations = locations;
         }
 
-        public String getTitle() {
-            return title;
+        public Map<String, AddressLevelType> getLocationTypes() {
+            return locationTypes;
         }
 
-        public String getParentTitle() {
-            return parentTitle;
+        public Map<String, AddressLevel> getLocations() {
+            return locations;
+        }
+
+        public AddressLevelType getLocationType(String name) {
+            return locationTypes.get(name);
+        }
+
+        public AddressLevel getLocation(String name) {
+            return locations.get(name);
         }
     }
 

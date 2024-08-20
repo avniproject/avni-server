@@ -28,15 +28,14 @@ import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 @StepScope
 @Component
 public class LocationWriter implements ItemWriter<Row> {
-    private static final LocationHeaders headers = new LocationHeaders();
     @Value("#{jobParameters['locationUploadMode']}")
     private String locationUploadMode;
     @Value("#{jobParameters['locationHierarchy']}")
     private String locationHierarchy;
+    private static final LocationHeaders headers = new LocationHeaders();
     private final LocationService locationService;
     private final LocationRepository locationRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;

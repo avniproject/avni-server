@@ -17,6 +17,11 @@ public class AddressLevelTypeBuilder {
         return this;
     }
 
+    public AddressLevelTypeBuilder withUuid(UUID uuid) {
+        addressLevelType.setUuid(uuid.toString());
+        return this;
+    }
+
     public AddressLevelTypeBuilder withUuid(String uuid) {
         addressLevelType.setUuid(uuid);
         return this;

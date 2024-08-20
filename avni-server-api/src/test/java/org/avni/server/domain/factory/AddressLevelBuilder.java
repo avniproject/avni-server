@@ -37,6 +37,11 @@ public class AddressLevelBuilder {
         return this;
     }
 
+    public AddressLevelBuilder withUuid(UUID uuid) {
+        entity.setUuid(uuid.toString());
+        return this;
+    }
+
     public AddressLevelBuilder withUuid(String uuid) {
         entity.setUuid(uuid);
         return this;
