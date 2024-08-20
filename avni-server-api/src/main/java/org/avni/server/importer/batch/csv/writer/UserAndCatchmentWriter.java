@@ -126,6 +126,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByName(language);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
+        JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
         validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix);
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
@@ -140,7 +141,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setEmail(email);
         userService.setPhoneNumber(phoneNumber, user, RegionUtil.getCurrentUserRegion());
         user.setName(nameOfUser.trim());
-        JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
         if (!isNewUser) resetSyncService.recordSyncAttributeValueChangeForUser(user, catchment.getId(), syncSettings);
         user.setCatchment(catchment);
         user.setOperatingIndividualScope(ByCatchment);
