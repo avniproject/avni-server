@@ -52,7 +52,7 @@ public class AuthServiceTest {
     public void setup() {
         initMocks(this);
         authService = new AuthService(userRepository, organisationRepository, accountAdminRepository,
-                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null, userService), userService);
+                new IdpServiceFactory(organisationRepository, null, null, cognitoAuthService, keycloakAuthService, IdpType.cognito, null), userService);
         String uuid = "9ecc2805-6528-47ee-8267-9368b266ad39";
         user = new User();
         user.setUuid(uuid);

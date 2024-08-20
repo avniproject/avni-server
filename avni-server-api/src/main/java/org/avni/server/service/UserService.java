@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import com.amazonaws.services.cognitoidp.model.AWSCognitoIdentityProviderException;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -7,12 +8,14 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
+import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.validation.ValidationException;
-import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -33,9 +36,10 @@ public class UserService implements NonScopeAwareService {
     private final IndividualRepository individualRepository;
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccountAdminRepository accountAdminRepository;
+    private final IdpServiceFactory idpServiceFactory;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, AccountAdminRepository accountAdminRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, IdpServiceFactory idpServiceFactory, AccountAdminRepository accountAdminRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
@@ -43,6 +47,7 @@ public class UserService implements NonScopeAwareService {
         this.individualRepository = individualRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.accountAdminRepository = accountAdminRepository;
+        this.idpServiceFactory = idpServiceFactory;
     }
 
     public User getCurrentUser() {
@@ -196,6 +201,25 @@ public class UserService implements NonScopeAwareService {
 
         individualRepository.save(subject);
         userSubjectRepository.save(userSubject);
+    }
+
+    public ResponseEntity<?> deleteUser(Long id) {
+        try {
+            User user = userRepository.findOne(id);
+            idpServiceFactory.getIdpService(user, this.isAdmin(user)).deleteUser(user);
+
+            User currentUser = this.getCurrentUser();
+            user.setAuditInfo(currentUser);
+
+            user.setVoided(true);
+            user.setDisabledInCognito(true);
+            user.setUserGroups(user.getUserGroups().stream().filter(ug -> ug.getGroup().isEveryone()).collect(Collectors.toList()));
+            userRepository.save(user);
+            logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
+            return new ResponseEntity<>(user, HttpStatus.CREATED);
+        } catch (AWSCognitoIdentityProviderException ex) {
+            return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
+        }
     }
 
     public void setPhoneNumber(String phoneNumber, User user, String userRegion) {

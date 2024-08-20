@@ -58,6 +58,8 @@ public class UserController {
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
 
+    private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
+
     @Autowired
     public UserController(CatchmentRepository catchmentRepository,
                           UserRepository userRepository,
@@ -149,7 +151,7 @@ public class UserController {
             String region = getRegionForUser(userContract);
             user = setUserAttributes(user, userContract, region);
 
-            idpServiceFactory.getIdpService(user).updateUser(user);
+            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).updateUser(user);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             userService.associateUserToGroups(user, userContract.getGroupIds());
@@ -181,7 +183,11 @@ public class UserController {
     }
 
     private Boolean isNameInvalid(String name) {
-        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, ValidationUtil.NAME_INVALID_CHARS_PATTERN);
+        return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
+    }
+
+    private Boolean phoneNumberIsValid(String phoneNumber, String region) {
+        return PhoneNumberUtil.isValidPhoneNumber(phoneNumber, region);
     }
 
     private User setUserAttributes(User user, UserContract userContract, String userRegion) {
@@ -189,7 +195,9 @@ public class UserController {
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
 
-        userService.setPhoneNumber(userContract.getPhoneNumber(), user, userRegion);
+        if (!phoneNumberIsValid(userContract.getPhoneNumber(), userRegion))
+            throw new ValidationException(String.format("Invalid phone number %s", userContract.getPhoneNumber()));
+        user.setPhoneNumber(userContract.getPhoneNumber());
 
         if (isUserNameInvalid(userContract.getUsername())) {
             throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
@@ -221,19 +229,7 @@ public class UserController {
     @Transactional
     public ResponseEntity deleteUser(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-        try {
-            User user = userRepository.findOne(id);
-            User currentUser = userService.getCurrentUser();
-            user.setAuditInfo(currentUser);
-            idpServiceFactory.getIdpService(user).deleteUser(user);
-            user.setVoided(true);
-            user.setDisabledInCognito(true);
-            userRepository.save(user);
-            logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
-        } catch (AWSCognitoIdentityProviderException ex) {
-            return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
-        }
+        return userService.deleteUser(id);
     }
 
     @RequestMapping(value = {"/user/{id}/disable", "/user/accountOrgAdmin/{id}/disable"}, method = RequestMethod.PUT)
@@ -245,14 +241,15 @@ public class UserController {
             User user = userRepository.findOne(id);
             User currentUser = userService.getCurrentUser();
             user.setAuditInfo(currentUser);
+            boolean isAdmin = userService.isAdmin(user);
             if (disable) {
-                idpServiceFactory.getIdpService(user).disableUser(user);
+                idpServiceFactory.getIdpService(user, isAdmin).disableUser(user);
                 user.setDisabledInCognito(true);
                 userRepository.save(user);
                 logger.info(String.format("Disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
             } else {
                 if (user.isDisabledInCognito()) {
-                    idpServiceFactory.getIdpService(user).enableUser(user);
+                    idpServiceFactory.getIdpService(user, isAdmin).enableUser(user);
                     user.setDisabledInCognito(false);
                     userRepository.save(user);
                     logger.info(String.format("Enabled previously disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
@@ -272,7 +269,7 @@ public class UserController {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(resetPasswordRequest.getUserId());
-            idpServiceFactory.getIdpService(user).resetPassword(user, resetPasswordRequest.getPassword());
+            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).resetPassword(user, resetPasswordRequest.getPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
@@ -286,7 +283,7 @@ public class UserController {
     public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         try {
             User user = userRepository.findOne(UserContextHolder.getUser().getId());
-            idpServiceFactory.getIdpService(user).resetPassword(user, changePasswordRequest.getNewPassword());
+            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).resetPassword(user, changePasswordRequest.getNewPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);

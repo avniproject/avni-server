@@ -6,6 +6,8 @@ import org.avni.server.domain.Group;
 import org.avni.server.domain.UserGroup;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,6 +42,10 @@ public interface UserGroupRepository extends ReferenceDataRepository<UserGroup> 
 
     @RestResource(exported = false)
     Long deleteAllByGroupIsNotIn(List<Group> groups);
+
+    @Modifying
+    @Query("DELETE FROM UserGroup ug where ug.group in (:groups)")
+    int deleteAllByGroupIn(List<Group> groups);
 
     boolean existsByUserIdAndLastModifiedDateTimeGreaterThan(Long userId, Date lastModifiedDateTime);
 

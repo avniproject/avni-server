@@ -30,6 +30,9 @@ public class UserServiceAssociateGroupsTest {
     private UserGroupRepository userGroupRepository;
     @Mock
     private GroupRepository groupRepository;
+    @Mock
+    private IdpServiceFactory idpServiceFactory;
+
     @Captor
     ArgumentCaptor<UserGroup> userGroupArgumentCaptor;
     @Captor
@@ -50,7 +53,7 @@ public class UserServiceAssociateGroupsTest {
     public void setup() {
         initMocks(this);
 
-        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null, null);
+        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null, idpServiceFactory, null);
 
         // init
         orgId = 1234l;

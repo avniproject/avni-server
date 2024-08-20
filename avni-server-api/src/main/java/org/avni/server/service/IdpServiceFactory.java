@@ -35,13 +35,11 @@ public class IdpServiceFactory {
 
     @Autowired
     private OrganisationConfigService organisationConfigService;
-    @Autowired
-    private UserService userService;
 
     public IdpServiceFactory() {
     }
 
-    public IdpServiceFactory(OrganisationRepository organisationRepository, CognitoIdpService cognitoIdpService, KeycloakIdpService keycloakIdpService, CognitoAuthServiceImpl cognitoAuthService, KeycloakAuthService keycloakAuthService, IdpType idpType, OrganisationConfigService organisationConfigService, UserService userService) {
+    public IdpServiceFactory(OrganisationRepository organisationRepository, CognitoIdpService cognitoIdpService, KeycloakIdpService keycloakIdpService, CognitoAuthServiceImpl cognitoAuthService, KeycloakAuthService keycloakAuthService, IdpType idpType, OrganisationConfigService organisationConfigService) {
         this.organisationRepository = organisationRepository;
         this.cognitoIdpService = cognitoIdpService;
         this.keycloakIdpService = keycloakIdpService;
@@ -49,7 +47,6 @@ public class IdpServiceFactory {
         this.keycloakAuthService = keycloakAuthService;
         this.idpType = idpType;
         this.organisationConfigService = organisationConfigService;
-        this.userService = userService;
     }
 
     public IdpService getIdpService() {
@@ -74,8 +71,8 @@ public class IdpServiceFactory {
         return cognitoIdpService;
     }
 
-    public IdpService getIdpService(User user) {
-        if (userService.isAdmin(user)) {
+    public IdpService getIdpService(User user, boolean isAdmin) {
+        if (isAdmin) {
             return getIdpService();
         }
         Organisation organisation = organisationRepository.findOne(user.getOrganisationId());
