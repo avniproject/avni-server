@@ -940,8 +940,9 @@ public class OrganisationService {
     }
 
     private Group addDefaultGroupIfNotPresent(Long organisationId, String groupType) {
-        if (Objects.nonNull(groupRepository.findByNameAndOrganisationId(groupType, organisationId))) {
-            return null;
+        Group existingGroup = groupRepository.findByNameAndOrganisationId(groupType, organisationId);
+        if (Objects.nonNull(existingGroup)) {
+            return existingGroup;
         }
         Group group = new Group();
         group.setName(groupType);
@@ -964,8 +965,10 @@ public class OrganisationService {
 
     public void setupBaseOrganisationMetadata(Organisation organisation) {
         createDefaultGenders(organisation);
-        addDefaultGroupIfNotPresent(organisation.getId(), Group.Everyone);
+        Group everyoneGroup = addDefaultGroupIfNotPresent(organisation.getId(), Group.Everyone);
         addDefaultGroupIfNotPresent(organisation.getId(), Group.Administrators);
+        Dashboard defaultDashboard = dashboardService.createDefaultDashboard(organisation);
+        groupDashboardService.createDefaultGroupDashboardForOrg(organisation, everyoneGroup, defaultDashboard);
     }
 
     public Organisation getCurrentOrganisation() {
