@@ -33,7 +33,7 @@ public class AddressLevel extends OrganisationAwareEntity {
     @JoinColumn(name = "type_id")
     private AddressLevelType type;
 
-    @ManyToOne(cascade = {CascadeType.ALL})
+    @ManyToOne
     @JoinColumn(name = "parent_id")
     private AddressLevel parent;
 

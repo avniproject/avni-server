@@ -27,7 +27,7 @@ public class AddressLevelType extends OrganisationAwareEntity {
     @PositiveOrZero
     private Double level;
 
-    @ManyToOne(cascade = {CascadeType.ALL})
+    @ManyToOne(cascade = {CascadeType.MERGE})
     private AddressLevelType parent;
 
     @OneToMany(mappedBy = "parent")

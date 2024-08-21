@@ -64,10 +64,10 @@ public class MediaController {
             logger.debug(format("Generating pre-signed url: %s", url.toString()));
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
         } catch (AccessDeniedException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }
@@ -108,10 +108,10 @@ public class MediaController {
         try {
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3Service.generateMediaDownloadUrl(url).toString());
         } catch (AccessDeniedException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }

@@ -19,7 +19,6 @@ public class LocationWriter implements ItemWriter<Row> {
     private String locationUploadMode;
     @Value("#{jobParameters['locationHierarchy']}")
     private String locationHierarchy;
-    private List<String> editLocationTypeNames;
 
     @Autowired
     public LocationWriter(BulkLocationCreator bulkLocationCreator, BulkLocationEditor bulkLocationEditor) {
@@ -27,18 +26,12 @@ public class LocationWriter implements ItemWriter<Row> {
         this.bulkLocationEditor = bulkLocationEditor;
     }
 
-    @PostConstruct
-    public void init() {
-        this.editLocationTypeNames = this.bulkLocationCreator.getLocationTypeNames();
-    }
-
     @Override
     public void write(List<? extends Row> rows) {
-        List<String> allErrorMsgs = new ArrayList<>();
         if (LocationUploadMode.isCreateMode(locationUploadMode)) {
             this.bulkLocationCreator.write(rows, locationHierarchy);
         } else {
-            this.bulkLocationEditor.write(rows, allErrorMsgs);
+            this.bulkLocationEditor.write(rows);
         }
     }
 
