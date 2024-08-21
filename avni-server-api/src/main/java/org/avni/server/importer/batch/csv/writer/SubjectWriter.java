@@ -3,10 +3,8 @@ package org.avni.server.importer.batch.csv.writer;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
-import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.IndividualRepository;
-import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
@@ -26,13 +24,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Component
 public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final IndividualRepository individualRepository;
     private final GenderRepository genderRepository;
     private final SubjectTypeCreator subjectTypeCreator;
-    private final LocationCreator locationCreator;
     private final FormMappingRepository formMappingRepository;
     private final ObservationService observationService;
     private final RuleServerInvoker ruleServerInvoker;
@@ -49,9 +45,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
     @Autowired
-    public SubjectWriter(AddressLevelTypeRepository addressLevelTypeRepository,
-                         LocationRepository locationRepository,
-                         IndividualRepository individualRepository,
+    public SubjectWriter(IndividualRepository individualRepository,
                          GenderRepository genderRepository,
                          SubjectTypeCreator subjectTypeCreator,
                          FormMappingRepository formMappingRepository,
@@ -78,7 +72,6 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.addressLevelCreator = addressLevelCreator;
         this.subjectMigrationService = subjectMigrationService;
         this.subjectTypeService = subjectTypeService;
-        this.locationCreator = new LocationCreator();
         this.s3Service = s3Service;
     }
 
@@ -104,6 +97,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             setDateOfBirth(individual, row, allErrorMsgs);
             individual.setDateOfBirthVerified(row.getBool(SubjectHeaders.dobVerified));
             setRegistrationDate(individual, row, allErrorMsgs);
+            LocationCreator locationCreator = new LocationCreator();
             individual.setRegistrationLocation(locationCreator.getLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
 
             AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
