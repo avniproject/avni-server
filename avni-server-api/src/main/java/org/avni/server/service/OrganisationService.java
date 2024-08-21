@@ -915,7 +915,7 @@ public class OrganisationService {
     }
 
     private void createGender(String genderName, Organisation org) {
-        if (Objects.nonNull(genderRepository.findByName(genderName))) {
+        if (Objects.nonNull(genderRepository.findByNameAndOrganisationId(genderName, org.getId()))) {
             return;
         }
         Gender gender = new Gender();

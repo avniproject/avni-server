@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 @RepositoryRestResource(collectionResourceRel = "gender", path = "gender")
 public interface GenderRepository extends CHSRepository<Gender>, CustomCHSJpaRepository<Gender, Long>, FindByLastModifiedDateTime<Gender> {
     Gender findByName(String name);
+    Gender findByNameAndOrganisationId(String name, Long organisationId);
     Gender findByNameIgnoreCase(String name);
 
     @RestResource(exported = false)
