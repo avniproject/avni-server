@@ -69,6 +69,7 @@ public class DashboardService implements NonScopeAwareService {
                 dashboardFilter = new DashboardFilter();
                 dashboardFilter.setUuid(bundleFilter.getUuid());
             }
+            dashboardFilter.setVoided(bundleFilter.isVoided());
             dashboardFilter.setName(bundleFilter.getName());
             DashboardFilterConfigBundleContract bundleFilterConfig = bundleFilter.getFilterConfig();
             dashboardFilter.setFilterConfig(bundleFilterConfig.toJsonObject());
