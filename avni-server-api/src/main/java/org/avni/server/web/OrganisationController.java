@@ -60,7 +60,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         setOrgAccountByIdOrDefault(org, request.getAccountId());
 
         organisationRepository.save(org);
-        organisationService.setupBaseOrganisationAdminConfig(org);
+        organisationService.setupBaseOrganisationData(org);
         return new ResponseEntity<>(org, HttpStatus.CREATED);
     }
 

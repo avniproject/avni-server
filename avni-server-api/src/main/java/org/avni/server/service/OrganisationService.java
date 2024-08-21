@@ -929,7 +929,7 @@ public class OrganisationService {
     }
 
     private void createGender(String genderName, Organisation org) {
-        if (Objects.nonNull(genderRepository.findByName(genderName))) {
+        if (Objects.nonNull(genderRepository.findByNameAndOrganisationId(genderName, org.getId()))) {
             return;
         }
         Gender gender = new Gender();
@@ -957,6 +957,11 @@ public class OrganisationService {
         createGender("Male", org);
         createGender("Female", org);
         createGender("Other", org);
+    }
+
+    public void setupBaseOrganisationData(Organisation organisation) {
+        setupBaseOrganisationMetadata(organisation);
+        setupBaseOrganisationAdminConfig(organisation);
     }
 
     public void setupBaseOrganisationAdminConfig(Organisation organisation) {
