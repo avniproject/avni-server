@@ -944,6 +944,11 @@ public class OrganisationService {
         createGender("Other", org);
     }
 
+    public void setupBaseOrganisationData(Organisation organisation) {
+        setupBaseOrganisationMetadata(organisation);
+        setupBaseOrganisationAdminConfig(organisation);
+    }
+
     public void setupBaseOrganisationAdminConfig(Organisation organisation) {
         organisationConfigService.createDefaultOrganisationConfig(organisation);
     }
