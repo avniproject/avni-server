@@ -20,9 +20,10 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
-public class LocationWriterTest {
+public class BulkLocationCreatorTest {
     private ImportService importService;
-    private LocationWriter locationWriter;
+    private BulkLocationCreator bulkLocationCreator;
+    private String dummyHierarchy;
 
     @Before
     public void setup() {
@@ -30,8 +31,9 @@ public class LocationWriterTest {
         LocationRepository locationRepository = mock(LocationRepository.class);
         LocationService locationService = mock(LocationService.class);
         importService = mock(ImportService.class);
-        locationWriter = new LocationWriter(locationService, locationRepository, addressLevelTypeRepository, mock(ObservationCreator.class), importService, mock(FormService.class));
+        bulkLocationCreator = new BulkLocationCreator(locationService, locationRepository, addressLevelTypeRepository, mock(ObservationCreator.class), importService, mock(FormService.class));
         when(locationService.save(any())).thenReturn(new AddressLevel());
+        dummyHierarchy = "1.2";
     }
 
     @Test(expected = Exception.class)
@@ -45,7 +47,7 @@ public class LocationWriterTest {
 
         rows.add(new Row(headers, new String[]{b1.getTitle(), v1.getTitle(), "new address level"}));
 
-        locationWriter.write(rows);
+        bulkLocationCreator.write(rows, dummyHierarchy);
     }
 
     @Test(expected = Exception.class)
@@ -58,14 +60,10 @@ public class LocationWriterTest {
 
         rows.add(new Row(headers, new String[]{b1.getTitle(), v1.getTitle()}));
 
-        locationWriter.write(rows);
+        bulkLocationCreator.write(rows, dummyHierarchy);
     }
 
-    private void createModeFileSetup() throws Exception {
-        String dummyHierarchy = "1.2";
-        locationWriter.setLocationUploadMode(String.valueOf(LocationWriter.LocationUploadMode.CREATE));
-        locationWriter.setLocationHierarchy(dummyHierarchy);
-
+    private void createModeFileSetup() {
         when(importService.getAddressLevelTypesForCreateModeSingleHierarchy(dummyHierarchy)).thenReturn(hierarchyOneOfAddressLevelTypes());
     }
 
@@ -76,14 +74,5 @@ public class LocationWriterTest {
 
     private AddressLevelType blockType() {
         return new AddressLevelTypeBuilder().name("Block").level(3.0).build();
-    }
-
-    private List<AddressLevelType> hierarchyTwoOfAddressLevelTypes() {
-        return Arrays.asList(subcenter(),
-                new AddressLevelTypeBuilder().name("AWC").level(2.0).build());
-    }
-
-    private AddressLevelType subcenter() {
-        return new AddressLevelTypeBuilder().name("Sub Center").level(3.0).build();
     }
 }

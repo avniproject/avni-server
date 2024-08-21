@@ -28,18 +28,17 @@ import java.util.List;
 @Component
 public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final ProgramEnrolmentRepository programEnrolmentRepository;
-    private LocationCreator locationCreator;
-    private SubjectCreator subjectCreator;
-    private DateCreator dateCreator;
-    private ProgramCreator programCreator;
-    private FormMappingRepository formMappingRepository;
-    private ObservationService observationService;
-    private RuleServerInvoker ruleServerInvoker;
-    private VisitCreator visitCreator;
-    private DecisionCreator decisionCreator;
-    private ObservationCreator observationCreator;
-    private ProgramEnrolmentService programEnrolmentService;
-    private EntityApprovalStatusWriter entityApprovalStatusWriter;
+    private final SubjectCreator subjectCreator;
+    private final DateCreator dateCreator;
+    private final ProgramCreator programCreator;
+    private final FormMappingRepository formMappingRepository;
+    private final ObservationService observationService;
+    private final RuleServerInvoker ruleServerInvoker;
+    private final VisitCreator visitCreator;
+    private final DecisionCreator decisionCreator;
+    private final ObservationCreator observationCreator;
+    private final ProgramEnrolmentService programEnrolmentService;
+    private final EntityApprovalStatusWriter entityApprovalStatusWriter;
 
     @Autowired
     public ProgramEnrolmentWriter(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -66,7 +65,6 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         this.observationCreator = observationCreator;
         this.programEnrolmentService = programEnrolmentService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
-        this.locationCreator = new LocationCreator();
         this.dateCreator = new DateCreator();
     }
 
@@ -95,6 +93,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         );
         if (exitDate != null) programEnrolment.setProgramExitDateTime(exitDate.toDateTimeAtStartOfDay());
 
+        LocationCreator locationCreator = new LocationCreator();
         programEnrolment.setEnrolmentLocation(locationCreator.getLocation(row, ProgramEnrolmentHeaders.enrolmentLocation, allErrorMsgs));
         programEnrolment.setExitLocation(locationCreator.getLocation(row, ProgramEnrolmentHeaders.exitLocation, allErrorMsgs));
         programEnrolment.setProgram(program);
