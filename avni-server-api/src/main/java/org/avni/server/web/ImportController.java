@@ -190,7 +190,7 @@ public class ImportController {
 
     @GetMapping(value = "/web/locationHierarchies")
     @ResponseBody
-    public HashMap<String, String> getAllAddressLevelTypeHierarchies() {
+    public Map<String, String> getAllAddressLevelTypeHierarchies() {
         try {
             return locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg();
         } catch (Exception exception) {

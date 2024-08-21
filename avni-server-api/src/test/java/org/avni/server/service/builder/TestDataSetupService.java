@@ -83,29 +83,13 @@ public class TestDataSetupService {
         return new TestCatchmentData(addressLevelType, addressLevel1, addressLevel2, catchment);
     }
 
-    public TestLocationHierarchyData setupLocationHierarchy(Map<Integer, String> locationTypes, Map<String, String> locations) {
-        Map<String, AddressLevelType> namedLocationTypes = new HashMap<>();
-        List<AddressLevelType> addressLevelTypes = locationTypes.entrySet().stream().map(levelNameEntry ->
-                new AddressLevelTypeBuilder()
-                        .name(levelNameEntry.getValue())
-                        .level(levelNameEntry.getKey().doubleValue())
-                        .withUuid(UUID.randomUUID())
-                        .build()).collect(Collectors.toList());
-        for (AddressLevelType addressLevelType : addressLevelTypes) {
-            AddressLevelType type = addressLevelTypeRepository.save(addressLevelType);
-            namedLocationTypes.put(addressLevelType.getName(), type);
+    public void saveLocationTypes(List<AddressLevelType> lowestToHighestAddressLevelTypes) {
+        AddressLevelType lastAddressLevelType = null;
+        for (AddressLevelType addressLevelType : lowestToHighestAddressLevelTypes) {
+            if (lastAddressLevelType != null)
+                addressLevelType.addChildAddressLevelType(lastAddressLevelType);
+            lastAddressLevelType = addressLevelTypeRepository.save(addressLevelType);
         }
-
-        HashMap<String, AddressLevel> namedLocations = new HashMap<>();
-        locations.forEach((levelName, locationName) -> {
-            AddressLevelType addressLevelType = namedLocationTypes.get(levelName);
-            namedLocations.put(levelName, testLocationService.save(new AddressLevelBuilder()
-                    .type(addressLevelType)
-                    .title(locationName)
-                    .withUuid(UUID.randomUUID())
-                    .build()));
-        });
-        return new TestLocationHierarchyData(namedLocationTypes, namedLocations);
     }
 
     public TestSyncAttributeBasedSubjectTypeData setupSubjectTypeWithSyncAttributes() {

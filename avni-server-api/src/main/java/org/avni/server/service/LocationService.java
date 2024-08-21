@@ -111,14 +111,14 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         try {
             locationRepository.save(location);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             throw new BuilderException(String.format("Unable to create Location{name='%s',level='%s',orgUUID='%s',..}: '%s' (%s)", contract.getName(), contract.getLevel(), contract.getOrganisationUUID(), e.getMessage(), contract));
         }
         try {
             location.calculateLineage();
             locationRepository.save(location);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             throw new BuilderException(String.format("Unable to update lineage for location with Id %s - %s. (%s)", location.getId(), e.getMessage(), contract));
         }
         return location;

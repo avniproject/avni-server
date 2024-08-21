@@ -90,6 +90,7 @@ dependencies {
     compile 'org.owasp.encoder:encoder:1.2.3'
     implementation 'org.apache.commons:commons-csv:1.10.0'
     compile 'com.googlecode.libphonenumber:libphonenumber:8.12.32'
+    testImplementation 'org.slf4j:slf4j-reload4j:2.0.6'
 }
 
 bootRun {

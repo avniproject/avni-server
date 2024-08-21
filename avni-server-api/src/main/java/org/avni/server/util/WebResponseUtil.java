@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class WebResponseUtil {
     public static ResponseEntity<Map<String, String>> createBadRequestResponse(Exception e, Logger logger) {
-        logger.error(e.getMessage());
+        logger.error(e.getMessage(), e);
         return ResponseEntity.badRequest().body(generateJsonError(e.getMessage()));
     }
 

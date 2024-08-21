@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -69,7 +70,8 @@ public class BulkLocationEditor extends BulkLocationModifier {
         updateLocationProperties(row, allErrorMsgs, location);
     }
 
-    public void write(List<? extends Row> rows, List<String> allErrorMsgs) {
+    public void write(List<? extends Row> rows) {
+        List<String> allErrorMsgs = new ArrayList<>();
         validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
         for (Row row : rows) {
             editLocation(row, allErrorMsgs);

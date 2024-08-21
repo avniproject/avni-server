@@ -36,7 +36,7 @@ public class OrganisationConfigSearchController {
         try {
             return new ResponseEntity<>(organisationConfigService.getOrganisationSettings(organisationId), HttpStatus.OK);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
         }
         return ResponseEntity.status(500).build();
     }

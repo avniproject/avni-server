@@ -69,7 +69,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
                 return new ResponseEntity<>(list.get(0), HttpStatus.CREATED);
             }
         } catch (BuilderException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
         }
         return ResponseEntity.ok(null);
@@ -127,7 +127,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
         try {
             location = locationService.update(locationEditContract, id);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
         }
         return new ResponseEntity<>(location, HttpStatus.OK);

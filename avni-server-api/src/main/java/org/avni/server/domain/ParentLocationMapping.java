@@ -8,12 +8,10 @@ import javax.persistence.*;
 @Table(name = "location_location_mapping")
 @BatchSize(size = 100)
 public class ParentLocationMapping extends OrganisationAwareEntity {
-//    @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "location_id")
     private AddressLevel location;
 
-//    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_location_id")
     private AddressLevel parentLocation;
