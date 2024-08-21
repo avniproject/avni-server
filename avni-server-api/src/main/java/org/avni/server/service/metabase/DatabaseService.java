@@ -103,37 +103,51 @@ public class DatabaseService {
         return responseBody.path("initial_sync_status").asText();
     }
 
+    private JsonNode getTableMetadata() {
+        int tableMetadataId = getTableIdByName("Table Metadata");
+        String requestBody = createRequestBodyForDataset(tableMetadataId);
+        return databaseRepository.getDataset(requestBody);
+    }
+
+    private String formatName(String rawName) {
+        String[] parts = rawName.split("_");
+        StringBuilder formattedName = new StringBuilder();
+
+        for (String part : parts) {
+            formattedName.append(part.substring(0, 1).toUpperCase())
+                         .append(part.substring(1))
+                         .append(" ");
+        }
+
+        return formattedName.toString().trim();
+    }
+
     public List<String> getSubjectTypeNames() {
-        int tableId = getTableIdByName("Subject Type");
-        String requestBody = createRequestBodyForDataset(tableId);
-
-        JsonNode response = databaseRepository.getDataset(requestBody);
-
-        JsonNode dataNode = response.path("data");
-        JsonNode rows = dataNode.path("rows");
-
+        JsonNode tableMetadata = getTableMetadata();
         List<String> subjectTypeNames = new ArrayList<>();
+
+        JsonNode rows = tableMetadata.path("data").path("rows");
         for (JsonNode row : rows) {
-            String name = row.get(4).asText();
-            boolean isVoided = row.get(6).asBoolean();
-            if (!isVoided) {
-                subjectTypeNames.add(name);
+            String type = row.get(2).asText();
+            if (Arrays.asList("Individual", "Household", "Group", "Person").contains(type)) {
+                String rawName = row.get(1).asText();
+                subjectTypeNames.add(formatName(rawName));
             }
         }
         return subjectTypeNames;
     }
 
-    private List<String> getProgramNamesFromOperationalProgramsTable() {
-        int operationalProgramsTableId = getTableIdByName("All Operational Programs");
-
-        String requestBody = createRequestBodyForDataset(operationalProgramsTableId);
-        JsonNode response = databaseRepository.getDataset(requestBody);
-
+    public List<String> getProgramAndEncounterNames() {
+        JsonNode tableMetadata = getTableMetadata();
         List<String> programNames = new ArrayList<>();
-        JsonNode rows = response.path("data").path("rows");
+
+        JsonNode rows = tableMetadata.path("data").path("rows");
         for (JsonNode row : rows) {
-            String programName = row.get(1).asText();
-            programNames.add(programName);
+            String type = row.get(2).asText();
+            if (Arrays.asList("ProgramEncounter", "ProgramEnrolment").contains(type)) {
+                String rawName = row.get(1).asText();
+                programNames.add(formatName(rawName));
+            }
         }
         return programNames;
     }
@@ -238,9 +252,9 @@ public class DatabaseService {
             throw new RuntimeException("Database initial sync is not complete.");
         }
 
-        List<String> programNames = getProgramNamesFromOperationalProgramsTable();
+        List<String> programNames = getProgramAndEncounterNames();
 
-        JsonNode databaseDetails = databaseRepository.getDatabaseDetails(databaseId);
+        JsonNode databaseDetails = databaseRepository.getDatabaseDetails(getDatabaseId());
         List<String> allTableNames = extractTableNames(databaseDetails);
 
         for (String programName : programNames) {
