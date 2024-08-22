@@ -31,6 +31,8 @@ public class BulkLocationCreator extends BulkLocationModifier {
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final ImportService importService;
     private final FormService formService;
+    public static final String LocationTypesHeaderError = "Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.";
+    public static final String UnknownHeadersErrorMessage = "Unknown headers included in file. Please refer to sample file for valid list of headers.";
 
     public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService) {
         super(locationRepository, observationCreator);
@@ -74,7 +76,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
                 .stream().map(AddressLevelType::getName).collect(Collectors.toList());
 
         if (headerList.size() >= locationTypeNamesForHierachy.size() && !headerList.subList(0, locationTypeNamesForHierachy.size()).equals(locationTypeNamesForHierachy)) {
-            allErrorMsgs.add("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.");
+            allErrorMsgs.add(LocationTypesHeaderError);
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
         return locationTypeNamesForHierachy;
@@ -87,7 +89,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
                     .stream().map(FormElement::getName).collect(Collectors.toList());
             locationPropertyNames.add(LocationHeaders.gpsCoordinates);
             if ((!locationPropertyNames.containsAll(additionalHeaders))) {
-                allErrorMsgs.add("Unknown headers included in file. Please refer to sample file for valid list of headers.");
+                allErrorMsgs.add(UnknownHeadersErrorMessage);
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
         }
