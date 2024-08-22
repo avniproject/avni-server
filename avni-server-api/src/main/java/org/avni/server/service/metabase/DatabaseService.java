@@ -1,4 +1,4 @@
-package org.avni.server.service.metabase;
+ckage org.avni.server.service.metabase;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -129,13 +129,15 @@ public class DatabaseService {
         JsonNode rows = tableMetadata.path("data").path("rows");
         for (JsonNode row : rows) {
             String type = row.get(2).asText();
-            if (Arrays.asList("Individual", "Household", "Group", "Person").contains(type)) {
+            if (Arrays.asList(TableType.INDIVIDUAL.getTypeName(), TableType.HOUSEHOLD.getTypeName(), TableType.GROUP.getTypeName(), TableType.PERSON.getTypeName()).contains(type)) {
                 String rawName = row.get(1).asText();
                 subjectTypeNames.add(formatName(rawName));
             }
         }
+        System.out.println("The subject type names::" + subjectTypeNames);
         return subjectTypeNames;
     }
+
 
     public List<String> getProgramAndEncounterNames() {
         JsonNode tableMetadata = getTableMetadata();
@@ -144,13 +146,15 @@ public class DatabaseService {
         JsonNode rows = tableMetadata.path("data").path("rows");
         for (JsonNode row : rows) {
             String type = row.get(2).asText();
-            if (Arrays.asList("ProgramEncounter", "ProgramEnrolment").contains(type)) {
+            if (Arrays.asList(TableType.PROGRAM_ENCOUNTER.getTypeName(), TableType.PROGRAM_ENROLMENT.getTypeName()).contains(type)) {
                 String rawName = row.get(1).asText();
                 programNames.add(formatName(rawName));
             }
         }
+        System.out.println("The program and encounter::" + programNames);
         return programNames;
     }
+
 
     private List<String> extractTableNames(JsonNode databaseDetails) {
         List<String> tableNames = new ArrayList<>();
