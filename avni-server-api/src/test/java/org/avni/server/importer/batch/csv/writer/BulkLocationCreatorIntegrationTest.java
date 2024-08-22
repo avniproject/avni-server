@@ -1,6 +1,5 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -15,7 +14,10 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.avni.server.importer.batch.csv.writer.BulkLocationCreator.LocationTypesHeaderError;
 import static org.avni.server.importer.batch.csv.writer.BulkLocationCreator.UnknownHeadersErrorMessage;
@@ -24,7 +26,7 @@ import static org.junit.Assert.assertNotNull;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
-public class BulkLocationCreatorIntegrationTest extends AbstractControllerIntegrationTest {
+public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private TestDataSetupService testDataSetupService;
     @Autowired
@@ -58,12 +60,14 @@ public class BulkLocationCreatorIntegrationTest extends AbstractControllerIntegr
         return count;
     }
 
-    private static String[] header(String ... cells) {
-        return cells;
+    private void lineageExists(String ... lineage) {
+        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(".", lineage)).get();
+        assertNotNull(address);
     }
 
-    private static String[] dataRow(String ... cells) {
-        return cells;
+    private void locationHasAttribute(String[] lineage, String concept) {
+        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(".", lineage)).get();
+        assertNotNull(address.getLocationProperties().get(concept));
     }
 
     private void treatAsDescriptor(String[] headers, String ... additionalHeaders) {
@@ -89,20 +93,6 @@ public class BulkLocationCreatorIntegrationTest extends AbstractControllerIntegr
         }
         long after = addressLevelRepository.count();
         assertEquals(before, after);
-    }
-
-    private String[] lineage(String ... lineage) {
-        return lineage;
-    }
-
-    private void lineageExists(String ... lineage) {
-        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(".", lineage)).get();
-        assertNotNull(address);
-    }
-
-    private void locationHasAttribute(String[] lineage, String concept) {
-        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(".", lineage)).get();
-        assertNotNull(address.getLocationProperties().get(concept));
     }
 
     @Test
@@ -163,11 +153,34 @@ public class BulkLocationCreatorIntegrationTest extends AbstractControllerIntegr
                 dataRow("Bihar", "Vaishali", "Block 4", "23.45,43.86", "not an answer to this concept"),
                 "");
 
-        // in random steps
+        success(header("State", "District", "Block", "GPS coordinates", " Coded Concept", "Text Concept"),
+                dataRow("Bihar", "Vaishali", "Block 5", "23.45,43.86", " Answer 1", "any text"),
+                newLocationsCreated(1));
+        locationHasAttribute(lineage("Bihar", "Vaishali", "Block 5"), "Coded Concept");
+        locationHasAttribute(lineage("Bihar", "Vaishali", "Block 5"), "Text Concept");
+        // end
+
+
+        // without full hierarchy
         success(header("State", "District", "Block", "GPS coordinates"),
-                dataRow(" ", " ", "Block11", "23.45,43.85"), newLocationsCreated(1));
+                dataRow("Bihar", "District 1", " ", "23.45,43.85"), newLocationsCreated(1));
+        lineageExists("Bihar", "District 1");
+
         success(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("Bihar", "District1", "Block11"), newLocationsCreated(1));
-        lineageExists("Bihar", "District1", "Block11");
+                dataRow("State 2", "District 1", " ", "23.45,43.85"), newLocationsCreated(2));
+        lineageExists("State 2", "District 1");
+
+        success(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("State 3", " ", " ", "23.45,43.85"), newLocationsCreated(1));
+        lineageExists("State 3");
+        // end
+
+
+        // if in random steps
+        failure(header("State", "District", "Block", "GPS coordinates"),
+                dataRow(" ", " ", "Block11", "23.45,43.85"), "");
+        failure(header("State", "District", "Block", "GPS coordinates"),
+                dataRow(" ", " District 11", "Block11", "23.45,43.85"), "");
+        // end
     }
 }
