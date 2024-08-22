@@ -52,12 +52,12 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) {
         AddressLevel parent = null;
         AddressLevel location = null;
-        for (String header : row.getHeaders()) {
-            if (isValidLocation(header, row, locationTypeNames)) {
-                location = createAddressLevel(row, parent, header, locationTypeNames);
+        for (String columnHeader : row.getHeaders()) {
+            if (isValidLocation(columnHeader, row, locationTypeNames)) {
+                location = createAddressLevel(row, parent, columnHeader, locationTypeNames);
                 parent = location;
             } //This will get called only when location have extra properties
-            if (location != null && !locationTypeNames.contains(header)) {
+            if (location != null && !locationTypeNames.contains(columnHeader)) {
                 updateLocationProperties(row, allErrorMsgs, location);
             }
         }

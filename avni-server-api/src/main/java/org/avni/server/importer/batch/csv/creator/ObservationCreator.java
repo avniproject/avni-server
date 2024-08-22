@@ -122,7 +122,7 @@ public class ObservationCreator {
 
     private String getRowValue(FormElement formElement, Row row, Integer questionGroupIndex) {
         Concept concept = formElement.getConcept();
-        if(formElement.getGroup() != null) {
+        if (formElement.getGroup() != null) {
             Concept parentConcept = formElement.getGroup().getConcept();
             String parentChildName = parentConcept.getName() + "|" + concept.getName();
             String headerName = questionGroupIndex == null ? parentChildName : String.format("%s|%d", parentChildName, questionGroupIndex);
@@ -136,7 +136,7 @@ public class ObservationCreator {
         for (Concept concept : getConceptHeaders(headers, row.getHeaders())) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);
-            if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().equals("")))
+            if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
                 continue;
             ObservationRequest observationRequest = new ObservationRequest();
             observationRequest.setConceptName(concept.getName());
@@ -166,7 +166,7 @@ public class ObservationCreator {
             List<ObservationCollection> repeatableObservationRequest = new ArrayList<>();
             for (int i = 1; i <= maxIndex; i++) {
                 ObservationCollection questionGroupObservations = getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, i);
-                if(!questionGroupObservations.isEmpty()) {
+                if (!questionGroupObservations.isEmpty()) {
                     repeatableObservationRequest.add(questionGroupObservations);
                 }
             }
@@ -205,7 +205,7 @@ public class ObservationCreator {
         }).collect(Collectors.toList());
     }
 
-    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType)  {
+    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType) {
         List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(formType);
         if (applicableForms.isEmpty())
             throw new RuntimeException(String.format("No forms of type %s found", formType));
