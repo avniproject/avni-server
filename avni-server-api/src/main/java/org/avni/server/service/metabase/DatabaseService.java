@@ -259,7 +259,7 @@ public class DatabaseService {
 
         for (String programName : programNames) {
             for (String tableName : allTableNames) {
-                if (tableName.contains(programName)) {
+                if (tableName.equalsIgnoreCase(programName)) {
                     createQuestionForTable(tableName, "Address", "id", "address_id");
                 }
             }
