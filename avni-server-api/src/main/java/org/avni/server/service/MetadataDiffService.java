@@ -162,7 +162,7 @@ public class MetadataDiffService {
         return filePath.substring(rootPath.length() + 1);
     }
 
-    private Map<String, Object> findDifferences(Map<String, Object> jsonMap1, Map<String, Object> jsonMap2) {
+    protected Map<String, Object> findDifferences(Map<String, Object> jsonMap1, Map<String, Object> jsonMap2) {
         Map<String, Object> differences = new HashMap<>();
         boolean hasDifferences = false;
         String uuid = "null";
@@ -196,7 +196,7 @@ public class MetadataDiffService {
         return differences;
     }
 
-    private Map<String, Object> findJsonDifferences(Map<String, Object> json1, Map<String, Object> json2) {
+    protected Map<String, Object> findJsonDifferences(Map<String, Object> json1, Map<String, Object> json2) {
         Map<String, Object> differences = new LinkedHashMap<>();
         if (json1 == null && json2 == null) {
             return differences;
@@ -249,7 +249,7 @@ public class MetadataDiffService {
         return differences;
     }
 
-    private List<Map<String, Object>> findArrayDifferences(List<Object> array1, List<Object> array2) {
+    protected List<Map<String, Object>> findArrayDifferences(List<Object> array1, List<Object> array2) {
         List<Map<String, Object>> differences = new ArrayList<>();
         int maxSize = Math.max(array1.size(), array2.size());
 
@@ -323,20 +323,20 @@ public class MetadataDiffService {
         return arrayDiff;
     }
 
-    private Set<String> findMissingFiles(Set<String> fileNames1, Set<String> fileNames2) {
+    protected Set<String> findMissingFiles(Set<String> fileNames1, Set<String> fileNames2) {
         Set<String> missingFiles = new HashSet<>(fileNames1);
         missingFiles.removeAll(fileNames2);
         return missingFiles;
     }
 
-    private Map<String, Object> missingFilesMap(Set<String> missingFiles, String message) {
+    protected Map<String, Object> missingFilesMap(Set<String> missingFiles, String message) {
         Map<String, Object> missingFilesMap = new LinkedHashMap<>();
         missingFilesMap.put("message", message);
         missingFilesMap.put("files", missingFiles);
         return missingFilesMap;
     }
 
-    private void deleteDirectory(File directory) {
+    protected void deleteDirectory(File directory) {
         File[] files = directory.listFiles();
         if (files != null) {
             for (File file : files) {
