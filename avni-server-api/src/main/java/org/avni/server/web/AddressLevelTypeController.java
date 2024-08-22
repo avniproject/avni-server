@@ -118,7 +118,7 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
         }
         if (!addressLevelType.isVoidable()) {
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(
-                    String.format("Cannot delete Type '%s' until all SubTypes are deleted or there are non-voided addresses depending on it", addressLevelType.getName())));
+                    String.format("Cannot delete '%s'. Sub location types or locations of this type exist. Please delete them to proceed.", addressLevelType.getName())));
         }
         addressLevelType.setVoided(true);
         return new ResponseEntity<>(addressLevelType, HttpStatus.OK);
