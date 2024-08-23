@@ -1,28 +1,31 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import org.avni.server.application.*;
+import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
+import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.LocationHierarchyService;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
+import wiremock.org.checkerframework.checker.units.qual.A;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.avni.server.importer.batch.csv.writer.BulkLocationCreator.LocationTypesHeaderError;
-import static org.avni.server.importer.batch.csv.writer.BulkLocationCreator.UnknownHeadersErrorMessage;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.avni.server.importer.batch.csv.writer.BulkLocationCreator.*;
+import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -39,6 +42,10 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
     private TestConceptService testConceptService;
     @Autowired
     private LocationRepository locationRepository;
+    @Autowired
+    private FormRepository formRepository;
+    @Autowired
+    private ConceptRepository conceptRepository;
     private String hierarchy;
 
     @Override
@@ -48,8 +55,24 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID()).build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID()).build();
         testDataSetupService.saveLocationTypes(Arrays.asList(block, district, state));
-        testConceptService.createCodedConcept("Coded Concept", "Answer 1", "Answer 2");
-        testConceptService.createConcept("Text Concept", ConceptDataType.Text);
+        Concept codedConcept = testConceptService.createCodedConcept("Coded Concept", "Answer 1", "Answer 2");
+        Concept textConcept = testConceptService.createConcept("Text Concept", ConceptDataType.Text);
+        Form locationForm = new TestFormBuilder()
+                .withUuid(UUID.randomUUID().toString())
+                .withFormType(FormType.Location)
+                .withName("Location Form")
+                .addFormElementGroup(
+                        new TestFormElementGroupBuilder()
+                                .withDisplayOrder(1d)
+                                .withUuid(UUID.randomUUID().toString())
+                                .addFormElement(
+                                        new TestFormElementBuilder().withDisplayOrder(1d).withType(FormElement.SINGLE_SELECT).withConcept(codedConcept).withName(codedConcept.getName()).withUuid(UUID.randomUUID().toString()).build(),
+                                        new TestFormElementBuilder().withDisplayOrder(2d).withConcept(textConcept).withName(textConcept.getName()).withUuid(UUID.randomUUID().toString()).build()
+                                )
+                                .withName("Location Form Element Group")
+                                .build()
+                ).build();
+        formRepository.save(locationForm);
 
         setUser(organisationData.getUser().getUsername());
         Map<String, String> hierarchies = locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg();
@@ -60,17 +83,18 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         return count;
     }
 
-    private void lineageExists(String ... lineage) {
-        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(".", lineage)).get();
+    private void lineageExists(String... lineage) {
+        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(", ", lineage)).get();
         assertNotNull(address);
     }
 
-    private void locationHasAttribute(String[] lineage, String concept) {
-        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(".", lineage)).get();
-        assertNotNull(address.getLocationProperties().get(concept));
+    private void locationHasAttribute(String[] lineage, String conceptName) {
+        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(", ", lineage)).get();
+        Concept concept = conceptRepository.findByName(conceptName);
+        assertNotNull(address.getLocationProperties().get(concept.getUuid()));
     }
 
-    private void treatAsDescriptor(String[] headers, String ... additionalHeaders) {
+    private void treatAsDescriptor(String[] headers, String... additionalHeaders) {
         long before = addressLevelRepository.count();
         bulkLocationCreator.write(Collections.singletonList(new Row(headers, additionalHeaders)), hierarchy);
         long after = addressLevelRepository.count();
@@ -88,6 +112,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         long before = addressLevelRepository.count();
         try {
             bulkLocationCreator.write(Collections.singletonList(new Row(headers, cells)), hierarchy);
+            fail();
         } catch (Exception e) {
             assertEquals(errorMessage, e.getMessage());
         }
@@ -96,7 +121,6 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    @Ignore
     public void shouldCreate() {
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Mahua", "23.45,43.85"),
@@ -119,18 +143,19 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
 
         failure(header("State1", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
-                LocationTypesHeaderError);
+                error(LocationTypesHeaderError));
         failure(header("State", "District2", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
-                LocationTypesHeaderError);
+                error(LocationTypesHeaderError));
+        failure(header("District", "State", "Block", "GPS coordinates"),
+                dataRow("Vaishali", "Bihar", "Nijma", "23.45,43.85"),
+                error(LocationTypesHeaderError));
         failure(header("State", "District", "Block", "GPS"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
-                UnknownHeadersErrorMessage);
-
-        treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("Ex: state 1", "Ex: distr 1", "Ex: blo 1", "Ex. 23.45,43.85"));
-        treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
-                dataRow(" Ex: state 1", "Ex: distr 1 ", "Ex: blo 1", " Ex. 23.45,43.85 "));
+                error(UnknownHeadersErrorMessage));
+        failure(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("Bihar", "Vaishali", "Nijma", "23.45,"),
+                error("Invalid 'GPS coordinates'"));
 
 
         //attributes
@@ -151,7 +176,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
 
         failure(header("State", "District", "Block", "GPS coordinates", "Coded Concept "),
                 dataRow("Bihar", "Vaishali", "Block 4", "23.45,43.86", "not an answer to this concept"),
-                "");
+                error("Invalid answer 'not an answer to this concept' for 'Coded Concept'"));
 
         success(header("State", "District", "Block", "GPS coordinates", " Coded Concept", "Text Concept"),
                 dataRow("Bihar", "Vaishali", "Block 5", "23.45,43.86", " Answer 1", "any text"),
@@ -178,9 +203,22 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
 
         // if in random steps
         failure(header("State", "District", "Block", "GPS coordinates"),
-                dataRow(" ", " ", "Block11", "23.45,43.85"), "");
+                dataRow(" ", " ", "Block11", "23.45,43.85"),
+                error(ParentMissingOfLocation));
         failure(header("State", "District", "Block", "GPS coordinates"),
-                dataRow(" ", " District 11", "Block11", "23.45,43.85"), "");
+                dataRow(" ", " District 11", "Block11", "23.45,43.85"),
+                error(ParentMissingOfLocation));
+        failure(header("State", "District", "Block", "GPS coordinates"),
+                dataRow(" ", " ", " ", "23.45,43.85"),
+                error(NoLocationProvided));
         // end
+
+
+        treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("Example: state 1", "Ex: distr 1", "Ex: blo 1", "Ex. 23.45,43.85"));
+        treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
+                dataRow(" Example: state 1", "Ex: distr 1 ", "Ex: blo 1", " Ex. 23.45,43.85 "));
+        treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("  state 1", "Example: distr 1 ", "Ex: blo 1", " Ex. 23.45,43.85 "));
     }
 }

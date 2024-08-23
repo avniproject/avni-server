@@ -10,13 +10,16 @@ import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.FormService;
+import org.avni.server.service.ImportLocationsConstants;
 import org.avni.server.service.ImportService;
 import org.avni.server.service.LocationService;
+import org.avni.server.util.CollectionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.LocationContract;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -33,6 +36,8 @@ public class BulkLocationCreator extends BulkLocationModifier {
     private final FormService formService;
     public static final String LocationTypesHeaderError = "Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.";
     public static final String UnknownHeadersErrorMessage = "Unknown headers included in file. Please refer to sample file for valid list of headers.";
+    public static final String ParentMissingOfLocation = "Parent missing for location provided";
+    public static final String NoLocationProvided = "No location provided";
 
     public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService) {
         super(locationRepository, observationCreator);
@@ -116,11 +121,33 @@ public class BulkLocationCreator extends BulkLocationModifier {
         return locationTypeNames.contains(header) && !S.isEmpty(row.get(header));
     }
 
-    public void write(List<? extends Row> rows, String locationHierarchy) {
-        List<String> allErrorMsgs = new ArrayList<>();
-        List<String> locationTypeNames = validateCreateModeHeaders(rows.get(0).getHeaders(), allErrorMsgs, locationHierarchy);
-        for (Row row : rows) {
-            createLocation(row, allErrorMsgs, locationTypeNames);
+    private void validateRow(Row row, List<String> hierarchicalLocationTypeNames, List<String> allErrorMsgs) {
+        List<String> values = row.get(hierarchicalLocationTypeNames);
+        if (CollectionUtil.isEmpty(values)) {
+            allErrorMsgs.add(NoLocationProvided);
+            throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
+        if (!CollectionUtil.hasOnlyTrailingEmptyStrings(values)) {
+            allErrorMsgs.add(ParentMissingOfLocation);
+            throw new RuntimeException(String.join(", ", allErrorMsgs));
+        }
+    }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void write(List<? extends Row> rows, String idBasedLocationHierarchy) {
+        List<String> allErrorMsgs = new ArrayList<>();
+        List<String> hierarchicalLocationTypeNames = validateCreateModeHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
+        for (Row row : rows) {
+            if (skipRow(row, hierarchicalLocationTypeNames)) {
+                continue;
+            }
+            validateRow(row, hierarchicalLocationTypeNames, allErrorMsgs);
+            createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames);
+        }
+    }
+
+    private boolean skipRow(Row row, List<String> hierarchicalLocationTypeNames) {
+        List<String> values = row.get(hierarchicalLocationTypeNames);
+        return CollectionUtil.anyStartsWith(values, ImportLocationsConstants.Example);
     }
 }
