@@ -188,12 +188,12 @@ public class CardService implements NonScopeAwareService {
     }
 
     public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
-        List<String> defaultDashboardStandardCardTypeNames = Arrays.asList("Scheduled visits", "Overdue visits", "Total", "Recent registrations", "Recent enrolments", "Recent visits", "Due checklist");
-        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardStandardCardTypeNames);
+        Map<String, String> defaultDashboardCards = getDefaultDashboardCardNamesAndUuids();
+        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardCards.keySet());
         Map<String, ReportCard> savedCards = new HashMap<>();
         standardReportCardTypes.forEach(standardReportCardType -> {
             ReportCard reportCard = new ReportCard();
-            reportCard.setUuid(UUID.randomUUID().toString());
+            reportCard.setUuid(defaultDashboardCards.get(standardReportCardType.getName()));
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
             reportCard.setName(standardReportCardType.getName());
@@ -213,5 +213,17 @@ public class CardService implements NonScopeAwareService {
             savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
         });
         return savedCards;
+    }
+
+    private static Map<String, String> getDefaultDashboardCardNamesAndUuids() {
+        Map<String, String> defaultDashboardStandardCardTypeNamesAndUuids = new HashMap<>();
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Scheduled visits", "6085c2f4-52e7-4b08-85b6-d6b2612b4cf5");
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Overdue visits", "85ce7239-e8b5-4e57-b07d-66c18cee47b2");
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Total", "a1673f8a-c394-4bcf-8b6f-63d83a5443e2");
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Recent registrations", "f366f35a-5c4f-4ff7-b510-2dc9f5f88847");
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Recent enrolments", "e1036b69-df46-4351-9916-10cd4cfcb6bd");
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Recent visits", "dd961ee1-9d4e-4ec9-99f0-99b36672be7c");
+        defaultDashboardStandardCardTypeNamesAndUuids.put("Due checklist", "9b7632dd-4e98-429a-8e42-67a947bf9ece");
+        return defaultDashboardStandardCardTypeNamesAndUuids;
     }
 }

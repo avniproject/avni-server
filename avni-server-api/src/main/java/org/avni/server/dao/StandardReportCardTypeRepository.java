@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "standardReportCardType", path = "standardReportCardType")
@@ -27,5 +28,5 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
 
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
-    List<StandardReportCardType> findAllByNameIn(List<String> defaultDashboardStandardCardTypeNames);
+    List<StandardReportCardType> findAllByNameIn(Set<String> defaultDashboardStandardCardTypeNames);
 }
