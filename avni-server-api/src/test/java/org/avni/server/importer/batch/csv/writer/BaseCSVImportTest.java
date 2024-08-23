@@ -17,4 +17,8 @@ public abstract class BaseCSVImportTest extends AbstractControllerIntegrationTes
     protected String[] lineage(String ... lineage) {
         return lineage;
     }
+
+    protected String error(String message) {
+        return message;
+    }
 }

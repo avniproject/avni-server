@@ -2,7 +2,9 @@ package org.avni.server.importer.batch.model;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.String.format;
@@ -15,7 +17,7 @@ public class Row extends HashMap<String, String> {
     public Row(String[] headers, String[] values) {
         this.headers = headers;
         this.values = values;
-        IntStream.range(0, values.length).forEach(index -> this.put(headers[index], values[index].trim()));
+        IntStream.range(0, values.length).forEach(index -> this.put(headers[index].trim(), values[index].trim()));
     }
 
     private String nullSafeTrim(String s) {
@@ -27,6 +29,10 @@ public class Row extends HashMap<String, String> {
 
     public String[] getHeaders() {
         return Arrays.stream(headers).map(this::nullSafeTrim).toArray(String[]::new);
+    }
+
+    public List<String> get(List<String> headers) {
+        return headers.stream().map(this::get).collect(Collectors.toList());
     }
 
     @Override

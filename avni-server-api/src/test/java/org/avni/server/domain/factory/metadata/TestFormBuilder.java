@@ -1,8 +1,10 @@
 package org.avni.server.domain.factory.metadata;
 
 import org.avni.server.application.Form;
+import org.avni.server.application.FormElementGroup;
 import org.avni.server.application.FormType;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 public class TestFormBuilder {
@@ -26,6 +28,14 @@ public class TestFormBuilder {
     public TestFormBuilder withDefaultFieldsForNewEntity() {
         String s = UUID.randomUUID().toString();
         return withUuid(s).withName(s).withFormType(FormType.IndividualProfile);
+    }
+
+    public TestFormBuilder addFormElementGroup(FormElementGroup... formElementGroups ) {
+        Arrays.stream(formElementGroups).forEach(formElementGroup -> {
+            entity.addFormElementGroup(formElementGroup);
+            formElementGroup.setForm(entity);
+        });
+        return this;
     }
 
     public Form build() {
