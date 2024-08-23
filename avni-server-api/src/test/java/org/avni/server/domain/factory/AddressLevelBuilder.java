@@ -2,6 +2,7 @@ package org.avni.server.domain.factory;
 
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.ParentLocationMapping;
 
 import java.util.UUID;
 
@@ -23,7 +24,13 @@ public class AddressLevelBuilder {
     }
 
     public AddressLevelBuilder parent(AddressLevel parent) {
-        entity.setParent(parent);
+        parent.addChild(entity);
+
+        ParentLocationMapping parentLocationMapping = new ParentLocationMapping();
+        parentLocationMapping.assignUUID();
+        parentLocationMapping.setParentLocation(parent);
+        parentLocationMapping.setLocation(entity);
+        entity.setParentLocationMapping(parentLocationMapping);
         return this;
     }
 
