@@ -1,10 +1,13 @@
-ckage org.avni.server.service.metabase;
+package org.avni.server.service.metabase;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.metabase.DatabaseRepository;
+import org.avni.server.domain.metabase.TableType;
+import org.avni.server.domain.metabase.MetabaseJoin;
+import org.avni.server.domain.metabase.MetabaseQuery;
 import org.avni.server.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
 @Service
 public class DatabaseService {
@@ -165,35 +169,26 @@ public class DatabaseService {
         return tableNames;
     }
 
-    private void createQuestionForTable(String tableName, String addressTableName, String addressField, String tableField) {
+    private void createQuestionForTable(String tableName, String addressTableName, String addressField, String tableField) throws Exception {
         int addressTableId = getTableIdByName(addressTableName);
         int joinFieldId1 = getFieldIdByTableNameAndFieldName(addressTableName, addressField);
         int tableId = getTableIdByName(tableName);
         int joinFieldId2 = getFieldIdByTableNameAndFieldName(tableName, tableField);
 
+        JsonNode conditionNode = objectMapper.readTree(
+            "[\"=\", [\"field\", " + joinFieldId1 + ", {\"base-type\": \"type/Integer\"}], [\"field\", " + joinFieldId2 + ", {\"base-type\": \"type/Integer\", \"join-alias\": \"" + tableName + "\"}]]"
+        );
+        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, conditionNode);  // Change: tableId as integer
+
+        ArrayNode joinsArray = objectMapper.createArrayNode();
+        joinsArray.add(join.toJson(objectMapper));
+
+        MetabaseQuery query = new MetabaseQuery(addressTableId, joinsArray);  // Change: addressTableId as integer
+
         ObjectNode datasetQuery = objectMapper.createObjectNode();
         datasetQuery.put("database", getDatabaseId());
         datasetQuery.put("type", "query");
-
-        ObjectNode query = objectMapper.createObjectNode();
-        query.put("source-table", addressTableId);
-
-        ArrayNode joins = objectMapper.createArrayNode();
-        ObjectNode join = objectMapper.createObjectNode();
-        join.put("fields", "all");
-        join.put("alias", tableName);
-
-        ArrayNode condition = objectMapper.createArrayNode();
-        condition.add("=");
-        condition.add(objectMapper.createArrayNode().add("field").add(joinFieldId1).add(objectMapper.createObjectNode().put("base-type", "type/Integer")));
-        condition.add(objectMapper.createArrayNode().add("field").add(joinFieldId2).add(objectMapper.createObjectNode().put("base-type", "type/Integer").put("join-alias", tableName)));
-
-        join.set("condition", condition);
-        join.put("source-table", tableId);
-        joins.add(join);
-
-        query.set("joins", joins);
-        datasetQuery.set("query", query);
+        datasetQuery.set("query", query.toJson(objectMapper));
 
         ObjectNode body = objectMapper.createObjectNode();
         body.put("name", "Address + " + tableName);
@@ -207,6 +202,8 @@ public class DatabaseService {
 
         databaseRepository.postForObject(metabaseApiUrl + "/card", body, JsonNode.class);
     }
+
+
 
     private void createQuestionForTable(String tableName, String schema) {
         int tableId = getTableIdByName(tableName, schema);
@@ -236,7 +233,7 @@ public class DatabaseService {
         );
     }
 
-    public void createQuestionsForSubjectTypes() {
+    public void createQuestionsForSubjectTypes() throws Exception {
 
         String syncStatus = getInitialSyncStatus();
         if (!"complete".equals(syncStatus)) {
@@ -250,7 +247,7 @@ public class DatabaseService {
         }
     }
 
-    public void createQuestionsForProgramsAndEncounters() {
+    public void createQuestionsForProgramsAndEncounters() throws Exception{
         String syncStatus = getInitialSyncStatus();
         if (!"complete".equals(syncStatus)) {
             throw new RuntimeException("Database initial sync is not complete.");

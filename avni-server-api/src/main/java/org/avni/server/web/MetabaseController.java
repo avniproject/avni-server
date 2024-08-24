@@ -28,7 +28,7 @@ public class MetabaseController {
     }
 
     @PostMapping("/create-questions")
-    public void createQuestions() {
+    public void createQuestions() throws Exception{
         databaseService.createQuestionsForSubjectTypes();
         databaseService.createQuestionsForProgramsAndEncounters();
         databaseService.createQuestionsForIndivdualTables();

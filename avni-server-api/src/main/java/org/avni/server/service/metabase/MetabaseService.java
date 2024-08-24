@@ -64,7 +64,7 @@ public class MetabaseService {
         collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), metabaseCollection.getId());
     }
 
-    public void createQuestionsForSubjectTypes() {
+    public void createQuestionsForSubjectTypes() throws Exception{
         databaseService.createQuestionsForSubjectTypes();
     }
 
