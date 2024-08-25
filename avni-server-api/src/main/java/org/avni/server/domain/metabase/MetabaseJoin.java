@@ -10,11 +10,17 @@ public class MetabaseJoin {
     private final int sourceTable;
     private final JsonNode condition;
 
-    public MetabaseJoin(String fields, String alias, int sourceTable, JsonNode condition) {
+    public MetabaseJoin(String fields, String alias, int sourceTable, int joinFieldId1, int joinFieldId2, String tableName, ObjectMapper objectMapper) throws Exception {
         this.fields = fields;
         this.alias = alias;
         this.sourceTable = sourceTable;
-        this.condition = condition;
+        this.condition = createConditionNode(joinFieldId1, joinFieldId2, tableName, objectMapper);
+    }
+
+    private JsonNode createConditionNode(int joinFieldId1, int joinFieldId2, String tableName, ObjectMapper objectMapper) throws Exception {
+        return objectMapper.readTree(
+            "[\"=\", [\"field\", " + joinFieldId1 + ", {\"base-type\": \"type/Integer\"}], [\"field\", " + joinFieldId2 + ", {\"base-type\": \"type/Integer\", \"join-alias\": \"" + tableName + "\"}]]"
+        );
     }
 
     public ObjectNode toJson(ObjectMapper objectMapper) {

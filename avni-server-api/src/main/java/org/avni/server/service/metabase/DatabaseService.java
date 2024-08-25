@@ -176,10 +176,7 @@ public class DatabaseService {
         int tableId = getTableIdByName(tableName);
         int joinFieldId2 = getFieldIdByTableNameAndFieldName(tableName, tableField);
 
-        JsonNode conditionNode = objectMapper.readTree(
-            "[\"=\", [\"field\", " + joinFieldId1 + ", {\"base-type\": \"type/Integer\"}], [\"field\", " + joinFieldId2 + ", {\"base-type\": \"type/Integer\", \"join-alias\": \"" + tableName + "\"}]]"
-        );
-        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, conditionNode);
+        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, joinFieldId1, joinFieldId2, tableName, objectMapper);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
         joinsArray.add(join.toJson(objectMapper));
