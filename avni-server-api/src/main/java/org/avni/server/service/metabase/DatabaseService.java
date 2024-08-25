@@ -8,6 +8,7 @@ import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.domain.metabase.TableType;
 import org.avni.server.domain.metabase.MetabaseJoin;
 import org.avni.server.domain.metabase.MetabaseQuery;
+import org.avni.server.domain.metabase.MetabaseRequestBody;
 import org.avni.server.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -178,32 +179,18 @@ public class DatabaseService {
         JsonNode conditionNode = objectMapper.readTree(
             "[\"=\", [\"field\", " + joinFieldId1 + ", {\"base-type\": \"type/Integer\"}], [\"field\", " + joinFieldId2 + ", {\"base-type\": \"type/Integer\", \"join-alias\": \"" + tableName + "\"}]]"
         );
-        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, conditionNode);  // Change: tableId as integer
+        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, conditionNode);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
         joinsArray.add(join.toJson(objectMapper));
 
-        MetabaseQuery query = new MetabaseQuery(addressTableId, joinsArray);  // Change: addressTableId as integer
+        MetabaseQuery query = new MetabaseQuery(getDatabaseId(),addressTableId, joinsArray);
 
-        ObjectNode datasetQuery = objectMapper.createObjectNode();
-        datasetQuery.put("database", getDatabaseId());
-        datasetQuery.put("type", "query");
-        datasetQuery.set("query", query.toJson(objectMapper));
+        MetabaseRequestBody requestBody = new MetabaseRequestBody(
+            "Address + " + tableName, query, "table", null, objectMapper.createObjectNode(), getCollectionId());
 
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("name", "Address + " + tableName);
-        body.set("dataset_query", datasetQuery);
-        body.put("display", "table");
-        body.putNull("description");
-        body.set("visualization_settings", objectMapper.createObjectNode());
-        body.put("collection_id", getCollectionId());
-        body.putNull("collection_position");
-        body.putNull("result_metadata");
-
-        databaseRepository.postForObject(metabaseApiUrl + "/card", body, JsonNode.class);
+        databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
-
-
 
     private void createQuestionForTable(String tableName, String schema) {
         int tableId = getTableIdByName(tableName, schema);
