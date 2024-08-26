@@ -11,17 +11,20 @@ import java.util.List;
 public class LocationCreator {
     private static final Logger logger = LoggerFactory.getLogger(LocationCreator.class);
 
-    public Point getLocation(Row row, String header, List<String> errorMsgs) {
-        try {
-            String location = row.get(header);
-            if (!S.isEmpty(location)) {
-                String[] points = location.split(",");
-                return new Point(Double.parseDouble(points[0].trim()), Double.parseDouble(points[1].trim()));
+    public Point getGeoLocation(Row row, String header, List<String> errorMsgs) {
+        String location = row.get(header);
+        if (!S.isEmpty(location)) {
+            String[] points = location.split(",");
+            if (points.length != 2) {
+                errorMsgs.add("Invalid 'GPS coordinates'");
+                return null;
             }
-        } catch (Exception ex) {
-            logger.error(String.format("Error processing row %s", row), ex);
-            errorMsgs.add(String.format("Invalid '%s'", header));
-            return null;
+            try {
+                return new Point(Double.parseDouble(points[0].trim()), Double.parseDouble(points[1].trim()));
+            } catch (NumberFormatException e) {
+                errorMsgs.add("Invalid 'GPS coordinates'");
+                return null;
+            }
         }
         return null;
     }

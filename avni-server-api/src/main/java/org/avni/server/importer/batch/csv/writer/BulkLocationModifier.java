@@ -22,7 +22,7 @@ public abstract class BulkLocationModifier {
 
     protected void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) {
         LocationCreator locationCreator = new LocationCreator();
-        location.setGpsCoordinates(locationCreator.getLocation(row, LocationHeaders.gpsCoordinates, allErrorMsgs));
+        location.setGpsCoordinates(locationCreator.getGeoLocation(row, LocationHeaders.gpsCoordinates, allErrorMsgs));
         location.setLocationProperties(observationCreator.getObservations(row, headers, allErrorMsgs, FormType.Location, location.getLocationProperties()));
         locationRepository.save(location);
     }

@@ -98,7 +98,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             individual.setDateOfBirthVerified(row.getBool(SubjectHeaders.dobVerified));
             setRegistrationDate(individual, row, allErrorMsgs);
             LocationCreator locationCreator = new LocationCreator();
-            individual.setRegistrationLocation(locationCreator.getLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
+            individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
 
             AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
             individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
