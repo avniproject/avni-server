@@ -17,7 +17,6 @@ import org.avni.server.service.builder.TestDataSetupService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
-import wiremock.org.checkerframework.checker.units.qual.A;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,9 +82,10 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         return count;
     }
 
-    private void lineageExists(String... lineage) {
-        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(String.join(", ", lineage)).get();
-        assertNotNull(address);
+    private void assertlineageExists(String... lineage) {
+        String titleLineage = String.join(", ", lineage);
+        AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(titleLineage).get();
+        assertNotNull(titleLineage, address);
     }
 
     private void locationHasAttribute(String[] lineage, String conceptName) {
@@ -101,11 +101,12 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         assertEquals(before, after);
     }
 
-    private void success(String[] headers, String[] cells, int numberOfNewLocations) {
+    private void success(String[] headers, String[] cells, int numberOfNewLocations, String[]... lineages) {
         long before = addressLevelRepository.count();
         bulkLocationCreator.write(Collections.singletonList(new Row(headers, cells)), hierarchy);
         long after = addressLevelRepository.count();
         assertEquals(before + newLocationsCreated(numberOfNewLocations), after);
+        Arrays.stream(lineages).forEach(this::assertlineageExists);
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {
@@ -120,26 +121,43 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         assertEquals(before, after);
     }
 
+    private String[] lineageExists(String... lineage) {
+        return lineage;
+    }
+
     @Test
     public void shouldCreate() {
+        // three locations, full lineage created
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Mahua", "23.45,43.85"),
-                newLocationsCreated(3));
+                newLocationsCreated(3),
+                lineageExists("Bihar", "Vaishali", "Mahua")
+        );
+
+        // Location with space
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" Bihar", " Vaishali ", " Jamui ", "23.20,43.85"),
-                newLocationsCreated(1));
+                newLocationsCreated(1),
+                lineageExists("Bihar", "Vaishali", "Jamui")
+                );
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" Bihar", " Darbhanga "),
-                newLocationsCreated(1));
+                newLocationsCreated(1),
+                lineageExists("Bihar", "Darbhanga"));
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" Bihar", " Aara ", " ", "24.20,43.85"),
-                newLocationsCreated(1));
+                newLocationsCreated(1),
+                lineageExists("Bihar", "Aara"));
         success(header(" State ", "District", " Block", " GPS coordinates"),
                 dataRow(" Bihar", " Chapra ", " ", "24.20,43.85"),
-                newLocationsCreated(1));
+                newLocationsCreated(1),
+                lineageExists("Bihar", "Chapra"));
+
+        // upper case
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" bihar", " VAISHALI ", " Tarora ", "23.20,43.85"),
-                newLocationsCreated(1));
+                newLocationsCreated(1),
+                lineageExists("Bihar", "Vaishali", "Tarora"));
 
         failure(header("State1", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
@@ -163,12 +181,13 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 dataRow("Bihar", "Vaishali", "Block 1", "23.45,43.86", "Answer 1"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 1"), "Coded Concept");
-
+        //attributes with space in header
         success(header("State", "District", "Block", "GPS coordinates", " Coded Concept"),
                 dataRow("Bihar", "Vaishali", "Block 2", "23.45,43.86", " Answer 1"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 2"), "Coded Concept");
 
+        //attributes with text concept type
         success(header("State", "District", "Block", "GPS coordinates", "Text Concept"),
                 dataRow("Bihar", "Vaishali", "Block 3", "23.45,43.86", "any text"),
                 newLocationsCreated(1));
@@ -178,30 +197,30 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 dataRow("Bihar", "Vaishali", "Block 4", "23.45,43.86", "not an answer to this concept"),
                 error("Invalid answer 'not an answer to this concept' for 'Coded Concept'"));
 
+        // multiple attributes
         success(header("State", "District", "Block", "GPS coordinates", " Coded Concept", "Text Concept"),
                 dataRow("Bihar", "Vaishali", "Block 5", "23.45,43.86", " Answer 1", "any text"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 5"), "Coded Concept");
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 5"), "Text Concept");
-        // end
 
 
         // without full hierarchy
         success(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("Bihar", "District 1", " ", "23.45,43.85"), newLocationsCreated(1));
-        lineageExists("Bihar", "District 1");
-
+                dataRow("Bihar", "District 1", " ", "23.45,43.85"),
+                newLocationsCreated(1),
+                lineageExists("Bihar", "District 1"));
         success(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("State 2", "District 1", " ", "23.45,43.85"), newLocationsCreated(2));
-        lineageExists("State 2", "District 1");
-
+                dataRow("State 2", "District 1", " ", "23.45,43.85"),
+                newLocationsCreated(2),
+                lineageExists("State 2", "District 1"));
         success(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("State 3", " ", " ", "23.45,43.85"), newLocationsCreated(1));
-        lineageExists("State 3");
-        // end
+                dataRow("State 3", " ", " ", "23.45,43.85"),
+                newLocationsCreated(1),
+                lineageExists("State 3"));
 
 
-        // if in random steps
+        // if done in random steps
         failure(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" ", " ", "Block11", "23.45,43.85"),
                 error(ParentMissingOfLocation));
@@ -212,6 +231,15 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 dataRow(" ", " ", " ", "23.45,43.85"),
                 error(NoLocationProvided));
         // end
+
+
+        // create existing location, results in no new location created
+        success(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("Bihar", "Vaishali", "Mahua", "23.45,43.85"),
+                newLocationsCreated(0));
+        success(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("Bihar", "Vaishali", " Mahua ", "23.45,43.85"),
+                newLocationsCreated(0));
 
 
         treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),

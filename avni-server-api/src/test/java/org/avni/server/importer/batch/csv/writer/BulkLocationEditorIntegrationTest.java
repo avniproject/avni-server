@@ -35,12 +35,9 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private FormRepository formRepository;
     @Autowired
-    private LocationHierarchyService locationHierarchyService;
-    @Autowired
     private TestLocationService testLocationService;
     @Autowired
     private BulkLocationEditor bulkLocationEditor;
-    private String hierarchy;
     @Autowired
     private LocationRepository locationRepository;
 
@@ -87,8 +84,6 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity().title("Block33").parent(district3).type(block).build());
 
         setUser(organisationData.getUser().getUsername());
-        Map<String, String> hierarchies = locationHierarchyService.determineAddressHierarchiesForAllAddressLevelTypesInOrg();
-        hierarchy = String.join(".", hierarchies.keySet());
     }
 
     private void lineageExists(String... lineage) {

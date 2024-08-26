@@ -94,8 +94,8 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         if (exitDate != null) programEnrolment.setProgramExitDateTime(exitDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();
-        programEnrolment.setEnrolmentLocation(locationCreator.getLocation(row, ProgramEnrolmentHeaders.enrolmentLocation, allErrorMsgs));
-        programEnrolment.setExitLocation(locationCreator.getLocation(row, ProgramEnrolmentHeaders.exitLocation, allErrorMsgs));
+        programEnrolment.setEnrolmentLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeaders.enrolmentLocation, allErrorMsgs));
+        programEnrolment.setExitLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeaders.exitLocation, allErrorMsgs));
         programEnrolment.setProgram(program);
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(individual.getSubjectType().getUuid(), program.getUuid(), null, FormType.ProgramEnrolment);
         if (formMapping == null) {
