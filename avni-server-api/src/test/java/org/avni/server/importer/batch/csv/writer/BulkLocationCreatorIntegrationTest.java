@@ -82,7 +82,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         return count;
     }
 
-    private void assertlineageExists(String... lineage) {
+    private void assertLineageExists(String... lineage) {
         String titleLineage = String.join(", ", lineage);
         AddressLevel address = this.locationRepository.findByTitleLineageIgnoreCase(titleLineage).get();
         assertNotNull(titleLineage, address);
@@ -106,7 +106,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         bulkLocationCreator.write(Collections.singletonList(new Row(headers, cells)), hierarchy);
         long after = addressLevelRepository.count();
         assertEquals(before + newLocationsCreated(numberOfNewLocations), after);
-        Arrays.stream(lineages).forEach(this::assertlineageExists);
+        Arrays.stream(lineages).forEach(this::assertLineageExists);
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {

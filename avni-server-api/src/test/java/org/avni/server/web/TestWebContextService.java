@@ -2,6 +2,7 @@ package org.avni.server.web;
 
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
@@ -40,7 +41,10 @@ public class TestWebContextService {
         userContext.setUser(user);
         UserContextHolder.create(userContext);
 
-        userContext.setOrganisation(organisationRepository.findOne(user.getOrganisationId()));
+        if (user.getOrganisationId() != null) {
+            Organisation organisation = organisationRepository.findOne(user.getOrganisationId());
+            userContext.setOrganisation(organisation);
+        }
         SimpleGrantedAuthority[] authorities = Stream.of(USER_AUTHORITY)
                 .filter(authority -> userContext.getRoles().contains(authority.getAuthority()))
                 .toArray(SimpleGrantedAuthority[]::new);

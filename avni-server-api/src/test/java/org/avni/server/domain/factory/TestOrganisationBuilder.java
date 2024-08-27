@@ -12,12 +12,17 @@ public class TestOrganisationBuilder {
 
     public TestOrganisationBuilder withMandatoryFields() {
         String placeholder = UUID.randomUUID().toString();
-        return withUuid(placeholder).withDbUser("testDbUser").withName(placeholder).withSchemaName(placeholder);
+        return withUuid(placeholder).withDbUser("testDbUserNew").withName(placeholder).withSchemaName(placeholder);
     }
 
     public TestOrganisationBuilder setId(long id) {
         organisation.setId(id);
         return this;
+    }
+
+    public TestOrganisationBuilder withUsernameSuffix(String usernameSuffix) {
+        organisation.setUsernameSuffix(usernameSuffix);
+    	return this;
     }
 
     public TestOrganisationBuilder withSchemaName(String schemaName) {

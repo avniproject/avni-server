@@ -10,18 +10,18 @@ $BODY$
     EXECUTE 'GRANT ' || quote_ident(inrolname) || ' TO openchs';
     PERFORM grant_all_on_all(inrolname);
     RETURN 1;
-  END
+END
 $BODY$ LANGUAGE PLPGSQL;
 
 
 DROP FUNCTION IF EXISTS create_implementation_schema(text);
 CREATE OR REPLACE FUNCTION create_implementation_schema(schema_name text, db_user text)
-  RETURNS BIGINT AS
+    RETURNS BIGINT AS
 $BODY$
 BEGIN
-  EXECUTE 'CREATE SCHEMA IF NOT EXISTS "' || schema_name || '" AUTHORIZATION "' || db_user || '"';
-  EXECUTE 'GRANT ALL PRIVILEGES ON SCHEMA "' || schema_name || '" TO "' || db_user || '"';
-  RETURN 1;
+    EXECUTE 'CREATE SCHEMA IF NOT EXISTS "' || schema_name || '" AUTHORIZATION "' || db_user || '"';
+    EXECUTE 'GRANT ALL PRIVILEGES ON SCHEMA "' || schema_name || '" TO "' || db_user || '"';
+    RETURN 1;
 END
 $BODY$ LANGUAGE PLPGSQL;
 
@@ -29,20 +29,20 @@ $BODY$ LANGUAGE PLPGSQL;
 CREATE OR REPLACE FUNCTION jsonb_object_values_contain(obs JSONB, pattern TEXT)
   RETURNS BOOLEAN AS $$
 BEGIN
-  return EXISTS (select true from jsonb_each_text(obs) where value ilike pattern);
+    return EXISTS (select true from jsonb_each_text(obs) where value ilike pattern);
 END;
 $$
-LANGUAGE plpgsql IMMUTABLE;
+    LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION create_audit(user_id NUMERIC)
   RETURNS INTEGER AS $$
 DECLARE result INTEGER;
 BEGIN
-  INSERT INTO audit(created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+    INSERT INTO audit(created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
   VALUES(user_id, user_id, now(), now()) RETURNING id into result;
-  RETURN result;
+    RETURN result;
 END $$
-  LANGUAGE plpgsql;
+    LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION create_audit()
   RETURNS INTEGER AS 'select create_audit(1)' language sql;
@@ -58,7 +58,7 @@ CREATE OR REPLACE FUNCTION create_view(schema_name text, view_name text, sql_que
     RETURNS BIGINT AS
 $BODY$
 BEGIN
---     EXECUTE 'set search_path = ' || ;
+    --     EXECUTE 'set search_path = ' || ;
     EXECUTE 'DROP VIEW IF EXISTS ' || schema_name || '.' || view_name;
     EXECUTE 'CREATE OR REPLACE VIEW ' || schema_name || '.' || view_name || ' AS ' || sql_query;
     RETURN 1;
@@ -207,13 +207,13 @@ $body$
 BEGIN
     EXECUTE (
         SELECT 'GRANT ALL ON TABLE '
-                   || tablename
+                        || tablename
                    || ' TO ' || quote_ident(rolename)
     );
 
     EXECUTE (
         SELECT 'GRANT SELECT ON '
-                   || tablename
+                        || tablename
                    || ' TO ' || quote_ident(rolename)
     );
 
@@ -228,19 +228,19 @@ $body$
 BEGIN
     EXECUTE (
         SELECT 'GRANT ALL ON TABLE '
-                   || string_agg(format('%I.%I', table_schema, table_name), ',')
-                   || ' TO ' || quote_ident(rolename) || ''
-        FROM information_schema.tables
-        WHERE table_schema = 'public'
+                        || string_agg(format('%I.%I', table_schema, table_name), ',')
+                        || ' TO ' || quote_ident(rolename) || ''
+             FROM information_schema.tables
+             WHERE table_schema = 'public'
           AND table_type = 'BASE TABLE'
     );
 
     EXECUTE (
         SELECT 'GRANT SELECT ON '
-                   || string_agg(format('%I.%I', schemaname, viewname), ',')
-                   || ' TO ' || quote_ident(rolename) || ''
-        FROM pg_catalog.pg_views
-        WHERE schemaname = 'public'
+                        || string_agg(format('%I.%I', schemaname, viewname), ',')
+                        || ' TO ' || quote_ident(rolename) || ''
+             FROM pg_catalog.pg_views
+             WHERE schemaname = 'public'
           and viewowner in ('openchs')
     );
 
@@ -276,21 +276,21 @@ CREATE OR REPLACE FUNCTION multi_select_coded(obs JSONB)
 AS $$
 DECLARE result VARCHAR;
 BEGIN
-  BEGIN
-    IF JSONB_TYPEOF(obs) = 'array'
-    THEN
+    BEGIN
+        IF JSONB_TYPEOF(obs) = 'array'
+        THEN
       SELECT STRING_AGG(C.NAME, ' ,') FROM JSONB_ARRAY_ELEMENTS_TEXT(obs) AS OB (UUID)
-                                             JOIN CONCEPT C ON C.UUID = OB.UUID
-      INTO RESULT;
-    ELSE
-      SELECT SINGLE_SELECT_CODED(obs) INTO RESULT;
-    END IF;
-    RETURN RESULT;
+                     JOIN CONCEPT C ON C.UUID = OB.UUID
+            INTO RESULT;
+        ELSE
+            SELECT SINGLE_SELECT_CODED(obs) INTO RESULT;
+        END IF;
+        RETURN RESULT;
   EXCEPTION WHEN OTHERS
-    THEN
-      RAISE NOTICE 'Failed while processing multi_select_coded(''%'')', obs :: TEXT;
-      RAISE NOTICE '% %', SQLERRM, SQLSTATE;
-  END;
+            THEN
+                RAISE NOTICE 'Failed while processing multi_select_coded(''%'')', obs :: TEXT;
+                RAISE NOTICE '% %', SQLERRM, SQLSTATE;
+    END;
 END $$;
 
 CREATE OR REPLACE FUNCTION single_select_coded(obs TEXT)
@@ -298,31 +298,31 @@ CREATE OR REPLACE FUNCTION single_select_coded(obs TEXT)
 AS $$
 DECLARE result VARCHAR;
 BEGIN
-  BEGIN
+    BEGIN
     SELECT name FROM concept WHERE uuid = obs
-    INTO result;
-    RETURN result;
-  END;
+        INTO result;
+        RETURN result;
+    END;
 END $$
-  STABLE;
+    STABLE;
 
 CREATE OR REPLACE FUNCTION single_select_coded(obs JSONB)
   RETURNS VARCHAR LANGUAGE plpgsql
 AS $$
 DECLARE result VARCHAR;
 BEGIN
-  BEGIN
-    IF JSONB_TYPEOF(obs) = 'array'
-    THEN
-      SELECT name FROM concept WHERE (obs->>0) = uuid INTO result;
-    ELSEIF JSONB_TYPEOF(obs) = 'string'
-    THEN
-      select name from concept where (array_to_json(array[obs])->>0) = uuid into result;
-    END IF;
-    RETURN result;
-  END;
+    BEGIN
+        IF JSONB_TYPEOF(obs) = 'array'
+        THEN
+            SELECT name FROM concept WHERE (obs ->> 0) = uuid INTO result;
+        ELSEIF JSONB_TYPEOF(obs) = 'string'
+        THEN
+            select name from concept where (array_to_json(array [obs]) ->> 0) = uuid into result;
+        END IF;
+        RETURN result;
+    END;
 END $$
-  STABLE;
+    STABLE;
 
 CREATE OR REPLACE FUNCTION no_op() RETURNS trigger AS $$
 BEGIN
