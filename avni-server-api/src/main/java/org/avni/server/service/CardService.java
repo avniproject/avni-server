@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.mapper.dashboard.DefaultDashboardConstants;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
@@ -188,7 +189,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
-        Map<String, String> defaultDashboardCards = getDefaultDashboardCardNamesAndUuids();
+        Map<String, String> defaultDashboardCards = DefaultDashboardConstants.CARD_NAME_UUID_MAPPING;
         List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardCards.keySet());
         Map<String, ReportCard> savedCards = new HashMap<>();
         standardReportCardTypes.forEach(standardReportCardType -> {
@@ -197,33 +198,21 @@ public class CardService implements NonScopeAwareService {
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
             reportCard.setName(standardReportCardType.getName());
-            reportCard.setColour("#ffffff");
+            reportCard.setColour(DefaultDashboardConstants.WHITE_BG_COLOUR);
             reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
             reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
             reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
             if (isRecentStandardReportCard(standardReportCardType.getName())) {
                 reportCard.setStandardReportCardInputRecentDuration(new ValueUnit("1", "days"));
             }
-            if (standardReportCardType.getName().equals("Overdue visits")) {
-                reportCard.setColour("#d32f2f");
+            if (standardReportCardType.getName().equals(DefaultDashboardConstants.OVERDUE_VISITS_CARD)) {
+                reportCard.setColour(DefaultDashboardConstants.RED_BG_COLOUR);
             }
-            if (standardReportCardType.getName().equals("Scheduled visits")) {
-                reportCard.setColour("#388e3c");
+            if (standardReportCardType.getName().equals(DefaultDashboardConstants.SCHEDULED_VISITS_CARD)) {
+                reportCard.setColour(DefaultDashboardConstants.GREEN_BG_COLOUR);
             }
             savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
         });
         return savedCards;
-    }
-
-    private static Map<String, String> getDefaultDashboardCardNamesAndUuids() {
-        Map<String, String> defaultDashboardStandardCardTypeNamesAndUuids = new HashMap<>();
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Scheduled visits", "6085c2f4-52e7-4b08-85b6-d6b2612b4cf5");
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Overdue visits", "85ce7239-e8b5-4e57-b07d-66c18cee47b2");
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Total", "a1673f8a-c394-4bcf-8b6f-63d83a5443e2");
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Recent registrations", "f366f35a-5c4f-4ff7-b510-2dc9f5f88847");
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Recent enrolments", "e1036b69-df46-4351-9916-10cd4cfcb6bd");
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Recent visits", "dd961ee1-9d4e-4ec9-99f0-99b36672be7c");
-        defaultDashboardStandardCardTypeNamesAndUuids.put("Due checklist", "9b7632dd-4e98-429a-8e42-67a947bf9ece");
-        return defaultDashboardStandardCardTypeNamesAndUuids;
     }
 }
