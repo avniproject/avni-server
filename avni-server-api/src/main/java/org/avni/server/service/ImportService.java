@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 @Service
 public class ImportService implements ImportLocationsConstants {
 
+    public static final Random RANDOM = new Random();
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
     private static final Logger logger = LoggerFactory.getLogger(ProgramEnrolmentWriter.class);
@@ -272,7 +273,7 @@ public class ImportService implements ImportLocationsConstants {
     }
 
     private void appendSampleValuesForUsersAndCatchments(StringBuilder sampleFileBuilder, BufferedReader csvReader, List<String> headersForSubjectTypesWithSyncAttributes) throws IOException {
-        String toBeAppendedValuesForSyncAttributeConcepts = constructSampleSyncAttributeConceptValues(headersForSubjectTypesWithSyncAttributes);
+        String toBeAppendedValuesForSyncAttributeConcepts = constructSampleSyncAttributeConceptValues(headersForSubjectTypesWithSyncAttributes.size());
 
         String line;
         while ((line = csvReader.readLine()) != null) {
@@ -282,9 +283,9 @@ public class ImportService implements ImportLocationsConstants {
         }
     }
 
-    private String constructSampleSyncAttributeConceptValues(List<String> headersForSubjectTypesWithSyncAttributes) {
-        String sampleSyncConceptValues = "\"value1,value2\"";
-        List<String> sampleValuesForSyncAttributeConcepts = Collections.nCopies(headersForSubjectTypesWithSyncAttributes.size(), sampleSyncConceptValues);
+    public String constructSampleSyncAttributeConceptValues(int size) {
+        String[] sampleSyncConceptValues = {"\"value1\"", "\"value2\"", "\"value1,value2\""};
+        List<String> sampleValuesForSyncAttributeConcepts = Collections.nCopies(size, sampleSyncConceptValues[RANDOM.nextInt(sampleSyncConceptValues.length)]);
         return String.join(",", sampleValuesForSyncAttributeConcepts);
     }
 
