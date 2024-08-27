@@ -45,21 +45,25 @@ public class TestDataSetupService {
     @Autowired
     private OrganisationStatusRepository organisationStatusRepository;
 
-    public TestOrganisationData setupOrganisation(String orgSuffix) {
-        Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
-        User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
-        User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user2@%s", orgSuffix)).withAuditUser(userRepository.getDefaultSuperAdmin()).build();
+    public TestOrganisationData setupOrganisation(String orgSuffix, String userGroupName) {
+        User defaultSuperAdmin = userRepository.getDefaultSuperAdmin();
+        testWebContextService.setUser(defaultSuperAdmin);
+        User user1 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user@%s", orgSuffix)).withAuditUser(defaultSuperAdmin).build();
         Organisation organisation = new TestOrganisationBuilder()
+                .withUsernameSuffix(orgSuffix)
                 .setCategory(organisationCategoryRepository.findEntity(1L))
                 .withStatus(organisationStatusRepository.findEntity(1L))
                 .withMandatoryFields()
                 .withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user1);
-        testOrganisationService.createUser(organisation, user2);
-        userRepository.save(new UserBuilder(user1).withAuditUser(user1).build());
-        userRepository.save(new UserBuilder(user2).withAuditUser(user1).build());
+
         testWebContextService.setUser(user1.getUsername());
 
+
+        Group group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().withName(userGroupName).build();
+        User user2 = new UserBuilder().withDefaultValuesForNewEntity().userName(String.format("user2@%s", orgSuffix)).withAuditUser(user1).build();
+        testOrganisationService.createUser(organisation, user2);
+        userRepository.save(new UserBuilder(user2).withAuditUser(user1).build());
         organisationConfigRepository.save(new TestOrganisationConfigBuilder().withMandatoryFields().withOrganisationId(organisation.getId()).build());
 
         groupRepository.save(group);
@@ -68,6 +72,10 @@ public class TestDataSetupService {
         TestOrganisationData testOrganisationData = new TestOrganisationData(user1, group, organisation);
         testOrganisationData.setUser2(user2);
         return testOrganisationData;
+    }
+
+    public TestOrganisationData setupOrganisation(String orgSuffix) {
+        return this.setupOrganisation(orgSuffix, UUID.randomUUID().toString());
     }
 
     public TestOrganisationData setupOrganisation() {

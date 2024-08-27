@@ -1,5 +1,7 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.Locale;
@@ -17,10 +19,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import javax.transaction.Transactional;
 import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.avni.server.domain.OperatingIndividualScope.ByCatchment;
@@ -44,8 +48,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'";
     private static final String ERR_MSG_LOCALE_FIELD = "Provided value '%s' for Preferred Language is invalid";
     private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid";
-    private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers included in file. Please refer to sample file for valid list of headers";
-    private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file. Please refer to sample file for the list of mandatory headers.";
+    private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers";
+    private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
     private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'" +
             "To input this value, add this as an answer to the coded concept '%s'";
     private static final String METADATA_ROW_START_STRING = "Mandatory field.";
@@ -71,9 +75,10 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         this.compoundHeaderPattern = Pattern.compile("^(?<subjectTypeName>.*?)->(?<conceptName>.*)$");
     }
 
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     @Override
-    public void write(List<? extends Row> rows) throws Exception {
-        if(!CollectionUtils.isEmpty(rows)) {
+    public void write(List<? extends Row> rows) throws IDPException {
+        if (!CollectionUtils.isEmpty(rows)) {
             validateHeaders(rows.get(0).getHeaders());
             for (Row row : rows) write(row);
         }
@@ -87,27 +92,33 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
         checkForMissingHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
         checkForUnknownHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
-        if(!allErrorMsgs.isEmpty()) {
+        if (!allErrorMsgs.isEmpty()) {
             throw new RuntimeException(String.join(ERR_MSG_DELIMITER, allErrorMsgs));
         }
     }
 
     private void checkForUnknownHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
         headerList.removeIf(StringUtils::isEmpty);
-        headerList.removeIf(header -> expectedStandardHeaders.contains(header));
-        headerList.removeIf(header -> syncAttributeHeadersForSubjectTypes.contains(header));
-        if (!headerList.isEmpty()) {
-            allErrorMsgs.add(ERR_MSG_UNKNOWN_HEADERS);
+        HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
+        expectedHeaders.addAll(syncAttributeHeadersForSubjectTypes);
+        Sets.SetView<String> unknownHeaders = Sets.difference(new HashSet<>(headerList), expectedHeaders);
+        if (!unknownHeaders.isEmpty()) {
+            allErrorMsgs.add(String.format(ERR_MSG_UNKNOWN_HEADERS, String.join(", ", unknownHeaders)));
         }
     }
 
     private void checkForMissingHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
-        if (headerList.isEmpty() || !headerList.containsAll(expectedStandardHeaders) || !headerList.containsAll(syncAttributeHeadersForSubjectTypes)) {
-            allErrorMsgs.add(ERR_MSG_MISSING_MANDATORY_FIELDS);
+        HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
+        expectedHeaders.addAll(syncAttributeHeadersForSubjectTypes);
+        HashSet<String> presentHeaders = new HashSet<>(headerList);
+        presentHeaders.addAll(syncAttributeHeadersForSubjectTypes);
+        Sets.SetView<String> missingHeaders = Sets.difference(expectedHeaders, presentHeaders);
+        if (!missingHeaders.isEmpty()) {
+            allErrorMsgs.add(String.format(ERR_MSG_MISSING_MANDATORY_FIELDS, String.join(", ", missingHeaders)));
         }
     }
 
-    private void write(Row row) throws Exception {
+    private void write(Row row) throws IDPException {
         List<String> rowValidationErrorMsgs = new ArrayList<>();
         String fullAddress = row.get(LOCATION_WITH_FULL_HIERARCHY);
         if (fullAddress != null && fullAddress.startsWith(METADATA_ROW_START_STRING)) return;
@@ -179,7 +190,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
         extractUserNameValidationErrMsg(rowValidationErrorMsgs, nameOfUser);
         extractUserEmailValidationErrMsg(rowValidationErrorMsgs, email);
-        if(!rowValidationErrorMsgs.isEmpty()) {
+        if (!rowValidationErrorMsgs.isEmpty()) {
             throw new RuntimeException(String.join(ERR_MSG_DELIMITER, rowValidationErrorMsgs));
         }
     }
@@ -209,7 +220,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     }
 
     private void addErrMsgIfValidationFails(boolean validationCheckResult, List<String> rowValidationErrorMsgs, String validationErrorMessage) {
-        if(validationCheckResult) {
+        if (validationCheckResult) {
             rowValidationErrorMsgs.add(validationErrorMessage);
         }
     }
@@ -273,7 +284,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         List<String> syncSettingCodedConceptValues = new ArrayList<>();
         for (String syncSettingsValue : syncSettingsValues) {
             Optional<Concept> conceptAnswer = Optional.ofNullable(conceptService.getByName(syncSettingsValue));
-            if(conceptAnswer.isPresent()) {
+            if (conceptAnswer.isPresent()) {
                 syncSettingCodedConceptValues.add(conceptAnswer.get().getUuid());
             } else {
                 rowValidationErrorMsgs.add(format(ERR_MSG_INVALID_CONCEPT_ANSWER, syncSettingsValue, concept.getName(), concept.getName()));

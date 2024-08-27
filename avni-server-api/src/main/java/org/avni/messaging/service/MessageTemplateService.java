@@ -13,9 +13,8 @@ import java.util.List;
 
 @Service
 public class MessageTemplateService {
-
-    private GlificMessageTemplateRepository messageTemplateRepository;
-    private OrganisationConfigService organisationConfigService;
+    private final GlificMessageTemplateRepository messageTemplateRepository;
+    private final OrganisationConfigService organisationConfigService;
 
     @Autowired
     public MessageTemplateService(GlificMessageTemplateRepository messageTemplateRepository, OrganisationConfigService organisationConfigService) {

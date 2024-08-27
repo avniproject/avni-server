@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,6 +71,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
         updateLocationProperties(row, allErrorMsgs, location);
     }
 
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void write(List<? extends Row> rows) {
         List<String> allErrorMsgs = new ArrayList<>();
         validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
