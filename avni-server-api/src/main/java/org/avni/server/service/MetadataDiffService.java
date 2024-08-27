@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -251,25 +252,36 @@ public class MetadataDiffService {
 
     protected List<Map<String, Object>> findArrayDifferences(List<Object> array1, List<Object> array2) {
         List<Map<String, Object>> differences = new ArrayList<>();
-        int maxSize = Math.max(array1.size(), array2.size());
 
-        for (int i = 0; i < maxSize; i++) {
-            if (i >= array1.size()) {
-                differences.add(createFieldDiff(null, array2.get(i), "added"));
-            } else if (i >= array2.size()) {
-                differences.add(createFieldDiff(array1.get(i), null, "removed"));
+        Function<Map<String, Object>, String> getUuid = obj -> (String) obj.get("uuid");
+
+        Map<String, Map<String, Object>> map1 = array1.stream()
+                .filter(obj -> obj instanceof Map)
+                .map(obj -> (Map<String, Object>) obj)
+                .collect(Collectors.toMap(getUuid, Function.identity(), (e1, e2) -> e1));
+
+        Map<String, Map<String, Object>> map2 = array2.stream()
+                .filter(obj -> obj instanceof Map)
+                .map(obj -> (Map<String, Object>) obj)
+                .collect(Collectors.toMap(getUuid, Function.identity(), (e1, e2) -> e1));
+
+        for (String uuid : map2.keySet()) {
+            if (!map1.containsKey(uuid)) {
+                differences.add(createFieldDiff(null, map2.get(uuid), "added"));
             } else {
-                Object value1 = array1.get(i);
-                Object value2 = array2.get(i);
+                Map<String, Object> obj1 = map1.get(uuid);
+                Map<String, Object> obj2 = map2.get(uuid);
 
-                if (value1 instanceof Map && value2 instanceof Map) {
-                    Map<String, Object> subDiff = findJsonDifferences(castToStringObjectMap(value1), castToStringObjectMap(value2));
-                    if (!subDiff.isEmpty()) {
-                        differences.add(createObjectDiff(castToStringObjectMap(value1), castToStringObjectMap(value2), "modified"));
-                    }
-                } else if (!value1.equals(value2)) {
-                    differences.add(createFieldDiff(value1, value2, "modified"));
+                Map<String, Object> subDiff = findJsonDifferences(obj1, obj2);
+                if (!subDiff.isEmpty()) {
+                    differences.add(createObjectDiff(obj1, obj2, "modified"));
                 }
+            }
+        }
+
+        for (String uuid : map1.keySet()) {
+            if (!map2.containsKey(uuid)) {
+                differences.add(createFieldDiff(map1.get(uuid), null, "removed"));
             }
         }
         return differences;
