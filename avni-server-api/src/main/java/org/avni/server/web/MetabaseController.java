@@ -1,4 +1,5 @@
 package org.avni.server.web;
+import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.dao.metabase.MetabaseConnector;
@@ -35,7 +36,7 @@ public class MetabaseController {
     }
 
     @GetMapping("/sync-status")
-    public String getSyncStatus() {
+    public SyncStatus getSyncStatus() {
         return databaseService.getInitialSyncStatus();
     }
 

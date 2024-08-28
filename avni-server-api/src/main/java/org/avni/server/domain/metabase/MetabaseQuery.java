@@ -8,7 +8,8 @@ public class MetabaseQuery {
     private final int databaseId;
     private final int sourceTable;
     private final ArrayNode joins;
-    private final String type = "query";
+    private final QueryType type = QueryType.QUERY;
+
 
     public MetabaseQuery(int databaseId,int sourceTable, ArrayNode joins) {
         this.databaseId = databaseId;
@@ -24,7 +25,8 @@ public class MetabaseQuery {
         ObjectNode queryNode = objectMapper.createObjectNode();
         queryNode.put("source-table", sourceTable);
         queryNode.set("joins", joins);
-        queryNode.put("type", type);
+        queryNode.put("type", type.toString());
+
 
         return queryNode;
     }

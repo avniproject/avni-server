@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.metabase.DatabaseRepository;
-import org.avni.server.domain.metabase.TableType;
-import org.avni.server.domain.metabase.MetabaseJoin;
-import org.avni.server.domain.metabase.MetabaseQuery;
-import org.avni.server.domain.metabase.MetabaseRequestBody;
+import org.avni.server.domain.metabase.*;
 import org.avni.server.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -103,9 +100,10 @@ public class DatabaseService {
         return -1;
     }
 
-    public String getInitialSyncStatus() {
+    public SyncStatus getInitialSyncStatus() {
         JsonNode responseBody = databaseRepository.getInitialSyncStatus(getDatabaseId());
-        return responseBody.path("initial_sync_status").asText();
+        String status = responseBody.path("initial_sync_status").asText();
+        return SyncStatus.fromString(status);
     }
 
     private JsonNode getTableMetadata() {
@@ -184,7 +182,7 @@ public class DatabaseService {
         MetabaseQuery query = new MetabaseQuery(getDatabaseId(),addressTableId, joinsArray);
 
         MetabaseRequestBody requestBody = new MetabaseRequestBody(
-            "Address + " + tableName, query, "table", null, objectMapper.createObjectNode(), getCollectionId());
+                "Address + " + tableName, query, VisualizationType.TABLE, null, objectMapper.createObjectNode(), getCollectionId(), CardType.QUESTION);
 
         databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
@@ -218,9 +216,8 @@ public class DatabaseService {
     }
 
     public void createQuestionsForSubjectTypes() throws Exception {
-
-        String syncStatus = getInitialSyncStatus();
-        if (!"complete".equals(syncStatus)) {
+        SyncStatus syncStatus = getInitialSyncStatus();
+        if (syncStatus != SyncStatus.COMPLETE) {
             throw new RuntimeException("Database initial sync is not complete.");
         }
 
@@ -232,8 +229,8 @@ public class DatabaseService {
     }
 
     public void createQuestionsForProgramsAndEncounters() throws Exception{
-        String syncStatus = getInitialSyncStatus();
-        if (!"complete".equals(syncStatus)) {
+        SyncStatus syncStatus = getInitialSyncStatus();
+        if (syncStatus != SyncStatus.COMPLETE) {
             throw new RuntimeException("Database initial sync is not complete.");
         }
 
