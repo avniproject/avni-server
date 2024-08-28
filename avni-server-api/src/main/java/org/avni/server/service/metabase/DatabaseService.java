@@ -6,14 +6,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.domain.metabase.*;
-import org.avni.server.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
+
+import org.avni.server.util.S;
 
 @Service
 public class DatabaseService {
@@ -91,7 +91,7 @@ public class DatabaseService {
 
     public int getFieldIdByTableNameAndFieldName(String tableName, String fieldName) {
         JsonNode fieldsArray = databaseRepository.getFields(getDatabaseId());
-        String snakeCaseTableName = StringUtils.toSnakeCase(tableName);
+        String snakeCaseTableName = S.toSnakeCase(tableName);
         for (JsonNode fieldNode : fieldsArray) {
             if (snakeCaseTableName.equals(fieldNode.path("table_name").asText()) && fieldName.equals(fieldNode.path("name").asText())) {
                 return fieldNode.path("id").asInt();
@@ -112,19 +112,6 @@ public class DatabaseService {
         return databaseRepository.getDataset(requestBody);
     }
 
-    private String formatName(String rawName) {
-        String[] parts = rawName.split("_");
-        StringBuilder formattedName = new StringBuilder();
-
-        for (String part : parts) {
-            formattedName.append(part.substring(0, 1).toUpperCase())
-                         .append(part.substring(1))
-                         .append(" ");
-        }
-
-        return formattedName.toString().trim();
-    }
-
     public List<String> getSubjectTypeNames() {
         JsonNode tableMetadata = getTableMetadata();
         List<String> subjectTypeNames = new ArrayList<>();
@@ -134,7 +121,7 @@ public class DatabaseService {
             String type = row.get(2).asText();
             if (Arrays.asList(TableType.INDIVIDUAL.getTypeName(), TableType.HOUSEHOLD.getTypeName(), TableType.GROUP.getTypeName(), TableType.PERSON.getTypeName()).contains(type)) {
                 String rawName = row.get(1).asText();
-                subjectTypeNames.add(formatName(rawName));
+                subjectTypeNames.add(S.formatName(rawName));
             }
         }
         System.out.println("The subject type names::" + subjectTypeNames);
@@ -151,7 +138,7 @@ public class DatabaseService {
             String type = row.get(2).asText();
             if (Arrays.asList(TableType.PROGRAM_ENCOUNTER.getTypeName(), TableType.PROGRAM_ENROLMENT.getTypeName()).contains(type)) {
                 String rawName = row.get(1).asText();
-                programNames.add(formatName(rawName));
+                programNames.add(S.formatName(rawName));
             }
         }
         System.out.println("The program and encounter::" + programNames);

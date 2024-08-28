@@ -29,4 +29,24 @@ public class S {
                 .toArray(String[]::new);
     }
 
+    public static String toSnakeCase(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.trim().replaceAll(" +", "_").toLowerCase();
+    }
+
+    public static String formatName(String rawName) {
+        String[] parts = rawName.split("_");
+        StringBuilder formattedName = new StringBuilder();
+
+        for (String part : parts) {
+            formattedName.append(part.substring(0, 1).toUpperCase())
+                    .append(part.substring(1))
+                    .append(" ");
+        }
+
+        return formattedName.toString().trim();
+    }
+
 }
