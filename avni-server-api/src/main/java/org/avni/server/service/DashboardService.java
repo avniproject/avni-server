@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Service
-public class DashboardService implements NonScopeAwareService {
+public class DashboardService implements NonScopeAwareService, DefaultDashboardConstants {
     private final DashboardRepository dashboardRepository;
     private final CardRepository cardRepository;
     private final DashboardSectionRepository dashboardSectionRepository;
@@ -216,34 +216,34 @@ public class DashboardService implements NonScopeAwareService {
 
     public Dashboard createDefaultDashboard(Organisation organisation) {
         Map<String, ReportCard> defaultDashboardCards = cardService.createDefaultDashboardCards(organisation);
-        Dashboard defaultDashboard = createDashboard(organisation, DefaultDashboardConstants.DEFAULT_DASHBOARD);
+        Dashboard defaultDashboard = createDashboard(organisation, DEFAULT_DASHBOARD);
 
-        DashboardSection visitDetailsSection = createDashboardSection(organisation, DefaultDashboardConstants.VISIT_DETAILS_SECTION, 1.0);
-        DashboardSectionCardMapping scheduledVisitsToVisitDetailsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(DefaultDashboardConstants.SCHEDULED_VISITS_CARD), visitDetailsSection, 1.0);
+        DashboardSection visitDetailsSection = createDashboardSection(organisation, VISIT_DETAILS_SECTION, 1.0);
+        DashboardSectionCardMapping scheduledVisitsToVisitDetailsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(SCHEDULED_VISITS_CARD), visitDetailsSection, 1.0);
         visitDetailsSection.addDashboardSectionCardMapping(scheduledVisitsToVisitDetailsMapping);
-        DashboardSectionCardMapping overdueVisitsToVisitDetailsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(DefaultDashboardConstants.OVERDUE_VISITS_CARD), visitDetailsSection, 2.0);
+        DashboardSectionCardMapping overdueVisitsToVisitDetailsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(OVERDUE_VISITS_CARD), visitDetailsSection, 2.0);
         visitDetailsSection.addDashboardSectionCardMapping(overdueVisitsToVisitDetailsMapping);
         defaultDashboard.addSection(visitDetailsSection);
 
-        DashboardSection recentStatisticsSection = createDashboardSection(organisation, DefaultDashboardConstants.RECENT_STATISTICS_SECTION, 2.0);
-        DashboardSectionCardMapping recentRegistrationsToStatisticsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(DefaultDashboardConstants.RECENT_REGISTRATIONS_CARD), recentStatisticsSection, 1.0);
+        DashboardSection recentStatisticsSection = createDashboardSection(organisation, RECENT_STATISTICS_SECTION, 2.0);
+        DashboardSectionCardMapping recentRegistrationsToStatisticsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(RECENT_REGISTRATIONS_CARD), recentStatisticsSection, 1.0);
         recentStatisticsSection.addDashboardSectionCardMapping(recentRegistrationsToStatisticsMapping);
-        DashboardSectionCardMapping recentEnrolmentsToStatisticsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(DefaultDashboardConstants.RECENT_ENROLMENTS_CARD), recentStatisticsSection, 2.0);
+        DashboardSectionCardMapping recentEnrolmentsToStatisticsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(RECENT_ENROLMENTS_CARD), recentStatisticsSection, 2.0);
         recentStatisticsSection.addDashboardSectionCardMapping(recentEnrolmentsToStatisticsMapping);
-        DashboardSectionCardMapping recentVisitsToStatisticsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(DefaultDashboardConstants.RECENT_VISITS_CARD), recentStatisticsSection, 3.0);
+        DashboardSectionCardMapping recentVisitsToStatisticsMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(RECENT_VISITS_CARD), recentStatisticsSection, 3.0);
         recentStatisticsSection.addDashboardSectionCardMapping(recentVisitsToStatisticsMapping);
         defaultDashboard.addSection(recentStatisticsSection);
 
-        DashboardSection registrationOverviewSection = createDashboardSection(organisation, DefaultDashboardConstants.REGISTRATION_OVERVIEW_SECTION,3.0);
-        DashboardSectionCardMapping totalToRegistrationOverviewMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(DefaultDashboardConstants.TOTAL_CARD), registrationOverviewSection, 1.0);
+        DashboardSection registrationOverviewSection = createDashboardSection(organisation, REGISTRATION_OVERVIEW_SECTION,3.0);
+        DashboardSectionCardMapping totalToRegistrationOverviewMapping = createDashboardSectionCardMapping(organisation, defaultDashboardCards.get(TOTAL_CARD), registrationOverviewSection, 1.0);
         registrationOverviewSection.addDashboardSectionCardMapping(totalToRegistrationOverviewMapping);
         defaultDashboard.addSection(registrationOverviewSection);
 
-        DashboardFilter subjectTypeFilter = createDashboardFilter(organisation, DefaultDashboardConstants.SUBJECT_TYPE_FILTER, new JsonObject()
+        DashboardFilter subjectTypeFilter = createDashboardFilter(organisation, SUBJECT_TYPE_FILTER, new JsonObject()
                 .with(DashboardFilter.DashboardFilterConfig.TypeFieldName, String.valueOf(DashboardFilter.FilterType.SubjectType)));
         defaultDashboard.addUpdateFilter(subjectTypeFilter);
 
-        DashboardFilter asOnDateFilter = createDashboardFilter(organisation, DefaultDashboardConstants.AS_ON_DATE_FILTER, new JsonObject()
+        DashboardFilter asOnDateFilter = createDashboardFilter(organisation, AS_ON_DATE_FILTER, new JsonObject()
                 .with(DashboardFilter.DashboardFilterConfig.TypeFieldName, String.valueOf(DashboardFilter.FilterType.AsOnDate)));
         defaultDashboard.addUpdateFilter(asOnDateFilter);
 
@@ -258,14 +258,14 @@ public class DashboardService implements NonScopeAwareService {
 
     private Dashboard createDashboard(Organisation organisation, String name) {
         Dashboard dashboard = new Dashboard();
-        setDefaults(dashboard, organisation, DefaultDashboardConstants.DASHBOARD_NAME_UUID_MAPPING.get(name));
+        setDefaults(dashboard, organisation, DASHBOARD_NAME_UUID_MAPPING.get(name));
         dashboard.setName(name);
         return dashboard;
     }
 
     private DashboardSection createDashboardSection(Organisation organisation, String name, Double displayOrder) {
         DashboardSection dashboardSection = new DashboardSection();
-        setDefaults(dashboardSection, organisation, DefaultDashboardConstants.SECTION_NAME_UUID_MAPPING.get(name));
+        setDefaults(dashboardSection, organisation, SECTION_NAME_UUID_MAPPING.get(name));
         dashboardSection.setName(name);
         dashboardSection.setDescription("");
         dashboardSection.setViewType(DashboardSection.ViewType.Tile);
@@ -275,7 +275,7 @@ public class DashboardService implements NonScopeAwareService {
 
     private DashboardSectionCardMapping createDashboardSectionCardMapping(Organisation organisation, ReportCard reportCard, DashboardSection dashboardSection, Double displayOrder) {
         DashboardSectionCardMapping dashboardSectionCardMapping = new DashboardSectionCardMapping();
-        setDefaults(dashboardSectionCardMapping, organisation, DefaultDashboardConstants.SECTION_CARD_MAPPING.get(dashboardSection.getName().concat(reportCard.getName())));
+        setDefaults(dashboardSectionCardMapping, organisation, SECTION_CARD_MAPPING.get(dashboardSection.getName().concat(reportCard.getName())));
         dashboardSectionCardMapping.setCard(reportCard);
         dashboardSectionCardMapping.setDashboardSection(dashboardSection);
         dashboardSectionCardMapping.setDisplayOrder(displayOrder);
@@ -284,7 +284,7 @@ public class DashboardService implements NonScopeAwareService {
 
     private DashboardFilter createDashboardFilter(Organisation organisation, String name, JsonObject filterConfig) {
         DashboardFilter dashboardFilter = new DashboardFilter();
-        setDefaults(dashboardFilter, organisation, DefaultDashboardConstants.FILTER_NAME_UUID_MAPPING.get(name));
+        setDefaults(dashboardFilter, organisation, FILTER_NAME_UUID_MAPPING.get(name));
         dashboardFilter.setName(name);
         dashboardFilter.setFilterConfig(filterConfig);
         return dashboardFilter;

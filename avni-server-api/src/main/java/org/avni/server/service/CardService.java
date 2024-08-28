@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class CardService implements NonScopeAwareService {
+public class CardService implements NonScopeAwareService, DefaultDashboardConstants {
     private final CardRepository cardRepository;
     private final StandardReportCardTypeRepository standardReportCardTypeRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -189,7 +189,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
-        Map<String, String> defaultDashboardCards = DefaultDashboardConstants.CARD_NAME_UUID_MAPPING;
+        Map<String, String> defaultDashboardCards = CARD_NAME_UUID_MAPPING;
         List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardCards.keySet());
         Map<String, ReportCard> savedCards = new HashMap<>();
         standardReportCardTypes.forEach(standardReportCardType -> {
@@ -198,18 +198,18 @@ public class CardService implements NonScopeAwareService {
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
             reportCard.setName(standardReportCardType.getName());
-            reportCard.setColour(DefaultDashboardConstants.WHITE_BG_COLOUR);
+            reportCard.setColour(WHITE_BG_COLOUR);
             reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
             reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
             reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
             if (isRecentStandardReportCard(standardReportCardType.getName())) {
                 reportCard.setStandardReportCardInputRecentDuration(new ValueUnit("1", "days"));
             }
-            if (standardReportCardType.getName().equals(DefaultDashboardConstants.OVERDUE_VISITS_CARD)) {
-                reportCard.setColour(DefaultDashboardConstants.RED_BG_COLOUR);
+            if (standardReportCardType.getName().equals(OVERDUE_VISITS_CARD)) {
+                reportCard.setColour(RED_BG_COLOUR);
             }
-            if (standardReportCardType.getName().equals(DefaultDashboardConstants.SCHEDULED_VISITS_CARD)) {
-                reportCard.setColour(DefaultDashboardConstants.GREEN_BG_COLOUR);
+            if (standardReportCardType.getName().equals(SCHEDULED_VISITS_CARD)) {
+                reportCard.setColour(GREEN_BG_COLOUR);
             }
             savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
         });
