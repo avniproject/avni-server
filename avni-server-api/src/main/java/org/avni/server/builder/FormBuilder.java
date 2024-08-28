@@ -94,7 +94,6 @@ public class FormBuilder extends BaseBuilder<Form, FormBuilder> {
                         .withBackgroundColour(formElementGroupContract.getBackgroundColour())
                         .withStartTime(formElementGroupContract.getStartTime())
                         .withStayTime(formElementGroupContract.getStayTime())
-                        .withDisplay(formElementGroupContract.getDisplay())
                         .withDisplayOrder(formElementGroupContract.getDisplayOrder())
                         .withRule(formElementGroupContract.getRule())
                         .withDeclarativeRule(formElementGroupContract.getDeclarativeRule())

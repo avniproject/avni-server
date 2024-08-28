@@ -33,11 +33,6 @@ public class TestFormElementGroupBuilder {
         return this;
     }
 
-    public TestFormElementGroupBuilder withDisplay(String display) {
-        formElementGroup.setDisplay(display);
-        return this;
-    }
-
     public TestFormElementGroupBuilder withRule(String rule) {
         formElementGroup.setRule(rule);
         return this;

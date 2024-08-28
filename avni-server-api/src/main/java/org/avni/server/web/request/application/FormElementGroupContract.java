@@ -62,12 +62,9 @@ public class FormElementGroupContract extends ReferenceDataContract {
     }
 
     public String getDisplay() {
-        return display;
+        return getName();
     }
 
-    public void setDisplay(String display) {
-        this.display = display;
-    }
 
     public DeclarativeRule getDeclarativeRule() {
         return declarativeRule;
@@ -122,7 +119,6 @@ public class FormElementGroupContract extends ReferenceDataContract {
         return "{" +
                 "name=" + this.getName() + '\'' +
                 "displayOrder=" + displayOrder +
-                ", display='" + display + '\'' +
                 '}';
     }
 
@@ -138,7 +134,6 @@ public class FormElementGroupContract extends ReferenceDataContract {
         FormElementGroupContract fegContract = new FormElementGroupContract();
         fegContract.setName(feg.getName());
         fegContract.setUuid(feg.getUuid());
-        fegContract.setDisplay(feg.getDisplay());
         fegContract.setDisplayOrder(feg.getDisplayOrder());
         fegContract.setVoided(feg.isVoided());
         fegContract.setRule(feg.getRule());

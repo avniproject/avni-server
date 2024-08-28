@@ -19,9 +19,6 @@ public class FormElementGroup extends OrganisationAwareEntity {
     @NotNull
     private String name;
 
-    @Column
-    private String display;
-
     @NotNull
     private Double displayOrder;
 
@@ -99,12 +96,9 @@ public class FormElementGroup extends OrganisationAwareEntity {
     }
 
     public String getDisplay() {
-        return display;
+        return getName();
     }
 
-    public void setDisplay(String display) {
-        this.display = display;
-    }
 
     FormElement findFormElementByConcept(String conceptName) {
         return formElements.stream().filter(x -> x.getConcept().getName().equals(conceptName)).findAny().orElse(null);

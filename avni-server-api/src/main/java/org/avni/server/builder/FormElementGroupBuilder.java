@@ -45,11 +45,6 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
         return this;
     }
 
-    public FormElementGroupBuilder withDisplay(String display) {
-        this.set("Display", display, String.class);
-        return this;
-    }
-
     public FormElementGroupBuilder withRule(String rule) {
         this.get().setRule(rule);
         return this;
