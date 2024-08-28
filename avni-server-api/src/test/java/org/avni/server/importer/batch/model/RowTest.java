@@ -6,11 +6,17 @@ import static org.junit.Assert.assertEquals;
 
 public class RowTest {
     @Test
-    public void toStringShouldSerialiseProperly() throws Exception {
+    public void toStringShouldSerialiseProperly() {
         String[] headers = {"A", "B"};
         assertEquals("\"AA\",\"\"", new Row(headers, new String[]{"AA"}).toString());
         assertEquals("\"AA\",\"BB\"", new Row(headers, new String[]{"AA", "BB"}).toString());
         assertEquals("\"AB, CD\",\"BB, EE\"", new Row(headers, new String[]{"AB, CD", "BB, EE"}).toString());
+    }
+
+    @Test
+    public void allowExtraColumnsInData() {
+        String[] headers = {"A", "B"};
+        new Row(headers, new String[]{"AA", "BB", "CC"});
     }
 
     @Test

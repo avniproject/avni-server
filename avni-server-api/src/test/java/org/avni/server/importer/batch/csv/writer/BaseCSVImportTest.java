@@ -1,9 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.domain.AddressLevel;
-
-import static org.junit.Assert.assertNotNull;
 
 public abstract class BaseCSVImportTest extends AbstractControllerIntegrationTest {
     protected String[] header(String... cells) {
@@ -20,5 +17,9 @@ public abstract class BaseCSVImportTest extends AbstractControllerIntegrationTes
 
     protected String error(String message) {
         return message;
+    }
+
+    protected String hasError(String s) {
+        return s;
     }
 }

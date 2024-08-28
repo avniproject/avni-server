@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import com.google.common.collect.Sets;
 import org.avni.server.application.FormElement;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
@@ -20,10 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // This class is need so that the logic can be instantiated in integration tests. Spring batch configuration is not working in integration tests.
@@ -68,23 +66,29 @@ public class BulkLocationCreator extends BulkLocationModifier {
         }
     }
 
-    private List<String> validateCreateModeHeaders(String[] headers, List<String> allErrorMsgs, String locationHierarchy) {
+    private List<String> validateHeaders(String[] headers, List<String> allErrorMsgs, String locationHierarchy) {
         List<String> headerList = Arrays.asList(headers);
-        List<String> locationTypeHeaders = checkIfHeaderHasLocationTypesInOrderForHierarchy(locationHierarchy, headerList, allErrorMsgs);
-        List<String> additionalHeaders = new ArrayList<>(headerList.subList(locationTypeHeaders.size(), headerList.size()));
+        List<String> locationTypeHeaders = checkIfHeaderHasLocationTypesAndInOrderForHierarchy(locationHierarchy, headerList, allErrorMsgs);
+        List<String> additionalHeaders = headerList.size() > locationTypeHeaders.size() ? new ArrayList<>(headerList.subList(locationTypeHeaders.size(), headerList.size())) : new ArrayList<>();
         checkIfHeaderRowHasUnknownHeaders(additionalHeaders, allErrorMsgs);
         return locationTypeHeaders;
     }
 
-    private List<String> checkIfHeaderHasLocationTypesInOrderForHierarchy(String locationHierarchy, List<String> headerList, List<String> allErrorMsgs) {
-        List<String> locationTypeNamesForHierachy = importService.getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy)
+    private List<String> checkIfHeaderHasLocationTypesAndInOrderForHierarchy(String locationHierarchy, List<String> headerList, List<String> allErrorMsgs) {
+        List<String> locationTypeNamesForHierarchy = importService.getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy)
                 .stream().map(AddressLevelType::getName).collect(Collectors.toList());
 
-        if (headerList.size() >= locationTypeNamesForHierachy.size() && !headerList.subList(0, locationTypeNamesForHierachy.size()).equals(locationTypeNamesForHierachy)) {
+        HashSet<String> expectedHeaders = new HashSet<>(locationTypeNamesForHierarchy);
+        if (Sets.difference(new HashSet<>(expectedHeaders), new HashSet<>(headerList)).size() == locationTypeNamesForHierarchy.size()) {
             allErrorMsgs.add(LocationTypesHeaderError);
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
-        return locationTypeNamesForHierachy;
+
+        if (headerList.size() >= locationTypeNamesForHierarchy.size() && !headerList.subList(0, locationTypeNamesForHierarchy.size()).equals(locationTypeNamesForHierarchy)) {
+            allErrorMsgs.add(LocationTypesHeaderError);
+            throw new RuntimeException(String.join(", ", allErrorMsgs));
+        }
+        return locationTypeNamesForHierarchy;
     }
 
     private void checkIfHeaderRowHasUnknownHeaders(List<String> additionalHeaders, List<String> allErrorMsgs) {
@@ -136,7 +140,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void write(List<? extends Row> rows, String idBasedLocationHierarchy) {
         List<String> allErrorMsgs = new ArrayList<>();
-        List<String> hierarchicalLocationTypeNames = validateCreateModeHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
+        List<String> hierarchicalLocationTypeNames = validateHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
         for (Row row : rows) {
             if (skipRow(row, hierarchicalLocationTypeNames)) {
                 continue;

@@ -1,6 +1,5 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;
@@ -10,6 +9,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -32,7 +32,6 @@ import static org.avni.server.importer.batch.csv.writer.header.UsersAndCatchment
 
 @Component
 public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
-    public static final String ERR_MSG_DELIMITER = "\",\"";
     private final UserService userService;
     private final CatchmentService catchmentService;
     private final LocationRepository locationRepository;
@@ -44,14 +43,15 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final Pattern compoundHeaderPattern;
     private final ResetSyncService resetSyncService;
 
-    private static final String ERR_MSG_MANDATORY_FIELD = "Invalid or Empty value specified for mandatory field %s";
-    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'";
-    private static final String ERR_MSG_LOCALE_FIELD = "Provided value '%s' for Preferred Language is invalid";
-    private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid";
-    private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers";
+    private static final String ERR_MSG_MANDATORY_OR_INVALID_FIELD = "Invalid or Empty value specified for mandatory field %s.";
+    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'.";
+    private static final String ERR_MSG_LOCALE_FIELD = "Provided value '%s' for Preferred Language is invalid.";
+    private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid.";
+    private static final String ERR_MSG_INVALID_PHONE_NUMBER = "Provided value '%s' for phone number is invalid.";
+    private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers.";
     private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
-    private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'" +
-            "To input this value, add this as an answer to the coded concept '%s'";
+    private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'. " +
+            "To input this value, add this as an answer to the coded concept '%s'.";
     private static final String METADATA_ROW_START_STRING = "Mandatory field.";
     private static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList("calendar", "spinner");
 
@@ -93,7 +93,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         checkForMissingHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
         checkForUnknownHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
         if (!allErrorMsgs.isEmpty()) {
-            throw new RuntimeException(String.join(ERR_MSG_DELIMITER, allErrorMsgs));
+            throw new RuntimeException(createMultiErrorMessage(allErrorMsgs));
         }
     }
 
@@ -107,11 +107,10 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private void checkForMissingHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> syncAttributeHeadersForSubjectTypes) {
+    private void checkForMissingHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders, List<String> expectedSyncAttributeHeadersForSubjectTypes) {
         HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
-        expectedHeaders.addAll(syncAttributeHeadersForSubjectTypes);
+        expectedHeaders.addAll(expectedSyncAttributeHeadersForSubjectTypes);
         HashSet<String> presentHeaders = new HashSet<>(headerList);
-        presentHeaders.addAll(syncAttributeHeadersForSubjectTypes);
         Sets.SetView<String> missingHeaders = Sets.difference(expectedHeaders, presentHeaders);
         if (!missingHeaders.isEmpty()) {
             allErrorMsgs.add(String.format(ERR_MSG_MISSING_MANDATORY_FIELDS, String.join(", ", missingHeaders)));
@@ -138,7 +137,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
-        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix);
+        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, beneficiaryMode);
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
@@ -175,24 +174,32 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix) {
-        addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, CATCHMENT_NAME));
-        addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, USERNAME));
-        addErrMsgIfValidationFails(!StringUtils.hasLength(nameOfUser), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, FULL_NAME_OF_USER));
-        addErrMsgIfValidationFails(!StringUtils.hasLength(email), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, EMAIL_ADDRESS));
-        addErrMsgIfValidationFails(!StringUtils.hasLength(phoneNumber), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, MOBILE_NUMBER));
+    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, Boolean beneficiaryMode) {
+        addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, CATCHMENT_NAME));
+        if (!addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, USERNAME)))
+            extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
+        if (!addErrMsgIfValidationFails(!StringUtils.hasLength(nameOfUser), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, FULL_NAME_OF_USER)))
+            extractUserNameValidationErrMsg(rowValidationErrorMsgs, nameOfUser);
+        if (!addErrMsgIfValidationFails(!StringUtils.hasLength(email), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, EMAIL_ADDRESS)))
+            extractUserEmailValidationErrMsg(rowValidationErrorMsgs, email);
+        if (!addErrMsgIfValidationFails(!StringUtils.hasLength(phoneNumber), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, MOBILE_NUMBER)))
+            addErrMsgIfValidationFails(!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion()), rowValidationErrorMsgs, format(ERR_MSG_INVALID_PHONE_NUMBER, MOBILE_NUMBER));
 
-        addErrMsgIfValidationFails(Objects.isNull(location), rowValidationErrorMsgs, format(ERR_MSG_LOCATION_FIELD, fullAddress));
-        addErrMsgIfValidationFails(Objects.isNull(locale), rowValidationErrorMsgs, format(ERR_MSG_LOCALE_FIELD, language));
-        addErrMsgIfValidationFails(Objects.isNull(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode),
+        addErrMsgIfValidationFails(StringUtils.isEmpty(location), rowValidationErrorMsgs, format(ERR_MSG_LOCATION_FIELD, fullAddress));
+        addErrMsgIfValidationFails(StringUtils.isEmpty(locale), rowValidationErrorMsgs, format(ERR_MSG_LOCALE_FIELD, language));
+        addErrMsgIfValidationFails(StringUtils.isEmpty(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode),
                 rowValidationErrorMsgs, format(ERR_MSG_DATE_PICKER_FIELD, datePickerMode));
 
-        extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
-        extractUserNameValidationErrMsg(rowValidationErrorMsgs, nameOfUser);
-        extractUserEmailValidationErrMsg(rowValidationErrorMsgs, email);
+        addErrMsgIfValidationFails(trackLocation == null, rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, TRACK_LOCATION));
+        addErrMsgIfValidationFails(beneficiaryMode == null, rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, ENABLE_BENEFICIARY_MODE));
+
         if (!rowValidationErrorMsgs.isEmpty()) {
-            throw new RuntimeException(String.join(ERR_MSG_DELIMITER, rowValidationErrorMsgs));
+            throw new RuntimeException(createMultiErrorMessage(rowValidationErrorMsgs));
         }
+    }
+
+    private static String createMultiErrorMessage(List<String> errorMsgs) {
+        return errorMsgs.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining("; "));
     }
 
     private void extractUserNameValidationErrMsg(List<String> rowValidationErrorMsgs, String nameOfUser) {
@@ -219,10 +226,11 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private void addErrMsgIfValidationFails(boolean validationCheckResult, List<String> rowValidationErrorMsgs, String validationErrorMessage) {
+    private boolean addErrMsgIfValidationFails(boolean validationCheckResult, List<String> rowValidationErrorMsgs, String validationErrorMessage) {
         if (validationCheckResult) {
             rowValidationErrorMsgs.add(validationErrorMessage);
         }
+        return validationCheckResult;
     }
 
     private JsonObject constructSyncSettings(Row row, List<String> rowValidationErrorMsgs) {
@@ -245,7 +253,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         if (headerPatternMatcher.matches()) {
             String conceptName = headerPatternMatcher.group("conceptName");
             String conceptValues = row.get(saHeader);
-            addErrMsgIfValidationFails(StringUtils.isEmpty(conceptValues), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_FIELD, saHeader));
+            if (addErrMsgIfValidationFails(StringUtils.isEmpty(conceptValues), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, saHeader))) return;
+
             String subjectTypeName = headerPatternMatcher.group("subjectTypeName");
             SubjectType subjectType = subjectTypeService.getByName(subjectTypeName);
 

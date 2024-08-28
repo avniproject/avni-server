@@ -121,6 +121,26 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         assertEquals(before, after);
     }
 
+    private void failsOnMissingHeader(String[] headers, String... errorMessages) {
+        try {
+            bulkLocationCreator.write(Collections.singletonList(new Row(headers, new String[0])), hierarchy);
+            fail();
+        } catch (RuntimeException e) {
+            String message = e.getMessage();
+            if (message == null) {
+                e.printStackTrace();
+                fail();
+            } else {
+                Arrays.stream(errorMessages).forEach(s -> {
+                    if (!message.contains(s)) {
+                        e.printStackTrace();
+                        fail("Expected error message: " + s + " not present in: " + message);
+                    }
+                });
+            }
+        }
+    }
+
     private String[] lineageExists(String... lineage) {
         return lineage;
     }
@@ -241,6 +261,11 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 dataRow("Bihar", "Vaishali", " Mahua ", "23.45,43.85"),
                 newLocationsCreated(0));
 
+        // missing headers
+        failsOnMissingHeader(
+                header(),
+                hasError("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.")
+        );
 
         treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
                 dataRow("Example: state 1", "Ex: distr 1", "Ex: blo 1", "Ex. 23.45,43.85"));
