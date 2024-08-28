@@ -394,7 +394,7 @@ public class User {
             throw new ValidationException(String.format("Invalid username '%s'. Include correct userSuffix %s at the end", username, userSuffix));
         }
         if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(username.trim(), ValidationUtil.COMMON_INVALID_CHARS_PATTERN)) {
-            throw new ValidationException(String.format("Invalid username '%s', contains atleast one disallowed character %s", username, ValidationUtil.COMMON_INVALID_CHARS_PATTERN));
+            throw new ValidationException(String.format("Invalid username '%s', contains at least one disallowed character %s", username, ValidationUtil.COMMON_INVALID_CHARS));
         }
     }
 
@@ -403,7 +403,7 @@ public class User {
      */
     public static void validateName(String name) {
         if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, ValidationUtil.NAME_INVALID_CHARS_PATTERN)) {
-            throw new ValidationException(String.format("Invalid name '%s', contains atleast one disallowed character %s", name, ValidationUtil.NAME_INVALID_CHARS_PATTERN));
+            throw new ValidationException(String.format("Invalid name '%s', contains at least one disallowed character %s", name, ValidationUtil.NAME_INVALID_CHARS));
         }
     }
 }

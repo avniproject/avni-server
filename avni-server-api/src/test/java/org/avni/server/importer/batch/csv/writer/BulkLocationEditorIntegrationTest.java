@@ -104,6 +104,54 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         return strings;
     }
 
+    private void treatAsDescriptor(String[] headers, String... descriptorCells) {
+        long before = locationRepository.count();
+        bulkLocationEditor.write(Collections.singletonList(new Row(headers, descriptorCells)));
+        long after = locationRepository.count();
+        assertEquals(before, after);
+    }
+
+    private void success(String[] headers, String[] dataRow, String[] exists, String[] ... notExists) {
+        bulkLocationEditor.editLocation(new Row(headers, dataRow), new ArrayList<>());
+        lineageExists(exists);
+        for (String[] notExist : notExists) {
+            lineageNotExists(notExist);
+        }
+    }
+
+    private void failure(String[] headers, String[] dataRow, String errorMessage, String[] exists, String[] ... notExists) {
+        try {
+            bulkLocationEditor.editLocation(new Row(headers, dataRow), new ArrayList<>());
+            fail();
+        } catch (Exception exception) {
+            assertEquals(errorMessage, exception.getMessage());
+        }
+        lineageExists(exists);
+        for (String[] notExist : notExists) {
+            lineageNotExists(notExist);
+        }
+    }
+
+    private void failsOnMissingHeader(String[] headers, String... errorMessages) {
+        try {
+            bulkLocationEditor.write(Collections.singletonList(new Row(headers, new String[0])));
+            fail();
+        } catch (RuntimeException e) {
+            String message = e.getMessage();
+            if (message == null) {
+                e.printStackTrace();
+                fail();
+            } else {
+                Arrays.stream(errorMessages).forEach(s -> {
+                    if (!message.contains(s)) {
+                        e.printStackTrace();
+                        fail("Expected error message: " + s + " not present in: " + message);
+                    }
+                });
+            }
+        }
+    }
+
     @Test
     public void shouldEdit() {
         // no change
@@ -153,33 +201,16 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
                         "Enter new name here ONLY if it needs to be updated",
                         "Hierarchy of parent location that should contain the child location",
                         "Ex: 23.45,43.85"));
-    }
 
-    private void treatAsDescriptor(String[] headers, String... descriptorCells) {
-        long before = locationRepository.count();
-        bulkLocationEditor.write(Collections.singletonList(new Row(headers, descriptorCells)));
-        long after = locationRepository.count();
-        assertEquals(before, after);
-    }
-
-    private void success(String[] headers, String[] dataRow, String[] exists, String[] ... notExists) {
-        bulkLocationEditor.editLocation(new Row(headers, dataRow), new ArrayList<>());
-        lineageExists(exists);
-        for (String[] notExist : notExists) {
-            lineageNotExists(notExist);
-        }
-    }
-
-    private void failure(String[] headers, String[] dataRow, String errorMessage, String[] exists, String[] ... notExists) {
-        try {
-            bulkLocationEditor.editLocation(new Row(headers, dataRow), new ArrayList<>());
-            fail();
-        } catch (Exception exception) {
-            assertEquals(errorMessage, exception.getMessage());
-        }
-        lineageExists(exists);
-        for (String[] notExist : notExists) {
-            lineageNotExists(notExist);
-        }
+        // missing header - nothing provided
+        failsOnMissingHeader(
+                header(),
+                hasError("'Location with full hierarchy' is required, At least one of 'New location name', 'GPS coordinates' or 'Parent location with full hierarchy' is required")
+        );
+        // missing header - New location name
+        failsOnMissingHeader(
+                header("Location with full hierarchy"),
+                hasError("At least one of 'New location name', 'GPS coordinates' or 'Parent location with full hierarchy'")
+        );
     }
 }
