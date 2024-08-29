@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormElementGroupContract extends ReferenceDataContract {
     private Double displayOrder;
-    private String display;
-    private List<FormElementContract> formElements = formElements = new ArrayList<>();
+    private List<FormElementContract> formElements = new ArrayList<>();
     private Long organisationId;
     private String rule;
     private DeclarativeRule declarativeRule;
