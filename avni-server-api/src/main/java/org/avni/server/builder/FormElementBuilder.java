@@ -7,6 +7,9 @@ import org.avni.server.application.KeyValues;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.Documentation;
+import org.springframework.util.StringUtils;
+
+import static java.lang.String.format;
 
 public class FormElementBuilder extends BaseBuilder<FormElement, FormElementBuilder> {
     private final FormElementGroup formElementGroup;
@@ -17,6 +20,9 @@ public class FormElementBuilder extends BaseBuilder<FormElement, FormElementBuil
     }
 
     public FormElementBuilder withName(String name) {
+        if(StringUtils.hasLength(name) && name.length() > 255) {
+            throw new BuilderException(format("FormElement name \"%s\" exceeds allowed length of 255 characters", name));
+        }
         this.set("Name", name, String.class);
         return this;
     }

@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.application.*;
+import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilder;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.OperationalProgramRepository;
@@ -143,7 +144,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formRequest.validate();
             formService.checkIfLocationConceptsHaveBeenUsed(formRequest);
             formService.saveForm(formRequest);
-        } catch (InvalidObjectException | FormBuilderException e) {
+        } catch (BuilderException | InvalidObjectException | FormBuilderException e) {
             logger.error(format("Error saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
             return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
@@ -236,7 +237,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
         logger.info(format("Patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
             formService.saveForm(formRequest);
-        } catch (FormBuilderException e) {
+        } catch (BuilderException | FormBuilderException e) {
             logger.info(format("Error patching form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()), e);
             return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorMessageBody(e));
         }
