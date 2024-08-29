@@ -235,7 +235,7 @@ public class AccessControlService {
             return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotDirectlyAssignedToThisUser);
         }
 
-        if (subjectType.isAnySyncRegistrationConceptUsable()) {
+        if (!currentUser.isIgnoreSyncSettingsInDEA() && subjectType.isAnySyncRegistrationConceptUsable()) {
             List<UserSyncSettings> syncSettingsList = currentUser.getSyncSettingsList();
             UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
             if (userSyncSettingsForSubjectType == null) {

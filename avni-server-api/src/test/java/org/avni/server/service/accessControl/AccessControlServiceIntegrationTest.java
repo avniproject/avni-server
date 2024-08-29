@@ -175,6 +175,106 @@ public class AccessControlServiceIntegrationTest extends AbstractControllerInteg
     }
 
     @Test
+    public void checkSubjectAccessForUserIgnoringSyncAttributes() {
+        User user = organisationData.getUser();
+        user.setIgnoreSyncSettingsInDEA(true);
+        TestDataSetupService.TestSyncAttributeBasedSubjectTypeData subjectTypeData = testDataSetupService.setupSubjectTypeWithSyncAttributes();
+        UserSyncSettings userSyncSettings = new TestUserSyncSettingsBuilder()
+                .setSubjectTypeUUID(subjectTypeData.getSubjectType().getUuid())
+                .setSyncConcept1(subjectTypeData.getSyncConcept().getUuid())
+                .setSyncConcept1Values(Collections.singletonList(subjectTypeData.getSyncConcept().getAnswerConcept("Answer 1").getUuid()))
+                .build();
+        userRepository.save(new UserBuilder(user)
+                .withCatchment(catchmentData.getCatchment())
+                .withOperatingIndividualScope(OperatingIndividualScope.ByCatchment)
+                .withSubjectTypeSyncSettings(userSyncSettings).build());
+        setUser(user);
+
+        // new subject
+        Individual subject = new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeData.getSubjectType())
+                .withLocation(catchmentData.getAddressLevel1())
+                .withSyncConcept1Value(subjectTypeData.getSyncConcept().getAnswerConcept("Answer 1").getUuid())
+                .build();
+        SubjectPartitionCheckStatus subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, null);
+        assertTrue(subjectPartitionCheckStatus.getMessage(), subjectPartitionCheckStatus.isPassed());
+
+        // new subject, with not matching sync attribute value
+        subject = new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeData.getSubjectType())
+                .withLocation(catchmentData.getAddressLevel1())
+                .withSyncConcept1Value(subjectTypeData.getSyncConcept().getAnswerConcept("Answer 2").getUuid())
+                .build();
+        subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, null);
+        assertTrue(subjectPartitionCheckStatus.isPassed());
+
+
+        // existing subject with matching sync attribute value
+        ObservationCollection observationCollection = new ObservationCollection();
+        observationCollection.put(subjectTypeData.getSyncConcept().getUuid(), subjectTypeData.getSyncConcept().getAnswerConcept("Answer 1").getUuid());
+        subject = new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeData.getSubjectType())
+                .withLocation(catchmentData.getAddressLevel1())
+                .withObservations(observationCollection)
+                .build();
+        subject = testSubjectService.save(subject);
+        SubjectPartitionData previousPartitionState = SubjectPartitionData.create(subject);
+
+        subject.setSyncConcept1Value(subjectTypeData.getSyncConcept().getAnswerConcept("Answer 2").getUuid());
+        subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, previousPartitionState);
+        assertTrue(subjectPartitionCheckStatus.getMessage(), subjectPartitionCheckStatus.isPassed());
+
+
+        // existing subject with not matching sync attribute value
+        observationCollection = new ObservationCollection();
+        observationCollection.put(subjectTypeData.getSyncConcept().getUuid(), subjectTypeData.getSyncConcept().getAnswerConcept("Answer 2").getUuid());
+        subject = new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeData.getSubjectType())
+                .withLocation(catchmentData.getAddressLevel1())
+                .build();
+        subject = testSubjectService.save(subject);
+        previousPartitionState = SubjectPartitionData.create(subject);
+
+        subject.setSyncConcept1Value(subjectTypeData.getSyncConcept().getAnswerConcept("Answer 1").getUuid());
+        subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, previousPartitionState);
+        assertTrue(subjectPartitionCheckStatus.isPassed());
+
+
+        AddressLevel outsideCatchment = testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity().type(catchmentData.getAddressLevelType()).build());
+        SubjectType subjectType = testSubjectTypeService.createWithDefaults(
+                new SubjectTypeBuilder()
+                        .setShouldSyncByLocation(true)
+                        .setMandatoryFieldsForNewEntity()
+                        .setUuid("subjectType")
+                        .setName("subjectType")
+                        .build());
+
+        // new subject, with sync attribute value, outside catchment
+        subject = new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeData.getSubjectType())
+                .withLocation(outsideCatchment)
+                .withSyncConcept1Value(subjectTypeData.getSyncConcept().getAnswerConcept("Answer 2").getUuid())
+                .build();
+        subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, null);
+        assertFalse(subjectPartitionCheckStatus.isPassed());
+        assertEquals(SubjectPartitionCheckStatus.NotInThisUsersCatchment, subjectPartitionCheckStatus.getMessage());
+
+        // existing subject, without sync attribute value, outside catchment
+        subject = new SubjectBuilder().withMandatoryFieldsForNewEntity()
+                .withSubjectType(subjectTypeData.getSubjectType())
+                .withLocation(outsideCatchment).build();
+        subject = testSubjectService.save(subject);
+        previousPartitionState = SubjectPartitionData.create(subject);
+
+        subject.setAddressLevel(catchmentData.getAddressLevel2());
+        subject = testSubjectService.save(subject);
+        subjectPartitionCheckStatus = accessControlService.checkSubjectAccess(subject, previousPartitionState);
+        assertFalse(subjectPartitionCheckStatus.isPassed());
+        assertEquals(SubjectPartitionCheckStatus.NotInThisUsersCatchment, subjectPartitionCheckStatus.getMessage());
+        //
+    }
+
+    @Test
     public void checkForDirectAssignment() throws ValidationException {
         User user = organisationData.getUser();
         userRepository.save(new UserBuilder(user)
