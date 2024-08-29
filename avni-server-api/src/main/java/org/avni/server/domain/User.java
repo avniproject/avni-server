@@ -101,6 +101,9 @@ public class User {
     @Type(type = "jsonObject")
     private JsonObject syncSettings;
 
+    @Column(name = "ignore_sync_settings_in_dea")
+    private boolean ignoreSyncSettingsInDEA;
+
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
     private List<UserGroup> userGroups;
 
@@ -289,6 +292,14 @@ public class User {
 
     public void setSyncSettings(JsonObject syncSettings) {
         this.syncSettings = syncSettings;
+    }
+
+    public boolean isIgnoreSyncSettingsInDEA() {
+        return ignoreSyncSettingsInDEA;
+    }
+
+    public void setIgnoreSyncSettingsInDEA(boolean ignoreSyncSettingsInDEA) {
+        this.ignoreSyncSettingsInDEA = ignoreSyncSettingsInDEA;
     }
 
     public String[] getRoles() {
