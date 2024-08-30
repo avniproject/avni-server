@@ -7,7 +7,9 @@ public class AddressLevelContractWeb {
 
     private Long id;
     private String name;
+    private String title; // set to same value as name to handle different consumers of contract
     private String type;
+    private String typeString; // set to same value as type to handle different consumers of contract
     private Long typeId;
     private Double level;
     private String lineage;
@@ -19,7 +21,9 @@ public class AddressLevelContractWeb {
         AddressLevelContractWeb addressLevelContractWeb = new AddressLevelContractWeb();
         addressLevelContractWeb.setId(addressLevel.getId());
         addressLevelContractWeb.setName(addressLevel.getTitle());
-        addressLevelContractWeb.setType(addressLevel.getType().getName());
+        addressLevelContractWeb.setTitle(addressLevel.getTitle());
+        addressLevelContractWeb.setType(addressLevel.getTypeString());
+        addressLevelContractWeb.setTypeString(addressLevel.getTypeString());
         addressLevelContractWeb.setTypeId(addressLevel.getType().getId());
         addressLevelContractWeb.setLevel(addressLevel.getLevel());
         addressLevelContractWeb.setParentId(addressLevel.getParentId());
@@ -32,7 +36,9 @@ public class AddressLevelContractWeb {
         AddressLevelContractWeb addressLevelContractWeb = new AddressLevelContractWeb();
         addressLevelContractWeb.setId(locationProjection.getId());
         addressLevelContractWeb.setName(locationProjection.getTitle());
+        addressLevelContractWeb.setTitle(locationProjection.getTitle());
         addressLevelContractWeb.setType(locationProjection.getTypeString());
+        addressLevelContractWeb.setTypeString(locationProjection.getTypeString());
         addressLevelContractWeb.setTypeId(locationProjection.getTypeId());
         addressLevelContractWeb.setLevel(locationProjection.getLevel());
         addressLevelContractWeb.setParentId(locationProjection.getParentId());
@@ -112,5 +118,21 @@ public class AddressLevelContractWeb {
 
     public void setTypeId(Long typeId) {
         this.typeId = typeId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getTypeString() {
+        return typeString;
+    }
+
+    public void setTypeString(String typeString) {
+        this.typeString = typeString;
     }
 }

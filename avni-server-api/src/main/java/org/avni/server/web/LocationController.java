@@ -8,6 +8,7 @@ import org.avni.server.dao.LocationSyncRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
@@ -34,8 +35,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RepositoryRestController
 public class LocationController implements RestControllerResourceProcessor<AddressLevel> {
@@ -47,15 +48,17 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     private final ScopeBasedSyncService<AddressLevel> scopeBasedSyncService;
     private final AccessControlService accessControlService;
     private final LocationSyncRepository locationSyncRepository;
+    private final AddressLevelService addressLevelService;
 
     @Autowired
-    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService, AccessControlService accessControlService, LocationSyncRepository locationSyncRepository) {
+    public LocationController(LocationRepository locationRepository, UserService userService, LocationService locationService, ScopeBasedSyncService<AddressLevel> scopeBasedSyncService, AccessControlService accessControlService, LocationSyncRepository locationSyncRepository, AddressLevelService addressLevelService) {
         this.locationRepository = locationRepository;
         this.userService = userService;
         this.locationService = locationService;
         this.scopeBasedSyncService = scopeBasedSyncService;
         this.accessControlService = accessControlService;
         this.locationSyncRepository = locationSyncRepository;
+        this.addressLevelService = addressLevelService;
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -77,18 +80,18 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "/locations")
     @ResponseBody
-    public Page<LocationProjection> getAll(Pageable pageable) {
-        return locationRepository.findNonVoidedLocations(pageable);
+    public Page<AddressLevelContractWeb> getAll(Pageable pageable) {
+        return addressLevelService.addTitleLineageToLocation(locationRepository.findNonVoidedLocations(pageable));
     }
 
     @GetMapping(value = "locations/search/find")
     @ResponseBody
-    public Page<LocationProjection> find(
+    public Page<AddressLevelContractWeb> find(
             @RequestParam(value = "title", defaultValue = "") String title,
             @RequestParam(value = "typeId", required = false) Integer typeId,
             @RequestParam(value = "parentId", required = false) Integer parentId,
             Pageable pageable) {
-        return locationService.find(new LocationSearchRequest(title, typeId, parentId, pageable));
+        return addressLevelService.addTitleLineageToLocation(locationService.find(new LocationSearchRequest(title, typeId, parentId, pageable)));
     }
 
     @GetMapping(value = "locations/search/findAsList")
@@ -101,11 +104,11 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "/locations/search/findAllById")
     @ResponseBody
-    public List<LocationProjection> findByIdIn(@Param("ids") Long[] ids) {
+    public List<AddressLevelContractWeb> findByIdIn(@Param("ids") Long[] ids) {
         if (ids == null || ids.length == 0) {
             return new ArrayList<>();
         }
-        return locationRepository.findByIdIn(ids);
+        return addressLevelService.addTitleLineageToLocation(locationRepository.findByIdIn(ids));
     }
 
     @RequestMapping(value = {"/locations/search/lastModified", "/locations/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
@@ -157,27 +160,27 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     @GetMapping(value = "/locations/search/typeId/{typeId}")
     @ResponseBody
     public List<AddressLevelContractWeb> getLocationsByTypeId(@PathVariable("typeId") Long typeId) {
+        //TODO API does not appear to be in use. Remove.
         accessControlService.checkPrivilege(PrivilegeType.EditLocation);
-        return locationRepository.findNonVoidedLocationsByTypeId(typeId).stream()
-                .map(AddressLevelContractWeb::fromEntity)
-                .collect(Collectors.toList());
+        return addressLevelService.addTitleLineageToLocation(locationRepository.findNonVoidedLocationsByTypeId(typeId));
     }
 
     @GetMapping(value = "locations/parents/{uuid}")
     @ResponseBody
-    public List<LocationProjection> getParents(@PathVariable("uuid") String uuid,
-                                               @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {
-        return locationService.getParents(uuid, maxLevelTypeId);
+    public List<AddressLevelContractWeb> getParents(@PathVariable("uuid") String uuid,
+                                                    @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {
+        return addressLevelService.addTitleLineageToLocation(locationService.getParents(uuid, maxLevelTypeId));
     }
 
 
     @GetMapping(value = "/locations/web")
     @ResponseBody
-    public ResponseEntity getLocationByParam(@RequestParam("uuid") String uuid) {
+    public ResponseEntity<AddressLevelContractWeb> getLocationByParam(@RequestParam("uuid") String uuid) {
         LocationProjection addressLevel = locationRepository.findNonVoidedLocationsByUuid(uuid);
         if (addressLevel == null) {
             return ResponseEntity.notFound().build();
         }
-        return new ResponseEntity<>(AddressLevelContractWeb.fromEntity(addressLevel), HttpStatus.OK);
+        AddressLevelContractWeb addressLevelContract = addressLevelService.addTitleLineageToLocation(Collections.singletonList(addressLevel)).get(0);
+        return new ResponseEntity<>(addressLevelContract, HttpStatus.OK);
     }
 }
