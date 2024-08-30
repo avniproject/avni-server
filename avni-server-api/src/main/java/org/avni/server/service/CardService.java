@@ -14,6 +14,7 @@ import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -139,13 +140,14 @@ public class CardService implements NonScopeAwareService, DefaultDashboardConsta
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
-        if (recentDurationString == null) return null;
+        if (!StringUtils.hasText(recentDurationString)) {
+            return ValueUnit.getDefaultRecentDuration();
+        }
         try {
             return ObjectMapperSingleton.getObjectMapper().readValue(recentDurationString, ValueUnit.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
@@ -203,7 +205,7 @@ public class CardService implements NonScopeAwareService, DefaultDashboardConsta
             reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
             reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
             if (isRecentStandardReportCard(standardReportCardType.getName())) {
-                reportCard.setStandardReportCardInputRecentDuration(new ValueUnit("1", "days"));
+                reportCard.setStandardReportCardInputRecentDuration(ValueUnit.getDefaultRecentDuration());
             }
             if (standardReportCardType.getName().equals(OVERDUE_VISITS_CARD)) {
                 reportCard.setColour(RED_BG_COLOUR);

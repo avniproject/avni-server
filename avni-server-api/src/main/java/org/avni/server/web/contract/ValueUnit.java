@@ -18,6 +18,10 @@ public class ValueUnit implements Serializable {
         this.unit = unit;
     }
 
+    public static ValueUnit getDefaultRecentDuration() {
+        return new ValueUnit("1", "days");
+    }
+
     public String getValue() {
         return value;
     }
