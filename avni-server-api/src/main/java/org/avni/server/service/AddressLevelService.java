@@ -3,13 +3,17 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.KeyType;
+import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.AddressLevelContract;
+import org.avni.server.web.request.AddressLevelContractWeb;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -96,6 +100,20 @@ public class AddressLevelService {
 
     public String getTitleLineage(AddressLevel location) {
         return locationRepository.getTitleLineageById(location.getId());
+    }
+
+    public List<AddressLevelContractWeb> addTitleLineageToLocation(List<LocationProjection> locationProjections) {
+        Map<Long, String> titleLineages = getTitleLineages(locationProjections.stream().map(LocationProjection::getId).collect(Collectors.toList()));
+        return locationProjections.stream().map(locationProjection -> {
+            AddressLevelContractWeb addressLevel = AddressLevelContractWeb.fromEntity(locationProjection);
+            addressLevel.setTitleLineage(titleLineages.get(locationProjection.getId()));
+            return addressLevel;
+        }).collect(Collectors.toList());
+    }
+
+    public Page<AddressLevelContractWeb> addTitleLineageToLocation(Page<LocationProjection> locationProjections) {
+        List<AddressLevelContractWeb> locationWebContracts = addTitleLineageToLocation(locationProjections.getContent());
+        return new PageImpl<>(locationWebContracts, locationProjections.getPageable(), locationProjections.getTotalElements());
     }
 
     // This method uses in memory approach instead of database, because for smaller number of addresses the query plan to achive this is expensive due to over estimation by postgres.
