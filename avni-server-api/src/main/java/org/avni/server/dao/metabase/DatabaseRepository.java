@@ -2,13 +2,17 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.domain.metabase.Database;
+import org.avni.server.domain.metabase.MetabaseDatabaseInfo;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Repository
 public class DatabaseRepository extends MetabaseConnector {
+    private final ObjectMapper objectMapper;
     public DatabaseRepository(RestTemplateBuilder restTemplateBuilder) {
         super(restTemplateBuilder);
+        this.objectMapper = new ObjectMapper();
     }
 
     public Database save(Database database) {
@@ -18,9 +22,14 @@ public class DatabaseRepository extends MetabaseConnector {
         return database;
     }
 
-    public JsonNode getDatabaseDetails(int databaseId) {
+    public MetabaseDatabaseInfo getDatabaseDetails(int databaseId) {
         String url = metabaseApiUrl + "/database/" + databaseId + "?include=tables";
-        return getForObject(url, JsonNode.class);
+        String jsonResponse = getForObject(url, String.class);
+        try {
+            return objectMapper.readValue(jsonResponse, MetabaseDatabaseInfo.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse database details", e);
+        }
     }
 
     public JsonNode getFields(int databaseId) {

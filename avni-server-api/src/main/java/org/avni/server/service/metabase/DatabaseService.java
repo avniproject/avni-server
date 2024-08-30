@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.avni.server.util.S;
 
@@ -52,38 +53,35 @@ public class DatabaseService {
     }
 
     public int getTableIdByName(String tableName) {
-        JsonNode rootNode = databaseRepository.getDatabaseDetails(getDatabaseId());
-        JsonNode tablesArray = rootNode.path("tables");
-        for (JsonNode tableNode : tablesArray) {
-            if (tableName.equals(tableNode.path("display_name").asText())) {
-                return tableNode.path("id").asInt();
+        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getDatabaseId());
+        List<TableDetails> tables = databaseInfo.getTables();
+
+        for (TableDetails table : tables) {
+            if (tableName.equals(table.getDisplayName())) {
+                return table.getId();
             }
         }
         return -1;
     }
 
     public int getTableIdByName(String tableName, String schema) {
-        JsonNode rootNode = databaseRepository.getDatabaseDetails(
-            getDatabaseId()
-        );
-        JsonNode tablesArray = rootNode.path("tables");
+        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getDatabaseId());
+        List<TableDetails> tables = databaseInfo.getTables();
 
-        for (JsonNode tableNode : tablesArray) {
-            String tableSchema = tableNode.path("schema").asText();
+        for (TableDetails table : tables) {
+            String tableSchema = table.getSchema();
 
             boolean schemaMatches = schema.equals("public")
-                ? "public".equals(tableSchema)
-                : !"public".equals(tableSchema);
+                    ? "public".equals(tableSchema)
+                    : !"public".equals(tableSchema);
 
-            if (
-                tableName.equals(tableNode.path("display_name").asText()) &&
-                schemaMatches
-            ) {
-                return tableNode.path("id").asInt();
+            if (tableName.equals(table.getDisplayName()) && schemaMatches) {
+                return table.getId();
             }
         }
         return -1;
     }
+
 
     private String createRequestBodyForDataset(int sourceTableId) {
         return "{\"database\":" + getDatabaseId() + ",\"query\":{\"source-table\":" + sourceTableId + "},\"type\":\"query\",\"parameters\":[]}";
@@ -215,7 +213,7 @@ public class DatabaseService {
         }
     }
 
-    public void createQuestionsForProgramsAndEncounters() throws Exception{
+    public void createQuestionsForProgramsAndEncounters() throws Exception {
         SyncStatus syncStatus = getInitialSyncStatus();
         if (syncStatus != SyncStatus.COMPLETE) {
             throw new RuntimeException("Database initial sync is not complete.");
@@ -223,8 +221,11 @@ public class DatabaseService {
 
         List<String> programNames = getProgramAndEncounterNames();
 
-        JsonNode databaseDetails = databaseRepository.getDatabaseDetails(getDatabaseId());
-        List<String> allTableNames = extractTableNames(databaseDetails);
+        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getDatabaseId());
+        List<String> allTableNames = databaseInfo.getTables()
+                .stream()
+                .map(TableDetails::getDisplayName)
+                .collect(Collectors.toList());
 
         for (String programName : programNames) {
             for (String tableName : allTableNames) {
