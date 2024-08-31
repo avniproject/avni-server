@@ -3,6 +3,7 @@ package org.avni.server.dao.metabase;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.domain.metabase.Database;
+import org.avni.server.domain.metabase.DatabaseSyncStatus;
 import org.avni.server.domain.metabase.FieldDetails;
 import org.avni.server.domain.metabase.MetabaseDatabaseInfo;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -46,9 +47,14 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public JsonNode getInitialSyncStatus(int databaseId) {
+    public DatabaseSyncStatus getInitialSyncStatus(int databaseId) {
         String url = metabaseApiUrl + "/database/" + databaseId;
-        return getForObject(url, JsonNode.class);
+        String jsonResponse = getForObject(url, String.class);
+        try {
+            return objectMapper.readValue(jsonResponse, DatabaseSyncStatus.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse sync status", e);
+        }
     }
 
     public JsonNode getDataset(String requestBody) {

@@ -100,10 +100,11 @@ public class DatabaseService {
     }
 
     public SyncStatus getInitialSyncStatus() {
-        JsonNode responseBody = databaseRepository.getInitialSyncStatus(getDatabaseId());
-        String status = responseBody.path("initial_sync_status").asText();
+        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(getDatabaseId());
+        String status = databaseSyncStatus.getInitialSyncStatus();
         return SyncStatus.fromString(status);
     }
+
 
     private JsonNode getTableMetadata() {
         int tableMetadataId = getTableIdByName("Table Metadata");
