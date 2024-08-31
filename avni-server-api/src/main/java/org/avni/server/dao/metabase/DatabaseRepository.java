@@ -1,11 +1,15 @@
 package org.avni.server.dao.metabase;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.domain.metabase.Database;
+import org.avni.server.domain.metabase.FieldDetails;
 import org.avni.server.domain.metabase.MetabaseDatabaseInfo;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.List;
 
 @Repository
 public class DatabaseRepository extends MetabaseConnector {
@@ -32,9 +36,14 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public JsonNode getFields(int databaseId) {
+    public List<FieldDetails> getFields(int databaseId) {
         String url = metabaseApiUrl + "/database/" + databaseId + "/fields";
-        return getForObject(url, JsonNode.class);
+        String jsonResponse = getForObject(url, String.class);
+        try {
+            return objectMapper.readValue(jsonResponse, new TypeReference<List<FieldDetails>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse fields", e);
+        }
     }
 
     public JsonNode getInitialSyncStatus(int databaseId) {

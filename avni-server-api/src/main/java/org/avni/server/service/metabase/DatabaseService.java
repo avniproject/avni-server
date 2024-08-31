@@ -88,11 +88,12 @@ public class DatabaseService {
     }
 
     public int getFieldIdByTableNameAndFieldName(String tableName, String fieldName) {
-        JsonNode fieldsArray = databaseRepository.getFields(getDatabaseId());
+        List<FieldDetails> fieldsList = databaseRepository.getFields(getDatabaseId());
         String snakeCaseTableName = S.toSnakeCase(tableName);
-        for (JsonNode fieldNode : fieldsArray) {
-            if (snakeCaseTableName.equals(fieldNode.path("table_name").asText()) && fieldName.equals(fieldNode.path("name").asText())) {
-                return fieldNode.path("id").asInt();
+
+        for (FieldDetails field : fieldsList) {
+            if (snakeCaseTableName.equals(field.getTableName()) && fieldName.equals(field.getName())) {
+                return field.getId();
             }
         }
         return -1;
