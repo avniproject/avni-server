@@ -22,6 +22,7 @@ public class DatabaseService {
     private final DatabaseRepository databaseRepository;
     private final ObjectMapper objectMapper;
     private final MetabaseService metabaseService;
+    private final AddressQuestionCreationService addressQuestionCreationService;
     private Integer databaseId;
     private Integer collectionId;
 
@@ -32,20 +33,21 @@ public class DatabaseService {
     private String apiKey;
 
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, ObjectMapper objectMapper, MetabaseService metabaseService) {
+    public DatabaseService(DatabaseRepository databaseRepository, ObjectMapper objectMapper, MetabaseService metabaseService, AddressQuestionCreationService addressQuestionCreationService) {
         this.databaseRepository = databaseRepository;
         this.objectMapper = objectMapper;
         this.metabaseService = metabaseService;
+        this.addressQuestionCreationService = addressQuestionCreationService;
     }
 
-    private int getDatabaseId() {
+    public int getDatabaseId() {
         if (databaseId == null) {
             databaseId = metabaseService.getGlobalDatabaseId();
         }
         return databaseId;
     }
 
-    private int getCollectionId() {
+    public int getCollectionId() {
         if (collectionId == null) {
             collectionId = metabaseService.getGlobalCollectionId();
         }
@@ -223,7 +225,7 @@ public class DatabaseService {
         List<String> subjectTypeNames = getSubjectTypeNames();
 
         for (String subjectTypeName : subjectTypeNames) {
-            createQuestionForTable(subjectTypeName, "Address", "id", "address_id");
+            addressQuestionCreationService.createQuestionForTable(subjectTypeName, "Address", "id", "address_id");
         }
     }
 
@@ -244,7 +246,7 @@ public class DatabaseService {
         for (String programName : programNames) {
             for (String tableName : allTableNames) {
                 if (tableName.equalsIgnoreCase(programName)) {
-                    createQuestionForTable(tableName, "Address", "id", "address_id");
+                    addressQuestionCreationService.createQuestionForTable(tableName, "Address", "id", "address_id");
                 }
             }
         }
