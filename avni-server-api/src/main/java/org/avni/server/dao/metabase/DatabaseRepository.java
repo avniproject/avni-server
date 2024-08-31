@@ -2,10 +2,7 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.avni.server.domain.metabase.Database;
-import org.avni.server.domain.metabase.DatabaseSyncStatus;
-import org.avni.server.domain.metabase.FieldDetails;
-import org.avni.server.domain.metabase.MetabaseDatabaseInfo;
+import org.avni.server.domain.metabase.*;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,8 +54,13 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public JsonNode getDataset(String requestBody) {
+    public DatasetResponse getDataset(String requestBody) {
         String url = metabaseApiUrl + "/dataset";
-        return postForObject(url, requestBody, JsonNode.class);
+        String jsonResponse = postForObject(url, requestBody, String.class);
+        try {
+            return objectMapper.readValue(jsonResponse, DatasetResponse.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse dataset response", e);
+        }
     }
 }

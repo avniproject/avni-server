@@ -106,44 +106,56 @@ public class DatabaseService {
     }
 
 
-    private JsonNode getTableMetadata() {
+    private DatasetResponse getTableMetadata() {
         int tableMetadataId = getTableIdByName("Table Metadata");
         String requestBody = createRequestBodyForDataset(tableMetadataId);
         return databaseRepository.getDataset(requestBody);
     }
 
     public List<String> getSubjectTypeNames() {
-        JsonNode tableMetadata = getTableMetadata();
+        DatasetResponse tableMetadata = getTableMetadata();
         List<String> subjectTypeNames = new ArrayList<>();
 
-        JsonNode rows = tableMetadata.path("data").path("rows");
-        for (JsonNode row : rows) {
-            String type = row.get(2).asText();
-            if (Arrays.asList(TableType.INDIVIDUAL.getTypeName(), TableType.HOUSEHOLD.getTypeName(), TableType.GROUP.getTypeName(), TableType.PERSON.getTypeName()).contains(type)) {
-                String rawName = row.get(1).asText();
+        List<List<String>> rows = tableMetadata.getData().getRows();
+        for (List<String> row : rows) {
+            String type = row.get(2);
+            if (Arrays.asList(
+                    TableType.INDIVIDUAL.getTypeName(),
+                    TableType.HOUSEHOLD.getTypeName(),
+                    TableType.GROUP.getTypeName(),
+                    TableType.PERSON.getTypeName()
+            ).contains(type)) {
+                String rawName = row.get(1);
                 subjectTypeNames.add(S.formatName(rawName));
             }
         }
-        System.out.println("The subject type names::" + subjectTypeNames);
+
+        System.out.println("The subject type names: " + subjectTypeNames);
         return subjectTypeNames;
     }
 
 
+
     public List<String> getProgramAndEncounterNames() {
-        JsonNode tableMetadata = getTableMetadata();
+        DatasetResponse tableMetadata = getTableMetadata();
         List<String> programNames = new ArrayList<>();
 
-        JsonNode rows = tableMetadata.path("data").path("rows");
-        for (JsonNode row : rows) {
-            String type = row.get(2).asText();
-            if (Arrays.asList(TableType.PROGRAM_ENCOUNTER.getTypeName(), TableType.PROGRAM_ENROLMENT.getTypeName()).contains(type)) {
-                String rawName = row.get(1).asText();
+        List<List<String>> rows = tableMetadata.getData().getRows();
+        for (List<String> row : rows) {
+            String type = row.get(2);
+            if (Arrays.asList(
+                    TableType.PROGRAM_ENCOUNTER.getTypeName(),
+                    TableType.PROGRAM_ENROLMENT.getTypeName()
+            ).contains(type)) {
+                String rawName = row.get(1);
                 programNames.add(S.formatName(rawName));
             }
         }
-        System.out.println("The program and encounter::" + programNames);
+
+        System.out.println("The program and encounter names: " + programNames);
         return programNames;
     }
+
 
 
     private List<String> extractTableNames(JsonNode databaseDetails) {
