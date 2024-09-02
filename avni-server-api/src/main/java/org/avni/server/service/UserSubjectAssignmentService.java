@@ -106,7 +106,10 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
         List<Long> subjectIds = searchResults.stream().map(s -> Long.parseLong(s.get("id").toString())).collect(Collectors.toList());
         List<UserSubjectAssignment> userSubjectAssignmentBySubjectIds = userSubjectAssignmentRepository.findUserSubjectAssignmentBySubject_IdIn(subjectIds);
-
+        List<Long> addressIds = searchResults.stream()
+                .map(searchResult -> ((BigInteger) searchResult.get("addressId")).longValue())
+                .collect(Collectors.toList());
+        Map<Long, String> titleLineages = addressLevelService.getTitleLineages(addressIds);
         Map<String, List<User>> groupedSubjects = userSubjectAssignmentBySubjectIds.stream()
                 .filter(usa -> !usa.isVoided())
                 .collect(groupingBy(UserSubjectAssignment::getSubjectIdAsString, TreeMap::new,
@@ -120,6 +123,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                     .orElseGet(Stream::empty)
                     .map(uw -> pf.createProjection(UserWebProjection.class, uw)).collect(Collectors.toList());
             searchResult.put("assignedUsers", userWebProjections);
+            searchResult.put("addressLevel", titleLineages.get(((BigInteger) searchResult.get("addressId")).longValue()));
         }
 
         BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
