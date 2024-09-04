@@ -3,7 +3,6 @@ package org.avni.server.importer.batch.zip;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
-import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.SubjectTypeRepository;
@@ -249,7 +248,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException, ValidationException {
+    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException {
         logger.info("processing file {}", fileName);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (fileName) {
@@ -376,7 +375,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
+    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException {
         logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData.getKey());
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (bundleFolder) {

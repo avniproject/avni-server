@@ -20,7 +20,7 @@ public class FormElementBuilder extends BaseBuilder<FormElement, FormElementBuil
     }
 
     public FormElementBuilder withName(String name) {
-        if(StringUtils.hasLength(name) && name.length() > 255) {
+        if (StringUtils.hasLength(name) && name.length() > 255) {
             throw new BuilderException(format("FormElement name \"%s\" exceeds allowed length of 255 characters", name));
         }
         this.set("Name", name, String.class);

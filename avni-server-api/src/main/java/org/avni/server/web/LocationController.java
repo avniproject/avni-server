@@ -73,7 +73,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
             }
         } catch (BuilderException e) {
             logger.error(e.getMessage(), e);
-            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e.getMessage()));
+            return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(e));
         }
         return ResponseEntity.ok(null);
     }

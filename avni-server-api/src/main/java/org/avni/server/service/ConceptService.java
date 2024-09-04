@@ -178,7 +178,7 @@ public class ConceptService implements NonScopeAwareService {
         if (conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
             throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
-        logger.info(String.format("Creating concept: %s", conceptRequest.toString()));
+        logger.info(String.format("Creating concept: %s", conceptRequest));
 
         addToMigrationIfRequired(conceptRequest);
         Concept concept = map(conceptRequest);

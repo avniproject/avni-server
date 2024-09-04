@@ -34,7 +34,7 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
     }
 
     public FormElementGroupBuilder withName(String name) {
-        if(StringUtils.hasLength(name) && name.length() > 255) {
+        if (StringUtils.hasLength(name) && name.length() > 255) {
             throw new BuilderException(format("FormElementGroup name \"%s\" exceeds allowed length of 255 characters", name));
         }
         this.set("Name", name, String.class);

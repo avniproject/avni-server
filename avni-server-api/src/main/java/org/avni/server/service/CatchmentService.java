@@ -53,7 +53,7 @@ public class CatchmentService {
         return catchmentRepository.save(catchment);
     }
 
-    public List<Catchment> saveAllCatchments(CatchmentsContract catchmentsContract, Organisation organisation) throws BuilderException {
+    public List<Catchment> saveAllCatchments(CatchmentsContract catchmentsContract, Organisation organisation) {
         List<Catchment> catchments = new ArrayList<>();
         for (CatchmentContract catchmentRequest : catchmentsContract.getCatchments()) {
             logger.info(String.format("Processing catchment request: %s", catchmentRequest.toString()));
@@ -79,7 +79,7 @@ public class CatchmentService {
         return catchments;
     }
 
-    private void addAddressLevels(CatchmentContract catchmentRequest, Catchment catchment) throws BuilderException {
+    private void addAddressLevels(CatchmentContract catchmentRequest, Catchment catchment) {
         List<AddressLevelContract> locations = catchmentRequest.getLocations();
         if(isNull(locations) || locations.isEmpty()) {
             logger.warn(String.format("Locations not defined in Catchment {uuid='%s',locations=undefined,...}", catchment.getUuid()));

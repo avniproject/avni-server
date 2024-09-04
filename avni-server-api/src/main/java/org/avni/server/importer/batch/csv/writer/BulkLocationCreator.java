@@ -2,7 +2,6 @@ package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
 import org.avni.server.application.FormElement;
-import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
@@ -104,7 +103,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         }
     }
 
-    private AddressLevel createAddressLevel(Row row, AddressLevel parent, String header, List<String> locationTypeNames) throws BuilderException {
+    private AddressLevel createAddressLevel(Row row, AddressLevel parent, String header, List<String> locationTypeNames) {
         AddressLevel location;
         location = locationRepository.findChildLocation(parent, row.get(header));
         if (location == null) {
