@@ -3,6 +3,7 @@ package org.avni.server.service;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.VirtualCatchmentRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Organisation;
@@ -26,15 +27,15 @@ import static java.util.Objects.isNull;
 @Service
 public class CatchmentService {
     private final CatchmentRepository catchmentRepository;
-    private final UserService userService;
     private final LocationRepository locationRepository;
+    private final VirtualCatchmentRepository virtualCatchmentRepository;
     private final Logger logger;
 
     @Autowired
-    public CatchmentService(CatchmentRepository catchmentRepository, UserService userService, LocationRepository locationRepository) {
+    public CatchmentService(CatchmentRepository catchmentRepository, LocationRepository locationRepository, VirtualCatchmentRepository virtualCatchmentRepository) {
         this.catchmentRepository = catchmentRepository;
-        this.userService = userService;
         this.locationRepository = locationRepository;
+        this.virtualCatchmentRepository = virtualCatchmentRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -52,7 +53,7 @@ public class CatchmentService {
         return catchmentRepository.save(catchment);
     }
 
-    public List<Catchment> saveAllCatchments(CatchmentsContract catchmentsContract, Organisation organisation) throws BuilderException {
+    public List<Catchment> saveAllCatchments(CatchmentsContract catchmentsContract, Organisation organisation) {
         List<Catchment> catchments = new ArrayList<>();
         for (CatchmentContract catchmentRequest : catchmentsContract.getCatchments()) {
             logger.info(String.format("Processing catchment request: %s", catchmentRequest.toString()));
@@ -71,13 +72,14 @@ public class CatchmentService {
             addAddressLevels(catchmentRequest, catchment);
             removeObsoleteAddressLevelsFromCatchment(catchment, catchmentRequest);
             catchment.setOrganisationId(organisation.getId());
+            catchment.setVoided(catchmentRequest.isVoided());
 
             catchments.add(catchmentRepository.save(catchment));
         }
         return catchments;
     }
 
-    private void addAddressLevels(CatchmentContract catchmentRequest, Catchment catchment) throws BuilderException {
+    private void addAddressLevels(CatchmentContract catchmentRequest, Catchment catchment) {
         List<AddressLevelContract> locations = catchmentRequest.getLocations();
         if(isNull(locations) || locations.isEmpty()) {
             logger.warn(String.format("Locations not defined in Catchment {uuid='%s',locations=undefined,...}", catchment.getUuid()));
@@ -112,5 +114,9 @@ public class CatchmentService {
     private boolean catchmentExistsWithSameNameAndDifferentUUID(CatchmentContract catchmentRequest) {
         Catchment catchment = catchmentRepository.findByName(catchmentRequest.getName());
         return catchment != null && !catchment.getUuid().equals(catchmentRequest.getUuid());
+    }
+
+    public boolean hasLocation(AddressLevel addressLevel, Catchment catchment) {
+        return virtualCatchmentRepository.existsByAddressLevelAndCatchment(addressLevel, catchment);
     }
 }

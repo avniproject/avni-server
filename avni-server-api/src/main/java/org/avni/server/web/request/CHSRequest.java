@@ -32,9 +32,13 @@ public class CHSRequest {
         this(chsEntity.getUuid(), chsEntity.getId(), chsEntity.isVoided());
     }
 
-    public Long getId() { return id; }
+    public Long getId() {
+        return id;
+    }
 
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getUuid() {
         return uuid == null ? null : uuid.trim();
@@ -56,5 +60,16 @@ public class CHSRequest {
 
     public void setVoided(boolean voided) {
         isVoided = voided;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("uuid='").append(uuid).append('\'');
+        if (id != null && id != 0)
+            sb.append(", id=").append(id);
+        sb.append("isVoided ='").append(isVoided).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

@@ -1,6 +1,7 @@
 package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
+import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
@@ -10,6 +11,7 @@ import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.server.domain.RuleExecutionException;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.EntityTypeRetrieverService;
 import org.avni.server.service.RuleService;
 import org.avni.server.web.request.rules.response.ScheduleRuleResponseEntity;
 import org.joda.time.DateTime;
@@ -34,12 +36,13 @@ public class MessagingService {
     private final MessageReceiverService messageReceiverService;
     private final MessageRequestService messageRequestService;
     private final RuleService ruleService;
-    private MessageRequestQueueRepository messageRequestQueueRepository;
-    private ManualMessageRepository manualMessageRepository;
-    private GroupMessagingService groupMessagingService;
-    private Bugsnag bugsnag;
+    private final MessageRequestQueueRepository messageRequestQueueRepository;
+    private final ManualMessageRepository manualMessageRepository;
+    private final GroupMessagingService groupMessagingService;
+    private final Bugsnag bugsnag;
 
-    private IndividualMessagingService individualMessagingService;
+    private final IndividualMessagingService individualMessagingService;
+    private final EntityTypeRetrieverService entityTypeRetrieverService;
 
     @Autowired
     public MessagingService(MessageRuleRepository messageRuleRepository, MessageReceiverService messageReceiverService,
@@ -47,7 +50,7 @@ public class MessagingService {
                             MessageRequestQueueRepository messageRequestQueueRepository,
                             ManualMessageRepository manualMessageRepository,
                             RuleService ruleService, GroupMessagingService groupMessagingService,
-                            IndividualMessagingService individualMessagingService, Bugsnag bugsnag) {
+                            IndividualMessagingService individualMessagingService, Bugsnag bugsnag, EntityTypeRetrieverService entityTypeRetrieverService) {
         this.messageRuleRepository = messageRuleRepository;
         this.messageReceiverService = messageReceiverService;
         this.messageRequestService = messageRequestService;
@@ -57,6 +60,7 @@ public class MessagingService {
         this.groupMessagingService = groupMessagingService;
         this.bugsnag = bugsnag;
         this.individualMessagingService = individualMessagingService;
+        this.entityTypeRetrieverService = entityTypeRetrieverService;
     }
 
     public MessageRule find(Long id) {
@@ -182,4 +186,12 @@ public class MessagingService {
         else
             individualMessagingService.sendManualMessage(messageRequest);
         }
+
+    public void saveRules(MessageRuleContract[] messageRuleContracts) {
+        for (MessageRuleContract messageRuleContract : messageRuleContracts) {
+            MessageRule messageRule = this.find(messageRuleContract.getUuid());
+            messageRule = MessageRuleContract.toModel(messageRuleContract, messageRule, entityTypeRetrieverService);
+            this.saveRule(messageRule);
+        }
+    }
 }

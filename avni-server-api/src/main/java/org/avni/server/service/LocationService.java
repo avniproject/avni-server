@@ -6,6 +6,7 @@ import org.avni.server.application.KeyType;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
@@ -53,13 +54,15 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         this.logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    public List<AddressLevel> saveAll(List<LocationContract> locationContracts) throws BuilderException {
+    public List<AddressLevel> saveAll(List<LocationContract> locationContracts) {
         List<AddressLevel> saved = new ArrayList<>();
-        for (LocationContract contract : locationContracts) saved.add(save(contract));
+        for (LocationContract contract : locationContracts) {
+            saved.add(save(contract));
+        }
         return saved;
     }
 
-    public AddressLevel save(LocationContract locationContract) throws BuilderException {
+    public AddressLevel save(LocationContract locationContract) {
         logger.info(String.format("Processing location request: %s", locationContract.toString()));
         AddressLevelType type = getTypeByUuidOrName(locationContract);
         if (type == null) {
@@ -95,7 +98,7 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         return addressLevelType;
     }
 
-    private AddressLevel saveLocation(LocationContract contract, AddressLevelType type) throws BuilderException {
+    private AddressLevel saveLocation(LocationContract contract, AddressLevelType type) {
         LocationBuilder locationBuilder = new LocationBuilder(locationRepository.findByUuid(contract.getUuid()), type);
         locationBuilder.copy(contract);
         AddressLevel location = locationBuilder.build();
@@ -103,20 +106,21 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
 
         // Validate location title/name is unique only if new AddressLevel
         if (location.getId() == null && !titleIsValid(location, contract.getName().trim(), type))
-            throw new BuilderException(String.format("Location with same name '%s' and type '%s' exists at this level", contract.getName(), type.getName()));
+            throw new BuilderException(String.format("Location with same name '%s' and type '%s' exists at this level.", contract.getName(), type.getName()),
+                    contract.toString());
 
         try {
             locationRepository.save(location);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            throw new BuilderException(String.format("Unable to create Location{name='%s',level='%s',orgUUID='%s',..}: '%s'", contract.getName(), contract.getLevel(), contract.getOrganisationUUID(), e.getMessage()));
+            logger.error(e.getMessage(), e);
+            throw new BuilderException(String.format("Unable to create Location{name='%s',level='%s',orgUUID='%s',..}: '%s'", contract.getName(), contract.getLevel(), contract.getOrganisationUUID(), e.getMessage()), contract.toString());
         }
         try {
             location.calculateLineage();
             locationRepository.save(location);
         } catch (Exception e) {
-            logger.error(e.getMessage());
-            throw new BuilderException(String.format("Unable to update lineage for location with Id %s - %s", location.getId(), e.getMessage()));
+            logger.error(e.getMessage(), e);
+            throw new BuilderException(String.format("Unable to update lineage for location with Id %s - %s.", location.getId(), e.getMessage()), contract.toString());
         }
         return location;
     }
@@ -305,6 +309,16 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
 
     public List<LocationProjection> getParents(String uuid, Long maxLevelTypeId) {
         return maxLevelTypeId == null ?
-         locationRepository.getParents(uuid) : locationRepository.getParentsWithMaxLevelTypeId(uuid, maxLevelTypeId);
+                locationRepository.getParents(uuid) : locationRepository.getParentsWithMaxLevelTypeId(uuid, maxLevelTypeId);
+    }
+
+    public void createAddressLevelTypes(AddressLevelTypeContract[] addressLevelTypeContracts) {
+        for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
+            try {
+                this.createAddressLevelType(addressLevelTypeContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(addressLevelTypeContract, e);
+            }
+        }
     }
 }

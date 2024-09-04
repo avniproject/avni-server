@@ -22,6 +22,11 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
         return findById(id).orElse(null);
     }
 
+    default T findEntity(String uuid) {
+        if (uuid == null) return null;
+        return findByUuid(uuid);
+    }
+
     default Predicate jsonContains(Path<?> jsonb, String pattern, CriteriaBuilder builder) {
         return builder.isTrue(builder.function("jsonb_object_values_contain", Boolean.class,
                 jsonb, builder.literal(pattern)));

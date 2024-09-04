@@ -14,6 +14,7 @@ import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.request.ChangePasswordRequest;
@@ -55,9 +56,9 @@ public class UserController {
     private final AccountAdminRepository accountAdminRepository;
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final AccessControlService accessControlService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
-    private final AccessControlService accessControlService;
 
     @Autowired
     public UserController(CatchmentRepository catchmentRepository,
@@ -92,15 +93,20 @@ public class UserController {
     public ResponseEntity createUser(@RequestBody UserContract userContract) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
-            if (usernameExists(userContract.getUsername()))
+            if (isUserNameInvalid(userContract.getUsername())) {
+                throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
+            }
+
+            if (usernameExists(userContract.getUsername().trim())) {
                 throw new ValidationException(String.format("Username %s already exists", userContract.getUsername()));
+            }
 
             User user = new User();
             user.setUuid(UUID.randomUUID().toString());
             logger.info(String.format("Creating user with username '%s' and UUID '%s'", userContract.getUsername(), user.getUuid()));
 
-            user.setUsername(userContract.getUsername());
-            user = setUserAttributes(user, userContract);
+            user.setUsername(userContract.getUsername().trim());
+            user = setUserAttributes(user, userContract, getRegionForUser(userContract));
 
             User savedUser = userService.save(user);
             idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
@@ -125,7 +131,7 @@ public class UserController {
             throw new EntityNotFoundException(String.format("User not found with id %d", id));
         }
         UserContract userContract = UserContract.fromEntity(user);
-        userContract.setSyncSettings(UserSyncSettings.fromUserSyncSettings(user.getSyncSettings(), subjectTypeRepository));
+        userContract.setSyncSettings(UserSyncSettings.toWebResponse(user.getSyncSettings(), subjectTypeRepository));
         return userContract;
     }
 
@@ -141,9 +147,11 @@ public class UserController {
             User currentUser = userService.getCurrentUser();
             user.setAuditInfo(currentUser);
             resetSyncService.recordSyncAttributeValueChangeForUser(user, userContract, UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
-            user = setUserAttributes(user, userContract);
 
-            idpServiceFactory.getIdpService(user).updateUser(user);
+            String region = getRegionForUser(userContract);
+            user = setUserAttributes(user, userContract, region);
+
+            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).updateUser(user);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             userService.associateUserToGroups(user, userContract.getGroupIds());
@@ -154,6 +162,16 @@ public class UserController {
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
         }
+    }
+
+    private String getRegionForUser(UserContract userContract) {
+        String region;
+        if (userContract.getAccountIds().isEmpty()) {
+            region = RegionUtil.getCurrentUserRegion();
+        } else {
+            region = accountRepository.findOne(userContract.getAccountIds().get(0)).getRegion();
+        }
+        return region;
     }
 
     private Boolean emailIsValid(String email) {
@@ -168,12 +186,16 @@ public class UserController {
         return ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, NAME_INVALID_CHARS_PATTERN);
     }
 
-    private User setUserAttributes(User user, UserContract userContract) {
+    private Boolean phoneNumberIsValid(String phoneNumber, String region) {
+        return PhoneNumberUtil.isValidPhoneNumber(phoneNumber, region);
+    }
+
+    private User setUserAttributes(User user, UserContract userContract, String userRegion) {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
 
-        userService.setPhoneNumber(userContract.getPhoneNumber(), user);
+        userService.setPhoneNumber(userContract.getPhoneNumber(), user, userRegion);
 
         if (isUserNameInvalid(userContract.getUsername())) {
             throw new ValidationException(String.format("Invalid username %s", userContract.getUsername()));
@@ -183,8 +205,8 @@ public class UserController {
             throw new ValidationException(String.format("Invalid name %s", userContract.getName()));
         }
 
-        user.setName(userContract.getName());
-        if(userContract.getCatchmentId()!=null) {
+        user.setName(userContract.getName().trim());
+        if (userContract.getCatchmentId() != null) {
             user.setCatchment(catchmentRepository.findOne(userContract.getCatchmentId()));
         }
 
@@ -205,19 +227,7 @@ public class UserController {
     @Transactional
     public ResponseEntity deleteUser(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-        try {
-            User user = userRepository.findOne(id);
-            User currentUser = userService.getCurrentUser();
-            user.setAuditInfo(currentUser);
-            idpServiceFactory.getIdpService(user).deleteUser(user);
-            user.setVoided(true);
-            user.setDisabledInCognito(true);
-            userRepository.save(user);
-            logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
-        } catch (AWSCognitoIdentityProviderException ex) {
-            return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
-        }
+        return userService.deleteUser(id);
     }
 
     @RequestMapping(value = {"/user/{id}/disable", "/user/accountOrgAdmin/{id}/disable"}, method = RequestMethod.PUT)
@@ -229,14 +239,15 @@ public class UserController {
             User user = userRepository.findOne(id);
             User currentUser = userService.getCurrentUser();
             user.setAuditInfo(currentUser);
+            boolean isAdmin = userService.isAdmin(user);
             if (disable) {
-                idpServiceFactory.getIdpService(user).disableUser(user);
+                idpServiceFactory.getIdpService(user, isAdmin).disableUser(user);
                 user.setDisabledInCognito(true);
                 userRepository.save(user);
                 logger.info(String.format("Disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
             } else {
                 if (user.isDisabledInCognito()) {
-                    idpServiceFactory.getIdpService(user).enableUser(user);
+                    idpServiceFactory.getIdpService(user, isAdmin).enableUser(user);
                     user.setDisabledInCognito(false);
                     userRepository.save(user);
                     logger.info(String.format("Enabled previously disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
@@ -256,7 +267,7 @@ public class UserController {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
         try {
             User user = userRepository.findOne(resetPasswordRequest.getUserId());
-            idpServiceFactory.getIdpService(user).resetPassword(user, resetPasswordRequest.getPassword());
+            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).resetPassword(user, resetPasswordRequest.getPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
@@ -270,7 +281,7 @@ public class UserController {
     public ResponseEntity changePassword(@RequestBody ChangePasswordRequest changePasswordRequest) {
         try {
             User user = userRepository.findOne(UserContextHolder.getUser().getId());
-            idpServiceFactory.getIdpService(user).resetPassword(user, changePasswordRequest.getNewPassword());
+            idpServiceFactory.getIdpService(user, userService.isAdmin(user)).resetPassword(user, changePasswordRequest.getNewPassword());
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
@@ -363,7 +374,7 @@ public class UserController {
                 .map(Organisation::getId).collect(Collectors.toList());
     }
 
-    @GetMapping( "/user/search/findByOrganisation")
+    @GetMapping("/user/search/findByOrganisation")
     @ResponseBody
     public Page<User> getUsersByOrganisation(@RequestParam("organisationId") Long organisationId, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);

@@ -10,6 +10,8 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
+import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.web.request.GroupPrivilegeContract;
 import org.avni.server.web.request.UserBulkUploadContract;
 import org.avni.server.web.request.UserInfoClientContract;
@@ -67,12 +69,13 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();
+        boolean isAdmin = userService.isAdmin(user);
 
-        if (organisation == null && !user.isAdmin()) {
+        if (organisation == null && !isAdmin) {
             logger.info(String.format("Organisation not found for user ID: %s", user.getId()));
             return new ResponseEntity<>(new UserInfoClientContract(), HttpStatus.NOT_FOUND);
         }
-        if (user.isAdmin() && organisation == null) {
+        if (isAdmin && organisation == null) {
             organisation = new Organisation();
         }
         return new ResponseEntity<>(getUserInfoObject(organisation, user), HttpStatus.OK);
@@ -158,8 +161,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             user.setOrganisationId(organisationId);
             user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
             user.setSettings(userContract.getSettings());
-            user.setPhoneNumber(userContract.getPhoneNumber());
-            user.setEmail(userContract.getEmail());
+            userService.setPhoneNumber(userContract.getPhoneNumber(), user, RegionUtil.getCurrentUserRegion());
             user.setAuditInfo(userService.getCurrentUser());
             User savedUser = userService.save(user);
             if (newUser) userService.addToDefaultUserGroup(savedUser);

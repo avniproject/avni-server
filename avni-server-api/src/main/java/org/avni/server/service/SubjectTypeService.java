@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.application.Subject;
 import org.avni.server.application.SubjectTypeSettingKey;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
@@ -9,6 +10,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
+import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
@@ -42,6 +44,7 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final ConceptService conceptService;
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final UserService userService;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -52,7 +55,7 @@ public class SubjectTypeService implements NonScopeAwareService {
                               JobLauncher userSubjectTypeCreateJobLauncher,
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService, OrganisationConfigService organisationConfigService,
-                              AddressLevelTypeRepository addressLevelTypeRepository) {
+                              AddressLevelTypeRepository addressLevelTypeRepository, UserService userService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -64,6 +67,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         logger = LoggerFactory.getLogger(this.getClass());
+        this.userService = userService;
     }
 
     public SubjectTypeUpsertResponse saveSubjectType(SubjectTypeContract subjectTypeRequest) {
@@ -195,6 +199,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         UserContext userContext = UserContextHolder.getUserContext();
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString("uuid", jobUUID)
+                .addString("type", String.format("Subjects Create - %s", subjectType.getName()), false)
                 .addString("organisationUUID", userContext.getOrganisationUUID())
                 .addLong("userId", userContext.getUser().getId())
                 .addLong("subjectTypeId", subjectType.getId())
@@ -246,7 +251,7 @@ public class SubjectTypeService implements NonScopeAwareService {
 
         return Arrays.stream(syncAttributes).
                 filter(Objects::nonNull).sorted().
-                map(sa -> String.format("\"Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(conceptService.get(sa))))
+                map(sa -> String.format("\"Mandatory field. Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(conceptService.get(sa))))
                 .collect(Collectors.toList());
     }
 
@@ -272,8 +277,31 @@ public class SubjectTypeService implements NonScopeAwareService {
         }
     }
 
+    @Transactional
+    public void saveSubjectTypesFromBundle(SubjectTypeContract[] subjectTypeContracts) {
+        for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
+            try {
+                SubjectTypeUpsertResponse response = this.saveSubjectType(subjectTypeContract);
+                if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
+                    userService.ensureSubjectsForUserSubjectType(response.getSubjectType());
+                }
+            } catch (Exception e) {
+                throw new BulkItemSaveException(subjectTypeContract, e);
+            }
+        }
+    }
 
-    public class SubjectTypeUpsertResponse {
+    public void saveOperationalSubjectTypes(OperationalSubjectTypesContract operationalSubjectTypesContract, Organisation organisation) {
+        for (OperationalSubjectTypeContract ostc : operationalSubjectTypesContract.getOperationalSubjectTypes()) {
+            try {
+                this.createOperationalSubjectType(ostc, organisation);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(ostc, e);
+            }
+        }
+    }
+
+    public static class SubjectTypeUpsertResponse {
         boolean isSubjectTypeNotPresentInDB;
         SubjectType subjectType;
 

@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EntityTypeRetrieverService {
-    private SubjectTypeRepository subjectTypeRepository;
-    private ProgramRepository programRepository;
-    private EncounterTypeRepository encounterTypeRepository;
+    private final SubjectTypeRepository subjectTypeRepository;
+    private final ProgramRepository programRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
 
     @Autowired
     public EntityTypeRetrieverService(SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {

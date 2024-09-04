@@ -1,9 +1,6 @@
 package org.avni.server.web.request;
 
-import org.avni.server.domain.accessControl.GroupPrivilege;
-
 public class GroupPrivilegeContractWeb extends CHSRequest {
-
     private String groupUUID;
     private String privilegeUUID;
     private String subjectTypeUUID;
@@ -13,21 +10,6 @@ public class GroupPrivilegeContractWeb extends CHSRequest {
     private String checklistDetailUUID;
     private boolean allow;
     private boolean isNotEveryoneGroup = true;
-
-    public static GroupPrivilegeContractWeb fromEntity(GroupPrivilege groupPrivilege) {
-        GroupPrivilegeContractWeb groupPrivilegeContractWeb = new GroupPrivilegeContractWeb();
-        groupPrivilegeContractWeb.setUuid(groupPrivilege.getUuid());
-        groupPrivilegeContractWeb.setGroupUUID(groupPrivilege.getGroupUuid());
-        groupPrivilegeContractWeb.setPrivilegeUUID(groupPrivilege.getPrivilegeUuid());
-        groupPrivilegeContractWeb.setSubjectTypeUUID(groupPrivilege.getSubjectTypeUuid());
-        groupPrivilegeContractWeb.setProgramUUID(groupPrivilege.getProgramUuid());
-        groupPrivilegeContractWeb.setProgramEncounterTypeUUID(groupPrivilege.getProgramEncounterTypeUuid());
-        groupPrivilegeContractWeb.setEncounterTypeUUID(groupPrivilege.getEncounterTypeUuid());
-        groupPrivilegeContractWeb.setChecklistDetailUUID(groupPrivilege.getChecklistDetailUuid());
-        groupPrivilegeContractWeb.setAllow(groupPrivilege.isAllow());
-        groupPrivilegeContractWeb.setNotEveryoneGroup(!groupPrivilege.getGroup().isEveryone());
-        return groupPrivilegeContractWeb;
-    }
 
     public String getGroupUUID() {
         return groupUUID;

@@ -10,6 +10,7 @@ public class ReportCardBundleContract extends ReportCardContract {
     private List<String> standardReportCardInputSubjectTypes = new ArrayList<>();
     private List<String> standardReportCardInputPrograms = new ArrayList<>();
     private List<String> standardReportCardInputEncounterTypes = new ArrayList<>();
+    private String standardReportCardInputRecentDuration = null;
 
     public String getStandardReportCardType() {
         return standardReportCardType;
@@ -41,5 +42,13 @@ public class ReportCardBundleContract extends ReportCardContract {
 
     public void setStandardReportCardInputEncounterTypes(List<String> standardReportCardInputEncounterTypes) {
         this.standardReportCardInputEncounterTypes = standardReportCardInputEncounterTypes;
+    }
+
+    public String getStandardReportCardInputRecentDuration() {
+        return standardReportCardInputRecentDuration;
+    }
+
+    public void setStandardReportCardInputRecentDuration(String standardReportCardInputRecentDuration) {
+        this.standardReportCardInputRecentDuration = standardReportCardInputRecentDuration;
     }
 }

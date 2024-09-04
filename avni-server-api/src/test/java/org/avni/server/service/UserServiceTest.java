@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -23,6 +24,8 @@ public class UserServiceTest {
     private UserGroupRepository userGroupRepository;
     @Mock
     private GroupRepository groupRepository;
+    @Mock
+    private IdpServiceFactory idpServiceFactory;
 
     @Captor
     ArgumentCaptor<UserGroup> userGroupArgumentCaptor;
@@ -32,7 +35,7 @@ public class UserServiceTest {
     public void setup() {
         initMocks(this);
 
-        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null);
+        userService = new UserService(null, groupRepository, userGroupRepository, null, null, null, idpServiceFactory, null);
     }
 
     @Test
@@ -89,5 +92,12 @@ public class UserServiceTest {
         assertEquals(group1, allValues.get(0).getGroup());
         assertEquals(group2, allValues.get(1).getGroup());
         assertEquals(everyone, allValues.get(2).getGroup());
+    }
+
+    @Test
+    public void testUserGroupSplitByDelimiter() {
+        final String groupsSpecified = "ug1, ug2|ug3 |  ug4-ug5 ,   ug6 ug7";
+        String[] userGroups = userService.splitIntoUserGroupNames(groupsSpecified);
+        assertArrayEquals(new String[]{"ug1", "ug2", "ug3", "ug4-ug5", "ug6 ug7"}, userGroups);
     }
 }

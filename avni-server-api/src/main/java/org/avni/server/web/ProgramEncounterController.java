@@ -11,6 +11,7 @@ import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.ProgramEncounterRequest;
+import org.avni.server.web.response.AvniEntityResponse;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -43,9 +45,10 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     private final FormMappingService formMappingService;
     private final AccessControlService accessControlService;
     private final EntityApprovalStatusService entityApprovalStatusService;
+    private final TxDataControllerHelper txDataControllerHelper;
 
     @Autowired
-    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService) {
+    public ProgramEncounterController(EncounterTypeRepository encounterTypeRepository, ProgramEncounterRepository programEncounterRepository, UserService userService, ProgramEncounterService programEncounterService, ScopeBasedSyncService<ProgramEncounter> scopeBasedSyncService, FormMappingService formMappingService, AccessControlService accessControlService, EntityApprovalStatusService entityApprovalStatusService, TxDataControllerHelper txDataControllerHelper) {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programEncounterRepository = programEncounterRepository;
         this.userService = userService;
@@ -54,6 +57,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
         this.formMappingService = formMappingService;
         this.accessControlService = accessControlService;
         this.entityApprovalStatusService = entityApprovalStatusService;
+        this.txDataControllerHelper = txDataControllerHelper;
     }
 
     @GetMapping(value = "/web/programEncounter/{uuid}")
@@ -72,7 +76,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public void save(@RequestBody ProgramEncounterRequest request) {
         programEncounterService.saveProgramEncounter(request);
-        if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
+        if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
             programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
         }
     }
@@ -80,14 +84,21 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @RequestMapping(value = "/web/programEncounters", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void saveForWeb(@RequestBody ProgramEncounterRequest request) {
-        ProgramEncounter programEncounter = programEncounterService.saveProgramEncounter(request);
-        if (request.getVisitSchedules() != null && request.getVisitSchedules().size() > 0) {
-            programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
-        }
+    public AvniEntityResponse saveForWeb(@RequestBody ProgramEncounterRequest request) {
+        try {
+            ProgramEncounter programEncounter = programEncounterService.saveProgramEncounter(request);
+            txDataControllerHelper.checkSubjectAccess(programEncounter.getProgramEnrolment().getIndividual());
+            if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
+                programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
+            }
 
-        FormMapping formMapping = programEncounterService.getFormMapping(programEncounter);
-        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEncounter, programEncounter.getId(), ApprovalStatus.Status.Pending, programEncounter.getEncounterType().getUuid(), formMapping);
+            FormMapping formMapping = programEncounterService.getFormMapping(programEncounter);
+            entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.ProgramEncounter, programEncounter.getId(), ApprovalStatus.Status.Pending, programEncounter.getEncounterType().getUuid(), formMapping);
+            return new AvniEntityResponse(programEncounter);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/programEncounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
@@ -148,14 +159,20 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
     @Transactional
-    public ResponseEntity<?> voidProgramEncounter(@PathVariable String uuid) {
-        ProgramEncounter programEncounter = programEncounterRepository.findByUuid(uuid);
-        if (programEncounter == null) {
-            return ResponseEntity.notFound().build();
+    public AvniEntityResponse voidProgramEncounter(@PathVariable String uuid) {
+        try {
+            ProgramEncounter programEncounter = programEncounterRepository.findByUuid(uuid);
+            if (programEncounter == null) {
+                return AvniEntityResponse.error("Program Encounter not found");
+            }
+            txDataControllerHelper.checkSubjectAccess(programEncounter.getProgramEnrolment().getIndividual());
+            programEncounter.setVoided(true);
+            programEncounterService.save(programEncounter);
+            return new AvniEntityResponse(programEncounter);
+        } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return AvniEntityResponse.error(e.getMessage());
         }
-        programEncounter.setVoided(true);
-        programEncounterService.save(programEncounter);
-        return ResponseEntity.ok().build();
     }
 
     @Override

@@ -33,6 +33,7 @@ public class ReportCardMapper {
         response.setStandardReportCardInputSubjectTypes(reportCardService.getStandardReportCardInputSubjectTypes(card).stream().map(SubjectTypeContract::createBasic).collect(Collectors.toList()));
         response.setStandardReportCardInputPrograms(reportCardService.getStandardReportCardInputPrograms(card).stream().map(ProgramContract::createBasic).collect(Collectors.toList()));
         response.setStandardReportCardInputEncounterTypes(reportCardService.getStandardReportCardInputEncounterTypes(card).stream().map(EncounterTypeContract::createBasic).collect(Collectors.toList()));
+        response.setStandardReportCardInputRecentDuration(reportCardService.buildDurationForRecentTypeCards(card.getStandardReportCardInputRecentDuration()));
         return response;
     }
 
@@ -57,6 +58,9 @@ public class ReportCardMapper {
         response.setStandardReportCardInputSubjectTypes(reportCardService.getStandardReportCardInputSubjectTypes(reportCard).stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
         response.setStandardReportCardInputPrograms(reportCardService.getStandardReportCardInputPrograms(reportCard).stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
         response.setStandardReportCardInputEncounterTypes(reportCardService.getStandardReportCardInputEncounterTypes(reportCard).stream().map(CHSBaseEntity::getUuid).collect(Collectors.toList()));
+        if (reportCard.getStandardReportCardInputRecentDuration() != null) {
+            response.setStandardReportCardInputRecentDuration(reportCard.getStandardReportCardInputRecentDuration());
+        }
         return response;
     }
 }

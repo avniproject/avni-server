@@ -29,6 +29,10 @@ public class TestOrganisationSetupService {
     private AccountRepository accountRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private OrganisationCategoryRepository organisationCategoryRepository;
+    @Autowired
+    private OrganisationStatusRepository organisationStatusRepository;
 
     private Group group;
     private User user;
@@ -36,7 +40,11 @@ public class TestOrganisationSetupService {
     public void setupOrganisation(AbstractControllerIntegrationTest abstractControllerIntegrationTest) {
         group = new TestGroupBuilder().withMandatoryFieldsForNewEntity().build();
         user = new UserBuilder().withDefaultValuesForNewEntity().userName("user@example").withAuditUser(userRepository.getDefaultSuperAdmin()).build();
-        Organisation organisation = new TestOrganisationBuilder().withMandatoryFields().withAccount(accountRepository.getDefaultAccount()).build();
+        Organisation organisation = new TestOrganisationBuilder()
+                .withMandatoryFields()
+                .setCategory(organisationCategoryRepository.findEntity(1L))
+                .withStatus(organisationStatusRepository.findEntity(1L))
+                .withAccount(accountRepository.getDefaultAccount()).build();
         testOrganisationService.createOrganisation(organisation, user);
         userRepository.save(new UserBuilder(user).withAuditUser(user).build());
         abstractControllerIntegrationTest.setUser(user.getUsername());

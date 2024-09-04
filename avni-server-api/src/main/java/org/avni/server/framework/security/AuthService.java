@@ -12,6 +12,7 @@ import org.avni.server.domain.UserContext;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
 import org.avni.server.service.IAMAuthService;
 import org.avni.server.service.IdpServiceFactory;
+import org.avni.server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,14 +30,16 @@ public class AuthService {
     private final UserRepository userRepository;
     private final OrganisationRepository organisationRepository;
     private final AccountAdminRepository accountAdminRepository;
+    private final UserService userService;
     private final IdpServiceFactory idpServiceFactory;
 
     @Autowired
-    public AuthService(UserRepository userRepository, OrganisationRepository organisationRepository, AccountAdminRepository accountAdminRepository, IdpServiceFactory idpServiceFactory) {
+    public AuthService(UserRepository userRepository, OrganisationRepository organisationRepository, AccountAdminRepository accountAdminRepository, IdpServiceFactory idpServiceFactory, UserService userService) {
         this.idpServiceFactory = idpServiceFactory;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
         this.accountAdminRepository = accountAdminRepository;
+        this.userService = userService;
     }
 
     public UserContext authenticateByUserName(String username, String organisationUUID) {
@@ -81,8 +84,7 @@ public class AuthService {
         if (user == null) {
             return null;
         }
-        List<AccountAdmin> accountAdmins = accountAdminRepository.findByUser_Id(user.getId());
-        user.setAdmin(accountAdmins.size() > 0);
+        user.setAdmin(userService.isAdmin(user));
         Organisation organisation = null;
         if (organisationUUID != null) {
             organisation = organisationRepository.findByUuid(organisationUUID);

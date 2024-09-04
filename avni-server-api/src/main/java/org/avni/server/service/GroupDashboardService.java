@@ -4,10 +4,7 @@ import org.avni.server.common.EntityHelper;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.GroupDashboardRepository;
 import org.avni.server.dao.GroupRepository;
-import org.avni.server.domain.Dashboard;
-import org.avni.server.domain.Group;
-import org.avni.server.domain.GroupDashboard;
-import org.avni.server.domain.ValidationException;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.request.GroupDashboardContract;
@@ -18,6 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class GroupDashboardService implements NonScopeAwareService {
@@ -55,12 +53,12 @@ public class GroupDashboardService implements NonScopeAwareService {
             Long organisationId = UserContextHolder.getUserContext().getOrganisationId();
             GroupDashboard groupDashboard = EntityHelper.newOrExistingEntity(groupDashboardRepository, contract.getUuid(), null, new GroupDashboard());
             Group group = null;
-            if(contract.isGroupOneOfTheDefaultGroups() && !StringUtils.isEmpty(contract.getGroupName())) {
+            if (contract.isGroupOneOfTheDefaultGroups() && !StringUtils.isEmpty(contract.getGroupName())) {
                 group = groupRepository.findByNameAndOrganisationId(contract.getGroupName(), organisationId);
             } else {
                 group = groupRepository.findByUuid(contract.getGroupUUID());
             }
-            if(group == null) {
+            if (group == null) {
                 throw new RuntimeException("Unable to process import of Group Dashboards, due to missing mandatory details."
                         + "\nPlease download a newer version of the bundle from the source organisation and try uploading again.");
             }
@@ -68,6 +66,9 @@ public class GroupDashboardService implements NonScopeAwareService {
             groupDashboard.setDashboard(dashboard);
             groupDashboard.setGroup(group);
             groupDashboard.setOrganisationId(organisationId);
+            groupDashboard.setPrimaryDashboard(contract.isPrimaryDashboard());
+            groupDashboard.setSecondaryDashboard(contract.isSecondaryDashboard());
+            groupDashboard.setVoided(contract.isVoided());
             groupDashboards.add(groupDashboard);
         }
         groupDashboardRepository.saveAll(groupDashboards);
@@ -101,6 +102,16 @@ public class GroupDashboardService implements NonScopeAwareService {
 
     public void delete(GroupDashboard groupDashboard) {
         groupDashboard.setVoided(true);
+        groupDashboardRepository.save(groupDashboard);
+    }
+
+    public void createDefaultGroupDashboardForOrg(Organisation organisation, Group group, Dashboard dashboard) {
+        GroupDashboard groupDashboard = new GroupDashboard();
+        groupDashboard.setOrganisationId(organisation.getId());
+        groupDashboard.setUuid(UUID.randomUUID().toString());
+        groupDashboard.setGroup(group);
+        groupDashboard.setDashboard(dashboard);
+        groupDashboard.setPrimaryDashboard(true);
         groupDashboardRepository.save(groupDashboard);
     }
 

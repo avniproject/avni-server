@@ -1,16 +1,20 @@
 package org.avni.server.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.contract.ValueUnit;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
-import org.avni.server.web.request.reports.ReportCardRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import org.joda.time.DateTime;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CardService implements NonScopeAwareService {
@@ -76,6 +80,9 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with id %d doesn't exist", standardReportCardTypeId));
             }
             reportCard.setStandardReportCardType(type);
+            buildStandardReportCardInputs(type, reportCardWebRequest.getStandardReportCardInputSubjectTypes(),
+                    reportCardWebRequest.getStandardReportCardInputPrograms(),
+                    reportCardWebRequest.getStandardReportCardInputEncounterTypes(), reportCardWebRequest.getStandardReportCardInputRecentDuration(), reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
         }
@@ -90,12 +97,31 @@ public class CardService implements NonScopeAwareService {
                 throw new BadRequestError(String.format("StandardReportCardType with uuid %s doesn't exist", standardReportCardTypeUUID));
             }
             reportCard.setStandardReportCardType(type);
+            ValueUnit recentDuration = buildDurationForRecentTypeCards(reportCardBundleRequest.getStandardReportCardInputRecentDuration());
+            buildStandardReportCardInputs(type, reportCardBundleRequest.getStandardReportCardInputSubjectTypes(), reportCardBundleRequest.getStandardReportCardInputPrograms(), reportCardBundleRequest.getStandardReportCardInputEncounterTypes(), recentDuration, reportCard);
         } else {
             reportCard.setStandardReportCardType(null);
         }
     }
 
-    private void buildCard(ReportCardRequest reportCardRequest, ReportCard card) {
+    private void buildStandardReportCardInputs(StandardReportCardType type, List<String> subjectTypes, List<String> programs, List<String> encounterTypes, ValueUnit recentDuration, ReportCard card) {
+        card.setStandardReportCardInputSubjectTypes(subjectTypes);
+        card.setStandardReportCardInputPrograms(programs);
+        card.setStandardReportCardInputEncounterTypes(encounterTypes);
+
+        if (isRecentStandardReportCard(type.getName())) {
+            if (recentDuration == null) {
+                throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
+            }
+            card.setStandardReportCardInputRecentDuration(recentDuration);
+        }
+    }
+
+    private boolean isRecentStandardReportCard(String cardTypeName) {
+        return cardTypeName.toLowerCase().contains("recent");
+    }
+
+    private void buildCard(ReportCardContract reportCardRequest, ReportCard card) {
         card.setName(reportCardRequest.getName());
         card.setColour(reportCardRequest.getColor());
         card.setDescription(reportCardRequest.getDescription());
@@ -109,10 +135,16 @@ public class CardService implements NonScopeAwareService {
                     ReportCard.INT_CONSTANT_DEFAULT_COUNT_OF_CARDS, ReportCard.INT_CONSTANT_MAX_COUNT_OF_CARDS));
         }
         card.setCountOfCards(reportCardRequest.getCount());
+    }
 
-        card.setStandardReportCardInputSubjectTypes(reportCardRequest.getStandardReportCardInputSubjectTypes());
-        card.setStandardReportCardInputPrograms(reportCardRequest.getStandardReportCardInputPrograms());
-        card.setStandardReportCardInputEncounterTypes(reportCardRequest.getStandardReportCardInputEncounterTypes());
+    public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
+        if (recentDurationString == null) return null;
+        try {
+            return ObjectMapperSingleton.getObjectMapper().readValue(recentDurationString, ValueUnit.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
@@ -143,5 +175,43 @@ public class CardService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return cardRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveCards(ReportCardBundleRequest[] cardContracts) {
+        for (ReportCardBundleRequest cardContract : cardContracts) {
+            try {
+                uploadCard(cardContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(cardContract, e);
+            }
+        }
+    }
+
+    public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
+        List<String> defaultDashboardStandardCardTypeNames = Arrays.asList("Scheduled visits", "Overdue visits", "Total", "Recent registrations", "Recent enrolments", "Recent visits", "Due checklist");
+        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardStandardCardTypeNames);
+        Map<String, ReportCard> savedCards = new HashMap<>();
+        standardReportCardTypes.forEach(standardReportCardType -> {
+            ReportCard reportCard = new ReportCard();
+            reportCard.setUuid(UUID.randomUUID().toString());
+            reportCard.setStandardReportCardType(standardReportCardType);
+            reportCard.setOrganisationId(organisation.getId());
+            reportCard.setName(standardReportCardType.getName());
+            reportCard.setColour("#ffffff");
+            reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
+            reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
+            reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
+            if (isRecentStandardReportCard(standardReportCardType.getName())) {
+                reportCard.setStandardReportCardInputRecentDuration(new ValueUnit("1", "days"));
+            }
+            if (standardReportCardType.getName().equals("Overdue visits")) {
+                reportCard.setColour("#d32f2f");
+            }
+            if (standardReportCardType.getName().equals("Scheduled visits")) {
+                reportCard.setColour("#388e3c");
+            }
+            savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
+        });
+        return savedCards;
     }
 }

@@ -15,6 +15,7 @@ import org.avni.server.util.S;
 import org.avni.server.web.request.webapp.search.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -98,7 +99,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
         parameters.put("limit", limit);
 
         String sortColumn = pageElement.getSortColumn();
-        if (sortColumn != null && !sortColumn.isEmpty()) {
+        if (!StringUtils.isEmpty(sortColumn)) {
             SortOrder sortOrder = Optional.ofNullable(pageElement.getSortOrder()).orElse(SortOrder.asc);
 
             Map<String, String> columnsMap = new HashMap<String, String>() {
@@ -157,7 +158,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     }
 
     public T withNameFilter(String name) {
-        if (name != null && !name.isEmpty()) {
+        if (!StringUtils.isEmpty(name)) {
             String[] tokens = name.split("\\s+");
             StringBuffer whereClause = new StringBuffer();
             whereClause.append("(");
@@ -227,7 +228,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     }
 
     public T withSearchAll(String searchString) {
-        if (searchString == null || searchString.isEmpty()) return (T) this;
+        if (StringUtils.isEmpty(searchString)) return (T) this;
         String searchValue = "%" + searchString + "%";
         parameters.put("searchAll", searchValue);
         whereClauses.add("(cast(i.observations as text) ilike :searchAll\n" +
@@ -282,7 +283,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
                 whereClauses.add("(" + codedFilter + ")");
             }
 
-            if (c.getDataType().equalsIgnoreCase("TEXT")) {
+            if (c.getDataType().equalsIgnoreCase("TEXT") || c.getDataType().equalsIgnoreCase("ID")) {
                 String value = "%" + c.getValue() + "%";
                 String param = "textValue" + ci;
                 addParameter(param, value);
@@ -291,13 +292,13 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
             if (c.getDataType().equalsIgnoreCase("NUMERIC")) {
                 if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
-                    if (c.getMinValue() != null && !c.getMinValue().isEmpty()) {
+                    if (!StringUtils.isEmpty(c.getMinValue())) {
                         Float value = Float.parseFloat(c.getMinValue());
                         String param = "numericValueMin" + ci;
                         addParameter(param, value);
                         whereClauses.add("cast(" + tableAlias + ".observations ->> :" + conceptUuidParam + " as numeric)  >= :" + param);
                     }
-                    if (c.getMaxValue() != null && !c.getMaxValue().isEmpty()) {
+                    if (!StringUtils.isEmpty(c.getMaxValue())) {
                         Float value = Float.parseFloat(c.getMaxValue());
                         String param = "numericValueMax" + ci;
                         addParameter(param, value);
@@ -313,13 +314,13 @@ public class BaseSubjectSearchQueryBuilder<T> {
 
             if (c.getDataType().equalsIgnoreCase("DATE")) {
                 if (c.getWidget() != null && c.getWidget().equalsIgnoreCase("RANGE")) {
-                    if (c.getMinValue() != null && !c.getMinValue().isEmpty()) {
+                    if (!StringUtils.isEmpty(c.getMinValue())) {
                         String value = c.getMinValue();
                         String param = "dateTimeValueMin" + ci;
                         addParameter(param, value);
                         whereClauses.add("cast(" + tableAlias + ".observations ->>:" + conceptUuidParam + " as date)  >= cast(:" + param + " as date)");
                     }
-                    if (c.getMaxValue() != null && !c.getMaxValue().isEmpty()) {
+                    if (!StringUtils.isEmpty(c.getMaxValue())) {
                         String value = c.getMaxValue();
                         String param = "dateTimeValueMax" + ci;
                         addParameter(param, value);

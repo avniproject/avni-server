@@ -25,20 +25,20 @@ public class PhoneNumberUtilTest {
 
     @Test
     public void checkFormats() {
-        assertEquals("919455509147", PhoneNumberUtil.getPhoneNumberInGlificFormat("9455509147"));
-        assertEquals("9455509147", PhoneNumberUtil.getNationalPhoneNumber("9455509147"));
-        assertEquals("+919455509147", PhoneNumberUtil.getStandardFormatPhoneNumber("9455509147"));
+        assertEquals("919455509147", PhoneNumberUtil.getPhoneNumberInGlificFormat("9455509147", "IN"));
+        assertEquals("9455509147", PhoneNumberUtil.getNationalPhoneNumber("9455509147", "IN"));
+        assertEquals("+919455509147", PhoneNumberUtil.getStandardFormatPhoneNumber("9455509147", "IN"));
     }
 
     @Test
     public void isValid() {
-        assertFalse(PhoneNumberUtil.isValidPhoneNumber("+9111111111"));
+        assertFalse(PhoneNumberUtil.isValidPhoneNumber("+9111111111", "IN"));
     }
 
     @Test
     public void getInvalidMessage() {
-        assertEquals("Invalid phone number. CountryCode:91, NationalNumber:11111111", PhoneNumberUtil.getInvalidMessage("+9111111111"));
-        assertEquals("Invalid phone number. CountryCode:91, NationalNumber:2829", PhoneNumberUtil.getInvalidMessage("+91 2829"));
-        assertEquals("The string supplied did not seem to be a phone number.", PhoneNumberUtil.getInvalidMessage(""));
+        assertEquals("Invalid phone number. CountryCode:91, NationalNumber:11111111", PhoneNumberUtil.getInvalidMessage("+9111111111", "IN"));
+        assertEquals("Invalid phone number. CountryCode:91, NationalNumber:2829", PhoneNumberUtil.getInvalidMessage("+91 2829", "IN"));
+        assertEquals("The string supplied did not seem to be a phone number.", PhoneNumberUtil.getInvalidMessage("", "IN"));
     }
 }

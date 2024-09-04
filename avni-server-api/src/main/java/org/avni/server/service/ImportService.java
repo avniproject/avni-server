@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-public class ImportService implements ImportLocationsConstants{
+public class ImportService implements ImportLocationsConstants {
 
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
@@ -123,7 +123,7 @@ public class ImportService implements ImportLocationsConstants{
 
     /**
      * Upload types can be
-     *
+     * <p>
      * Subject---<SubjectType>
      * ProgramEnrolment---<Program>---<SubjectType>
      * ProgramEncounter---<EncounterType>---<SubjectType>
@@ -138,7 +138,7 @@ public class ImportService implements ImportLocationsConstants{
         String response = "";
 
         if (uploadType.equals("usersAndCatchments")) {
-           return getUsersAndCatchmentsSampleFile();
+            return getUsersAndCatchmentsSampleFile();
         }
 
         if (uploadSpec[0].equals("Subject")) {
@@ -171,23 +171,19 @@ public class ImportService implements ImportLocationsConstants{
     public String getLocationsSampleFile(LocationWriter.LocationUploadMode locationUploadMode, String locationHierarchy) {
         StringBuilder sampleFileBuilder = new StringBuilder();
         List<AddressLevelType> addressLevelTypes = null;
-        try {
-            if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
-                addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy);
-            }
-            List<FormElement> formElementNamesForLocationTypeFormElements = formService.getFormElementNamesForLocationTypeForms();
-            appendHeaderRowForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
-            appendDescriptionForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
-            appendExamplesForLocations(sampleFileBuilder, locationUploadMode);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
+            addressLevelTypes = getAddressLevelTypesForCreateModeSingleHierarchy(locationHierarchy);
         }
+        List<FormElement> formElementNamesForLocationTypeFormElements = formService.getFormElementNamesForLocationTypeForms();
+        appendHeaderRowForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+        appendDescriptionForLocations(sampleFileBuilder, locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements);
+        appendExamplesForLocations(sampleFileBuilder, locationUploadMode);
         return sampleFileBuilder.toString();
     }
 
-    public List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) throws Exception {
-        if(!StringUtils.hasText(locationHierarchy)) {
-            throw new Exception(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
+    public List<AddressLevelType> getAddressLevelTypesForCreateModeSingleHierarchy(String locationHierarchy) {
+        if (!StringUtils.hasText(locationHierarchy)) {
+            throw new RuntimeException(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
         }
         List<Long> selectedLocationHierarchy = Arrays.stream(locationHierarchy.split("\\."))
                 .map(Long::parseLong).collect(Collectors.toList());
@@ -215,14 +211,14 @@ public class ImportService implements ImportLocationsConstants{
                                                List<FormElement> formElementNamesForLocationTypeFormElements) {
         if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(addressLevelTypes.stream()
-                    .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, Example+alt.getName()+ STRING_CONSTANT_ONE)).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
+                    .map(alt -> String.format(STRING_PLACEHOLDER_BLOCK, Example + alt.getName() + STRING_CONSTANT_ONE)).collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
         } else {
             sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(String.format(STRING_3_PLACEHOLDER_BLOCK, LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION,
                     NEW_LOCATION_NAME_DESCRIPTION, PARENT_LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION));
         }
         sampleFileBuilder.append(String.format(STRING_PLACEHOLDER_BLOCK, GPS_COORDINATES_EXAMPLE));
         sampleFileBuilder.append(formElementNamesForLocationTypeFormElements.stream()
-                .map(fe -> String.format(STRING_PLACEHOLDER_BLOCK, ALLOWED_VALUES +conceptService.getSampleValuesForSyncConcept(fe.getConcept())))
+                .map(fe -> String.format(STRING_PLACEHOLDER_BLOCK, ALLOWED_VALUES + conceptService.getSampleValuesForSyncConcept(fe.getConcept())))
                 .collect(Collectors.joining(STRING_CONSTANT_EMPTY_STRING)));
     }
 
@@ -235,7 +231,7 @@ public class ImportService implements ImportLocationsConstants{
         }
     }
 
-    private String getUsersAndCatchmentsSampleFile()  {
+    private String getUsersAndCatchmentsSampleFile() {
         StringBuilder sampleFileBuilder = new StringBuilder();
 
         try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/bulkuploads/sample/usersAndCatchments.csv")) {
@@ -261,7 +257,7 @@ public class ImportService implements ImportLocationsConstants{
                 .map(Group::getName)
                 .collect(Collectors.joining(", ", "{", "}")));
         descriptionRow = allowedValuesForSubjectTypesWithSyncAttributes.isEmpty() ? descriptionRow
-                : String.format("%s,%s", descriptionRow ,syncAttributesSampleValues);
+                : String.format("%s,%s", descriptionRow, syncAttributesSampleValues);
         sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(descriptionRow);
     }
 
@@ -388,13 +384,13 @@ public class ImportService implements ImportLocationsConstants{
         return "\"" + conceptName + "\"";
     }
 
-    private String addToResponse(String inputString, List headers) {
+    private String addToResponse(String inputString, List<String> headers) {
         String outputString = addCommaIfNecessary(inputString);
         return outputString.concat(String.join(",", headers));
     }
 
     private String addCommaIfNecessary(String str) {
-        if (str.length() > 0) {
+        if (!str.isEmpty()) {
             return str.concat(",");
         }
         return str;

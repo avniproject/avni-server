@@ -1,6 +1,8 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.ObservationCollection;
+import org.avni.server.geo.Point;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -15,6 +17,8 @@ public class LocationContract extends ReferenceDataContract {
     private String organisationUUID;
     private String addressLevelTypeUUID;
     private String legacyId;
+    private Point gpsCoordinates;
+    private ObservationCollection locationProperties = new ObservationCollection();
 
     public LocationContract() {
     }
@@ -86,6 +90,22 @@ public class LocationContract extends ReferenceDataContract {
         this.legacyId = legacyId;
     }
 
+    public Point getGpsCoordinates() {
+        return gpsCoordinates;
+    }
+
+    public void setGpsCoordinates(Point gpsCoordinates) {
+        this.gpsCoordinates = gpsCoordinates;
+    }
+
+    public ObservationCollection getLocationProperties() {
+        return locationProperties;
+    }
+
+    public void setLocationProperties(ObservationCollection locationProperties) {
+        this.locationProperties = locationProperties;
+    }
+
     public static LocationContract fromAddressLevel(AddressLevel addressLevel) {
         LocationContract contract = new LocationContract();
         if (addressLevel == null) return contract;
@@ -96,6 +116,8 @@ public class LocationContract extends ReferenceDataContract {
         contract.setAddressLevelTypeUUID(addressLevel.getType().getUuid());
         contract.setVoided(addressLevel.isVoided());
         contract.setLegacyId(addressLevel.getLegacyId());
+        contract.setGpsCoordinates(addressLevel.getGpsCoordinates());
+        contract.setLocationProperties(addressLevel.getLocationProperties());
         AddressLevel parent = addressLevel.getParent();
         if (parent != null) {
             ReferenceDataContract parentContract = new ReferenceDataContract();

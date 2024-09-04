@@ -17,7 +17,6 @@ import org.avni.server.domain.IdentifierUserAssignment;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.webapp.IdentifierUserAssignmentContractWeb;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
@@ -57,7 +56,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @ResponseBody
     public ResponseEntity getOne(@PathVariable("id") Long id) {
         IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
-        if (identifierUserAssignment.isVoided())
+        if (identifierUserAssignment == null || identifierUserAssignment.isVoided())
             return ResponseEntity.notFound().build();
         return new ResponseEntity<>(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment), HttpStatus.OK);
     }
@@ -66,12 +65,9 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @Transactional
     ResponseEntity saveIdentifierAssignment(@RequestBody IdentifierUserAssignmentContractWeb request) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
-        IdentifierUserAssignment identifierUserAssignment = new IdentifierUserAssignment();
+        IdentifierUserAssignment identifierUserAssignment = getIdentifierUserAssignment(request);
+
         identifierUserAssignment.assignUUID();
-        identifierUserAssignment.setAssignedTo(request.getUserId() == null ? null : userRepository.findOne(request.getUserId()));
-        identifierUserAssignment.setIdentifierSource(request.getIdentifierSourceId() == null ? null : identifierSourceRepository.findOne(request.getIdentifierSourceId()));
-        identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
-        identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
         identifierUserAssignment.setVoided(false);
         try {
             identifierUserAssignmentService.save(identifierUserAssignment);
@@ -86,18 +82,15 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     public ResponseEntity updateIdAssignment(@RequestBody IdentifierUserAssignmentContractWeb request,
                                              @PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
-        IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
-        if (identifierUserAssignment == null)
+        IdentifierUserAssignment existingIdentifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
+        if (existingIdentifierUserAssignment == null)
             return ResponseEntity.badRequest()
                     .body(ReactAdminUtil.generateJsonError(String.format("Identifier source with id '%d' not found", id)));
 
-        identifierUserAssignment.setAssignedTo(request.getUserId() == null ? null : userRepository.findOne(request.getUserId()));
-        identifierUserAssignment.setIdentifierSource(request.getIdentifierSourceId() == null ? null : identifierSourceRepository.findOne(request.getIdentifierSourceId()));
-        identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
-        identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
+        IdentifierUserAssignment identifierUserAssignment = getIdentifierUserAssignment(request);
         identifierUserAssignment.setVoided(request.isVoided());
         try {
-            identifierUserAssignmentService.save(identifierUserAssignment);
+            identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
         } catch (IdentifierOverlappingException | ValidationException e) {
             return WebResponseUtil.createBadRequestResponse(e, logger);
         }
@@ -108,13 +101,21 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
     @Transactional
     public ResponseEntity voidIdentifierUserAssignment(@PathVariable("id") Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
-        IdentifierUserAssignment identifierSource = identifierUserAssignmentRepository.findOne(id);
-        if (identifierSource == null)
+        IdentifierUserAssignment identifierUserAssignment = identifierUserAssignmentRepository.findOne(id);
+        if (identifierUserAssignment == null)
             return ResponseEntity.notFound().build();
 
-        identifierSource.setVoided(true);
-        identifierUserAssignmentRepository.save(identifierSource);
+        identifierUserAssignment.setVoided(true);
+        identifierUserAssignmentRepository.save(identifierUserAssignment);
         return ResponseEntity.ok(null);
     }
 
+    private IdentifierUserAssignment getIdentifierUserAssignment(IdentifierUserAssignmentContractWeb request) {
+        IdentifierUserAssignment identifierUserAssignment = new IdentifierUserAssignment();
+        identifierUserAssignment.setAssignedTo(request.getUserId() == null ? null : userRepository.findOne(request.getUserId()));
+        identifierUserAssignment.setIdentifierSource(request.getIdentifierSourceId() == null ? null : identifierSourceRepository.findOne(request.getIdentifierSourceId()));
+        identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
+        identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
+        return identifierUserAssignment;
+    }
 }

@@ -186,7 +186,7 @@ public class EncounterService implements ScopeAwareService<Encounter> {
         if (individual.getAddressLevel() != null) {
             encounter.setAddressId(individual.getAddressLevel().getId());
         }
-        return encounterRepository.save(encounter);
+        return encounterRepository.saveEntity(encounter);
     }
 
     public Page<Encounter> search(EncounterSearchRequest encounterSearchRequest) {

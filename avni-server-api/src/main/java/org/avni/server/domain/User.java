@@ -1,15 +1,17 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
-import com.google.i18n.phonenumbers.Phonenumber;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.avni.server.util.ValidationUtil;
+import org.avni.server.web.request.syncAttribute.UserSyncSettings;
+import org.avni.server.web.validation.ValidationException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxyHelper;
 import org.joda.time.DateTime;
-import org.avni.server.web.validation.ValidationException;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -79,6 +81,9 @@ public class User {
     private Set<AccountAdmin> accountAdmin = new HashSet<>();
 
     @Transient
+    /*
+      Using transient field isAdmin is problematic when the user is not the current user. User UserService.isAdmin() instead, except in JDBC interceptor.
+     */
     private boolean isAdmin;
 
     @JsonIgnore
@@ -105,6 +110,11 @@ public class User {
     @JsonIgnore
     public boolean hasAllPrivileges() {
         return getUserGroups().stream().anyMatch(userGroup -> userGroup.getGroup().isHasAllPrivileges());
+    }
+
+    public List<UserSyncSettings> getSyncSettingsList() {
+        User.SyncSettingKeys.subjectTypeSyncSettings.name();
+        return ObjectMapperSingleton.getObjectMapper().convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {});
     }
 
     public enum SyncSettingKeys {
@@ -152,7 +162,6 @@ public class User {
     public String getPhoneNumber() { return phoneNumber; }
 
     public void setPhoneNumber(String phoneNumber) {
-
         this.phoneNumber = phoneNumber;
     }
 
@@ -190,6 +199,11 @@ public class User {
 
     public void setCatchment(@NotNull Catchment catchment) {
         this.catchment = catchment;
+    }
+
+    public void removeCatchment() {
+        this.catchment = null;
+        this.operatingIndividualScope = OperatingIndividualScope.None;
     }
 
     public Boolean isVoided() {
@@ -302,10 +316,16 @@ public class User {
         }
     }
 
+    /**
+     * Using transient field isAdmin is problematic when the user is not the current user. User UserService.isAdmin() instead, except in JDBC interceptor.
+     */
     public boolean isAdmin() {
         return isAdmin;
     }
 
+    /**
+     * Using transient field isAdmin is problematic when the user is not the current user. User UserService.isAdmin() instead, except in JDBC interceptor.
+     */
     public void setAdmin(boolean admin) {
         this.isAdmin = admin;
     }
@@ -364,14 +384,26 @@ public class User {
      * where yyy is {@link Organisation#getUsernameSuffix()} and xxx represents user
      */
     public static void validateUsername(String username, String userSuffix) {
-        if (username == null || !username.contains("@") || username.length() < 7) {
+        if (username == null || !username.contains("@") || username.trim().length() < 7) {
             throw new ValidationException(String.format("Invalid username '%s'. It must be at least 7 characters.", username));
         }
-        if (username.indexOf("@") < 4) {
+        if (username.trim().indexOf("@") < 4) {
             throw new ValidationException(String.format("Invalid username '%s'. Name part should be at least 4 characters", username));
         }
-        if (!username.endsWith(userSuffix)) {
+        if (!username.trim().endsWith(userSuffix)) {
             throw new ValidationException(String.format("Invalid username '%s'. Include correct userSuffix %s at the end", username, userSuffix));
+        }
+        if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(username.trim(), ValidationUtil.COMMON_INVALID_CHARS_PATTERN)) {
+            throw new ValidationException(String.format("Invalid username '%s', contains at least one disallowed character %s", username, ValidationUtil.COMMON_INVALID_CHARS));
+        }
+    }
+
+    /**
+     * name must not be empty and not have invalid characters
+     */
+    public static void validateName(String name) {
+        if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, ValidationUtil.NAME_INVALID_CHARS_PATTERN)) {
+            throw new ValidationException(String.format("Invalid name '%s', contains at least one disallowed character %s", name, ValidationUtil.NAME_INVALID_CHARS));
         }
     }
 }

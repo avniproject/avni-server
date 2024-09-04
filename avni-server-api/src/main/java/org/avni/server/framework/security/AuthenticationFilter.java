@@ -72,7 +72,7 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
                 long start = System.currentTimeMillis();
                 chain.doFilter(request, response);
                 long end = System.currentTimeMillis();
-                logger.info(String.format("%s %s?%s User: %s Organisation: %s Time: %s ms", method, requestURI, queryString, userContext.getUserName(), userContext.getOrganisationName(), (end - start)));
+                logger.info(String.format("%s %s?%s Status: %s User: %s Organisation: %s Time: %s ms", method, requestURI, queryString, response.getStatus(), userContext.getUserName(), userContext.getOrganisationName(), (end - start)));
             } else {
                 String derivedAuthToken = authTokenManager.getDerivedAuthToken(request, queryString);
                 authTokenManager.setAuthCookie(request, response, derivedAuthToken);

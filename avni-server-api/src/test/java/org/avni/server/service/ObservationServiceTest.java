@@ -10,6 +10,7 @@ import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
+import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.web.external.request.export.ExportFilters;
 import org.avni.server.web.request.ObservationRequest;
 import org.junit.Before;
@@ -41,12 +42,10 @@ public class ObservationServiceTest {
 
     private ObservationService observationService;
 
-    private String INDIVIDUAL_UUID = "0a1bf764-4576-4d71-b8ec-25895a113e81";
-
     @Before
     public void setup() {
         initMocks(this);
-        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, formRepository, Optional.of(enhancedValidationService));
+        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, Optional.of(enhancedValidationService));
     }
 
     @Test

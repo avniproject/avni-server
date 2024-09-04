@@ -3,6 +3,8 @@ package org.avni.server.framework.rest;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
+import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationStatus;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurerAdapter;
@@ -37,6 +39,8 @@ public class RepositoryConfig extends RepositoryRestConfigurerAdapter {
         config.exposeIdsFor(CommentThread.class);
         config.exposeIdsFor(RuleFailureTelemetry.class);
         config.exposeIdsFor(Individual.class);
+        config.exposeIdsFor(OrganisationCategory.class);
+        config.exposeIdsFor(OrganisationStatus.class);
 
         //TODO
         /**

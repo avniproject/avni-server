@@ -9,8 +9,11 @@ import org.avni.server.service.ConceptService;
 import org.avni.server.service.DocumentationService;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
+
+import static java.lang.String.format;
 
 public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormElementGroupBuilder> {
     private final ConceptService conceptService;
@@ -31,6 +34,9 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
     }
 
     public FormElementGroupBuilder withName(String name) {
+        if (StringUtils.hasLength(name) && name.length() > 255) {
+            throw new BuilderException(format("FormElementGroup name \"%s\" exceeds allowed length of 255 characters", name));
+        }
         this.set("Name", name, String.class);
         return this;
     }
@@ -42,11 +48,6 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
 
     public FormElementGroupBuilder withIsVoided(boolean isVoided) {
         this.set("Voided", isVoided, Boolean.class);
-        return this;
-    }
-
-    public FormElementGroupBuilder withDisplay(String display) {
-        this.set("Display", display, String.class);
         return this;
     }
 
@@ -95,7 +96,7 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
         Concept concept = formElement.getConcept() != null && formElement.getConcept().getUuid().equals(uuid) ?
                 formElement.getConcept() : conceptService.get(uuid);
         if (concept == null) {
-            throw new FormBuilderException(String.format("Concept with uuid '%s' not found", uuid));
+            throw new FormBuilderException(format("Concept with uuid '%s' not found", uuid));
         }
         return concept;
     }
@@ -142,7 +143,7 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
         if (formElementContract.getParentFormElementUuid() != null) {
             group = getExistingFormElement(formElementContract.getParentFormElementUuid());
             if (group == null) {
-                throw new FormBuilderException(String.format("Parent form element with uuid '%s' not found", formElementContract.getParentFormElementUuid()));
+                throw new FormBuilderException(format("Parent form element with uuid '%s' not found", formElementContract.getParentFormElementUuid()));
             }
         }
         return group;
@@ -164,7 +165,7 @@ public class FormElementGroupBuilder extends BaseBuilder<FormElementGroup, FormE
     private FormElement getFormElement(FormElementContract formElementContract) throws FormBuilderException {
         FormElement formElement = get().findFormElement(formElementContract.getUuid());
         if (formElement == null) {
-            throw new FormBuilderException(String.format("FormElement with uuid '%s' not found", formElementContract.getUuid()));
+            throw new FormBuilderException(format("FormElement with uuid '%s' not found", formElementContract.getUuid()));
         }
         return formElement;
     }

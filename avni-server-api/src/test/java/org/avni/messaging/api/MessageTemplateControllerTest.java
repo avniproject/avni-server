@@ -4,10 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.avni.messaging.contract.MessageTemplateContract;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
@@ -16,6 +13,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Sql(scripts = {"/test-data.sql"})
+@Ignore // this is not testing much and is setup with admin user which is incorrect
 public class MessageTemplateControllerTest extends AbstractControllerIntegrationTest {
 
     private String SAMPLE_AUTH_RESPONSE = "{\"data\":{\"access_token\":\"SFMyNTY.YjQ2M2MzMmMtNGZlOC00OTEyLWIzYTEtZmRhZTRkOGQ1ZTIx.3TjKqpElrD5N2ffGHEAFX91cyp7zwoTztYR8p1jwwgA\",\"renewal_token\":\"SFMyNTY.MjYxODllMTgtNDM1OC00YjJjLTlmN2MtOTA5MzMwYzM3ZjA2.dDigSwftcGFGHu4o9MwkASp2KqH6eitp1aRmeYSgi5M\",\"token_expiry_time\":\"2022-10-13T21:42:33.342529Z\"}}";

@@ -33,12 +33,12 @@ public class CommentService implements ScopeAwareService<Comment> {
     public Comment saveComment(CommentContract commentContract) {
         Comment comment = new Comment();
         buildComment(commentContract, comment);
-        return commentRepository.save(comment);
+        return commentRepository.saveEntity(comment);
     }
 
     public Comment editComment(CommentContract commentContract, Comment existingComment) {
         buildComment(commentContract, existingComment);
-        return commentRepository.save(existingComment);
+        return commentRepository.saveEntity(existingComment);
     }
 
     private void buildComment(CommentContract commentContract, Comment comment) {
@@ -54,7 +54,7 @@ public class CommentService implements ScopeAwareService<Comment> {
 
     public Comment deleteComment(Comment comment) {
         comment.setVoided(true);
-        return commentRepository.save(comment);
+        return commentRepository.saveEntity(comment);
     }
 
     @Override

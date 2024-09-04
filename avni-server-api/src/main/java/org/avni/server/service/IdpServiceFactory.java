@@ -71,7 +71,10 @@ public class IdpServiceFactory {
         return cognitoIdpService;
     }
 
-    public IdpService getIdpService(User user) {
+    public IdpService getIdpService(User user, boolean isAdmin) {
+        if (isAdmin) {
+            return getIdpService();
+        }
         Organisation organisation = organisationRepository.findOne(user.getOrganisationId());
         return getIdpService(organisation);
     }

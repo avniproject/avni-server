@@ -3,6 +3,7 @@ package org.avni.server.web.response.reports;
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
+import org.avni.server.web.contract.ValueUnit;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
 
@@ -15,6 +16,7 @@ public class ReportCardWebResponse extends ReportCardContract {
     private List<SubjectTypeContract> standardReportCardInputSubjectTypes = new ArrayList<>();
     private List<ProgramContract> standardReportCardInputPrograms = new ArrayList<>();
     private List<EncounterTypeContract> standardReportCardInputEncounterTypes = new ArrayList<>();
+    private ValueUnit standardReportCardInputRecentDuration = null;
 
     public List<SubjectTypeContract> getStandardReportCardInputSubjectTypes() {
         return standardReportCardInputSubjectTypes;
@@ -46,5 +48,13 @@ public class ReportCardWebResponse extends ReportCardContract {
 
     public void setStandardReportCardType(StandardReportCardTypeContract standardReportCardType) {
         this.standardReportCardType = standardReportCardType;
+    }
+
+    public ValueUnit getStandardReportCardInputRecentDuration() {
+        return standardReportCardInputRecentDuration;
+    }
+
+    public void setStandardReportCardInputRecentDuration(ValueUnit standardReportCardInputRecentDuration) {
+        this.standardReportCardInputRecentDuration = standardReportCardInputRecentDuration;
     }
 }

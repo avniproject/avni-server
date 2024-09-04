@@ -2,16 +2,12 @@ package org.avni.server.importer.batch.zip;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.messaging.contract.MessageRuleContract;
-import org.avni.messaging.domain.MessageRule;
 import org.avni.messaging.service.MessagingService;
-import org.avni.server.application.Subject;
-import org.avni.server.application.menu.MenuItem;
-import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFile;
@@ -46,8 +42,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static java.lang.String.format;
 
 @Component
 @JobScope
@@ -254,7 +248,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException, ValidationException {
+    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException {
         logger.info("processing file {}", fileName);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (fileName) {
@@ -264,9 +258,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "addressLevelTypes.json":
                 AddressLevelTypeContract[] addressLevelTypeContracts = convertString(fileData, AddressLevelTypeContract[].class);
-                for (AddressLevelTypeContract addressLevelTypeContract : addressLevelTypeContracts) {
-                    locationService.createAddressLevelType(addressLevelTypeContract);
-                }
+                locationService.createAddressLevelTypes(addressLevelTypeContracts);
                 break;
             case "locations.json":
                 LocationContract[] locationContracts = convertString(fileData, LocationContract[].class);
@@ -278,48 +270,31 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "subjectTypes.json":
                 SubjectTypeContract[] subjectTypeContracts = convertString(fileData, SubjectTypeContract[].class);
-                for (SubjectTypeContract subjectTypeContract : subjectTypeContracts) {
-                    SubjectTypeService.SubjectTypeUpsertResponse response = subjectTypeService.saveSubjectType(subjectTypeContract);
-                    if (response.isSubjectTypeNotPresentInDB() && Subject.valueOf(subjectTypeContract.getType()).equals(Subject.User)) {
-                        subjectTypeService.launchUserSubjectTypeJob(response.getSubjectType());
-                    }
-                }
+                subjectTypeService.saveSubjectTypesFromBundle(subjectTypeContracts);
                 break;
             case "operationalSubjectTypes.json":
                 OperationalSubjectTypesContract operationalSubjectTypesContract = convertString(fileData, OperationalSubjectTypesContract.class);
-                for (OperationalSubjectTypeContract ostc : operationalSubjectTypesContract.getOperationalSubjectTypes()) {
-                    subjectTypeService.createOperationalSubjectType(ostc, organisation);
-                }
+                subjectTypeService.saveOperationalSubjectTypes(operationalSubjectTypesContract, organisation);
                 break;
             case "programs.json":
                 ProgramRequest[] programRequests = convertString(fileData, ProgramRequest[].class);
-                for (ProgramRequest programRequest : programRequests) {
-                    programService.saveProgram(programRequest);
-                }
+                programService.savePrograms(programRequests);
                 break;
             case "operationalPrograms.json":
                 OperationalProgramsContract operationalProgramsContract = convertString(fileData, OperationalProgramsContract.class);
-                for (OperationalProgramContract opc : operationalProgramsContract.getOperationalPrograms()) {
-                    programService.createOperationalProgram(opc, organisation);
-                }
+                programService.saveOperationalPrograms(operationalProgramsContract, organisation);
                 break;
             case "encounterTypes.json":
                 EntityTypeContract[] entityTypeContracts = convertString(fileData, EntityTypeContract[].class);
-                for (EntityTypeContract entityTypeContract : entityTypeContracts) {
-                    encounterTypeService.createEncounterType(entityTypeContract);
-                }
+                encounterTypeService.saveEncounterTypes(entityTypeContracts);
                 break;
             case "operationalEncounterTypes.json":
                 OperationalEncounterTypesContract operationalEncounterTypesContract = convertString(fileData, OperationalEncounterTypesContract.class);
-                for (OperationalEncounterTypeContract oetc : operationalEncounterTypesContract.getOperationalEncounterTypes()) {
-                    encounterTypeService.createOperationalEncounterType(oetc, organisation);
-                }
+                encounterTypeService.saveOperationalEncounterTypes(operationalEncounterTypesContract, organisation);
                 break;
             case "documentations.json":
                 DocumentationContract[] documentationContracts = convertString(fileData, DocumentationContract[].class);
-                for (DocumentationContract documentationContract : documentationContracts) {
-                    documentationService.saveDocumentation(documentationContract);
-                }
+                documentationService.saveDocumentations(documentationContracts);
                 break;
             case "concepts.json":
                 ConceptContract[] conceptContracts = convertString(fileData, ConceptContract[].class);
@@ -333,45 +308,31 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "individualRelation.json":
                 IndividualRelationContract[] individualRelationContracts = convertString(fileData, IndividualRelationContract[].class);
-                for (IndividualRelationContract individualRelationContract : individualRelationContracts) {
-                    individualRelationService.uploadRelation(individualRelationContract);
-                }
+                individualRelationService.saveRelations(individualRelationContracts);
                 break;
             case "relationshipType.json":
                 IndividualRelationshipTypeContract[] individualRelationshipTypeContracts = convertString(fileData, IndividualRelationshipTypeContract[].class);
-                for (IndividualRelationshipTypeContract individualRelationshipTypeContract : individualRelationshipTypeContracts) {
-                    individualRelationshipTypeService.saveRelationshipType(individualRelationshipTypeContract);
-                }
+                individualRelationshipTypeService.saveRelationshipTypes(individualRelationshipTypeContracts);
                 break;
             case "identifierSource.json":
                 IdentifierSourceContractWeb[] identifierSourceContractWebs = convertString(fileData, IdentifierSourceContractWeb[].class);
-                for (IdentifierSourceContractWeb identifierSourceContractWeb : identifierSourceContractWebs) {
-                    identifierSourceService.saveIdSource(identifierSourceContractWeb);
-                }
+                identifierSourceService.saveIdSources(identifierSourceContractWebs);
                 break;
             case "checklist.json":
                 ChecklistDetailRequest[] checklistDetailRequests = convertString(fileData, ChecklistDetailRequest[].class);
-                for (ChecklistDetailRequest checklistDetailRequest : checklistDetailRequests) {
-                    checklistDetailService.saveChecklist(checklistDetailRequest);
-                }
+                checklistDetailService.saveChecklists(checklistDetailRequests);
                 break;
             case "groups.json":
                 GroupContract[] groupContracts = convertString(fileData, GroupContract[].class);
-                for (GroupContract groupContract : groupContracts) {
-                    groupsService.saveGroup(groupContract, organisation);
-                }
+                groupsService.saveGroups(groupContracts, organisation);
                 break;
             case "groupRole.json":
                 GroupRoleContract[] groupRoleContracts = convertString(fileData, GroupRoleContract[].class);
-                for (GroupRoleContract groupRoleContract : groupRoleContracts) {
-                    SubjectType groupSubjectType = subjectTypeRepository.findByUuid(groupRoleContract.getGroupSubjectTypeUUID());
-                    SubjectType memberSubjectType = subjectTypeRepository.findByUuid(groupRoleContract.getMemberSubjectTypeUUID());
-                    groupRoleService.saveGroupRole(groupRoleContract, groupSubjectType, memberSubjectType);
-                }
+                groupRoleService.saveGroupRoles(groupRoleContracts, organisation);
                 break;
             case "groupPrivilege.json":
-                GroupPrivilegeContractWeb[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeContractWeb[].class);
-                groupPrivilegeService.savePrivileges(groupPrivilegeContracts, organisation);
+                GroupPrivilegeBundleContract[] groupPrivilegeContracts = convertString(fileData, GroupPrivilegeBundleContract[].class);
+                groupPrivilegeService.savePrivilegesFromBundle(groupPrivilegeContracts, organisation);
                 break;
             case "groupDashboards.json":
                 GroupDashboardBundleContract[] contracts = convertString(fileData, GroupDashboardBundleContract[].class);
@@ -385,42 +346,27 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 break;
             case "reportCard.json":
                 ReportCardBundleRequest[] cardContracts = convertString(fileData, ReportCardBundleRequest[].class);
-                for (ReportCardBundleRequest cardRequest : cardContracts) {
-                    cardService.uploadCard(cardRequest);
-                }
+                cardService.saveCards(cardContracts);
                 break;
             case "reportDashboard.json":
                 DashboardBundleContract[] dashboardContracts = convertString(fileData, DashboardBundleContract[].class);
-                for (DashboardBundleContract dashboardContract : dashboardContracts) {
-                    dashboardService.uploadDashboard(dashboardContract);
-                }
+                dashboardService.saveDashboards(dashboardContracts);
                 break;
             case "taskType.json":
                 TaskTypeContract[] taskTypeContracts = convertString(fileData, TaskTypeContract[].class);
-                for (TaskTypeContract taskTypeContract : taskTypeContracts) {
-                    taskTypeService.saveTaskType(taskTypeContract);
-                }
+                taskTypeService.saveTaskTypes(taskTypeContracts);
                 break;
             case "taskStatus.json":
                 TaskStatusContract[] taskStatusContracts = convertString(fileData, TaskStatusContract[].class);
-                for (TaskStatusContract taskStatusContract : taskStatusContracts) {
-                    taskStatusService.importTaskStatus(taskStatusContract);
-                }
+                taskStatusService.saveTaskStatuses(taskStatusContracts);
                 break;
             case "menuItem.json":
                 MenuItemContract[] menuItemContracts = convertString(fileData, MenuItemContract[].class);
-                for (MenuItemContract contract : menuItemContracts) {
-                    MenuItem menuItem = menuItemService.find(contract.getUuid());
-                    menuItemService.save(MenuItemContract.toEntity(contract, menuItem));
-                }
+                menuItemService.saveMenuItems(menuItemContracts);
                 break;
             case "messageRule.json":
                 MessageRuleContract[] messageRuleContracts = convertString(fileData, MessageRuleContract[].class);
-                for (MessageRuleContract messageRuleContract : messageRuleContracts) {
-                    MessageRule messageRule = messagingService.find(messageRuleContract.getUuid());
-                    messageRule = MessageRuleContract.toModel(messageRuleContract, messageRule, entityTypeRetrieverService);
-                    messagingService.saveRule(messageRule);
-                }
+                messagingService.saveRules(messageRuleContracts);
                 break;
             case "ruleDependency.json":
                 RuleDependencyRequest ruleDependencyRequest = convertString(fileData, RuleDependencyRequest.class);
@@ -429,7 +375,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException, BuilderException {
+    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException {
         logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData.getKey());
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (bundleFolder) {

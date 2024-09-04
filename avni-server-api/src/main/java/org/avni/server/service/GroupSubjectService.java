@@ -40,7 +40,7 @@ public class GroupSubjectService implements ScopeAwareService<GroupSubject> {
     public GroupSubject save(GroupSubject groupSubject) throws ValidationException {
         this.addSyncAttributes(groupSubject);
         assignMemberToTheAssigneeOfGroup(groupSubject);
-        return groupSubjectRepository.save(groupSubject);
+        return groupSubjectRepository.saveEntity(groupSubject);
     }
 
     private void assignMemberToTheAssigneeOfGroup(GroupSubject groupSubject) {

@@ -4,18 +4,18 @@ import org.avni.server.domain.Account;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.web.request.UserInfoContract;
 
 import java.util.List;
 
 public class UserInfoWebResponse extends UserInfoContract {
     private String region;
-    private OrganisationCategory organisationCategory;
     private long lastSessionTime;
     private boolean hasAllPrivileges;
     private List<UserPrivilegeWebResponse> privileges;
     private boolean isAdmin;
+    private String organisationCategoryName;
 
     private UserInfoWebResponse() {
     }
@@ -31,7 +31,7 @@ public class UserInfoWebResponse extends UserInfoContract {
             response.setOrganisationId(contextOrganisation.getId());
             response.setOrganisationName(contextOrganisation.getName());
             response.setUsernameSuffix(contextOrganisation.getEffectiveUsernameSuffix());
-            response.organisationCategory = contextOrganisation.getCategory();
+            response.organisationCategoryName = contextOrganisation.getCategory().getName();
             response.region = contextOrganisation.getAccount().getRegion();
         } else {
             response.region = Account.DEFAULT_REGION; // current cannot support multiple regions for super admins
@@ -44,7 +44,7 @@ public class UserInfoWebResponse extends UserInfoContract {
         this.privileges = privileges;
         this.hasAllPrivileges = hasAllPrivileges;
         this.lastSessionTime = lastSessionTime;
-        this.organisationCategory = organisationCategory;
+        this.organisationCategoryName = organisationCategory.getName();
         this.region = region;
     }
 
@@ -68,8 +68,8 @@ public class UserInfoWebResponse extends UserInfoContract {
         this.lastSessionTime = lastSessionTime;
     }
 
-    public OrganisationCategory getOrganisationCategory() {
-        return organisationCategory;
+    public String getOrganisationCategoryName() {
+        return organisationCategoryName;
     }
 
     public String getRegion() {

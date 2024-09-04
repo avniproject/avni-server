@@ -15,12 +15,11 @@ public class SubjectAssignmentSearchQueryBuilder extends BaseSubjectSearchQueryB
         String SUBJECT_ASSIGNMENT_SEARCH_BASE_QUERY = "select i.id                                                                   as \"id\",\n" +
                 "       cast(concat_ws(' ', i.first_name, i.middle_name, i.last_name) as text) as \"fullName\",\n" +
                 "       i.uuid                                                                 as \"uuid\",\n" +
-                "       cast(tllv.title_lineage as text)                                       as \"addressLevel\",\n" +
+                "       i.address_id                                                           as \"addressId\",\n" +
                 "       string_agg(distinct p.name || ':' || p.colour, ', ')                   as \"programs\",\n" +
                 "       string_agg(distinct assigned_to.name || ':' || g.name, ', ')           as \"assignedTo\"\n" +
                 "       $CUSTOM_FIELDS\n" +
                 "from individual i\n" +
-                "         left outer join title_lineage_locations_view tllv on i.address_id = tllv.lowestpoint_id\n" +
                 "         left outer join subject_type st on i.subject_type_id = st.id and st.is_voided is false\n" +
                 "         left outer join program_enrolment penr on i.id = penr.individual_id and penr.is_voided is false\n" +
                 "         left outer join program p on p.id = penr.program_id\n" +

@@ -1,17 +1,21 @@
 package org.avni.server.service;
 
+import com.amazonaws.services.cognitoidp.model.AWSCognitoIdentityProviderException;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
 import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
+import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.validation.ValidationException;
-import org.bouncycastle.util.Strings;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -31,15 +35,19 @@ public class UserService implements NonScopeAwareService {
     private final UserSubjectRepository userSubjectRepository;
     private final IndividualRepository individualRepository;
     private final SubjectTypeRepository subjectTypeRepository;
+    private final AccountAdminRepository accountAdminRepository;
+    private final IdpServiceFactory idpServiceFactory;
 
     @Autowired
-    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository) {
+    public UserService(UserRepository userRepository, GroupRepository groupRepository, UserGroupRepository userGroupRepository, UserSubjectRepository userSubjectRepository, IndividualRepository individualRepository, SubjectTypeRepository subjectTypeRepository, IdpServiceFactory idpServiceFactory, AccountAdminRepository accountAdminRepository) {
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.userGroupRepository = userGroupRepository;
         this.userSubjectRepository = userSubjectRepository;
         this.individualRepository = individualRepository;
         this.subjectTypeRepository = subjectTypeRepository;
+        this.accountAdminRepository = accountAdminRepository;
+        this.idpServiceFactory = idpServiceFactory;
     }
 
     public User getCurrentUser() {
@@ -49,10 +57,10 @@ public class UserService implements NonScopeAwareService {
 
     public User save(User user) {
         String idPrefix = UserSettings.getIdPrefix(user.getSettings());
-        if (StringUtils.hasLength(idPrefix)) {
+        if (user.getOrganisationId() != null && StringUtils.hasLength(idPrefix) ) { // Not a super-admin and has idPrefix
             synchronized (String.format("%d-USER-ID-PREFIX-%s", user.getOrganisationId(), idPrefix).intern()) {
-                List<User> usersWithSameIdPrefix = userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
-                if (usersWithSameIdPrefix.size() == 0) {
+                List<User> usersWithSameIdPrefix = user.isNew() ? userRepository.getAllUsersWithSameIdPrefix(idPrefix) : userRepository.getUsersWithSameIdPrefix(idPrefix, user.getId());
+                if (usersWithSameIdPrefix.isEmpty()) {
                     return createUpdateUser(user);
                 } else {
                     throw new ValidationException(String.format("There is another user %s with same prefix: %s", usersWithSameIdPrefix.get(0).getUsername(), idPrefix));
@@ -64,16 +72,19 @@ public class UserService implements NonScopeAwareService {
     }
 
     private User createUpdateUser(User user) {
-        SubjectType userSubjectType = subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User);
         User savedUser = userRepository.save(user);
-        if (userSubjectType != null)
-            this.ensureSubjectForUser(user, userSubjectType);
+        if (user.getOrganisationId() != null) { // Not a super-admin
+            SubjectType userSubjectType = subjectTypeRepository.findByTypeAndIsVoidedFalse(Subject.User);
+            if (userSubjectType != null) {
+                this.ensureSubjectForUser(user, userSubjectType);
+            }
+        }
         return savedUser;
     }
 
     @Transactional
     public void addToDefaultUserGroup(User user) {
-        if (user.getOrganisationId() != null) {
+        if (user.getOrganisationId() != null) { //Not a super-admin
             Group group = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
             if (userGroupRepository.findByUserAndGroupAndIsVoidedFalse(user, group) == null) {
                 UserGroup userGroup = UserGroup.createMembership(user, group);
@@ -127,7 +138,7 @@ public class UserService implements NonScopeAwareService {
     }
 
     public Optional<User> findByPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
+        return userRepository.findByPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion()));
     }
 
     @Transactional
@@ -137,7 +148,7 @@ public class UserService implements NonScopeAwareService {
             return;
         }
 
-        String[] groupNames = Strings.split(groupsSpecified, ',');
+        String[] groupNames = splitIntoUserGroupNames(groupsSpecified);
         Arrays.stream(groupNames).distinct().forEach(groupName -> {
             if (!StringUtils.hasLength(groupName.trim())) return;
 
@@ -154,6 +165,15 @@ public class UserService implements NonScopeAwareService {
         if (!Arrays.asList(groupNames).contains(Group.Everyone)) {
             this.addToDefaultUserGroup(user);
         }
+    }
+
+    public String[] splitIntoUserGroupNames(String groupsSpecified) {
+        return groupsSpecified.trim().split("\\s*,\\s*|\\s*\\|\\s*");
+    }
+
+    public void ensureSubjectsForUserSubjectType(SubjectType subjectType) {
+        List<User> users = userRepository.findAllByIsVoidedFalseAndOrganisationId(subjectType.getOrganisationId());
+        users.forEach(user -> ensureSubjectForUser(user, subjectType));
     }
 
     public void ensureSubjectForUser(User user, SubjectType subjectType) {
@@ -186,10 +206,34 @@ public class UserService implements NonScopeAwareService {
         userSubjectRepository.save(userSubject);
     }
 
-    public void setPhoneNumber(String phoneNumber, User user) {
-        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
-            throw new ValidationException(PhoneNumberUtil.getInvalidMessage(phoneNumber));
+    public ResponseEntity<?> deleteUser(Long id) {
+        try {
+            User user = userRepository.findOne(id);
+            idpServiceFactory.getIdpService(user, this.isAdmin(user)).deleteUser(user);
+
+            User currentUser = this.getCurrentUser();
+            user.setAuditInfo(currentUser);
+
+            user.setVoided(true);
+            user.setDisabledInCognito(true);
+            user.setUserGroups(user.getUserGroups().stream().filter(ug -> ug.getGroup().isEveryone()).collect(Collectors.toList()));
+            userRepository.save(user);
+            logger.info(String.format("Deleted user '%s', UUID '%s'", user.getUsername(), user.getUuid()));
+            return new ResponseEntity<>(user, HttpStatus.CREATED);
+        } catch (AWSCognitoIdentityProviderException ex) {
+            return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
         }
-        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber));
+    }
+
+    public void setPhoneNumber(String phoneNumber, User user, String userRegion) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, userRegion)) {
+            throw new ValidationException(PhoneNumberUtil.getInvalidMessage(phoneNumber, userRegion));
+        }
+        user.setPhoneNumber(PhoneNumberUtil.getStandardFormatPhoneNumber(phoneNumber, userRegion));
+    }
+
+    public boolean isAdmin(User user) {
+        List<AccountAdmin> accountAdmins = accountAdminRepository.findByUser_Id(user.getId());
+        return !accountAdmins.isEmpty();
     }
 }

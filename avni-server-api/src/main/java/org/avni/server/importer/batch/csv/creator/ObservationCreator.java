@@ -19,6 +19,7 @@ import org.avni.server.service.LocationService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.S3Service;
 import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.ObservationRequest;
 import org.slf4j.Logger;
@@ -97,10 +98,10 @@ public class ObservationCreator {
 
     public ObservationCollection getObservations(Row row,
                                                  Headers headers,
-                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) throws Exception {
+                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations);
-        if (errorMsgs.size() > 0) {
-            throw new Exception(String.join(", ", errorMsgs));
+        if (!errorMsgs.isEmpty()) {
+            throw new RuntimeException(String.join(", ", errorMsgs));
         }
         return observationCollection;
     }
@@ -121,7 +122,7 @@ public class ObservationCreator {
 
     private String getRowValue(FormElement formElement, Row row, Integer questionGroupIndex) {
         Concept concept = formElement.getConcept();
-        if(formElement.getGroup() != null) {
+        if (formElement.getGroup() != null) {
             Concept parentConcept = formElement.getGroup().getConcept();
             String parentChildName = parentConcept.getName() + "|" + concept.getName();
             String headerName = questionGroupIndex == null ? parentChildName : String.format("%s|%d", parentChildName, questionGroupIndex);
@@ -130,12 +131,12 @@ public class ObservationCreator {
         return row.get(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) throws Exception {
+    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         for (Concept concept : getConceptHeaders(headers, row.getHeaders())) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);
-            if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().equals("")))
+            if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
                 continue;
             ObservationRequest observationRequest = new ObservationRequest();
             observationRequest.setConceptName(concept.getName());
@@ -165,7 +166,7 @@ public class ObservationCreator {
             List<ObservationCollection> repeatableObservationRequest = new ArrayList<>();
             for (int i = 1; i <= maxIndex; i++) {
                 ObservationCollection questionGroupObservations = getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, i);
-                if(!questionGroupObservations.isEmpty()) {
+                if (!questionGroupObservations.isEmpty()) {
                     repeatableObservationRequest.add(questionGroupObservations);
                 }
             }
@@ -204,10 +205,10 @@ public class ObservationCreator {
         }).collect(Collectors.toList());
     }
 
-    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType) throws Exception {
+    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType) {
         List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(formType);
-        if (applicableForms.size() == 0)
-            throw new Exception(String.format("No forms of type %s found", formType));
+        if (applicableForms.isEmpty())
+            throw new RuntimeException(String.format("No forms of type %s found", formType));
 
         return applicableForms.stream()
                 .map(f -> {
@@ -218,7 +219,7 @@ public class ObservationCreator {
                 .flatMap(List::stream)
                 .filter(fel -> fel.getConcept().equals(concept))
                 .findFirst()
-                .orElseThrow(() -> new Exception("No form element linked to concept found"));
+                .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
 
     private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, Headers headers, ObservationCollection oldObservations) throws Exception {
@@ -273,11 +274,11 @@ public class ObservationCreator {
 
     private Map<String, Object> toPhoneNumberFormat(String phoneNumber, List<String> errorMsgs, String conceptName) {
         Map<String, Object> phoneNumberObs = new HashMap<>();
-        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber)) {
+        if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion())) {
             errorMsgs.add(format("Invalid %s provided %s. Please provide valid phone number.", conceptName, phoneNumber));
             return null;
         }
-        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getNationalPhoneNumber(phoneNumber));
+        phoneNumberObs.put("phoneNumber", PhoneNumberUtil.getNationalPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion()));
         phoneNumberObs.put("verified", false);
         return phoneNumberObs;
     }

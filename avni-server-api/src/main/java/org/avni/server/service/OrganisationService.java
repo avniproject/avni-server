@@ -4,23 +4,24 @@ import com.fasterxml.jackson.core.PrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import org.apache.commons.io.IOUtils;
 import org.avni.messaging.contract.MessageRuleContract;
+import org.avni.messaging.repository.ManualMessageRepository;
 import org.avni.messaging.repository.MessageReceiverRepository;
 import org.avni.messaging.repository.MessageRequestQueueRepository;
+import org.avni.messaging.repository.MessageRuleRepository;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.*;
-import org.avni.server.dao.application.FormElementGroupRepository;
-import org.avni.server.dao.application.FormElementRepository;
-import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.dao.application.FormRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationGenderMappingRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
-import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
+import org.avni.server.dao.application.*;
+import org.avni.server.dao.externalSystem.ExternalSystemConfigRepository;
+import org.avni.server.dao.individualRelationship.*;
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
 import org.avni.server.dao.task.TaskRepository;
+import org.avni.server.dao.task.TaskStatusRepository;
+import org.avni.server.dao.task.TaskTypeRepository;
+import org.avni.server.dao.task.TaskUnAssignmentRepository;
 import org.avni.server.domain.*;
+import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.model.BundleFolder;
 import org.avni.server.mapper.dashboard.DashboardMapper;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -97,7 +99,7 @@ public class OrganisationService {
     private final VideoRepository videoRepository;
     private final VideoService videoService;
     private final CardService cardService;
-    private final DashboardService dashboardService;
+    private final DashboardFilterRepository dashboardFilterRepository;
     private final MenuItemService menuItemService;
 
     private final MessagingService messagingService;
@@ -106,8 +108,10 @@ public class OrganisationService {
     private final DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository;
     private final DashboardSectionRepository dashboardSectionRepository;
     private final GroupDashboardRepository groupDashboardRepository;
+    private final DashboardService dashboardService;
     private final Msg91ConfigRepository msg91ConfigRepository;
     private final S3Service s3Service;
+    private final UserService userService;
 
     //Tx repositories
     private final RuleFailureTelemetryRepository ruleFailureTelemetryRepository;
@@ -144,7 +148,26 @@ public class OrganisationService {
     private final ReportCardMapper reportCardMapper;
     private final UserSubjectRepository userSubjectRepository;
     private final Logger logger;
+    private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
+    private final CustomQueryRepository customQueryRepository;
+    private final DocumentationRepository documentationRepository;
+    private final DocumentationItemRepository documentationItemRepository;
+    private final ExportJobParametersRepository exportJobParametersRepository;
+    private final ExternalSystemConfigRepository externalSystemConfigRepository;
+    private final LocationMappingRepository locationMappingRepository;
+    private final MenuItemRepository menuItemRepository;
+    private final ManualMessageRepository manualMessageRepository;
+    private final MessageRuleRepository messageRuleRepository;
+    private final ResetSyncRepository resetSyncRepository;
+    private final RuleFailureLogRepository ruleFailureLogRepository;
+    private final TaskStatusRepository taskStatusRepository;
+    private final TaskTypeRepository taskTypeRepository;
+    private final TaskUnAssignmentRepository taskUnAssignmentRepository;
+    private final UserRepository userRepository;
+
+    private final JdbcTemplate jdbcTemplate;
     private final DashboardMapper dashboardMapper;
+    private final GroupDashboardService groupDashboardService;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -187,10 +210,10 @@ public class OrganisationService {
                                CardRepository cardRepository,
                                DashboardRepository dashboardRepository,
                                DashboardSectionCardMappingRepository dashboardSectionCardMappingRepository,
-                               DashboardSectionRepository dashboardSectionRepository,
+                               DashboardFilterRepository dashboardFilterRepository, DashboardSectionRepository dashboardSectionRepository,
                                GroupDashboardRepository groupDashboardRepository,
                                Msg91ConfigRepository msg91ConfigRepository,
-                               S3Service s3Service, RuleFailureTelemetryRepository ruleFailureTelemetryRepository,
+                               S3Service s3Service, UserService userService, RuleFailureTelemetryRepository ruleFailureTelemetryRepository,
                                IdentifierAssignmentRepository identifierAssignmentRepository,
                                SyncTelemetryRepository syncTelemetryRepository,
                                VideoTelemetricRepository videoTelemetricRepository,
@@ -221,9 +244,27 @@ public class OrganisationService {
                                OrganisationConfigService organisationConfigService,
                                GenderRepository genderRepository,
                                OrganisationRepository organisationRepository,
+                               UserSubjectRepository userSubjectRepository,
+                               AnswerConceptMigrationRepository answerConceptMigrationRepository,
+                               CustomQueryRepository customQueryRepository,
+                               DocumentationRepository documentationRepository,
+                               DocumentationItemRepository documentationItemRepository,
+                               ExportJobParametersRepository exportJobParametersRepository,
+                               ExternalSystemConfigRepository externalSystemConfigRepository,
+                               LocationMappingRepository locationMappingRepository,
+                               MenuItemRepository menuItemRepository,
+                               ManualMessageRepository manualMessageRepository,
+                               MessageRuleRepository messageRuleRepository,
+                               ResetSyncRepository resetSyncRepository,
+                               RuleFailureLogRepository ruleFailureLogRepository,
+                               TaskStatusRepository taskStatusRepository,
+                               TaskTypeRepository taskTypeRepository,
+                               TaskUnAssignmentRepository taskUnAssignmentRepository,
+                               UserRepository userRepository,
+                               JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               UserSubjectRepository userSubjectRepository) {
+                               GroupDashboardService groupDashboardService) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -258,16 +299,17 @@ public class OrganisationService {
         this.videoRepository = videoRepository;
         this.videoService = videoService;
         this.cardService = cardService;
-        this.dashboardService = dashboardService;
         this.menuItemService = menuItemService;
         this.messagingService = messagingService;
         this.cardRepository = cardRepository;
         this.dashboardRepository = dashboardRepository;
         this.dashboardSectionCardMappingRepository = dashboardSectionCardMappingRepository;
+        this.dashboardFilterRepository = dashboardFilterRepository;
         this.dashboardSectionRepository = dashboardSectionRepository;
         this.groupDashboardRepository = groupDashboardRepository;
         this.msg91ConfigRepository = msg91ConfigRepository;
         this.s3Service = s3Service;
+        this.userService = userService;
         this.ruleFailureTelemetryRepository = ruleFailureTelemetryRepository;
         this.identifierAssignmentRepository = identifierAssignmentRepository;
         this.syncTelemetryRepository = syncTelemetryRepository;
@@ -302,7 +344,139 @@ public class OrganisationService {
         this.reportCardMapper = reportCardMapper;
         this.dashboardMapper = dashboardMapper;
         this.userSubjectRepository = userSubjectRepository;
+        this.answerConceptMigrationRepository = answerConceptMigrationRepository;
+        this.customQueryRepository = customQueryRepository;
+        this.documentationRepository = documentationRepository;
+        this.documentationItemRepository = documentationItemRepository;
+        this.exportJobParametersRepository = exportJobParametersRepository;
+        this.externalSystemConfigRepository = externalSystemConfigRepository;
+        this.locationMappingRepository = locationMappingRepository;
+        this.menuItemRepository = menuItemRepository;
+        this.manualMessageRepository = manualMessageRepository;
+        this.messageRuleRepository = messageRuleRepository;
+        this.resetSyncRepository = resetSyncRepository;
+        this.ruleFailureLogRepository = ruleFailureLogRepository;
+        this.taskStatusRepository = taskStatusRepository;
+        this.taskTypeRepository = taskTypeRepository;
+        this.taskUnAssignmentRepository = taskUnAssignmentRepository;
+        this.userRepository = userRepository;
+        this.jdbcTemplate = jdbcTemplate;
+        this.dashboardService = dashboardService;
         logger = LoggerFactory.getLogger(this.getClass());
+        this.groupDashboardService = groupDashboardService;
+    }
+
+    private CrudRepository[] getTxCrudRepositories() {
+        CrudRepository[] txCrudRepositories = {
+                exportJobParametersRepository,
+                manualMessageRepository,
+                messageReceiverRepository,
+                messageRequestQueueRepository,
+                ruleFailureLogRepository,
+        };
+        return txCrudRepositories;
+    }
+
+    private JpaRepository[] getTxJpaRepositories() {
+        JpaRepository[] transactionalRepositories = {
+                newsRepository,
+                commentRepository,
+                commentThreadRepository,
+                entityApprovalStatusRepository,
+                ruleFailureTelemetryRepository,
+                identifierAssignmentRepository,
+                syncTelemetryRepository,
+                videoTelemetricRepository,
+                groupSubjectRepository,
+                individualRelationshipRepository,
+                checklistItemRepository,
+                checklistRepository,
+                programEncounterRepository,
+                programEnrolmentRepository,
+                encounterRepository,
+                subjectMigrationRepository,
+                userSubjectAssignmentRepository,
+                subjectProgramEligibilityRepository,
+                taskUnAssignmentRepository,
+                taskRepository,
+                userSubjectRepository,
+                individualRepository,
+                resetSyncRepository,
+        };
+        return transactionalRepositories;
+    }
+
+    private CrudRepository[] getMetadataCrudRepositories() {
+        CrudRepository[] metadataCrudRepositories = {
+                messageRuleRepository,
+                customQueryRepository,
+        };
+        return metadataCrudRepositories;
+    }
+
+    private JpaRepository[] getMetadataJpaRepositories() {
+        JpaRepository[] metadataRepositories = {
+                groupPrivilegeRepository,
+                groupRoleRepository,
+                checklistItemDetailRepository,
+                checklistDetailRepository,
+                individualRelationGenderMappingRepository,
+                individualRelationshipTypeRepository,
+                individualRelationRepository,
+                formElementRepository,
+                formElementGroupRepository,
+                formMappingRepository,
+                formRepository,
+                conceptAnswerRepository,
+                conceptRepository,
+                operationalEncounterTypeRepository,
+                encounterTypeRepository,
+                operationalProgramRepository,
+                programRepository,
+                operationalSubjectTypeRepository,
+                subjectTypeRepository,
+                translationRepository,
+                videoRepository,
+                dashboardSectionCardMappingRepository,
+                cardRepository,
+                dashboardSectionRepository,
+                groupDashboardRepository,
+                dashboardFilterRepository,
+                dashboardRepository,
+                answerConceptMigrationRepository,
+                documentationItemRepository,
+                documentationRepository,
+                menuItemRepository,
+                ruleRepository,
+                ruleDependencyRepository,
+                taskTypeRepository,
+                taskStatusRepository,
+                translationRepository,
+                userSubjectAssignmentRepository,
+        };
+        return metadataRepositories;
+    }
+
+    private CrudRepository[] getAdminConfigCrudRepositories() {
+        CrudRepository[] adminConfigCrudRepositories = {
+                externalSystemConfigRepository,
+        };
+        return adminConfigCrudRepositories;
+    }
+
+    private JpaRepository[] getAdminConfigJPARepositories() {
+        JpaRepository[] adminConfigRepositories = {
+                msg91ConfigRepository,
+                identifierUserAssignmentRepository,
+                identifierSourceRepository,
+                genderRepository,
+                catchmentRepository,
+                locationMappingRepository,
+                locationRepository,
+                addressLevelTypeRepository,
+                organisationConfigRepository,
+        };
+        return adminConfigRepositories;
     }
 
     public void addOrganisationConfig(Long orgId, ZipOutputStream zos) throws IOException {
@@ -374,9 +548,10 @@ public class OrganisationService {
     }
 
     public void addGroupPrivilegeJson(ZipOutputStream zos) throws IOException {
-        List<GroupPrivilegeContractWeb> groupPrivileges = groupPrivilegeRepository.findAll().stream()
+        List<GroupPrivilegeBundleContract> groupPrivileges = groupPrivilegeRepository.findAll().stream()
                 .filter(groupPrivilege -> !groupPrivilege.getGroup().isAdministrator())
-                .map(GroupPrivilegeContractWeb::fromEntity).collect(Collectors.toList());
+                .filter(groupPrivilege -> groupPrivilege.getImplVersion() == GroupPrivilege.IMPL_VERSION)
+                .map(GroupPrivilegeBundleContract::fromEntity).collect(Collectors.toList());
         if (!groupPrivileges.isEmpty()) {
             addFileToZip(zos, "groupPrivilege.json", groupPrivileges);
         }
@@ -546,7 +721,7 @@ public class OrganisationService {
 
     public void addReportCardIcons(ZipOutputStream zos) throws IOException {
         List<ReportCard> cards = cardRepository.findAllByIconFileS3KeyNotNull().stream()
-            .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
+                .filter(card -> !card.getIconFileS3Key().trim().isEmpty()).collect(Collectors.toList());
         if (!cards.isEmpty()) {
             addDirectoryToZip(zos, BundleFolder.REPORT_CARD_ICONS.getFolderName());
         }
@@ -597,6 +772,7 @@ public class OrganisationService {
     public void addApplicationMenus(ZipOutputStream zos) throws IOException {
         addFileToZip(zos, "menuItem.json", menuItemService.findAll().stream().map(MenuItemContract::new).collect(Collectors.toList()));
     }
+
     public void addMessageRules(ZipOutputStream zos) throws IOException {
         addFileToZip(zos, "messageRule.json", messagingService.findAll().stream().map(messageRule -> new MessageRuleContract(messageRule, entityTypeRetrieverService)).collect(Collectors.toList()));
     }
@@ -665,93 +841,83 @@ public class OrganisationService {
         zos.closeEntry();
     }
 
-
-    public void deleteTransactionalData() {
-        JpaRepository[] transactionalRepositories = {
-            newsRepository,
-            commentRepository,
-            commentThreadRepository,
-            entityApprovalStatusRepository,
-            ruleFailureTelemetryRepository,
-            identifierAssignmentRepository,
-            syncTelemetryRepository,
-            videoTelemetricRepository,
-            groupSubjectRepository,
-            individualRelationshipRepository,
-            checklistItemRepository,
-            checklistRepository,
-            programEncounterRepository,
-            programEnrolmentRepository,
-            encounterRepository,
-            subjectMigrationRepository,
-            userSubjectAssignmentRepository,
-            subjectProgramEligibilityRepository,
-            taskRepository,
-            userSubjectRepository,
-            individualRepository
-        };
-
-        CrudRepository[] txCrudRepositories = {
-            messageReceiverRepository,
-            messageRequestQueueRepository,
-        };
-
-        Arrays.asList(txCrudRepositories).forEach(this::deleteAll);
-        Arrays.asList(transactionalRepositories).forEach(this::deleteAll);
+    public void deleteTransactionalData(Organisation organisation) {
+        deleteNonRepositoryTransactionalData(organisation);
+        Arrays.asList(getTxCrudRepositories()).forEach(this::deleteAll);
+        Arrays.asList(getTxJpaRepositories()).forEach(this::deleteAll);
     }
 
-    public void deleteMetadata() {
-        JpaRepository[] metadataRepositories = {
-                groupPrivilegeRepository,
-                groupRoleRepository,
-                checklistItemDetailRepository,
-                checklistDetailRepository,
-                identifierUserAssignmentRepository,
-                identifierSourceRepository,
-                individualRelationGenderMappingRepository,
-                individualRelationshipTypeRepository,
-                individualRelationRepository,
-                formMappingRepository,
-                formElementRepository,
-                formElementGroupRepository,
-                formRepository,
-                conceptAnswerRepository,
-                conceptRepository,
-                operationalEncounterTypeRepository,
-                encounterTypeRepository,
-                operationalProgramRepository,
-                programRepository,
-                operationalSubjectTypeRepository,
-                subjectTypeRepository,
-                organisationConfigRepository,
-                translationRepository,
-                videoRepository,
-                dashboardSectionCardMappingRepository,
-                cardRepository,
-                dashboardSectionRepository,
-                groupDashboardRepository,
-                dashboardRepository,
-                msg91ConfigRepository,
-                genderRepository,
-                userGroupRepository,
-                groupRepository
-        };
+    public void deleteMetadata(Organisation organisation) {
+        deleteNonRepositoryMetadata(organisation);
+        Arrays.asList(getMetadataJpaRepositories()).forEach(this::deleteAll);
+        Arrays.asList(getMetadataCrudRepositories()).forEach(this::deleteAll);
+        userRepository.findAllByOrganisationId(organisation.getId()).stream().forEach(user -> user.setSyncSettings(new JsonObject()));
+    }
 
-        Arrays.asList(metadataRepositories).forEach(this::deleteAll);
+    public void deleteNonRepositoryTransactionalData(Organisation organisation) {
+        String individualRelativeDeletionQuery = "delete from individual_relative where organisation_id = %d and organisation_id > 1";
+        jdbcTemplate.execute(String.format(individualRelativeDeletionQuery, organisation.getId()));
+    }
+
+    public void deleteNonRepositoryMetadata(Organisation organisation) {
+        String decisionConceptsDeletionQuery = "delete from decision_concept dc using concept c where dc.concept_id = c.id and c.organisation_id = %d and c.organisation_id > 1";
+        String nonApplicableFormElementDeletionQuery = "delete from non_applicable_form_element where organisation_id = %d and organisation_id > 1";
+        jdbcTemplate.execute(String.format(decisionConceptsDeletionQuery, organisation.getId()));
+        jdbcTemplate.execute(String.format(nonApplicableFormElementDeletionQuery, organisation.getId()));
+    }
+
+    public void deleteAdminConfigData(Organisation organisation) {
+        removeCatchmentAssignmentAndDeleteNonAdminUsers(organisation);
+        deleteNonDefaultGroupsAndTheirMappings();
+        deleteNonRepositoryAdminConfigData(organisation);
+        Arrays.asList(getAdminConfigCrudRepositories()).forEach(this::deleteAll);
+        Arrays.asList(getAdminConfigJPARepositories()).forEach(this::deleteAll);
+    }
+
+    private void deleteNonDefaultGroupsAndTheirMappings() {
+        List<Group> nonDefaultGroups = groupRepository.findAll().stream()
+                .filter(group -> !group.isOneOfTheDefaultGroups())
+                .collect(Collectors.toList());
+        if(nonDefaultGroups != null && !nonDefaultGroups.isEmpty()) {
+            userGroupRepository.deleteAllByGroupIn(nonDefaultGroups);
+            groupRepository.deleteAll(nonDefaultGroups);
+        }
+    }
+
+    private void removeCatchmentAssignmentAndDeleteNonAdminUsers(Organisation organisation) {
+        userRepository.findAllByOrganisationId(organisation.getId()).stream().forEach(user -> user.removeCatchment());
+        userRepository.findAllByOrganisationId(organisation.getId()).stream()
+                .filter(user -> !user.hasAllPrivileges()).forEach(user -> userService.deleteUser(user.getId()));
+    }
+
+    public void deleteNonRepositoryAdminConfigData(Organisation organisation) {
+        String catchmentAddressMappingDeletionQuery = "delete from catchment_address_mapping cam using address_level al where cam.addresslevel_id = al.id and al.organisation_id = %d and al.organisation_id > 1";
+        jdbcTemplate.execute(String.format(catchmentAddressMappingDeletionQuery, organisation.getId()));
     }
 
     private void deleteAll(JpaRepository repository) {
         repository.deleteAllInBatch();
     }
+
     private void deleteAll(CrudRepository repository) {
         repository.deleteAll();
     }
+
     public void deleteMediaContent(boolean deleteMetadata) {
         try {
             s3Service.deleteOrgMedia(deleteMetadata);
         } catch (Exception e) {
             logger.info("Error while deleting the media files, skipping.");
         }
+    }
+
+    public void deleteETLData(Organisation organisation) {
+        String baseQuery = "select delete_etl_metadata_for_schema('$impl_schema', '$impl_db_user', '$impl_db_owner')";
+        String query = baseQuery
+                .replace("$impl_schema", organisation.getSchemaName())
+                .replace("$impl_db_user", organisation.getDbUser())
+                .replace("$impl_db_owner", organisation.getDbUser());
+        jdbcTemplate.execute(query);
     }
 
     public void addGroupDashboardJson(ZipOutputStream zos) throws IOException {
@@ -763,6 +929,9 @@ public class OrganisationService {
     }
 
     private void createGender(String genderName, Organisation org) {
+        if (Objects.nonNull(genderRepository.findByNameAndOrganisationId(genderName, org.getId()))) {
+            return;
+        }
         Gender gender = new Gender();
         gender.setName(genderName);
         gender.assignUUID();
@@ -770,14 +939,18 @@ public class OrganisationService {
         genderRepository.save(gender);
     }
 
-    private void addDefaultGroup(Long organisationId, String groupType) {
+    private Group addDefaultGroupIfNotPresent(Long organisationId, String groupType) {
+        Group existingGroup = groupRepository.findByNameAndOrganisationId(groupType, organisationId);
+        if (Objects.nonNull(existingGroup)) {
+            return existingGroup;
+        }
         Group group = new Group();
         group.setName(groupType);
         group.setOrganisationId(organisationId);
         group.setUuid(UUID.randomUUID().toString());
         group.setHasAllPrivileges(group.isAdministrator());
         group.setVersion(0);
-        groupRepository.save(group);
+        return groupRepository.save(group);
     }
 
     private void createDefaultGenders(Organisation org) {
@@ -787,10 +960,20 @@ public class OrganisationService {
     }
 
     public void setupBaseOrganisationData(Organisation organisation) {
-        createDefaultGenders(organisation);
-        addDefaultGroup(organisation.getId(), Group.Everyone);
-        addDefaultGroup(organisation.getId(), Group.Administrators);
+        setupBaseOrganisationMetadata(organisation);
+        setupBaseOrganisationAdminConfig(organisation);
+    }
+
+    public void setupBaseOrganisationAdminConfig(Organisation organisation) {
         organisationConfigService.createDefaultOrganisationConfig(organisation);
+    }
+
+    public void setupBaseOrganisationMetadata(Organisation organisation) {
+        createDefaultGenders(organisation);
+        Group everyoneGroup = addDefaultGroupIfNotPresent(organisation.getId(), Group.Everyone);
+        addDefaultGroupIfNotPresent(organisation.getId(), Group.Administrators);
+        Dashboard defaultDashboard = dashboardService.createDefaultDashboard(organisation);
+        groupDashboardService.createDefaultGroupDashboardForOrg(organisation, everyoneGroup, defaultDashboard);
     }
 
     public Organisation getCurrentOrganisation() {

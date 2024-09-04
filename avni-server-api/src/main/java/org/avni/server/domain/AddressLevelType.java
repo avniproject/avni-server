@@ -27,7 +27,7 @@ public class AddressLevelType extends OrganisationAwareEntity {
     @PositiveOrZero
     private Double level;
 
-    @ManyToOne(cascade = {CascadeType.ALL})
+    @ManyToOne(cascade = {CascadeType.MERGE})
     private AddressLevelType parent;
 
     @OneToMany(mappedBy = "parent")
@@ -78,6 +78,11 @@ public class AddressLevelType extends OrganisationAwareEntity {
 
     public void setAddressLevels(Set<AddressLevel> addressLevels) {
         this.addressLevels = addressLevels;
+    }
+
+    public void addChildAddressLevelType(AddressLevelType addressLevelType) {
+        subTypes.add(addressLevelType);
+        addressLevelType.setParent(this);
     }
 
     @JsonIgnore

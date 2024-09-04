@@ -8,11 +8,13 @@ import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.accessControl.PrivilegeService;
 import org.avni.server.service.application.MenuItemService;
 import org.avni.server.web.request.EntitySyncStatusContract;
+import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -298,13 +300,18 @@ public class SyncController {
         Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true, includeUserSubjectType);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
-        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true);
-        logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
-        return ResponseEntity.ok().body(new JsonObject()
-                .with("syncDetails", changedEntities)
-                .with("now", now)
-                .with("nowMinus10Seconds", nowMinus10Seconds)
-        );
+        try {
+            List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true);
+            logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
+            return ResponseEntity.ok().body(new JsonObject()
+                    .with("syncDetails", changedEntities)
+                    .with("now", now)
+                    .with("nowMinus10Seconds", nowMinus10Seconds)
+            );
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+
     }
 
     /**

@@ -1,6 +1,5 @@
 package org.avni.server.service;
 
-import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S3File;
 import org.avni.server.util.S3FileType;

@@ -3,12 +3,12 @@ package org.avni.server.dao;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
-import org.flywaydb.core.api.android.ContextHolder;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @Sql({"/test-data.sql"})
 public class UserRepositoryTest extends AbstractControllerIntegrationTest {

@@ -18,10 +18,7 @@ import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.observation.PhoneNumberObservationValue;
-import org.avni.server.util.BugsnagReporter;
-import org.avni.server.util.DateTimeUtil;
-import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.util.PhoneNumberUtil;
+import org.avni.server.util.*;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.validation.ValidationException;
@@ -240,7 +237,7 @@ public class EnhancedValidationService {
             case PhoneNumber:
                 try {
                     PhoneNumberObservationValue phoneNumber = objectMapper.convertValue(value, PhoneNumberObservationValue.class);
-                    if (PhoneNumberUtil.isValidPhoneNumber(phoneNumber.getPhoneNumber())) {
+                    if (PhoneNumberUtil.isValidPhoneNumber(phoneNumber.getPhoneNumber(), RegionUtil.getCurrentUserRegion())) {
                         return formatErrorMessage(question, value);
                     }
                 } catch (ClassCastException | IllegalArgumentException e) {

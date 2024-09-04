@@ -27,7 +27,7 @@ public class AccessControlServiceTest {
 
     @Test
     public void adminHasPrivilegeForNonTxn() {
-        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository);
+        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository, null, null, null);
         User user = new UserBuilder().id(1L).isAdmin(true).build();
         when(privilegeRepository.isAllowedForAdmin(PrivilegeType.EditSubjectType)).thenReturn(true);
         accessControlService.checkPrivilege(user, PrivilegeType.EditSubjectType);
@@ -36,7 +36,7 @@ public class AccessControlServiceTest {
     @Test(expected = AvniAccessException.class)
     public void adminDoesntHavePrivilegeTxn() {
         initMocks(this);
-        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository);
+        AccessControlService accessControlService = new AccessControlService(userRepository, null, null, null, privilegeRepository, null, null, null);
         User user = new UserBuilder().id(1L).isAdmin(true).build();
         when(privilegeRepository.isAllowedForAdmin(PrivilegeType.EditSubject)).thenReturn(false);
         accessControlService.checkPrivilege(user, PrivilegeType.EditSubject);

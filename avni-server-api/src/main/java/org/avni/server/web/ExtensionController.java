@@ -106,10 +106,10 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
             InputStream contentStream = s3Service.getExtensionContent(format("%s/%s", OrganisationConfig.Extension.EXTENSION_DIR, filePath), organisation);
             return ResponseEntity.ok().body(new InputStreamResource(contentStream));
         } catch (AccessDeniedException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(format("Error in serving file %s", filePath));
         }
     }
@@ -131,10 +131,10 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
             logger.debug(format("S3 signed URL: %s", url.toString()));
             return ResponseEntity.status(HttpStatus.FOUND).location(url.toURI()).build();
         } catch (AccessDeniedException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }

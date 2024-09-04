@@ -5,13 +5,16 @@ import java.util.regex.Pattern;
 
 public class ValidationUtil {
     public static final Pattern COMMON_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"'].*$");
+    public static final Pattern COMMON_INVALID_CHARS = Pattern.compile("<> = \" '");
+    public static final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
+    public static final Pattern NAME_INVALID_CHARS = Pattern.compile("<> = \"");
 
     public static boolean checkNull(Object checkObject) {
         return checkObject == null;
     }
 
     public static boolean checkEmptyString(String checkString) {
-        return checkString.trim().equals("");
+        return checkString.trim().isEmpty();
     }
 
     public static boolean containsDisallowedPattern(String checkString, Pattern pattern) {

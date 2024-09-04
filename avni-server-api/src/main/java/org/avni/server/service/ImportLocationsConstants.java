@@ -10,7 +10,7 @@ public interface ImportLocationsConstants {
     String STRING_CONSTANT_EMPTY_STRING = "";
     String STRING_PLACEHOLDER_BLOCK = "\"%s\",";
     String STRING_3_PLACEHOLDER_BLOCK = String.join("", Collections.nCopies(3, STRING_PLACEHOLDER_BLOCK));
-    String Example = "Ex: ";
+    String Example = "Example: ";
     String ALLOWED_VALUES = "Allowed values: ";
     String COLUMN_NAME_GPS_COORDINATES = LocationHeaders.gpsCoordinates;
     String COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY = "Location with full hierarchy";

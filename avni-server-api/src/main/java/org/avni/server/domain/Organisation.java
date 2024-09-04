@@ -1,7 +1,8 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationStatus;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
@@ -25,8 +26,12 @@ public class Organisation extends ETLEntity {
     private Account account;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.EAGER)
     private OrganisationCategory category;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.EAGER)
+    private OrganisationStatus status;
 
     public Organisation() {
     }
@@ -81,12 +86,29 @@ public class Organisation extends ETLEntity {
         return usernameSuffix == null ? getDbUser() : usernameSuffix;
     }
 
+    @JsonIgnore
     public OrganisationCategory getCategory() {
         return category;
+    }
+
+    public Long getCategoryId() {
+        return category.getId();
     }
 
     public void setCategory(OrganisationCategory organisationCategory) {
         this.category = organisationCategory;
     }
 
+    @JsonIgnore
+    public OrganisationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrganisationStatus status) {
+        this.status = status;
+    }
+
+    public Long getStatusId() {
+        return status.getId();
+    }
 }

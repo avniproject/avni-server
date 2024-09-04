@@ -11,7 +11,6 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "groups", path = "groups")
-
 public interface GroupRepository extends ReferenceDataRepository<Group>, FindByLastModifiedDateTime<Group> {
 
     Group findByNameAndOrganisationId(String name, Long organisationId);

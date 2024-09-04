@@ -14,7 +14,6 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "standardReportCardType", path = "standardReportCardType")
-
 public interface StandardReportCardTypeRepository extends AvniJpaRepository<StandardReportCardType, Long> {
     StandardReportCardType findByUuid(String uuid);
 
@@ -27,4 +26,6 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
             Pageable pageable);
 
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
+
+    List<StandardReportCardType> findAllByNameIn(List<String> defaultDashboardStandardCardTypeNames);
 }

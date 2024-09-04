@@ -22,9 +22,10 @@ DELETE FROM individual_relation_gender_mapping;
 DELETE FROM individual_relation;
 DELETE FROM gender;
 DELETE FROM catchment_address_mapping;
+DELETE FROM location_location_mapping;
 DELETE FROM address_level;
 DELETE FROM catchment;
-DELETE FROM account_admin;
+DELETE FROM account_admin where admin_id <> (select id from users where username = 'admin');
 DELETE FROM user_group;
 DELETE FROM external_system_config;
 DELETE FROM organisation_config;
@@ -32,11 +33,12 @@ DELETE from message_request_queue;
 DELETE from message_receiver;
 DELETE from message_rule;
 DELETE FROM reset_sync;
-DELETE FROM users;
+DELETE FROM users where username <> 'admin';
 DELETE FROM subject_type;
 DELETE FROM group_privilege;
+DELETE FROM group_dashboard;
 DELETE FROM groups;
-DELETE FROM organisation;
+DELETE FROM organisation where name <> 'OpenCHS';
 DELETE FROM audit;
 
 ALTER SEQUENCE non_applicable_form_element_id_seq RESTART WITH 1;
@@ -68,14 +70,10 @@ ALTER SEQUENCE message_receiver_id_seq RESTART WITH 1;
 ALTER SEQUENCE message_request_queue_id_seq RESTART WITH 1;
 ALTER SEQUENCE message_rule_id_seq RESTART WITH 1;
 
-INSERT into organisation(id, name, db_user, uuid, media_directory, parent_organisation_id, schema_name)
-values (1, 'OpenCHS', 'openchs', '3539a906-dfae-4ec3-8fbb-1b08f35c3884', 'openchs_impl', null, 'openchs')
-ON CONFLICT (uuid) DO NOTHING;
-
 select create_db_user('demo', 'password');
 
-INSERT INTO organisation(id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name)
-VALUES (2, 'demo', 'demo', 'demo', 'ae0e4ac4-681d-45f2-8bdd-2b09a5a1a6e5', 1, 'demo')
+INSERT INTO organisation(id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name, category_id, status_id)
+VALUES (2, 'demo', 'demo', 'demo', 'ae0e4ac4-681d-45f2-8bdd-2b09a5a1a6e5', 1, 'demo', 1, 1)
 ON CONFLICT (uuid) DO NOTHING;
 
 insert into organisation_config (uuid, organisation_id, settings, version, is_voided, worklist_updation_rule, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -83,15 +81,13 @@ values ('5bd9c67e-c949-4872-9763-daeab7b48b1b', 1, '{"enableMessaging": true}', 
 
 select create_db_user('a_demo', 'password');
 
-INSERT INTO organisation (id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name)
-VALUES (3, 'a-demo', 'a_demo', 'a-demo', '2734f2ba-610b-49f8-b8d3-4196a460e325', 1, 'a_demo')
+INSERT INTO organisation (id, name, db_user, media_directory, uuid, parent_organisation_id, schema_name, category_id, status_id)
+VALUES (3, 'a-demo', 'a_demo', 'a-demo', '2734f2ba-610b-49f8-b8d3-4196a460e325', 1, 'a_demo', 1, 1)
 ON CONFLICT (uuid) DO NOTHING;
 
 insert into subject_type(id, uuid, name, organisation_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
 VALUES (1, '9f2af1f9-e150-4f8e-aad3-40bb7eb05aa3', 'Individual', 1, 1, 1, now(), now());
 
-INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)
-VALUES (1, 'admin', '5fed2907-df3a-4867-aef5-c87f4c78a31a', 1, 'None', false, 'admin');
 INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)
 VALUES (2, 'demo-admin', '0e53a72c-a109-49f2-918c-9599b266a585', 2, 'None', true, 'demo-admin');
 INSERT INTO users (id, username, uuid, organisation_id, operating_individual_scope, is_org_admin, name)

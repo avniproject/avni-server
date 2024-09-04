@@ -49,8 +49,8 @@ public class BasicEncounterCreator {
                 ));
         if (visitDate != null) basicEncounter.setEncounterDateTime(visitDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
 
-        basicEncounter.setEncounterLocation(locationCreator.getLocation(row, CommonEncounterHeaders.encounterLocation, allErrorMsgs));
-        basicEncounter.setCancelLocation(locationCreator.getLocation(row, CommonEncounterHeaders.cancelLocation, allErrorMsgs));
+        basicEncounter.setEncounterLocation(locationCreator.getGeoLocation(row, CommonEncounterHeaders.encounterLocation, allErrorMsgs));
+        basicEncounter.setCancelLocation(locationCreator.getGeoLocation(row, CommonEncounterHeaders.cancelLocation, allErrorMsgs));
         EncounterType encounterType = encounterTypeCreator.getEncounterType(row.get(CommonEncounterHeaders.encounterTypeHeaderName), CommonEncounterHeaders.encounterTypeHeaderName);
         basicEncounter.setEncounterType(encounterType);
         return basicEncounter;

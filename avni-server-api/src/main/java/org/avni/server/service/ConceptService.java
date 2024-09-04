@@ -43,7 +43,7 @@ public class ConceptService implements NonScopeAwareService {
     private final LocationRepository locationRepository;
 
     @Autowired
-    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, OrganisationRepository organisationRepository, UserService userService, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
+    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, OrganisationRepository organisationRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
         this.formElementRepository = formElementRepository;
         this.answerConceptMigrationRepository = answerConceptMigrationRepository;
         this.locationRepository = locationRepository;
@@ -176,9 +176,9 @@ public class ConceptService implements NonScopeAwareService {
     private Concept saveOrUpdate(ConceptContract conceptRequest) throws AnswerConceptNotFoundException {
         if (conceptRequest == null) return null;
         if (conceptExistsWithSameNameAndDifferentUUID(conceptRequest)) {
-            throw new BadRequestError(String.format("Concept %s exists with different uuid", conceptRequest.getName()));
+            throw new BadRequestError(String.format("Concept with name \'%s\' already exists", conceptRequest.getName()));
         }
-        logger.info(String.format("Creating concept: %s", conceptRequest.toString()));
+        logger.info(String.format("Creating concept: %s", conceptRequest));
 
         addToMigrationIfRequired(conceptRequest);
         Concept concept = map(conceptRequest);

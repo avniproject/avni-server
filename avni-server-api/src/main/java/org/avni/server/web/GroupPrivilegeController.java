@@ -46,7 +46,7 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
     @RequestMapping(value = "/groups/{id}/privileges", method = RequestMethod.GET)
     public List<GroupPrivilegeContract> getById(@PathVariable("id") Long id) {
         List<GroupPrivilege> allPossibleGroupPrivileges = groupPrivilegeService.getAllGroupPrivileges(id);
-        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByGroup_Id(id);
+        List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByGroup_IdAndImplVersion(id, GroupPrivilege.IMPL_VERSION);
         groupPrivileges.addAll(allPossibleGroupPrivileges);
         return groupPrivileges.stream()
                 .map(GroupPrivilegeContract::fromEntity)
@@ -61,6 +61,7 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
         List<GroupPrivilege> privilegesToBeAddedOrUpdated = new ArrayList<>();
 
         for (GroupPrivilegeWebRequest groupPrivilegeRequest : request) {
+            //continue to rely on uuid here since privilege list on webapp will either be new records or valid impl_version existing record for the same org
             GroupPrivilege groupPrivilege = groupPrivilegeRepository.findByUuid(groupPrivilegeRequest.getUuid());
             if (groupPrivilege != null) {
                 groupPrivilege.setAllow(groupPrivilegeRequest.isAllow());
@@ -91,6 +92,6 @@ public class GroupPrivilegeController extends AbstractController<GroupPrivilege>
             }
         }
 
-        return ResponseEntity.ok(groupPrivilegeRepository.saveAll(privilegesToBeAddedOrUpdated));
+        return ResponseEntity.ok(groupPrivilegeRepository.saveAllGroupPrivileges(privilegesToBeAddedOrUpdated));
     }
 }

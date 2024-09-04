@@ -31,6 +31,13 @@ CREATE or replace VIEW virtual_catchment_address_mapping_table AS
 SELECT *
 FROM virtual_catchment_address_mapping_table_function();
 
+DROP TRIGGER IF EXISTS delete_on_virtual_catchment_address_mapping ON virtual_catchment_address_mapping_table CASCADE;
+
+CREATE TRIGGER delete_on_virtual_catchment_address_mapping
+    INSTEAD OF DELETE
+    ON virtual_catchment_address_mapping_table
+    FOR EACH ROW
+EXECUTE FUNCTION no_op();
 
 DROP VIEW if exists address_level_type_view;
 
@@ -93,3 +100,12 @@ FROM (SELECT pe.individual_id,
       and pe.is_voided = false
       GROUP BY pe.individual_id, op.name, prog.colour) progralalise
 GROUP BY progralalise.individual_id;
+
+SELECT grant_all_on_views(
+               ARRAY ['address_level_type_view',
+                   'individual_program_enrolment_search_view',
+                   'title_lineage_locations_view',
+                   'virtual_catchment_address_mapping_table'],
+               a.rolname)
+FROM pg_roles a
+WHERE pg_has_role('openchs', a.oid, 'member');

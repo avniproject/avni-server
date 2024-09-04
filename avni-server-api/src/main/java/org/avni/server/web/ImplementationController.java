@@ -3,9 +3,11 @@ package org.avni.server.web;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.OrganisationService;
+import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -23,18 +25,19 @@ import javax.transaction.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.util.zip.ZipOutputStream;
 
-import static org.avni.server.domain.accessControl.PrivilegeType.MultiTxEntityTypeUpdate;
-
 @RestController
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
-
     private final OrganisationService organisationService;
+    private final OrganisationConfigService organisationConfigService;
     private final AccessControlService accessControlService;
+    private final UserService userService;
 
     @Autowired
-    public ImplementationController(OrganisationService organisationService, AccessControlService accessControlService) {
+    public ImplementationController(OrganisationService organisationService, OrganisationConfigService organisationConfigService, AccessControlService accessControlService, UserService userService) {
         this.organisationService = organisationService;
+        this.organisationConfigService = organisationConfigService;
         this.accessControlService = accessControlService;
+        this.userService = userService;
     }
 
     @RequestMapping(value = "/implementation/export/{includeLocations}", method = RequestMethod.GET)
@@ -104,28 +107,72 @@ public class ImplementationController implements RestControllerResourceProcessor
 
     @RequestMapping(value = "/implementation/delete", method = RequestMethod.DELETE)
     @Transactional
-    public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata) {
-        if (accessControlService.isSuperAdmin()) {
+    public ResponseEntity delete(@Param("deleteMetadata") boolean deleteMetadata,
+                                 @Param("deleteAdminConfig") boolean deleteAdminConfig) {
+        if (userService.isAdmin(UserContextHolder.getUser())) {
             return new ResponseEntity<>("Super admin cannot delete implementation data", HttpStatus.FORBIDDEN);
         }
         Organisation organisation = organisationService.getCurrentOrganisation();
-        if (OrganisationCategory.Production.equals(organisation.getCategory())) {
+        if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
             return new ResponseEntity<>("Production organisation's data cannot be deleted", HttpStatus.CONFLICT);
         }
+        if(deleteAdminConfig && !deleteMetadata) {
+            return new ResponseEntity<>("You cannot delete admin config data without deleting metadata", HttpStatus.BAD_REQUEST);
+        }
+        //Delete
+        checkPrivilegeAndDeleteTransactionalData(organisation);
+        selectivelyCleanupMediaContent(deleteMetadata);
+        checkPrivilegeAndDeleteMetadata(deleteMetadata, organisation);
+        checkPrivilegeAndDeleteAdminConfig(deleteAdminConfig, organisation);
+        //Recreate
+        checkPrivilegeAndRecreateBasicAdminConfig(deleteAdminConfig);
+        checkPrivilegeAndRecreateBasicMetadata(deleteMetadata);
+        //Refer to OrganisationService git history for list of repos and tables excluded from deletion flow due to valid causes
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
-        accessControlService.checkPrivilege(MultiTxEntityTypeUpdate);
-        organisationService.deleteTransactionalData();
-
+    private void checkPrivilegeAndRecreateBasicMetadata(boolean deleteMetadata) {
         if (deleteMetadata) {
-            accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
-            organisationService.deleteMetadata();
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+            organisationService.setupBaseOrganisationMetadata(UserContextHolder.getOrganisation());
+        }
+    }
+
+    private void checkPrivilegeAndRecreateBasicAdminConfig(boolean deleteAdminConfig) {
+        if (deleteAdminConfig) {
+            accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
+            organisationService.setupBaseOrganisationAdminConfig(UserContextHolder.getOrganisation());
+        }
+    }
+
+    private void checkPrivilegeAndDeleteAdminConfig(boolean deleteAdminConfig, Organisation organisation) {
+        if(deleteAdminConfig){
+            accessControlService.checkPrivilege(PrivilegeType.DeleteOrganisationConfiguration);
+            organisationService.deleteAdminConfigData(organisation);
+        }
+    }
+
+    private void selectivelyCleanupMediaContent(boolean deleteMetadata) {
+        if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+        } else {
+            accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
         }
         organisationService.deleteMediaContent(deleteMetadata);
+    }
 
-        if (deleteMetadata)
-            organisationService.setupBaseOrganisationData(UserContextHolder.getOrganisation());
+    private void checkPrivilegeAndDeleteMetadata(boolean deleteMetadata, Organisation organisation) {
+        if (deleteMetadata) {
+            accessControlService.checkPrivilege(PrivilegeType.UploadMetadataAndData);
+            organisationService.deleteETLData(organisation);
+            organisationConfigService.deleteMetadataRelatedSettings();
+            organisationService.deleteMetadata(organisation);
+        }
+    }
 
-        return new ResponseEntity<>(HttpStatus.OK);
+    private void checkPrivilegeAndDeleteTransactionalData(Organisation organisation) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        organisationService.deleteTransactionalData(organisation);
     }
 
     private HttpHeaders getHttpHeaders() {

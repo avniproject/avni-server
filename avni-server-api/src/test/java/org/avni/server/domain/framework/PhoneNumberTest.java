@@ -33,7 +33,7 @@ public class PhoneNumberTest {
         assertEquals("+919455509147", instance.format(instance.parse("9455509147", "IN"), PhoneNumberUtil.PhoneNumberFormat.E164));
     }
 
-    private static boolean isValidNumber(PhoneNumberUtil instance, String number) throws NumberParseException {
+    private static boolean isValidNumber(PhoneNumberUtil instance, String number) {
         try {
             return instance.isValidNumber(instance.parse(number, "IN"));
         } catch (NumberParseException e) {

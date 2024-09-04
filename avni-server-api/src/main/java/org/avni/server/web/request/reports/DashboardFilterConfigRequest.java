@@ -2,8 +2,8 @@ package org.avni.server.web.request.reports;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.web.contract.DashboardFilterConfigContract;
+import org.avni.server.web.contract.reports.ObservationBasedFilterContract;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DashboardFilterConfigRequest extends DashboardFilterConfigContract {
@@ -18,15 +18,11 @@ public class DashboardFilterConfigRequest extends DashboardFilterConfigContract 
     }
 
     public JsonObject toJsonObject() {
-        JsonObject jsonObject = new JsonObject();
-        DashboardFilter.FilterType filterType = DashboardFilter.FilterType.valueOf(this.getType());
-        jsonObject.with(DashboardFilter.DashboardFilterConfig.TypeFieldName, this.getType())
-                .with(DashboardFilter.DashboardFilterConfig.SubjectTypeFieldName, this.getSubjectTypeUUID())
-                .with(DashboardFilter.DashboardFilterConfig.WidgetFieldName, this.getWidget());
-        if (filterType.equals(DashboardFilter.FilterType.GroupSubject))
-            jsonObject.put(DashboardFilter.DashboardFilterConfig.GroupSubjectTypeFilterName, getGroupSubjectTypeFilter().getJsonObject());
-        else if (filterType.equals(DashboardFilter.FilterType.Concept))
-            jsonObject.put(DashboardFilter.DashboardFilterConfig.ObservationBasedFilterName, observationBasedFilter.getJsonObject());
-        return jsonObject;
+        return super.toJsonObject(observationBasedFilter == null ? null : observationBasedFilter.getJsonObject(observationBasedFilter.getConceptUUID()));
+    }
+
+    @Override
+    public ObservationBasedFilterContract newObservationBasedFilter() {
+        throw new RuntimeException("Not applicable for DashboardFilterConfigRequest, as it constructed via de-serialisation only");
     }
 }

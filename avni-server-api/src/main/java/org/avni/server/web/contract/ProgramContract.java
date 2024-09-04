@@ -119,4 +119,11 @@ public class ProgramContract {
         contract.setUuid(program.getUuid());
         return contract;
     }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "uuid='" + uuid + '\'' +
+                '}';
+    }
 }

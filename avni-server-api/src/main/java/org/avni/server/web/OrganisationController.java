@@ -26,14 +26,18 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     private final ImplementationRepository implementationRepository;
     private final AccessControlService accessControlService;
     private final OrganisationService organisationService;
+    private final OrganisationCategoryRepository organisationCategoryRepository;
+    private final OrganisationStatusRepository organisationStatusRepository;
 
     @Autowired
-    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService) {
+    public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService, OrganisationCategoryRepository organisationCategoryRepository, OrganisationStatusRepository organisationStatusRepository) {
         this.organisationRepository = organisationRepository;
         this.accountRepository = accountRepository;
         this.implementationRepository = implementationRepository;
         this.accessControlService = accessControlService;
         this.organisationService = organisationService;
+        this.organisationCategoryRepository = organisationCategoryRepository;
+        this.organisationStatusRepository = organisationStatusRepository;
     }
 
     @RequestMapping(value = "/organisation", method = RequestMethod.POST)
@@ -50,7 +54,8 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         org.setUuid(request.getUuid() == null ? UUID.randomUUID().toString() : request.getUuid());
         org.setDbUser(request.getDbUser());
         org.setSchemaName(request.getSchemaName());
-        org.setCategory(request.getCategory());
+        org.setCategory(organisationCategoryRepository.findEntity(request.getCategoryId()));
+        org.setStatus(organisationStatusRepository.findEntity(request.getStatusId()));
         setAttributesOnOrganisation(request, org);
         setOrgAccountByIdOrDefault(org, request.getAccountId());
 
@@ -96,7 +101,6 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         return organisationRepository.save(organisation);
     }
 
-
     @RequestMapping(value = "/organisation/search/find", method = RequestMethod.GET)
     @ResponseBody
     public Page<OrganisationContract> find(@RequestParam(value = "name", required = false) String name,
@@ -115,7 +119,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
             }
             List<Predicate> predicates = new ArrayList<>();
             ownedAccounts.forEach(account -> predicates.add(builder.equal(root.get("account"), account)));
-            Predicate accountPredicate = builder.or(predicates.toArray(new Predicate[predicates.size()]));
+            Predicate accountPredicate = builder.or(predicates.toArray(new Predicate[0]));
             return builder.and(accountPredicate, predicate);
         }, pageable);
         return organisations.map(OrganisationContract::fromEntity);
@@ -136,7 +140,8 @@ public class OrganisationController implements RestControllerResourceProcessor<O
         }
         organisation.setMediaDirectory(request.getMediaDirectory());
         organisation.setVoided(request.isVoided());
-        organisation.setCategory(request.getCategory());
+        organisation.setCategory(organisationCategoryRepository.findEntity(request.getCategoryId()));
+        organisation.setStatus(organisationStatusRepository.findEntity(request.getStatusId()));
     }
 
     private void setOrgAccountByIdOrDefault(Organisation organisation, Long accountId) {

@@ -11,9 +11,7 @@ import org.springframework.data.rest.core.config.Projection;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
@@ -35,7 +33,7 @@ public class AddressLevel extends OrganisationAwareEntity {
     @JoinColumn(name = "type_id")
     private AddressLevelType type;
 
-    @ManyToOne(cascade = {CascadeType.ALL})
+    @ManyToOne
     @JoinColumn(name = "parent_id")
     private AddressLevel parent;
 
@@ -46,17 +44,14 @@ public class AddressLevel extends OrganisationAwareEntity {
     @Type(type = "org.avni.server.ltree.LTreeType")
     private String lineage;
 
-    @Transient
-    private String typeString;
-
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "location")
     private Set<ParentLocationMapping> parentLocationMappings = new HashSet<>();
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(name = "catchment_address_mapping", joinColumns = {@JoinColumn(name = "addresslevel_id")}, inverseJoinColumns = {@JoinColumn(name = "catchment_id")})
     private Set<Catchment> catchments = new HashSet<>();
 
-    @ManyToMany()
+    @ManyToMany
     @Immutable
     @JoinTable(name = "virtual_catchment_address_mapping_table", joinColumns = {@JoinColumn(name = "addresslevel_id")}, inverseJoinColumns = {@JoinColumn(name = "catchment_id")})
     private Set<Catchment> virtualCatchments = new HashSet<>();
@@ -163,10 +158,6 @@ public class AddressLevel extends OrganisationAwareEntity {
         return this.type.getName();
     }
 
-    public void setTypeString(String typeString) {
-        this.typeString = typeString;
-    }
-
     public void addCatchment(Catchment catchment) {
         catchments.add(catchment);
     }
@@ -193,7 +184,7 @@ public class AddressLevel extends OrganisationAwareEntity {
 
     public void setParentLocationMapping(ParentLocationMapping parentLocationMapping) {
         AddressLevel parentLocation = parentLocationMappings.stream()
-                .map(it -> it.getParentLocation())
+                .map(ParentLocationMapping::getParentLocation)
                 .filter(Objects::nonNull)
                 .findFirst().orElse(null);
         if (!parentLocationMapping.getParentLocation().equals(parentLocation)) {
@@ -252,6 +243,11 @@ public class AddressLevel extends OrganisationAwareEntity {
         this.legacyId = legacyId;
     }
 
+    public void addChild(AddressLevel addressLevel) {
+        this.subLocations.add(addressLevel);
+        addressLevel.setParent(this);
+    }
+
     @Projection(name = "AddressLevelProjection", types = {AddressLevel.class})
     public interface AddressLevelProjection extends BaseProjection {
         String getTitle();
@@ -261,5 +257,9 @@ public class AddressLevel extends OrganisationAwareEntity {
 
     public void calculateLineage() {
         this.lineage = this.getParent() == null ? this.getId().toString() : this.getParent().lineage + "." + this.getId().toString();
+    }
+
+    public List<Long> getLineageAddressIds() {
+        return Arrays.stream(this.lineage.split("\\.")).map(Long::parseLong).collect(Collectors.toList());
     }
 }

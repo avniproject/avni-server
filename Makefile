@@ -133,12 +133,17 @@ debug_server_remote_db: build_server
 
 build_server: ## Builds the jar file
 	./gradlew clean build -x test
+build-server: build_server
 
 boot_run:
 	OPENCHS_DATABASE=$(DB) ./gradlew bootRun
 
 test_server: rebuild_testdb ## Run tests
 	GRADLE_OPTS="-Xmx256m" ./gradlew clean test
+test-server: test_server
+
+test_server_without_clean_rebuild:  ## Run tests
+	GRADLE_OPTS="-Xmx256m" ./gradlew test
 
 test_server_with_remote_db:
 	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER)

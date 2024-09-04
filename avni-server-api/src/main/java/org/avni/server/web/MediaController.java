@@ -27,7 +27,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -64,10 +63,10 @@ public class MediaController {
             logger.debug(format("Generating pre-signed url: %s", url.toString()));
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(url.toString());
         } catch (AccessDeniedException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }
@@ -76,7 +75,11 @@ public class MediaController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<String> generateMobileDatabaseBackupUploadUrl() {
         logger.info("getting mobile database backup upload url");
-        return getFileUrlResponse(mobileDatabaseBackupFile(), HttpMethod.PUT);
+        try {
+            return getFileUrlResponse(mobileDatabaseBackupFile(), HttpMethod.PUT);
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     private String mobileDatabaseBackupFile() {
@@ -92,14 +95,22 @@ public class MediaController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<String> generateMobileDatabaseBackupDownloadUrl() {
         logger.info("getting mobile database backup download url");
-        return getFileUrlResponse(mobileDatabaseBackupFile(), HttpMethod.GET);
+        try {
+            return getFileUrlResponse(mobileDatabaseBackupFile(), HttpMethod.GET);
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/media/mobileDatabaseBackupUrl/exists", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<String> mobileDatabaseBackupExists() {
         logger.info("checking whether mobile database backup url exists");
-        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(s3Service.fileExists(mobileDatabaseBackupFile())));
+        try {
+            return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(Boolean.toString(s3Service.fileExists(mobileDatabaseBackupFile())));
+        } catch (ValidationException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @RequestMapping(value = "/media/signedUrl", method = RequestMethod.GET)
@@ -108,10 +119,10 @@ public class MediaController {
         try {
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3Service.generateMediaDownloadUrl(url).toString());
         } catch (AccessDeniedException e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorBodyBuilder.getErrorMessageBody(e));
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(e));
         }
     }

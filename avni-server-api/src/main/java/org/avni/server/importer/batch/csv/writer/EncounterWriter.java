@@ -26,17 +26,17 @@ import java.util.List;
 
 @Component
 public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
-    private EncounterRepository encounterRepository;
-    private IndividualRepository individualRepository;
-    private BasicEncounterCreator basicEncounterCreator;
-    private FormMappingRepository formMappingRepository;
-    private ObservationService observationService;
-    private RuleServerInvoker ruleServerInvoker;
-    private VisitCreator visitCreator;
-    private DecisionCreator decisionCreator;
-    private ObservationCreator observationCreator;
-    private EncounterService encounterService;
-    private EntityApprovalStatusWriter entityApprovalStatusWriter;
+    private final EncounterRepository encounterRepository;
+    private final IndividualRepository individualRepository;
+    private final BasicEncounterCreator basicEncounterCreator;
+    private final FormMappingRepository formMappingRepository;
+    private final ObservationService observationService;
+    private final RuleServerInvoker ruleServerInvoker;
+    private final VisitCreator visitCreator;
+    private final DecisionCreator decisionCreator;
+    private final ObservationCreator observationCreator;
+    private final EncounterService encounterService;
+    private final EntityApprovalStatusWriter entityApprovalStatusWriter;
 
     @Autowired
     public EncounterWriter(EncounterRepository encounterRepository,

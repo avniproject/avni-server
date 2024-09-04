@@ -39,12 +39,18 @@ public class TestGroupService {
         Privilege p = privilegeRepository.findByType(privilegeType);
         groupPrivilege.setPrivilege(p);
         groupPrivilege.setGroup(group);
-        groupPrivilegeRepository.save(groupPrivilege);
+        groupPrivilegeRepository.saveGroupPrivilege(groupPrivilege);
     }
 
     public void giveViewSubjectPrivilegeTo(Group group, SubjectType ... subjectTypes) {
         Arrays.stream(subjectTypes).forEach(subjectType -> {
             this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).build(), PrivilegeType.ViewSubject);
+        });
+    }
+
+    public void giveEditSubjectPrivilegeTo(Group group, SubjectType ... subjectTypes) {
+        Arrays.stream(subjectTypes).forEach(subjectType -> {
+            this.givePrivilege(group, new TestGroupPrivilegeBuilder().withDefaultValuesForNewEntity().setSubjectType(subjectType).build(), PrivilegeType.EditSubject);
         });
     }
 

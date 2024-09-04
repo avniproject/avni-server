@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.common.EntityHelper;
 import org.avni.server.dao.task.TaskTypeRepository;
 import org.avni.server.domain.task.TaskType;
@@ -43,5 +44,15 @@ public class TaskTypeService implements NonScopeAwareService {
         taskType.assignUUIDIfRequired();
         taskTypeRepository.save(taskType);
         return taskType;
+    }
+
+    public void saveTaskTypes(TaskTypeContract[] taskTypeContracts) {
+        for (TaskTypeContract taskTypeContract : taskTypeContracts) {
+            try {
+                saveTaskType(taskTypeContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(taskTypeContract, e);
+            }
+        }
     }
 }

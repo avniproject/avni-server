@@ -12,10 +12,9 @@ import java.util.List;
 
 @Service
 public class AccountAdminService {
-
     private final Logger logger;
-    private AccountAdminRepository accountAdminRepository;
-    private AccountRepository accountRepository;
+    private final AccountAdminRepository accountAdminRepository;
+    private final AccountRepository accountRepository;
 
     public AccountAdminService(AccountAdminRepository accountAdminRepository, AccountRepository accountRepository) {
         this.accountAdminRepository = accountAdminRepository;
@@ -36,5 +35,4 @@ public class AccountAdminService {
             accountAdminRepository.save(accountAdmin);
         });
     }
-
 }

@@ -57,7 +57,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
         this.filterConfig = filterConfig;
     }
 
-    public class DashboardFilterConfig {
+    public static class DashboardFilterConfig {
         public static final String TypeFieldName = "type";
         public static final String SubjectTypeFieldName = "subjectTypeUUID";
         public static final String WidgetFieldName = "widget";
@@ -150,6 +150,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
         GroupSubject,
         Address,
         Concept,
-        SubjectType;
+        SubjectType,
+        AsOnDate;
     }
 }

@@ -17,6 +17,11 @@ public class AddressLevelTypeBuilder {
         return this;
     }
 
+    public AddressLevelTypeBuilder withUuid(UUID uuid) {
+        addressLevelType.setUuid(uuid.toString());
+        return this;
+    }
+
     public AddressLevelTypeBuilder withUuid(String uuid) {
         addressLevelType.setUuid(uuid);
         return this;
@@ -25,6 +30,16 @@ public class AddressLevelTypeBuilder {
     public AddressLevelTypeBuilder withDefaultValuesForNewEntity() {
         String placeholder = UUID.randomUUID().toString();
         return withUuid(placeholder).name(placeholder).level(3d);
+    }
+
+    public AddressLevelTypeBuilder parent(AddressLevelType parent) {
+        addressLevelType.setParent(parent);
+        return this;
+    }
+
+    public AddressLevelTypeBuilder child(AddressLevelType child) {
+        addressLevelType.addChildAddressLevelType(child);
+        return this;
     }
 
     public AddressLevelType build() {

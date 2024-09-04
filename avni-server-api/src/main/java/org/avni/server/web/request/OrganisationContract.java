@@ -1,14 +1,16 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationStatus;
 
 public class OrganisationContract extends ETLContract {
     private Long parentOrganisationId;
     private String mediaDirectory;
     private String usernameSuffix;
     private Long accountId;
-    private OrganisationCategory category;
+    private Long categoryId;
+    private Long statusId;
     private String region;
 
     public static OrganisationContract fromEntity(Organisation organisation) {
@@ -19,10 +21,19 @@ public class OrganisationContract extends ETLContract {
         organisationContract.setMediaDirectory(organisation.getMediaDirectory());
         organisationContract.setUsernameSuffix(organisation.getEffectiveUsernameSuffix());
         organisationContract.setAccountId(organisation.getAccount() == null ? null : organisation.getAccount().getId());
-        organisationContract.setCategory(organisation.getCategory());
+        organisationContract.setCategoryId(organisation.getCategory().getId());
+        organisationContract.setStatusId(organisation.getStatus().getId());
         organisationContract.region = organisation.getAccount().getRegion();
         mapEntity(organisationContract, organisation);
         return organisationContract;
+    }
+
+    private void setStatusId(Long id) {
+        this.statusId = id;
+    }
+
+    private void setCategoryId(Long id) {
+        this.categoryId = id;
     }
 
     public Long getParentOrganisationId() {
@@ -57,12 +68,12 @@ public class OrganisationContract extends ETLContract {
         this.mediaDirectory = mediaDirectory;
     }
 
-    public OrganisationCategory getCategory() {
-        return category;
+    public Long getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategory(OrganisationCategory category) {
-        this.category = category;
+    public Long getStatusId() {
+        return statusId;
     }
 
     public String getRegion() {

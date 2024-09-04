@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.common.EntityHelper;
 import org.avni.server.dao.DocumentationRepository;
 import org.avni.server.domain.CHSEntity;
@@ -85,6 +86,16 @@ public class DocumentationService implements NonScopeAwareService {
     private void assignUUIDIfNull(CHSEntity chsEntity, CHSRequest request) {
         if (chsEntity.getUuid() == null) {
             chsEntity.setUuid(request.getUuid());
+        }
+    }
+
+    public void saveDocumentations(DocumentationContract[] documentationContracts) {
+        for (DocumentationContract documentationContract : documentationContracts) {
+            try {
+                saveDocumentation(documentationContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(documentationContract, e);
+            }
         }
     }
 }

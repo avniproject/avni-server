@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationGenderMappingRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
@@ -58,6 +59,7 @@ public class IndividualRelationService implements NonScopeAwareService {
             individualRelation.setUuid(uuid == null ? UUID.randomUUID().toString() : uuid);
         }
         individualRelation.setName(name); //Update name if changed
+        individualRelation.setVoided(individualRelationContract.isVoided());
         IndividualRelation savedRelation = individualRelationRepository.save(individualRelation);
         saveGenderMappings(individualRelationContract, savedRelation);
     }
@@ -147,5 +149,15 @@ public class IndividualRelationService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return individualRelationRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void saveRelations(IndividualRelationContract[] individualRelationContracts) {
+        for (IndividualRelationContract individualRelationContract : individualRelationContracts) {
+            try {
+                uploadRelation(individualRelationContract);
+            } catch (Exception e) {
+                throw new BulkItemSaveException(individualRelationContract, e);
+            }
+        }
     }
 }

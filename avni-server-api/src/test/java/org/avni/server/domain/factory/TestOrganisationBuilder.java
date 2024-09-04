@@ -2,7 +2,8 @@ package org.avni.server.domain.factory;
 
 import org.avni.server.domain.Account;
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.metadata.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.domain.organisation.OrganisationStatus;
 
 import java.util.UUID;
 
@@ -11,12 +12,17 @@ public class TestOrganisationBuilder {
 
     public TestOrganisationBuilder withMandatoryFields() {
         String placeholder = UUID.randomUUID().toString();
-        return withUuid(placeholder).withDbUser("testDbUser").withName(placeholder).withSchemaName(placeholder).setCategory(OrganisationCategory.Production);
+        return withUuid(placeholder).withDbUser("testDbUserNew").withName(placeholder).withSchemaName(placeholder);
     }
 
     public TestOrganisationBuilder setId(long id) {
         organisation.setId(id);
         return this;
+    }
+
+    public TestOrganisationBuilder withUsernameSuffix(String usernameSuffix) {
+        organisation.setUsernameSuffix(usernameSuffix);
+    	return this;
     }
 
     public TestOrganisationBuilder withSchemaName(String schemaName) {
@@ -46,6 +52,11 @@ public class TestOrganisationBuilder {
 
     public TestOrganisationBuilder setCategory(OrganisationCategory organisationCategory) {
         organisation.setCategory(organisationCategory);
+        return this;
+    }
+
+    public TestOrganisationBuilder withStatus(OrganisationStatus status) {
+        organisation.setStatus(status);
         return this;
     }
 
