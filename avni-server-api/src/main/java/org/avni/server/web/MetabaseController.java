@@ -30,9 +30,7 @@ public class MetabaseController {
 
     @PostMapping("/create-questions")
     public void createQuestions() throws Exception{
-        databaseService.createQuestionsForSubjectTypes();
-        databaseService.createQuestionsForProgramsAndEncounters();
-        databaseService.createQuestionsForIndivdualTables();
+        databaseService.createQuestions();
     }
 
     @GetMapping("/sync-status")

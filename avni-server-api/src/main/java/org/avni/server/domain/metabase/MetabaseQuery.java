@@ -5,29 +5,24 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class MetabaseQuery {
-    private final int databaseId;
-    private final int sourceTable;
+    private final Database database;
     private final ArrayNode joins;
-    private final QueryType type = QueryType.QUERY;
 
-
-    public MetabaseQuery(int databaseId,int sourceTable, ArrayNode joins) {
-        this.databaseId = databaseId;
-        this.sourceTable = sourceTable;
+    public MetabaseQuery(Database database, ArrayNode joins) {
+        this.database = database;
         this.joins = joins;
     }
 
     public int getDatabaseId() {
-        return databaseId;
+        return database.getId();
     }
+
 
     public ObjectNode toJson(ObjectMapper objectMapper) {
         ObjectNode queryNode = objectMapper.createObjectNode();
-        queryNode.put("source-table", sourceTable);
+        queryNode.put("database", database.getId());
         queryNode.set("joins", joins);
-        queryNode.put("type", type.toString());
-
-
+        queryNode.put("type", "query");
         return queryNode;
     }
 }

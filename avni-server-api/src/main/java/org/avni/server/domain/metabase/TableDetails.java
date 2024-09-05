@@ -69,4 +69,7 @@ public class TableDetails {
         return displayName;
     }
 
+    public boolean nameMatches(String tableName) {
+        return tableName.equals(getDisplayName());
+    }
 }

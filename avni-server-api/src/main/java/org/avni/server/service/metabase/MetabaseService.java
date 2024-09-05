@@ -23,7 +23,7 @@ public class MetabaseService {
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
     private Database globalDatabase;
-    private CollectionResponse globalCollection;
+    private MetabaseCollectionInfo globalCollection;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
@@ -51,7 +51,7 @@ public class MetabaseService {
         this.globalDatabase = database;
 
         CollectionResponse metabaseCollection = collectionRepository.save(new Collection(name, name + " collection"));
-        this.globalCollection = metabaseCollection;
+        this.globalCollection = new MetabaseCollectionInfo(null, metabaseCollection.getId(), false);
 
         Group metabaseGroup = groupPermissionsRepository.save(new Group(name));
 
@@ -69,10 +69,18 @@ public class MetabaseService {
     }
 
     public int getGlobalDatabaseId() {
+        if (globalDatabase == null) {
+            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+            globalDatabase = databaseRepository.getDatabaseByName(currentOrganisation.getName());
+        }
         return globalDatabase.getId();
     }
 
     public int getGlobalCollectionId() {
+        if (globalCollection == null) {
+            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+            globalCollection = databaseRepository.getCollectionByName(currentOrganisation.getName() + " collection");
+        }
         return globalCollection.getId();
     }
 }

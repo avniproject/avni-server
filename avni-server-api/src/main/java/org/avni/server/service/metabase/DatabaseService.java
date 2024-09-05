@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.avni.server.util.S;
@@ -40,6 +41,11 @@ public class DatabaseService {
         this.addressQuestionCreationService = addressQuestionCreationService;
     }
 
+    public Database getGlobalDatabase() {
+        int databaseId = metabaseService.getGlobalDatabaseId();
+        return databaseRepository.getDatabaseByName(String.valueOf(databaseId));
+    }
+
     public int getDatabaseId() {
         if (databaseId == null) {
             databaseId = metabaseService.getGlobalDatabaseId();
@@ -54,8 +60,8 @@ public class DatabaseService {
         return collectionId;
     }
 
-    public int getTableIdByName(String tableName) {
-        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getDatabaseId());
+    public int getTableIdByDisplayName(String tableName) {
+        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getGlobalDatabase());
         List<TableDetails> tables = databaseInfo.getTables();
 
         for (TableDetails table : tables) {
@@ -66,8 +72,8 @@ public class DatabaseService {
         return -1;
     }
 
-    public int getTableIdByName(String tableName, String schema) {
-        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getDatabaseId());
+    public int getTableIdByDisplayName(String tableName, String schema) {
+        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getGlobalDatabase());
         List<TableDetails> tables = databaseInfo.getTables();
 
         for (TableDetails table : tables) {
@@ -84,13 +90,26 @@ public class DatabaseService {
         return -1;
     }
 
+    public TableDetails getTableDetailsByDisplayName(String tableName) {
+        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getGlobalDatabase());
+        List<TableDetails> tables = databaseInfo.getTables();
+
+        // Handle Optional properly
+        Optional<TableDetails> tableDetailsOptional = tables.stream()
+                .filter(tableDetail -> tableDetail.nameMatches(tableName))
+                .findFirst();
+
+        return tableDetailsOptional.orElseThrow(() ->
+                new RuntimeException("Table not found: " + tableName));
+    }
+
 
     private String createRequestBodyForDataset(int sourceTableId) {
         return "{\"database\":" + getDatabaseId() + ",\"query\":{\"source-table\":" + sourceTableId + "},\"type\":\"query\",\"parameters\":[]}";
     }
 
     public int getFieldIdByTableNameAndFieldName(String tableName, String fieldName) {
-        List<FieldDetails> fieldsList = databaseRepository.getFields(getDatabaseId());
+        List<FieldDetails> fieldsList = databaseRepository.getFields(getGlobalDatabase());
         String snakeCaseTableName = S.toSnakeCase(tableName);
 
         for (FieldDetails field : fieldsList) {
@@ -108,53 +127,52 @@ public class DatabaseService {
     }
 
 
-    private DatasetResponse getTableMetadata() {
-        int tableMetadataId = getTableIdByName("Table Metadata");
-        String requestBody = createRequestBodyForDataset(tableMetadataId);
-        return databaseRepository.getDataset(requestBody);
+    private DatasetResponse getTableMetadata(Database database) {
+        TableDetails metadataTable = databaseRepository.getTableDetailsByDisplayName(database, "table_metadata");
+        return databaseRepository.findAll(metadataTable, database);
     }
 
     public List<String> getSubjectTypeNames() {
-        DatasetResponse tableMetadata = getTableMetadata();
+        Database database = getGlobalDatabase();
+        TableDetails metadataTable = databaseRepository.getTableDetailsByDisplayName(database, "table_metadata");
+
+        DatasetResponse datasetResponse = databaseRepository.findAll(metadataTable, database);
+        List<List<String>> rows = datasetResponse.getData().getRows();
+
         List<String> subjectTypeNames = new ArrayList<>();
 
-        List<List<String>> rows = tableMetadata.getData().getRows();
         for (List<String> row : rows) {
             String type = row.get(2);
-            if (Arrays.asList(
-                    TableType.INDIVIDUAL.getTypeName(),
-                    TableType.HOUSEHOLD.getTypeName(),
-                    TableType.GROUP.getTypeName(),
-                    TableType.PERSON.getTypeName()
-            ).contains(type)) {
-                String rawName = row.get(1);
-                subjectTypeNames.add(S.formatName(rawName));
+            if (type.equalsIgnoreCase(TableType.INDIVIDUAL.getTypeName()) ||
+                    type.equalsIgnoreCase(TableType.HOUSEHOLD.getTypeName()) ||
+                    type.equalsIgnoreCase(TableType.GROUP.getTypeName()) ||
+                    type.equalsIgnoreCase(TableType.PERSON.getTypeName())) {
+                subjectTypeNames.add(row.get(1));
             }
         }
 
-        System.out.println("The subject type names: " + subjectTypeNames);
         return subjectTypeNames;
     }
 
 
 
     public List<String> getProgramAndEncounterNames() {
-        DatasetResponse tableMetadata = getTableMetadata();
+        Database database = getGlobalDatabase();
+        TableDetails metadataTable = databaseRepository.getTableDetailsByDisplayName(database, "table_metadata");
+
+        DatasetResponse datasetResponse = databaseRepository.findAll(metadataTable, database);
+        List<List<String>> rows = datasetResponse.getData().getRows();
+
         List<String> programNames = new ArrayList<>();
 
-        List<List<String>> rows = tableMetadata.getData().getRows();
         for (List<String> row : rows) {
             String type = row.get(2);
-            if (Arrays.asList(
-                    TableType.PROGRAM_ENCOUNTER.getTypeName(),
-                    TableType.PROGRAM_ENROLMENT.getTypeName()
-            ).contains(type)) {
-                String rawName = row.get(1);
-                programNames.add(S.formatName(rawName));
+            if (type.equalsIgnoreCase(TableType.PROGRAM_ENCOUNTER.getTypeName()) ||
+                    type.equalsIgnoreCase(TableType.PROGRAM_ENROLMENT.getTypeName())) {
+                programNames.add(row.get(1));
             }
         }
 
-        System.out.println("The program and encounter names: " + programNames);
         return programNames;
     }
 
@@ -169,27 +187,8 @@ public class DatabaseService {
         return tableNames;
     }
 
-    private void createQuestionForTable(String tableName, String addressTableName, String addressField, String tableField) throws Exception {
-        int addressTableId = getTableIdByName(addressTableName);
-        int joinFieldId1 = getFieldIdByTableNameAndFieldName(addressTableName, addressField);
-        int tableId = getTableIdByName(tableName);
-        int joinFieldId2 = getFieldIdByTableNameAndFieldName(tableName, tableField);
-
-        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, joinFieldId1, joinFieldId2, tableName, objectMapper);
-
-        ArrayNode joinsArray = objectMapper.createArrayNode();
-        joinsArray.add(join.toJson(objectMapper));
-
-        MetabaseQuery query = new MetabaseQuery(getDatabaseId(),addressTableId, joinsArray);
-
-        MetabaseRequestBody requestBody = new MetabaseRequestBody(
-                "Address + " + tableName, query, VisualizationType.TABLE, null, objectMapper.createObjectNode(), getCollectionId(), CardType.QUESTION);
-
-        databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
-    }
-
     private void createQuestionForTable(String tableName, String schema) {
-        int tableId = getTableIdByName(tableName, schema);
+        int tableId = getTableIdByDisplayName(tableName, schema);
 
         ObjectNode datasetQuery = objectMapper.createObjectNode();
         datasetQuery.put("database", getDatabaseId());
@@ -219,12 +218,15 @@ public class DatabaseService {
     public void createQuestionsForSubjectTypes() throws Exception {
         SyncStatus syncStatus = getInitialSyncStatus();
         if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database initial sync is not complete.");
+            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
         }
 
+        Database database = getGlobalDatabase();
         List<String> subjectTypeNames = getSubjectTypeNames();
 
         for (String subjectTypeName : subjectTypeNames) {
+            TableDetails subjectTable = databaseRepository.getTableDetailsByDisplayName(database, subjectTypeName);
+
             addressQuestionCreationService.createQuestionForTable(subjectTypeName, "Address", "id", "address_id");
         }
     }
@@ -232,35 +234,39 @@ public class DatabaseService {
     public void createQuestionsForProgramsAndEncounters() throws Exception {
         SyncStatus syncStatus = getInitialSyncStatus();
         if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database initial sync is not complete.");
+            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
         }
 
-        List<String> programNames = getProgramAndEncounterNames();
+        Database database = getGlobalDatabase();
 
-        MetabaseDatabaseInfo databaseInfo = databaseRepository.getDatabaseDetails(getDatabaseId());
-        List<String> allTableNames = databaseInfo.getTables()
-                .stream()
-                .map(TableDetails::getDisplayName)
-                .collect(Collectors.toList());
+        List<String> programAndEncounterNames = getProgramAndEncounterNames();
 
-        for (String programName : programNames) {
-            for (String tableName : allTableNames) {
-                if (tableName.equalsIgnoreCase(programName)) {
-                    addressQuestionCreationService.createQuestionForTable(tableName, "Address", "id", "address_id");
-                }
-            }
+        for (String programName : programAndEncounterNames) {
+            TableDetails programTable = databaseRepository.getTableDetailsByDisplayName(database, programName);
+            addressQuestionCreationService.createQuestionForTable(programName, "Address", "id", "address_id");
         }
     }
 
-    public void createQuestionsForIndivdualTables() {
-        List<String> tablesToCreateQuestionsFor = Arrays.asList(
-            "Address",
-            "Media",
-            "Sync Telemetry"
-        );
+    public void createQuestionsForIndividualTables() throws Exception {
+        SyncStatus syncStatus = getInitialSyncStatus();
+        if (syncStatus != SyncStatus.COMPLETE) {
+            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
+        }
+
+        Database database = getGlobalDatabase();
+        List<String> tablesToCreateQuestionsFor = Arrays.asList("Address", "Media", "Sync Telemetry");
 
         for (String tableName : tablesToCreateQuestionsFor) {
-            createQuestionForTable(tableName, "!public");
+            TableDetails tableDetails = databaseRepository.getTableDetailsByDisplayName(database, tableName);
+            databaseRepository.createQuestionForTable(database, tableDetails, "Address", "id", "address_id");
         }
+    }
+
+    public void createQuestions() throws Exception {
+        createQuestionsForSubjectTypes();
+
+        createQuestionsForProgramsAndEncounters();
+
+        createQuestionsForIndividualTables();
     }
 }

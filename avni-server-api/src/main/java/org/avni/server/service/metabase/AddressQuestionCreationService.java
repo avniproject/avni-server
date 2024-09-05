@@ -29,46 +29,14 @@ public class AddressQuestionCreationService implements QuestionCreationService {
 
     @Override
     public void createQuestionForTable(String tableName, String addressTableName, String addressField, String tableField) throws Exception {
-        int addressTableId = databaseService.getTableIdByName(addressTableName);
-        int joinFieldId1 = databaseService.getFieldIdByTableNameAndFieldName(addressTableName, addressField);
-        int tableId = databaseService.getTableIdByName(tableName);
-        int joinFieldId2 = databaseService.getFieldIdByTableNameAndFieldName(tableName, tableField);
+        Database database = databaseService.getGlobalDatabase();
+        TableDetails tableDetails = databaseRepository.getTableDetailsByDisplayName(database, tableName);
 
-        MetabaseJoin join = new MetabaseJoin("all", tableName, tableId, joinFieldId1, joinFieldId2, tableName, objectMapper);
-
-        ArrayNode joinsArray = objectMapper.createArrayNode();
-        joinsArray.add(join.toJson(objectMapper));
-
-        MetabaseQuery query = new MetabaseQuery(databaseService.getDatabaseId(), addressTableId, joinsArray);
-
-        MetabaseRequestBody requestBody = new MetabaseRequestBody(
-                "Address + " + tableName, query, VisualizationType.TABLE, null, objectMapper.createObjectNode(), databaseService.getCollectionId(), CardType.QUESTION);
-
-        databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
+        databaseRepository.createQuestionForTable(database, tableDetails, addressTableName, addressField, tableField);
     }
 
     @Override
     public void createQuestionForTable(String tableName, String schema) {
-        int tableId = databaseService.getTableIdByName(tableName, schema);
-
-        ObjectNode datasetQuery = objectMapper.createObjectNode();
-        datasetQuery.put("database", databaseService.getDatabaseId());
-        datasetQuery.put("type", "query");
-
-        ObjectNode query = objectMapper.createObjectNode();
-        query.put("source-table", tableId);
-        datasetQuery.set("query", query);
-
-        ObjectNode body = objectMapper.createObjectNode();
-        body.put("name", tableName);
-        body.set("dataset_query", datasetQuery);
-        body.put("display", "table");
-        body.putNull("description");
-        body.set("visualization_settings", objectMapper.createObjectNode());
-        body.put("collection_id", databaseService.getCollectionId());
-        body.putNull("collection_position");
-        body.putNull("result_metadata");
-
-        databaseRepository.postForObject(metabaseApiUrl + "/card", body, JsonNode.class);
+        // to be added
     }
 }
