@@ -111,16 +111,12 @@ public class CardService implements NonScopeAwareService, DefaultDashboardConsta
         card.setStandardReportCardInputPrograms(programs);
         card.setStandardReportCardInputEncounterTypes(encounterTypes);
 
-        if (isRecentStandardReportCard(type.getName())) {
+        if (type.getType().isRecentStandardReportCardType()) {
             if (recentDuration == null) {
                 throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
             }
             card.setStandardReportCardInputRecentDuration(recentDuration);
         }
-    }
-
-    private boolean isRecentStandardReportCard(String cardTypeName) {
-        return cardTypeName.toLowerCase().contains("recent");
     }
 
     private void buildCard(ReportCardContract reportCardRequest, ReportCard card) {
@@ -199,12 +195,12 @@ public class CardService implements NonScopeAwareService, DefaultDashboardConsta
             reportCard.setUuid(defaultDashboardCards.get(standardReportCardType.getName()));
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
-            reportCard.setName(standardReportCardType.getName());
+            reportCard.setName(standardReportCardType.getDescription());
             reportCard.setColour(WHITE_BG_COLOUR);
             reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
             reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
             reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
-            if (isRecentStandardReportCard(standardReportCardType.getName())) {
+            if (standardReportCardType.getType().isRecentStandardReportCardType()) {
                 reportCard.setStandardReportCardInputRecentDuration(ValueUnit.getDefaultRecentDuration());
             }
             if (standardReportCardType.getName().equals(OVERDUE_VISITS_CARD)) {
