@@ -22,6 +22,7 @@ public class UserContract extends ReferenceDataContract {
     private Long organisationId;
     private List<Long> accountIds;
     private boolean disabledInCognito;
+    private boolean ignoreSyncSettingsInDEA;
     private String password;
     private JsonObject syncSettings;
     private String createdBy;
@@ -40,6 +41,7 @@ public class UserContract extends ReferenceDataContract {
         userContract.setPhoneNumber(user.getPhoneNumber());
         userContract.setOrganisationId(user.getOrganisationId());
         userContract.setDisabledInCognito(user.isDisabledInCognito());
+        userContract.setIgnoreSyncSettingsInDEA(user.isIgnoreSyncSettingsInDEA());
         userContract.setCatchmentId(user.getCatchmentId().orElse(null));
         userContract.setSettings(user.getSettings());
         userContract.setCreatedBy(user.getCreatedByUserName());
@@ -59,6 +61,14 @@ public class UserContract extends ReferenceDataContract {
 
     public void setDisabledInCognito(boolean disabledInCognito) {
         this.disabledInCognito = disabledInCognito;
+    }
+
+    public boolean isIgnoreSyncSettingsInDEA() {
+        return ignoreSyncSettingsInDEA;
+    }
+
+    public void setIgnoreSyncSettingsInDEA(boolean ignoreSyncSettingsInDEA) {
+        this.ignoreSyncSettingsInDEA = ignoreSyncSettingsInDEA;
     }
 
     public Long getOrganisationId() {

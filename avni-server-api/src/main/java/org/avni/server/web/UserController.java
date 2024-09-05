@@ -212,6 +212,7 @@ public class UserController {
 
         user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
         user.setSettings(userContract.getSettings());
+        user.setIgnoreSyncSettingsInDEA(userContract.isIgnoreSyncSettingsInDEA());
         user.setSyncSettings(UserSyncSettings.fromUserSyncWebJSON(userContract.getSyncSettings(), subjectTypeRepository));
         User currentUser = userService.getCurrentUser();
         Long organisationId = null;
