@@ -16,6 +16,6 @@ public class AvniAccessException extends RuntimeException {
     }
 
     public static AvniAccessException createForNotAdmin(User user) {
-        return new AvniAccessException(String.format("User doesn't have privilege of type: %s", user.getUuid()));
+        return new AvniAccessException("User is not admin");
     }
 }

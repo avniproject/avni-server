@@ -16,4 +16,6 @@ public interface DashboardRepository extends ReferenceDataRepository<Dashboard>,
     List<String> getAllNames();
 
     List<Dashboard> findAllByIsVoidedFalseOrderByName();
+
+    Dashboard findByUuidAndOrganisationIdAndIsVoidedFalse(String uuid, Long organisationId);
 }
