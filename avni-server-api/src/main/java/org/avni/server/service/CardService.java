@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
-import org.avni.server.mapper.dashboard.DefaultDashboardConstants;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
@@ -16,10 +15,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.avni.server.domain.StandardReportCardTypeType.OverdueVisits;
+import static org.avni.server.domain.StandardReportCardTypeType.ScheduledVisits;
+import static org.avni.server.mapper.dashboard.DefaultDashboardConstants.*;
 
 @Service
-public class CardService implements NonScopeAwareService, DefaultDashboardConstants {
+public class CardService implements NonScopeAwareService {
     private final CardRepository cardRepository;
     private final StandardReportCardTypeRepository standardReportCardTypeRepository;
     private final SubjectTypeRepository subjectTypeRepository;
@@ -186,13 +192,13 @@ public class CardService implements NonScopeAwareService, DefaultDashboardConsta
         }
     }
 
-    public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
-        Map<String, String> defaultDashboardCards = CARD_NAME_UUID_MAPPING;
-        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardCards.keySet());
-        Map<String, ReportCard> savedCards = new HashMap<>();
+    public Map<StandardReportCardTypeType, ReportCard> createDefaultDashboardCards(Organisation organisation) {
+        Map<StandardReportCardTypeType, String> defaultDashboardCards = CARD_TYPE_UUID_MAPPING;
+        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByTypeIn(defaultDashboardCards.keySet());
+        Map<StandardReportCardTypeType, ReportCard> savedCards = new HashMap<>();
         standardReportCardTypes.forEach(standardReportCardType -> {
             ReportCard reportCard = new ReportCard();
-            reportCard.setUuid(defaultDashboardCards.get(standardReportCardType.getName()));
+            reportCard.setUuid(defaultDashboardCards.get(standardReportCardType.getType()));
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
             reportCard.setName(standardReportCardType.getDescription());
@@ -203,13 +209,13 @@ public class CardService implements NonScopeAwareService, DefaultDashboardConsta
             if (standardReportCardType.getType().isRecentStandardReportCardType()) {
                 reportCard.setStandardReportCardInputRecentDuration(ValueUnit.getDefaultRecentDuration());
             }
-            if (standardReportCardType.getName().equals(OVERDUE_VISITS_CARD)) {
+            if (standardReportCardType.getType().equals(OverdueVisits)) {
                 reportCard.setColour(RED_BG_COLOUR);
             }
-            if (standardReportCardType.getName().equals(SCHEDULED_VISITS_CARD)) {
+            if (standardReportCardType.getType().equals(ScheduledVisits)) {
                 reportCard.setColour(GREEN_BG_COLOUR);
             }
-            savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
+            savedCards.put(standardReportCardType.getType(), cardRepository.save(reportCard));
         });
         return savedCards;
     }

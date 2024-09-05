@@ -1,24 +1,21 @@
 package org.avni.server.mapper.dashboard;
 
+import org.avni.server.domain.StandardReportCardTypeType;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.avni.server.domain.StandardReportCardTypeType.*;
+
 public interface DefaultDashboardConstants {
-    String SCHEDULED_VISITS_CARD = "Scheduled visits";
-    String OVERDUE_VISITS_CARD = "Overdue visits";
-    String TOTAL_CARD = "Total";
-    String RECENT_REGISTRATIONS_CARD = "Recent registrations";
-    String RECENT_ENROLMENTS_CARD = "Recent enrolments";
-    String RECENT_VISITS_CARD = "Recent visits";
-    String DUE_CHECKLIST_CARD = "Due checklist";
-    Map<String, String> CARD_NAME_UUID_MAPPING = new HashMap<String, String>() {{
-        put(SCHEDULED_VISITS_CARD, "6085c2f4-52e7-4b08-85b6-d6b2612b4cf5");
-        put(OVERDUE_VISITS_CARD, "85ce7239-e8b5-4e57-b07d-66c18cee47b2");
-        put(TOTAL_CARD, "a1673f8a-c394-4bcf-8b6f-63d83a5443e2");
-        put(RECENT_REGISTRATIONS_CARD, "f366f35a-5c4f-4ff7-b510-2dc9f5f88847");
-        put(RECENT_ENROLMENTS_CARD, "e1036b69-df46-4351-9916-10cd4cfcb6bd");
-        put(RECENT_VISITS_CARD, "dd961ee1-9d4e-4ec9-99f0-99b36672be7c");
-        put(DUE_CHECKLIST_CARD, "9b7632dd-4e98-429a-8e42-67a947bf9ece");
+    Map<StandardReportCardTypeType, String> CARD_TYPE_UUID_MAPPING = new HashMap<StandardReportCardTypeType, String>() {{
+        put(ScheduledVisits, "6085c2f4-52e7-4b08-85b6-d6b2612b4cf5");
+        put(OverdueVisits, "85ce7239-e8b5-4e57-b07d-66c18cee47b2");
+        put(Total, "a1673f8a-c394-4bcf-8b6f-63d83a5443e2");
+        put(RecentRegistrations, "f366f35a-5c4f-4ff7-b510-2dc9f5f88847");
+        put(RecentEnrolments, "e1036b69-df46-4351-9916-10cd4cfcb6bd");
+        put(RecentVisits, "dd961ee1-9d4e-4ec9-99f0-99b36672be7c");
+        put(DueChecklist, "9b7632dd-4e98-429a-8e42-67a947bf9ece");
     }};
 
     String DEFAULT_DASHBOARD = "Default Dashboard";
@@ -36,12 +33,12 @@ public interface DefaultDashboardConstants {
     }};
 
     Map<String, String> SECTION_CARD_MAPPING = new HashMap<String, String>() {{
-        put(VISIT_DETAILS_SECTION.concat(SCHEDULED_VISITS_CARD), "4d139c45-1854-46ec-ad80-40725f7b9b8a");
-        put(VISIT_DETAILS_SECTION.concat(OVERDUE_VISITS_CARD), "4dff9285-88b3-43de-a90b-9823ab32e433");
-        put(RECENT_STATISTICS_SECTION.concat(RECENT_REGISTRATIONS_CARD), "8afecd6c-741c-4871-86f1-bce171f8bfd8");
-        put(RECENT_STATISTICS_SECTION.concat(RECENT_ENROLMENTS_CARD), "383b8df8-93d8-43d9-bc96-545e1176fe63");
-        put(RECENT_STATISTICS_SECTION.concat(RECENT_VISITS_CARD), "9fb198b6-ae10-4c3f-a8e6-652b7d1b7e9c");
-        put(REGISTRATION_OVERVIEW_SECTION.concat(TOTAL_CARD), "e02a68ed-c02b-4cba-a5b5-6a5c71ab5eb8");
+        put(VISIT_DETAILS_SECTION.concat(ScheduledVisits.name()), "4d139c45-1854-46ec-ad80-40725f7b9b8a");
+        put(VISIT_DETAILS_SECTION.concat(OverdueVisits.name()), "4dff9285-88b3-43de-a90b-9823ab32e433");
+        put(RECENT_STATISTICS_SECTION.concat(RecentRegistrations.name()), "8afecd6c-741c-4871-86f1-bce171f8bfd8");
+        put(RECENT_STATISTICS_SECTION.concat(RecentEnrolments.name()), "383b8df8-93d8-43d9-bc96-545e1176fe63");
+        put(RECENT_STATISTICS_SECTION.concat(RecentVisits.name()), "9fb198b6-ae10-4c3f-a8e6-652b7d1b7e9c");
+        put(REGISTRATION_OVERVIEW_SECTION.concat(Total.name()), "e02a68ed-c02b-4cba-a5b5-6a5c71ab5eb8");
     }};
 
     String SUBJECT_TYPE_FILTER = "Subject Type";

@@ -1,6 +1,7 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.StandardReportCardType;
+import org.avni.server.domain.StandardReportCardTypeType;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,5 +29,5 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
 
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
-    List<StandardReportCardType> findAllByNameIn(Set<String> defaultDashboardStandardCardTypeNames);
+    List<StandardReportCardType> findAllByTypeIn(Set<StandardReportCardTypeType> defaultDashboardStandardCardTypeTypes);
 }
