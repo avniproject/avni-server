@@ -28,7 +28,7 @@ import java.util.Optional;
 public interface LocationRepository extends ReferenceDataRepository<AddressLevel>, FindByLastModifiedDateTime<AddressLevel>, OperatingIndividualScopeAwareRepository<AddressLevel> {
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where al.id in (:ids)",
@@ -59,7 +59,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     AddressLevel findByTitleAndCatchmentsUuid(String title, String uuid);
 
     String locationProjectionBaseQuery = "select al.id, al.uuid, al.title, al.type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(al.lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(al.lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where (:title is null or lower(al.title) like lower(concat('%', :title,'%'))) " +
@@ -208,7 +208,6 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
             "cast(lineage as text) as lineage, " +
-            "null as titleLineage, " +
             "alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
@@ -217,7 +216,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     Page<LocationProjection> findNonVoidedLocations(Pageable pageable);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where al.is_voided = false " +
@@ -227,7 +226,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     List<LocationProjection> findNonVoidedLocationsByTypeId(Long typeId);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where al.is_voided = false " +
@@ -236,7 +235,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     LocationProjection findNonVoidedLocationsByUuid(String uuid);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId,\n" +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al\n" +
             "left join address_level_type alt on alt.id = al.type_id\n" +
             "where lineage @>" +
@@ -247,7 +246,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     List<LocationProjection> getParentsWithMaxLevelTypeId(String uuid, Long maxLevelTypeId);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId,\n" +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al\n" +
             "left join address_level_type alt on alt.id = al.type_id\n" +
             "where lineage @>" +

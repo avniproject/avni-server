@@ -5,7 +5,6 @@ public interface LocationProjection extends BaseProjection {
     Long getTypeId();
     Long getParentId();
     String getLineage();
-    String getTitleLineage();
     String getTypeString();
     Double getLevel();
 }
