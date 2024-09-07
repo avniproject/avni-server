@@ -1,28 +1,20 @@
 package org.avni.server.domain.metabase;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class MetabaseQuery {
-    private final Database database;
-    private final ArrayNode joins;
+    private final int databaseId;
+    private final ObjectNode queryNode;
 
-    public MetabaseQuery(Database database, ArrayNode joins) {
-        this.database = database;
-        this.joins = joins;
+    public MetabaseQuery(int databaseId, ObjectNode queryNode) {
+        this.databaseId = databaseId;
+        this.queryNode = queryNode;
     }
 
     public int getDatabaseId() {
-        return database.getId();
+        return databaseId;
     }
 
-
-    public ObjectNode toJson(ObjectMapper objectMapper) {
-        ObjectNode queryNode = objectMapper.createObjectNode();
-        queryNode.put("database", database.getId());
-        queryNode.set("joins", joins);
-        queryNode.put("type", "query");
+    public ObjectNode toJson() {
         return queryNode;
     }
 }

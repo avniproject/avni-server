@@ -5,7 +5,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class CollectionUtilTest {
+public class CreateCollectionRequestUtilTest {
     @Test
     public void hasOnlyTrailingEmptyStrings() {
         assertTrue(CollectionUtil.hasOnlyTrailingEmptyStrings(Arrays.asList("a", "b", "")));

@@ -1,41 +1,57 @@
-// to be completed
 package org.avni.server.domain.metabase;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class MetabaseQueryBuilder {
     private final Database database;
-    private ArrayNode joins;
+    private final ArrayNode joinsArray;
+    private final ObjectMapper objectMapper;
+    private ObjectNode queryNode;
 
-    public MetabaseQueryBuilder(Database database, ArrayNode joins) {
+    public MetabaseQueryBuilder(Database database, ArrayNode joinsArray, ObjectMapper objectMapper) {
         this.database = database;
-        this.joins = joins;
+        this.joinsArray = joinsArray;
+        this.objectMapper = objectMapper;
+        this.queryNode = objectMapper.createObjectNode();
     }
 
     public MetabaseQueryBuilder forTable(TableDetails tableDetails) {
-        // code to be added
+        queryNode.put("source-table", tableDetails.getId());
+        queryNode.put("database", database.getId());
         return this;
     }
 
+    public MetabaseQueryBuilder  joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
+        ObjectNode joinNode = objectMapper.createObjectNode();
+        joinNode.put("fields", "all");
+        joinNode.put("alias", addressTable.getName());
+        joinNode.put("source-table", addressTable.getId());
 
-    public MetabaseQueryBuilder joinWith(TableDetails joinTable, FieldDetails originField, FieldDetails destinationField) {
-        // Build the join condition and add to the joins array
-        ObjectMapper objectMapper = new ObjectMapper();
-        ArrayNode joinCondition = objectMapper.createArrayNode();
+        ArrayNode conditionArray = objectMapper.createArrayNode();
+        conditionArray.add("=");
 
-        joinCondition.add(ConditionType.EQUAL.getOperator());
-        joinCondition.add(objectMapper.createArrayNode().add("field").add(originField.getId()));
-        joinCondition.add(objectMapper.createArrayNode().add("field").add(destinationField.getId()));
+        ArrayNode leftField = objectMapper.createArrayNode();
+        leftField.add("field");
+        leftField.add(joinField1.getId());
+        leftField.add(objectMapper.createObjectNode().put("base-type", "type/Integer"));
+        conditionArray.add(leftField);
 
-        joins.add(joinCondition);
+        ArrayNode rightField = objectMapper.createArrayNode();
+        rightField.add("field");
+        rightField.add(joinField2.getId());
+        rightField.add(objectMapper.createObjectNode().put("base-type", "type/Integer").put("join-alias", addressTable.getName()));
+        conditionArray.add(rightField);
+
+        joinNode.set("condition", conditionArray);
+        joinsArray.add(joinNode);
+        queryNode.set("joins", joinsArray);
         return this;
     }
-
 
     public MetabaseQuery build() {
-        return new MetabaseQuery(database, joins);
+        queryNode.put("type", "query");
+        return new MetabaseQuery(database.getId(), queryNode);
     }
 }

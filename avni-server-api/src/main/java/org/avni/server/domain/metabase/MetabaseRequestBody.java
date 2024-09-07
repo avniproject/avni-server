@@ -32,7 +32,7 @@ public class MetabaseRequestBody {
         ObjectNode datasetQueryNode = objectMapper.createObjectNode();
         datasetQueryNode.put("database", datasetQuery.getDatabaseId());
         datasetQueryNode.put("type", "query");
-        datasetQueryNode.set("query", datasetQuery.toJson(objectMapper));
+        datasetQueryNode.set("query", datasetQuery.toJson());
 
         rootNode.set("dataset_query", datasetQueryNode);
         rootNode.put("display", display.toString());

@@ -8,7 +8,6 @@ import org.avni.server.util.S;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.List;
 
 @Repository
@@ -26,28 +25,52 @@ public class DatabaseRepository extends MetabaseConnector {
         return database;
     }
 
-    public Database getDatabaseByName(String databaseName) {
-        String url = metabaseApiUrl + "/database";
-        String jsonResponse = getForObject(url, String.class);
+    public Database getDatabaseById(Database database) {
+        int id = database.getId();
+        String url = metabaseApiUrl + "/database/" + id;
         try {
-            List<Database> databases = objectMapper.readValue(jsonResponse, new TypeReference<List<Database>>() {});
-            return databases.stream()
-                    .filter(db -> db.getName().equals(databaseName))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Database with name " + databaseName + " not found."));
+            String jsonResponse = getForObject(url, String.class);
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(jsonResponse, Database.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to retrieve database with ID " + id, e);
+        }
+    }
+
+    public Database getDatabaseByName(String name) {
+        String url = metabaseApiUrl + "/database";
+
+        String jsonResponse = getForObject(url, String.class);
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(jsonResponse);
+            JsonNode dataArray = rootNode.path("data");
+
+            for (JsonNode dbNode : dataArray) {
+                Database db = objectMapper.treeToValue(dbNode, Database.class);
+                if (db.getName().equals(name)) {
+                    return db;
+                }
+            }
+            throw new RuntimeException("Database with name " + name + " not found.");
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve database", e);
         }
     }
 
-    public MetabaseCollectionInfo getCollectionByName(String collectionName) {
+    public CollectionInfoResponse getCollectionByName(String collectionName) {
         String url = metabaseApiUrl + "/collection";
-        String jsonResponse = getForObject(url, String.class);
-
         try {
-            List<MetabaseCollectionInfo> collections = objectMapper.readValue(jsonResponse, new TypeReference<List<MetabaseCollectionInfo>>() {});
+            String jsonResponse = getForObject(url, String.class);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<CollectionInfoResponse> collections = objectMapper.readValue(
+                    jsonResponse, new TypeReference<List<CollectionInfoResponse>>() {}
+            );
+
             return collections.stream()
-                    .filter(coll -> coll.getName().equals(collectionName))
+                    .filter(collection -> collection.getName().equals(collectionName))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Collection with name " + collectionName + " not found."));
         } catch (Exception e) {
@@ -55,13 +78,13 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public void createQuestionForTable(Database database, TableDetails tableDetails, String addressTableName, String addressField, String tableField) throws Exception {
-        TableDetails addressTableDetails = getTableDetailsByDisplayName(database, addressTableName);
+    public void createQuestionForTable(Database database, TableDetails tableDetails, String addressTableName, String addressField, String tableField) {
+        TableDetails addressTableDetails = getTableDetailsByName(database, addressTableName);
         FieldDetails joinField1 = getFieldDetailsByName(database, addressTableName, addressField);
         FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails.getName(), tableField);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
-        MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray)
+        MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray, objectMapper)
                 .forTable(tableDetails)
                 .joinWith(addressTableDetails, joinField1, joinField2)
                 .build();
@@ -72,7 +95,7 @@ public class DatabaseRepository extends MetabaseConnector {
                 VisualizationType.TABLE,
                 null,
                 objectMapper.createObjectNode(),
-                getCollectionByName(database.getName()).getId(),
+                getCollectionByName(database.getName()).getIdAsInt(),
                 CardType.QUESTION
         );
 
@@ -111,16 +134,16 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public TableDetails getTableDetailsByDisplayName(Database database, String tableName) {
+    public TableDetails getTableDetailsByName(Database database, String tableName) {
         MetabaseDatabaseInfo databaseInfo = getDatabaseDetails(database);
         return databaseInfo.getTables().stream()
-                .filter(tableDetail -> tableDetail.nameMatches(tableName))
+                .filter(tableDetail -> tableDetail.getName().equalsIgnoreCase(tableName))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Table with name " + tableName + " not found."));
     }
 
-    public DatabaseSyncStatus getInitialSyncStatus(int databaseId) {
-        String url = metabaseApiUrl + "/database/" + databaseId;
+    public DatabaseSyncStatus getInitialSyncStatus(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId();
         String jsonResponse = getForObject(url, String.class);
         try {
             return objectMapper.readValue(jsonResponse, DatabaseSyncStatus.class);
