@@ -78,9 +78,8 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public void createQuestionForTable(Database database, TableDetails tableDetails, String addressTableName, String addressField, String tableField) {
-        TableDetails addressTableDetails = getTableDetailsByName(database, addressTableName);
-        FieldDetails joinField1 = getFieldDetailsByName(database, addressTableName, addressField);
+    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, String addressField, String tableField) {
+        FieldDetails joinField1 = getFieldDetailsByName(database, addressTableDetails.getName(), addressField);
         FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails.getName(), tableField);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
@@ -134,12 +133,12 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public TableDetails getTableDetailsByName(Database database, String tableName) {
+    public TableDetails findTableDetailsByName(Database database, TableDetails targetTable) {
         MetabaseDatabaseInfo databaseInfo = getDatabaseDetails(database);
         return databaseInfo.getTables().stream()
-                .filter(tableDetail -> tableDetail.getName().equalsIgnoreCase(tableName))
+                .filter(tableDetail -> tableDetail.getName().equalsIgnoreCase(targetTable.getName()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Table with name " + tableName + " not found."));
+                .orElseThrow(() -> new RuntimeException("Table with name " + targetTable.getName() + " not found."));
     }
 
     public DatabaseSyncStatus getInitialSyncStatus(Database database) {

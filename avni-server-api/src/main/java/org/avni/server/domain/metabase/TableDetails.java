@@ -72,4 +72,8 @@ public class TableDetails {
     public boolean nameMatches(String tableName) {
         return tableName.equals(getDisplayName());
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

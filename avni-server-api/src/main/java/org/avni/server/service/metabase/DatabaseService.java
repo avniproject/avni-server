@@ -63,9 +63,12 @@ public class DatabaseService {
 
     public List<String> getSubjectTypeNames() {
         Database database = getGlobalDatabase();
-        TableDetails metadataTable = databaseRepository.getTableDetailsByName(database, "table_metadata");
+        TableDetails metadataTable = new TableDetails();
+        metadataTable.setName("table_metadata");
 
-        DatasetResponse datasetResponse = databaseRepository.findAll(metadataTable, database);
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(database, metadataTable);
+
+        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, database);
         List<List<String>> rows = datasetResponse.getData().getRows();
 
         List<String> subjectTypeNames = new ArrayList<>();
@@ -85,11 +88,15 @@ public class DatabaseService {
 
 
 
+
     public List<String> getProgramAndEncounterNames() {
         Database database = getGlobalDatabase();
-        TableDetails metadataTable = databaseRepository.getTableDetailsByName(database, "table_metadata");
+        TableDetails metadataTable = new TableDetails();
+        metadataTable.setName("table_metadata");
 
-        DatasetResponse datasetResponse = databaseRepository.findAll(metadataTable, database);
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(database, metadataTable);
+
+        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, database);
         List<List<String>> rows = datasetResponse.getData().getRows();
 
         List<String> programNames = new ArrayList<>();
@@ -105,17 +112,32 @@ public class DatabaseService {
         return programNames;
     }
 
+
     public void createQuestionsForSubjectTypes() throws Exception {
         SyncStatus syncStatus = getInitialSyncStatus();
         if (syncStatus != SyncStatus.COMPLETE) {
             throw new RuntimeException("Database sync is not complete. Cannot create questions.");
         }
+
+        Database database = getGlobalDatabase();
         List<String> subjectTypeNames = getSubjectTypeNames();
 
+        TableDetails addressTableDetails = new TableDetails();
+        addressTableDetails.setName("Address");
+
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, addressTableDetails);
+
         for (String subjectTypeName : subjectTypeNames) {
-            addressQuestionCreationService.createQuestionForTable(subjectTypeName, "Address", "id", "address_id");
+            TableDetails subjectTableDetails = new TableDetails();
+            subjectTableDetails.setName(subjectTypeName);
+
+            TableDetails fetchedSubjectTableDetails = databaseRepository.findTableDetailsByName(database, subjectTableDetails);
+
+            addressQuestionCreationService.createQuestionForTable(fetchedSubjectTableDetails, fetchedAddressTableDetails, "id", "address_id");
         }
     }
+
+
 
     public void createQuestionsForProgramsAndEncounters() throws Exception {
         SyncStatus syncStatus = getInitialSyncStatus();
@@ -123,12 +145,25 @@ public class DatabaseService {
             throw new RuntimeException("Database sync is not complete. Cannot create questions.");
         }
 
+        Database database = getGlobalDatabase();
         List<String> programAndEncounterNames = getProgramAndEncounterNames();
 
+        TableDetails addressTableDetails = new TableDetails();
+        addressTableDetails.setName("Address");
+
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, addressTableDetails);
+
         for (String programName : programAndEncounterNames) {
-            addressQuestionCreationService.createQuestionForTable(programName, "Address", "id", "address_id");
+            TableDetails programTableDetails = new TableDetails();
+            programTableDetails.setName(programName);
+
+            TableDetails fetchedProgramTableDetails = databaseRepository.findTableDetailsByName(database, programTableDetails);
+
+            addressQuestionCreationService.createQuestionForTable(fetchedProgramTableDetails, fetchedAddressTableDetails, "id", "address_id");
         }
     }
+
+
 
     public void createQuestionsForIndividualTables() {
         SyncStatus syncStatus = getInitialSyncStatus();
@@ -138,13 +173,15 @@ public class DatabaseService {
 
         Database database = getGlobalDatabase();
 
-        List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");  // Adjust these as needed
+        List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");
 
         for (String tableName : individualTables) {
-            TableDetails tableDetails = databaseRepository.getTableDetailsByName(database, tableName);
+            TableDetails tableDetails = new TableDetails();
+            tableDetails.setName(tableName);
+            TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails);
 
             MetabaseQuery query = new MetabaseQueryBuilder(database, objectMapper.createArrayNode(), objectMapper)
-                    .forTable(tableDetails)
+                    .forTable(fetchedTableDetails)
                     .build();
 
             MetabaseRequestBody requestBody = new MetabaseRequestBody(
