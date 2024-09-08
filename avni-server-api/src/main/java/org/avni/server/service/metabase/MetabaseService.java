@@ -67,7 +67,9 @@ public class MetabaseService {
     public int getGlobalDatabaseId() {
         if (globalDatabase == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalDatabase = databaseRepository.getDatabaseByName(currentOrganisation.getName());
+            Database database = new Database();
+            database.setName(currentOrganisation.getName());
+            globalDatabase = databaseRepository.getDatabaseByName(database);
         }
         return globalDatabase.getId();
     }

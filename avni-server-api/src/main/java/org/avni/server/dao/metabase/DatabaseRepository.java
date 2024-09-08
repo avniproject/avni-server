@@ -37,7 +37,7 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public Database getDatabaseByName(String name) {
+    public Database getDatabaseByName(Database database) {
         String url = metabaseApiUrl + "/database";
 
         String jsonResponse = getForObject(url, String.class);
@@ -49,11 +49,11 @@ public class DatabaseRepository extends MetabaseConnector {
 
             for (JsonNode dbNode : dataArray) {
                 Database db = objectMapper.treeToValue(dbNode, Database.class);
-                if (db.getName().equals(name)) {
+                if (db.getName().equals(database.getName())) {
                     return db;
                 }
             }
-            throw new RuntimeException("Database with name " + name + " not found.");
+            throw new RuntimeException("Database with name " + database.getName() + " not found.");
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve database", e);
         }
@@ -97,12 +97,8 @@ public class DatabaseRepository extends MetabaseConnector {
                 getCollectionByName(database.getName()).getIdAsInt()
         );
 
-        System.out.println("Final Request Body: " + requestBody.toJson(objectMapper).toPrettyString());
-
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
-
-
 
     public FieldDetails getFieldDetailsByName(Database database, TableDetails tableDetails, FieldDetails fieldDetails) {
         List<FieldDetails> fieldsList = getFields(database);
