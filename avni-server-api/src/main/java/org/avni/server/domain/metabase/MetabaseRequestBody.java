@@ -13,16 +13,14 @@ public class MetabaseRequestBody {
     private int collectionId;
     private Integer collectionPosition;
     private JsonNode resultMetadata;
-    private CardType cardType;
 
-    public MetabaseRequestBody(String name, MetabaseQuery datasetQuery, VisualizationType display, String description, ObjectNode visualizationSettings, int collectionId, CardType cardType) {
+    public MetabaseRequestBody(String name, MetabaseQuery datasetQuery, VisualizationType display, String description, ObjectNode visualizationSettings, int collectionId) {
         this.name = name;
         this.datasetQuery = datasetQuery;
         this.display = display;
         this.description = description;
         this.visualizationSettings = visualizationSettings;
         this.collectionId = collectionId;
-        this.cardType = cardType;
     }
 
     public ObjectNode toJson(ObjectMapper objectMapper) {
@@ -36,7 +34,6 @@ public class MetabaseRequestBody {
 
         rootNode.set("dataset_query", datasetQueryNode);
         rootNode.put("display", display.toString());
-        rootNode.put("type", cardType.getType());
         rootNode.putNull("description");
         rootNode.set("visualization_settings", visualizationSettings);
         rootNode.put("collection_id", collectionId);

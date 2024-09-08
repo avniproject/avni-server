@@ -19,11 +19,10 @@ public class MetabaseQueryBuilder {
 
     public MetabaseQueryBuilder forTable(TableDetails tableDetails) {
         queryNode.put("source-table", tableDetails.getId());
-        queryNode.put("database", database.getId());
         return this;
     }
 
-    public MetabaseQueryBuilder  joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
+    public MetabaseQueryBuilder joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
         ObjectNode joinNode = objectMapper.createObjectNode();
         joinNode.put("fields", "all");
         joinNode.put("alias", addressTable.getName());
@@ -34,24 +33,25 @@ public class MetabaseQueryBuilder {
 
         ArrayNode leftField = objectMapper.createArrayNode();
         leftField.add("field");
-        leftField.add(joinField1.getId());
+        leftField.add(joinField2.getId());
         leftField.add(objectMapper.createObjectNode().put("base-type", "type/Integer"));
         conditionArray.add(leftField);
 
         ArrayNode rightField = objectMapper.createArrayNode();
         rightField.add("field");
-        rightField.add(joinField2.getId());
+        rightField.add(joinField1.getId());
         rightField.add(objectMapper.createObjectNode().put("base-type", "type/Integer").put("join-alias", addressTable.getName()));
         conditionArray.add(rightField);
 
         joinNode.set("condition", conditionArray);
         joinsArray.add(joinNode);
         queryNode.set("joins", joinsArray);
+
         return this;
     }
 
+
     public MetabaseQuery build() {
-        queryNode.put("type", "query");
         return new MetabaseQuery(database.getId(), queryNode);
     }
 }

@@ -64,10 +64,6 @@ public class MetabaseService {
         collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), metabaseCollection.getId());
     }
 
-    public void createQuestionsForSubjectTypes() throws Exception{
-        databaseService.createQuestionsForSubjectTypes();
-    }
-
     public int getGlobalDatabaseId() {
         if (globalDatabase == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
@@ -79,7 +75,7 @@ public class MetabaseService {
     public int getGlobalCollectionId() {
         if (globalCollection == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalCollection = databaseRepository.getCollectionByName(currentOrganisation.getName() + " collection");
+            globalCollection = databaseRepository.getCollectionByName(currentOrganisation.getName());
         }
         return globalCollection.getIdAsInt();
     }

@@ -202,14 +202,12 @@ public class DatabaseService {
                     VisualizationType.TABLE,
                     null,
                     objectMapper.createObjectNode(),
-                    databaseRepository.getCollectionByName(database.getName()).getIdAsInt(),
-                    CardType.QUESTION
+                    databaseRepository.getCollectionByName(database.getName()).getIdAsInt()
             );
 
             databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
         }
     }
-
 
     public void createQuestions() throws Exception {
         createQuestionsForSubjectTypes();

@@ -89,17 +89,20 @@ public class DatabaseRepository extends MetabaseConnector {
                 .build();
 
         MetabaseRequestBody requestBody = new MetabaseRequestBody(
-                "Address + " + tableDetails.getDisplayName(),
+                tableDetails.getDisplayName(),
                 query,
                 VisualizationType.TABLE,
                 null,
                 objectMapper.createObjectNode(),
-                getCollectionByName(database.getName()).getIdAsInt(),
-                CardType.QUESTION
+                getCollectionByName(database.getName()).getIdAsInt()
         );
+
+        System.out.println("Final Request Body: " + requestBody.toJson(objectMapper).toPrettyString());
 
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
+
+
 
     public FieldDetails getFieldDetailsByName(Database database, TableDetails tableDetails, FieldDetails fieldDetails) {
         List<FieldDetails> fieldsList = getFields(database);
@@ -151,9 +154,10 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public DatasetResponse getDataset(String requestBody) {
+    public DatasetResponse getDataset(DatasetRequestBody requestBody) {
         String url = metabaseApiUrl + "/dataset";
-        String jsonResponse = postForObject(url, requestBody, String.class);
+        String jsonRequestBody = requestBody.toJson(objectMapper).toString();
+        String jsonResponse = postForObject(url, jsonRequestBody, String.class);
         try {
             return objectMapper.readValue(jsonResponse, DatasetResponse.class);
         } catch (Exception e) {
@@ -162,12 +166,11 @@ public class DatabaseRepository extends MetabaseConnector {
     }
 
     public DatasetResponse findAll(TableDetails table, Database database) {
-        String requestBody = createRequestBodyForDataset(database, table);
+        DatasetRequestBody requestBody = createRequestBodyForDataset(database, table);
         return getDataset(requestBody);
     }
 
-    private String createRequestBodyForDataset(Database database, TableDetails table) {
-        DatasetRequestBody requestBody = new DatasetRequestBody(database, table);
-        return requestBody.toJson(objectMapper).toString();
+    private DatasetRequestBody createRequestBodyForDataset(Database database, TableDetails table) {
+        return new DatasetRequestBody(database, table);
     }
 }

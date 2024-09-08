@@ -50,8 +50,7 @@ public class AddressQuestionCreationService implements QuestionCreationService {
                 VisualizationType.TABLE,
                 null,
                 objectMapper.createObjectNode(),
-                databaseService.getCollectionId(),
-                CardType.QUESTION
+                databaseService.getCollectionId()
         );
         databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
