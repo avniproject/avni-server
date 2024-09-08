@@ -1,11 +1,8 @@
 package org.avni.server.service.metabase;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -15,22 +12,14 @@ import java.util.List;
 public class DatabaseService {
 
     private final DatabaseRepository databaseRepository;
-    private final ObjectMapper objectMapper;
     private final MetabaseService metabaseService;
     private final AddressQuestionCreationService addressQuestionCreationService;
-
-    @Value("${metabase.api.url}")
-    private String metabaseApiUrl;
-
-    @Value("${metabase.api.key}")
-    private String apiKey;
 
     private static final String ADDRESS_TABLE = "Address";
 
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, ObjectMapper objectMapper, MetabaseService metabaseService, AddressQuestionCreationService addressQuestionCreationService) {
+    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, AddressQuestionCreationService addressQuestionCreationService) {
         this.databaseRepository = databaseRepository;
-        this.objectMapper = objectMapper;
         this.metabaseService = metabaseService;
         this.addressQuestionCreationService = addressQuestionCreationService;
     }
@@ -39,8 +28,8 @@ public class DatabaseService {
         return metabaseService.getGlobalDatabase();
     }
 
-    public int getCollectionId() {
-        return metabaseService.getGlobalCollection().getIdAsInt();
+    public CollectionInfoResponse getGlobalCollection() {
+        return metabaseService.getGlobalCollection();
     }
 
     public SyncStatus getInitialSyncStatus() {
@@ -57,9 +46,7 @@ public class DatabaseService {
     }
 
     public List<String> getSubjectTypeNames() {
-        TableDetails metadataTable = new TableDetails("table_metadata");
-
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), metadataTable);
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
 
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
@@ -80,9 +67,7 @@ public class DatabaseService {
     }
 
     public List<String> getProgramAndEncounterNames() {
-        TableDetails metadataTable = new TableDetails("table_metadata");
-
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), metadataTable);
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
 
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
@@ -100,7 +85,7 @@ public class DatabaseService {
         return programNames;
     }
 
-    public void createQuestionsForSubjectTypes() throws Exception {
+    public void createQuestionsForSubjectTypes(){
         ensureSyncComplete();
         List<String> subjectTypeNames = getSubjectTypeNames();
 
@@ -119,12 +104,11 @@ public class DatabaseService {
         }
     }
 
-    public void createQuestionsForProgramsAndEncounters() throws Exception {
+    public void createQuestionsForProgramsAndEncounters(){
         ensureSyncComplete();
         List<String> programAndEncounterNames = getProgramAndEncounterNames();
 
-        TableDetails addressTableDetails = new TableDetails(ADDRESS_TABLE);
-        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), addressTableDetails);
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails(ADDRESS_TABLE));
 
         FieldDetails addressFieldDetails = new FieldDetails("id");
         FieldDetails programFieldDetails = new FieldDetails("address_id");
@@ -137,36 +121,17 @@ public class DatabaseService {
         }
     }
 
-    public void createQuestionsForIndividualTables() {
+    public void createQuestionsForIndividualTables(){
         ensureSyncComplete();
-
-        Database database = getGlobalDatabase();
 
         List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");
 
         for (String tableName : individualTables) {
-            TableDetails tableDetails = new TableDetails();
-            tableDetails.setName(tableName);
-            TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails);
-
-            MetabaseQuery query = new MetabaseQueryBuilder(database, objectMapper.createArrayNode(), objectMapper)
-                    .forTable(fetchedTableDetails)
-                    .build();
-
-            MetabaseRequestBody requestBody = new MetabaseRequestBody(
-                    tableName,
-                    query,
-                    VisualizationType.TABLE,
-                    null,
-                    objectMapper.createObjectNode(),
-                    databaseRepository.getCollectionByName(database).getIdAsInt()
-            );
-
-            databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
+            addressQuestionCreationService.createQuestionForTable(tableName, "!public");
         }
     }
 
-    public void createQuestions() throws Exception {
+    public void createQuestions() {
         createQuestionsForSubjectTypes();
 
         createQuestionsForProgramsAndEncounters();

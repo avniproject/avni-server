@@ -25,18 +25,6 @@ public class DatabaseRepository extends MetabaseConnector {
         return database;
     }
 
-    public Database getDatabaseById(Database database) {
-        int id = database.getId();
-        String url = metabaseApiUrl + "/database/" + id;
-        try {
-            String jsonResponse = getForObject(url, String.class);
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(jsonResponse, Database.class);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve database with ID " + id, e);
-        }
-    }
-
     public Database getDatabaseByName(Database database) {
         String url = metabaseApiUrl + "/database";
 
@@ -78,14 +66,31 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressField, FieldDetails tableField) {
-        FieldDetails joinField1 = getFieldDetailsByName(database, addressTableDetails, addressField);
-        FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails, tableField);
+    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails originField, FieldDetails destinationField) {
+        FieldDetails joinField1 = getFieldDetailsByName(database, addressTableDetails, originField);
+        FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails, destinationField);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
         MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray, objectMapper)
                 .forTable(tableDetails)
                 .joinWith(addressTableDetails, joinField1, joinField2)
+                .build();
+
+        MetabaseRequestBody requestBody = new MetabaseRequestBody(
+                tableDetails.getDisplayName(),
+                query,
+                VisualizationType.TABLE,
+                null,
+                objectMapper.createObjectNode(),
+                getCollectionByName(database).getIdAsInt()
+        );
+
+        postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
+    }
+
+    public void createQuestionForIndividualTable(Database database, TableDetails tableDetails) {
+        MetabaseQuery query = new MetabaseQueryBuilder(database, objectMapper.createArrayNode(), objectMapper)
+                .forTable(tableDetails)
                 .build();
 
         MetabaseRequestBody requestBody = new MetabaseRequestBody(
