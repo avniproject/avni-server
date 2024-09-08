@@ -31,7 +31,6 @@ public class AddressQuestionCreationService implements QuestionCreationService {
         databaseRepository.createQuestionForTable(database, tableDetails, addressTableDetails, addressFieldDetails, tableFieldDetails);
     }
 
-
     @Override
     public void createQuestionForTable(String tableName, String schema) throws Exception {
         Database database = databaseService.getGlobalDatabase();
@@ -54,6 +53,4 @@ public class AddressQuestionCreationService implements QuestionCreationService {
         );
         databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
-
-
 }

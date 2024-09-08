@@ -18,14 +18,14 @@ public class DatabaseService {
     private final ObjectMapper objectMapper;
     private final MetabaseService metabaseService;
     private final AddressQuestionCreationService addressQuestionCreationService;
-    private Integer databaseId;
-    private Integer collectionId;
 
     @Value("${metabase.api.url}")
     private String metabaseApiUrl;
 
     @Value("${metabase.api.key}")
     private String apiKey;
+
+    private static final String ADDRESS_TABLE = "Address";
 
     @Autowired
     public DatabaseService(DatabaseRepository databaseRepository, ObjectMapper objectMapper, MetabaseService metabaseService, AddressQuestionCreationService addressQuestionCreationService) {
@@ -36,39 +36,32 @@ public class DatabaseService {
     }
 
     public Database getGlobalDatabase() {
-        Database globalDatabase = metabaseService.getGlobalDatabase();
-        return databaseRepository.getDatabaseById(globalDatabase);
-    }
-
-    public int getDatabaseId() {
-        if (databaseId == null) {
-            databaseId = metabaseService.getGlobalDatabaseId();
-        }
-        return databaseId;
+        return metabaseService.getGlobalDatabase();
     }
 
     public int getCollectionId() {
-        if (collectionId == null) {
-            collectionId = metabaseService.getGlobalCollectionId();
-        }
-        return collectionId;
+        return metabaseService.getGlobalCollection().getIdAsInt();
     }
 
     public SyncStatus getInitialSyncStatus() {
-        Database globalDatabase = metabaseService.getGlobalDatabase();
-        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(globalDatabase);
+        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(getGlobalDatabase());
         String status = databaseSyncStatus.getInitialSyncStatus();
         return SyncStatus.fromString(status);
     }
 
+    private void ensureSyncComplete() {
+        SyncStatus syncStatus = getInitialSyncStatus();
+        if (syncStatus != SyncStatus.COMPLETE) {
+            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
+        }
+    }
+
     public List<String> getSubjectTypeNames() {
-        Database database = getGlobalDatabase();
-        TableDetails metadataTable = new TableDetails();
-        metadataTable.setName("table_metadata");
+        TableDetails metadataTable = new TableDetails("table_metadata");
 
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(database, metadataTable);
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), metadataTable);
 
-        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, database);
+        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
 
         List<String> subjectTypeNames = new ArrayList<>();
@@ -86,17 +79,12 @@ public class DatabaseService {
         return subjectTypeNames;
     }
 
-
-
-
     public List<String> getProgramAndEncounterNames() {
-        Database database = getGlobalDatabase();
-        TableDetails metadataTable = new TableDetails();
-        metadataTable.setName("table_metadata");
+        TableDetails metadataTable = new TableDetails("table_metadata");
 
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(database, metadataTable);
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), metadataTable);
 
-        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, database);
+        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
 
         List<String> programNames = new ArrayList<>();
@@ -112,76 +100,45 @@ public class DatabaseService {
         return programNames;
     }
 
-
     public void createQuestionsForSubjectTypes() throws Exception {
-        SyncStatus syncStatus = getInitialSyncStatus();
-        if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
-        }
-
-        Database database = getGlobalDatabase();
+        ensureSyncComplete();
         List<String> subjectTypeNames = getSubjectTypeNames();
 
-        TableDetails addressTableDetails = new TableDetails();
-        addressTableDetails.setName("Address");
+        TableDetails addressTableDetails = new TableDetails(ADDRESS_TABLE);
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), addressTableDetails);
 
-        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, addressTableDetails);
+        FieldDetails addressFieldDetails = new FieldDetails("id");
+        FieldDetails subjectFieldDetails = new FieldDetails("address_id");
 
-        FieldDetails addressFieldDetails = new FieldDetails();
-        addressFieldDetails.setName("id");
-
-        FieldDetails subjectFieldDetails = new FieldDetails();
-        subjectFieldDetails.setName("address_id");
 
         for (String subjectTypeName : subjectTypeNames) {
             TableDetails subjectTableDetails = new TableDetails();
             subjectTableDetails.setName(subjectTypeName);
-
-            TableDetails fetchedSubjectTableDetails = databaseRepository.findTableDetailsByName(database, subjectTableDetails);
-
+            TableDetails fetchedSubjectTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), subjectTableDetails);
             addressQuestionCreationService.createQuestionForTable(fetchedSubjectTableDetails, fetchedAddressTableDetails, addressFieldDetails, subjectFieldDetails);
         }
     }
 
-
-
     public void createQuestionsForProgramsAndEncounters() throws Exception {
-        SyncStatus syncStatus = getInitialSyncStatus();
-        if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
-        }
-
-        Database database = getGlobalDatabase();
+        ensureSyncComplete();
         List<String> programAndEncounterNames = getProgramAndEncounterNames();
 
-        TableDetails addressTableDetails = new TableDetails();
-        addressTableDetails.setName("Address");
+        TableDetails addressTableDetails = new TableDetails(ADDRESS_TABLE);
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), addressTableDetails);
 
-        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, addressTableDetails);
-
-        FieldDetails addressFieldDetails = new FieldDetails();
-        addressFieldDetails.setName("id");
-
-        FieldDetails programFieldDetails = new FieldDetails();
-        programFieldDetails.setName("address_id");
+        FieldDetails addressFieldDetails = new FieldDetails("id");
+        FieldDetails programFieldDetails = new FieldDetails("address_id");
 
         for (String programName : programAndEncounterNames) {
             TableDetails programTableDetails = new TableDetails();
             programTableDetails.setName(programName);
-
-            TableDetails fetchedProgramTableDetails = databaseRepository.findTableDetailsByName(database, programTableDetails);
-
+            TableDetails fetchedProgramTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), programTableDetails);
             addressQuestionCreationService.createQuestionForTable(fetchedProgramTableDetails, fetchedAddressTableDetails, addressFieldDetails, programFieldDetails);
         }
     }
 
-
-
     public void createQuestionsForIndividualTables() {
-        SyncStatus syncStatus = getInitialSyncStatus();
-        if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
-        }
+        ensureSyncComplete();
 
         Database database = getGlobalDatabase();
 

@@ -5,6 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TableDetails {
+    public TableDetails() {
+    }
+
+    public TableDetails(String name) {
+        this.name = name;
+    }
 
     @JsonProperty("description")
     private String description;

@@ -64,27 +64,19 @@ public class MetabaseService {
         collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), metabaseCollection.getId());
     }
 
-    public int getGlobalDatabaseId() {
+    public Database getGlobalDatabase() {
         if (globalDatabase == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            Database database = new Database();
-            database.setName(currentOrganisation.getName());
-            globalDatabase = databaseRepository.getDatabaseByName(database);
+            globalDatabase = databaseRepository.getDatabaseByName(new Database(currentOrganisation.getName()));
         }
-        return globalDatabase.getId();
+        return globalDatabase;
     }
 
-    public int getGlobalCollectionId() {
+    public CollectionInfoResponse getGlobalCollection() {
         if (globalCollection == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            Database database = new Database();
-            database.setName(currentOrganisation.getName());
-            globalCollection = databaseRepository.getCollectionByName(database);
+            globalCollection = databaseRepository.getCollectionByName(new Database(currentOrganisation.getName()));
         }
-        return globalCollection.getIdAsInt();
-    }
-
-    public Database getGlobalDatabase() {
-        return globalDatabase;
+        return globalCollection;
     }
 }
