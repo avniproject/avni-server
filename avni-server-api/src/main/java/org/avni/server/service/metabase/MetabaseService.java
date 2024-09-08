@@ -77,7 +77,9 @@ public class MetabaseService {
     public int getGlobalCollectionId() {
         if (globalCollection == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalCollection = databaseRepository.getCollectionByName(currentOrganisation.getName());
+            Database database = new Database();
+            database.setName(currentOrganisation.getName());
+            globalCollection = databaseRepository.getCollectionByName(database);
         }
         return globalCollection.getIdAsInt();
     }

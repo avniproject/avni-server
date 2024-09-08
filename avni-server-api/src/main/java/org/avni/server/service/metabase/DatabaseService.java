@@ -202,7 +202,7 @@ public class DatabaseService {
                     VisualizationType.TABLE,
                     null,
                     objectMapper.createObjectNode(),
-                    databaseRepository.getCollectionByName(database.getName()).getIdAsInt()
+                    databaseRepository.getCollectionByName(database).getIdAsInt()
             );
 
             databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);

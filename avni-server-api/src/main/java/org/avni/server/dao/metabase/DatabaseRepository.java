@@ -59,7 +59,7 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public CollectionInfoResponse getCollectionByName(String collectionName) {
+    public CollectionInfoResponse getCollectionByName(Database database) {
         String url = metabaseApiUrl + "/collection";
         try {
             String jsonResponse = getForObject(url, String.class);
@@ -70,9 +70,9 @@ public class DatabaseRepository extends MetabaseConnector {
             );
 
             return collections.stream()
-                    .filter(collection -> collection.getName().equals(collectionName))
+                    .filter(collection -> collection.getName().equals(database.getName()))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Collection with name " + collectionName + " not found."));
+                    .orElseThrow(() -> new RuntimeException("Collection with name " + database.getName() + " not found."));
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve collection", e);
         }
@@ -94,7 +94,7 @@ public class DatabaseRepository extends MetabaseConnector {
                 VisualizationType.TABLE,
                 null,
                 objectMapper.createObjectNode(),
-                getCollectionByName(database.getName()).getIdAsInt()
+                getCollectionByName(database).getIdAsInt()
         );
 
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
