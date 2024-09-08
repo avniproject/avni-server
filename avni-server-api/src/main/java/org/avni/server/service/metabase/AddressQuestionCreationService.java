@@ -26,9 +26,9 @@ public class AddressQuestionCreationService implements QuestionCreationService {
     }
 
     @Override
-    public void createQuestionForTable(TableDetails tableDetails, TableDetails addressTableDetails, String addressField, String tableField) throws Exception {
+    public void createQuestionForTable(TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressFieldDetails, FieldDetails tableFieldDetails) throws Exception {
         Database database = databaseService.getGlobalDatabase();
-        databaseRepository.createQuestionForTable(database, tableDetails, addressTableDetails, addressField, tableField);
+        databaseRepository.createQuestionForTable(database, tableDetails, addressTableDetails, addressFieldDetails, tableFieldDetails);
     }
 
 

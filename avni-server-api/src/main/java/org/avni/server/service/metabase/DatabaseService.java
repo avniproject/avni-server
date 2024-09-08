@@ -127,13 +127,19 @@ public class DatabaseService {
 
         TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, addressTableDetails);
 
+        FieldDetails addressFieldDetails = new FieldDetails();
+        addressFieldDetails.setName("id");
+
+        FieldDetails subjectFieldDetails = new FieldDetails();
+        subjectFieldDetails.setName("address_id");
+
         for (String subjectTypeName : subjectTypeNames) {
             TableDetails subjectTableDetails = new TableDetails();
             subjectTableDetails.setName(subjectTypeName);
 
             TableDetails fetchedSubjectTableDetails = databaseRepository.findTableDetailsByName(database, subjectTableDetails);
 
-            addressQuestionCreationService.createQuestionForTable(fetchedSubjectTableDetails, fetchedAddressTableDetails, "id", "address_id");
+            addressQuestionCreationService.createQuestionForTable(fetchedSubjectTableDetails, fetchedAddressTableDetails, addressFieldDetails, subjectFieldDetails);
         }
     }
 
@@ -153,13 +159,19 @@ public class DatabaseService {
 
         TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, addressTableDetails);
 
+        FieldDetails addressFieldDetails = new FieldDetails();
+        addressFieldDetails.setName("id");
+
+        FieldDetails programFieldDetails = new FieldDetails();
+        programFieldDetails.setName("address_id");
+
         for (String programName : programAndEncounterNames) {
             TableDetails programTableDetails = new TableDetails();
             programTableDetails.setName(programName);
 
             TableDetails fetchedProgramTableDetails = databaseRepository.findTableDetailsByName(database, programTableDetails);
 
-            addressQuestionCreationService.createQuestionForTable(fetchedProgramTableDetails, fetchedAddressTableDetails, "id", "address_id");
+            addressQuestionCreationService.createQuestionForTable(fetchedProgramTableDetails, fetchedAddressTableDetails, addressFieldDetails, programFieldDetails);
         }
     }
 

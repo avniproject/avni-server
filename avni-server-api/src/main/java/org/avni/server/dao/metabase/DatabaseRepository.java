@@ -78,9 +78,9 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, String addressField, String tableField) {
-        FieldDetails joinField1 = getFieldDetailsByName(database, addressTableDetails.getName(), addressField);
-        FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails.getName(), tableField);
+    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressField, FieldDetails tableField) {
+        FieldDetails joinField1 = getFieldDetailsByName(database, addressTableDetails, addressField);
+        FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails, tableField);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
         MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray, objectMapper)
@@ -101,14 +101,14 @@ public class DatabaseRepository extends MetabaseConnector {
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
 
-    public FieldDetails getFieldDetailsByName(Database database, String tableName, String fieldName) {
+    public FieldDetails getFieldDetailsByName(Database database, TableDetails tableDetails, FieldDetails fieldDetails) {
         List<FieldDetails> fieldsList = getFields(database);
-        String snakeCaseTableName = S.toSnakeCase(tableName);
+        String snakeCaseTableName = S.toSnakeCase(tableDetails.getName());
 
         return fieldsList.stream()
-                .filter(field -> snakeCaseTableName.equals(field.getTableName()) && fieldName.equals(field.getName()))
+                .filter(field -> snakeCaseTableName.equals(field.getTableName()) && fieldDetails.getName().equals(field.getName()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Field " + fieldName + " not found in table " + tableName));
+                .orElseThrow(() -> new RuntimeException("Field " + fieldDetails.getName() + " not found in table " + tableDetails.getName()));
     }
 
     public MetabaseDatabaseInfo getDatabaseDetails(Database database) {
@@ -166,7 +166,8 @@ public class DatabaseRepository extends MetabaseConnector {
         return getDataset(requestBody);
     }
 
-    private String createRequestBodyForDataset(Database database,TableDetails table) {
-        return "{\"database\":" + database.getId() + ",\"query\":{\"source-table\":" + table.getId() + "},\"type\":\"query\",\"parameters\":[]}";
+    private String createRequestBodyForDataset(Database database, TableDetails table) {
+        DatasetRequestBody requestBody = new DatasetRequestBody(database, table);
+        return requestBody.toJson(objectMapper).toString();
     }
 }

@@ -9,8 +9,16 @@ public class FieldDetails {
     @JsonProperty("id")
     private int id;
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     @JsonProperty("name")
     private String name;
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     @JsonProperty("display_name")
     private String displayName;
