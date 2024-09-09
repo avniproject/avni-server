@@ -2,7 +2,9 @@ package org.avni.server.web;
 
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.OrganisationRepository;
+import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Dashboard;
+import org.avni.server.domain.DashboardSectionCardMapping;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.organisation.OrganisationCategory;
@@ -16,8 +18,10 @@ import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -114,7 +118,16 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     @Deprecated
     @RequestMapping(value = "/dashboardCardMapping/search/lastModified", method = RequestMethod.GET)
     public PagedResources<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-            @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now) {
+                                                                        @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now) {
         return wrap(new PageImpl<>(Collections.emptyList()));
+    }
+
+    @GetMapping(value = "/v2/dashboard/search/lastModified")
+    public PagedResources<Resource<Dashboard>> getDashboards(@RequestParam("lastModifiedDateTime")
+                                                             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+                                                             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+                                                             Pageable pageable) {
+        return wrap(dashboardRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+                CHSEntity.toDate(now), pageable));
     }
 }

@@ -23,10 +23,4 @@ public interface FindByLastModifiedDateTime<T> {
             Pageable pageable) {
         return findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable);
     }
-
-    boolean existsByLastModifiedDateTimeGreaterThan(@Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime);
-
-    default boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime) {
-        return existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime == null ? null : lastModifiedDateTime.toDate());
-    }
 }
