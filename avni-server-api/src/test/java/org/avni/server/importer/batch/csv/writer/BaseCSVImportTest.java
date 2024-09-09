@@ -22,4 +22,8 @@ public abstract class BaseCSVImportTest extends AbstractControllerIntegrationTes
     protected String hasError(String s) {
         return s;
     }
+
+    protected String doesntHaveError(String s) {
+        return s;
+    }
 }

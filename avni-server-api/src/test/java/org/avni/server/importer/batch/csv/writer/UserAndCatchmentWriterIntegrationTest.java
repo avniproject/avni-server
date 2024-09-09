@@ -175,6 +175,12 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 dataRow(" Bihar, District1, Block11", " Catchment 4", " username3@example", " User 3", " username3@example.com ", " 9455509147 ", "English ", "true ", " spinner", " false", "", " User Group 1", " Answer 1"),
                 catchmentCreated(true),
                 userCreated(true));
+        // without mandatory fields
+        success(
+                header(" Location with full hierarchy", " Catchment Name", "Username ", " Full Name of User", "Email Address", "Mobile Number", " Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", " Identifier Prefix", " User Groups", " SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
+                dataRow(" Bihar, District1, Block11", " Catchment 5", " username6@example", " User 6", " username6@example.com ", " 9455509147 ", "English ", "", " spinner", " ", "", " User Group 1", " Answer 1"),
+                catchmentCreated(true),
+                userCreated(true));
 
         // wrong - username, email, phone number, language, track location, date picker mode, enable beneficiary mode
         failure(
@@ -185,8 +191,8 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 hasError("Provided value 'Mobile Number' for phone number is invalid."),
                 hasError("Provided value 'Irish' for Preferred Language is invalid."),
                 hasError("Provided value 'spinnerr' for Date picker mode is invalid."),
-                hasError("Invalid or Empty value specified for mandatory field Track Location"),
-                hasError("Invalid or Empty value specified for mandatory field Enable Beneficiary")
+                hasError("Provided value 'truee' for track location is invalid."),
+                hasError("Provided value 'falsee' for enable beneficiary mode is invalid.")
         );
         // empty - catchment name, username, Full Name of User, email, phone number, track location, date picker mode, enable beneficiary mode
         failure(
@@ -197,9 +203,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 hasError("Invalid or Empty value specified for mandatory field Full Name of User."),
                 hasError("Invalid or Empty value specified for mandatory field Email Address."),
                 hasError("Invalid or Empty value specified for mandatory field Mobile Number."),
-                hasError("Provided value '' for Date picker mode is invalid."),
-                hasError("Invalid or Empty value specified for mandatory field Track Location."),
-                hasError("Invalid or Empty value specified for mandatory field Enable Beneficiary")
+                hasError("Provided value '' for Date picker mode is invalid.")
         );
 
         // invalid User Group Name
