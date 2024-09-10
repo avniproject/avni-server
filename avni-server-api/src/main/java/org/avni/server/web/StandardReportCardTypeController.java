@@ -41,20 +41,4 @@ public class StandardReportCardTypeController implements RestControllerResourceP
         return card.map(c -> ResponseEntity.ok(StandardReportCardTypeContract.fromEntity(c)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-
-    @GetMapping(value = "/v2/standardReportCardType/search/lastModified")
-    public PagedResources<Resource<StandardReportCardType>> getStandardReportCardTypes(@RequestParam("lastModifiedDateTime")
-                                                                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-                                                                               @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-                                                                               Pageable pageable) {
-        return wrap(standardReportCardTypeRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
-                lastModifiedDateTime,
-                now, pageable));
-    }
-
-    @Override
-    public Resource<StandardReportCardType> process(Resource<StandardReportCardType> resource) {
-        resource.removeLinks();
-        return resource;
-    }
 }

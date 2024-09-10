@@ -22,7 +22,6 @@ public class MetadataResourceInterceptor extends HandlerInterceptorAdapter {
     private final UserUtil userUtil;
 
     private static final HashSet<String> endOfLifeEndpoints1 = new HashSet<String>() {{
-        add("/standardReportCardType/search/lastModified");
         add("/dashboardFilter/search/lastModified");
         add("/card/search/lastModified");
         add("/dashboardSection/search/lastModified");
