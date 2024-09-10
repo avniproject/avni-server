@@ -1,5 +1,6 @@
 package org.avni.server.domain.metabase;
 
+//Refer Documentation : https://www.metabase.com/docs/latest/api/card#post-apicard
 public enum CardType {
     QUESTION("question");
 

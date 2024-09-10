@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+// Refer docs : https://www.metabase.com/docs/latest/api/card#post-apicard
 public class MetabaseRequestBody {
     private String name;
     private MetabaseQuery datasetQuery;

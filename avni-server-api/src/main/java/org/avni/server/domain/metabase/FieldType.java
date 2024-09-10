@@ -1,13 +1,15 @@
 package org.avni.server.domain.metabase;
 
-public enum BaseType {
+// Refer Documentation here : https://www.metabase.com/docs/latest/data-modeling/field-types
+
+public enum FieldType {
     INTEGER("type/Integer"),
     TEXT("type/Text"),
     BOOLEAN("type/Boolean");
 
     private final String typeName;
 
-    BaseType(String typeName) {
+    FieldType(String typeName) {
         this.typeName = typeName;
     }
 

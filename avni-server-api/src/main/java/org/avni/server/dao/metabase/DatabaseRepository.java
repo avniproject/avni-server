@@ -88,7 +88,7 @@ public class DatabaseRepository extends MetabaseConnector {
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
     }
 
-    public void createQuestionForIndividualTable(Database database, TableDetails tableDetails) {
+    public void createQuestionForASingleTable(Database database, TableDetails tableDetails) {
         MetabaseQuery query = new MetabaseQueryBuilder(database, objectMapper.createArrayNode(), objectMapper)
                 .forTable(tableDetails)
                 .build();

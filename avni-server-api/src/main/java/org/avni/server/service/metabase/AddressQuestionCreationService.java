@@ -32,6 +32,6 @@ public class AddressQuestionCreationService implements QuestionCreationService {
         tableDetails.setName(tableName);
         TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails);
 
-        databaseRepository.createQuestionForIndividualTable(database, fetchedTableDetails);
+        databaseRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 }

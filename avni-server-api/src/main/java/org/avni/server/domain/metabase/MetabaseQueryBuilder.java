@@ -18,34 +18,34 @@ public class MetabaseQueryBuilder {
     }
 
     public MetabaseQueryBuilder forTable(TableDetails tableDetails) {
-        queryNode.put("source-table", tableDetails.getId());
+        queryNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), tableDetails.getId());
         return this;
     }
 
     public MetabaseQueryBuilder joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
         ObjectNode joinNode = objectMapper.createObjectNode();
-        joinNode.put("fields", "all");
-        joinNode.put("alias", addressTable.getName());
-        joinNode.put("source-table", addressTable.getId());
+        joinNode.put(FieldAttribute.FIELDS.getAttributeName(), "all");
+        joinNode.put(FieldAttribute.ALIAS.getAttributeName(), addressTable.getName());
 
         ArrayNode conditionArray = objectMapper.createArrayNode();
-        conditionArray.add("=");
+        conditionArray.add(ConditionType.EQUAL.getOperator());
 
         ArrayNode leftField = objectMapper.createArrayNode();
-        leftField.add("field");
+        leftField.add(FieldAttribute.FIELD.getAttributeName());
         leftField.add(joinField2.getId());
-        leftField.add(objectMapper.createObjectNode().put("base-type", "type/Integer"));
+        leftField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()));
         conditionArray.add(leftField);
 
         ArrayNode rightField = objectMapper.createArrayNode();
-        rightField.add("field");
+        rightField.add(FieldAttribute.FIELD.getAttributeName());
         rightField.add(joinField1.getId());
-        rightField.add(objectMapper.createObjectNode().put("base-type", "type/Integer").put("join-alias", addressTable.getName()));
+        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()).put(FieldAttribute.JOIN_ALIAS.getAttributeName(), addressTable.getName()));
         conditionArray.add(rightField);
 
-        joinNode.set("condition", conditionArray);
+        joinNode.set(FieldAttribute.CONDITION.getAttributeName(), conditionArray);
+        joinNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), addressTable.getId());
         joinsArray.add(joinNode);
-        queryNode.set("joins", joinsArray);
+        queryNode.set(FieldAttribute.JOINS.getAttributeName(), joinsArray);
 
         return this;
     }
