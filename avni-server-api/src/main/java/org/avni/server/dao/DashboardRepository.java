@@ -1,7 +1,6 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.Dashboard;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -18,7 +17,6 @@ import java.util.List;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "dashboard", path = "dashboard")
 public interface DashboardRepository extends ReferenceDataRepository<Dashboard>, JpaSpecificationExecutor<Dashboard> {
-
     @Query("select d.name from Dashboard d where d.isVoided = false")
     List<String> getAllNames();
 
@@ -27,7 +25,7 @@ public interface DashboardRepository extends ReferenceDataRepository<Dashboard>,
     Dashboard findByUuidAndOrganisationIdAndIsVoidedFalse(String uuid, Long organisationId);
 
     @RestResource(path = "lastModified", rel = "lastModified")
-    Page<Dashboard> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+    Page<Dashboard> findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
             @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
             @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);

@@ -1,7 +1,6 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.ReportCard;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -27,7 +26,7 @@ public interface CardRepository extends ReferenceDataRepository<ReportCard>, Jpa
     List<ReportCard> findAllByIsVoidedFalseOrderByName();
 
     @RestResource(path = "lastModified", rel = "lastModified")
-    Page<ReportCard> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+    Page<ReportCard> findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
             @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
             @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);

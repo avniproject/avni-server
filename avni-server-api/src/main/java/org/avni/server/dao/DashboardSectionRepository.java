@@ -1,7 +1,6 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.DashboardSection;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -17,7 +16,7 @@ import java.util.Date;
 @RepositoryRestResource(collectionResourceRel = "dashboardSection", path = "dashboardSection")
 public interface DashboardSectionRepository extends ReferenceDataRepository<DashboardSection>, JpaSpecificationExecutor<DashboardSection> {
     @RestResource(path = "lastModified", rel = "lastModified")
-    Page<DashboardSection> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+    Page<DashboardSection> findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
             @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
             @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);

@@ -1,26 +1,20 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.StandardReportCardTypeRepository;
-import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.StandardReportCardType;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
 @RestController
 public class StandardReportCardTypeController implements RestControllerResourceProcessor<StandardReportCardType> {
@@ -53,7 +47,7 @@ public class StandardReportCardTypeController implements RestControllerResourceP
                                                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                                @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                                Pageable pageable) {
-        return wrap(standardReportCardTypeRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+        return wrap(standardReportCardTypeRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
                 lastModifiedDateTime,
                 now, pageable));
     }

@@ -2,7 +2,6 @@ package org.avni.server.web;
 
 import org.avni.server.dao.DashboardFilterRepository;
 import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.Checklist;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ public class DashboardFilterController implements RestControllerResourceProcesso
                                                                             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                         Pageable pageable) {
-        return wrap(dashboardFilterRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(dashboardFilterRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
                 CHSEntity.toDate(now), pageable));
     }
 

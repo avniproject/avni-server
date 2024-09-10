@@ -4,7 +4,6 @@ import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Dashboard;
-import org.avni.server.domain.DashboardSectionCardMapping;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.organisation.OrganisationCategory;
@@ -127,7 +126,7 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
                                                              @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                              @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                              Pageable pageable) {
-        return wrap(dashboardRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(dashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
                 CHSEntity.toDate(now), pageable));
     }
 }

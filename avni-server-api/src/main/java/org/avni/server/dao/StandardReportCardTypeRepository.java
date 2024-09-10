@@ -22,7 +22,7 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
     List<StandardReportCardType> findAllByIsVoidedFalse();
 
     @RestResource(path = "lastModified", rel = "lastModified")
-    Page<StandardReportCardType> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
+    Page<StandardReportCardType> findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(
             @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable);

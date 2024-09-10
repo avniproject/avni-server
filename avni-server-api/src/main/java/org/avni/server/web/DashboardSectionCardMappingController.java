@@ -3,7 +3,6 @@ package org.avni.server.web;
 import org.avni.server.dao.DashboardSectionCardMappingRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.DashboardSectionCardMapping;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +30,7 @@ public class DashboardSectionCardMappingController implements RestControllerReso
                                                                                      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                                                  @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                                                  Pageable pageable) {
-        return wrap(dashboardSectionCardMappingRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(dashboardSectionCardMappingRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
                 CHSEntity.toDate(now), pageable));
     }
 

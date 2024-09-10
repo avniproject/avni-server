@@ -5,11 +5,9 @@ import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.ReportCard;
 import org.avni.server.domain.StandardReportCardType;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.joda.time.DateTime;
@@ -96,7 +94,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
                                                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                         Pageable pageable) {
-        return wrap(cardRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(cardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
                 CHSEntity.toDate(now), pageable));
     }
 
