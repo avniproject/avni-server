@@ -1,13 +1,21 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.GroupDashboardRepository;
+import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.GroupDashboard;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.service.GroupDashboardService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.GroupDashboardContract;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +24,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+
 @RestController
-public class GroupDashboardController {
+public class GroupDashboardController implements RestControllerResourceProcessor<GroupDashboard> {
     private final GroupDashboardRepository groupDashboardRepository;
     private final GroupDashboardService groupDashboardService;
     private final AccessControlService accessControlService;
@@ -86,5 +96,24 @@ public class GroupDashboardController {
         return groupDashboardRepository.findByGroup_IdAndIsVoidedFalseOrderByDashboardName(id).stream()
                 .map(GroupDashboardContract::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping(value = "/v2/groupDashboard/search/lastModified")
+    public PagedResources<Resource<GroupDashboard>> getDashboardFilters(@RequestParam("lastModifiedDateTime")
+                                                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+                                                                         Pageable pageable) {
+        return wrap(groupDashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+                CHSEntity.toDate(now), pageable));
+    }
+
+    @Override
+    public Resource<GroupDashboard> process(Resource<GroupDashboard> resource) {
+        GroupDashboard entity = resource.getContent();
+        resource.removeLinks();
+        resource.add(new Link(entity.getDashboard().getUuid(), "dashboardUUID"));
+        resource.add(new Link(entity.getGroup().getUuid(), "groupUUID"));
+        addAuditFields(entity, resource);
+        return resource;
     }
 }

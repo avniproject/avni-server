@@ -28,6 +28,7 @@ public class MetadataResourceInterceptor extends HandlerInterceptorAdapter {
         add("/dashboardSection/search/lastModified");
         add("/dashboardSectionCardMapping/search/lastModified");
         add("/dashboard/search/lastModified");
+        add("/groupDashboard/search/lastModified");
     }};
 
     @Value("${avni.endpoints.endOfLife.1}")
