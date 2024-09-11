@@ -8,6 +8,8 @@ import org.avni.server.util.S;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -44,6 +46,27 @@ public class DatabaseRepository extends MetabaseConnector {
             throw new RuntimeException("Database with name " + database.getName() + " not found.");
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve database", e);
+        }
+    }
+
+    public List<CollectionItem> getExistingCollectionItems(int collectionId) {
+        String url = metabaseApiUrl + "/collection/" + collectionId + "/items";
+        String jsonResponse = getForObject(url, String.class);
+
+        try {
+            JsonNode rootNode = objectMapper.readTree(jsonResponse);
+            JsonNode dataArray = rootNode.path("data");
+
+            List<CollectionItem> items = new ArrayList<>();
+            for (JsonNode itemNode : dataArray) {
+                CollectionItem item = new CollectionItem();
+                item.setName(itemNode.get("name").asText());
+                item.setId(itemNode.get("id").asInt());
+                items.add(item);
+            }
+            return items;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch collection items", e);
         }
     }
 

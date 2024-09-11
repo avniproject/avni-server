@@ -24,7 +24,7 @@ public class MetabaseQueryBuilder {
 
     public MetabaseQueryBuilder joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
         ObjectNode joinNode = objectMapper.createObjectNode();
-        joinNode.put(FieldAttribute.FIELDS.getAttributeName(), "all");
+        joinNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
         joinNode.put(FieldAttribute.ALIAS.getAttributeName(), addressTable.getName());
 
         ArrayNode conditionArray = objectMapper.createArrayNode();
