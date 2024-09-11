@@ -5,6 +5,7 @@ public enum TableType {
     HOUSEHOLD("Household"),
     GROUP("Group"),
     PERSON("Person"),
+    ENCOUNTER("Encounter"),
     PROGRAM_ENCOUNTER("ProgramEncounter"),
     PROGRAM_ENROLMENT("ProgramEnrolment");
 

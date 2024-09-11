@@ -54,12 +54,12 @@ public class DatabaseService {
         List<String> subjectTypeNames = new ArrayList<>();
 
         for (List<String> row : rows) {
-            String type = row.get(2);
+            String type = row.get(DatasetColumn.TYPE.getIndex());
             if (type.equalsIgnoreCase(TableType.INDIVIDUAL.getTypeName()) ||
                     type.equalsIgnoreCase(TableType.HOUSEHOLD.getTypeName()) ||
                     type.equalsIgnoreCase(TableType.GROUP.getTypeName()) ||
                     type.equalsIgnoreCase(TableType.PERSON.getTypeName())) {
-                subjectTypeNames.add(row.get(1));
+                subjectTypeNames.add(row.get(DatasetColumn.NAME.getIndex()));
             }
         }
 
@@ -75,10 +75,11 @@ public class DatabaseService {
         List<String> programNames = new ArrayList<>();
 
         for (List<String> row : rows) {
-            String type = row.get(2);
+            String type = row.get(DatasetColumn.TYPE.getIndex());
             if (type.equalsIgnoreCase(TableType.PROGRAM_ENCOUNTER.getTypeName()) ||
+                    type.equalsIgnoreCase(TableType.ENCOUNTER.getTypeName()) ||
                     type.equalsIgnoreCase(TableType.PROGRAM_ENROLMENT.getTypeName())) {
-                programNames.add(row.get(1));
+                programNames.add(row.get(DatasetColumn.NAME.getIndex()));
             }
         }
 
