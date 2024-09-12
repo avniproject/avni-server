@@ -178,7 +178,7 @@ public class MetadataDiffService {
                     hasDifferences = true;
                 }
             } else {
-                differences.put(uuid, createFieldDiff(null, json1, "removed"));
+                differences.put(uuid, createFieldDiff( json1, null,"removed"));
                 hasDifferences = true;
             }
         }
@@ -343,8 +343,7 @@ public class MetadataDiffService {
 
     protected Map<String, Object> missingFilesMap(Set<String> missingFiles, String message) {
         Map<String, Object> missingFilesMap = new LinkedHashMap<>();
-        missingFilesMap.put("message", message);
-        missingFilesMap.put("files", missingFiles);
+        missingFilesMap.put(message, missingFiles);
         return missingFilesMap;
     }
 
@@ -372,7 +371,6 @@ public class MetadataDiffService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private Map<String, Object> castToStringObjectMap(Object obj) {
         if (obj instanceof Map) {
             return (Map<String, Object>) obj;
