@@ -23,8 +23,8 @@ public class MutableRequestWrapper extends HttpServletRequestWrapper {
             values = new String[0];
         }
         List<String> list = new ArrayList<String>(values.length + 1);
-        list.addAll(Arrays.asList(values));
         list.add(value);
+        list.addAll(Arrays.asList(values));
         parameterMap.put(name, list.toArray(new String[0]));
     }
 
