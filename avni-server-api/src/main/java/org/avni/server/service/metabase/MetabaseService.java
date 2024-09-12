@@ -18,7 +18,6 @@ public class MetabaseService {
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
-    private final DatabaseService databaseService;
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
@@ -29,14 +28,12 @@ public class MetabaseService {
     public MetabaseService(OrganisationService organisationService,
                            AvniDatabase avniDatabase,
                            DatabaseRepository databaseRepository,
-                           @Lazy DatabaseService databaseService,
                            GroupPermissionsRepository groupPermissionsRepository,
                            CollectionPermissionsRepository collectionPermissionsRepository,
                            CollectionRepository collectionRepository) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
-        this.databaseService = databaseService;
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
