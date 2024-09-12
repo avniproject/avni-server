@@ -19,7 +19,7 @@ public class MetabaseConnector {
     protected String metabaseApiUrl;
 
     @Value("${metabase.api.key}")
-    private String apiKey;
+    protected String apiKey;
 
     public MetabaseConnector(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.build();
@@ -42,7 +42,7 @@ public class MetabaseConnector {
         restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
     }
 
-    protected <T> T postForObject(String url, Object request, Class<T> responseType) {
+    public <T> T postForObject(String url, Object request, Class<T> responseType) {
         HttpEntity<Object> entity = createHttpEntity(request);
         return restTemplate.postForObject(url, entity, responseType);
     }
@@ -57,4 +57,5 @@ public class MetabaseConnector {
         HttpHeaders headers = getHeaders();
         return new HttpEntity<>(body.getBody(), headers);
     }
+
 }

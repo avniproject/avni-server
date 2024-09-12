@@ -1,5 +1,8 @@
 package org.avni.server.domain.metabase;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DatabaseDetails {
     private String host;
     private String port;

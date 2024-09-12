@@ -1,20 +1,28 @@
 package org.avni.server.domain.metabase;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Database {
     private Integer id;
     private String name;
     private String engine;
     private DatabaseDetails details;
-    
 
     public Database() {
+
     }
-    
+
+    public Database(String name) {
+        this.name = name;
+    }
+
     public Database(String name, String engine, DatabaseDetails details) {
         this(null,name,engine,details);
     }
 
-    public Database(Integer id,String name, String engine, DatabaseDetails details) {
+
+    public Database(Integer id, String name, String engine, DatabaseDetails details) {
         this.id=id;
         this.name = name;
         this.engine = engine;

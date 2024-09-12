@@ -1,6 +1,6 @@
 package org.avni.server.dao.metabase;
 
-import org.avni.server.domain.metabase.Collection;
+import org.avni.server.domain.metabase.CreateCollectionRequest;
 import org.avni.server.domain.metabase.CollectionResponse;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
@@ -11,8 +11,8 @@ public class CollectionRepository extends MetabaseConnector {
         super(restTemplateBuilder);
     }
 
-    public CollectionResponse save(Collection collection) {
+    public CollectionResponse save(CreateCollectionRequest createCollectionRequest) {
         String url = metabaseApiUrl + "/collection";
-        return postForObject(url, collection, CollectionResponse.class);
+        return postForObject(url, createCollectionRequest, CollectionResponse.class);
     }
 }

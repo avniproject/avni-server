@@ -1,20 +1,16 @@
-package org.avni.server.service;
+package org.avni.server.service.metabase;
 
 import org.avni.server.dao.metabase.CollectionPermissionsRepository;
 import org.avni.server.dao.metabase.CollectionRepository;
 import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.dao.metabase.GroupPermissionsRepository;
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.metabase.AvniDatabase;
-import org.avni.server.domain.metabase.Collection;
-import org.avni.server.domain.metabase.CollectionPermissionsService;
-import org.avni.server.domain.metabase.CollectionResponse;
-import org.avni.server.domain.metabase.Database;
-import org.avni.server.domain.metabase.DatabaseDetails;
-import org.avni.server.domain.metabase.Group;
-import org.avni.server.domain.metabase.GroupPermissionsService;
+import org.avni.server.domain.metabase.*;
+import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class MetabaseService {
@@ -22,21 +18,25 @@ public class MetabaseService {
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
+    private final DatabaseService databaseService;
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
+    private Database globalDatabase;
+    private CollectionInfoResponse globalCollection;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
                            AvniDatabase avniDatabase,
                            DatabaseRepository databaseRepository,
+                           @Lazy DatabaseService databaseService,
                            GroupPermissionsRepository groupPermissionsRepository,
-                           GroupPermissionsService permissions,
                            CollectionPermissionsRepository collectionPermissionsRepository,
                            CollectionRepository collectionRepository) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
+        this.databaseService = databaseService;
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
@@ -48,8 +48,10 @@ public class MetabaseService {
         String dbUser = currentOrganisation.getDbUser();
 
         Database database = databaseRepository.save(new Database(name, "postgres", new DatabaseDetails(avniDatabase, dbUser)));
-        
-        CollectionResponse metabaseCollection = collectionRepository.save(new Collection(name, name + " collection"));
+        this.globalDatabase = database;
+
+        CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
+        this.globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
 
         Group metabaseGroup = groupPermissionsRepository.save(new Group(name));
 
@@ -60,5 +62,21 @@ public class MetabaseService {
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(collectionPermissionsRepository.getCollectionPermissionsGraph());
         collectionPermissions.updatePermissions(metabaseGroup.getId(), metabaseCollection.getId());
         collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), metabaseCollection.getId());
+    }
+
+    public Database getGlobalDatabase() {
+        if (globalDatabase == null) {
+            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+            globalDatabase = databaseRepository.getDatabaseByName(new Database(currentOrganisation.getName()));
+        }
+        return globalDatabase;
+    }
+
+    public CollectionInfoResponse getGlobalCollection() {
+        if (globalCollection == null) {
+            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+            globalCollection = databaseRepository.getCollectionByName(new Database(currentOrganisation.getName()));
+        }
+        return globalCollection;
     }
 }
