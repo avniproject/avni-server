@@ -8,8 +8,9 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -18,7 +19,6 @@ public class MetabaseService {
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
-    private final DatabaseService databaseService;
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
@@ -29,14 +29,12 @@ public class MetabaseService {
     public MetabaseService(OrganisationService organisationService,
                            AvniDatabase avniDatabase,
                            DatabaseRepository databaseRepository,
-                           @Lazy DatabaseService databaseService,
                            GroupPermissionsRepository groupPermissionsRepository,
                            CollectionPermissionsRepository collectionPermissionsRepository,
                            CollectionRepository collectionRepository) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
-        this.databaseService = databaseService;
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
@@ -47,36 +45,60 @@ public class MetabaseService {
         String name = currentOrganisation.getName();
         String dbUser = currentOrganisation.getDbUser();
 
-        Database database = databaseRepository.save(new Database(name, "postgres", new DatabaseDetails(avniDatabase, dbUser)));
-        this.globalDatabase = database;
+        globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
+        if (globalDatabase == null) {
+            Database newDatabase = new Database(name, "postgres", new DatabaseDetails(avniDatabase, dbUser));
+            globalDatabase = databaseRepository.save(newDatabase);
+        }
 
-        CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
-        this.globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
+        globalCollection = databaseRepository.getCollectionByName(globalDatabase);
+        if (globalCollection == null) {
+            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
+            globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
+        }
 
-        Group metabaseGroup = groupPermissionsRepository.save(new Group(name));
+        Group metabaseGroup = findOrCreateGroup(name);
 
         GroupPermissionsService groupPermissions = new GroupPermissionsService(groupPermissionsRepository.getPermissionsGraph());
-        groupPermissions.updatePermissions(metabaseGroup.getId(), database.getId());
-        groupPermissionsRepository.updatePermissionsGraph(groupPermissions, metabaseGroup.getId(), database.getId());
+        groupPermissions.updatePermissions(metabaseGroup.getId(), globalDatabase.getId());
+        groupPermissionsRepository.updatePermissionsGraph(groupPermissions, metabaseGroup.getId(), globalDatabase.getId());
 
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(collectionPermissionsRepository.getCollectionPermissionsGraph());
-        collectionPermissions.updatePermissions(metabaseGroup.getId(), metabaseCollection.getId());
-        collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), metabaseCollection.getId());
+        collectionPermissions.updatePermissions(metabaseGroup.getId(), globalCollection.getIdAsInt());
+        collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), globalCollection.getIdAsInt());
     }
 
     public Database getGlobalDatabase() {
         if (globalDatabase == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
             globalDatabase = databaseRepository.getDatabaseByName(new Database(currentOrganisation.getName()));
+            if (globalDatabase == null) {
+                throw new RuntimeException("Global database not found.");
+            }
         }
         return globalDatabase;
     }
+
 
     public CollectionInfoResponse getGlobalCollection() {
         if (globalCollection == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
             globalCollection = databaseRepository.getCollectionByName(new Database(currentOrganisation.getName()));
+            if (globalCollection == null) {
+                throw new RuntimeException("Global database not found.");
+            }
         }
         return globalCollection;
     }
+
+    private Group findOrCreateGroup(String name) {
+        List<GroupPermissionResponse> existingGroups = groupPermissionsRepository.getAllGroups();
+        for (GroupPermissionResponse group : existingGroups) {
+            if (group.getName().equals(name)) {
+                return new Group( group.getName(),group.getId());
+            }
+        }
+        return groupPermissionsRepository.save(new Group(name));
+    }
+
 }
