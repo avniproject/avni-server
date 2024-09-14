@@ -10,9 +10,6 @@ import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
-
 @Service
 public class MetabaseService {
 
@@ -57,15 +54,12 @@ public class MetabaseService {
             globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
         }
 
-        Group metabaseGroup = findOrCreateGroup(name);
+        Group metabaseGroup = groupPermissionsRepository.findOrCreateGroup(name, globalDatabase.getId(), globalCollection.getIdAsInt());
 
-        GroupPermissionsService groupPermissions = new GroupPermissionsService(groupPermissionsRepository.getPermissionsGraph());
-        groupPermissions.updatePermissions(metabaseGroup.getId(), globalDatabase.getId());
-        groupPermissionsRepository.updatePermissionsGraph(groupPermissions, metabaseGroup.getId(), globalDatabase.getId());
-
-        CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(collectionPermissionsRepository.getCollectionPermissionsGraph());
-        collectionPermissions.updatePermissions(metabaseGroup.getId(), globalCollection.getIdAsInt());
-        collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), globalCollection.getIdAsInt());
+        CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
+                collectionPermissionsRepository.getCollectionPermissionsGraph()
+        );
+        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, metabaseGroup.getId(), globalCollection.getIdAsInt());
     }
 
     public Database getGlobalDatabase() {
@@ -89,16 +83,6 @@ public class MetabaseService {
             }
         }
         return globalCollection;
-    }
-
-    private Group findOrCreateGroup(String name) {
-        List<GroupPermissionResponse> existingGroups = groupPermissionsRepository.getAllGroups();
-        for (GroupPermissionResponse group : existingGroups) {
-            if (group.getName().equals(name)) {
-                return new Group( group.getName(),group.getId());
-            }
-        }
-        return groupPermissionsRepository.save(new Group(name));
     }
 
 }

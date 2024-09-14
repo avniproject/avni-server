@@ -29,7 +29,7 @@ public class GroupPermissionsRepository extends MetabaseConnector {
         return getForObject(url, GroupPermissionsGraphResponse.class);
     }
 
-    public void updatePermissionsGraph(GroupPermissionsService permissions, int groupId, int databaseId) {
+    public void updatePermissionsGraph(GroupPermissionsService permissions) {
         String url = metabaseApiUrl + "/permissions/graph";
         Map<String, Object> requestBody = permissions.getUpdatedPermissionsGraph();
         sendPutRequest(url, requestBody);
@@ -39,5 +39,26 @@ public class GroupPermissionsRepository extends MetabaseConnector {
         String url = metabaseApiUrl + "/permissions/group";
         GroupPermissionResponse[] response = getForObject(url, GroupPermissionResponse[].class);
         return Arrays.asList(response);
+    }
+
+    public void updateGroupPermissions(int groupId, int databaseId) {
+        GroupPermissionsService groupPermissions = new GroupPermissionsService(getPermissionsGraph());
+        groupPermissions.updatePermissions(groupId, databaseId);
+        updatePermissionsGraph(groupPermissions);
+    }
+
+
+    public Group findOrCreateGroup(String name, int databaseId, int collectionId) {
+        List<GroupPermissionResponse> existingGroups = getAllGroups();
+
+        for (GroupPermissionResponse group : existingGroups) {
+            if (group.getName().equals(name)) {
+                return new Group(group.getName(), group.getId());
+            }
+        }
+
+        Group newGroup = save(new Group(name));
+        updateGroupPermissions(newGroup.getId(), databaseId);
+        return newGroup;
     }
 }

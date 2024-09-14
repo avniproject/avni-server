@@ -3,6 +3,7 @@ package org.avni.server.domain.metabase;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.avni.server.dao.metabase.CollectionPermissionsRepository;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -54,5 +55,10 @@ public class CollectionPermissionsService {
 
     public CollectionPermissionsGraphResponse getPermissionsGraph() {
         return permissionsGraph;
+    }
+
+    public void updateAndSavePermissions(CollectionPermissionsRepository collectionPermissionsRepository, int groupId, int collectionId) {
+        updatePermissions(groupId, collectionId);
+        collectionPermissionsRepository.updateCollectionPermissions(this, groupId, collectionId);
     }
 }
