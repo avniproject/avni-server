@@ -17,6 +17,7 @@ import org.avni.server.service.LocationService;
 import org.avni.server.util.CollectionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.LocationContract;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -37,6 +38,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public static final String ParentMissingOfLocation = "Parent missing for location provided";
     public static final String NoLocationProvided = "No location provided";
 
+    @Autowired
     public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService) {
         super(locationRepository, observationCreator);
         this.locationService = locationService;

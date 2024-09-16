@@ -90,10 +90,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         List<String> headerList = new ArrayList<>(Arrays.asList(headers));
         List<String> allErrorMsgs = new ArrayList<>();
         UsersAndCatchmentsHeaders usersAndCatchmentsHeaders = new UsersAndCatchmentsHeaders();
-        List<String> expectedStandardHeaders = Arrays.asList(usersAndCatchmentsHeaders.getAllHeaders());
         List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
-        checkForMissingHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
-        checkForUnknownHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
+        checkForMissingHeaders(headerList, allErrorMsgs, Arrays.asList(usersAndCatchmentsHeaders.getMandatoryHeaders()), syncAttributeHeadersForSubjectTypes);
+        checkForUnknownHeaders(headerList, allErrorMsgs, Arrays.asList(usersAndCatchmentsHeaders.getAllHeaders()), syncAttributeHeadersForSubjectTypes);
         if (!allErrorMsgs.isEmpty()) {
             throw new RuntimeException(createMultiErrorMessage(allErrorMsgs));
         }
@@ -201,7 +200,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     }
 
     private static String createMultiErrorMessage(List<String> errorMsgs) {
-        return errorMsgs.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining("; "));
+        return String.join(" ", errorMsgs);
     }
 
     private void extractUserNameValidationErrMsg(List<String> rowValidationErrorMsgs, String nameOfUser) {

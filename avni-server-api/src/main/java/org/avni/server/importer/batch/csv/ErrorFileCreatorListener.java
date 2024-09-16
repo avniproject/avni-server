@@ -80,7 +80,7 @@ public class ErrorFileCreatorListener implements JobExecutionListener {
         logger.debug(format("Bulk upload '%s'! %s", jobExecution.getStatus(), jobInfo));
         try {
             ObjectInfo metadata = bulkUploadS3Service.uploadErrorFile(errorFile, uuid);
-            logger.debug(format("Bulk upload '%s'! Check for errors at '%s'", jobExecution.getStatus(), metadata.getKey()));
+            logger.debug(format("Bulk upload '%s'! Check for errors at '%s'. Local file: %s", jobExecution.getStatus(), metadata.getKey(), errorFile.getAbsolutePath()));
         } catch (IOException e) {
             logger.error(String.format("Unable to create error files in S3 %s", e.getMessage()), e);
         }

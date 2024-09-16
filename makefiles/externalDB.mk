@@ -136,9 +136,9 @@ endif
 		--exclude-table-data=audit \
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
-		--exclude-table-data='scheduled_job_run' \
-		--exclude-table-data='qrtz_*' \
 		--exclude-table-data='batch_*' \
+		--exclude-table='qrtz_*' \
+		--exclude-table='scheduled_job_run' \
 		--exclude-table='public.individual_copy' \
 		--exclude-table='public.program_enrolment_copy' \
 		--exclude-table='public.encounter_copy' \
@@ -206,9 +206,9 @@ else
 endif
 
 backup-org-db:
-ifndef orgName
-	@echo "Provde the orgName variable"
+ifndef orgDbUser
+	@echo "Provde the orgDbUser variable"
 	exit 1
 else
-	sudo -u $(su) pg_dump avni_org > ../avni-db-dumps/local-$(orgName).sql
+	sudo -u $(su) pg_dump avni_org > ../avni-db-dumps/local-$(orgDbUser).sql
 endif
