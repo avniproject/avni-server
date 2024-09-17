@@ -33,7 +33,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
 
         Optional<AddressLevel> existingLocationAddressLevel = locationRepository.findByTitleLineageIgnoreCase(existingLocationTitleLineage);
         if (!existingLocationAddressLevel.isPresent()) {
-            allErrorMsgs.add(String.format("Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'", existingLocationTitleLineage));
+            allErrorMsgs.add(String.format("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations '%s'", existingLocationTitleLineage));
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
 
@@ -41,7 +41,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
         if (!StringUtils.isEmpty(newLocationParentTitleLineage)) {
             newLocationParentAddressLevel = locationRepository.findByTitleLineageIgnoreCase(newLocationParentTitleLineage).orElse(null);
             if (newLocationParentAddressLevel == null) {
-                allErrorMsgs.add(String.format("Provided new Location parent does not exist in Avni. Please add it or check for spelling mistakes '%s'", newLocationParentTitleLineage));
+                allErrorMsgs.add(String.format("Provided new location parent does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations - '%s'", newLocationParentTitleLineage));
             }
         }
         updateExistingLocation(existingLocationAddressLevel.get(), newLocationParentAddressLevel, row, allErrorMsgs);

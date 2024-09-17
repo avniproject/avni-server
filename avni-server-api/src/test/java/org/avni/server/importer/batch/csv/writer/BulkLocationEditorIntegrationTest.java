@@ -185,14 +185,21 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         // lineage with spaces
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar,  District3,  Block31", " Block31New", "Bihar,  District3", "23.45,43.85"),
-                error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes 'Bihar,  District3,  Block31'"),
+                error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations 'Bihar,  District3,  Block31'"),
+                verifyExists("Bihar", "District3", "Block31"),
+                verifyNotExists("Bihar, District3, Block31New"));
+
+        // lineage without spaces
+        failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
+                dataRow("Bihar,District3,Block31", " Block31New", "Bihar,  District3", "23.45,43.85"),
+                error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations 'Bihar,District3,Block31'"),
                 verifyExists("Bihar", "District3", "Block31"),
                 verifyNotExists("Bihar, District3, Block31New"));
 
         // change to non existing parent
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar, District2, Block21", " Block21Town", "Bihar,  DistrictN", "23.45,43.85"),
-                error("Provided new Location parent does not exist in Avni. Please add it or check for spelling mistakes 'Bihar,  DistrictN'"),
+                error("Provided new location parent does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations - 'Bihar,  DistrictN'"),
                 verifyExists("Bihar", "District2", "Block21"),
                 verifyNotExists("Bihar, District2, Block21Town"));
 

@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.avni.server.importer.batch.csv.writer.BulkLocationCreator.*;
 import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -173,6 +172,12 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 newLocationsCreated(1),
                 lineageExists("Bihar", "Chapra"));
 
+        // gps with space
+        success(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("Bihar", "District1", "", "24.20, 43.85"),
+                newLocationsCreated(1),
+                lineageExists("Bihar", "District1"));
+
         // upper case
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" bihar", " VAISHALI ", " Tarora ", "23.20,43.85"),
@@ -181,20 +186,26 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
 
         failure(header("State1", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
-                error(LocationTypesHeaderError));
+                error("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers."));
         failure(header("State", "District2", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
-                error(LocationTypesHeaderError));
+                error("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers."));
         failure(header("District", "State", "Block", "GPS coordinates"),
                 dataRow("Vaishali", "Bihar", "Nijma", "23.45,43.85"),
-                error(LocationTypesHeaderError));
+                error("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers."));
+
+        // invalid header for GPS coordinates
         failure(header("State", "District", "Block", "GPS"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,43.85"),
-                error(UnknownHeadersErrorMessage));
+                error("Unknown headers included in file. Please refer to sample file for valid list of headers."));
+        // invalid GPS coordinates
         failure(header("State", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Nijma", "23.45,"),
                 error("Invalid 'GPS coordinates'"));
-
+        // invalid GPS coordinates
+        failure(header("State", "District", "Block", "GPS coordinates"),
+                dataRow("Bihar", "Vaishali", "Nijma", "23.45a,"),
+                error("Invalid 'GPS coordinates'"));
 
         //attributes
         success(header("State", "District", "Block", "GPS coordinates", "Coded Concept"),
@@ -243,13 +254,13 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         // if done in random steps
         failure(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" ", " ", "Block11", "23.45,43.85"),
-                error(ParentMissingOfLocation));
+                error("Parent missing for location provided"));
         failure(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" ", " District 11", "Block11", "23.45,43.85"),
-                error(ParentMissingOfLocation));
+                error("Parent missing for location provided"));
         failure(header("State", "District", "Block", "GPS coordinates"),
                 dataRow(" ", " ", " ", "23.45,43.85"),
-                error(NoLocationProvided));
+                error("No location provided"));
         // end
 
 

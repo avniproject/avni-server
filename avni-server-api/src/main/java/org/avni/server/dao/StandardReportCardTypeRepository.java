@@ -1,6 +1,8 @@
 package org.avni.server.dao;
 
 import org.avni.server.domain.StandardReportCardType;
+import org.avni.server.domain.StandardReportCardTypeType;
+import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "standardReportCardType", path = "standardReportCardType")
@@ -27,5 +30,5 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
 
     boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
-    List<StandardReportCardType> findAllByNameIn(List<String> defaultDashboardStandardCardTypeNames);
+    List<StandardReportCardType> findAllByTypeIn(Set<StandardReportCardTypeType> defaultDashboardStandardCardTypeTypes);
 }

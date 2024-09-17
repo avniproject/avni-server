@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "dashboardSectionCardMapping", path = "dashboardSectionCardMapping")
-public interface DashboardSectionCardMappingRepository extends ReferenceDataRepository<DashboardSectionCardMapping>, FindByLastModifiedDateTime<DashboardSectionCardMapping> {
+public interface DashboardSectionCardMappingRepository extends ReferenceDataRepository<DashboardSectionCardMapping>, EndOfLife1EndpointRepository<DashboardSectionCardMapping> {
 
     default DashboardSectionCardMapping findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in FormMapping");
@@ -18,5 +18,4 @@ public interface DashboardSectionCardMappingRepository extends ReferenceDataRepo
     }
 
     DashboardSectionCardMapping findByCardIdAndDashboardSectionAndIsVoidedFalse(Long id, DashboardSection section);
-
 }

@@ -10,10 +10,11 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "dashboard", path = "dashboard")
-public interface DashboardRepository extends ReferenceDataRepository<Dashboard>, FindByLastModifiedDateTime<Dashboard>, JpaSpecificationExecutor<Dashboard> {
-
+public interface DashboardRepository extends ReferenceDataRepository<Dashboard>, JpaSpecificationExecutor<Dashboard>, EndOfLife1EndpointRepository<Dashboard> {
     @Query("select d.name from Dashboard d where d.isVoided = false")
     List<String> getAllNames();
 
     List<Dashboard> findAllByIsVoidedFalseOrderByName();
+
+    Dashboard findByUuidAndOrganisationIdAndIsVoidedFalse(String uuid, Long organisationId);
 }

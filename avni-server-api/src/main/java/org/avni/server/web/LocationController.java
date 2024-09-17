@@ -8,7 +8,6 @@ import org.avni.server.dao.LocationSyncRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.service.AddressLevelService;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;

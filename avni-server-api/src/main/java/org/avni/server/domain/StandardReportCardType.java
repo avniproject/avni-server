@@ -1,10 +1,10 @@
 package org.avni.server.domain;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @BatchSize(size = 100)
@@ -28,6 +28,10 @@ public class StandardReportCardType {
     private DateTime createdDateTime;
     @Column
     private DateTime lastModifiedDateTime;
+    @Column
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private StandardReportCardTypeType type;
 
     public Long getId() {
         return id;
@@ -83,5 +87,13 @@ public class StandardReportCardType {
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
+    }
+
+    public @NotNull StandardReportCardTypeType getType() {
+        return type;
+    }
+
+    public void setType(@NotNull StandardReportCardTypeType type) {
+        this.type = type;
     }
 }

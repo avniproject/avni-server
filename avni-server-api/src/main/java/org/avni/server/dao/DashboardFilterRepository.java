@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "dashboardFilter", path = "dashboardFilter")
-public interface DashboardFilterRepository extends ReferenceDataRepository<DashboardFilter>, FindByLastModifiedDateTime<DashboardFilter>, JpaSpecificationExecutor<DashboardFilter> {
+public interface DashboardFilterRepository extends ReferenceDataRepository<DashboardFilter>, JpaSpecificationExecutor<DashboardFilter>, EndOfLife1EndpointRepository<DashboardFilter> {
 }
