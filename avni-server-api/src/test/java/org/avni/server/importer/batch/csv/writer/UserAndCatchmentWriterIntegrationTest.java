@@ -247,7 +247,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
         failure(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, NoBlock11", "Catchment 3", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
-                has(error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes 'Bihar, District1, NoBlock11'."))
+                has(error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations 'Bihar, District1, NoBlock11'"))
         );
 
         // Missing headers - sync attributes

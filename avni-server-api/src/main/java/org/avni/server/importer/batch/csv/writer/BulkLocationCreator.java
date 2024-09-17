@@ -82,12 +82,12 @@ public class BulkLocationCreator extends BulkLocationModifier {
 
         HashSet<String> expectedHeaders = new HashSet<>(locationTypeNamesForHierarchy);
         if (Sets.difference(new HashSet<>(expectedHeaders), new HashSet<>(headerList)).size() == locationTypeNamesForHierarchy.size()) {
-            allErrorMsgs.add(LocationTypesHeaderError);
+            allErrorMsgs.add("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.");
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
 
         if (headerList.size() >= locationTypeNamesForHierarchy.size() && !headerList.subList(0, locationTypeNamesForHierarchy.size()).equals(locationTypeNamesForHierarchy)) {
-            allErrorMsgs.add(LocationTypesHeaderError);
+            allErrorMsgs.add("Location types missing or not in order in header for specified Location Hierarchy. Please refer to sample file for valid list of headers.");
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
         return locationTypeNamesForHierarchy;
@@ -100,7 +100,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
                     .stream().map(FormElement::getName).collect(Collectors.toList());
             locationPropertyNames.add(LocationHeaders.gpsCoordinates);
             if ((!locationPropertyNames.containsAll(additionalHeaders))) {
-                allErrorMsgs.add(UnknownHeadersErrorMessage);
+                allErrorMsgs.add("Unknown headers included in file. Please refer to sample file for valid list of headers.");
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
         }
@@ -130,11 +130,11 @@ public class BulkLocationCreator extends BulkLocationModifier {
     private void validateRow(Row row, List<String> hierarchicalLocationTypeNames, List<String> allErrorMsgs) {
         List<String> values = row.get(hierarchicalLocationTypeNames);
         if (CollectionUtil.isEmpty(values)) {
-            allErrorMsgs.add(NoLocationProvided);
+            allErrorMsgs.add("No location provided");
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
         if (!CollectionUtil.hasOnlyTrailingEmptyStrings(values)) {
-            allErrorMsgs.add(ParentMissingOfLocation);
+            allErrorMsgs.add("Parent missing for location provided");
             throw new RuntimeException(String.join(", ", allErrorMsgs));
         }
     }

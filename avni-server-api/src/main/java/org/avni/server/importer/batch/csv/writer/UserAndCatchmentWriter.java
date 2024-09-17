@@ -44,7 +44,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final ResetSyncService resetSyncService;
 
     private static final String ERR_MSG_MANDATORY_OR_INVALID_FIELD = "Invalid or Empty value specified for mandatory field %s.";
-    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'.";
+    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations '%s'.";
     private static final String ERR_MSG_LOCALE_FIELD = "Provided value '%s' for Preferred Language is invalid.";
     private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid.";
     private static final String ERR_MSG_INVALID_PHONE_NUMBER = "Provided value '%s' for phone number is invalid.";
