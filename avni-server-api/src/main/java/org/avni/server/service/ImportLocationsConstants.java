@@ -2,14 +2,11 @@ package org.avni.server.service;
 
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
 
-import java.util.Collections;
-
 public interface ImportLocationsConstants {
     String STRING_CONSTANT_ONE = "1";
     String STRING_CONSTANT_NEW_LINE = "\n";
-    String STRING_CONSTANT_EMPTY_STRING = "";
-    String STRING_PLACEHOLDER_BLOCK = "\"%s\",";
-    String STRING_3_PLACEHOLDER_BLOCK = String.join("", Collections.nCopies(3, STRING_PLACEHOLDER_BLOCK));
+    String STRING_CONSTANT_SEPARATOR = ",";
+    String STRING_PLACEHOLDER_BLOCK = "\"%s\"";
     String Example = "Example: ";
     String ALLOWED_VALUES = "Allowed values: ";
     String COLUMN_NAME_GPS_COORDINATES = LocationHeaders.gpsCoordinates;
@@ -23,5 +20,6 @@ public interface ImportLocationsConstants {
     String NEW_LOCATION_NAME_EXAMPLE = "Vil C";
     String PARENT_LOCATION_WITH_FULL_HIERARCHY_EXAMPLE = "PHC C, Sub C";
     String GPS_COORDINATES_EXAMPLE = "Ex: 23.45,43.85";
-    String ENTER_YOUR_DATA_STARTING_HERE = "Enter your data starting here";
+    String ENTER_YOUR_DATA_STARTING_HERE = "Enter your data starting here.";
+    String PARENT_LOCATION_REQUIRED = "Note: Child locations without parent locations are not allowed.";
 }
