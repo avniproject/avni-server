@@ -8,6 +8,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.joda.time.DateTime;
@@ -17,6 +18,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -61,10 +63,14 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     @PostMapping(value = "/web/reportCard")
     @ResponseBody
     @Transactional
-    public ResponseEntity<ReportCardWebResponse> newCard(@RequestBody ReportCardWebRequest cardRequest) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
-        ReportCard card = cardService.saveCard(cardRequest);
-        return ResponseEntity.ok(reportCardMapper.toWebResponse(card));
+    public ResponseEntity<?> newCard(@RequestBody ReportCardWebRequest cardRequest) {
+        try {
+            accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
+            ReportCard card = cardService.saveCard(cardRequest);
+            return ResponseEntity.ok(reportCardMapper.toWebResponse(card));
+        } catch (BadRequestError e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PutMapping(value = "/web/reportCard/{id}")
@@ -85,8 +91,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     @Transactional
     public void deleteCard(@PathVariable Long id) {
         accessControlService.checkPrivilege(PrivilegeType.EditOfflineDashboardAndReportCard);
-        Optional<ReportCard> card = cardRepository.findById(id);
-        card.ifPresent(cardService::deleteCard);
+        cardService.deleteCard(id);
     }
 
     @GetMapping(value = "/v2/card/search/lastModified")

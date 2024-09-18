@@ -11,6 +11,7 @@ import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
@@ -245,9 +246,9 @@ public class SubjectTypeController implements RestControllerResourceProcessor<Su
         if (subjectType == null)
             return ResponseEntity.notFound().build();
 
-        operationalSubjectType.setName(ReactAdminUtil.getVoidedName(operationalSubjectType.getName(), operationalSubjectType.getId()));
+        operationalSubjectType.setName(EntityUtil.getVoidedName(operationalSubjectType.getName(), operationalSubjectType.getId()));
         operationalSubjectType.setVoided(true);
-        subjectType.setName(ReactAdminUtil.getVoidedName(subjectType.getName(), subjectType.getId()));
+        subjectType.setName(EntityUtil.getVoidedName(subjectType.getName(), subjectType.getId()));
         subjectType.setVoided(true);
         operationalSubjectTypeRepository.save(operationalSubjectType);
         subjectTypeRepository.save(subjectType);

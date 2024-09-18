@@ -6,11 +6,11 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.projection.CodedConceptProjection;
 import org.avni.server.projection.ConceptProjection;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.application.ConceptUsageContract;
@@ -132,7 +132,7 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
         try {
             Concept existingConcept = conceptRepository.findByUuid(conceptUUID);
             existingConcept.setVoided(!existingConcept.isVoided());
-            existingConcept.setName(ReactAdminUtil.getVoidedName(existingConcept.getName(), existingConcept.getId()));
+            existingConcept.setName(EntityUtil.getVoidedName(existingConcept.getName(), existingConcept.getId()));
             conceptRepository.save(existingConcept);
         } catch (Exception e) {
             logger.error(format("Error deleting concept: %s", conceptUUID), e);

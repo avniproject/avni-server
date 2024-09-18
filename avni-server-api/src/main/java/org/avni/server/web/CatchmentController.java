@@ -7,6 +7,7 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.CatchmentService;
 import org.avni.server.service.ResetSyncService;
@@ -148,7 +149,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("AddressLevelType with id %d not found", id)));
         }
         catchment.setVoided(true);
-        catchment.setName(ReactAdminUtil.getVoidedName(catchment.getName(),catchment.getId()));
+        catchment.setName(EntityUtil.getVoidedName(catchment.getName(),catchment.getId()));
         catchmentRepository.save(catchment);
         return new ResponseEntity<>(CatchmentContract.fromEntity(catchment), HttpStatus.OK);
     }

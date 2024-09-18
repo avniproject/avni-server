@@ -4,9 +4,9 @@ import org.avni.server.application.projections.DocumentationProjection;
 import org.avni.server.dao.DocumentationRepository;
 import org.avni.server.domain.Documentation;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.service.DocumentationService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.webapp.documentation.DocumentationContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -58,7 +58,7 @@ public class DocumentationController extends AbstractController<Documentation> i
         Documentation documentation = documentationRepository.findByUuid(id);
         if (documentation != null) {
             documentation.setVoided(true);
-            documentation.setName(ReactAdminUtil.getVoidedName(documentation.getName(), documentation.getId()));
+            documentation.setName(EntityUtil.getVoidedName(documentation.getName(), documentation.getId()));
             documentationRepository.save(documentation);
         }
     }

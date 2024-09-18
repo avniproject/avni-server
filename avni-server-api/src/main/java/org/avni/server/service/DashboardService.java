@@ -4,8 +4,8 @@ import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.contract.reports.*;
 import org.avni.server.web.request.DashboardFilterRequest;
 import org.avni.server.web.request.DashboardWebRequest;
@@ -120,7 +120,7 @@ public class DashboardService implements NonScopeAwareService {
 
     public void deleteDashboard(Dashboard dashboard) {
         dashboard.setVoided(true);
-        dashboard.setName((ReactAdminUtil.getVoidedName(dashboard.getName(), dashboard.getId())));
+        dashboard.setName((EntityUtil.getVoidedName(dashboard.getName(), dashboard.getId())));
         dashboardRepository.save(dashboard);
     }
 

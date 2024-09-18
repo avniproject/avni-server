@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
@@ -70,8 +71,10 @@ public class CardService implements NonScopeAwareService {
         return cardRepository.save(existingCard);
     }
 
-    public void deleteCard(ReportCard card) {
+    public void deleteCard(Long id) {
+        ReportCard card = cardRepository.findEntity(id);
         card.setVoided(true);
+        card.setName(EntityUtil.getVoidedName(card.getName(), card.getId()));
         cardRepository.save(card);
     }
 
@@ -161,7 +164,7 @@ public class CardService implements NonScopeAwareService {
     private void assertNoExistingCardWithName(String name) {
         ReportCard existingCard = cardRepository.findByName(name);
         if (existingCard != null) {
-            throw new BadRequestError(String.format("Card %s already exists", name));
+            throw new BadRequestError(String.format("Report card with same name (%s) already exists", name));
         }
     }
 
