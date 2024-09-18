@@ -53,6 +53,18 @@ public class AccessControlService {
         }
     }
 
+    public void checkHasAnyOfSpecificPrivileges(List<PrivilegeType> privilegeTypes) {
+        this.checkHasAnyOfSpecificPrivileges(UserContextHolder.getUser(), privilegeTypes);
+    }
+
+    public void checkHasAnyOfSpecificPrivileges(User contextUser, List<PrivilegeType> privilegeTypes) {
+        if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && privilegeRepository.isAnyOfSpecificAllowedForAdmin(privilegeTypes))) return;
+
+        List<String> privilegeTypeNames = privilegeTypes.stream().map(Enum::name).collect(Collectors.toList());
+        if (!userRepository.hasAnyOfSpecificPrivileges(privilegeTypeNames, contextUser.getId())) {
+            throw AvniAccessException.createNoPrivilegeException(privilegeTypes);
+        }
+    }
     private boolean userExistsAndHasAllPrivileges(User contextUser) {
         if (contextUser == null) throw new AvniNoUserSessionException("User not logged in");
         return userRepository.hasAllPrivileges(contextUser.getId());

@@ -4,9 +4,9 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.web.request.api.RequestUtils;
+import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
@@ -15,13 +15,8 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import org.joda.time.DateTime;
-
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.QueryHint;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.List;
 import java.util.Optional;
 
@@ -95,6 +90,14 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
             "    join users on ug.user_id = users.id\n" +
             "where p.type = :type and users.id = :userId and group_privilege.allow and group_privilege.is_voided = false", nativeQuery = true)
     boolean hasPrivilege(String type, long userId);
+
+    @Query(value = "select (count(p.id) > 0) as exists from group_privilege\n" +
+            "    join privilege p on group_privilege.privilege_id = p.id\n" +
+            "    join groups on group_privilege.group_id = groups.id and groups.is_voided = false\n" +
+            "    join user_group ug on groups.id = ug.group_id and ug.is_voided = false\n" +
+            "    join users on ug.user_id = users.id\n" +
+            "where p.type in :types and users.id = :userId and group_privilege.allow and group_privilege.is_voided = false", nativeQuery = true)
+    boolean hasAnyOfSpecificPrivileges(List<String> types, long userId);
 
     @Query(value = "select bool_or(groups.has_all_privileges) from users\n" +
             "    left outer join user_group ug on users.id = ug.user_id and ug.is_voided = false\n" +

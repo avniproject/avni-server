@@ -16,6 +16,7 @@ import org.avni.server.importer.batch.model.BundleZip;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.service.application.MenuItemService;
+import org.avni.server.service.media.MediaFolder;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.GroupDashboardBundleContract;
 import org.avni.server.web.contract.reports.DashboardBundleContract;
@@ -226,12 +227,12 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     private String uploadIcon(String iconFileName, byte[] iconFileData) throws IOException {
-        String bucketName = "icons";
+        String folderName = MediaFolder.ICONS.label;
         logger.info("uploading icon {}", iconFileName);
         String[] splitFileName = iconFileName.split("\\.");
         String entityUUID = splitFileName[0];
         String extension = splitFileName[1];
-        return s3Service.uploadByteArray(entityUUID, extension, bucketName, iconFileData);
+        return s3Service.uploadByteArray(entityUUID, extension, folderName, iconFileData);
     }
 
     private void deployFileIfDataExists(List<? extends BundleFile> bundleFiles, BundleZip bundleZip, String filename) throws IOException, FormBuilderException, ValidationException {

@@ -40,7 +40,13 @@ public interface PrivilegeRepository extends AvniJpaRepository<Privilege, Long> 
 
     boolean existsByEntityTypeAndTypeAndIsVoidedFalse(PrivilegeEntityType privilegeEntityType, PrivilegeType privilegeType);
 
+    boolean existsByEntityTypeAndTypeInAndIsVoidedFalse(PrivilegeEntityType privilegeEntityType, List<PrivilegeType> privilegeTypes);
+
     default boolean isAllowedForAdmin(PrivilegeType privilegeType) {
         return this.existsByEntityTypeAndTypeAndIsVoidedFalse(PrivilegeEntityType.NonTransaction, privilegeType);
+    }
+
+    default boolean isAnyOfSpecificAllowedForAdmin(List<PrivilegeType> privilegeTypes) {
+        return this.existsByEntityTypeAndTypeInAndIsVoidedFalse(PrivilegeEntityType.NonTransaction, privilegeTypes);
     }
 }

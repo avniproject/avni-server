@@ -9,16 +9,15 @@ import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.S;
 import org.avni.server.web.request.NewsContract;
+import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedResources;
-import org.avni.server.web.response.slice.SlicedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -78,7 +77,7 @@ public class NewsController extends AbstractController<News> implements RestCont
     @ResponseBody
     @Transactional
     public ResponseEntity<NewsContract> newNews(@RequestBody NewsContract newsContract) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.EditNews);
         News news = newsService.saveNews(newsContract);
         return ResponseEntity.ok(NewsContract.fromEntity(news));
     }
@@ -87,7 +86,7 @@ public class NewsController extends AbstractController<News> implements RestCont
     @ResponseBody
     @Transactional
     public ResponseEntity<NewsContract> editNews(@PathVariable Long id, @RequestBody NewsContract newsContract) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.EditNews);
         Optional<News> news = newsRepository.findById(id);
         if (!news.isPresent()) {
             return ResponseEntity.notFound().build();
@@ -100,7 +99,7 @@ public class NewsController extends AbstractController<News> implements RestCont
     @ResponseBody
     @Transactional
     public void deleteNews(@PathVariable Long id) {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        accessControlService.checkPrivilege(PrivilegeType.EditNews);
         Optional<News> news = newsRepository.findById(id);
         news.ifPresent(newsService::deleteNews);
     }

@@ -14,6 +14,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.media.MediaFolder;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.util.S;
 import org.avni.server.util.S3File;
@@ -45,7 +46,6 @@ public abstract class StorageService implements S3Service {
     protected final Pattern mediaDirPattern = Pattern.compile("^/?(?<mediaDir>[^/]+)/.+$");
     protected final Logger logger;
     protected final Boolean isDev;
-    protected final String PROFILE_PIC_DIR = "profile-pics";
 
     protected StorageService(String bucketName, boolean s3InDev, Logger logger, Boolean isDev) {
         this.bucketName = bucketName;
@@ -397,7 +397,7 @@ public abstract class StorageService implements S3Service {
 
     @Override
     public String uploadProfilePic(String profilePicURL, Object oldValue) throws Exception {
-        return this.uploadMediaFileInDir(PROFILE_PIC_DIR, profilePicURL, oldValue);
+        return this.uploadMediaFileInDir(MediaFolder.PROFILE_PICS.label, profilePicURL, oldValue);
     }
 
     @Override
