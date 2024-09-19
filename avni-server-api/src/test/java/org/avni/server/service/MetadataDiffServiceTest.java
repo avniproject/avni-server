@@ -5,27 +5,30 @@ import static org.mockito.Mockito.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class MetadataDiffServiceTest {
 
+    private MetadataBundleAndFileHandler bundleAndFileHandler;
+    private MetadataDiffChecker diffChecker;
+    private MetadataDiffOutputGenerator outputGenerator;
     private MetadataDiffService metadataDiffService;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
-        metadataDiffService = new MetadataDiffService();
+        bundleAndFileHandler = mock(MetadataBundleAndFileHandler.class);
+        diffChecker = mock(MetadataDiffChecker.class);
+        outputGenerator = mock(MetadataDiffOutputGenerator.class);
+        metadataDiffService = new MetadataDiffService(bundleAndFileHandler, diffChecker, outputGenerator);
     }
 
     @Test
@@ -62,7 +65,7 @@ public class MetadataDiffServiceTest {
         jsonMap2.put("uuid1", createJsonObject("value2"));
         jsonMap2.put("uuid2", createJsonObject("value3"));
 
-        Map<String, Object> differences = metadataDiffService.findDifferences(jsonMap1, jsonMap2);
+        Map<String, Object> differences = diffChecker.findDifferences(jsonMap1, jsonMap2);
 
         assertNotNull(differences);
 
