@@ -9,6 +9,11 @@ import java.util.stream.Collectors;
 @Service
 public class MetadataDiffChecker {
 
+    public static final String MODIFIED = "modified";
+    public static final String ADDED = "added";
+    public static final String REMOVED = "removed";
+    public static final String NO_MODIFICATION = "noModification";
+
     MetadataDiffOutputGenerator metadataDiffOutputGenerator;
     protected Map<String, Object> findDifferences(Map<String, Object> jsonMap1, Map<String, Object> jsonMap2) {
         Map<String, Object> differences = new HashMap<>();
@@ -25,7 +30,7 @@ public class MetadataDiffChecker {
                     hasDifferences = true;
                 }
             } else {
-                differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff( json1, null,"removed"));
+                differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff( json1, null,REMOVED));
                 hasDifferences = true;
             }
         }
@@ -33,13 +38,13 @@ public class MetadataDiffChecker {
         for (Map.Entry<String, Object> entry : jsonMap2.entrySet()) {
             String uuid2 = entry.getKey();
             if (!jsonMap1.containsKey(uuid2)) {
-                differences.put(uuid2, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), "added"));
+                differences.put(uuid2, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
                 hasDifferences = true;
             }
         }
 
         if (!hasDifferences) {
-            differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff(null, null, "noModification"));
+            differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff(null, null, NO_MODIFICATION));
         }
         return differences;
     }
@@ -51,12 +56,12 @@ public class MetadataDiffChecker {
         }
 
         if (json1 == null) {
-            json2.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, value, "added")));
+            json2.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, value, ADDED)));
             return differences;
         }
 
         if (json2 == null) {
-            json1.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value, null, "removed")));
+            json1.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value, null, REMOVED)));
             return differences;
         }
 
@@ -69,20 +74,20 @@ public class MetadataDiffChecker {
                 continue;
             }
             if (value2 == null) {
-                differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, null, "removed"));
+                differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, null, REMOVED));
             } else {
                 if (value1 instanceof Map && value2 instanceof Map) {
                     Map<String, Object> subDiff = findJsonDifferences((Map<String, Object>) value1, (Map<String, Object>) value2);
                     if (!subDiff.isEmpty()) {
-                        differences.put(key, metadataDiffOutputGenerator.createObjectDiff((Map<String, Object>) value1, (Map<String, Object>) value2, "modified"));
+                        differences.put(key, metadataDiffOutputGenerator.createObjectDiff((Map<String, Object>) value1, (Map<String, Object>) value2, MODIFIED));
                     }
                 } else if (value1 instanceof List && value2 instanceof List) {
                     List<Map<String, Object>> listDiff = findArrayDifferences((List<Object>) value1, (List<Object>) value2);
                     if (!listDiff.isEmpty()) {
-                        differences.put(key, metadataDiffOutputGenerator.createArrayDiff((List<Object>) value1, (List<Object>) value2, "modified"));
+                        differences.put(key, metadataDiffOutputGenerator.createArrayDiff((List<Object>) value1, (List<Object>) value2, MODIFIED));
                     }
                 } else if (!value1.equals(value2)) {
-                    differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, value2, "modified"));
+                    differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, value2, MODIFIED));
                 }
             }
         }
@@ -90,7 +95,7 @@ public class MetadataDiffChecker {
         for (Map.Entry<String, Object> entry : json2.entrySet()) {
             String key = entry.getKey();
             if (!json1.containsKey(key)) {
-                differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), "added"));
+                differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
             }
         }
 
@@ -114,21 +119,21 @@ public class MetadataDiffChecker {
 
         for (String uuid : map2.keySet()) {
             if (!map1.containsKey(uuid)) {
-                differences.add(metadataDiffOutputGenerator.createFieldDiff(null, map2.get(uuid), "added"));
+                differences.add(metadataDiffOutputGenerator.createFieldDiff(null, map2.get(uuid), ADDED));
             } else {
                 Map<String, Object> obj1 = map1.get(uuid);
                 Map<String, Object> obj2 = map2.get(uuid);
 
                 Map<String, Object> subDiff = findJsonDifferences(obj1, obj2);
                 if (!subDiff.isEmpty()) {
-                    differences.add(metadataDiffOutputGenerator.createObjectDiff(obj1, obj2, "modified"));
+                    differences.add(metadataDiffOutputGenerator.createObjectDiff(obj1, obj2, MODIFIED));
                 }
             }
         }
 
         for (String uuid : map1.keySet()) {
             if (!map2.containsKey(uuid)) {
-                differences.add(metadataDiffOutputGenerator.createFieldDiff(map1.get(uuid), null, "removed"));
+                differences.add(metadataDiffOutputGenerator.createFieldDiff(map1.get(uuid), null, REMOVED));
             }
         }
         return differences;

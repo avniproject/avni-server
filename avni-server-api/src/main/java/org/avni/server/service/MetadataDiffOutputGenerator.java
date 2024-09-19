@@ -10,26 +10,38 @@ import java.util.Map;
 public class MetadataDiffOutputGenerator {
     MetadataDiffChecker metadataDiffChecker;
 
+    public static final String NO_MODIFICATION = "noModification";
+    public static final String OLD_VALUE = "oldValue";
+    public static final String NEW_VALUE = "newValue";
+    public static final String CHANGE_TYPE = "changeType";
+    public static final String DATA_TYPE = "dataType";
+    public static final String OBJECT = "object";
+    public static final String FIELD = "field";
+    public static final String ARRAY = "array";
+    public static final String PRIMITIVE = "primitive";
+    public static final String ITEMS = "items";
+
+
     protected Map<String, Object> createFieldDiff(Object oldValue, Object newValue, String changeType) {
         Map<String, Object> fieldDiff = new LinkedHashMap<>();
 
-        if(!"noModification".equals(changeType)) {
+        if(!NO_MODIFICATION.equals(changeType)) {
             if (oldValue == null && newValue != null) {
-                fieldDiff.put("dataType", getDataType(newValue));
+                fieldDiff.put(DATA_TYPE, getDataType(newValue));
             } else if (oldValue != null && newValue == null) {
-                fieldDiff.put("dataType", getDataType(oldValue));
+                fieldDiff.put(DATA_TYPE, getDataType(oldValue));
             } else if (oldValue != null && newValue != null) {
-                fieldDiff.put("dataType", getDataType(newValue));
+                fieldDiff.put(DATA_TYPE, getDataType(newValue));
             } else {
-                fieldDiff.put("dataType", "object");
+                fieldDiff.put(DATA_TYPE, OBJECT);
             }
         }
-        fieldDiff.put("changeType", changeType);
+        fieldDiff.put(CHANGE_TYPE, changeType);
         if (oldValue != null) {
-            fieldDiff.put("oldValue", oldValue);
+            fieldDiff.put(OLD_VALUE, oldValue);
         }
         if (newValue != null) {
-            fieldDiff.put("newValue", newValue);
+            fieldDiff.put(NEW_VALUE, newValue);
         }
         return fieldDiff;
     }
@@ -38,10 +50,10 @@ public class MetadataDiffOutputGenerator {
         Map<String, Object> objectDiff = new LinkedHashMap<>();
         Map<String, Object> fieldsDiff = metadataDiffChecker.findDifferences(oldValue, newValue);
 
-        if (!fieldsDiff.isEmpty() && !"noModification".equals(changeType)) {
-            objectDiff.put("dataType", "object");
-            objectDiff.put("changeType", changeType);
-            objectDiff.put("fields", fieldsDiff);
+        if (!fieldsDiff.isEmpty() && !NO_MODIFICATION.equals(changeType)) {
+            objectDiff.put(DATA_TYPE, OBJECT);
+            objectDiff.put(CHANGE_TYPE, changeType);
+            objectDiff.put(FIELD, fieldsDiff);
         }
         return objectDiff;
     }
@@ -50,20 +62,20 @@ public class MetadataDiffOutputGenerator {
         Map<String, Object> arrayDiff = new LinkedHashMap<>();
 
         List<Map<String, Object>> itemsDiff = metadataDiffChecker.findArrayDifferences(oldValue, newValue);
-        if (!itemsDiff.isEmpty() && !"noModification".equals(changeType)) {
-            arrayDiff.put("dataType", "array");
-            arrayDiff.put("changeType", changeType);
-            arrayDiff.put("items", itemsDiff);
+        if (!itemsDiff.isEmpty() && !NO_MODIFICATION.equals(changeType)) {
+            arrayDiff.put(DATA_TYPE, ARRAY);
+            arrayDiff.put(CHANGE_TYPE, changeType);
+            arrayDiff.put(ITEMS, itemsDiff);
         }
         return arrayDiff;
     }
     private String getDataType(Object value) {
         if (value instanceof Map) {
-            return "object";
+            return OBJECT;
         } else if (value instanceof List) {
-            return "array";
+            return ARRAY;
         } else {
-            return "primitive";
+            return PRIMITIVE;
         }
     }
 }
