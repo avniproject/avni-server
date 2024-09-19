@@ -82,6 +82,10 @@ public class AccessControlService {
         this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, subjectTypeUUID);
     }
 
+    public void checkHasAnyOfSpecificSubjectPrivileges(List<PrivilegeType> privilegeTypes, @NotNull String subjectTypeUUID) {
+        this.checkHasAnyOfSpecificSubjectPrivileges(UserContextHolder.getUser(), privilegeTypes, subjectTypeUUID);
+    }
+
     public void checkSubjectPrivilege(PrivilegeType privilegeType, Individual individual) {
         this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, individual.getSubjectType().getUuid());
     }
@@ -109,6 +113,15 @@ public class AccessControlService {
         if (subjectType == null) return;
         if (!userRepository.hasSubjectPrivilege(privilegeType.name(), subjectType.getId(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType, subjectTypeUUID, SubjectType.class);
+        }
+    }
+
+    public void checkHasAnyOfSpecificSubjectPrivileges(User contextUser, List<PrivilegeType> privilegeTypes, @NotNull String subjectTypeUUID) {
+        if (userExistsAndHasAllPrivileges(contextUser)) return;
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+        if (subjectType == null) return;
+        if (!userRepository.hasAnyOfSpecificSubjectPrivileges(privilegeTypes.stream().map(Enum::name).collect(Collectors.toList()), subjectType.getId(), contextUser.getId())) {
+            throw AvniAccessException.createNoPrivilegeException(privilegeTypes);
         }
     }
 

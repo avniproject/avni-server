@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -175,10 +175,10 @@ public class MediaController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use .bmp, .jpg, .jpeg, .png, .gif file.");
             }
             if (folder.equals(MediaFolder.ICONS) && isInvalidDimension(tempSourceFile, imageType)) {
-                accessControlService.checkHasAnyOfSpecificPrivileges(new ArrayList<PrivilegeType>() {{
-                    add(PrivilegeType.EditSubjectType);
-                    add(PrivilegeType.EditOfflineDashboardAndReportCard);
-                }});
+                accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
+                    PrivilegeType.EditSubjectType,
+                    PrivilegeType.EditOfflineDashboardAndReportCard
+                ));
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 75 X 75 or smaller.");
             }
             if (folder.equals(MediaFolder.NEWS) && isInvalidImageSize(file)) {
@@ -187,10 +187,10 @@ public class MediaController {
             }
             if (folder.equals(MediaFolder.PROFILE_PICS)) {
                 // not checking privileges for specific subject type here as that will be checked while saving the entity
-                accessControlService.checkHasAnyOfSpecificPrivileges(new ArrayList<PrivilegeType>() {{
-                    add(PrivilegeType.RegisterSubject);
-                    add(PrivilegeType.EditSubject);
-                }});
+                accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
+                    PrivilegeType.RegisterSubject,
+                    PrivilegeType.EditSubject
+                ));
             }
             String uuid = UUID.randomUUID().toString();
             String targetFilePath = format("%s/%s%s", folderName, uuid, imageType.EXT);
