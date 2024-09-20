@@ -177,12 +177,12 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     }
 
     public void updateParent(AddressLevel location, AddressLevel newParent) {
-        updateDescendantLocationLineage(locationRepository.findAllByParent(location), location.getParentId(), newParent.getId());
-        updateLocationMapping(location, newParent);
-        location.setLineage(updateLineage(location.getLineage(), location.getParentId(), newParent.getId()));
-        Long oldParentId = location.getParentId();
+        location.setLineage(updateLineage(location, newParent.getLineage()));
         location.setParent(newParent);
-        resetSyncService.recordLocationParentChange(location, oldParentId);
+        locationRepository.save(location);
+        updateDescendantLocationLineage(locationRepository.findAllByParent(location), location.getLineage());
+        updateLocationMapping(location, newParent);
+        resetSyncService.recordLocationParentChange(location, location.getParentId());
     }
 
     private void updateParent(AddressLevel location, Long newParentId) {
@@ -197,22 +197,16 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
         locationMappingRepository.saveAll(updatedLocationMappings);
     }
 
-    private String updateLineage(String lineage, Long oldParentId, Long newParentId) {
-        if (oldParentId == null) {
-            return newParentId + "." + lineage;
-        }
-        return lineage.replaceAll(oldParentId.toString(), newParentId.toString());
+    private String updateLineage(AddressLevel location, String parentLineage) {
+        return parentLineage + "." + location.getId();
     }
 
-    private void updateDescendantLocationLineage(List<AddressLevel> children, Long oldId, Long newId) {
-        if (children.isEmpty()) {
-            return;
-        } else {
+    private void updateDescendantLocationLineage(List<AddressLevel> children, String parentLineage) {
+        if (!children.isEmpty()) {
             children.forEach(child -> {
-                String lineage = child.getLineage();
-                child.setLineage(updateLineage(lineage, oldId, newId));
+                child.setLineage(updateLineage(child, parentLineage));
                 locationRepository.save(child);
-                updateDescendantLocationLineage(locationRepository.findAllByParent(child), oldId, newId);
+                updateDescendantLocationLineage(locationRepository.findAllByParent(child), child.getLineage());
             });
         }
     }

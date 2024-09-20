@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.AddressLevelType;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ImportLocationsConstants;
@@ -42,6 +43,14 @@ public class BulkLocationEditor extends BulkLocationModifier {
             newLocationParentAddressLevel = locationRepository.findByTitleLineageIgnoreCase(newLocationParentTitleLineage).orElse(null);
             if (newLocationParentAddressLevel == null) {
                 allErrorMsgs.add(String.format("Provided new location parent does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations - '%s'", newLocationParentTitleLineage));
+                throw new RuntimeException(String.join(", ", allErrorMsgs));
+            }
+            AddressLevelType currentParentType = null;
+            AddressLevel currentParent = existingLocationAddressLevel.get().getParentLocation();
+            if (currentParent != null) {currentParentType = currentParent.getType();}
+            if (!newLocationParentAddressLevel.getType().equals(currentParentType)) {
+                allErrorMsgs.add("Provided new location parent is of a different type from current parent.");
+                throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
         }
         updateExistingLocation(existingLocationAddressLevel.get(), newLocationParentAddressLevel, row, allErrorMsgs);
