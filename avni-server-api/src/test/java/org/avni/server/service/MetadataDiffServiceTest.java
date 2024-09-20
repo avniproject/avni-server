@@ -1,8 +1,5 @@
 package org.avni.server.service;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -10,11 +7,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static org.junit.Assert.*;
 
 public class MetadataDiffServiceTest {
 
@@ -28,7 +28,7 @@ public class MetadataDiffServiceTest {
         bundleAndFileHandler = new MetadataBundleAndFileHandler();
         outputGenerator = new MetadataDiffOutputGenerator();
         diffChecker = new MetadataDiffChecker(outputGenerator);
-        metadataDiffService = new MetadataDiffService(bundleAndFileHandler, diffChecker, outputGenerator);
+        metadataDiffService = new MetadataDiffService(bundleAndFileHandler, diffChecker);
     }
 
     @Test

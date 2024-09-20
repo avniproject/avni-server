@@ -5,29 +5,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 @Service
 public class MetadataDiffService {
 
     private static final Logger logger = LoggerFactory.getLogger(MetadataDiffService.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final MetadataBundleAndFileHandler bundleAndFileHandler;
     private final MetadataDiffChecker diffChecker;
-    private final MetadataDiffOutputGenerator outputGenerator;
 
     @Autowired
-    public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, MetadataDiffChecker diffChecker, MetadataDiffOutputGenerator outputGenerator) {
+    public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, MetadataDiffChecker diffChecker) {
         this.bundleAndFileHandler = bundleAndFileHandler;
         this.diffChecker = diffChecker;
-        this.outputGenerator = outputGenerator;
     }
 
-    public Map<String, Object> compareMetadataZips(MultipartFile zipFile1, MultipartFile zipFile2) throws IOException {
+    public Map<String, Object> compareMetadataZips(MultipartFile zipFile1, MultipartFile zipFile2) {
         Map<String, Object> result = new HashMap<>();
         File tempDir1 = null, tempDir2 = null;
 
