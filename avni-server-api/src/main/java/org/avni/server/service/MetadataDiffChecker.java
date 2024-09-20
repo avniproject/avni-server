@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -14,7 +15,12 @@ public class MetadataDiffChecker {
     public static final String REMOVED = "removed";
     public static final String NO_MODIFICATION = "noModification";
 
-    MetadataDiffOutputGenerator metadataDiffOutputGenerator;
+     MetadataDiffOutputGenerator metadataDiffOutputGenerator;
+
+    public MetadataDiffChecker(MetadataDiffOutputGenerator metadataDiffOutputGenerator) {
+        this.metadataDiffOutputGenerator = metadataDiffOutputGenerator;
+    }
+
     protected Map<String, Object> findDifferences(Map<String, Object> jsonMap1, Map<String, Object> jsonMap2) {
         Map<String, Object> differences = new HashMap<>();
         boolean hasDifferences = false;
@@ -79,12 +85,12 @@ public class MetadataDiffChecker {
                 if (value1 instanceof Map && value2 instanceof Map) {
                     Map<String, Object> subDiff = findJsonDifferences((Map<String, Object>) value1, (Map<String, Object>) value2);
                     if (!subDiff.isEmpty()) {
-                        differences.put(key, metadataDiffOutputGenerator.createObjectDiff((Map<String, Object>) value1, (Map<String, Object>) value2, MODIFIED));
+                        differences.put(key, metadataDiffOutputGenerator.createObjectDiff(subDiff, MODIFIED));
                     }
                 } else if (value1 instanceof List && value2 instanceof List) {
                     List<Map<String, Object>> listDiff = findArrayDifferences((List<Object>) value1, (List<Object>) value2);
                     if (!listDiff.isEmpty()) {
-                        differences.put(key, metadataDiffOutputGenerator.createArrayDiff((List<Object>) value1, (List<Object>) value2, MODIFIED));
+                        differences.put(key, metadataDiffOutputGenerator.createArrayDiff(listDiff, MODIFIED));
                     }
                 } else if (!value1.equals(value2)) {
                     differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, value2, MODIFIED));
@@ -126,7 +132,7 @@ public class MetadataDiffChecker {
 
                 Map<String, Object> subDiff = findJsonDifferences(obj1, obj2);
                 if (!subDiff.isEmpty()) {
-                    differences.add(metadataDiffOutputGenerator.createObjectDiff(obj1, obj2, MODIFIED));
+                    differences.add(metadataDiffOutputGenerator.createObjectDiff(subDiff, MODIFIED));
                 }
             }
         }

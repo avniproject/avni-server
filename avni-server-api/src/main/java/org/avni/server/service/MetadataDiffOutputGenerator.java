@@ -8,7 +8,6 @@ import java.util.Map;
 
 @Service
 public class MetadataDiffOutputGenerator {
-    MetadataDiffChecker metadataDiffChecker;
 
     public static final String NO_MODIFICATION = "noModification";
     public static final String OLD_VALUE = "oldValue";
@@ -20,7 +19,6 @@ public class MetadataDiffOutputGenerator {
     public static final String ARRAY = "array";
     public static final String PRIMITIVE = "primitive";
     public static final String ITEMS = "items";
-
 
     protected Map<String, Object> createFieldDiff(Object oldValue, Object newValue, String changeType) {
         Map<String, Object> fieldDiff = new LinkedHashMap<>();
@@ -46,9 +44,8 @@ public class MetadataDiffOutputGenerator {
         return fieldDiff;
     }
 
-    protected Map<String, Object> createObjectDiff(Map<String, Object> oldValue, Map<String, Object> newValue, String changeType) {
+    protected Map<String, Object> createObjectDiff(Map<String, Object> fieldsDiff, String changeType) {
         Map<String, Object> objectDiff = new LinkedHashMap<>();
-        Map<String, Object> fieldsDiff = metadataDiffChecker.findDifferences(oldValue, newValue);
 
         if (!fieldsDiff.isEmpty() && !NO_MODIFICATION.equals(changeType)) {
             objectDiff.put(DATA_TYPE, OBJECT);
@@ -58,10 +55,9 @@ public class MetadataDiffOutputGenerator {
         return objectDiff;
     }
 
-    protected Map<String, Object> createArrayDiff(List<Object> oldValue, List<Object> newValue, String changeType) {
+    protected Map<String, Object> createArrayDiff(List<Map<String, Object>> itemsDiff, String changeType) {
         Map<String, Object> arrayDiff = new LinkedHashMap<>();
 
-        List<Map<String, Object>> itemsDiff = metadataDiffChecker.findArrayDifferences(oldValue, newValue);
         if (!itemsDiff.isEmpty() && !NO_MODIFICATION.equals(changeType)) {
             arrayDiff.put(DATA_TYPE, ARRAY);
             arrayDiff.put(CHANGE_TYPE, changeType);
