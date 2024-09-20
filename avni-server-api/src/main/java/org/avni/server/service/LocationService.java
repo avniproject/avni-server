@@ -177,12 +177,13 @@ public class LocationService implements ScopeAwareService<AddressLevel> {
     }
 
     public void updateParent(AddressLevel location, AddressLevel newParent) {
+        Long oldParentId = location.getParentId();
         location.setLineage(updateLineage(location, newParent.getLineage()));
         location.setParent(newParent);
         locationRepository.save(location);
         updateDescendantLocationLineage(locationRepository.findAllByParent(location), location.getLineage());
         updateLocationMapping(location, newParent);
-        resetSyncService.recordLocationParentChange(location, location.getParentId());
+        resetSyncService.recordLocationParentChange(location, oldParentId);
     }
 
     private void updateParent(AddressLevel location, Long newParentId) {
