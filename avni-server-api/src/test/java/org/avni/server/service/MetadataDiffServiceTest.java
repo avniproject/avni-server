@@ -25,9 +25,9 @@ public class MetadataDiffServiceTest {
 
     @Before
     public void setUp() {
-        bundleAndFileHandler = mock(MetadataBundleAndFileHandler.class);
-        diffChecker = mock(MetadataDiffChecker.class);
-        outputGenerator = mock(MetadataDiffOutputGenerator.class);
+        bundleAndFileHandler = new MetadataBundleAndFileHandler();
+        outputGenerator = new MetadataDiffOutputGenerator();
+        diffChecker = new MetadataDiffChecker(outputGenerator);
         metadataDiffService = new MetadataDiffService(bundleAndFileHandler, diffChecker, outputGenerator);
     }
 

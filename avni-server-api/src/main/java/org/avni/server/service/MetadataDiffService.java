@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ public class MetadataDiffService {
     private final MetadataDiffChecker diffChecker;
     private final MetadataDiffOutputGenerator outputGenerator;
 
+    @Autowired
     public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, MetadataDiffChecker diffChecker, MetadataDiffOutputGenerator outputGenerator) {
         this.bundleAndFileHandler = bundleAndFileHandler;
         this.diffChecker = diffChecker;
