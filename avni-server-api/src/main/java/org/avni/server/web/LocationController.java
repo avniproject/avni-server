@@ -96,10 +96,10 @@ public class LocationController implements RestControllerResourceProcessor<Addre
 
     @GetMapping(value = "locations/search/findAsList")
     @ResponseBody
-    public List<LocationProjection> findAsList(
+    public List<AddressLevelContractWeb> findAsList(
         @RequestParam(value = "title", defaultValue = "") String title,
         @RequestParam(value = "typeId", required = false) Integer typeId) {
-        return locationRepository.findLocationProjectionByTitleIgnoreCaseAndTypeIdAsList(title, typeId);
+        return addressLevelService.addTitleLineageToLocation(locationRepository.findLocationProjectionByTitleIgnoreCaseAndTypeIdAsList(title, typeId));
     }
 
     @GetMapping(value = "/locations/search/findAllById")
