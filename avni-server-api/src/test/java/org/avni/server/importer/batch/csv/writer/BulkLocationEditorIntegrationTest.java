@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.*;
-import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.AddressLevel;
@@ -12,7 +11,6 @@ import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.LocationHierarchyService;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestLocationService;
@@ -21,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
@@ -200,6 +197,13 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar, District2, Block21", " Block21Town", "Bihar,  DistrictN", "23.45,43.85"),
                 error("Provided new location parent does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations - 'Bihar,  DistrictN'"),
+                verifyExists("Bihar", "District2", "Block21"),
+                verifyNotExists("Bihar, District2, Block21Town"));
+
+        // change to parent at a different level from current parent's level
+        failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
+                dataRow("Bihar, District2, Block21", " Block21Town", "Bihar", "23.45,43.85"),
+                error("Provided new location parent is of a different type from current parent."),
                 verifyExists("Bihar", "District2", "Block21"),
                 verifyNotExists("Bihar, District2, Block21Town"));
 
