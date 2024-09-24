@@ -161,7 +161,8 @@ public class FormService implements NonScopeAwareService {
                             formContract.getUuid(),
                             conceptUuid));
                 }
-                if (multiSelectTypes.contains(ConceptDataType.valueOf(formElement.getConcept().getDataType()))) {
+                String conceptDataType = formElement.getConcept().getDataType();
+                if (conceptDataType != null && multiSelectTypes.contains(ConceptDataType.valueOf(conceptDataType))) {
                     FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
                     if (existingFormElement != null) {
                         if (!existingFormElement.getType().equals(formElement.getType())) {
