@@ -382,7 +382,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         switch (bundleFolder) {
             case FORMS:
                 FormContract formContract = convertString(fileData.getValue(), FormContract.class);
-                formContract.validate();
+                formService.validateForm(formContract);
                 formService.saveForm(formContract);
                 break;
             case TRANSLATIONS:

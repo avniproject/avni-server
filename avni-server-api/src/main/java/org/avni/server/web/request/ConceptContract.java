@@ -82,6 +82,11 @@ public class ConceptContract extends ReferenceDataContract {
         return ConceptDataType.Coded.toString().equals(this.getDataType());
     }
 
+    @JsonIgnore
+    public boolean isQuestionGroup() {
+        return ConceptDataType.QuestionGroup.toString().equals(this.getDataType());
+    }
+
     public List<ConceptContract> getAnswers() {
         return answers;
     }

@@ -141,7 +141,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     public ResponseEntity<?> save(@RequestBody FormContract formRequest) {
         logger.info(format("Saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
-            formRequest.validate();
+            formService.validateForm(formRequest);
             formService.checkIfLocationConceptsHaveBeenUsed(formRequest);
             formService.saveForm(formRequest);
         } catch (BuilderException | InvalidObjectException | FormBuilderException e) {
