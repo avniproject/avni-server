@@ -118,6 +118,8 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
                 return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
                                 TimeUnit.SECONDS).maximumWeight(cacheMaxWeight)
                         .weigher((key, value) -> value == null ? 0 : (((List<VirtualCatchmentProjection>) value).size() / 100) + 1)
+                        .weakKeys()
+                        .softValues()
                         .build().asMap(), DISALLOW_NULL_VALUES);
             }
 
