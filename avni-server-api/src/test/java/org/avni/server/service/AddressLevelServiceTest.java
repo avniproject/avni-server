@@ -3,7 +3,6 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.KeyType;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevelType;
@@ -28,13 +27,13 @@ public class AddressLevelServiceTest {
         OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
 
         when(locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(1L, Arrays.asList(1L))).thenReturn(asList(
-                new VirtualCatchmentProjectImplementation(1L, 1L, 1L, 1L),
-                new VirtualCatchmentProjectImplementation(2L, 2L, 1L, 1L)
+                new VirtualCatchmentProjectTestImplementation(1L, 1L, 1L, 1L),
+                new VirtualCatchmentProjectTestImplementation(2L, 2L, 1L, 1L)
         ));
 
         when(locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(1L, Arrays.asList(2L))).thenReturn(asList(
-                new VirtualCatchmentProjectImplementation(3L, 3L, 1L, 2L),
-                new VirtualCatchmentProjectImplementation(4L, 4L, 1L, 2L)
+                new VirtualCatchmentProjectTestImplementation(3L, 3L, 1L, 2L),
+                new VirtualCatchmentProjectTestImplementation(4L, 4L, 1L, 2L)
         ));
 
         String orgConfig = "[{\"subjectTypeUUID\": \"first-subject-type-uuid\", \"locationTypeUUIDs\": [\"first-address-level-type-uuid\"]},{\"subjectTypeUUID\": \"second-subject-type-uuid\", \"locationTypeUUIDs\": [\"second-address-level-type-uuid\"]}]";
@@ -69,37 +68,4 @@ public class AddressLevelServiceTest {
         return addressLevelType;
     }
 
-    public static class VirtualCatchmentProjectImplementation implements VirtualCatchmentProjection {
-        private final Long id;
-        private final Long addressLevel_id;
-        private final Long catchment_id;
-        private final Long type_id;
-
-        public VirtualCatchmentProjectImplementation(Long id, Long addressLevel_id, Long catchment_id, Long type_id) {
-            this.id = id;
-            this.addressLevel_id = addressLevel_id;
-            this.catchment_id = catchment_id;
-            this.type_id = type_id;
-        }
-
-        @Override
-        public Long getId() {
-            return this.id;
-        }
-
-        @Override
-        public Long getAddresslevel_id() {
-            return this.addressLevel_id;
-        }
-
-        @Override
-        public Long getCatchment_id() {
-            return this.catchment_id;
-        }
-
-        @Override
-        public Long getType_id() {
-            return this.type_id;
-        }
-    }
 }
