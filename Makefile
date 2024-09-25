@@ -119,6 +119,9 @@ deploy_test_schema: ## Runs all migrations to create the schema with all the obj
 start_server: build_server
 	OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=none java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
+start_server_perf_test_mode: build_server
+	OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=none java -Xmx1512m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -XX:+UsePerfData -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+
 start_server_keycloak: build_server
 	OPENCHS_MODE=on-premise OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=keycloak java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
