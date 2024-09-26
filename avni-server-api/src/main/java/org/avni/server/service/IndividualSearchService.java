@@ -40,7 +40,7 @@ public class IndividualSearchService {
                 .map(individualRecord -> ((BigInteger) individualRecord.get("addressId")).longValue())
                 .collect(Collectors.toList());
 
-        List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = individualIds.size() > 0 ?
+        List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = !individualIds.isEmpty() ?
                 programEnrolmentRepository.findActiveEnrolmentsByIndividualIds(individualIds) :
                 Collections.emptyList();
 

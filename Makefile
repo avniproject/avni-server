@@ -178,6 +178,7 @@ ci-test:
 
 open_test_results:
 	open avni-server-api/build/reports/tests/test/index.html
+open-test-results: open_test_results
 
 build-rpm:
 	./gradlew clean avni-server-api:buildRpm -x test --info --stacktrace

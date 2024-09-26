@@ -1,7 +1,5 @@
 package org.avni.server.dao.search;
 
-import org.avni.server.dao.search.EncounterSearchQueryBuilder;
-import org.avni.server.dao.search.SqlQuery;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
@@ -13,7 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 public class EncounterSearchQueryBuilderTest {
 

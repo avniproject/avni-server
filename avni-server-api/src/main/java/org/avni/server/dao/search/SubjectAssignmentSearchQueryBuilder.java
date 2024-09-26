@@ -110,12 +110,12 @@ public class SubjectAssignmentSearchQueryBuilder extends BaseSubjectSearchQueryB
     }
 
     @Override
-    public SqlQuery getSQLResultQuery(SubjectSearchRequest searchRequest) {
+    public SqlQuery getSQLResultQuery(SubjectSearchRequest searchRequest, SubjectType subjectType) {
         return this.withSubjectSearchFilter(searchRequest).build();
     }
 
     @Override
-    public SqlQuery getSQLCountQuery(SubjectSearchRequest searchRequest) {
+    public SqlQuery getSQLCountQuery(SubjectSearchRequest searchRequest, SubjectType subjectType) {
         return this.withSubjectSearchFilter(searchRequest).forCount().build();
     }
 }
