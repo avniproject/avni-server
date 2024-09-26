@@ -122,7 +122,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                 "addrPerCatchmentCache2 size should have been 10");
 
         //Validate cache miss the first time
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment1.getId());
+        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment2.getId());
     }
 
     @Test
@@ -157,15 +157,15 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
 
         //Invoke for a new catchment
         addressLevelCache.getAddressLevelsForCatchment(catchment4);
-        Assert.isTrue(CATCHMENT_4_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
-                "addrPerCatchmentCache4 size should have been 20");
 
         //Validate cache miss the first time for new catchment
         verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment4.getId());
         verifyNoMoreInteractions(mockLocationRepository);
 
-        //Ensure cache has overflown and got cleared
+        //Ensure cache has overflown and first entry got replaced with new catchment entry
         Assert.isNull(addrPerCatchmentCache.get(catchment1), "addrPerCatchmentCache1 should not have had the data");
+        Assert.isTrue(CATCHMENT_4_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
+                "addrPerCatchmentCache4 size should have been 20");
 
         //Rest of the cache is left intact
         Assert.notNull(addrPerCatchmentCache.get(catchment2).get(), "addrPerCatchmentCache2 should have had the data");
