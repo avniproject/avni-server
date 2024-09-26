@@ -14,8 +14,11 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.Assert;
 
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.avni.server.service.AddressLevelCache.ADDRESSES_PER_CATCHMENT;
 import static org.mockito.Mockito.*;
@@ -34,6 +37,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     private static final int CATCHMENT_3_SIZE = 8;
     private static final int CATCHMENT_4_SIZE = 20;
 
+    private long addressIdStartIdx;
 
     @Mock
     private LocationRepository mockLocationRepository;
@@ -48,16 +52,21 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
 
     @Before
     public void setUpAddressLevelCache() {
+        addressIdStartIdx = 1L;
         //Reset mocks
         reset(mockLocationRepository);
 
         //Use mock inside AddressLevelCache
         ReflectionTestUtils.setField(addressLevelCache, "locationRepository", mockLocationRepository);
 
-        catchment1 = initCatchmentAndMock(CATCHMENT_1_ID, 1L, CATCHMENT_1_SIZE);
-        catchment2 = initCatchmentAndMock(CATCHMENT_2_ID, 3L, CATCHMENT_2_SIZE);
-        catchment3 = initCatchmentAndMock(CATCHMENT_3_ID, 13L, CATCHMENT_3_SIZE);
-        catchment4 = initCatchmentAndMock(CATCHMENT_4_ID, 21L, CATCHMENT_4_SIZE);
+        catchment1 = initCatchmentAndMock(CATCHMENT_1_ID, addressIdStartIdx, CATCHMENT_1_SIZE);
+        catchment2 = initCatchmentAndMock(CATCHMENT_2_ID, getAddressIdStartIdx( CATCHMENT_1_SIZE), CATCHMENT_2_SIZE);
+        catchment3 = initCatchmentAndMock(CATCHMENT_3_ID, getAddressIdStartIdx( CATCHMENT_2_SIZE), CATCHMENT_3_SIZE);
+        catchment4 = initCatchmentAndMock(CATCHMENT_4_ID, getAddressIdStartIdx( CATCHMENT_3_SIZE), CATCHMENT_4_SIZE);
+    }
+
+    private long getAddressIdStartIdx(long offset) {
+        return addressIdStartIdx += offset;
     }
 
     private Catchment initCatchmentAndMock(long catchment1Id, long startIndex, int numberOfEntries) {
@@ -163,16 +172,60 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         verifyNoMoreInteractions(mockLocationRepository);
 
         //Ensure cache has overflown and first entry got replaced with new catchment entry
-        Assert.isNull(addrPerCatchmentCache.get(catchment1), "addrPerCatchmentCache1 should not have had the data");
+        Assert.isTrue(Objects.isNull(addrPerCatchmentCache.get(catchment1))
+                        || Objects.isNull(addrPerCatchmentCache.get(catchment2))
+                        || Objects.isNull(addrPerCatchmentCache.get(catchment3)),
+                "addrPerCatchmentCache 1,2 or 3 should not have had the data");
+        Assert.isTrue(CATCHMENT_4_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
+                "addrPerCatchmentCache4 size should have been 20");
+    }
+
+
+    @Test
+    public void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryFromMemory() {
+        Cache addrPerCatchmentCache = cacheManager.getCache(ADDRESSES_PER_CATCHMENT);
+
+        //Invoke for different catchments
+        addressLevelCache.getAddressLevelsForCatchment(catchment1);
+        addressLevelCache.getAddressLevelsForCatchment(catchment2);
+        addressLevelCache.getAddressLevelsForCatchment(catchment3);
+
+        //Make weakReferences to later check the ReferenceQueue for System GC removing them from memory
+        ReferenceQueue<Object> keysReferenceQueue = new ReferenceQueue<>();
+        ReferenceQueue<Object> valuesReferenceQueue = new ReferenceQueue<>();
+
+        WeakReference weakReferenceForCatchment1 = new WeakReference<>(addrPerCatchmentCache.get(catchment1), keysReferenceQueue);
+        WeakReference weakReferenceForCatchment2 = new WeakReference<>(addrPerCatchmentCache.get(catchment2), keysReferenceQueue);
+        WeakReference weakReferenceForCatchment3 = new WeakReference<>(addrPerCatchmentCache.get(catchment3), keysReferenceQueue);
+        WeakReference weakReferenceForCatchment1Value = new WeakReference<>(addrPerCatchmentCache.get(catchment1).get(), valuesReferenceQueue);
+        WeakReference weakReferenceForCatchment2Value = new WeakReference<>(addrPerCatchmentCache.get(catchment2).get(), valuesReferenceQueue);
+        WeakReference weakReferenceForCatchment3Value = new WeakReference<>(addrPerCatchmentCache.get(catchment3).get(), valuesReferenceQueue);
+
+        //Invoke for a new catchment
+        addressLevelCache.getAddressLevelsForCatchment(catchment4);
+        //Ensure cache has overflown and first entry got replaced with new catchment entry
+        Assert.isTrue(Objects.isNull(addrPerCatchmentCache.get(catchment1))
+                        | Objects.isNull(addrPerCatchmentCache.get(catchment2))
+                        | Objects.isNull(addrPerCatchmentCache.get(catchment3)),
+                "addrPerCatchmentCache 1,2 or 3 should not have had the data");
         Assert.isTrue(CATCHMENT_4_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
                 "addrPerCatchmentCache4 size should have been 20");
 
-        //Rest of the cache is left intact
-        Assert.notNull(addrPerCatchmentCache.get(catchment2).get(), "addrPerCatchmentCache2 should have had the data");
-        Assert.isTrue(CATCHMENT_2_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
-                "addrPerCatchmentCache2 size should have been 10");
-        Assert.notNull(addrPerCatchmentCache.get(catchment3).get(), "addrPerCatchmentCache3 should have had the data");
-        Assert.isTrue(CATCHMENT_3_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment3).get()).size(),
-                "addrPerCatchmentCache3 size should have been 8");
+        // Remove references to catchment Response lists
+        reset(mockLocationRepository);
+
+        //Explicitly invoke Garbage collection, so that old catchment1 with only weak references is cleared from memory
+        System.gc();
+
+        //Validate that catchment1 entries are no longer retained in memory
+        Assert.isTrue(Objects.isNull(weakReferenceForCatchment1.get())
+                | Objects.isNull(weakReferenceForCatchment2.get())
+                | Objects.isNull(weakReferenceForCatchment3.get()), "one of referentForCatchments should not have had the data");
+        Assert.notNull(keysReferenceQueue.poll(), "should return one cached element");
+
+        Assert.isTrue(Objects.isNull(weakReferenceForCatchment1Value.get())
+                | Objects.isNull(weakReferenceForCatchment2Value.get())
+                | Objects.isNull(weakReferenceForCatchment3Value.get()), "one of referentForCatchmentValues should not have had the data");
+        Assert.notNull(valuesReferenceQueue.poll(), "should return one cached element's value");
     }
 }
