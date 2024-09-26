@@ -1,7 +1,7 @@
 package org.avni.server;
 
 import com.google.common.cache.CacheBuilder;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.domain.User;
 import org.avni.server.framework.jpa.CHSAuditorAware;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
@@ -117,7 +117,7 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
             private ConcurrentMapCache getConcurrentMapCacheWithWeightedCapacityForAddressesConfig(String name) {
                 return new ConcurrentMapCache(name, CacheBuilder.newBuilder().expireAfterWrite(timeToLiveInSeconds,
                                 TimeUnit.SECONDS).maximumWeight(cacheMaxWeight)
-                        .weigher((key, value) -> value == null ? 0 : (((List<VirtualCatchmentProjection>) value).size() / 100) + 1)
+                        .weigher((key, value) -> value == null ? 0 : (((List<CatchmentAddressProjection>) value).size() / 100) + 1)
                         .weakKeys()
                         .softValues()
                         .build().asMap(), DISALLOW_NULL_VALUES);

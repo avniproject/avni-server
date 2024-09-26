@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.Catchment;
@@ -64,18 +64,18 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         //Init Catchment
         Catchment catchment = new Catchment();
         catchment.setId(catchment1Id);
-        List<VirtualCatchmentProjection> catchmentResponseList = getVirtualCatchmentProjectionArrayList(catchment1Id, startIndex, numberOfEntries);
+        List<CatchmentAddressProjection> catchmentResponseList = getVirtualCatchmentProjectionArrayList(catchment1Id, startIndex, numberOfEntries);
 
         //stubbing
-        when(mockLocationRepository.getVirtualCatchmentsForCatchmentId(catchment.getId())).thenReturn(catchmentResponseList);
+        when(mockLocationRepository.getCatchmentAddressesForCatchmentId(catchment.getId())).thenReturn(catchmentResponseList);
 
         return catchment;
     }
 
-    private ArrayList<VirtualCatchmentProjection> getVirtualCatchmentProjectionArrayList(Long catchmentId, long startIndex, int numberOfEntries) {
-        ArrayList<VirtualCatchmentProjection> virtualCatchmentProjectionList = new ArrayList<>(numberOfEntries);
+    private ArrayList<CatchmentAddressProjection> getVirtualCatchmentProjectionArrayList(Long catchmentId, long startIndex, int numberOfEntries) {
+        ArrayList<CatchmentAddressProjection> virtualCatchmentProjectionList = new ArrayList<>(numberOfEntries);
         for (long i = startIndex; i < startIndex + numberOfEntries; i++) {
-            virtualCatchmentProjectionList.add(new VirtualCatchmentProjectTestImplementation(i, i, catchmentId, ADDRESS_LEVEL_TYPE_ID));
+            virtualCatchmentProjectionList.add(new CatchmentAddressProjectionTestImplementation(i, i, catchmentId, ADDRESS_LEVEL_TYPE_ID));
         }
         return virtualCatchmentProjectionList;
     }
@@ -83,7 +83,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     @Test
     public void givenAddressLevelCacheIsConfigured_whenCallGetVirtualCatchmentsForCatchmentId_thenDataShouldBeInAddressPerCatchmentCache() {
         //Fetch and cache
-        List<VirtualCatchmentProjection> cachedVirtualCatchmentProjList = addressLevelCache.getAddressLevelsForCatchment(catchment1);
+        List<CatchmentAddressProjection> cachedVirtualCatchmentProjList = addressLevelCache.getAddressLevelsForCatchment(catchment1);
 
         //Validate cache content
         Assert.notNull(cachedVirtualCatchmentProjList, "addrPerCatchmentCache should have had the data");
@@ -97,11 +97,11 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
 
         Cache addrPerCatchmentCache = cacheManager.getCache(ADDRESSES_PER_CATCHMENT);
         Assert.notNull(addrPerCatchmentCache.get(catchment1).get(), "addrPerCatchmentCache should have had the data");
-        Assert.isTrue(CATCHMENT_1_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment1).get()).size(),
+        Assert.isTrue(CATCHMENT_1_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment1).get()).size(),
                 "addrPerCatchmentCache size should have been 2");
 
         //Validate cache miss the first time
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment1.getId());
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment1.getId());
 
         //Invoke cache multiple times
         addressLevelCache.getAddressLevelsForCatchment(catchment1);
@@ -118,11 +118,11 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         Assert.isNull(addrPerCatchmentCache.get(catchment2), "addrPerCatchmentCache2 should not have had the data");
 
         addressLevelCache.getAddressLevelsForCatchment(catchment2);
-        Assert.isTrue(CATCHMENT_2_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
+        Assert.isTrue(CATCHMENT_2_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
                 "addrPerCatchmentCache2 size should have been 10");
 
         //Validate cache miss the first time
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment2.getId());
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment2.getId());
     }
 
     @Test
@@ -138,41 +138,41 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         addressLevelCache.getAddressLevelsForCatchment(catchment2);
         addressLevelCache.getAddressLevelsForCatchment(catchment3);
 
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment1.getId());
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment2.getId());
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment3.getId());
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment1.getId());
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment2.getId());
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment3.getId());
 
         verifyNoMoreInteractions(mockLocationRepository);
 
         //Ensure cache has all the data
         Assert.notNull(addrPerCatchmentCache.get(catchment1).get(), "addrPerCatchmentCache1 should have had the data");
-        Assert.isTrue(CATCHMENT_1_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment1).get()).size(),
+        Assert.isTrue(CATCHMENT_1_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment1).get()).size(),
                 "addrPerCatchmentCache1 size should have been 2");
         Assert.notNull(addrPerCatchmentCache.get(catchment2).get(), "addrPerCatchmentCache2 should have had the data");
-        Assert.isTrue(CATCHMENT_2_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
+        Assert.isTrue(CATCHMENT_2_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
                 "addrPerCatchmentCache2 size should have been 10");
         Assert.notNull(addrPerCatchmentCache.get(catchment3).get(), "addrPerCatchmentCache3 should have had the data");
-        Assert.isTrue(CATCHMENT_3_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment3).get()).size(),
+        Assert.isTrue(CATCHMENT_3_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment3).get()).size(),
                 "addrPerCatchmentCache3 size should have been 8");
 
         //Invoke for a new catchment
         addressLevelCache.getAddressLevelsForCatchment(catchment4);
 
         //Validate cache miss the first time for new catchment
-        verify(mockLocationRepository).getVirtualCatchmentsForCatchmentId(catchment4.getId());
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment4.getId());
         verifyNoMoreInteractions(mockLocationRepository);
 
         //Ensure cache has overflown and first entry got replaced with new catchment entry
         Assert.isNull(addrPerCatchmentCache.get(catchment1), "addrPerCatchmentCache1 should not have had the data");
-        Assert.isTrue(CATCHMENT_4_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
+        Assert.isTrue(CATCHMENT_4_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
                 "addrPerCatchmentCache4 size should have been 20");
 
         //Rest of the cache is left intact
         Assert.notNull(addrPerCatchmentCache.get(catchment2).get(), "addrPerCatchmentCache2 should have had the data");
-        Assert.isTrue(CATCHMENT_2_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
+        Assert.isTrue(CATCHMENT_2_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment2).get()).size(),
                 "addrPerCatchmentCache2 size should have been 10");
         Assert.notNull(addrPerCatchmentCache.get(catchment3).get(), "addrPerCatchmentCache3 should have had the data");
-        Assert.isTrue(CATCHMENT_3_SIZE == ((List<VirtualCatchmentProjection>) addrPerCatchmentCache.get(catchment3).get()).size(),
+        Assert.isTrue(CATCHMENT_3_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment3).get()).size(),
                 "addrPerCatchmentCache3 size should have been 8");
     }
 }
