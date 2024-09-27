@@ -242,6 +242,14 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         Assert.notNull(keysReferenceQueue.poll(), "should return one cached element");
         Assert.notNull(keysReferenceQueue.poll(), "should return one cached element");
         Assert.isNull(keysReferenceQueue.poll(), "should return null");
+
+        //Ensure cache has overflown and one entry got replaced with fourth catchment entry
+        Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
+                        addrPerCatchmentCache.get(catchment2),
+                        addrPerCatchmentCache.get(catchment3)) == 1L,
+                "only one of addrPerCatchmentCache 1,2 or 3 should not have had the data");
+        Assert.isTrue(CATCHMENT_4_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
+                "addrPerCatchmentCache4 size should have been 20");
     }
 
     private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory() {
@@ -267,6 +275,14 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                 "one of referentForCatchmentValues should not have had the data");
         Assert.notNull(valuesReferenceQueue.poll(), "should return one cached element's value");
         Assert.isNull(valuesReferenceQueue.poll(), "should return null");
+
+        //Ensure cache has overflown and one entry got replaced with fourth catchment entry
+        Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
+                        addrPerCatchmentCache.get(catchment2),
+                        addrPerCatchmentCache.get(catchment3)) == 1L,
+                "only one of addrPerCatchmentCache 1,2 or 3 should not have had the data");
+        Assert.isTrue(CATCHMENT_4_SIZE == ((List<CatchmentAddressProjection>) addrPerCatchmentCache.get(catchment4).get()).size(),
+                "addrPerCatchmentCache4 size should have been 20");
     }
 
     private long getCountOfNullObjects(Object ... objects) {
