@@ -340,27 +340,8 @@ public class IndividualService implements ScopeAwareService<Individual> {
 
     @Messageable(EntityType.Subject)
     public Individual voidSubject(Individual individual) {
-        assertNoUnVoidedEncounters(individual);
-        assertNoUnVoidedEnrolments(individual);
         individual.setVoided(true);
         return individualRepository.saveEntity(individual);
-    }
-
-    private void assertNoUnVoidedEnrolments(Individual individual) {
-        long nonVoidedProgramEnrolments = individual.getProgramEnrolments()
-            .stream()
-            .filter(pe -> !pe.isVoided())
-            .count();
-        if (nonVoidedProgramEnrolments != 0) {
-            throw new BadRequestError(String.format("There are non deleted program enrolments for the %s %s", individual.getSubjectType().getOperationalSubjectTypeName(), individual.getFirstName()));
-        }
-    }
-
-    private void assertNoUnVoidedEncounters(Individual individual) {
-        long nonVoidedEncounterCount = individual.nonVoidedEncounters().count();
-        if (nonVoidedEncounterCount != 0) {
-            throw new BadRequestError(String.format("There are non deleted general encounters for the %s %s", individual.getSubjectType().getOperationalSubjectTypeName(), individual.getFirstName()));
-        }
     }
 
     @Override

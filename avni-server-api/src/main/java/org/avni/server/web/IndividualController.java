@@ -186,10 +186,10 @@ public class IndividualController extends AbstractController<Individual> impleme
             Pageable pageable) {
         IndividualRepository repo = this.individualRepository;
         return repo.findAll(
-                where(repo.getFilterSpecForName(name))
-                        .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
-                        .and(repo.getFilterSpecForVoid(false))
-                , pageable)
+                        where(repo.getFilterSpecForName(name))
+                                .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
+                                .and(repo.getFilterSpecForVoid(false))
+                        , pageable)
                 .map(t -> projectionFactory.createProjection(IndividualWebProjection.class, t));
     }
 
@@ -265,13 +265,13 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional
     public AvniEntityResponse voidSubject(@PathVariable String uuid) {
         try {
-        Individual individual = individualRepository.findByUuid(uuid);
+            Individual individual = individualRepository.findByUuid(uuid);
             txDataControllerHelper.checkSubjectAccess(individual);
-        if (individual == null) {
+            if (individual == null) {
                 return AvniEntityResponse.error("Subject not found");
-        }
-        accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
-        individualService.voidSubject(individual);
+            }
+            accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
+            individualService.voidSubject(individual);
             return new AvniEntityResponse(individual);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException | BadRequestError e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -387,7 +387,7 @@ public class IndividualController extends AbstractController<Individual> impleme
             logger.error(errorMessage);
             individual.updateAudit();
         } else {
-        individual.setObservations(observations);
+            individual.setObservations(observations);
         }
 
         Individual savedIndividual = individualService.save(individual);
@@ -428,5 +428,4 @@ public class IndividualController extends AbstractController<Individual> impleme
             return locationRepository.findByTitleIgnoreCase(individualRequest.getAddressLevel());
         }
     }
-
 }
