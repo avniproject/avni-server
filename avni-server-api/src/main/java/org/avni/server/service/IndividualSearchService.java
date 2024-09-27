@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,6 +18,7 @@ public class IndividualSearchService {
     private final SubjectSearchRepository subjectSearchRepository;
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final AddressLevelService addressLevelService;
+    private static final Logger logger = Logger.getLogger(IndividualSearchService.class.getName());
 
     @Autowired
     public IndividualSearchService(SubjectSearchRepository subjectSearchRepository, ProgramEnrolmentRepository programEnrolmentRepository, AddressLevelService addressLevelService) {
@@ -26,8 +28,11 @@ public class IndividualSearchService {
     }
 
     public LinkedHashMap<String, Object> search(SubjectSearchRequest subjectSearchRequest) {
+        logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
+        logger.info("Found " + searchResults.size() + " individuals");
         BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder());
+        logger.info("Total count of individuals: " + totalCount);
         return constructIndividual(searchResults, totalCount);
     }
 
