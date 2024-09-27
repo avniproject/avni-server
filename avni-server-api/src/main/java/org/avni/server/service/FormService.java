@@ -157,16 +157,16 @@ public class FormService implements NonScopeAwareService {
                         !conceptUuid.equals(PLACEHOLDER_CONCEPT_UUID) &&
                         !uniqueConcepts.add(conceptUuid)) {
                     throw new InvalidObjectException(String.format(
-                            "Cannot use same concept twice. Form{uuid='%s',..} uses Concept{uuid='%s',..} twice",
+                            "Cannot use same concept twice. Form{uuid='%s',..} uses Concept{name='%s',..} twice",
                             formContract.getUuid(),
-                            conceptUuid));
+                            conceptName));
                 }
                 String conceptDataType = formElement.getConcept().getDataType();
                 if (conceptDataType != null && multiSelectTypes.contains(ConceptDataType.valueOf(conceptDataType))) {
                     FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
                     if (existingFormElement != null) {
                         if (!existingFormElement.getType().equals(formElement.getType())) {
-                            throw new InvalidObjectException("Cannot change from Single to Multi Select or vice versa");
+                            throw new InvalidObjectException(String.format("Cannot change from Single to Multi Select or vice versa for form element: %s", existingFormElement.getName()));
                         }
                     }
                 }
@@ -174,7 +174,7 @@ public class FormService implements NonScopeAwareService {
                     FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
                     if (existingFormElement != null) {
                         if (!existingFormElement.getKeyValues().get(KeyType.repeatable).equals(formElement.getKeyValues().get(KeyType.repeatable))) {
-                            throw new InvalidObjectException("Cannot change from Repeatable to Non Repeatable or vice versa");
+                            throw new InvalidObjectException(String.format("Cannot change from Repeatable to Non Repeatable or vice versa for form element: %s", existingFormElement.getName()));
                         }
                     }
                 }
