@@ -26,14 +26,14 @@ public class AddressLevelServiceTest {
         AddressLevelTypeRepository addressLevelTypeRepository = mock(AddressLevelTypeRepository.class);
         OrganisationConfigService organisationConfigService = mock(OrganisationConfigService.class);
 
-        when(locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(1L, Arrays.asList(1L))).thenReturn(asList(
-                new VirtualCatchmentProjectTestImplementation(1L, 1L, 1L, 1L),
-                new VirtualCatchmentProjectTestImplementation(2L, 2L, 1L, 1L)
+        when(locationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(1L, Arrays.asList(1L))).thenReturn(asList(
+                new CatchmentAddressProjectionTestImplementation(1L,  1L, 1L, 1L),
+                new CatchmentAddressProjectionTestImplementation(2L,  2L, 1L, 1L)
         ));
 
-        when(locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(1L, Arrays.asList(2L))).thenReturn(asList(
-                new VirtualCatchmentProjectTestImplementation(3L, 3L, 1L, 2L),
-                new VirtualCatchmentProjectTestImplementation(4L, 4L, 1L, 2L)
+        when(locationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(1L, Arrays.asList(2L))).thenReturn(asList(
+                new CatchmentAddressProjectionTestImplementation( 3L, 3L, 1L, 2L),
+                new CatchmentAddressProjectionTestImplementation(4L, 4L, 1L, 2L)
         ));
 
         String orgConfig = "[{\"subjectTypeUUID\": \"first-subject-type-uuid\", \"locationTypeUUIDs\": [\"first-address-level-type-uuid\"]},{\"subjectTypeUUID\": \"second-subject-type-uuid\", \"locationTypeUUIDs\": [\"second-address-level-type-uuid\"]}]";

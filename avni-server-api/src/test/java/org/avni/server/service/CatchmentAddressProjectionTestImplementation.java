@@ -1,14 +1,14 @@
 package org.avni.server.service;
 
-import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 
-public class VirtualCatchmentProjectTestImplementation implements VirtualCatchmentProjection {
+public class CatchmentAddressProjectionTestImplementation implements CatchmentAddressProjection {
     private final Long id;
     private final Long addressLevel_id;
     private final Long catchment_id;
     private final Long type_id;
 
-    public VirtualCatchmentProjectTestImplementation(Long id, Long addressLevel_id, Long catchment_id, Long type_id) {
+    public CatchmentAddressProjectionTestImplementation(Long id, Long addressLevel_id, Long catchment_id, Long type_id) {
         this.id = id;
         this.addressLevel_id = addressLevel_id;
         this.catchment_id = catchment_id;

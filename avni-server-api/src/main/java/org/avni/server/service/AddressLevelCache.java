@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.Catchment;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +22,12 @@ public class AddressLevelCache {
     }
 
     @Cacheable(value = ADDRESSES_PER_CATCHMENT)
-    public List<VirtualCatchmentProjection> getAddressLevelsForCatchment(Catchment catchment) {
-        return locationRepository.getVirtualCatchmentsForCatchmentId(catchment.getId());
+    public List<CatchmentAddressProjection> getAddressLevelsForCatchment(Catchment catchment) {
+        return locationRepository.getCatchmentAddressesForCatchmentId(catchment.getId());
     }
 
     @Cacheable(value = ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS)
-    public List<VirtualCatchmentProjection> getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(Catchment catchment, List<Long> matchingAddressLevelTypeIds) {
-        return locationRepository.getVirtualCatchmentsForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds);
+    public List<CatchmentAddressProjection> getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(Catchment catchment, List<Long> matchingAddressLevelTypeIds) {
+        return locationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds);
     }
 }

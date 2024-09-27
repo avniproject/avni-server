@@ -1,6 +1,6 @@
 package org.avni.server.application.projections;
 
-public interface VirtualCatchmentProjection {
+public interface CatchmentAddressProjection {
     Long getId();
     Long getAddresslevel_id();
     Long getCatchment_id();
