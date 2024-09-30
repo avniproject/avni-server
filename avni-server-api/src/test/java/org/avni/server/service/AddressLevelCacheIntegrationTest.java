@@ -4,6 +4,7 @@ import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.Catchment;
+import org.avni.server.service.builder.TestDataSetupService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,6 +54,9 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     @Autowired
     private AddressLevelCache addressLevelCache;
 
+    @Autowired
+    private TestDataSetupService testDataSetupService;
+
     private Catchment catchment1, catchment2, catchment3, catchment4;
 
     private Cache addrPerCatchmentCache;
@@ -66,6 +70,8 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         addressIdStartIdx = 1L;
         //Reset mocks
         reset(mockLocationRepository);
+        TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
+        setUser(organisationData.getUser());
 
         //Use mock inside AddressLevelCache
         ReflectionTestUtils.setField(addressLevelCache, "locationRepository", mockLocationRepository);
