@@ -5,11 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.KeyType;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.Catchment;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
+import org.avni.server.framework.security.UserContextHolder;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -19,7 +27,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({UserContextHolder.class})
 public class AddressLevelServiceTest {
+    @Mock
+    private EntityManager entityManager;
+
+    @Before
+    public void setUp() {
+        entityManager = Mockito.mock(EntityManager.class);
+        Query query = Mockito.mock(Query.class);
+        when(entityManager.createNativeQuery(Mockito.anyString())).thenReturn(query);
+        when(entityManager.createNativeQuery(Mockito.anyString()).executeUpdate()).thenReturn(1);
+        PowerMockito.mockStatic(UserContextHolder.class);
+        Organisation org = mock(Organisation.class);
+        when(UserContextHolder.getOrganisation()).thenReturn(org);
+        when(org.getDbUser()).thenReturn("db-user");
+    }
+
     @Test
     public void shouldFetchDifferentAddressIdsWhenSubjectTypeChanges() throws JsonProcessingException {
         LocationRepository locationRepository = mock(LocationRepository.class);
@@ -46,7 +71,7 @@ public class AddressLevelServiceTest {
         when(addressLevelTypeRepository.findAllByUuidIn(singletonList("second-address-level-type-uuid")))
                 .thenReturn(singletonList(createAddressLevelType(2L)));
 
-        AddressLevelCache addressLevelCache = new AddressLevelCache(locationRepository);
+        AddressLevelCache addressLevelCache = new AddressLevelCache(entityManager, locationRepository);
         AddressLevelService addressLevelService = new AddressLevelService(locationRepository, addressLevelTypeRepository, organisationConfigService, addressLevelCache);
 
         Catchment catchment = new Catchment();

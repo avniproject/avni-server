@@ -3,7 +3,7 @@ package org.avni.server.service;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.VirtualCatchmentRepository;
+import org.avni.server.dao.RoleSwitchableRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.Organisation;
@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,17 +27,16 @@ import java.util.stream.Collectors;
 import static java.util.Objects.isNull;
 
 @Service
-public class CatchmentService {
+public class CatchmentService extends RoleSwitchableRepository {
     private final CatchmentRepository catchmentRepository;
     private final LocationRepository locationRepository;
-    private final VirtualCatchmentRepository virtualCatchmentRepository;
     private final Logger logger;
 
     @Autowired
-    public CatchmentService(CatchmentRepository catchmentRepository, LocationRepository locationRepository, VirtualCatchmentRepository virtualCatchmentRepository) {
+    public CatchmentService(EntityManager entityManager, CatchmentRepository catchmentRepository, LocationRepository locationRepository) {
+        super(entityManager);
         this.catchmentRepository = catchmentRepository;
         this.locationRepository = locationRepository;
-        this.virtualCatchmentRepository = virtualCatchmentRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -116,7 +117,13 @@ public class CatchmentService {
         return catchment != null && !catchment.getUuid().equals(catchmentRequest.getUuid());
     }
 
+    @Transactional
     public boolean hasLocation(AddressLevel addressLevel, Catchment catchment) {
-        return virtualCatchmentRepository.existsByAddressLevelAndCatchment(addressLevel, catchment);
+        try {
+            setRoleToNone();
+            return !locationRepository.getCatchmentAddressForCatchmentIdAndAddressLevelId(addressLevel.getId(), catchment.getId()).isEmpty();
+        } finally {
+            setRoleBackToUser();
+        }
     }
 }

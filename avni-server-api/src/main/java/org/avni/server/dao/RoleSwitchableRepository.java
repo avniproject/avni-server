@@ -15,8 +15,10 @@ public abstract class RoleSwitchableRepository {
     }
 
     protected void setRoleBackToUser() {
-        Query setRoleBackToOrgDbUser = entityManager.createNativeQuery("set role \"" + UserContextHolder.getOrganisation().getDbUser() + "\"");
-        setRoleBackToOrgDbUser.executeUpdate();
+        if (UserContextHolder.getOrganisation() != null) {
+            Query setRoleBackToOrgDbUser = entityManager.createNativeQuery("set role \"" + UserContextHolder.getOrganisation().getDbUser() + "\"");
+            setRoleBackToOrgDbUser.executeUpdate();
+        }
     }
 
     protected void setRoleToNone() {

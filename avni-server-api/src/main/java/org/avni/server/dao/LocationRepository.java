@@ -207,6 +207,9 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     @Query(value = CATCHMENT_ADDRESS_MAPPING_BASE_QUERY + "where al1.id in (:addressLevelIds)" + CATCHMENT_ADDRESS_MAPPING_GROUP_BY, nativeQuery = true)
     List<CatchmentAddressProjection> getCatchmentAddressesForAddressLevelIds(@Param("addressLevelIds") List<Long> addressLevelIds);
 
+    @Query(value = CATCHMENT_ADDRESS_MAPPING_BASE_QUERY + "where c.id = :catchmentId and al1.id = :addressLevelId" + CATCHMENT_ADDRESS_MAPPING_GROUP_BY, nativeQuery = true)
+    List<CatchmentAddressProjection> getCatchmentAddressForCatchmentIdAndAddressLevelId(@Param("addressLevelId") Long addressLevelId, @Param("catchmentId") Long catchmentId);
+
     @Query(value = "select title_lineage from title_lineage_locations_function(:addressId)", nativeQuery = true)
     String getTitleLineageById(Long addressId);
 
