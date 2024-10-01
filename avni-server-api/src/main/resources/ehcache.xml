@@ -8,6 +8,7 @@
          updateCheck="false" monitoring="autodetect" dynamicConfig="true"
          maxBytesLocalHeap="500M" statistics="true">
     <diskStore path="user.home/.ehcache"/>
+    <sizeOfPolicy maxDepth="100" maxDepthExceededBehavior="abort"/>
     <cache name="org.avni.server.domain.Concept" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
         <persistence strategy="localTempSwap"/>
         <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory" listenFor="all"/>

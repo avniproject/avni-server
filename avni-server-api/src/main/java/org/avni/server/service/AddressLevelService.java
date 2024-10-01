@@ -3,6 +3,7 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.KeyType;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.AddressLevelTypeRepository;
@@ -41,11 +42,11 @@ public class AddressLevelService {
 
     public List<Long> getAddressLevelsByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
         return filterByCatchmentAndSubjectType(catchment, subjectType)
-                .map(VirtualCatchmentProjection::getAddresslevel_id)
+                .map(CatchmentAddressProjection::getAddresslevel_id)
                 .collect(Collectors.toList());
     }
 
-    private Stream<VirtualCatchmentProjection> filterByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
+    private Stream<CatchmentAddressProjection> filterByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
         Optional<SubjectTypeSetting> customRegistrationLocationSetting = getCustomRegistrationSetting(subjectType);
 
         if (customRegistrationLocationSetting.isPresent() && !customRegistrationLocationSetting.get().getLocationTypeUUIDs().isEmpty()) {

@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.application.projections.BaseProjection;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.util.JsonObjectUtil;
@@ -70,8 +70,8 @@ public class ResetSyncService {
             List<Long> addressLevelIdsToBeChecked = new ArrayList<>(Collections.singletonList(addressLevel.getId()));
             addressLevelIdsToBeChecked.addAll(locationRepository.getParents(addressLevel.getParentUuid()).stream().map(BaseProjection::getId).collect(Collectors.toList()));
             addressLevelIdsToBeChecked.addAll(locationRepository.getParents(locationRepository.findById(oldParentId).get().getUuid()).stream().map(BaseProjection::getId).collect(Collectors.toList()));
-            List<Long> virtualCatchmentIdsForAddressLevelIds = locationRepository.getVirtualCatchmentsForAddressLevelIds(addressLevelIdsToBeChecked).stream()
-                .map(VirtualCatchmentProjection::getCatchment_id)
+            List<Long> virtualCatchmentIdsForAddressLevelIds = locationRepository.getCatchmentAddressesForAddressLevelIds(addressLevelIdsToBeChecked).stream()
+                .map(CatchmentAddressProjection::getCatchment_id)
                 .collect(Collectors.toList());
             List<ResetSync> resetSyncRecords = new ArrayList<>();
             userRepository.findByCatchment_IdInAndIsVoidedFalse(virtualCatchmentIdsForAddressLevelIds)
