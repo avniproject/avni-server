@@ -64,6 +64,10 @@ public class FormElementGroupContract extends ReferenceDataContract {
         return getName();
     }
 
+    @Deprecated
+    public void setDisplay(String display) {
+        //No-op, retained only to avoid failures while processing older version bundles
+    }
 
     public DeclarativeRule getDeclarativeRule() {
         return declarativeRule;
