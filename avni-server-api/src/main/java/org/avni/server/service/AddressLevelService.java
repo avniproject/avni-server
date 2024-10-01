@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.application.projections.LocationProjection;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
