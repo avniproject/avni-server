@@ -122,17 +122,17 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void givenAddressLevelCacheIsConfigured_whenCallgetCatchmentAddressesForCatchmentId_thenDataShouldBeInAddressPerCatchmentCache() {
+    public void givenAddressLevelCacheIsConfigured_whenCallGetCatchmentAddressesForCatchmentId_thenDataShouldBeInAddressPerCatchmentCache() {
         //Fetch and cache
-        List<CatchmentAddressProjection> cachedVirtualCatchmentProjList = addressLevelCache.getAddressLevelsForCatchment(catchment1);
+        List<CatchmentAddressProjection> cachedCatchmentAddressesList = addressLevelCache.getAddressLevelsForCatchment(catchment1);
 
         //Validate cache content
-        Assert.notNull(cachedVirtualCatchmentProjList, "addrPerCatchmentCache should have had the data");
-        Assert.isTrue(CATCHMENT_1_SIZE == cachedVirtualCatchmentProjList.size(), "addrPerCatchmentCache size should have been 2");
+        Assert.notNull(cachedCatchmentAddressesList, "addrPerCatchmentCache should have had the data");
+        Assert.isTrue(CATCHMENT_1_SIZE == cachedCatchmentAddressesList.size(), "addrPerCatchmentCache size should have been 2");
     }
 
     @Test
-    public void givenAddressLevelCacheIsConfigured_whenMultipleCallgetCatchmentAddressesForCatchmentId_thenValidateCacheMissAndHits() {
+    public void givenAddressLevelCacheIsConfigured_whenMultipleCallGetCatchmentAddressesForCatchmentId_thenValidateCacheMissAndHits() {
         //Fetch and cache
         addressLevelCache.getAddressLevelsForCatchment(catchment1);
 
@@ -153,7 +153,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void givenAddressLevelCacheIsConfigured_whenCallGetVirtualCatchmentsForDiffCatchmentId_thenValidateCacheMiss() {
+    public void givenAddressLevelCacheIsConfigured_whenCallGetCatchmentsAddressesForDiffCatchmentId_thenValidateCacheMiss() {
         Cache addrPerCatchmentCache = cacheManager.getCache(ADDRESSES_PER_CATCHMENT);
 
         //Validate missing cache entry for second catchment
@@ -175,7 +175,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndNewOneIsPopulated() {
+    public void givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndNewOneIsPopulated() {
         Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
 
         //Invoke for a fourth catchment
@@ -195,7 +195,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForVeryLargeCatchment_thenValidateCacheIsUntouchedAndCallHitsRepoEverytime() {
+    public void givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForVeryLargeCatchment_thenValidateCacheIsUntouchedAndCallHitsRepoEverytime() {
         Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
 
         //Invoke for a big catchment
@@ -252,7 +252,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         return addrPerCatchmentCache;
     }
 
-    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory() throws InterruptedException {
+    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory() throws InterruptedException {
         Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
 
         WeakReference weakReferenceForCatchment1 = new WeakReference<>(addrPerCatchmentCache.get(catchment1), keysReferenceQueue);
@@ -287,7 +287,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                 "addrPerCatchmentCache4 size should have been 20");
     }
 
-    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory() throws InterruptedException {
+    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory() throws InterruptedException {
         Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
 
         WeakReference weakReferenceForCatchment1Value = new WeakReference<>(addrPerCatchmentCache.get(catchment1).get(), valuesReferenceQueue);
@@ -326,31 +326,31 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
 
     @Test
     public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_1() throws InterruptedException {
-        givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
+        givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
     }
 
     @Test
     public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_2() throws InterruptedException {
-        givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
+        givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
     }
 
     @Test
     public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_3() throws InterruptedException {
-        givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
+        givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
     }
 
     @Test
     public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_1() throws InterruptedException {
-        givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
+        givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
     }
 
     @Test
     public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_2() throws InterruptedException {
-        givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
+        givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
     }
 
     @Test
     public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_3() throws InterruptedException {
-        givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
+        givenAddressLevelCachesAreFullyPopulated_whenCallGetCatchmentAddressesForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
     }
 }
