@@ -39,6 +39,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     private static final int CATCHMENT_2_SIZE = 10;
     private static final int CATCHMENT_3_SIZE = 8;
     private static final int CATCHMENT_4_SIZE = 20;
+    public static final int TIMEOUT = 100;
 
     private long addressIdStartIdx;
 
@@ -223,7 +224,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         return addrPerCatchmentCache;
     }
 
-    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory() {
+    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory() throws InterruptedException {
         Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
 
         WeakReference weakReferenceForCatchment1 = new WeakReference<>(addrPerCatchmentCache.get(catchment1), keysReferenceQueue);
@@ -244,10 +245,10 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                         weakReferenceForCatchment2.get(),
                         weakReferenceForCatchment3.get()) == 3L,
                 "only one of referentForCatchments should not have had the data");
-        Assert.notNull(keysReferenceQueue.poll(), "should return one cached element");
-        Assert.notNull(keysReferenceQueue.poll(), "should return one cached element");
-        Assert.notNull(keysReferenceQueue.poll(), "should return one cached element");
-        Assert.isNull(keysReferenceQueue.poll(), "should return null");
+        Assert.notNull(keysReferenceQueue.remove(TIMEOUT), "should return one cached element");
+        Assert.notNull(keysReferenceQueue.remove(TIMEOUT), "should return one cached element");
+        Assert.notNull(keysReferenceQueue.remove(TIMEOUT), "should return one cached element");
+        Assert.isNull(keysReferenceQueue.remove(TIMEOUT), "should return null");
 
         //Ensure cache has overflown and one entry got replaced with fourth catchment entry
         Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
@@ -258,7 +259,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                 "addrPerCatchmentCache4 size should have been 20");
     }
 
-    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory() {
+    private void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory() throws InterruptedException {
         Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
 
         WeakReference weakReferenceForCatchment1Value = new WeakReference<>(addrPerCatchmentCache.get(catchment1).get(), valuesReferenceQueue);
@@ -279,8 +280,8 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                         weakReferenceForCatchment2Value.get(),
                         weakReferenceForCatchment3Value.get()) == 1L,
                 "one of referentForCatchmentValues should not have had the data");
-        Assert.notNull(valuesReferenceQueue.poll(), "should return one cached element's value");
-        Assert.isNull(valuesReferenceQueue.poll(), "should return null");
+        Assert.notNull(valuesReferenceQueue.remove(TIMEOUT), "should return one cached element's value");
+        Assert.isNull(valuesReferenceQueue.remove(TIMEOUT), "should return null");
 
         //Ensure cache has overflown and one entry got replaced with fourth catchment entry
         Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
@@ -296,32 +297,32 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_1() {
+    public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_1() throws InterruptedException {
         givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
     }
 
     @Test
-    public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_2() {
+    public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_2() throws InterruptedException {
         givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
     }
 
     @Test
-    public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_3() {
+    public void validateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory_attempt_3() throws InterruptedException {
         givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesAllTheEntriesKeysFromMemory();
     }
 
     @Test
-    public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_1() {
+    public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_1() throws InterruptedException {
         givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
     }
 
     @Test
-    public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_2() {
+    public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_2() throws InterruptedException {
         givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
     }
 
     @Test
-    public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_3() {
+    public void validateCacheClearedAndGCRemovesTheOldEntryValueFromMemory_attempt_3() throws InterruptedException {
         givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForNewCatchmentId_thenValidateCacheClearedAndGCRemovesTheOldEntryValueFromMemory();
     }
 }
