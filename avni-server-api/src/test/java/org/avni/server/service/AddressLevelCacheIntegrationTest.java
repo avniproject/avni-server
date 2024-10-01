@@ -35,11 +35,13 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     private static final long CATCHMENT_2_ID = 2L;
     private static final long CATCHMENT_3_ID = 3L;
     private static final long CATCHMENT_4_ID = 4L;
+    private static final long CATCHMENT_5_ID = 5L;
     private static final int CATCHMENT_1_SIZE = 2;
     private static final int CATCHMENT_2_SIZE = 10;
     private static final int CATCHMENT_3_SIZE = 8;
     private static final int CATCHMENT_4_SIZE = 20;
-    public static final int TIMEOUT = 100;
+    private static final int CATCHMENT_5_SIZE = 301;
+    public static final int TIMEOUT_IN_MS = 100;
 
     private long addressIdStartIdx;
 
@@ -58,7 +60,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     @Autowired
     private TestDataSetupService testDataSetupService;
 
-    private Catchment catchment1, catchment2, catchment3, catchment4;
+    private Catchment catchment1, catchment2, catchment3, catchment4, catchment5Big;
 
     private Cache addrPerCatchmentCache;
 
@@ -83,6 +85,7 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
         catchment2 = initCatchmentAndMock(CATCHMENT_2_ID, getAddressIdStartIdx( CATCHMENT_1_SIZE), CATCHMENT_2_SIZE);
         catchment3 = initCatchmentAndMock(CATCHMENT_3_ID, getAddressIdStartIdx( CATCHMENT_2_SIZE), CATCHMENT_3_SIZE);
         catchment4 = initCatchmentAndMock(CATCHMENT_4_ID, getAddressIdStartIdx( CATCHMENT_3_SIZE), CATCHMENT_4_SIZE);
+        catchment5Big = initCatchmentAndMock(CATCHMENT_5_ID, getAddressIdStartIdx( CATCHMENT_4_SIZE), CATCHMENT_5_SIZE);
 
         keysReferenceQueue = new ReferenceQueue<>();
         valuesReferenceQueue = new ReferenceQueue<>();
@@ -191,6 +194,31 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                 "addrPerCatchmentCache4 size should have been 20");
     }
 
+    @Test
+    public void givenAddressLevelCachesAreFullyPopulated_whenCallGetVirtualCatchmentsForVeryLargeCatchment_thenValidateCacheIsUntouchedAndCallHitsRepoEverytime() {
+        Cache addrPerCatchmentCache = initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent();
+
+        //Invoke for a big catchment
+        addressLevelCache.getAddressLevelsForCatchment(catchment5Big);
+
+        //Validate cache miss the first time for big catchment
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentId(catchment5Big.getId());
+        verifyNoMoreInteractions(mockLocationRepository);
+
+        //Ensure cache has remained intact without any new entries
+        Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
+                        addrPerCatchmentCache.get(catchment2),
+                        addrPerCatchmentCache.get(catchment3)) == 0L,
+                "only one of addrPerCatchmentCache 1,2 or 3 should not have had the data");
+        Assert.isNull(addrPerCatchmentCache.get(catchment5Big), "addrPerCatchmentCache5 is not present in cache");
+
+        //Invoke for the same big catchment
+        addressLevelCache.getAddressLevelsForCatchment(catchment5Big);
+
+        //Validate cache miss again for the big catchment
+        verify(mockLocationRepository, times(2)).getCatchmentAddressesForCatchmentId(catchment5Big.getId());
+    }
+
     private Cache initFirst3CatchmentsAndValidateTheirCacheEntriesAndContent() {
         Cache addrPerCatchmentCache = cacheManager.getCache(ADDRESSES_PER_CATCHMENT);
 
@@ -245,10 +273,10 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                         weakReferenceForCatchment2.get(),
                         weakReferenceForCatchment3.get()) == 3L,
                 "only one of referentForCatchments should not have had the data");
-        Assert.notNull(keysReferenceQueue.remove(TIMEOUT), "should return one cached element");
-        Assert.notNull(keysReferenceQueue.remove(TIMEOUT), "should return one cached element");
-        Assert.notNull(keysReferenceQueue.remove(TIMEOUT), "should return one cached element");
-        Assert.isNull(keysReferenceQueue.remove(TIMEOUT), "should return null");
+        Assert.notNull(keysReferenceQueue.remove(TIMEOUT_IN_MS), "should return one cached element");
+        Assert.notNull(keysReferenceQueue.remove(TIMEOUT_IN_MS), "should return one cached element");
+        Assert.notNull(keysReferenceQueue.remove(TIMEOUT_IN_MS), "should return one cached element");
+        Assert.isNull(keysReferenceQueue.remove(TIMEOUT_IN_MS), "should return null");
 
         //Ensure cache has overflown and one entry got replaced with fourth catchment entry
         Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
@@ -280,8 +308,8 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
                         weakReferenceForCatchment2Value.get(),
                         weakReferenceForCatchment3Value.get()) == 1L,
                 "one of referentForCatchmentValues should not have had the data");
-        Assert.notNull(valuesReferenceQueue.remove(TIMEOUT), "should return one cached element's value");
-        Assert.isNull(valuesReferenceQueue.remove(TIMEOUT), "should return null");
+        Assert.notNull(valuesReferenceQueue.remove(TIMEOUT_IN_MS), "should return one cached element's value");
+        Assert.isNull(valuesReferenceQueue.remove(TIMEOUT_IN_MS), "should return null");
 
         //Ensure cache has overflown and one entry got replaced with fourth catchment entry
         Assert.isTrue(getCountOfNullObjects(addrPerCatchmentCache.get(catchment1),
