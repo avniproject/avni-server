@@ -39,4 +39,8 @@ public class JsonObject extends HashMap<String, Object> implements Serializable 
         }
         return (List) o;
     }
+
+    public Boolean getBoolean(String key) {
+        return (Boolean) this.get(key);
+    }
 }

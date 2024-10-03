@@ -31,7 +31,15 @@ public class CollectionUtil {
         return hasNoEmptyStrings(trimmed);
     }
 
+    public static boolean containsIgnoreCase(List<String> list, String value) {
+        return list.stream().anyMatch(x -> !StringUtils.isEmpty(x) && x.equalsIgnoreCase(value));
+    }
+
     public static boolean anyStartsWith(List<String> values, String prefix) {
         return values.stream().anyMatch(x -> !StringUtils.isEmpty(x) && x.startsWith(prefix));
+    }
+
+    public static String findMatchingIgnoreCase(List<String> values, String value) {
+        return values.stream().filter(x -> !StringUtils.isEmpty(x) && x.equalsIgnoreCase(value)).findFirst().orElse(null);
     }
 }

@@ -45,7 +45,7 @@ public class UserServiceTest {
         Group group = new Group();
         Group everyone = new Group();
         String group1 = "Group 1";
-        when(groupRepository.findByName(group1)).thenReturn(group);
+        when(groupRepository.findByNameIgnoreCase(group1)).thenReturn(group);
         when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(everyone);
 
 
@@ -80,8 +80,8 @@ public class UserServiceTest {
         Group group1 = new Group();
         Group group2 = new Group();
         Group everyone = new Group();
-        when(groupRepository.findByName("group1")).thenReturn(group1);
-        when(groupRepository.findByName("group2")).thenReturn(group2);
+        when(groupRepository.findByNameIgnoreCase("group1")).thenReturn(group1);
+        when(groupRepository.findByNameIgnoreCase("group2")).thenReturn(group2);
         when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(group1);
 
         userService.addToGroups(user, "group1,group2,group1");

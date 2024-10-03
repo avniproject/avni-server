@@ -120,6 +120,10 @@ public class User {
         return ObjectMapperSingleton.getObjectMapper().convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {});
     }
 
+    public boolean isPartOfUserGroup(String userGroup) {
+        return this.getUserGroups().stream().anyMatch(ug -> ug.getGroup().getName().equals(userGroup));
+    }
+
     public enum SyncSettingKeys {
         syncAttribute1,
         syncAttribute2,

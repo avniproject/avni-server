@@ -24,9 +24,9 @@ public enum Locale {
         this.name = name;
     }
 
-    public static Locale valueByName(@Nullable String name) {
+    public static Locale valueByNameIgnoreCase(@Nullable String name) {
         for (Locale value : Locale.values()) {
-            if (value.name.equals(name)) return value;
+            if (value.name.equalsIgnoreCase(name)) return value;
         }
         return null;
     }
