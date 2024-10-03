@@ -4,6 +4,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.service.LocationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
@@ -120,6 +121,7 @@ public class AddressLevelTypeController extends AbstractController<AddressLevelT
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(
                     String.format("Cannot delete '%s'. Sub location types or locations of this type exist. Please delete them to proceed.", addressLevelType.getName())));
         }
+        addressLevelType.setName(EntityUtil.getVoidedName(addressLevelType.getName(), addressLevelType.getId()));
         addressLevelType.setVoided(true);
         return new ResponseEntity<>(addressLevelType, HttpStatus.OK);
     }
