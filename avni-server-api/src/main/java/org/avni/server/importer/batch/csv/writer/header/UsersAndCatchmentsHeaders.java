@@ -18,7 +18,7 @@ public class UsersAndCatchmentsHeaders implements Headers {
     public static final String IDENTIFIER_PREFIX = "Identifier Prefix";
     public static final String USER_GROUPS = "User Groups";
 
-    private static final List<String> OPTIONAL_HEADERS = Arrays.asList(ENABLE_BENEFICIARY_MODE, TRACK_LOCATION);
+    private static final List<String> OPTIONAL_HEADERS = Arrays.asList(ENABLE_BENEFICIARY_MODE, TRACK_LOCATION, PREFERRED_LANGUAGE, DATE_PICKER_MODE, IDENTIFIER_PREFIX, USER_GROUPS);
 
     @Override
     public String[] getAllHeaders() {

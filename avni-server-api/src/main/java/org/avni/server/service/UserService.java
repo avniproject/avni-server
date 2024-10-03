@@ -152,7 +152,7 @@ public class UserService implements NonScopeAwareService {
         Arrays.stream(groupNames).distinct().forEach(groupName -> {
             if (!StringUtils.hasLength(groupName.trim())) return;
 
-            Group group = this.groupRepository.findByName(groupName);
+            Group group = this.groupRepository.findByNameIgnoreCase(groupName);
             if (group == null) {
                 String errorMessage = String.format("Group '%s' not found", groupName);
                 throw new RuntimeException(errorMessage);
