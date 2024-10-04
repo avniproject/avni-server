@@ -49,6 +49,7 @@ public class AddressLevelService {
                             customRegistrationLocationSetting.get().getLocationTypeUUIDs())
                     .stream()
                     .map(CHSBaseEntity::getId)
+                    .sorted()
                     .collect(Collectors.toList());
 
             return addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment, matchingAddressLevelTypeIds).stream();
