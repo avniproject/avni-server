@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.avni.server.service.AddressLevelCache.ADDRESSES_PER_CATCHMENT;
+import static org.avni.server.service.AddressLevelCache.ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS;
 import static org.mockito.Mockito.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -68,6 +69,11 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
     private ReferenceQueue<Object> keysReferenceQueue;
     private ReferenceQueue<Object> valuesReferenceQueue;
 
+    List<Long> matchingAddressLevelTypeIds1= Arrays.asList(1l, 2l,3l);
+    List<Long> matchingAddressLevelTypeIds2Ordered= Arrays.asList(1l, 2l,3l);
+    List<Long> matchingAddressLevelTypeIds2UnOrdered= Arrays.asList(2l, 1l,3l);
+    List<Long> matchingAddressLevelTypeIds3= Arrays.asList(4l);
+
     @Before
     public void setUpAddressLevelCache() {
         addressIdStartIdx = 1L;
@@ -109,6 +115,10 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
 
         //stubbing
         when(mockLocationRepository.getCatchmentAddressesForCatchmentId(catchment.getId())).thenReturn(catchmentResponseList);
+        when(mockLocationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds1)).thenReturn(catchmentResponseList);
+        when(mockLocationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds2Ordered)).thenReturn(catchmentResponseList);
+        when(mockLocationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds2UnOrdered)).thenReturn(catchmentResponseList);
+        when(mockLocationRepository.getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment.getId(), matchingAddressLevelTypeIds3)).thenReturn(new ArrayList<>());
 
         return catchment;
     }
@@ -119,6 +129,41 @@ public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrat
             CatchmentAddressProjectionList.add(new CatchmentAddressProjectionTestImplementation(i, i, catchmentId, ADDRESS_LEVEL_TYPE_ID));
         }
         return CatchmentAddressProjectionList;
+    }
+
+    @Test
+    public void givenAddressLevelCacheIsConfigured_whenCallGetCatchmentAddressesForCatchmentIdAndLevelTypeList_thenDataShouldBeInAddressPerCatchmentAndMatchingAddressLevelCache() {
+        //Clear cache
+        Cache addrPerCatchmentCacheAndMatchingAddrLevels = cacheManager.getCache(ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS);
+        addrPerCatchmentCacheAndMatchingAddrLevels.clear();
+
+        //Fetch and cache
+        List<CatchmentAddressProjection> cachedCatchmentAddressesList = addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment1, matchingAddressLevelTypeIds1);
+
+        //Validate cache content
+        Assert.notNull(cachedCatchmentAddressesList, "addrPerCatchmentCache should have had the data");
+        Assert.isTrue(CATCHMENT_1_SIZE == cachedCatchmentAddressesList.size(), "addrPerCatchmentCache size should have been 2");
+
+        //Validate cache miss the first time
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment1.getId(), matchingAddressLevelTypeIds1);
+
+        //Invoke cache again for same catchment and level type ids
+        addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment1, matchingAddressLevelTypeIds2Ordered);
+
+        //Validate cache hits
+        verifyNoMoreInteractions(mockLocationRepository);
+
+        //Invoke cache again for same catchment and level type ids list
+        addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment1, matchingAddressLevelTypeIds2UnOrdered);
+
+        //Validate cache miss this time due to change in order of level type ids list
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment1.getId(), matchingAddressLevelTypeIds2UnOrdered);
+
+        //Invoke cache again for same catchment and different level type ids list
+        addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment1, matchingAddressLevelTypeIds3);
+
+        //Validate cache miss this time due to change in level type ids list
+        verify(mockLocationRepository).getCatchmentAddressesForCatchmentIdAndLocationTypeId(catchment1.getId(), matchingAddressLevelTypeIds3);
     }
 
     @Test
