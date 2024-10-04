@@ -231,6 +231,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 dataRow(" Bihar, District1, Block11", " Catchment 6", " username8@example", " User 8", " username8@example.com ", " 9455509147 ", "Answer 1"),
                 catchmentCreated(false),
                 userCreatedDetails(true));
+        userCreatedDetails(user("username8@example"), datePickerMode("calendar"), language("en"), trackLocation(false), enableBeneficiaryMode(false), userGroup("Everyone"));
 
         // wrong - username, email, phone number, language, track location, date picker mode, enable beneficiary mode
         failure(

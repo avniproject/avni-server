@@ -159,9 +159,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         user.setSettings(new JsonObject()
                 .with(UserSettings.LOCALE, locale)
-                .with(UserSettings.TRACK_LOCATION, trackLocation)
+                .with(UserSettings.TRACK_LOCATION, UserSettings.createTrackLocation(trackLocation))
                 .withEmptyCheckAndTrim(UserSettings.DATE_PICKER_MODE, UserSettings.createDatePickerMode(datePickerMode))
-                .with(UserSettings.ENABLE_BENEFICIARY_MODE, beneficiaryMode)
+                .with(UserSettings.ENABLE_BENEFICIARY_MODE, UserSettings.createEnableBeneficiaryMode(beneficiaryMode))
                 .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix));
 
         user.setOrganisationId(organisation.getId());
