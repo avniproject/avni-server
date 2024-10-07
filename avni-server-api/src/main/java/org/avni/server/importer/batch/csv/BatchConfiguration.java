@@ -3,7 +3,6 @@ package org.avni.server.importer.batch.csv;
 import org.apache.commons.io.IOUtils;
 import org.avni.server.importer.batch.csv.writer.CsvFileItemWriter;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.ImportLocationsConstants;
 import org.avni.server.service.S3Service;
 import org.avni.server.util.CollectionUtil;
 import org.springframework.batch.core.Job;
