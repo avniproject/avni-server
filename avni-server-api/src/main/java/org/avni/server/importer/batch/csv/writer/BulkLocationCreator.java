@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
-import org.avni.server.application.FormElement;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
@@ -154,6 +153,6 @@ public class BulkLocationCreator extends BulkLocationModifier {
 
     private boolean skipRow(Row row, List<String> hierarchicalLocationTypeNames) {
         List<String> values = row.get(hierarchicalLocationTypeNames);
-        return CollectionUtil.anyStartsWith(values, ImportLocationsConstants.Example);
+        return CollectionUtil.anyStartsWith(values, ImportLocationsConstants.EXAMPLE);
     }
 }

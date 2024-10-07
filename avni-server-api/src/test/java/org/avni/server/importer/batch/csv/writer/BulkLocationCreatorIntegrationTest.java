@@ -279,10 +279,10 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         );
 
         treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("Example: state 1", "Ex: distr 1", "Ex: blo 1", "Ex. 23.45,43.85"));
+                dataRow("Example: state 1", "Example: distr 1", "Example: blo 1", "Ex. 23.45,43.85"));
         treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
-                dataRow(" Example: state 1", "Ex: distr 1 ", "Ex: blo 1", " Ex. 23.45,43.85 "));
+                dataRow(" Example: state 1", "Example: distr 1 ", "Example: blo 1", " Ex. 23.45,43.85 "));
         treatAsDescriptor(header("State", "District", "Block", "GPS coordinates"),
-                dataRow("  state 1", "Example: distr 1 ", "Ex: blo 1", " Ex. 23.45,43.85 "));
+                dataRow("  state 1", "Example: distr 1 ", "Example: blo 1", " Ex. 23.45,43.85 "));
     }
 }

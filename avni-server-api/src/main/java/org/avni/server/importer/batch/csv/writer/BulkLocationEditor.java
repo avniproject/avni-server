@@ -7,6 +7,7 @@ import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ImportLocationsConstants;
 import org.avni.server.service.LocationService;
+import org.avni.server.util.CollectionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -29,9 +30,6 @@ public class BulkLocationEditor extends BulkLocationModifier {
 
     public void editLocation(Row row, List<String> allErrorMsgs) {
         String existingLocationTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY);
-        if (existingLocationTitleLineage.equalsIgnoreCase(ImportLocationsConstants.LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION)
-                || existingLocationTitleLineage.equalsIgnoreCase(ImportLocationsConstants.LOCATION_WITH_FULL_HIERARCHY_EXAMPLE)
-        ) return;
         String newLocationParentTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY);
 
         Optional<AddressLevel> existingLocationAddressLevel = locationRepository.findByTitleLineageIgnoreCase(existingLocationTitleLineage);
@@ -87,7 +85,17 @@ public class BulkLocationEditor extends BulkLocationModifier {
         List<String> allErrorMsgs = new ArrayList<>();
         validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
         for (Row row : rows) {
+            if (skipRow(row, Arrays.asList(rows.get(0).getHeaders()))) {
+                continue;
+            }
             editLocation(row, allErrorMsgs);
         }
+    }
+
+    private boolean skipRow(Row row, List<String> editLocationHeaders) {
+        String existingLocationTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY);
+        return (existingLocationTitleLineage.equalsIgnoreCase(ImportLocationsConstants.LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION)
+                || existingLocationTitleLineage.equalsIgnoreCase(ImportLocationsConstants.LOCATION_WITH_FULL_HIERARCHY_EXAMPLE)
+                || CollectionUtil.anyStartsWith(row.get(editLocationHeaders), ImportLocationsConstants.EXAMPLE));
     }
 }

@@ -3,7 +3,9 @@ package org.avni.server.importer.batch.csv;
 import org.apache.commons.io.IOUtils;
 import org.avni.server.importer.batch.csv.writer.CsvFileItemWriter;
 import org.avni.server.importer.batch.model.Row;
+import org.avni.server.service.ImportLocationsConstants;
 import org.avni.server.service.S3Service;
+import org.avni.server.util.CollectionUtil;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -56,6 +58,7 @@ public class BatchConfiguration {
     public FlatFileItemReader<Row> csvFileItemReader(@Value("#{jobParameters['s3Key']}") String s3Key) throws IOException {
         byte[] bytes = IOUtils.toByteArray(s3Service.getObjectContent(s3Key));
         String[] headers = this.getHeaders(new StringReader(new String(bytes)));
+        int numberOfLinesToSkip = this.getNumberOfLinesToSkip(new StringReader(new String(bytes)));
         DefaultLineMapper<Row> lineMapper = new DefaultLineMapper<>();
         lineMapper.setLineTokenizer(new DelimitedLineTokenizer());
         lineMapper.setFieldSetMapper(fieldSet -> new Row(headers, fieldSet.getValues()));
@@ -63,7 +66,7 @@ public class BatchConfiguration {
         return new FlatFileItemReaderBuilder<Row>()
                 .name("csvFileItemReader")
                 .resource(new ByteArrayResource(bytes))
-                .linesToSkip(1)
+                .linesToSkip(numberOfLinesToSkip)
                 .lineMapper(lineMapper)
                 .build();
     }
@@ -121,5 +124,23 @@ public class BatchConfiguration {
         }};
 
         return headers.toArray(new String[]{});
+    }
+
+    private int getNumberOfLinesToSkip(Reader reader) throws IOException {
+        int linesToSkip = 1;
+        try(BufferedReader csvReader = new BufferedReader(reader)) {
+            csvReader.readLine(); //Retain always to move from Header line to descriptor line
+            String possibleDescriptorLine = csvReader.readLine();
+
+            final List<String> descriptors = new ArrayList<>();
+            new DelimitedLineTokenizer() {{
+                descriptors.addAll(doTokenize(possibleDescriptorLine));
+            }};
+
+            if (CollectionUtil.anyStartsWith(descriptors, ImportLocationsConstants.EXAMPLE)) {
+                linesToSkip++;
+            }
+        }
+        return linesToSkip;
     }
 }

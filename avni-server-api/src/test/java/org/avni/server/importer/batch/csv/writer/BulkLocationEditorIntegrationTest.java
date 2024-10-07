@@ -211,7 +211,7 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
                 dataRow("Can be found from Admin -> Locations -> Click Export. Used to specify which location's fields need to be updated. mandatory field",
                         "Enter new name here ONLY if it needs to be updated",
                         "Hierarchy of parent location that should contain the child location",
-                        "Ex: 23.45,43.85"));
+                        "Example: 23.45,43.85"));
 
         // missing header - nothing provided
         failsOnMissingHeader(

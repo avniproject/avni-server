@@ -8,7 +8,7 @@ public interface ImportLocationsConstants {
     String STRING_CONSTANT_NEW_LINE = "\n";
     String STRING_CONSTANT_SEPARATOR = ",";
     String STRING_PLACEHOLDER_BLOCK = "\"%s\"";
-    String Example = "Example: ";
+    String EXAMPLE = "Example: ";
     String ALLOWED_VALUES = "Allowed values: ";
     String COLUMN_NAME_GPS_COORDINATES = LocationHeaders.gpsCoordinates;
     String COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY = "Location with full hierarchy";
@@ -20,7 +20,7 @@ public interface ImportLocationsConstants {
     String LOCATION_WITH_FULL_HIERARCHY_EXAMPLE = "PHC B, Sub B, Vil B";
     String NEW_LOCATION_NAME_EXAMPLE = "Vil C";
     String PARENT_LOCATION_WITH_FULL_HIERARCHY_EXAMPLE = "PHC C, Sub C";
-    String GPS_COORDINATES_EXAMPLE = "Ex: 23.45,43.85";
+    String GPS_COORDINATES_EXAMPLE = "Example: 23.45,43.85";
     String PARENT_LOCATION_REQUIRED = ". Mandatory to mention the parent locations to which the location to be created belongs to.";
     String GPS_COORDINATES_SAMPLE = "23.45,43.85";
     int STARTING_INDEX = 0;

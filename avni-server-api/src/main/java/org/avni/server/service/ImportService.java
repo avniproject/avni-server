@@ -230,7 +230,7 @@ public class ImportService implements ImportLocationsConstants {
         List<String> descriptions = new ArrayList<>();
         if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
             descriptions.addAll(addressLevelTypes.stream()
-                            .map(alt -> Example + alt.getName() + STRING_CONSTANT_ONE).collect(Collectors.toList()));
+                            .map(alt -> EXAMPLE + alt.getName() + STRING_CONSTANT_ONE).collect(Collectors.toList()));
             descriptions.set(STARTING_INDEX, descriptions.get(STARTING_INDEX).concat(PARENT_LOCATION_REQUIRED));
         } else {
             descriptions.add(LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION);
