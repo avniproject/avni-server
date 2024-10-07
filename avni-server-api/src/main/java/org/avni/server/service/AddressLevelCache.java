@@ -36,7 +36,7 @@ public class AddressLevelCache extends RoleSwitchableRepository {
         }
     }
 
-    @Cacheable(value = ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS)
+    @Cacheable(cacheNames = ADDRESSES_PER_CATCHMENT_AND_MATCHING_ADDR_LEVELS,  key="T(java.lang.String).valueOf(#catchment?.id + '_' + T(org.springframework.util.StringUtils).collectionToCommaDelimitedString(#matchingAddressLevelTypeIds)).intern()")
     @Transactional
     public List<CatchmentAddressProjection> getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(Catchment catchment, List<Long> matchingAddressLevelTypeIds) {
         try {
