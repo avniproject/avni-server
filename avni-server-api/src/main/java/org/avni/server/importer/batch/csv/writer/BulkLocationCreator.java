@@ -97,7 +97,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         additionalHeaders.removeIf(StringUtils::isEmpty);
         if (!additionalHeaders.isEmpty()) {
             List<String> locationPropertyNames = formService.getFormElementNamesForLocationTypeForms()
-                    .stream().map(FormElement::getName).collect(Collectors.toList());
+                    .stream().map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList());
             locationPropertyNames.add(LocationHeaders.gpsCoordinates);
             if ((!locationPropertyNames.containsAll(additionalHeaders))) {
                 allErrorMsgs.add(UnknownHeadersErrorMessage);

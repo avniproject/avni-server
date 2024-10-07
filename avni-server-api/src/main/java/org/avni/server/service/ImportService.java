@@ -219,7 +219,7 @@ public class ImportService implements ImportLocationsConstants {
         }
         headers.add(COLUMN_NAME_GPS_COORDINATES);
         headers.addAll(formElementNamesForLocationTypeFormElements.stream()
-                .map(FormElement::getName).collect(Collectors.toList()));
+                .map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList()));
         return listAsSeparatedString(headers);
     }
 
