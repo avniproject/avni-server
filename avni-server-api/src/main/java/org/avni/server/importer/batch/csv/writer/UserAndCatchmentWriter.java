@@ -55,7 +55,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
     private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'. " +
             "To input this value, add this as an answer to the coded concept '%s'.";
-    private static final String METADATA_ROW_START_STRING = "Mandatory field.";
+    public static final String METADATA_ROW_START_STRING = "Mandatory field";
 
     @Autowired
     public UserAndCatchmentWriter(CatchmentService catchmentService,

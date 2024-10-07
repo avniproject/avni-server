@@ -35,6 +35,9 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.avni.server.importer.batch.csv.writer.UserAndCatchmentWriter.METADATA_ROW_START_STRING;
+import static org.avni.server.service.ImportLocationsConstants.EXAMPLE;
+
 @Configuration
 @EnableBatchProcessing
 @EnableScheduling
@@ -137,7 +140,8 @@ public class BatchConfiguration {
                 descriptors.addAll(doTokenize(possibleDescriptorLine));
             }};
 
-            if (CollectionUtil.anyStartsWith(descriptors, ImportLocationsConstants.EXAMPLE)) {
+            if (CollectionUtil.anyStartsWith(descriptors, EXAMPLE)
+                    || CollectionUtil.anyStartsWith(descriptors, METADATA_ROW_START_STRING)) {
                 linesToSkip++;
             }
         }
