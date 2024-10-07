@@ -51,7 +51,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
             AddressLevel currentParent = existingLocationAddressLevel.get().getParentLocation();
             if (currentParent != null) {currentParentType = currentParent.getType();}
             if (!newLocationParentAddressLevel.getType().equals(currentParentType)) {
-                allErrorMsgs.add("Provided new location parent is of a different type from current parent.");
+                allErrorMsgs.add(String.format("Only parent of location type \'%s\' is allowed for %s.", currentParentType.getName(), existingLocationAddressLevel.get().getTitle()));
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
         }

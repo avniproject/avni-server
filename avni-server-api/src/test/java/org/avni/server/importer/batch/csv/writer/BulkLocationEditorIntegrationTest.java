@@ -203,7 +203,7 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         // change to parent at a different level from current parent's level
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar, District2, Block21", " Block21Town", "Bihar", "23.45,43.85"),
-                error("Provided new location parent is of a different type from current parent."),
+                error("Only parent of location type 'District' is allowed for Block21."),
                 verifyExists("Bihar", "District2", "Block21"),
                 verifyNotExists("Bihar, District2, Block21Town"));
 
