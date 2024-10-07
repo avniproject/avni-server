@@ -23,12 +23,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Service
 public class ImportService implements ImportLocationsConstants {
 
-    public static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
+
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
     private static final Logger logger = LoggerFactory.getLogger(ProgramEnrolmentWriter.class);
@@ -142,27 +144,27 @@ public class ImportService implements ImportLocationsConstants {
             return getUsersAndCatchmentsSampleFile();
         }
 
-        if (uploadSpec[0].equals("Subject")) {
+        if (uploadSpec[STARTING_INDEX].equals("Subject")) {
             SubjectType subjectType = subjectTypeRepository.findByName(uploadSpec[1]);
             return getSubjectSampleFile(uploadSpec, response, subjectType);
         }
 
-        if (uploadSpec[0].equals("ProgramEnrolment")) {
+        if (uploadSpec[STARTING_INDEX].equals("ProgramEnrolment")) {
             Program program = programRepository.findByName(uploadSpec[1]);
             return getProgramEnrolmentSampleFile(uploadSpec, response, program);
         }
 
-        if (uploadSpec[0].equals("ProgramEncounter")) {
+        if (uploadSpec[STARTING_INDEX].equals("ProgramEncounter")) {
             EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
             return getProgramEncounterSampleFile(uploadSpec, response, encounterType);
         }
 
-        if (uploadSpec[0].equals("Encounter")) {
+        if (uploadSpec[STARTING_INDEX].equals("Encounter")) {
             EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
             return getEncounterSampleFile(uploadSpec, response, encounterType);
         }
 
-        if (uploadSpec[0].equals("GroupMembers")) {
+        if (uploadSpec[STARTING_INDEX].equals("GroupMembers")) {
             return getGroupMembersSampleFile(uploadSpec, response, getSubjectType(uploadSpec[1]));
         }
 
@@ -183,9 +185,9 @@ public class ImportService implements ImportLocationsConstants {
         StringBuilder sampleFileBuilder = new StringBuilder();
         sampleFileBuilder.append(buildHeaderRowForLocations(locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements));
         sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE);
-        sampleFileBuilder.append(buildExampleRowForLocations(locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements));
+        sampleFileBuilder.append(buildDescriptionRowForLocations(locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements));
         sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE);
-        sampleFileBuilder.append(buildDescriptionRowForLocations(locationUploadMode));
+        sampleFileBuilder.append(buildSampleValuesRowForLocations(locationUploadMode, addressLevelTypes, formElementNamesForLocationTypeFormElements));
         return sampleFileBuilder;
     }
 
@@ -223,33 +225,39 @@ public class ImportService implements ImportLocationsConstants {
         return listAsSeparatedString(headers);
     }
 
-    private String buildExampleRowForLocations(LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
-                                               List<FormElement> formElementNamesForLocationTypeFormElements) {
-        List<String> examples = new ArrayList<>();
-        if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
-            examples.addAll(addressLevelTypes.stream()
-                            .map(alt -> Example + alt.getName() + STRING_CONSTANT_ONE).collect(Collectors.toList()));
-        } else {
-            examples.add(LOCATION_WITH_FULL_HIERARCHY_EXAMPLE);
-            examples.add(NEW_LOCATION_NAME_EXAMPLE);
-            examples.add(PARENT_LOCATION_WITH_FULL_HIERARCHY_EXAMPLE);
-        }
-        examples.add(GPS_COORDINATES_EXAMPLE);
-        examples.addAll(formElementNamesForLocationTypeFormElements.stream()
-                .map(fe -> ALLOWED_VALUES + conceptService.getSampleValuesForSyncConcept(fe.getConcept())).collect(Collectors.toList()));
-        return listAsSeparatedString(examples);
-    }
-
-    private String buildDescriptionRowForLocations(LocationWriter.LocationUploadMode locationUploadMode) {
+    private String buildDescriptionRowForLocations(LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
+                                                   List<FormElement> formElementNamesForLocationTypeFormElements) {
         List<String> descriptions = new ArrayList<>();
         if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
-            descriptions.add(ENTER_YOUR_DATA_STARTING_HERE + " " + PARENT_LOCATION_REQUIRED);
+            descriptions.addAll(addressLevelTypes.stream()
+                            .map(alt -> Example + alt.getName() + STRING_CONSTANT_ONE).collect(Collectors.toList()));
+            descriptions.set(STARTING_INDEX, descriptions.get(STARTING_INDEX).concat(PARENT_LOCATION_REQUIRED));
         } else {
             descriptions.add(LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION);
             descriptions.add(NEW_LOCATION_NAME_DESCRIPTION);
             descriptions.add(PARENT_LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION);
         }
-        return listAsSeparatedString(descriptions);
+        descriptions.add(GPS_COORDINATES_EXAMPLE);
+        descriptions.addAll(formElementNamesForLocationTypeFormElements.stream()
+                .map(fe -> ALLOWED_VALUES + conceptService.getAllowedValuesForSyncConcept(fe.getConcept())).collect(Collectors.toList()));
+        return  listAsSeparatedString(descriptions);
+    }
+
+    private String buildSampleValuesRowForLocations(LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
+                                                    List<FormElement> formElementNamesForLocationTypeFormElements) {
+        List<String> sampleValues = new ArrayList<>();
+        if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
+            sampleValues.addAll(IntStream.range(0, addressLevelTypes.size()).mapToObj(idx -> EXAMPLE_LOCATION_NAMES[idx%EXAMPLE_LOCATION_NAMES.length]).collect(Collectors.toList()));
+        } else {
+            sampleValues.add(LOCATION_WITH_FULL_HIERARCHY_EXAMPLE);
+            sampleValues.add(NEW_LOCATION_NAME_EXAMPLE);
+            sampleValues.add(PARENT_LOCATION_WITH_FULL_HIERARCHY_EXAMPLE);
+        }
+        sampleValues.add(GPS_COORDINATES_SAMPLE);
+        sampleValues.addAll(formElementNamesForLocationTypeFormElements.stream()
+                .map(fe -> conceptService.getExampleValuesForSyncConcept(fe.getConcept()))
+                .collect(Collectors.toList()));
+        return listAsSeparatedString(sampleValues);
     }
 
     private String getUsersAndCatchmentsSampleFile() {

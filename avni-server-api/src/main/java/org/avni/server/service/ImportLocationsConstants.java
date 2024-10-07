@@ -2,7 +2,6 @@ package org.avni.server.service;
 
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
 
-import java.util.Collections;
 
 public interface ImportLocationsConstants {
     String STRING_CONSTANT_ONE = "1";
@@ -22,6 +21,8 @@ public interface ImportLocationsConstants {
     String NEW_LOCATION_NAME_EXAMPLE = "Vil C";
     String PARENT_LOCATION_WITH_FULL_HIERARCHY_EXAMPLE = "PHC C, Sub C";
     String GPS_COORDINATES_EXAMPLE = "Ex: 23.45,43.85";
-    String ENTER_YOUR_DATA_STARTING_HERE = "Enter your data starting here.";
-    String PARENT_LOCATION_REQUIRED = "Note: Child locations without parent locations are not allowed.";
+    String PARENT_LOCATION_REQUIRED = ". Mandatory to mention the parent locations to which the location to be created belongs to.";
+    String GPS_COORDINATES_SAMPLE = "23.45,43.85";
+    int STARTING_INDEX = 0;
+    String[] EXAMPLE_LOCATION_NAMES = {"Jawhar","Sarsun","Dehere","Barso", "Roru"};
 }

@@ -251,7 +251,7 @@ public class SubjectTypeService implements NonScopeAwareService {
 
         return Arrays.stream(syncAttributes).
                 filter(Objects::nonNull).sorted().
-                map(sa -> String.format("\"Mandatory field. Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(conceptService.get(sa))))
+                map(sa -> String.format("\"Mandatory field. Allowed values: %s\"", conceptService.getAllowedValuesForSyncConcept(conceptService.get(sa))))
                 .collect(Collectors.toList());
     }
 
