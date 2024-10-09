@@ -113,6 +113,7 @@ public class CardService implements NonScopeAwareService {
                     reportCardWebRequest.getStandardReportCardInputPrograms(),
                     reportCardWebRequest.getStandardReportCardInputEncounterTypes(), reportCardWebRequest.getStandardReportCardInputRecentDuration(), reportCard);
         } else {
+            reportCard.resetStandardReportCardInput();
             reportCard.setStandardReportCardType(null);
         }
     }
@@ -134,16 +135,27 @@ public class CardService implements NonScopeAwareService {
     }
 
     private void buildStandardReportCardInputs(StandardReportCardType type, List<String> subjectTypes, List<String> programs, List<String> encounterTypes, ValueUnit recentDuration, ReportCard card) {
+        if (!type.getType().isInputStandardReportCardType()) {
+            card.resetStandardReportCardInput();
+            return;
+        }
+
         card.setStandardReportCardInputSubjectTypes(subjectTypes);
         card.setStandardReportCardInputPrograms(programs);
         card.setStandardReportCardInputEncounterTypes(encounterTypes);
 
-        if (type.getType().isRecentStandardReportCardType()) {
-            if (recentDuration == null) {
-                throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
-            }
-            card.setStandardReportCardInputRecentDuration(recentDuration);
+        buildStandardReportCardInputRecentDuration(type, recentDuration, card);
+    }
+
+    private void buildStandardReportCardInputRecentDuration(StandardReportCardType type, ValueUnit recentDuration, ReportCard card) {
+        if (!type.getType().isRecentStandardReportCardType()) {
+            card.resetStandardReportCardInputRecentDuration();
+            return;
         }
+        if (recentDuration == null) {
+            throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
+        }
+        card.setStandardReportCardInputRecentDuration(recentDuration);
     }
 
     private void buildCard(ReportCardContract reportCardRequest, ReportCard card) {
