@@ -33,7 +33,6 @@ public class DatabaseRepository extends MetabaseConnector {
         String jsonResponse = getForObject(url, String.class);
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(jsonResponse);
             JsonNode dataArray = rootNode.path("data");
 
@@ -43,7 +42,7 @@ public class DatabaseRepository extends MetabaseConnector {
                     return db;
                 }
             }
-            throw new RuntimeException("Database with name " + database.getName() + " not found.");
+            return null;
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve database", e);
         }
@@ -74,8 +73,6 @@ public class DatabaseRepository extends MetabaseConnector {
         String url = metabaseApiUrl + "/collection";
         try {
             String jsonResponse = getForObject(url, String.class);
-
-            ObjectMapper objectMapper = new ObjectMapper();
             List<CollectionInfoResponse> collections = objectMapper.readValue(
                     jsonResponse, new TypeReference<List<CollectionInfoResponse>>() {}
             );
@@ -83,7 +80,7 @@ public class DatabaseRepository extends MetabaseConnector {
             return collections.stream()
                     .filter(collection -> collection.getName().equals(database.getName()))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Collection with name " + database.getName() + " not found."));
+                    .orElseThrow(null);
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve collection", e);
         }
