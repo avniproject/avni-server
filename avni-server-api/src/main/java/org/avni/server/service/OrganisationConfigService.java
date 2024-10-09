@@ -353,4 +353,16 @@ public class OrganisationConfigService implements NonScopeAwareService {
         settings.put(OrganisationConfig.Extension.EXTENSION_DIR, Collections.emptyList());
         return settings;
     }
+
+    public void setMetabaseSetupEnabled(Organisation organisation, boolean isEnabled) {
+        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        config.setMetabaseSetupEnabled(isEnabled);
+        organisationConfigRepository.save(config);
+    }
+
+    public boolean isMetabaseSetupEnabled(Organisation organisation) {
+        OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
+        return config.isMetabaseSetupEnabled();
+    }
+
 }

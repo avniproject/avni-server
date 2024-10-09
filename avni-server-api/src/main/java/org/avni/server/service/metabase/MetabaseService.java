@@ -8,9 +8,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
 
 @Service
 public class MetabaseService {
@@ -44,36 +42,47 @@ public class MetabaseService {
         String name = currentOrganisation.getName();
         String dbUser = currentOrganisation.getDbUser();
 
-        Database database = databaseRepository.save(new Database(name, "postgres", new DatabaseDetails(avniDatabase, dbUser)));
-        this.globalDatabase = database;
+        globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
+        if (globalDatabase == null) {
+            Database newDatabase = new Database(name, "postgres", new DatabaseDetails(avniDatabase, dbUser));
+            globalDatabase = databaseRepository.save(newDatabase);
+        }
 
-        CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
-        this.globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
+        globalCollection = databaseRepository.getCollectionByName(globalDatabase);
+        if (globalCollection == null) {
+            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
+            globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
+        }
 
-        Group metabaseGroup = groupPermissionsRepository.save(new Group(name));
+        Group metabaseGroup = groupPermissionsRepository.findOrCreateGroup(name, globalDatabase.getId(), globalCollection.getIdAsInt());
 
-        GroupPermissionsService groupPermissions = new GroupPermissionsService(groupPermissionsRepository.getPermissionsGraph());
-        groupPermissions.updatePermissions(metabaseGroup.getId(), database.getId());
-        groupPermissionsRepository.updatePermissionsGraph(groupPermissions, metabaseGroup.getId(), database.getId());
-
-        CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(collectionPermissionsRepository.getCollectionPermissionsGraph());
-        collectionPermissions.updatePermissions(metabaseGroup.getId(), metabaseCollection.getId());
-        collectionPermissionsRepository.updateCollectionPermissions(collectionPermissions, metabaseGroup.getId(), metabaseCollection.getId());
+        CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
+                collectionPermissionsRepository.getCollectionPermissionsGraph()
+        );
+        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, metabaseGroup.getId(), globalCollection.getIdAsInt());
     }
 
     public Database getGlobalDatabase() {
         if (globalDatabase == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
             globalDatabase = databaseRepository.getDatabaseByName(new Database(currentOrganisation.getName()));
+            if (globalDatabase == null) {
+                throw new RuntimeException("Global database not found.");
+            }
         }
         return globalDatabase;
     }
+
 
     public CollectionInfoResponse getGlobalCollection() {
         if (globalCollection == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
             globalCollection = databaseRepository.getCollectionByName(new Database(currentOrganisation.getName()));
+            if (globalCollection == null) {
+                throw new RuntimeException("Global database not found.");
+            }
         }
         return globalCollection;
     }
+
 }
