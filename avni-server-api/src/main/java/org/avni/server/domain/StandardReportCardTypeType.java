@@ -24,16 +24,7 @@ public enum StandardReportCardTypeType {
         addAll(Arrays.asList(RecentEnrolments, RecentVisits, RecentRegistrations));
     }};
 
-    private final static List<StandardReportCardTypeType> InputCardTypes = new ArrayList<StandardReportCardTypeType>() {{
-        addAll(RecentCardTypes);
-        addAll(Arrays.asList(ScheduledVisits, OverdueVisits, Total));
-    }};
-
     public boolean isRecentStandardReportCardType() {
         return RecentCardTypes.contains(this);
-    }
-
-    public boolean isInputStandardReportCardType() {
-        return InputCardTypes.contains(this);
     }
 }

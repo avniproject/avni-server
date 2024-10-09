@@ -2,15 +2,14 @@ package org.avni.server.web.request.reports;
 
 import org.avni.server.web.contract.ReportCardContract;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ReportCardBundleRequest extends ReportCardContract {
     private String standardReportCardType;
-    private List<String> standardReportCardInputSubjectTypes = new ArrayList<>();
-    private List<String> standardReportCardInputPrograms = new ArrayList<>();
-    private List<String> standardReportCardInputEncounterTypes = new ArrayList<>();
-    private String standardReportCardInputRecentDuration = null;
+    private List<String> standardReportCardInputSubjectTypes;
+    private List<String> standardReportCardInputPrograms;
+    private List<String> standardReportCardInputEncounterTypes;
+    private String standardReportCardInputRecentDuration;
 
     public String getStandardReportCardType() {
         return standardReportCardType;
