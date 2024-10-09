@@ -92,7 +92,7 @@ public class CardService implements NonScopeAwareService {
             throw new ValidationException(String.format("Organisation not found for user %s", user.getId()));
         }
         if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
-            throw new ValidationException("Cannot create, delete or make changes to report cards on Prod org. Report card features under maintenance. Please try again after few days.");
+            throw new ValidationException("Cannot create, delete or make changes to report cards on Production organisations. Report card features under maintenance. Please try again after few days.");
         }
     }
 
