@@ -4,12 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
 import org.avni.server.web.contract.ValueUnit;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
+import org.avni.server.web.validation.ValidationException;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,17 +34,20 @@ public class CardService implements NonScopeAwareService {
     private final SubjectTypeRepository subjectTypeRepository;
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
+    private final OrganisationRepository organisationRepository;
 
     @Autowired
-    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
+    public CardService(CardRepository cardRepository, StandardReportCardTypeRepository standardReportCardTypeRepository, SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, OrganisationRepository organisationRepository) {
         this.cardRepository = cardRepository;
         this.standardReportCardTypeRepository = standardReportCardTypeRepository;
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
+        this.organisationRepository = organisationRepository;
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
+        checkIfReportCardChangesAllowed();
         assertNoExistingCardWithName(reportCardRequest.getName());
         ReportCard card = new ReportCard();
         card.assignUUID();
@@ -52,6 +58,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public void uploadCard(ReportCardBundleRequest reportCardRequest) {
+        checkIfReportCardChangesAllowed();
         ReportCard card = cardRepository.findByUuid(reportCardRequest.getUuid());
         if (card == null) {
             card = new ReportCard();
@@ -63,6 +70,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public ReportCard editCard(ReportCardWebRequest request, Long cardId) {
+        checkIfReportCardChangesAllowed();
         ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(request.getName(), existingCard.getName());
         buildCard(request, existingCard);
@@ -71,8 +79,21 @@ public class CardService implements NonScopeAwareService {
     }
 
     public void deleteCard(ReportCard card) {
+        checkIfReportCardChangesAllowed();
         card.setVoided(true);
         cardRepository.save(card);
+    }
+
+    //TODO Remove this check after 10.0 release custom report card changes stabilize
+    public void checkIfReportCardChangesAllowed() {
+        User user = UserContextHolder.getUserContext().getUser();
+        Organisation organisation = organisationRepository.findOne(user.getOrganisationId());
+        if (organisation == null) {
+            throw new ValidationException(String.format("Organisation not found for user %s", user.getId()));
+        }
+        if (OrganisationCategory.Production.equals(organisation.getCategory().getName())) {
+            throw new ValidationException("Cannot create, delete or make changes to report cards on Prod org. Report card features under maintenance. Please try again after few days.");
+        }
     }
 
     public List<ReportCard> getAll() {
