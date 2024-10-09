@@ -46,6 +46,7 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     public Dashboard saveDashboard(DashboardWebRequest dashboardRequest) {
+        cardService.checkIfCustomDashboardRelatedChangesAreAllowed();
         assertNoExistingDashboardWithName(dashboardRequest.getName());
         Dashboard dashboard = new Dashboard();
         dashboard.assignUUID();
@@ -53,6 +54,7 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     public void uploadDashboard(DashboardBundleContract dashboardContract) {
+        cardService.checkIfCustomDashboardRelatedChangesAreAllowed();
         Dashboard dashboard = dashboardRepository.findByUuid(dashboardContract.getUuid());
         if (dashboard == null) {
             dashboard = new Dashboard();
@@ -112,12 +114,14 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     public Dashboard editDashboard(DashboardWebRequest dashboardRequest, Long dashboardId) {
+        cardService.checkIfCustomDashboardRelatedChangesAreAllowed();
         Dashboard existingDashboard = dashboardRepository.findOne(dashboardId);
         assertNewNameIsUnique(dashboardRequest.getName(), existingDashboard.getName());
         return buildDashboard(dashboardRequest, existingDashboard);
     }
 
     public void deleteDashboard(Dashboard dashboard) {
+        cardService.checkIfCustomDashboardRelatedChangesAreAllowed();
         dashboard.setVoided(true);
         dashboard.setName((ReactAdminUtil.getVoidedName(dashboard.getName(), dashboard.getId())));
         dashboardRepository.save(dashboard);
@@ -218,6 +222,7 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     public Dashboard createDefaultDashboard(Organisation organisation) {
+        cardService.checkIfCustomDashboardRelatedChangesAreAllowed();
         Map<StandardReportCardTypeType, ReportCard> defaultDashboardCards = cardService.createDefaultDashboardCards(organisation);
         Dashboard defaultDashboard = createDashboard(organisation, DEFAULT_DASHBOARD);
 

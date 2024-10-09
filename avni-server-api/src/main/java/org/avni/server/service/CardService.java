@@ -47,7 +47,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public ReportCard saveCard(ReportCardWebRequest reportCardRequest) {
-        checkIfReportCardChangesAllowed();
+        checkIfCustomDashboardRelatedChangesAreAllowed();
         assertNoExistingCardWithName(reportCardRequest.getName());
         ReportCard card = new ReportCard();
         card.assignUUID();
@@ -58,7 +58,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public void uploadCard(ReportCardBundleRequest reportCardRequest) {
-        checkIfReportCardChangesAllowed();
+        checkIfCustomDashboardRelatedChangesAreAllowed();
         ReportCard card = cardRepository.findByUuid(reportCardRequest.getUuid());
         if (card == null) {
             card = new ReportCard();
@@ -70,7 +70,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     public ReportCard editCard(ReportCardWebRequest request, Long cardId) {
-        checkIfReportCardChangesAllowed();
+        checkIfCustomDashboardRelatedChangesAreAllowed();
         ReportCard existingCard = cardRepository.findOne(cardId);
         assertNewNameIsUnique(request.getName(), existingCard.getName());
         buildCard(request, existingCard);
@@ -79,13 +79,13 @@ public class CardService implements NonScopeAwareService {
     }
 
     public void deleteCard(ReportCard card) {
-        checkIfReportCardChangesAllowed();
+        checkIfCustomDashboardRelatedChangesAreAllowed();
         card.setVoided(true);
         cardRepository.save(card);
     }
 
     //TODO Remove this check after 10.0 release custom report card changes stabilize
-    public void checkIfReportCardChangesAllowed() {
+    public void checkIfCustomDashboardRelatedChangesAreAllowed() {
         User user = UserContextHolder.getUserContext().getUser();
         Organisation organisation = organisationRepository.findOne(user.getOrganisationId());
         if (organisation == null) {
