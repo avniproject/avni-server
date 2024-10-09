@@ -222,7 +222,6 @@ public class DashboardService implements NonScopeAwareService {
     }
 
     public Dashboard createDefaultDashboard(Organisation organisation) {
-        cardService.checkIfCustomDashboardRelatedChangesAreAllowed();
         Map<StandardReportCardTypeType, ReportCard> defaultDashboardCards = cardService.createDefaultDashboardCards(organisation);
         Dashboard defaultDashboard = createDashboard(organisation, DEFAULT_DASHBOARD);
 
