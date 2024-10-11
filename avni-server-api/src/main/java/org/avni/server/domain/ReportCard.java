@@ -146,4 +146,12 @@ public class ReportCard extends OrganisationAwareEntity {
         String value = standardReportCardInputRecentDuration.toJSONString();
         standardReportCardInput.with("recentDuration", value);
     }
+
+    public void resetStandardReportCardInputRecentDuration() {
+        standardReportCardInput.remove("recentDuration");
+    }
+
+    public void resetStandardReportCardInput() {
+        standardReportCardInput = new JsonObject(new HashMap<>());
+    }
 }
