@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_NAME;
 import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_UUID;
 import static org.avni.server.domain.ConceptDataType.multiSelectTypes;
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
 @Service
 public class FormService implements NonScopeAwareService {
@@ -173,7 +174,7 @@ public class FormService implements NonScopeAwareService {
                 if  (formElement.getConcept().isQuestionGroup()) {
                     FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
                     if (existingFormElement != null) {
-                        if (!existingFormElement.getKeyValues().get(KeyType.repeatable).equals(formElement.getKeyValues().get(KeyType.repeatable))) {
+                        if (!nullSafeEquals(existingFormElement.getKeyValues().get(KeyType.repeatable), formElement.getKeyValues().get(KeyType.repeatable))) {
                             throw new InvalidObjectException(String.format("Cannot change from Repeatable to Non Repeatable or vice versa for form element: %s", existingFormElement.getName()));
                         }
                     }
