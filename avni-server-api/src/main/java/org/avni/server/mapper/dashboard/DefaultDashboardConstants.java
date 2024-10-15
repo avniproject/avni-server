@@ -15,7 +15,6 @@ public interface DefaultDashboardConstants {
         put(RecentRegistrations, "f366f35a-5c4f-4ff7-b510-2dc9f5f88847");
         put(RecentEnrolments, "e1036b69-df46-4351-9916-10cd4cfcb6bd");
         put(RecentVisits, "dd961ee1-9d4e-4ec9-99f0-99b36672be7c");
-        put(DueChecklist, "9b7632dd-4e98-429a-8e42-67a947bf9ece");
     }};
 
     String DEFAULT_DASHBOARD = "Default Dashboard";

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.web.contract.ValueUnit;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -111,7 +112,7 @@ public class ReportCard extends OrganisationAwareEntity {
     }
 
     public void setIconFileS3Key(String iconFileS3Key) {
-        this.iconFileS3Key = iconFileS3Key;
+        this.iconFileS3Key = StringUtils.isEmpty(iconFileS3Key) ? null : iconFileS3Key;
     }
 
     public List<String> getStandardReportCardInputSubjectTypes() {
