@@ -218,9 +218,11 @@ public class CardService implements NonScopeAwareService {
             reportCard.setOrganisationId(organisation.getId());
             reportCard.setName(standardReportCardType.getDescription());
             reportCard.setColour(WHITE_BG_COLOUR);
-            reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
-            reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
-            reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
+            if (standardReportCardType.getType().isInputStandardReportCardType()) {
+                reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
+                reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
+                reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
+            }
             if (standardReportCardType.getType().isRecentStandardReportCardType()) {
                 reportCard.setStandardReportCardInputRecentDuration(ValueUnit.getDefaultRecentDuration());
             }
