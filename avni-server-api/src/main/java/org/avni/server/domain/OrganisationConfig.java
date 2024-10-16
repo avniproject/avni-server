@@ -139,4 +139,14 @@ public class OrganisationConfig extends OrganisationAwareEntity {
             return String.format("%s/%s", EXTENSION_DIR, fileName);
         }
     }
+
+    public boolean isMetabaseSetupEnabled() {
+        Boolean setupEnabled = (Boolean) settings.get("metabaseSetupEnabled");
+        return setupEnabled != null && setupEnabled;
+    }
+
+    public void setMetabaseSetupEnabled(boolean setupEnabled) {
+        settings.put("metabaseSetupEnabled", setupEnabled);
+    }
+
 }
