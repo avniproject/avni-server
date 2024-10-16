@@ -72,7 +72,7 @@ public class AddressLevelServiceTest {
                 .thenReturn(singletonList(createAddressLevelType(2L)));
 
         AddressLevelCache addressLevelCache = new AddressLevelCache(entityManager, locationRepository);
-        AddressLevelService addressLevelService = new AddressLevelService(locationRepository, addressLevelTypeRepository, organisationConfigService, addressLevelCache);
+        AddressLevelService addressLevelService = new AddressLevelService(locationRepository, addressLevelTypeRepository, organisationConfigService, addressLevelCache, mock(LocationHierarchyService.class));
 
         Catchment catchment = new Catchment();
         catchment.setId(1L);
