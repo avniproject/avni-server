@@ -2,7 +2,7 @@ package org.avni.server.web.api;
 
 public class ApiRequestContext {
     private int version;
-    private static int MAX_VERSION = 2;
+    private final static int MAX_VERSION = 3;
 
     public ApiRequestContext(String version) {
         int currentVersion = Integer.valueOf(version);

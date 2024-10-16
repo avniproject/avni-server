@@ -11,6 +11,7 @@ import java.util.Map;
 public class ApiSubjectRequest {
     public static final String SUBJECT_TYPE = "Subject type";
     public static final String ADDRESS = "Address";
+    public static final String ADDRESS_MAP = "Address map";
     public static final String DATE_OF_BIRTH = "Date of birth";
     public static final String GENDER = "Gender";
     public static final String REGISTRATION_DATE = "Registration date";
@@ -29,6 +30,9 @@ public class ApiSubjectRequest {
 
     @JsonProperty(ADDRESS)
     private String address;
+
+    @JsonProperty(ADDRESS_MAP)
+    private Map<String, String> addressMap;
 
     @JsonProperty(DATE_OF_BIRTH)
     private LocalDate dateOfBirth;
@@ -74,6 +78,14 @@ public class ApiSubjectRequest {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public Map<String, String> getAddressMap() {
+        return addressMap;
+    }
+
+    public void setAddressMap(Map<String, String> addressMap) {
+        this.addressMap = addressMap;
     }
 
     public LocalDate getDateOfBirth() {

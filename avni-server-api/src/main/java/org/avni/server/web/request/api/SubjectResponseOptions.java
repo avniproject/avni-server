@@ -22,8 +22,8 @@ public class SubjectResponseOptions {
         return new SubjectResponseOptions(true, includeCatchments);
     }
 
-    public static SubjectResponseOptions forSubjectUpdate() {
-        return new SubjectResponseOptions(true, true);
+    public static SubjectResponseOptions forSubjectUpdate(Boolean includeCatchments) {
+        return new SubjectResponseOptions(true, includeCatchments);
     }
 
     public boolean isIncludeSubjectType() {
