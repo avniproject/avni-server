@@ -153,10 +153,10 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
         return this.findLocationByTitleTypeAndParentName(title, type, parentName);
     }
 
-    AddressLevel findByTitleIgnoreCaseAndTypeNameAndIsVoidedFalse(String title, String type);
+    AddressLevel findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse(String title, String type);
 
     default AddressLevel findLocation(String title, String type) {
-        return this.findByTitleIgnoreCaseAndTypeNameAndIsVoidedFalse(title, type);
+        return this.findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse(title, type);
     }
 
     @RestResource(path = "findByParent", rel = "findByParent")

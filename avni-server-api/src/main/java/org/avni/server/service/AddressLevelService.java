@@ -27,15 +27,17 @@ public class AddressLevelService {
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelCache addressLevelCache;
     private final ObjectMapper objectMapper;
+    private final LocationHierarchyService locationHierarchyService;
 
     public AddressLevelService(LocationRepository locationRepository,
                                AddressLevelTypeRepository addressLevelTypeRepository,
                                OrganisationConfigService organisationConfigService,
-                               AddressLevelCache addressLevelCache) {
+                               AddressLevelCache addressLevelCache, LocationHierarchyService locationHierarchyService) {
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationConfigService = organisationConfigService;
         this.addressLevelCache = addressLevelCache;
+        this.locationHierarchyService = locationHierarchyService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -138,5 +140,26 @@ public class AddressLevelService {
             titleLineages.put(addressId, lineage);
         });
         return titleLineages;
+    }
+
+    public Optional<AddressLevel> findByAddressMap(Map<String, String> addressMap) {
+        if (addressMap == null || addressMap.isEmpty()) {
+            return Optional.empty();
+        }
+        List<AddressLevel> addressLevels = addressMap.entrySet().stream().map(entry -> locationRepository.findLocation(entry.getValue(), entry.getKey()))
+                .filter(Objects::nonNull).sorted(Comparator.comparing(al -> al.getLineage().length()))
+                .collect(Collectors.toList());
+
+        if (addressLevels.isEmpty() || addressLevels.size() != addressMap.size()) {
+            return Optional.empty();
+        }
+
+        String typeHierarchyForAddressMap = addressLevels.stream().map(al -> String.valueOf(al.getTypeId())).collect(Collectors.joining("."));
+
+        TreeSet<String> addressLevelTypeHierarchies = locationHierarchyService.fetchAndFilterHierarchies();
+        if (addressLevelTypeHierarchies.stream().anyMatch(hierarchy -> hierarchy.contains(typeHierarchyForAddressMap))) {
+            return Optional.of(addressLevels.get(addressLevels.size() - 1));
+        }
+        return Optional.empty();
     }
 }
