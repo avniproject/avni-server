@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
@@ -17,7 +18,7 @@ public class DatabaseRepository extends MetabaseConnector {
     private final ObjectMapper objectMapper;
     public DatabaseRepository(RestTemplateBuilder restTemplateBuilder) {
         super(restTemplateBuilder);
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public Database save(Database database) {
@@ -91,7 +92,7 @@ public class DatabaseRepository extends MetabaseConnector {
         FieldDetails joinField2 = getFieldDetailsByName(database, tableDetails, destinationField);
 
         ArrayNode joinsArray = objectMapper.createArrayNode();
-        MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray, objectMapper)
+        MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray)
                 .forTable(tableDetails)
                 .joinWith(addressTableDetails, joinField1, joinField2)
                 .build();
@@ -105,11 +106,11 @@ public class DatabaseRepository extends MetabaseConnector {
                 getCollectionByName(database).getIdAsInt()
         );
 
-        postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
+        postForObject(metabaseApiUrl + "/card", requestBody.toJson(), JsonNode.class);
     }
 
     public void createQuestionForASingleTable(Database database, TableDetails tableDetails) {
-        MetabaseQuery query = new MetabaseQueryBuilder(database, objectMapper.createArrayNode(), objectMapper)
+        MetabaseQuery query = new MetabaseQueryBuilder(database, objectMapper.createArrayNode())
                 .forTable(tableDetails)
                 .build();
 
@@ -122,7 +123,7 @@ public class DatabaseRepository extends MetabaseConnector {
                 getCollectionByName(database).getIdAsInt()
         );
 
-        postForObject(metabaseApiUrl + "/card", requestBody.toJson(objectMapper), JsonNode.class);
+        postForObject(metabaseApiUrl + "/card", requestBody.toJson(), JsonNode.class);
     }
 
     public FieldDetails getFieldDetailsByName(Database database, TableDetails tableDetails, FieldDetails fieldDetails) {
@@ -177,7 +178,7 @@ public class DatabaseRepository extends MetabaseConnector {
 
     public DatasetResponse getDataset(DatasetRequestBody requestBody) {
         String url = metabaseApiUrl + "/dataset";
-        String jsonRequestBody = requestBody.toJson(objectMapper).toString();
+        String jsonRequestBody = requestBody.toJson().toString();
         String jsonResponse = postForObject(url, jsonRequestBody, String.class);
         try {
             return objectMapper.readValue(jsonResponse, DatasetResponse.class);
