@@ -2,6 +2,7 @@ package org.avni.server.domain.metabase;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.util.ObjectMapperSingleton;
 
 public class DatasetRequestBody {
 
@@ -13,16 +14,16 @@ public class DatasetRequestBody {
         this.table = table;
     }
 
-    public ObjectNode toJson(ObjectMapper objectMapper) {
-        ObjectNode rootNode = objectMapper.createObjectNode();
+    public ObjectNode toJson() {
+        ObjectNode rootNode = ObjectMapperSingleton.getObjectMapper().createObjectNode();
         rootNode.put("database", database.getId());
 
-        ObjectNode queryNode = objectMapper.createObjectNode();
+        ObjectNode queryNode = ObjectMapperSingleton.getObjectMapper().createObjectNode();
         queryNode.put("source-table", table.getId());
 
         rootNode.set("query", queryNode);
         rootNode.put("type", "query");
-        rootNode.set("parameters", objectMapper.createArrayNode());
+        rootNode.set("parameters", ObjectMapperSingleton.getObjectMapper().createArrayNode());
 
         return rootNode;
     }

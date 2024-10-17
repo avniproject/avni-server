@@ -37,5 +37,4 @@ public class MetabaseController {
     public SyncStatus getSyncStatus() {
         return databaseService.getInitialSyncStatus();
     }
-
 }
