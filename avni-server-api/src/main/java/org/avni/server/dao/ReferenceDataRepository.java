@@ -13,6 +13,8 @@ public interface ReferenceDataRepository<T extends CHSEntity> extends CHSReposit
     T findByName(String name);
     T findByNameIgnoreCase(String name);
 
+    T findByNameIgnoreCaseAndIsVoidedFalse(String name);
+
     Page<T> findPageByIsVoidedFalse(Pageable pageable);
     List<T> findByIsVoidedFalse();
 
