@@ -18,4 +18,6 @@ public interface CardRepository extends ReferenceDataRepository<ReportCard>, Jpa
     List<ReportCard> findAllByIconFileS3KeyNotNull();
 
     List<ReportCard> findAllByIsVoidedFalseOrderByName();
+
+    ReportCard findByNameIgnoreCaseAndIsVoidedFalse(String name);
 }
