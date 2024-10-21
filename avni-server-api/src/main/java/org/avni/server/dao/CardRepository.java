@@ -19,5 +19,5 @@ public interface CardRepository extends ReferenceDataRepository<ReportCard>, Jpa
 
     List<ReportCard> findAllByIsVoidedFalseOrderByName();
 
-    ReportCard findByNameIgnoreCaseAndIsVoidedFalse(String name);
+    List<ReportCard> findByNameIgnoreCaseAndIsVoidedFalse(String name);
 }

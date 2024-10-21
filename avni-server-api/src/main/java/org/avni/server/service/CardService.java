@@ -174,8 +174,8 @@ public class CardService implements NonScopeAwareService {
     }
 
     private void assertNoExistingCardWithName(String name) {
-        ReportCard existingCard = cardRepository.findByNameIgnoreCaseAndIsVoidedFalse(name);
-        if (existingCard != null) {
+        List<ReportCard> existingCards = cardRepository.findByNameIgnoreCaseAndIsVoidedFalse(name);
+        if (existingCards != null && existingCards.size() > 0) {
             throw new BadRequestError(String.format("Report card with same name (%s) already exists", name));
         }
     }
