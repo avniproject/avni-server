@@ -168,7 +168,7 @@ public class LocationController implements RestControllerResourceProcessor<Addre
     @GetMapping(value = "locations/parents/{uuid}")
     @ResponseBody
     public List<AddressLevelContractWeb> getParents(@PathVariable("uuid") String uuid,
-                                               @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {
+                                                    @RequestParam(value = "maxLevelTypeId", required = false) Long maxLevelTypeId) {
         return addressLevelService.addTitleLineageToLocation(locationService.getParents(uuid, maxLevelTypeId));
     }
 
