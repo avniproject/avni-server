@@ -12,9 +12,8 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
-import org.springframework.stereotype.Service;
-
 import org.joda.time.DateTime;
+import org.springframework.stereotype.Service;
 
 import java.io.InvalidObjectException;
 import java.util.*;
@@ -174,7 +173,11 @@ public class FormService implements NonScopeAwareService {
                 if  (formElement.getConcept().isQuestionGroup()) {
                     FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
                     if (existingFormElement != null) {
-                        if (!nullSafeEquals(existingFormElement.getKeyValues().get(KeyType.repeatable), formElement.getKeyValues().get(KeyType.repeatable))) {
+                        KeyValue existingKeyValue = existingFormElement.getKeyValues().get(KeyType.repeatable);
+                        KeyValue newKeyValue = formElement.getKeyValues().get(KeyType.repeatable);
+                        Boolean existingRepeatable = existingKeyValue != null ? (Boolean) existingKeyValue.getValue() : null;
+                        Boolean newRepeatable = newKeyValue != null ? (Boolean) newKeyValue.getValue() : null;
+                        if (!((existingRepeatable == null && (newRepeatable == null || newRepeatable.equals(Boolean.FALSE))) || nullSafeEquals(existingRepeatable, newRepeatable))) {
                             throw new InvalidObjectException(String.format("Cannot change from Repeatable to Non Repeatable or vice versa for form element: %s", existingFormElement.getName()));
                         }
                     }
