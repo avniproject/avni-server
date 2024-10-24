@@ -9,7 +9,6 @@ import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.DateTimeUtil;
@@ -225,10 +224,13 @@ public class ObservationService {
         ObservationModelContract observationModelContract = new ObservationModelContract();
         Object value = observationContract.getValue();
         if (concept.getDataType().equals(ConceptDataType.QuestionGroup.toString())) {
-            if (((ArrayList<?>) value).get(0) instanceof ArrayList)
-                value = constructRepeatableQuestionGroupValue((List<List<ObservationContract>>) value);
-            else
-                value = constructQuestionGroupValue((List<ObservationContract>) value);
+            ArrayList<?> valueAsArrayList = (ArrayList<?>) value;
+            if (valueAsArrayList != null && !valueAsArrayList.isEmpty()) {
+                if (valueAsArrayList.get(0) instanceof ArrayList)
+                    value = constructRepeatableQuestionGroupValue((List<List<ObservationContract>>) value);
+                else
+                    value = constructQuestionGroupValue((List<ObservationContract>) value);
+            }
         }
 
         observationModelContract.setValue(value);
