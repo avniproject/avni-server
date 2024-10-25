@@ -1,7 +1,7 @@
 package org.avni.server.dao;
 
-import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.application.projections.CatchmentAddressProjection;
+import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
@@ -18,10 +18,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.QueryHint;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "locations", path = "locations")
