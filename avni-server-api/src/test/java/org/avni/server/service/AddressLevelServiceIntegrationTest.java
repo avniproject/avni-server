@@ -61,9 +61,9 @@ public class AddressLevelServiceIntegrationTest extends AbstractControllerIntegr
         AddressLevel gp2AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("gp2").title("gp2").type(grandParent).build());
         AddressLevel parent2AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("parent2").title("parent2").type(parent).parent(gp2AddressLevel).build());
         AddressLevel child2AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("child2").title("child2").type(child).parent(parent2AddressLevel).build());
-//        AddressLevel gp3AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("gp3").title("gp3").type(grandParent).build());
-//        AddressLevel parent3AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("parent3").title("parent2").type(parent).parent(gp3AddressLevel).build());
-//        AddressLevel child3AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("child3").title("child1").type(child).parent(parent3AddressLevel).build());
+        AddressLevel gp3AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("gp3").title("gp3").type(grandParent).build());
+        AddressLevel parent3AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("parent3").title("parent2").type(parent).parent(gp3AddressLevel).build());
+        AddressLevel child3AddressLevel = testLocationService.save(new AddressLevelBuilder().withUuid("child3").title("child1").type(child).parent(parent3AddressLevel).build());
 
         Map<String, String> addressLevelMap = new HashMap<>();
 
@@ -91,12 +91,13 @@ public class AddressLevelServiceIntegrationTest extends AbstractControllerIntegr
         addressLevelMap.remove(grandParent.getName());
         assertEquals(Optional.empty(), addressLevelService.findByAddressMap(addressLevelMap));
 
-//        //valid locations in valid hierarchy and related, but with duplicate title
-//        addressLevelMap.put(grandParent.getName(), gp3AddressLevel.getTitle());
-//        assertEquals(Optional.empty(), addressLevelService.findByAddressMap(addressLevelMap));
-//        addressLevelMap.put(parent.getName(), parent3AddressLevel.getTitle());
-//        assertEquals(Optional.empty(), addressLevelService.findByAddressMap(addressLevelMap));
-//        addressLevelMap.put(child.getName(), child3AddressLevel.getTitle());
-//        assertEquals(child3AddressLevel, addressLevelService.findByAddressMap(addressLevelMap).get());
+        //valid locations in valid hierarchy and related, but with duplicate title
+        addressLevelMap.put(grandParent.getName(), gp3AddressLevel.getTitle());
+        assertEquals(Optional.empty(), addressLevelService.findByAddressMap(addressLevelMap));
+        addressLevelMap.remove(parent.getName().toUpperCase());
+        addressLevelMap.put(parent.getName(), parent3AddressLevel.getTitle());
+        assertEquals(Optional.empty(), addressLevelService.findByAddressMap(addressLevelMap));
+        addressLevelMap.put(child.getName(), child3AddressLevel.getTitle());
+        assertEquals(child3AddressLevel, addressLevelService.findByAddressMap(addressLevelMap).get());
     }
 }
