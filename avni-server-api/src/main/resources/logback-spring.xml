@@ -7,6 +7,7 @@
         <logger name="org.springframework" level="OFF"/>
         <logger name="org.avni.server.framework.hibernate" level="INFO"/>
         <logger name="org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor" level="OFF"/>
+        <logger name="net.sf.ehcache.pool.impl.DefaultSizeOfEngine" level="ERROR"/>
     </springProfile>
     <springProfile name="staging">
         <logger name="org.avni" additivity="false" level="info">
@@ -15,6 +16,7 @@
         </logger>
         <logger name="org.springframework" level="OFF"/>
         <logger name="org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor" level="OFF"/>
+        <logger name="net.sf.ehcache.pool.impl.DefaultSizeOfEngine" level="ERROR"/>
     </springProfile>
     <springProfile name="live">
         <logger name="org.avni" additivity="false" level="info">
@@ -23,5 +25,6 @@
         </logger>
         <logger name="org.springframework" level="OFF"/>
         <logger name="org.hibernate.search.batchindexing.impl.SimpleIndexingProgressMonitor" level="OFF"/>
+        <logger name="net.sf.ehcache.pool.impl.DefaultSizeOfEngine" level="ERROR"/>
     </springProfile>
 </configuration>

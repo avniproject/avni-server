@@ -168,7 +168,7 @@ public class CardService implements NonScopeAwareService {
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
-        if (!newName.equals(oldName)) {
+        if (!newName.trim().equalsIgnoreCase(oldName.trim())) {
             assertNoExistingCardWithName(newName);
         }
     }
