@@ -1,7 +1,7 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.Catchment;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 import org.joda.time.DateTime;
 import java.util.ArrayList;

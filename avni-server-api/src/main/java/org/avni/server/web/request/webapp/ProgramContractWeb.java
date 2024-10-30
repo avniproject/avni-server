@@ -3,7 +3,7 @@ package org.avni.server.web.request.webapp;
 import org.avni.server.domain.OperationalProgram;
 import org.avni.server.web.contract.ProgramContract;
 import org.joda.time.DateTime;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 
 /**

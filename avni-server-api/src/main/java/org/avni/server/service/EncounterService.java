@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 import static org.avni.server.web.request.api.ApiBaseEncounterRequest.*;
 import static org.avni.server.web.request.api.ApiSubjectRequest.OBSERVATIONS;
-import static org.springframework.data.jpa.domain.Specifications.where;
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @Service
 public class EncounterService implements ScopeAwareService<Encounter> {

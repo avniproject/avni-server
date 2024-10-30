@@ -2,7 +2,7 @@ package org.avni.server.web.request;
 
 import org.joda.time.DateTime;
 import org.avni.server.domain.JsonObject;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 @Relation(collectionRelation = "userInfo")
 public class UserInfoContract {

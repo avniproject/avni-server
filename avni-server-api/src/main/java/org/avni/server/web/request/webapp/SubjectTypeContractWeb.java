@@ -8,7 +8,7 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.FormatContract;
 import org.avni.server.web.request.GroupRoleContract;
 import org.joda.time.DateTime;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.util.List;
 
