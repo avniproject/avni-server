@@ -3,7 +3,7 @@ package org.avni.server.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "custom_query")
 public class CustomQuery extends OrganisationAwareEntity {

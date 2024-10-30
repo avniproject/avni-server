@@ -11,7 +11,7 @@ import org.avni.server.application.KeyValues;
 import org.avni.server.web.request.ConceptContract;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

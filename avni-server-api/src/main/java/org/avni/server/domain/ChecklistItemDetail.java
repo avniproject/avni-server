@@ -5,7 +5,7 @@ import org.hibernate.annotations.Type;
 import org.avni.server.application.Form;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "checklist_item_detail")

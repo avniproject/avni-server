@@ -1,9 +1,9 @@
 package org.avni.server.domain;
 
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.proxy.HibernateProxyHelper;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 @MappedSuperclass

@@ -5,7 +5,7 @@ import org.hibernate.annotations.BatchSize;
 import org.springframework.data.rest.core.config.Projection;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 

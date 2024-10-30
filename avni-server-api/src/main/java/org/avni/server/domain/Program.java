@@ -9,7 +9,7 @@ import org.hibernate.annotations.Type;
 import org.springframework.data.rest.core.config.Projection;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;

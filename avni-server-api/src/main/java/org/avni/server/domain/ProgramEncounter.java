@@ -10,7 +10,7 @@ import org.avni.server.domain.EncounterType.EncounterTypeProjection;
 import org.springframework.data.rest.core.config.Projection;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = TableNames.ProgramEncounter)

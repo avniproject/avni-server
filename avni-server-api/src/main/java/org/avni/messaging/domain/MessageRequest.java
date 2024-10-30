@@ -4,7 +4,7 @@ import org.avni.server.domain.OrganisationAwareEntity;
 import org.joda.time.DateTime;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "message_request_queue")

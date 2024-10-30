@@ -3,7 +3,7 @@ package org.avni.server.domain;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 
 @Entity(name = "rule_dependency")

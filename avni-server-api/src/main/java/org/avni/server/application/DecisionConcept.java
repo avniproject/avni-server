@@ -3,7 +3,7 @@ package org.avni.server.application;
 import org.avni.server.domain.Concept;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "decision_concept")

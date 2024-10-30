@@ -4,7 +4,7 @@ import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "individual_relationship_type")

@@ -5,7 +5,7 @@ import org.hibernate.annotations.BatchSize;
 import org.avni.server.util.S;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "comment")

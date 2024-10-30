@@ -3,7 +3,7 @@ package org.avni.messaging.domain;
 import org.avni.server.domain.OrganisationAwareEntity;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "message_rule")

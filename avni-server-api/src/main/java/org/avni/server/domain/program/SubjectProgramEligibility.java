@@ -8,7 +8,7 @@ import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "subject_program_eligibility")
 public class SubjectProgramEligibility extends OrganisationAwareEntity {

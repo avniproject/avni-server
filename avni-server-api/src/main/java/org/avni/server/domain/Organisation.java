@@ -6,7 +6,7 @@ import org.avni.server.domain.organisation.OrganisationStatus;
 import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "organisation")

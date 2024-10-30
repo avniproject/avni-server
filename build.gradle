@@ -1,6 +1,4 @@
 allprojects {
-    apply plugin: 'maven'
-
     group = 'org.openchs'
     version = '0.0.1-SNAPSHOT'
 }
@@ -8,18 +6,9 @@ allprojects {
 subprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
-
 
     repositories {
         mavenLocal()
-
         maven { url "https://repo.maven.apache.org/maven2" }
-    }
-
-
-    dependencies {
-        testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 }
