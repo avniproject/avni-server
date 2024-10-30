@@ -21,8 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -104,7 +105,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @RequestMapping(value = "/programEncounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Deprecated()
-    public PagedResources<Resource<ProgramEncounter>> getByIndividualsOfCatchmentAndLastModified(
+    public PagedModel<EntityModel<ProgramEncounter>> getByIndividualsOfCatchmentAndLastModified(
             @RequestParam("catchmentId") long catchmentId,
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -114,7 +115,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<ProgramEncounter>> getByLastModified(
+    public CollectionModel<EntityModel<ProgramEncounter>> getByLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -123,7 +124,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<ProgramEncounter>> getProgramEncountersByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programEncounterTypeUuid", required = false) String encounterTypeUuid,
@@ -140,7 +141,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
 
     @RequestMapping(value = "/programEncounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
+    public CollectionModel<EntityModel<ProgramEncounter>> getProgramEncountersByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programEncounterTypeUuid", required = false) String encounterTypeUuid,
@@ -176,11 +177,11 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     }
 
     @Override
-    public Resource<ProgramEncounter> process(Resource<ProgramEncounter> resource) {
+    public EntityModel<ProgramEncounter> process(EntityModel<ProgramEncounter> resource) {
         ProgramEncounter programEncounter = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(programEncounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(new Link(programEncounter.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        resource.add(Link.of(programEncounter.getEncounterType().getUuid(), "encounterTypeUUID"));
+        resource.add(Link.of(programEncounter.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
         addAuditFields(programEncounter, resource);
         addUserFields(programEncounter.getFilledBy(), resource, "filledBy");
         return resource;

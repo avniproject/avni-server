@@ -1,6 +1,7 @@
 package org.avni.server.domain.individualRelationship;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -39,7 +40,7 @@ public class IndividualRelationship extends OrganisationAwareEntity {
     private DateTime exitDateTime;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection exitObservations;
 
     public IndividualRelationshipType getRelationship() {

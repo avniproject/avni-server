@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -106,7 +106,7 @@ public class NewsController extends AbstractController<News> implements RestCont
 
     @RequestMapping(value = "/news/v2", method = RequestMethod.GET)
     @Transactional
-    public SlicedResources<Resource<News>> getNewsAsSlice(
+    public SlicedResources<EntityModel<News>> getNewsAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -115,7 +115,7 @@ public class NewsController extends AbstractController<News> implements RestCont
 
     @RequestMapping(value = "/news", method = RequestMethod.GET)
     @Transactional
-    public PagedResources<Resource<News>> getNews(
+    public CollectionModel<EntityModel<News>> getNews(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -123,10 +123,10 @@ public class NewsController extends AbstractController<News> implements RestCont
     }
 
     @Override
-    public Resource<News> process(Resource<News> resource) {
+    public EntityModel<News> process(EntityModel<News> resource) {
         News news = resource.getContent();
         if (!S.isEmpty(news.getHeroImage())) {
-            resource.add(new Link(s3Service.generateMediaDownloadUrl(news.getHeroImage()).toString(), "heroImageSignedURL"));
+            resource.add(Link.of(s3Service.generateMediaDownloadUrl(news.getHeroImage()).toString(), "heroImageSignedURL"));
         }
         return resource;
     }

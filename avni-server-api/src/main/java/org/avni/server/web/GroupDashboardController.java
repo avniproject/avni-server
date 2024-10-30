@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -99,7 +99,7 @@ public class GroupDashboardController implements RestControllerResourceProcessor
     }
 
     @GetMapping(value = "/v2/groupDashboard/search/lastModified")
-    public PagedResources<Resource<GroupDashboard>> getDashboardFilters(@RequestParam("lastModifiedDateTime")
+    public CollectionModel<EntityModel<GroupDashboard>> getDashboardFilters(@RequestParam("lastModifiedDateTime")
                                                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                          @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                          Pageable pageable) {
@@ -108,11 +108,11 @@ public class GroupDashboardController implements RestControllerResourceProcessor
     }
 
     @Override
-    public Resource<GroupDashboard> process(Resource<GroupDashboard> resource) {
+    public EntityModel<GroupDashboard> process(EntityModel<GroupDashboard> resource) {
         GroupDashboard entity = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(entity.getDashboard().getUuid(), "dashboardUUID"));
-        resource.add(new Link(entity.getGroup().getUuid(), "groupUUID"));
+        resource.add(Link.of(entity.getDashboard().getUuid(), "dashboardUUID"));
+        resource.add(Link.of(entity.getGroup().getUuid(), "groupUUID"));
         addAuditFields(entity, resource);
         return resource;
     }

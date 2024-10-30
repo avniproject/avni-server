@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.framework.hibernate.ChecklistItemUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.avni.server.application.Form;
@@ -17,7 +18,7 @@ public class ChecklistItemDetail extends OrganisationAwareEntity {
     private Concept concept;
 
     @Column(name = "status")
-    @Type(type = "status")
+    @Type(value = ChecklistItemUserType.class)
     private ChecklistItemStatus checklistItemStatus;
 
     @JoinColumn(name = "dependent_on", nullable = true)

@@ -16,8 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -95,7 +95,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     }
 
     @GetMapping(value = "/v2/card/search/lastModified")
-    public PagedResources<Resource<ReportCard>> getReportCards(@RequestParam("lastModifiedDateTime")
+    public CollectionModel<EntityModel<ReportCard>> getReportCards(@RequestParam("lastModifiedDateTime")
                                                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                         Pageable pageable) {
@@ -104,12 +104,12 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     }
 
     @Override
-    public Resource<ReportCard> process(Resource<ReportCard> resource) {
+    public EntityModel<ReportCard> process(EntityModel<ReportCard> resource) {
         ReportCard entity = resource.getContent();
         resource.removeLinks();
         StandardReportCardType standardReportCardType = entity.getStandardReportCardType();
         if (standardReportCardType != null)
-            resource.add(new Link(standardReportCardType.getUuid(), "standardReportCardUUID"));
+            resource.add(Link.of(standardReportCardType.getUuid(), "standardReportCardUUID"));
         addAuditFields(entity, resource);
         return resource;
     }

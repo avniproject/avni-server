@@ -4,22 +4,23 @@ import org.avni.server.config.IdpType;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableWebSecurity(debug = false)
 @Order(Ordered.LOWEST_PRECEDENCE)
-public class ApiSecurity extends WebSecurityConfigurerAdapter {
+public class ApiSecurity {
     private final AuthService authService;
 
     @Value("${avni.defaultUserName}")
@@ -47,9 +48,8 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
         this.errorBodyBuilder = errorBodyBuilder;
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        super.configure(http);
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         /*
          * Refer the following documents for CSP
          * https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
@@ -71,7 +71,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
         CsrfConfigurer<HttpSecurity> csrf = http.headers().frameOptions().sameOrigin().and().csrf();
         HttpSecurity httpSecurity;
         if (csrfEnabled)
-            httpSecurity = csrf.ignoringAntMatchers("/api/**").csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and();
+            httpSecurity = csrf.ignoringRequestMatchers("/api/**").csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and();
         else
             httpSecurity = csrf.disable();
 
@@ -80,7 +80,7 @@ public class ApiSecurity extends WebSecurityConfigurerAdapter {
                 .httpBasic().disable()
                 .authorizeRequests().anyRequest().permitAll()
                 .and()
-                .addFilter(new AuthenticationFilter(authenticationManager(), authService, idpType, defaultUserName, avniBlacklistedUrlsFile, errorBodyBuilder))
+                .addFilter(new AuthenticationFilter(authService, idpType, defaultUserName, avniBlacklistedUrlsFile, errorBodyBuilder))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
     }
 }

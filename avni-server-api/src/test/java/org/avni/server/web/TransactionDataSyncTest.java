@@ -22,8 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Collections;
@@ -355,7 +355,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     }
 
     private List<GroupSubject> getGroupSubjects(SubjectType groupSubjectType, DateTime lastModifiedDateTime, DateTime now) {
-        PagedResources<Resource<GroupSubject>> enrolments = groupSubjectController.getGroupSubjectsByOperatingIndividualScope(lastModifiedDateTime, now,
+        CollectionModel<EntityModel<GroupSubject>> enrolments = groupSubjectController.getGroupSubjectsByOperatingIndividualScope(lastModifiedDateTime, now,
                 groupSubjectType.getUuid(),
                 PageRequest.of(0, 10));
         return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());

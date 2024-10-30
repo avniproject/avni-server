@@ -3,6 +3,7 @@ package org.avni.server.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -97,11 +98,11 @@ public class User {
     private OperatingIndividualScope operatingIndividualScope;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject settings;
 
     @Column(name = "sync_settings")
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject syncSettings;
 
     @Column(name = "ignore_sync_settings_in_dea")

@@ -4,6 +4,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.User;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -40,7 +41,7 @@ public class Task extends OrganisationAwareEntity {
     private User assignedTo;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection metadata;
 
     @ManyToOne(targetEntity = Individual.class, fetch = FetchType.LAZY)
@@ -48,7 +49,7 @@ public class Task extends OrganisationAwareEntity {
     private Individual subject;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column

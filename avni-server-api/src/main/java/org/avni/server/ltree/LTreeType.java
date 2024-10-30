@@ -1,7 +1,11 @@
 package org.avni.server.ltree;
 
 import org.hibernate.HibernateException;
+import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.type.descriptor.converter.spi.BasicValueConverter;
+import org.hibernate.type.descriptor.jdbc.JdbcType;
+import org.hibernate.type.spi.TypeConfiguration;
 import org.hibernate.usertype.UserType;
 
 import java.io.Serializable;
@@ -12,21 +16,19 @@ import java.sql.Types;
 
 //https://stackoverflow.com/a/41381946/5737375
 
-public class LTreeType implements UserType {
-
-
-    @Override
-    public int[] sqlTypes() {
-        return new int[]{Types.OTHER};
-    }
-
+public class LTreeType implements UserType<String> {
     @Override
     public Class returnedClass() {
         return String.class;
     }
 
     @Override
-    public boolean equals(Object o, Object o1) throws HibernateException {
+    public int getSqlType() {
+        return Types.OTHER;
+    }
+
+    @Override
+    public boolean equals(String o, String o1) {
         if (o == o1) return true;
         if (o == null || o1 == null) return false;
 
@@ -34,23 +36,28 @@ public class LTreeType implements UserType {
     }
 
     @Override
-    public int hashCode(Object o) throws HibernateException {
+    public int hashCode(String o) {
         return o.hashCode();
     }
 
     @Override
-    public Object nullSafeGet(ResultSet resultSet, String[] strings, SharedSessionContractImplementor sessionImplementor, Object o) throws HibernateException, SQLException {
-        return resultSet.getString(strings[0]);
+    public String nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+        return rs.getString(position);
     }
 
     @Override
-    public void nullSafeSet(PreparedStatement preparedStatement, Object o, int i, SharedSessionContractImplementor sessionImplementor) throws HibernateException, SQLException {
-        preparedStatement.setObject(i, o, Types.OTHER);
+    public void nullSafeSet(PreparedStatement st, String value, int index, SharedSessionContractImplementor session) throws SQLException {
+        st.setObject(index, value, Types.OTHER);
     }
 
     @Override
-    public Object deepCopy(Object o) throws HibernateException {
-        return o != null ? new String((String) o) : null;
+    public String deepCopy(String o) {
+        return o;
+    }
+
+    @Override
+    public Serializable disassemble(String o) {
+        return (Serializable) o;
     }
 
     @Override
@@ -59,17 +66,37 @@ public class LTreeType implements UserType {
     }
 
     @Override
-    public Serializable disassemble(Object o) throws HibernateException {
-        return (Serializable) o;
+    public String replace(String detached, String managed, Object owner) {
+        return deepCopy(detached);
     }
 
     @Override
-    public Object assemble(Serializable serializable, Object o) throws HibernateException {
-        return serializable;
+    public long getDefaultSqlLength(Dialect dialect, JdbcType jdbcType) {
+        return UserType.super.getDefaultSqlLength(dialect, jdbcType);
     }
 
     @Override
-    public Object replace(Object o, Object o1, Object o2) throws HibernateException {
-        return deepCopy(o);
+    public int getDefaultSqlPrecision(Dialect dialect, JdbcType jdbcType) {
+        return UserType.super.getDefaultSqlPrecision(dialect, jdbcType);
+    }
+
+    @Override
+    public int getDefaultSqlScale(Dialect dialect, JdbcType jdbcType) {
+        return UserType.super.getDefaultSqlScale(dialect, jdbcType);
+    }
+
+    @Override
+    public JdbcType getJdbcType(TypeConfiguration typeConfiguration) {
+        return UserType.super.getJdbcType(typeConfiguration);
+    }
+
+    @Override
+    public BasicValueConverter<String, Object> getValueConverter() {
+        return UserType.super.getValueConverter();
+    }
+
+    @Override
+    public String assemble(Serializable serializable, Object o) throws HibernateException {
+        return (String) serializable;
     }
 }

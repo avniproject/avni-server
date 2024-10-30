@@ -19,12 +19,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 import java.util.List;
 
 import static org.avni.server.framework.security.ResourceProtectionStatus.isProtected;
 
-public class AuthenticationFilter extends BasicAuthenticationFilter {
+public class AuthenticationFilter extends OncePerRequestFilter {
     public static final String USER_NAME_HEADER = "USER-NAME";
     public static final String AUTH_TOKEN_HEADER = "AUTH-TOKEN";
     public static final String ORGANISATION_UUID = "ORGANISATION-UUID";
@@ -36,8 +38,8 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     private final List<String> blacklistedUrls;
     private final ErrorBodyBuilder errorBodyBuilder;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder) throws IOException {
-        super(authenticationManager);
+    public AuthenticationFilter(AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder) throws IOException {
+        super();
         this.authService = authService;
         this.idpType = idpType;
         this.defaultUserName = defaultUserName;

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.HashSet;
 
 @Component
-public class MetadataResourceInterceptor extends HandlerInterceptorAdapter {
+public class MetadataResourceInterceptor implements HandlerInterceptor {
     private final UserUtil userUtil;
 
     private static final HashSet<String> endOfLifeEndpoints1 = new HashSet<String>() {{

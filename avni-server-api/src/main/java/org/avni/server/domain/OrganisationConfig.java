@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.hibernate.annotations.BatchSize;
@@ -24,14 +25,14 @@ public class OrganisationConfig extends OrganisationAwareEntity {
 
     //  Check keys in OrganisationConfigSettingKeys
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject settings;
 
     @Column(name = "worklist_updation_rule")
     private String worklistUpdationRule;
 
     @Column(name = "export_settings")
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject exportSettings;
 
     @Deprecated

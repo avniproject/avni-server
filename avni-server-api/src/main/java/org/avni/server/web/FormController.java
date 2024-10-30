@@ -40,8 +40,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.rest.webmvc.support.RepositoryEntityLinks;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,8 +52,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 @RestController
 public class FormController implements RestControllerResourceProcessor<BasicFormDetails> {
@@ -100,7 +98,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/forms")
-    public PagedResources<Resource<BasicFormDetails>> getAllFormsWeb(
+    public CollectionModel<EntityModel<BasicFormDetails>> getAllFormsWeb(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "includeVoided", required = false) boolean includeVoided,
             Pageable pageable) {
@@ -392,7 +390,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             formDetail.add(linkTo(methodOn(FormController.class).getForms(programId, pageable)).withSelfRel());
             Link formLink = entityLinks.linkToSingleResource(Form.class, form.getId());
             formDetail.add(formLink);
-            formDetail.add(new Link(formLink.getHref() + "/formElementGroups", "formElementGroups"));
+            formDetail.add(Link.of(formLink.getHref() + "/formElementGroups", "formElementGroups"));
             formDetail.add(entityLinks.linkToSingleResource(User.class, form.getCreatedBy().getId()).withRel("createdBy"));
             formDetail.add(entityLinks.linkToSingleResource(User.class, form.getLastModifiedBy().getId()).withRel("lastModifiedBy"));
             return formDetail;

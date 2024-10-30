@@ -2,6 +2,7 @@ package org.avni.server.domain.extenalSystem;
 
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
@@ -20,7 +21,7 @@ public class ExternalSystemConfig extends OrganisationAwareEntity {
 
     @NotNull
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject config;
 
     public SystemName getSystemName() {

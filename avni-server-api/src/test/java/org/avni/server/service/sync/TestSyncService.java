@@ -9,8 +9,8 @@ import org.avni.server.web.request.EntitySyncStatusContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +45,7 @@ public class TestSyncService {
     }
 
     public List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
-        PagedResources<Resource<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
+        CollectionModel<EntityModel<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
         return individuals.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
     }
 
@@ -58,7 +58,7 @@ public class TestSyncService {
     }
 
     public List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime, DateTime now) throws Exception {
-        PagedResources<Resource<ProgramEnrolment>> enrolments = programEnrolmentController.getProgramEnrolmentsByOperatingIndividualScope(lastModifiedDateTime, now, program.getUuid(), PageRequest.of(0, 10));
+        CollectionModel<EntityModel<ProgramEnrolment>> enrolments = programEnrolmentController.getProgramEnrolmentsByOperatingIndividualScope(lastModifiedDateTime, now, program.getUuid(), PageRequest.of(0, 10));
         return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
     }
 }

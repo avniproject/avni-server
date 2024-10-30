@@ -2,6 +2,7 @@ package org.avni.server.application;
 
 import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -34,7 +35,7 @@ public class FormElementGroup extends OrganisationAwareEntity {
     private String rule;
 
     @Column(name = "declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule declarativeRule;
 
     @Column

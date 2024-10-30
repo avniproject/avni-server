@@ -28,8 +28,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -202,7 +202,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Encounter>> getEncountersByCatchmentAndLastModified(
+    public CollectionModel<EntityModel<Encounter>> getEncountersByCatchmentAndLastModified(
         @RequestParam("catchmentId") long catchmentId,
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -212,7 +212,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/search/lastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Encounter>> getEncountersByLastModified(
+    public CollectionModel<EntityModel<Encounter>> getEncountersByLastModified(
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
         Pageable pageable) {
@@ -221,7 +221,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<Encounter>> getEncountersByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<Encounter>> getEncountersByOperatingIndividualScopeAsSlice(
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
         @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
@@ -237,7 +237,7 @@ public class EncounterController extends AbstractController<Encounter> implement
 
     @RequestMapping(value = "/encounter", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Encounter>> getEncountersByOperatingIndividualScope(
+    public CollectionModel<EntityModel<Encounter>> getEncountersByOperatingIndividualScope(
         @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
         @RequestParam(value = "encounterTypeUuid", required = false) String encounterTypeUuid,
@@ -273,11 +273,11 @@ public class EncounterController extends AbstractController<Encounter> implement
     }
 
     @Override
-    public Resource<Encounter> process(Resource<Encounter> resource) {
+    public EntityModel<Encounter> process(EntityModel<Encounter> resource) {
         Encounter encounter = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(new Link(encounter.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
+        resource.add(Link.of(encounter.getIndividual().getUuid(), "individualUUID"));
         addAuditFields(encounter, resource);
         addUserFields(encounter.getFilledBy(), resource, "filledBy");
         return resource;

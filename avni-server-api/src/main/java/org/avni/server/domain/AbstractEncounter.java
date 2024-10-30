@@ -2,7 +2,9 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.avni.server.common.dbSchema.ColumnNames;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
+import org.avni.server.geo.PointType;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -30,21 +32,21 @@ public class AbstractEncounter extends SyncAttributeEntity {
     private DateTime encounterDateTime;
 
     @Column(name = ColumnNames.EncounterObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.EncounterCancelDateTime)
     private DateTime cancelDateTime;
 
     @Column(name = ColumnNames.EncounterCancelObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection cancelObservations;
 
-    @Type(type = "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point encounterLocation;
 
-    @Type(type = "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point cancelLocation;
 

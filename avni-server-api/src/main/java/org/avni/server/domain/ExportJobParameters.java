@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -17,7 +18,7 @@ public class ExportJobParameters extends OrganisationAwareEntity {
     private User user;
 
     @Column(name = "report_format")
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     @NotNull
     private JsonObject reportFormat;
 

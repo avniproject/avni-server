@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.avni.server.framework.hibernate.KeyValuesUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DynamicInsert;
@@ -36,7 +37,7 @@ public class Concept extends OrganisationAwareEntity {
     private String dataType;
 
     @Column
-    @Type(type = "keyValues")
+    @Type(value = KeyValuesUserType.class)
     private KeyValues keyValues;
 
     private Boolean active;

@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.query.Param;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -83,9 +83,9 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
 
     @GetMapping(value = "/web/concepts")
     @ResponseBody
-    public PagedResources<Resource<Concept>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
-        Sort sortWithId = pageable.getSort().and(new Sort("id"));
-        PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
+    public CollectionModel<EntityModel<Concept>> getAll(@RequestParam(value = "name", required = false) String name, Pageable pageable) {
+        Sort sortWithId = pageable.getSort().and(Sort.by("id"));
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
         if (name == null) {
             return wrap(conceptRepository.getAllNonVoidedConcepts(pageRequest));
         } else {

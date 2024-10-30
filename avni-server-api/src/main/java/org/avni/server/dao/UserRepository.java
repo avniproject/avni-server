@@ -25,7 +25,6 @@ import static org.avni.server.domain.User.DEFAULT_SUPER_ADMIN;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
 public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
-
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
     User findByUsername(String username);
 

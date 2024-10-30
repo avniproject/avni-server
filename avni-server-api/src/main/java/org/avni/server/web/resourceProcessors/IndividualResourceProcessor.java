@@ -2,20 +2,20 @@ package org.avni.server.web.resourceProcessors;
 
 import org.avni.server.domain.Individual;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.EntityModel;
 
 public class IndividualResourceProcessor extends ResourceProcessor<Individual> {
     @Override
-    public Resource<Individual> process(Resource<Individual> resource) {
+    public EntityModel<Individual> process(EntityModel<Individual> resource) {
         Individual individual = resource.getContent();
         resource.removeLinks();
         if (individual.getAddressLevel() != null) {
-            resource.add(new Link(individual.getAddressLevel().getUuid(), "addressUUID"));
+            resource.add(Link.of(individual.getAddressLevel().getUuid(), "addressUUID"));
         }
         if (individual.getGender() != null) {
-            resource.add(new Link(individual.getGender().getUuid(), "genderUUID"));
+            resource.add(Link.of(individual.getGender().getUuid(), "genderUUID"));
         }
-        resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
+        resource.add(Link.of(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
         return resource;
     }
 }

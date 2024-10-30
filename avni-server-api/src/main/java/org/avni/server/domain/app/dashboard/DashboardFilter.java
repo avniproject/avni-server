@@ -3,6 +3,7 @@ package org.avni.server.domain.app.dashboard;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.avni.server.domain.*;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -20,7 +21,7 @@ public class DashboardFilter extends OrganisationAwareEntity {
     @JoinColumn(name = "dashboard_id")
     private Dashboard dashboard;
 
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject filterConfig;
 
     @Column

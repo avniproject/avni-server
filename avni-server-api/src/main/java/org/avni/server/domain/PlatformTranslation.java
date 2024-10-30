@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.avni.server.application.Platform;
@@ -13,7 +14,7 @@ import jakarta.validation.constraints.NotNull;
 public class PlatformTranslation extends CHSEntity {
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject translationJson;
 
     @NotNull

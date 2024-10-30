@@ -1,5 +1,6 @@
 package org.avni.server.domain;
 
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -21,7 +22,7 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     private String syncStatus;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject entityStatus;
 
     @Column
@@ -40,7 +41,7 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     private String deviceName;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject deviceInfo;
 
     @Column

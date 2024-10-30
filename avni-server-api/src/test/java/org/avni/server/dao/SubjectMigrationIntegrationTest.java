@@ -20,8 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -60,7 +60,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
     private TestDataSetupService.TestOrganisationData organisationData;
 
     private List<SubjectMigration> getMigrations(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
-        PagedResources<Resource<SubjectMigration>> migrations = subjectMigrationController.getMigrationsByCatchmentAndLastModified(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
+        CollectionModel<EntityModel<SubjectMigration>> migrations = subjectMigrationController.getMigrationsByCatchmentAndLastModified(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
         return migrations.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
     }
 

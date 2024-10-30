@@ -1,6 +1,8 @@
 package org.avni.server.domain.task;
 
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.ArrayUserType;
+import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
@@ -21,7 +23,7 @@ public class TaskType extends OrganisationAwareEntity {
     private TaskTypeName type;
 
     @Column(columnDefinition = "text[]")
-    @Type(type = "metadataSearchFields")
+    @Type(value = ArrayUserType.class)
     private String[] metadataSearchFields;
 
     public String getName() {

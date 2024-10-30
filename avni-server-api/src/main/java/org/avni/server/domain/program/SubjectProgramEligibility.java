@@ -4,6 +4,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.Program;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
@@ -29,7 +30,7 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     private DateTime checkDate;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     public Individual getSubject() {

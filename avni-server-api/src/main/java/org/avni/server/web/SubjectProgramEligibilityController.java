@@ -25,8 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,7 +66,7 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
 
     @RequestMapping(value = "/subjectProgramEligibility/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<SubjectProgramEligibility>> getSubjectProgramEligibilityByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<SubjectProgramEligibility>> getSubjectProgramEligibilityByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -80,7 +80,7 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
 
     @RequestMapping(value = "/subjectProgramEligibility", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<SubjectProgramEligibility>> getSubjectProgramEligibilityByOperatingIndividualScope(
+    public CollectionModel<EntityModel<SubjectProgramEligibility>> getSubjectProgramEligibilityByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -112,11 +112,11 @@ public class SubjectProgramEligibilityController extends AbstractController<Subj
     }
 
     @Override
-    public Resource<SubjectProgramEligibility> process(Resource<SubjectProgramEligibility> resource) {
+    public EntityModel<SubjectProgramEligibility> process(EntityModel<SubjectProgramEligibility> resource) {
         SubjectProgramEligibility subjectProgramEligibility = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(subjectProgramEligibility.getSubject().getUuid(), "subjectUUID"));
-        resource.add(new Link(subjectProgramEligibility.getProgram().getUuid(), "programUUID"));
+        resource.add(Link.of(subjectProgramEligibility.getSubject().getUuid(), "subjectUUID"));
+        resource.add(Link.of(subjectProgramEligibility.getProgram().getUuid(), "programUUID"));
         addAuditFields(subjectProgramEligibility, resource);
         return resource;
     }

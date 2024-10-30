@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
+import org.avni.server.geo.PointType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.LocalDate;
@@ -77,10 +79,10 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     private Set<UserSubjectAssignment> userSubjectAssignments = new HashSet<>();
 
     @Column(name = ColumnNames.IndividualObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
-    @Type(type = "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point registrationLocation;
 

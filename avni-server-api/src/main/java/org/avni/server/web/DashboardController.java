@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -116,13 +116,13 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     //This is here because dashboardCardMapping used to get synced earlier which is no longer required now
     @Deprecated
     @RequestMapping(value = "/dashboardCardMapping/search/lastModified", method = RequestMethod.GET)
-    public PagedResources<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+    public CollectionModel<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now) {
         return wrap(new PageImpl<>(Collections.emptyList()));
     }
 
     @GetMapping(value = "/v2/dashboard/search/lastModified")
-    public PagedResources<Resource<Dashboard>> getDashboards(@RequestParam("lastModifiedDateTime")
+    public CollectionModel<EntityModel<Dashboard>> getDashboards(@RequestParam("lastModifiedDateTime")
                                                              @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                              @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                              Pageable pageable) {

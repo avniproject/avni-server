@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.geo.PointType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -41,22 +43,22 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     private DateTime enrolmentDateTime;
 
     @Column(name = ProgramEnrolmentObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.ProgramExitDateTime)
     private DateTime programExitDateTime;
 
-    @Type(type= "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point enrolmentLocation;
 
-    @Type(type= "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point exitLocation;
 
     @Column(name = ProgramEnrolmentExitObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection programExitObservations;
 
     @Column

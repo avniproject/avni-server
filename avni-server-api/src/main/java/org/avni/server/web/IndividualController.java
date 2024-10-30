@@ -35,8 +35,8 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.query.Param;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,7 +48,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
-import static org.springframework.data.jpa.domain.Specifications.where;
 
 @RestController
 public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual> {
@@ -153,7 +152,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = {"/individual/v2", "/individual/search/lastModified/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<Individual>> getIndividualsByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<Individual>> getIndividualsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -166,7 +165,7 @@ public class IndividualController extends AbstractController<Individual> impleme
 
     @GetMapping(value = {"/individual", /*-->Both are Deprecated */ "/individual/search/byCatchmentAndLastModified", "/individual/search/lastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Individual>> getIndividualsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<Individual>> getIndividualsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -329,17 +328,17 @@ public class IndividualController extends AbstractController<Individual> impleme
     }
 
     @Override
-    public Resource<Individual> process(Resource<Individual> resource) {
+    public EntityModel<Individual> process(EntityModel<Individual> resource) {
         Individual individual = resource.getContent();
         resource.removeLinks();
         if (individual.getAddressLevel() != null) {
-            resource.add(new Link(individual.getAddressLevel().getUuid(), "addressUUID"));
+            resource.add(Link.of(individual.getAddressLevel().getUuid(), "addressUUID"));
         }
         if (individual.getGender() != null) {
-            resource.add(new Link(individual.getGender().getUuid(), "genderUUID"));
+            resource.add(Link.of(individual.getGender().getUuid(), "genderUUID"));
         }
         if (individual.getSubjectType() != null) {
-            resource.add(new Link(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
+            resource.add(Link.of(individual.getSubjectType().getUuid(), "subjectTypeUUID"));
         }
         addAuditFields(individual, resource);
         return resource;
