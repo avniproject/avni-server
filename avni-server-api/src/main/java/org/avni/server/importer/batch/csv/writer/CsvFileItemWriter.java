@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.csv.writer;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.importer.batch.model.Row;
 import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,9 +58,9 @@ public class CsvFileItemWriter implements ItemWriter<Row> {
     }
 
     @Override
-    public void write(List<? extends Row> rows) throws Exception {
+    public void write(Chunk<? extends Row> chunk) throws Exception {
         authService.authenticateByUserId(userId, organisationUUID);
-        getWriter().write(rows);
+        getWriter().write(chunk);
     }
 
     public Long getUserId() {

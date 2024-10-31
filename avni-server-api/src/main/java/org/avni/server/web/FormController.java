@@ -45,7 +45,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Predicate;
 import javax.transaction.Transactional;
 import java.io.InvalidObjectException;
 import java.util.*;

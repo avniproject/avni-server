@@ -16,7 +16,7 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.QueryHint;
+import jakarta.persistence.QueryHint;
 import java.util.List;
 import java.util.Optional;
 

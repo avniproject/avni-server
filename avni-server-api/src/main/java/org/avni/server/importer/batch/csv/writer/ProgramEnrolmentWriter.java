@@ -16,6 +16,7 @@ import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.ProgramEnrolmentService;
 import org.joda.time.LocalDate;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -69,8 +70,8 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     }
 
     @Override
-    public void write(List<? extends Row> rows) throws Exception {
-        for (Row row : rows) write(row);
+    public void write(Chunk<? extends Row> chunk) throws Exception {
+        for (Row row : chunk.getItems()) write(row);
     }
 
     private void write(Row row) throws Exception {

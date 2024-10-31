@@ -2,8 +2,8 @@ package org.avni.server.dao.sync;
 
 import org.avni.server.dao.SyncParameters;
 
-import javax.persistence.criteria.From;
-import javax.persistence.criteria.Join;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.Join;
 
 public class TransactionDataCriteriaBuilderUtil {
     public static Join<Object, Object> joinUserSubjectAssignment(From fromSubject) {

@@ -2,6 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.importer.batch.model.Row;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,11 +28,11 @@ public class LocationWriter implements ItemWriter<Row> {
     }
 
     @Override
-    public void write(List<? extends Row> rows) {
+    public void write(Chunk<? extends Row> chunk) throws Exception {
         if (LocationUploadMode.isCreateMode(locationUploadMode)) {
-            this.bulkLocationCreator.write(rows, locationHierarchy);
+            this.bulkLocationCreator.write(chunk.getItems(), locationHierarchy);
         } else {
-            this.bulkLocationEditor.write(rows);
+            this.bulkLocationEditor.write(chunk.getItems());
         }
     }
 

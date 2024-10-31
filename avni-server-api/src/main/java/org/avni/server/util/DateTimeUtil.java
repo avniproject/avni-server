@@ -5,6 +5,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.joda.time.LocalDate;
 
+import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -41,5 +42,9 @@ public class DateTimeUtil {
         return Instant.parse(dateStringWithTimezone)
                 .toDateTime(IST)
                 .toString("yyyy-MM-dd");
+    }
+
+    public static long getMilliSecondsDuration(LocalDateTime start, LocalDateTime end) {
+        return java.time.Duration.between(start, end).toMillis();
     }
 }

@@ -32,6 +32,7 @@ import org.avni.server.web.request.webapp.task.TaskTypeContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -210,7 +211,8 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     @Override
-    public void write(List<? extends BundleFile> bundleFiles) throws Exception {
+    public void write(Chunk<? extends BundleFile> chunk) throws Exception {
+        List<? extends BundleFile> bundleFiles = chunk.getItems();
         BundleZip bundleZip = new BundleZip(bundleFiles.stream().collect(Collectors.toMap(BundleFile::getName, BundleFile::getContent)));
         for (String filename : fileSequence) {
             Optional<BundleFolder> fromFileName = BundleFolder.getFromFileName(filename);

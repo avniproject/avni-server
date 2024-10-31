@@ -82,5 +82,6 @@ public class ApiSecurity {
                 .and()
                 .addFilter(new AuthenticationFilter(authService, idpType, defaultUserName, avniBlacklistedUrlsFile, errorBodyBuilder))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        return httpSecurity.build();
     }
 }

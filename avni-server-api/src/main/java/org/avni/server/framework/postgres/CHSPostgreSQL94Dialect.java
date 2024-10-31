@@ -5,7 +5,6 @@ import org.hibernate.dialect.PostgreSQL94Dialect;
 import java.sql.Types;
 
 public class CHSPostgreSQL94Dialect extends PostgreSQL94Dialect {
-
     private static final String JSONB = "jsonb";
     private static final String JSON = "json";
 

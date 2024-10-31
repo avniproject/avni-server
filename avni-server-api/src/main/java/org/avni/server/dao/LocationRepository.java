@@ -16,7 +16,7 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.QueryHint;
+import jakarta.persistence.QueryHint;
 import jakarta.validation.constraints.NotNull;
 import java.util.*;
 

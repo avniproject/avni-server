@@ -14,6 +14,7 @@ import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -79,7 +80,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     @Override
-    public void write(List<? extends Row> rows) throws IDPException {
+    public void write(Chunk<? extends Row> chunk) throws IDPException {
+        List<? extends Row> rows = chunk.getItems();
         if (!CollectionUtils.isEmpty(rows)) {
             validateHeaders(rows.get(0).getHeaders());
             for (Row row : rows) write(row);
