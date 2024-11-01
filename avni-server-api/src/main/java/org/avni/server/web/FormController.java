@@ -52,6 +52,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 public class FormController implements RestControllerResourceProcessor<BasicFormDetails> {
@@ -103,9 +105,9 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             @RequestParam(value = "includeVoided", required = false) boolean includeVoided,
             Pageable pageable) {
         Long organisationId = UserContextHolder.getUserContext().getOrganisation().getId();
-        Sort sortWithId = pageable.getSort().and(new Sort("id"));
+        Sort sortWithId = pageable.getSort().and(Sort.by("id"));
 
-        PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
 
         Page<Form> forms = formRepository.findAll((root, query, builder) -> {
             Predicate predicate = builder.equal(root.get("organisationId"), organisationId);
@@ -388,11 +390,11 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             Form form = fm.getForm();
             BasicFormDetails formDetail = new BasicFormDetails(form, program.getOperationalProgramName());
             formDetail.add(linkTo(methodOn(FormController.class).getForms(programId, pageable)).withSelfRel());
-            Link formLink = entityLinks.linkToSingleResource(Form.class, form.getId());
+            Link formLink = entityLinks.linkToItemResource(Form.class, form.getId());
             formDetail.add(formLink);
             formDetail.add(Link.of(formLink.getHref() + "/formElementGroups", "formElementGroups"));
-            formDetail.add(entityLinks.linkToSingleResource(User.class, form.getCreatedBy().getId()).withRel("createdBy"));
-            formDetail.add(entityLinks.linkToSingleResource(User.class, form.getLastModifiedBy().getId()).withRel("lastModifiedBy"));
+            formDetail.add(entityLinks.linkToItemResource(User.class, form.getCreatedBy().getId()).withRel("createdBy"));
+            formDetail.add(entityLinks.linkToItemResource(User.class, form.getLastModifiedBy().getId()).withRel("lastModifiedBy"));
             return formDetail;
         }).collect(Collectors.toList());
     }

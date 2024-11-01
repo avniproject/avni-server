@@ -26,15 +26,15 @@ public class SyncSubjectController{
 
     public EntityModel<HashMap<String, Object>> process(SyncSubjectResponse syncSubjectResponse) {
         HashMap<String, Object> result = new HashMap<>();
-        result.put("individual", new IndividualResourceProcessor().process(new EntityModel<>(syncSubjectResponse.getIndividual())));
-        result.put("programEnrolments", syncSubjectResponse.getProgramEnrolments().stream().map(programEnrolment -> new ProgramEnrolmentResourceProcessor().process(new EntityModel<>(programEnrolment))));
-        result.put("programEncounters", syncSubjectResponse.getProgramEncounters().stream().map(programEncounter1 -> new ProgramEncounterResourceProcessor().process(new EntityModel<>(programEncounter1))));
-        result.put("encounters", syncSubjectResponse.getEncounters().stream().map(encounter -> new EncounterResourceProcessor().process(new EntityModel<>(encounter))));
-        result.put("checklists", syncSubjectResponse.getChecklists().stream().map(checklist -> new ChecklistResourceProcessor().process(new EntityModel<>(checklist))));
-        result.put("checklistItems", syncSubjectResponse.getChecklistItems().stream().map(checklistItem -> new ChecklistItemResourceProcessor().process(new EntityModel<>(checklistItem))));
-        result.put("groupSubjects", syncSubjectResponse.getGroupSubjects().stream().map(groupSubject -> new GroupSubjectResourceProcessor().process(new EntityModel<>(groupSubject))));
-        result.put("individualRelationships", syncSubjectResponse.getIndividualRelationships().stream().map(individualRelationship -> new IndividualRelationshipResourceProcessor().process(new EntityModel<>(individualRelationship))));
-        return new EntityModel<>(result);
+        result.put("individual", new IndividualResourceProcessor().process(EntityModel.of(syncSubjectResponse.getIndividual())));
+        result.put("programEnrolments", syncSubjectResponse.getProgramEnrolments().stream().map(programEnrolment -> new ProgramEnrolmentResourceProcessor().process(EntityModel.of(programEnrolment))));
+        result.put("programEncounters", syncSubjectResponse.getProgramEncounters().stream().map(programEncounter1 -> new ProgramEncounterResourceProcessor().process(EntityModel.of(programEncounter1))));
+        result.put("encounters", syncSubjectResponse.getEncounters().stream().map(encounter -> new EncounterResourceProcessor().process(EntityModel.of(encounter))));
+        result.put("checklists", syncSubjectResponse.getChecklists().stream().map(checklist -> new ChecklistResourceProcessor().process(EntityModel.of(checklist))));
+        result.put("checklistItems", syncSubjectResponse.getChecklistItems().stream().map(checklistItem -> new ChecklistItemResourceProcessor().process(EntityModel.of(checklistItem))));
+        result.put("groupSubjects", syncSubjectResponse.getGroupSubjects().stream().map(groupSubject -> new GroupSubjectResourceProcessor().process(EntityModel.of(groupSubject))));
+        result.put("individualRelationships", syncSubjectResponse.getIndividualRelationships().stream().map(individualRelationship -> new IndividualRelationshipResourceProcessor().process(EntityModel.of(individualRelationship))));
+        return EntityModel.of(result);
     }
 
     @GetMapping("/subject/{uuid}/allEntities")

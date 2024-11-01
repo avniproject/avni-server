@@ -48,6 +48,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @RestController
 public class IndividualController extends AbstractController<Individual> implements RestControllerResourceProcessor<Individual> {

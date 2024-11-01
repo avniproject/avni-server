@@ -6,8 +6,8 @@ import org.avni.server.domain.Encounter;
 import org.avni.server.web.api.EncounterSearchRequest;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.List;

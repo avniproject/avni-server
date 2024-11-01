@@ -79,7 +79,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
         CatchmentContract catchmentContract = CatchmentContract.fromEntity(catchment);
         boolean fastSyncExists = s3Service.fileExists(String.format("MobileDbBackup-%s", catchment.getUuid()));
         catchmentContract.setFastSyncExists(fastSyncExists);
-        return new EntityModel<>(catchmentContract);
+        return EntityModel.of(catchmentContract);
     }
 
     @GetMapping(value = "catchment/search/findAllById")
