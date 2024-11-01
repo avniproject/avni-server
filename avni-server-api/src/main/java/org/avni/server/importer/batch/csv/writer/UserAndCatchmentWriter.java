@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Matcher;

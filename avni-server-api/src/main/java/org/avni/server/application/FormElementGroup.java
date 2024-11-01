@@ -6,7 +6,7 @@ import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.List;

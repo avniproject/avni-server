@@ -13,7 +13,7 @@ import org.avni.server.web.request.GroupRoleContract;
 import org.hibernate.annotations.Type;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;

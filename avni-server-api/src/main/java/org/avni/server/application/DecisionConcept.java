@@ -2,7 +2,7 @@ package org.avni.server.application;
 
 import org.avni.server.domain.Concept;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity

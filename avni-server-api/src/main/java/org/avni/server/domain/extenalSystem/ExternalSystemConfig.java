@@ -5,10 +5,7 @@ import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity(name="external_system_config")

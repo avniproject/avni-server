@@ -6,7 +6,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Repository
 public class LocationSyncRepository extends RoleSwitchableRepository implements SyncableRepository<AddressLevel> {

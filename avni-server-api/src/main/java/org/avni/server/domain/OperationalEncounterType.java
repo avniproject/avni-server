@@ -3,7 +3,7 @@ package org.avni.server.domain;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity

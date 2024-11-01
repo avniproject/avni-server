@@ -8,7 +8,7 @@ import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "subject_program_eligibility")

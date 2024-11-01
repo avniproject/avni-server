@@ -12,9 +12,8 @@ import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import java.util.*;
 import java.util.stream.Collectors;
 

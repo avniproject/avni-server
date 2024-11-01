@@ -11,7 +11,7 @@ import org.joda.time.DateTime;
 import org.avni.server.web.validation.ValidationException;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashSet;

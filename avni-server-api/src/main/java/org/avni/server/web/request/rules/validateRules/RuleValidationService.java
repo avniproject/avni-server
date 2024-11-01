@@ -1,6 +1,5 @@
 package org.avni.server.web.request.rules.validateRules;
 
-import org.apache.logging.log4j.util.Strings;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.individualRelationship.RuleFailureLogRepository;
 import org.avni.server.domain.Concept;
@@ -70,7 +69,7 @@ public class RuleValidationService {
         Concept concept = conceptRepository.findByName(conceptName);
         if (concept == null) {
             ruleFailureLog.setErrorMessage(String.format("concept not found with the name %s", conceptName));
-            ruleFailureLog.setStacktrace(Strings.EMPTY);
+            ruleFailureLog.setStacktrace("");
             ruleFailureLog.setUuid(UUID.randomUUID().toString());
             ruleFailureLogRepository.save(ruleFailureLog);
             return false;

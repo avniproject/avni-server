@@ -7,7 +7,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;

@@ -5,7 +5,7 @@ import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity

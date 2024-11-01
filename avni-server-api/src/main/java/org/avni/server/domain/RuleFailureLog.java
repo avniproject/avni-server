@@ -2,9 +2,7 @@ package org.avni.server.domain;
 
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.io.PrintWriter;
 import java.io.StringWriter;

@@ -34,7 +34,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 

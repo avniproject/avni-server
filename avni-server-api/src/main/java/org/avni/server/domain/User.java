@@ -11,10 +11,11 @@ import org.avni.server.web.validation.ValidationException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
-import org.hibernate.proxy.HibernateProxyHelper;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -236,12 +237,15 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || HibernateProxyHelper.getClassWithoutInitializingProxy(this) != HibernateProxyHelper.getClassWithoutInitializingProxy(o)) return false;
 
-        User other = (User) o;
+        LazyInitializer lazyInitializer1 = HibernateProxy.extractLazyInitializer(this);
+        LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(o);
+        if (o == null || lazyInitializer2 == null || lazyInitializer1 == null || lazyInitializer1.getImplementationClass() != lazyInitializer2.getImplementationClass()) return false;
 
-        if (getId() != null ? !getId().equals(other.getId()) : other.getId() != null) return false;
-        return getUuid() != null ? getUuid().equals(other.getUuid()) : other.getUuid() == null;
+        User that = (User) o;
+
+        if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) return false;
+        return getUuid() != null ? getUuid().equals(that.getUuid()) : that.getUuid() == null;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package org.avni.server.domain.accessControl;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import org.avni.server.domain.CHSBaseEntity;

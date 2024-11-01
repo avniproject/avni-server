@@ -11,7 +11,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.avni.server.application.KeyValues;
 import org.avni.server.web.request.ConceptContract;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;

@@ -11,7 +11,7 @@ import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 import org.avni.server.geo.Point;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;

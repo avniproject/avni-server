@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @RestController
 public class VideoTelemetricController implements RestControllerResourceProcessor<VideoTelemetric> {

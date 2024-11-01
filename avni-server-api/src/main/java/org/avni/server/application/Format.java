@@ -1,7 +1,6 @@
 package org.avni.server.application;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.*;
 
 @Embeddable
 public class Format {

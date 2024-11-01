@@ -6,7 +6,7 @@ import org.hibernate.annotations.BatchSize;
 import org.avni.server.application.projections.BaseProjection;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;

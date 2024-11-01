@@ -9,7 +9,7 @@ import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.domain.EncounterType.EncounterTypeProjection;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity

@@ -28,7 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 

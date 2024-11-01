@@ -1,8 +1,7 @@
 package org.avni.server.domain;
 
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "custom_query")

@@ -6,7 +6,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.avni.server.application.RuleType;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "rule")

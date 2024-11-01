@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.List;
 

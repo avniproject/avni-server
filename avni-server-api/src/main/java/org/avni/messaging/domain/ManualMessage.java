@@ -5,9 +5,7 @@ import org.avni.server.framework.hibernate.ArrayUserType;
 import org.avni.server.framework.hibernate.NextTriggerDetailsUserType;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "manual_message")

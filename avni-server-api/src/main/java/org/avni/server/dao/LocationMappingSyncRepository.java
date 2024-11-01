@@ -7,7 +7,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 /**
  * LocationSyncRepository uses the postgres @> keyword for sync, which does not index well and creates poor plans.

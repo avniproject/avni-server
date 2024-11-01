@@ -35,7 +35,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 

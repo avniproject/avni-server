@@ -4,7 +4,7 @@ import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.User;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity

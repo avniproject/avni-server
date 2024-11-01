@@ -5,7 +5,7 @@ import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.domain.organisation.OrganisationStatus;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity

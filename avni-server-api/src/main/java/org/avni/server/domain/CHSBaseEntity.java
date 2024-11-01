@@ -1,9 +1,10 @@
 package org.avni.server.domain;
 
 import jakarta.validation.constraints.NotNull;
-import org.hibernate.proxy.HibernateProxyHelper;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
 @MappedSuperclass
@@ -59,7 +60,10 @@ public class CHSBaseEntity {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || HibernateProxyHelper.getClassWithoutInitializingProxy(this) != HibernateProxyHelper.getClassWithoutInitializingProxy(o)) return false;
+
+        LazyInitializer lazyInitializer1 = HibernateProxy.extractLazyInitializer(this);
+        LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(o);
+        if (o == null || lazyInitializer2 == null || lazyInitializer1 == null || lazyInitializer1.getImplementationClass() != lazyInitializer2.getImplementationClass()) return false;
 
         CHSBaseEntity that = (CHSBaseEntity) o;
 
