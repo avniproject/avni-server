@@ -29,7 +29,7 @@ public class FormElementRepositoryTest extends AbstractControllerIntegrationTest
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        pageRequest = new PageRequest(0, 100);
+        pageRequest = PageRequest.of(0, 100);
         setUser("demo-admin");
     }
 

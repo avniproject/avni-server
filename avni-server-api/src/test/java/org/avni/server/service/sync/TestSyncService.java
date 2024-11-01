@@ -46,7 +46,7 @@ public class TestSyncService {
 
     public List<Individual> getSubjects(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
         CollectionModel<EntityModel<Individual>> individuals = individualController.getIndividualsByOperatingIndividualScope(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
-        return individuals.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+        return individuals.getContent().stream().map(EntityModel::getContent).collect(Collectors.toList());
     }
 
     public List<ProgramEnrolment> getEnrolments(Program program) throws Exception {
@@ -59,6 +59,6 @@ public class TestSyncService {
 
     public List<ProgramEnrolment> getEnrolments(Program program, DateTime lastModifiedDateTime, DateTime now) throws Exception {
         CollectionModel<EntityModel<ProgramEnrolment>> enrolments = programEnrolmentController.getProgramEnrolmentsByOperatingIndividualScope(lastModifiedDateTime, now, program.getUuid(), PageRequest.of(0, 10));
-        return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+        return enrolments.getContent().stream().map(EntityModel::getContent).collect(Collectors.toList());
     }
 }

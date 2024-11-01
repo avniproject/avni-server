@@ -61,7 +61,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
 
     private List<SubjectMigration> getMigrations(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
         CollectionModel<EntityModel<SubjectMigration>> migrations = subjectMigrationController.getMigrationsByCatchmentAndLastModified(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
-        return migrations.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+        return migrations.getContent().stream().map(EntityModel::getContent).collect(Collectors.toList());
     }
 
     private boolean hasMigrationFor(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now, Individual subject) {

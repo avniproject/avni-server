@@ -358,6 +358,6 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         CollectionModel<EntityModel<GroupSubject>> enrolments = groupSubjectController.getGroupSubjectsByOperatingIndividualScope(lastModifiedDateTime, now,
                 groupSubjectType.getUuid(),
                 PageRequest.of(0, 10));
-        return enrolments.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+        return enrolments.getContent().stream().map(EntityModel::getContent).collect(Collectors.toList());
     }
 }
