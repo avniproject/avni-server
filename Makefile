@@ -57,9 +57,9 @@ _build_db:
 	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d $(database) -c 'create extension if not exists "ltree"';
 	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d $(database) -c 'create extension if not exists "hstore"';
 	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'create role demo with NOINHERIT NOLOGIN';
-	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'grant demo to openchs';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'grant demo to openchs WITH ADMIN OPTION';
 	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'create role openchs_impl';
-	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'grant openchs_impl to openchs';
+	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'grant openchs_impl to openchs WITH ADMIN OPTION';
 	-psql -h $(dbServer) -p $(dbPort) -U ${su} -d postgres  -c 'create role organisation_user createrole admin openchs_impl';
 # </postgres>
 
@@ -147,6 +147,10 @@ test-server: test_server
 
 test_server_quick_without_clean_rebuild:  ## Run tests
 	MAVEN_OPTS="-Xmx3200m" ./gradlew test
+
+test_server_with_remote_db_quick_with_rebuild:
+	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER) dbPort=$(DBPORT)
+	OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):$(DBPORT)/openchs_test GRADLE_OPTS="-Xmx3200m" ./gradlew clean build test
 
 test_server_with_remote_db:
 	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER)
