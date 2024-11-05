@@ -2,11 +2,14 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,10 +26,10 @@ public class CommentThread extends OrganisationAwareEntity {
 
     @Column
     @NotNull
-    private DateTime openDateTime;
+    private Instant openDateTime;
 
     @Column
-    private DateTime resolvedDateTime;
+    private Instant resolvedDateTime;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "commentThread")
     private Set<Comment> comments = new HashSet<>();
@@ -40,19 +43,19 @@ public class CommentThread extends OrganisationAwareEntity {
     }
 
     public DateTime getOpenDateTime() {
-        return openDateTime;
+        return DateTimeUtil.toJodaDateTime(openDateTime);
     }
 
     public void setOpenDateTime(DateTime openDateTime) {
-        this.openDateTime = openDateTime;
+        this.openDateTime = DateTimeUtil.toInstant(openDateTime);
     }
 
     public DateTime getResolvedDateTime() {
-        return resolvedDateTime;
+        return DateTimeUtil.toJodaDateTime(resolvedDateTime);
     }
 
     public void setResolvedDateTime(DateTime resolvedDateTime) {
-        this.resolvedDateTime = resolvedDateTime;
+        this.resolvedDateTime = DateTimeUtil.toInstant(resolvedDateTime);
     }
 
     public Set<Comment> getComments() {

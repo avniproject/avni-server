@@ -6,6 +6,7 @@ import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.PointType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
@@ -13,6 +14,8 @@ import org.avni.server.geo.Point;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -40,7 +43,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     @Column(name = ColumnNames.EnrolmentDateTime)
     @NotNull
-    private DateTime enrolmentDateTime;
+    private Instant enrolmentDateTime;
 
     @Column(name = ProgramEnrolmentObservations)
     @Type(value = ObservationCollectionUserType.class)
@@ -124,11 +127,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public DateTime getEnrolmentDateTime() {
-        return enrolmentDateTime;
+        return DateTimeUtil.toJodaDateTime(enrolmentDateTime);
     }
 
     public void setEnrolmentDateTime(DateTime enrolmentDateTime) {
-        this.enrolmentDateTime = enrolmentDateTime;
+        this.enrolmentDateTime = DateTimeUtil.toInstant(enrolmentDateTime);
     }
 
     public ObservationCollection getObservations() {

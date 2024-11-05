@@ -1,10 +1,13 @@
 package org.avni.server.domain;
 
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "video_telemetric")
@@ -22,7 +25,7 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Double videoEndTime;
 
     @Column(name = "player_close_time")
-    private DateTime playerCloseTime;
+    private Instant playerCloseTime;
 
     @Column(name = "player_open_time")
     private DateTime playerOpenTime;
@@ -60,11 +63,11 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getPlayerCloseTime() {
-        return playerCloseTime;
+        return DateTimeUtil.toJodaDateTime(playerCloseTime);
     }
 
     public void setPlayerCloseTime(DateTime playerCloseTime) {
-        this.playerCloseTime = playerCloseTime;
+        this.playerCloseTime = DateTimeUtil.toInstant(playerCloseTime);
     }
 
     public DateTime getPlayerOpenTime() {

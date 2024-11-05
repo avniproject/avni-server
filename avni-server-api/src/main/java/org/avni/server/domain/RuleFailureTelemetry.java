@@ -1,9 +1,12 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.enums.ruleFailure.AppType;
 import org.avni.server.domain.enums.ruleFailure.EntityType;
 import org.avni.server.domain.enums.ruleFailure.SourceType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -14,9 +17,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-
+import java.time.Instant;
 import java.util.Date;
 
 @Entity
@@ -65,10 +66,10 @@ public class RuleFailureTelemetry {
     private String stacktrace;
 
     @Column
-    private DateTime closedDateTime;
+    private Instant closedDateTime;
 
     @Column
-    private DateTime errorDateTime;
+    private Instant errorDateTime;
 
     @Column
     private Boolean isClosed;
@@ -214,19 +215,19 @@ public class RuleFailureTelemetry {
     }
 
     public DateTime getClosedDateTime() {
-        return closedDateTime;
+        return DateTimeUtil.toJodaDateTime(closedDateTime);
     }
 
     public void setClosedDateTime(DateTime closedDateTime) {
-        this.closedDateTime = closedDateTime;
+        this.closedDateTime = DateTimeUtil.toInstant(closedDateTime);
     }
 
     public DateTime getErrorDateTime() {
-        return errorDateTime;
+        return DateTimeUtil.toJodaDateTime(errorDateTime);
     }
 
     public void setErrorDateTime(DateTime errorDateTime) {
-        this.errorDateTime = errorDateTime;
+        this.errorDateTime = DateTimeUtil.toInstant(errorDateTime);
     }
 
     public Boolean getClosed() {

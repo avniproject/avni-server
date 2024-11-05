@@ -5,11 +5,14 @@ import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
 import org.avni.server.geo.PointType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 import java.util.Objects;
 
 @MappedSuperclass
@@ -23,13 +26,13 @@ public class AbstractEncounter extends SyncAttributeEntity {
     private EncounterType encounterType;
 
     @Column
-    private DateTime earliestVisitDateTime;
+    private Instant earliestVisitDateTime;
 
     @Column
-    private DateTime maxVisitDateTime;
+    private Instant maxVisitDateTime;
 
     @Column(name = ColumnNames.EncounterDateTime)
-    private DateTime encounterDateTime;
+    private Instant encounterDateTime;
 
     @Column(name = ColumnNames.EncounterObservations)
     @Type(value = ObservationCollectionUserType.class)
@@ -68,14 +71,14 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public DateTime getEncounterDateTime() {
-        return encounterDateTime;
+        return DateTimeUtil.toJodaDateTime(encounterDateTime);
     }
 
     public void setEncounterDateTime(DateTime encounterDateTime, User currentUser) {
         if (this.encounterDateTime == null && encounterDateTime != null) {
             this.filledBy = currentUser;
         }
-        this.encounterDateTime = encounterDateTime;
+        this.encounterDateTime = DateTimeUtil.toInstant(encounterDateTime);
     }
 
     public ObservationCollection getObservations() {
@@ -95,19 +98,19 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public DateTime getEarliestVisitDateTime() {
-        return earliestVisitDateTime;
+        return DateTimeUtil.toJodaDateTime(earliestVisitDateTime);
     }
 
     public void setEarliestVisitDateTime(DateTime earliestVisitDateTime) {
-        this.earliestVisitDateTime = earliestVisitDateTime;
+        this.earliestVisitDateTime = DateTimeUtil.toInstant(earliestVisitDateTime);
     }
 
     public DateTime getMaxVisitDateTime() {
-        return maxVisitDateTime;
+        return DateTimeUtil.toJodaDateTime(maxVisitDateTime);
     }
 
     public void setMaxVisitDateTime(DateTime maxVisitDateTime) {
-        this.maxVisitDateTime = maxVisitDateTime;
+        this.maxVisitDateTime = DateTimeUtil.toInstant(maxVisitDateTime);
     }
 
     public DateTime getCancelDateTime() {
