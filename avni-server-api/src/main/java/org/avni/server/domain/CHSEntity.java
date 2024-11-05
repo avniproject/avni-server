@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;
@@ -11,7 +12,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
+import java.time.Instant;
 import java.util.Date;
 
 @MappedSuperclass
@@ -27,7 +28,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
 
     @CreatedDate
     @NotNull
-    private Date createdDateTime;
+    private Instant createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
@@ -38,7 +39,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
 
     @LastModifiedDate
     @NotNull
-    private Date lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     @JsonIgnore
     public User getCreatedBy() {
@@ -54,7 +55,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime.toDate();
+        this.createdDateTime = createdDateTime.toDate().toInstant();
     }
 
     @JsonIgnore
@@ -75,7 +76,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime.toDate();
+        this.lastModifiedDateTime = lastModifiedDateTime.toDate().toInstant();
     }
 
     @Column(name = "version")

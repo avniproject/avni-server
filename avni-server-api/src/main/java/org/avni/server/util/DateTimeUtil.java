@@ -8,7 +8,6 @@ import org.joda.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 
 public class DateTimeUtil {
@@ -54,9 +53,34 @@ public class DateTimeUtil {
         return DateTimeUtil.toJodaDateTime(zonedDateTime).toLocalDate();
     }
 
+    public static LocalDate toJodaDate(java.time.Instant instant) {
+        return DateTimeUtil.toJodaDateTime(instant).toLocalDate();
+    }
+
+    public static java.time.Instant toInstant(LocalDate localDate) {
+        if (localDate == null) {
+            return null;
+        }
+        return localDate.toDate().toInstant();
+    }
+
     public static DateTime toJodaDateTime(ZonedDateTime zonedDateTime) {
         return new DateTime(
                 zonedDateTime.toInstant().toEpochMilli(),
                 DateTimeZone.forTimeZone(TimeZone.getTimeZone(zonedDateTime.getZone())));
+    }
+
+    public static java.time.Instant toInstant(DateTime createdDateTime) {
+        if (createdDateTime == null) {
+            return null;
+        }
+        return createdDateTime.toDate().toInstant();
+    }
+
+    public static DateTime toJodaDateTime(java.time.Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return new DateTime(instant);
     }
 }

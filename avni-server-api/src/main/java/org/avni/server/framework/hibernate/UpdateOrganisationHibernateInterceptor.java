@@ -4,6 +4,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.CallbackException;
 import org.hibernate.EmptyInterceptor;
+import org.hibernate.Interceptor;
 import org.hibernate.type.Type;
 import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
-public class UpdateOrganisationHibernateInterceptor extends EmptyInterceptor {
+public class UpdateOrganisationHibernateInterceptor implements Interceptor, Serializable {
     private static final Logger logger = LoggerFactory.getLogger(UpdateOrganisationHibernateInterceptor.class.getName());
 
     @Override
