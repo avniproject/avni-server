@@ -2,39 +2,35 @@ package org.avni.server.importer.batch.userSubjectType;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @EnableScheduling
-@EnableBatchProcessing
+//@EnableBatchProcessing
 public class UserSubjectTypeCreateBatchConfiguration {
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
     private final JobRepository jobRepository;
+    private final PlatformTransactionManager platformTransactionManager;
 
     @Autowired
-    public UserSubjectTypeCreateBatchConfiguration(JobBuilderFactory jobBuilderFactory,
-                                                   StepBuilderFactory stepBuilderFactory,
-                                                   JobRepository jobRepository) {
-        this.jobBuilderFactory = jobBuilderFactory;
-        this.stepBuilderFactory = stepBuilderFactory;
+    public UserSubjectTypeCreateBatchConfiguration(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
         this.jobRepository = jobRepository;
+        this.platformTransactionManager = platformTransactionManager;
     }
 
     @Bean
     public JobLauncher userSubjectTypeCreateJobLauncher() {
-        return new SimpleJobLauncher() {{
+        return new TaskExecutorJobLauncher() {{
             setJobRepository(jobRepository);
             setTaskExecutor(new ThreadPoolTaskExecutor() {{
                 setCorePoolSize(1);
@@ -47,8 +43,7 @@ public class UserSubjectTypeCreateBatchConfiguration {
 
     @Bean
     public Job userSubjectTypeCreateJob(UserSubjectTypeCreateJobListener listener, Step userSubjectTypeCreateStep) {
-        return jobBuilderFactory
-                .get("userSubjectTypeCreateJob")
+        return new JobBuilder("userSubjectTypeCreateJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .start(userSubjectTypeCreateStep)
@@ -57,8 +52,8 @@ public class UserSubjectTypeCreateBatchConfiguration {
 
     @Bean
     public Step userSubjectTypeCreateStep(UserSubjectTypeCreateTasklet tasklet) {
-        return stepBuilderFactory.get("userSubjectTypeCreateStep")
-                .tasklet(tasklet)
+        return new StepBuilder("userSubjectTypeCreateStep", jobRepository)
+                .tasklet(tasklet, platformTransactionManager)
                 .build();
     }
 }

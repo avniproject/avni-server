@@ -6,6 +6,7 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.WebResponseUtil;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -188,7 +190,7 @@ public class UserService implements NonScopeAwareService {
             subject.setSubjectType(subjectType);
             subject.setFirstName(user.getName());
             subject.setOrganisationId(subjectType.getOrganisationId());
-            subject.setRegistrationDate(user.getCreatedDateTime().toLocalDate());
+            subject.setRegistrationDate(DateTimeUtil.toJodaDate(user.getCreatedDateTime()));
             subject.assignUUID();
 
             userSubject.setSubject(subject);

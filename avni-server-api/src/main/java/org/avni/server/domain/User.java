@@ -2,6 +2,8 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -13,13 +15,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
-import org.joda.time.DateTime;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Entity
 @Table(name = "users")
@@ -63,14 +62,15 @@ public class User {
     @ManyToOne(targetEntity = User.class)
     private User createdBy;
 
-    private DateTime createdDateTime;
+    @Column
+    private ZonedDateTime createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
     @ManyToOne(targetEntity = User.class)
     private User lastModifiedBy;
 
-    private DateTime lastModifiedDateTime;
+    private ZonedDateTime lastModifiedDateTime;
 
     @Column
     private boolean isVoided;
@@ -265,7 +265,7 @@ public class User {
         this.createdBy = createdBy;
     }
 
-    public void setCreatedDateTime(DateTime createdDateTime) {
+    public void setCreatedDateTime(ZonedDateTime createdDateTime) {
         this.createdDateTime = createdDateTime;
     }
 
@@ -273,7 +273,7 @@ public class User {
         this.lastModifiedBy = lastModifiedBy;
     }
 
-    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
+    public void setLastModifiedDateTime(ZonedDateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
@@ -289,7 +289,7 @@ public class User {
         return this.lastModifiedBy.getName();
     }
 
-    public DateTime getCreatedDateTime() {
+    public ZonedDateTime getCreatedDateTime() {
         return createdDateTime;
     }
 
@@ -297,7 +297,7 @@ public class User {
         return lastModifiedBy;
     }
 
-    public DateTime getLastModifiedDateTime() {
+    public ZonedDateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
     }
 
@@ -378,10 +378,10 @@ public class User {
     public void setAuditInfo(User currentUser) {
         if (this.getCreatedBy() == null) {
             this.setCreatedBy(currentUser);
-            this.setCreatedDateTime(DateTime.now());
+            this.setCreatedDateTime(ZonedDateTime.now());
         }
         this.setLastModifiedBy(currentUser);
-        this.setLastModifiedDateTime(DateTime.now());
+        this.setLastModifiedDateTime(ZonedDateTime.now());
     }
 
     public void assignUUID() {

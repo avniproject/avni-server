@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.annotation.*;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -49,7 +50,7 @@ public class ZipErrorFileWriterListener {
     }
 
     @OnWriteError
-    public void onWriteError(Exception e, List o) {
+    public void onWriteError(Exception e, Chunk o) {
         logger.error("onWriteError", e);
     }
 

@@ -6,7 +6,9 @@ import org.joda.time.Instant;
 import org.joda.time.LocalDate;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 
 public class DateTimeUtil {
@@ -46,5 +48,15 @@ public class DateTimeUtil {
 
     public static long getMilliSecondsDuration(LocalDateTime start, LocalDateTime end) {
         return java.time.Duration.between(start, end).toMillis();
+    }
+
+    public static LocalDate toJodaDate(ZonedDateTime zonedDateTime) {
+        return DateTimeUtil.toJodaDateTime(zonedDateTime).toLocalDate();
+    }
+
+    public static DateTime toJodaDateTime(ZonedDateTime zonedDateTime) {
+        return new DateTime(
+                zonedDateTime.toInstant().toEpochMilli(),
+                DateTimeZone.forTimeZone(TimeZone.getTimeZone(zonedDateTime.getZone())));
     }
 }

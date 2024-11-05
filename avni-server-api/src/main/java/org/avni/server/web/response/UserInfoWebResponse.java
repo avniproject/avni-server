@@ -5,6 +5,7 @@ import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.organisation.OrganisationCategory;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.UserInfoContract;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class UserInfoWebResponse extends UserInfoContract {
         response.isAdmin = true;
         response.setName(user.getName());
         response.setUsername(user.getUsername());
-        response.setLastModifiedDateTime(user.getLastModifiedDateTime());
+        response.setLastModifiedDateTime(DateTimeUtil.toJodaDateTime(user.getLastModifiedDateTime()));
         if (contextOrganisation != null) {
             response.setOrganisationId(contextOrganisation.getId());
             response.setOrganisationName(contextOrganisation.getName());

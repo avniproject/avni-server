@@ -15,11 +15,11 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +28,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 
 import jakarta.persistence.EntityManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,12 +37,10 @@ import java.util.stream.Stream;
 import static java.lang.String.format;
 
 @Configuration
-@EnableBatchProcessing
+//@EnableBatchProcessing
 public class ExportBatchConfiguration {
     private final int CHUNK_SIZE = 100;
     private final EntityManager entityManager;
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final IndividualRepository individualRepository;
     private final GroupSubjectRepository groupSubjectRepository;
@@ -50,13 +50,13 @@ public class ExportBatchConfiguration {
     private final SubjectTypeRepository subjectTypeRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final ProgramRepository programRepository;
+    private final JobRepository jobRepository;
+    private final PlatformTransactionManager platformTransactionManager;
     private final int longitudinalExportV2Limit;
     private final int legacyLongitudinalExportLimit;
 
     @Autowired
-    public ExportBatchConfiguration(JobBuilderFactory jobBuilderFactory,
-                                    StepBuilderFactory stepBuilderFactory,
-                                    ProgramEnrolmentRepository programEnrolmentRepository,
+    public ExportBatchConfiguration(ProgramEnrolmentRepository programEnrolmentRepository,
                                     IndividualRepository individualRepository,
                                     GroupSubjectRepository groupSubjectRepository,
                                     AuthService authService,
@@ -66,11 +66,11 @@ public class ExportBatchConfiguration {
                                     EncounterTypeRepository encounterTypeRepository,
                                     ProgramRepository programRepository,
                                     EntityManager entityManager,
+                                    JobRepository jobRepository,
+                                    PlatformTransactionManager platformTransactionManager,
                                     @Value("${avni.longitudinal.export.v2.limit}") int longitudinalExportV2Limit,
                                     @Value("${avni.legacy.longitudinal.export.limit}") int legacyLongitudinalExportLimit
     ) {
-        this.jobBuilderFactory = jobBuilderFactory;
-        this.stepBuilderFactory = stepBuilderFactory;
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.individualRepository = individualRepository;
         this.groupSubjectRepository = groupSubjectRepository;
@@ -81,14 +81,15 @@ public class ExportBatchConfiguration {
         this.encounterTypeRepository = encounterTypeRepository;
         this.programRepository = programRepository;
         this.entityManager = entityManager;
+        this.jobRepository = jobRepository;
+        this.platformTransactionManager = platformTransactionManager;
         this.longitudinalExportV2Limit = longitudinalExportV2Limit;
         this.legacyLongitudinalExportLimit = legacyLongitudinalExportLimit;
     }
 
     @Bean
     public Job exportVisitJob(JobCompletionNotificationListener listener, Step step1) {
-        return jobBuilderFactory
-                .get("exportVisitJob")
+        return new JobBuilder("exportVisitJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .start(step1)
@@ -97,8 +98,7 @@ public class ExportBatchConfiguration {
 
     @Bean
     public Job exportV2Job(JobCompletionNotificationListener listener, Step exportV2Step) {
-        return jobBuilderFactory
-                .get("exportVisitJob")
+        return new JobBuilder("exportV2Job", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .start(exportV2Step)
@@ -108,8 +108,8 @@ public class ExportBatchConfiguration {
     @Bean
     public Step exportV2Step(Tasklet exportV2Tasklet,
                              LongitudinalExportJobStepListener listener) {
-        return stepBuilderFactory.get("exportV2Step")
-                .tasklet(exportV2Tasklet)
+        return new StepBuilder("exportV2Step", jobRepository)
+                .tasklet(exportV2Tasklet, platformTransactionManager)
                 .listener(listener)
                 .build();
     }
@@ -143,8 +143,8 @@ public class ExportBatchConfiguration {
     @Bean
     public Step step1(Tasklet tasklet,
                       LongitudinalExportJobStepListener listener) {
-        return stepBuilderFactory.get("step1")
-                .tasklet(tasklet)
+        return new StepBuilder("step1", jobRepository)
+                .tasklet(tasklet, platformTransactionManager)
                 .listener(listener)
                 .build();
     }

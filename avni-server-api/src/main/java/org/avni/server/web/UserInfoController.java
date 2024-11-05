@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.transaction.Transactional;
+
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -136,7 +138,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         User user = userService.getCurrentUser();
         user.setSettings(userInfo.getSettings());
         user.setLastModifiedBy(user);
-        user.setLastModifiedDateTime(DateTime.now());
+        user.setLastModifiedDateTime(ZonedDateTime.now());
         userRepository.save(user);
     }
 

@@ -6,8 +6,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.Type;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
 import org.avni.server.application.KeyValues;
 import org.avni.server.web.request.ConceptContract;
 
@@ -18,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Entity
-@Indexed
 @Table(name = "concept")
 @BatchSize(size = 100)
 @DynamicInsert
@@ -28,11 +25,9 @@ public class Concept extends OrganisationAwareEntity {
     private static final int POSTGRES_MAX_COLUMN_NAME_LENGTH = 63;
     private static final int NUMBER_OF_CHARACTERS_TO_ACCOMMODATE_HASHCODE = 14;
 
-    @Field
     @NotNull
     private String name;
 
-    @Field
     @NotNull
     private String dataType;
 

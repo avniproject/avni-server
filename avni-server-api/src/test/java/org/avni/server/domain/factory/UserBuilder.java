@@ -4,6 +4,7 @@ import org.avni.server.domain.*;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 public class UserBuilder {
@@ -54,8 +55,8 @@ public class UserBuilder {
 
     public UserBuilder withDefaultValuesForNewEntity() {
         String placeholder = UUID.randomUUID().toString();
-        user.setCreatedDateTime(DateTime.now());
-        user.setLastModifiedDateTime(DateTime.now());
+        user.setCreatedDateTime(ZonedDateTime.now());
+        user.setLastModifiedDateTime(ZonedDateTime.now());
         user.setName(placeholder);
         return userName(placeholder).phoneNumber(placeholder.substring(0, 10)).withUuid(placeholder).withOperatingIndividualScope(OperatingIndividualScope.None);
     }

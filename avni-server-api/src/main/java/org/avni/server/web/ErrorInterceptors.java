@@ -90,7 +90,7 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
         return new ResponseEntity(new RestControllerErrorResponse(errorBodyBuilder.getErrorBody(message)), httpStatus);
     }
 
-    @ExceptionHandler(value = {MaxUploadSizeExceededException.class, SizeLimitExceededException.class})
+    @ExceptionHandler(value = {SizeLimitExceededException.class})
     public ResponseEntity fileUploadSizeLimitExceededError(Exception e) {
         return ResponseEntity.badRequest().body(String.format("Maximum upload file size exceeded; ensure file size is less than %s.", maxFileSize));
     }
