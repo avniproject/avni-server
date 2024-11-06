@@ -1,5 +1,6 @@
 package org.avni.messaging.contract.glific;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -12,6 +13,7 @@ import java.util.List;
     "contact",
     "messages"
 })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Search {
 
     @JsonProperty("contact")
@@ -21,13 +23,13 @@ public class Search {
 
     /**
      * No args constructor for use in serialization
-     * 
+     *
      */
     public Search() {
     }
 
     /**
-     * 
+     *
      * @param contact
      * @param messages
      */
