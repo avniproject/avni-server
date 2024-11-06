@@ -27,7 +27,7 @@ public class UserInfoWebResponse extends UserInfoContract {
         response.isAdmin = true;
         response.setName(user.getName());
         response.setUsername(user.getUsername());
-        response.setLastModifiedDateTime(DateTimeUtil.toJodaDateTime(user.getLastModifiedDateTime()));
+        response.setLastModifiedDateTime(user.getLastModifiedDateTime().toDateTime());
         if (contextOrganisation != null) {
             response.setOrganisationId(contextOrganisation.getId());
             response.setOrganisationName(contextOrganisation.getName());

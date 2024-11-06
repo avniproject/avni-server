@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -15,8 +16,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
+import org.joda.time.DateTime;
 
-import java.time.ZonedDateTime;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,14 +65,14 @@ public class User {
     private User createdBy;
 
     @Column
-    private ZonedDateTime createdDateTime;
+    private Instant createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
     @ManyToOne(targetEntity = User.class)
     private User lastModifiedBy;
 
-    private ZonedDateTime lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     @Column
     private boolean isVoided;
@@ -265,16 +267,16 @@ public class User {
         this.createdBy = createdBy;
     }
 
-    public void setCreatedDateTime(ZonedDateTime createdDateTime) {
-        this.createdDateTime = createdDateTime;
+    public void setCreatedDateTime(DateTime createdDateTime) {
+        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
     }
 
     public void setLastModifiedBy(User lastModifiedBy) {
         this.lastModifiedBy = lastModifiedBy;
     }
 
-    public void setLastModifiedDateTime(ZonedDateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime;
+    public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
+        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
     }
 
     public User getCreatedBy() {
@@ -289,16 +291,16 @@ public class User {
         return this.lastModifiedBy.getName();
     }
 
-    public ZonedDateTime getCreatedDateTime() {
-        return createdDateTime;
+    public DateTime getCreatedDateTime() {
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public User getLastModifiedBy() {
         return lastModifiedBy;
     }
 
-    public ZonedDateTime getLastModifiedDateTime() {
-        return lastModifiedDateTime;
+    public DateTime getLastModifiedDateTime() {
+        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
     }
 
     public JsonObject getSyncSettings() {
@@ -378,10 +380,10 @@ public class User {
     public void setAuditInfo(User currentUser) {
         if (this.getCreatedBy() == null) {
             this.setCreatedBy(currentUser);
-            this.setCreatedDateTime(ZonedDateTime.now());
+            this.setCreatedDateTime(DateTime.now());
         }
         this.setLastModifiedBy(currentUser);
-        this.setLastModifiedDateTime(ZonedDateTime.now());
+        this.setLastModifiedDateTime(DateTime.now());
     }
 
     public void assignUUID() {

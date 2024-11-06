@@ -46,9 +46,9 @@ public class UserContract extends ReferenceDataContract {
         userContract.setCatchmentId(user.getCatchmentId().orElse(null));
         userContract.setSettings(user.getSettings());
         userContract.setCreatedBy(user.getCreatedByUserName());
-        userContract.setCreatedDateTime(DateTimeUtil.toJodaDateTime(user.getCreatedDateTime()));
+        userContract.setCreatedDateTime(user.getCreatedDateTime().toDateTime());
         userContract.setLastModifiedBy(user.getLastModifiedByUserName());
-        userContract.setLastModifiedDateTime(DateTimeUtil.toJodaDateTime(user.getLastModifiedDateTime()));
+        userContract.setLastModifiedDateTime(user.getLastModifiedDateTime().toDateTime());
         userContract.setGroupIds(user.getUserGroups().stream()
                 .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
         userContract.setUserGroupNames(user.getUserGroups().stream()

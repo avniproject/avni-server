@@ -190,7 +190,7 @@ public class UserService implements NonScopeAwareService {
             subject.setSubjectType(subjectType);
             subject.setFirstName(user.getName());
             subject.setOrganisationId(subjectType.getOrganisationId());
-            subject.setRegistrationDate(DateTimeUtil.toJodaDate(user.getCreatedDateTime()));
+            subject.setRegistrationDate(user.getCreatedDateTime().toLocalDate());
             subject.assignUUID();
 
             userSubject.setSubject(subject);

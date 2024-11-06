@@ -138,7 +138,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
         User user = userService.getCurrentUser();
         user.setSettings(userInfo.getSettings());
         user.setLastModifiedBy(user);
-        user.setLastModifiedDateTime(ZonedDateTime.now());
+        user.setLastModifiedDateTime(DateTime.now());
         userRepository.save(user);
     }
 
