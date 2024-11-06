@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.avni.server.domain.framework.IdHolder;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
@@ -14,8 +15,6 @@ import org.avni.server.web.validation.ValidationException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
-import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.proxy.LazyInitializer;
 import org.joda.time.DateTime;
 
 import java.time.Instant;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 @BatchSize(size = 100)
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class User {
+public class User implements IdHolder {
     public static final String DEFAULT_SUPER_ADMIN = "5fed2907-df3a-4867-aef5-c87f4c78a31a";
 
     @Column
@@ -238,16 +237,7 @@ public class User {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-
-        LazyInitializer lazyInitializer1 = HibernateProxy.extractLazyInitializer(this);
-        LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(o);
-        if (o == null || lazyInitializer2 == null || lazyInitializer1 == null || lazyInitializer1.getImplementationClass() != lazyInitializer2.getImplementationClass()) return false;
-
-        User that = (User) o;
-
-        if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) return false;
-        return getUuid() != null ? getUuid().equals(that.getUuid()) : that.getUuid() == null;
+        return CHSBaseEntity.equals(this, o);
     }
 
     @Override

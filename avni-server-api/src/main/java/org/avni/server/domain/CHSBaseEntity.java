@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import jakarta.validation.constraints.NotNull;
+import org.avni.server.domain.framework.IdHolder;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 
@@ -8,7 +9,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @MappedSuperclass
-public class CHSBaseEntity {
+public class CHSBaseEntity implements IdHolder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     @Id
@@ -59,16 +60,23 @@ public class CHSBaseEntity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        return CHSBaseEntity.equals(this, o);
+    }
 
-        LazyInitializer lazyInitializer1 = HibernateProxy.extractLazyInitializer(this);
+    public static boolean equals(IdHolder a, Object o) {
+        if (a == o) return true;
+
         LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(o);
-        if (o == null || lazyInitializer2 == null || lazyInitializer1 == null || lazyInitializer1.getImplementationClass() != lazyInitializer2.getImplementationClass()) return false;
 
-        CHSBaseEntity that = (CHSBaseEntity) o;
+        if (o == null) return false;
+        if (lazyInitializer2 != null && a.getClass() != lazyInitializer2.getImplementationClass()) return false;
 
-        if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) return false;
-        return getUuid() != null ? getUuid().equals(that.getUuid()) : that.getUuid() == null;
+        IdHolder that = lazyInitializer2 == null ? (IdHolder) o : (IdHolder) lazyInitializer2.getImplementation();
+
+        if (that.getId() == null && a.getId() == null) return that == a;
+
+        if (a.getId() != null ? !a.getId().equals(that.getId()) : that.getId() != null) return false;
+        return a.getUuid() != null ? a.getUuid().equals(that.getUuid()) : that.getUuid() == null;
     }
 
     @Override
@@ -77,4 +85,5 @@ public class CHSBaseEntity {
         result = 31 * result + (uuid != null ? uuid.hashCode() : 0);
         return result;
     }
+
 }
