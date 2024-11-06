@@ -50,7 +50,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.ProgramExitDateTime)
-    private DateTime programExitDateTime;
+    private Instant programExitDateTime;
 
     @Type(value = PointType.class)
     @Column
@@ -143,11 +143,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public DateTime getProgramExitDateTime() {
-        return programExitDateTime;
+        return DateTimeUtil.toJodaDateTime(programExitDateTime);
     }
 
     public void setProgramExitDateTime(DateTime programExitDateTime) {
-        this.programExitDateTime = programExitDateTime;
+        this.programExitDateTime = DateTimeUtil.toInstant(programExitDateTime);
     }
 
     public ObservationCollection getProgramExitObservations() {

@@ -52,7 +52,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     public DateTime getCreatedDateTime() {
-        return new DateTime(createdDateTime);
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
@@ -73,7 +73,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     private DateTime toJodaDateTime() {
-        return new DateTime(lastModifiedDateTime);
+        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {

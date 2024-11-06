@@ -86,7 +86,7 @@ public class RuleFailureTelemetry {
     private User createdBy;
 
     @CreatedDate
-    private Date createdDateTime;
+    private Instant createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
@@ -97,7 +97,7 @@ public class RuleFailureTelemetry {
     private User lastModifiedBy;
 
     @LastModifiedDate
-    private Date lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     @Column(name = "version")
     private int version;
@@ -107,7 +107,7 @@ public class RuleFailureTelemetry {
     }
 
     public DateTime getCreatedDateTime() {
-        return new DateTime(createdDateTime);
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public User getLastModifiedBy() {

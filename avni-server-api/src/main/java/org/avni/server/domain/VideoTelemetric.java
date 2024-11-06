@@ -28,7 +28,7 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Instant playerCloseTime;
 
     @Column(name = "player_open_time")
-    private DateTime playerOpenTime;
+    private Instant playerOpenTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
@@ -44,7 +44,7 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Long organisationId;
 
     @Column(name="created_datetime")
-    private DateTime createdDatetime;
+    private Instant createdDatetime;
 
     public Double getVideoStartTime() {
         return videoStartTime;
@@ -71,11 +71,11 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getPlayerOpenTime() {
-        return playerOpenTime;
+        return DateTimeUtil.toJodaDateTime(playerOpenTime);
     }
 
     public void setPlayerOpenTime(DateTime playerOpenTime) {
-        this.playerOpenTime = playerOpenTime;
+        this.playerOpenTime = DateTimeUtil.toInstant(playerOpenTime);
     }
 
     public Video getVideo() {
@@ -103,10 +103,10 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getCreatedDatetime() {
-        return createdDatetime;
+        return DateTimeUtil.toJodaDateTime(createdDatetime);
     }
 
     public void setCreatedDatetime(DateTime createdDatetime) {
-        this.createdDatetime = createdDatetime;
+        this.createdDatetime = DateTimeUtil.toInstant(createdDatetime);
     }
 }
