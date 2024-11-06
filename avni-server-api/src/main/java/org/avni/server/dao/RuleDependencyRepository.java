@@ -9,6 +9,7 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Date;
 
 @Repository
@@ -18,8 +19,8 @@ public interface RuleDependencyRepository extends ImplReferenceDataRepository<Ru
 
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<RuleDependency> findByLastModifiedDateTimeIsBetween(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now, Pageable pageable);
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now, Pageable pageable);
 
     default RuleDependency findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in RuleDependency");
@@ -29,6 +30,6 @@ public interface RuleDependencyRepository extends ImplReferenceDataRepository<Ru
         throw new UnsupportedOperationException("No field 'name' in RuleDependency");
     }
 
-    boolean existsByLastModifiedDateTimeGreaterThan(Date lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
 
 }

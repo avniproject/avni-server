@@ -16,6 +16,8 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.*;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,7 +62,7 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
             "(((:organisationIds) is not null and u.organisationId in (:organisationIds) and u.isOrgAdmin = true) or aa.account.id in (:accountIds))")
     User getOne(Long id, List<Long> accountIds, List<Long> organisationIds);
 
-    boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
 
     List<User> findByCatchment_IdInAndIsVoidedFalse(List<Long> catchmentIds);
 

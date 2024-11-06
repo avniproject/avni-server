@@ -1,7 +1,13 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.avni.server.dao.sync.SyncEntityName;
-import org.avni.server.domain.*;
+import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.CHSEntity;
+import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.EntitySyncStatusContract;
 import org.joda.time.DateTime;
@@ -17,9 +23,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
-import jakarta.persistence.criteria.*;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -30,8 +35,8 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     @PreAuthorize("hasAnyAuthority('user')")
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<EntityApprovalStatus> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
             Pageable pageable);
 
     default Page<EntityApprovalStatus> findEntityApprovalStatuses(EntityApprovalStatusSearchParams searchParams, Pageable pageable) {

@@ -6,6 +6,7 @@ import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.JsonObjectUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,6 +17,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import jakarta.persistence.criteria.*;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -61,7 +64,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (syncParameters.getSubjectType() == null || !syncParameters.getSubjectType().isDirectlyAssignable())
-                predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime), cb.literal(now)));
+                predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(DateTimeUtil.toInstant(lastModifiedDateTime)), cb.literal(DateTimeUtil.toInstant(now))));
             query.orderBy(cb.asc(root.get("lastModifiedDateTime")), cb.asc(root.get("id")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -79,7 +82,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.greaterThan(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime)));
+            predicates.add(cb.greaterThan(root.get("lastModifiedDateTime"), cb.literal(DateTimeUtil.toInstant(lastModifiedDateTime))));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -130,9 +133,9 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
                 predicates.add(cb.equal(userSubjectAssignmentJoin.get("isVoided"), false));
 
                 Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
-                Path<Date> lastModifiedDateTimePath = userSubjectAssignmentJoin.get("lastModifiedDateTime");
+                Path<Instant> lastModifiedDateTimePath = userSubjectAssignmentJoin.get("lastModifiedDateTime");
                 Date now = syncParameters.getNow().toDate();
-                predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime), cb.literal(now)));
+                predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(DateTimeUtil.toInstant(lastModifiedDateTime)), cb.literal(DateTimeUtil.toInstant(now))));
 
                 query.orderBy(cb.asc(lastModifiedDateTimePath), cb.asc(userSubjectAssignmentJoin.get("id")));
             }

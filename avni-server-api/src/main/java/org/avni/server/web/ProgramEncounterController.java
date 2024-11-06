@@ -9,6 +9,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.ProgramEncounterContract;
 import org.avni.server.web.request.ProgramEncounterRequest;
 import org.avni.server.web.response.AvniEntityResponse;
@@ -119,7 +120,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return wrap(programEncounterRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable));
+        return wrap(programEncounterRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime), DateTimeUtil.toInstant(now), pageable));
     }
 
     @RequestMapping(value = "/programEncounter/v2", method = RequestMethod.GET)

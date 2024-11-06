@@ -8,6 +8,7 @@ import org.joda.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 
 public class DateTimeUtil {
@@ -81,6 +82,17 @@ public class DateTimeUtil {
         if (instant == null) {
             return null;
         }
-        return new DateTime(instant);
+        return new DateTime(instant.toEpochMilli());
+    }
+
+    public static java.time.Instant toInstant(Date date) {
+        if (date == null) {
+            return null;
+        }
+        return date.toInstant();
+    }
+
+    public static java.time.Instant toInstant(Calendar calendar) {
+        return calendar == null ? null : calendar.toInstant();
     }
 }

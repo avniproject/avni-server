@@ -77,7 +77,7 @@ public class GeneralEncounterApiController {
         Page<Encounter> encounters;
         Map<Concept, String> conceptsMap = conceptService.readConceptsFromJsonObject(concepts);
 
-        EncounterSearchRequest encounterSearchRequest = new EncounterSearchRequest(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), encounterType, subjectUUID, conceptsMap, pageable);
+        EncounterSearchRequest encounterSearchRequest = new EncounterSearchRequest(CHSEntity.toUtilDate(lastModifiedDateTime), CHSEntity.toUtilDate(now), encounterType, subjectUUID, conceptsMap, pageable);
         TimeTakenLogger timeTakenLogger = new TimeTakenLogger("Search encounters", logger);
         encounters = encounterService.search(encounterSearchRequest);
         timeTakenLogger.logInfo();

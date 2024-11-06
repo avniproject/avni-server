@@ -1,10 +1,13 @@
 package org.avni.messaging.domain;
 
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "message_request_queue")
@@ -28,7 +31,7 @@ public class MessageRequest extends OrganisationAwareEntity {
 
     @Column
     @NotNull
-    private DateTime scheduledDateTime;
+    private Instant scheduledDateTime;
 
     @Column
     @NotNull
@@ -36,7 +39,7 @@ public class MessageRequest extends OrganisationAwareEntity {
     private MessageDeliveryStatus deliveryStatus;
 
     @Column
-    private DateTime deliveredDateTime;
+    private Instant deliveredDateTime;
 
     public void setMessageRule(MessageRule messageRule) {
         this.messageRule = messageRule;
@@ -51,7 +54,7 @@ public class MessageRequest extends OrganisationAwareEntity {
     }
 
     public void setScheduledDateTime(DateTime scheduledDateTime) {
-        this.scheduledDateTime = scheduledDateTime;
+        this.scheduledDateTime = DateTimeUtil.toInstant(scheduledDateTime);
     }
 
     public void setDeliveryStatus(MessageDeliveryStatus deliveryStatus) {
@@ -59,7 +62,7 @@ public class MessageRequest extends OrganisationAwareEntity {
     }
 
     public void setDeliveredDateTime(DateTime deliveredDateTime) {
-        this.deliveredDateTime = deliveredDateTime;
+        this.deliveredDateTime = DateTimeUtil.toInstant(deliveredDateTime);
     }
 
     public MessageRequest() {
@@ -69,20 +72,20 @@ public class MessageRequest extends OrganisationAwareEntity {
         this.messageRule = messageRule;
         this.messageReceiver = messageReceiverId;
         this.entityId = entityId;
-        this.scheduledDateTime = scheduledDateTime;
+        this.setScheduledDateTime(scheduledDateTime);
         this.deliveryStatus = MessageDeliveryStatus.NotSent;
     }
 
     public MessageRequest(ManualMessage manualMessage, MessageReceiver messageReceiver, DateTime scheduledDateTime) {
         this.manualMessage = manualMessage;
         this.messageReceiver = messageReceiver;
-        this.scheduledDateTime = scheduledDateTime;
+        this.setScheduledDateTime(scheduledDateTime);
         this.deliveryStatus = MessageDeliveryStatus.NotSent;
     }
 
     public void markComplete() {
         deliveryStatus = MessageDeliveryStatus.Sent;
-        deliveredDateTime = DateTime.now();
+        setDeliveredDateTime(DateTime.now());
     }
 
     public MessageRule getMessageRule() {
@@ -98,7 +101,7 @@ public class MessageRequest extends OrganisationAwareEntity {
     }
 
     public DateTime getScheduledDateTime() {
-        return scheduledDateTime;
+        return DateTimeUtil.toJodaDateTime(scheduledDateTime);
     }
 
     public MessageDeliveryStatus getDeliveryStatus() {
@@ -106,7 +109,7 @@ public class MessageRequest extends OrganisationAwareEntity {
     }
 
     public DateTime getDeliveredDateTime() {
-        return deliveredDateTime;
+        return DateTimeUtil.toJodaDateTime(deliveredDateTime);
     }
 
     public boolean isDelivered() {

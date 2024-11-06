@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -116,7 +117,11 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
         return getLastModifiedBy().getUsername();
     }
 
-    public static Date toDate(DateTime dateTime) {
+    public static Instant toDate(DateTime dateTime) {
+        return DateTimeUtil.toInstant(dateTime);
+    }
+
+    public static Date toUtilDate(DateTime dateTime) {
         return dateTime == null ? null : dateTime.toDate();
     }
 }

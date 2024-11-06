@@ -8,6 +8,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.service.GroupDashboardService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.GroupDashboardContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,7 +104,7 @@ public class GroupDashboardController implements RestControllerResourceProcessor
                                                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                          @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                          Pageable pageable) {
-        return wrap(groupDashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(groupDashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
                 CHSEntity.toDate(now), pageable));
     }
 

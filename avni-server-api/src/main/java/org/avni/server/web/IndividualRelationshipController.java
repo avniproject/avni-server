@@ -14,6 +14,7 @@ import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.IndividualRelationshipRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;
@@ -90,7 +91,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return wrap(individualRelationshipRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable));
+        return wrap(individualRelationshipRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime), DateTimeUtil.toInstant(now), pageable));
     }
 
     @RequestMapping(value = "/individualRelationship/v2", method = RequestMethod.GET)

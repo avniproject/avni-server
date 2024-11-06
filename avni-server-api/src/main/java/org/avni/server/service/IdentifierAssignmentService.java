@@ -11,6 +11,7 @@ import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.identifier.IdentifierGenerator;
+import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -74,6 +75,6 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         User user = UserContextHolder.getUserContext().getUser();
         this.generateIdentifiersIfNecessary(user);
-        return identifierAssignmentRepository.existsByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNull(user, CHSEntity.toDate(lastModifiedDateTime));
+        return identifierAssignmentRepository.existsByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNull(user, DateTimeUtil.toInstant(lastModifiedDateTime));
     }
 }

@@ -9,6 +9,7 @@ import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.joda.time.DateTime;
@@ -99,7 +100,7 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
                                                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                         Pageable pageable) {
-        return wrap(cardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(cardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
                 CHSEntity.toDate(now), pageable));
     }
 

@@ -56,7 +56,7 @@ dependencies {
     implementation "org.postgresql:postgresql"
     implementation("org.springframework.boot:spring-boot-starter-batch:${springBootVersion}")
     testImplementation 'org.springframework.batch:spring-batch-test:5.1.2'
-    implementation "joda-time:joda-time"
+    implementation "joda-time:joda-time:2.10.10"
     implementation("org.hibernate:hibernate-java8:5.6.15.Final") {
         exclude(group: 'org.hibernate', module: 'hibernate-core')
     }
@@ -97,7 +97,7 @@ dependencies {
     runtimeOnly("org.hibernate:hibernate-jcache:6.5.1.Final")
     implementation 'javax.cache:cache-api:1.1.1'
     dev "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
-    testImplementation "org.mockito:mockito-core:2.23.4"
+    testImplementation "org.mockito:mockito-core:3.12.4"
     testImplementation 'org.powermock:powermock-core:2.0.9'
     testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'

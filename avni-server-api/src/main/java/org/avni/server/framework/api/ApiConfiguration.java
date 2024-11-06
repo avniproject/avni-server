@@ -1,6 +1,8 @@
 package org.avni.server.framework.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.framework.hibernate.DummyInterceptor;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,5 +34,10 @@ public class ApiConfiguration implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(dummyInterceptor);
+    }
+
+    @Bean
+    public ObjectMapper myObjectMapper() {
+        return ObjectMapperSingleton.getObjectMapper();
     }
 }

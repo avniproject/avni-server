@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import java.time.Instant;
 import java.util.Date;
 import org.avni.server.domain.User;
 import org.avni.server.domain.Group;
@@ -22,8 +23,8 @@ public interface UserGroupRepository extends ReferenceDataRepository<UserGroup> 
 
     Page<UserGroup> findByUserIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             Long userId,
-            Date lastModifiedDateTime,
-            Date now,
+            Instant lastModifiedDateTime,
+            Instant now,
             Pageable pageable);
 
     default UserGroup findByName(String name) {
@@ -47,7 +48,7 @@ public interface UserGroupRepository extends ReferenceDataRepository<UserGroup> 
     @Query("DELETE FROM UserGroup ug where ug.group in (:groups)")
     int deleteAllByGroupIn(List<Group> groups);
 
-    boolean existsByUserIdAndLastModifiedDateTimeGreaterThan(Long userId, Date lastModifiedDateTime);
+    boolean existsByUserIdAndLastModifiedDateTimeGreaterThan(Long userId, Instant lastModifiedDateTime);
 
     List<UserGroup> findByUserAndGroupHasAllPrivilegesTrueAndIsVoidedFalse(User user);
 

@@ -5,6 +5,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.SyncTelemetry;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.SyncTelemetryRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,11 +59,12 @@ public class SyncTelemetryController implements RestControllerResourceProcessor<
         if (startDate == null && userIds.isEmpty()) {
             return wrap(syncTelemetryRepository.findAllByOrderByIdDesc(pageable));
         } else if (startDate != null && !userIds.isEmpty()) {
-            return wrap(syncTelemetryRepository.findAllByUserIdInAndSyncStartTimeBetweenOrderByIdDesc(userIds, startDate, endDate, pageable));
+            return wrap(syncTelemetryRepository.findAllByUserIdInAndSyncStartTimeBetweenOrderByIdDesc(userIds, DateTimeUtil.toInstant(startDate),
+                    DateTimeUtil.toInstant(endDate), pageable));
         } else if (!userIds.isEmpty()) {
             return wrap(syncTelemetryRepository.findAllByUserIdInOrderByIdDesc(userIds, pageable));
         } else {
-            return wrap(syncTelemetryRepository.findAllBySyncStartTimeBetweenOrderByIdDesc(startDate, endDate, pageable));
+            return wrap(syncTelemetryRepository.findAllBySyncStartTimeBetweenOrderByIdDesc(DateTimeUtil.toInstant(startDate), DateTimeUtil.toInstant(endDate), pageable));
         }
     }
 

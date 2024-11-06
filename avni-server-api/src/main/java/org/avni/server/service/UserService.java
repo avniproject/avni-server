@@ -127,7 +127,7 @@ public class UserService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return userRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+        return userRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
     }
 
     @Transactional
