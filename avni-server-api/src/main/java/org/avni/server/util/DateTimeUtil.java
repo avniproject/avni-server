@@ -50,11 +50,10 @@ public class DateTimeUtil {
         return java.time.Duration.between(start, end).toMillis();
     }
 
-    public static LocalDate toJodaDate(ZonedDateTime zonedDateTime) {
-        return DateTimeUtil.toJodaDateTime(zonedDateTime).toLocalDate();
-    }
-
     public static LocalDate toJodaDate(java.time.Instant instant) {
+        if (instant == null) {
+            return null;
+        }
         return DateTimeUtil.toJodaDateTime(instant).toLocalDate();
     }
 
@@ -63,12 +62,6 @@ public class DateTimeUtil {
             return null;
         }
         return localDate.toDate().toInstant();
-    }
-
-    public static DateTime toJodaDateTime(ZonedDateTime zonedDateTime) {
-        return new DateTime(
-                zonedDateTime.toInstant().toEpochMilli(),
-                DateTimeZone.forTimeZone(TimeZone.getTimeZone(zonedDateTime.getZone())));
     }
 
     public static java.time.Instant toInstant(DateTime createdDateTime) {

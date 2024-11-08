@@ -80,9 +80,10 @@ public class UserServiceTest {
         Group group1 = new Group();
         Group group2 = new Group();
         Group everyone = new Group();
+        everyone.setId(1L);
         when(groupRepository.findByNameIgnoreCase("group1")).thenReturn(group1);
         when(groupRepository.findByNameIgnoreCase("group2")).thenReturn(group2);
-        when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(group1);
+        when(groupRepository.findByNameAndOrganisationId(Group.Everyone, orgId)).thenReturn(everyone);
 
         userService.addToGroups(user, "group1,group2,group1");
         verify(userGroupRepository, times(3)).save(userGroupArgumentCaptor.capture());

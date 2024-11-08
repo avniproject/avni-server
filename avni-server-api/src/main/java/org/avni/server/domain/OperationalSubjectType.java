@@ -80,7 +80,7 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
         return subjectType.getValidFirstNameFormat();
     }
 
-    public Format getValidLastNameFormat(){
+    public Format getValidLastNameFormat() {
         return subjectType.getValidLastNameFormat();
     }
 
@@ -88,24 +88,32 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
         return subjectType.getIconFileS3Key();
     }
 
-    public boolean isAllowProfilePicture() { return subjectType.isAllowProfilePicture(); }
+    public boolean isAllowProfilePicture() {
+        return subjectType.isAllowProfilePicture();
+    }
 
-    public boolean isAllowMiddleName() { return subjectType.isAllowMiddleName();}
+    public boolean isAllowMiddleName() {
+        return subjectType.isAllowMiddleName();
+    }
+
     public boolean isLastNameOptional() {
         return subjectType.isLastNameOptional();
     }
-    public Format getValidMiddleNameFormat() { return subjectType.getValidMiddleNameFormat();}
+
+    public Format getValidMiddleNameFormat() {
+        return subjectType.getValidMiddleNameFormat();
+    }
 
     @Override
     public DateTime getLastModifiedDateTime() {
         Auditable lastModified = getLastModified(getSubjectType());
-        return lastModified.equals(this)?super.getLastModifiedDateTime(): lastModified.getLastModifiedDateTime();
+        return lastModified.equals(this) ? super.getLastModifiedDateTime() : lastModified.getLastModifiedDateTime();
     }
 
     @Override
     public User getLastModifiedBy() {
         Auditable lastModified = getLastModified(getSubjectType());
-        return lastModified.equals(this)?super.getLastModifiedBy(): lastModified.getLastModifiedBy();
+        return lastModified.equals(this) ? super.getLastModifiedBy() : lastModified.getLastModifiedBy();
     }
 
     public boolean isDirectlyAssignable() {
@@ -117,5 +125,7 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
         return subjectType.isVoided() || super.isVoided();
     }
 
-    public JsonObject getSettings() { return subjectType.getSettings(); }
+    public JsonObject getSettings() {
+        return subjectType.getSettings();
+    }
 }

@@ -19,7 +19,7 @@ public class OrganisationAwareEntity extends CHSEntity {
 
     @JsonIgnore
     public Auditable getLastModified(Auditable auditable) {
-        return super.getLastModifiedDateTime().isAfter(auditable.getLastModifiedDateTime()) ? this : auditable;
+        return super.getLastModifiedDateTime().isBefore(auditable.getLastModifiedDateTime()) ? auditable : this;
     }
 
 }

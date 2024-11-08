@@ -63,20 +63,21 @@ public class CHSBaseEntity implements IdHolder {
         return CHSBaseEntity.equals(this, o);
     }
 
-    public static boolean equals(IdHolder a, Object o) {
-        if (a == o) return true;
+    public static boolean equals(IdHolder a, Object other) {
+        if (a == other) return true;
 
-        LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(o);
+        LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(other);
 
-        if (o == null) return false;
+        if (other == null) return false;
         if (lazyInitializer2 != null && a.getClass() != lazyInitializer2.getImplementationClass()) return false;
+        if (lazyInitializer2 == null && a.getClass() != other.getClass()) return false;
 
-        IdHolder that = lazyInitializer2 == null ? (IdHolder) o : (IdHolder) lazyInitializer2.getImplementation();
+        IdHolder otherIdHolder = lazyInitializer2 == null ? (IdHolder) other : (IdHolder) lazyInitializer2.getImplementation();
 
-        if (that.getId() == null && a.getId() == null) return that == a;
+        if (otherIdHolder.getId() == null && a.getId() == null && otherIdHolder.getUuid() == null && a.getUuid() == null) return otherIdHolder == a;
 
-        if (a.getId() != null ? !a.getId().equals(that.getId()) : that.getId() != null) return false;
-        return a.getUuid() != null ? a.getUuid().equals(that.getUuid()) : that.getUuid() == null;
+        if (a.getId() != null ? !a.getId().equals(otherIdHolder.getId()) : otherIdHolder.getId() != null) return false;
+        return a.getUuid() != null ? a.getUuid().equals(otherIdHolder.getUuid()) : otherIdHolder.getUuid() == null;
     }
 
     @Override

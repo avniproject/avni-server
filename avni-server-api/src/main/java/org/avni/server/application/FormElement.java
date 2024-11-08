@@ -1,6 +1,7 @@
 package org.avni.server.application;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Null;
 import org.avni.server.domain.*;
 import org.avni.server.common.ValidationResult;
 import org.avni.server.framework.hibernate.DeclarativeRuleUserType;

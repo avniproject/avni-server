@@ -7,6 +7,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({UserContextHolder.class})
 public class AddressLevelServiceTest {
     @Mock
@@ -39,10 +39,16 @@ public class AddressLevelServiceTest {
         Query query = Mockito.mock(Query.class);
         when(entityManager.createNativeQuery(Mockito.anyString())).thenReturn(query);
         when(entityManager.createNativeQuery(Mockito.anyString()).executeUpdate()).thenReturn(1);
-        PowerMockito.mockStatic(UserContextHolder.class);
         Organisation org = mock(Organisation.class);
-        when(UserContextHolder.getOrganisation()).thenReturn(org);
+        UserContext userContext = new UserContext();
+        userContext.setOrganisation(org);
+        UserContextHolder.create(userContext);
         when(org.getDbUser()).thenReturn("db-user");
+    }
+
+    @After
+    public void tearDown() {
+        UserContextHolder.clear();
     }
 
     @Test
