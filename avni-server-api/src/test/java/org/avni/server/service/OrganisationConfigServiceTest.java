@@ -9,8 +9,6 @@ import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Optional;
