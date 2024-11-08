@@ -44,8 +44,7 @@ public class EncounterSearchRepository extends RoleSwitchableRepository {
             query.getParameters().forEach((name, value) -> {
                 sql.setParameter(name, value);
             });
-            BigInteger count = (BigInteger) sql.getSingleResult();
-            return count.longValue();
+            return (Long) sql.getSingleResult();
         } finally {
             setRoleBackToUser();
         }

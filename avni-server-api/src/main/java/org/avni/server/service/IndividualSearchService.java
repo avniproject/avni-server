@@ -8,8 +8,10 @@ import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -31,18 +33,18 @@ public class IndividualSearchService {
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
         logger.info("Found " + searchResults.size() + " individuals");
-        BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder());
+        Long totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder());
         logger.info("Total count of individuals: " + totalCount);
         return constructIndividual(searchResults, totalCount);
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, BigInteger totalCount) {
-        LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, Long totalCount) {
+        LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
                 .collect(Collectors.toList());
         List<Long> addressIds = individualList.stream()
-                .map(individualRecord -> ((BigInteger) individualRecord.get("addressId")).longValue())
+                .map(individualRecord -> (Long) individualRecord.get("addressId"))
                 .collect(Collectors.toList());
 
         List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = !individualIds.isEmpty() ?
@@ -58,7 +60,7 @@ public class IndividualSearchService {
                             .filter(x -> x.getId().equals(individualId))
                             .map(SearchSubjectEnrolledProgram::getProgram)
                             .collect(Collectors.toList()));
-                    individualRecord.put("addressLevel", titleLineages.get(((BigInteger) individualRecord.get("addressId")).longValue()));
+                    individualRecord.put("addressLevel", titleLineages.get((Long) individualRecord.get("addressId")));
                 }).collect(Collectors.toList());
         recordsMap.put("totalElements", totalCount);
         recordsMap.put("listOfRecords", listOfRecords);
