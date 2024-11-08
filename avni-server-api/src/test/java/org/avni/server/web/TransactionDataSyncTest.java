@@ -2,9 +2,7 @@ package org.avni.server.web;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.GroupRoleRepository;
-import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.UserSubjectAssignmentRepository;
+import org.avni.server.dao.*;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.TestUserSyncSettingsBuilder;
@@ -284,7 +282,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
         GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithCatchmentBasedSync).withMember(assigned).withGroup(assignedGroupSubject).build());
         userSubjectAssignmentService.assignSubjects(organisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
-        groupSubjects = getGroupSubjects(groupSubjectTypeForCatchmentBasedSync);
+
+        groupSubjects = getGroupSubjects(groupSubjectTypeForDirectAssignment);
         assertTrue(hasEntity(groupSubjectInDirectAssignment, groupSubjects));
     }
 

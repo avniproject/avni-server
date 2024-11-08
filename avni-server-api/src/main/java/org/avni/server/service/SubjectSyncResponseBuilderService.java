@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class SubjectSyncResponseBuilderService {
     private IndividualRepository individualRepository;
     private ChecklistService checklistService;

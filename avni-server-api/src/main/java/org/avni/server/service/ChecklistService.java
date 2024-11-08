@@ -30,16 +30,6 @@ public class ChecklistService implements ScopeAwareService<Checklist> {
         return checklistRepository.findByProgramEnrolmentIndividual(individual);
     }
 
-    @Transactional(Transactional.TxType.REQUIRED)
-    public ChecklistItem findChecklistItem(String checklistUUID, String checklistItemDetailUUID) {
-        return checklistItemRepository.findByChecklistUuidAndChecklistItemDetailUuid(checklistUUID, checklistItemDetailUUID);
-    }
-
-    @Transactional(Transactional.TxType.REQUIRED)
-    public void saveItem(ChecklistItem checklistItem) {
-        checklistItemRepository.saveEntity(checklistItem);
-    }
-
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String checklistDetailUuid) {
         ChecklistDetail checklistDetail = checklistDetailRepository.findByUuid(checklistDetailUuid);
