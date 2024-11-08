@@ -37,7 +37,7 @@ public class ApiConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public ObjectMapper myObjectMapper() {
+    public ObjectMapper objectMapper() {
         return ObjectMapperSingleton.getObjectMapper();
     }
 }

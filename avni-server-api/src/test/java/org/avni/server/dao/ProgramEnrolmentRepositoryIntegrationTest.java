@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.UserBuilder;
@@ -36,6 +37,7 @@ public class ProgramEnrolmentRepositoryIntegrationTest extends AbstractControlle
     private ProgramEnrolmentRepository programEnrolmentRepository;
 
     @Test
+    @Transactional
     public void updateSyncAttributesForIndividual_should_update_last_modified_datetime() throws Exception {
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData catchmentData = testDataSetupService.setupACatchment();

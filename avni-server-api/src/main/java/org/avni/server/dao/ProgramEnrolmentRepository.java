@@ -108,7 +108,6 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
         ) > 0;
     }
 
-    @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update program_enrolment enl set " +
             "address_id = :addressId, " +

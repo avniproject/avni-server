@@ -101,7 +101,6 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         syncAttributes.add(ConceptContract.create(concept));
     }
 
-    @Transactional
     public LinkedHashMap<String, Object> searchSubjects(SubjectSearchRequest subjectSearchRequest) {
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
         List<Long> subjectIds = searchResults.stream().map(s -> Long.parseLong(s.get("id").toString())).collect(Collectors.toList());

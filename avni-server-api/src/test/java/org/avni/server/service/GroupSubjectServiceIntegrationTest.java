@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -24,6 +25,7 @@ import static org.junit.Assert.*;
 
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Transactional
 public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;
@@ -41,6 +43,7 @@ public class GroupSubjectServiceIntegrationTest extends AbstractControllerIntegr
     private TestGroupSubjectService testGroupSubjectService;
 
     @Test
+    @Transactional
     public void on_addition_of_member_to_a_group__assign_member_to_the_user_assigned_to_the_group() throws ValidationException {
         TestDataSetupService.TestOrganisationData testOrganisationData = testDataSetupService.setupOrganisation();
         TestDataSetupService.TestCatchmentData testCatchmentData = testDataSetupService.setupACatchment();

@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.JsonObject;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({UserContextHolder.class})
+@Transactional
 public class OrganisationConfigServiceTest {
 
     @Test

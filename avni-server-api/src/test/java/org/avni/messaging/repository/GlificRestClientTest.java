@@ -2,6 +2,7 @@ package org.avni.messaging.repository;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import jakarta.transaction.Transactional;
 import org.avni.messaging.contract.glific.GlificAuth;
 import org.avni.messaging.contract.glific.GlificMessageTemplateResponse;
 import org.avni.messaging.contract.glific.GlificResponse;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = {"/test-data.sql"})
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class GlificRestClientTest extends AbstractControllerIntegrationTest {
     private String SAMPLE_AUTH_RESPONSE = "{\"data\":{\"access_token\":\"SFMyNTY.YjQ2M2MzMmMtNGZlOC00OTEyLWIzYTEtZmRhZTRkOGQ1ZTIx.3TjKqpElrD5N2ffGHEAFX91cyp7zwoTztYR8p1jwwgA\",\"renewal_token\":\"SFMyNTY.MjYxODllMTgtNDM1OC00YjJjLTlmN2MtOTA5MzMwYzM3ZjA2.dDigSwftcGFGHu4o9MwkASp2KqH6eitp1aRmeYSgi5M\",\"token_expiry_time\":\"2022-10-13T21:42:33.342529Z\"}}";
 

@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
@@ -174,6 +175,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     }
 
     @Test
+    @Transactional
     public void sync() throws Exception {
         // Catchment tx entities
         Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());

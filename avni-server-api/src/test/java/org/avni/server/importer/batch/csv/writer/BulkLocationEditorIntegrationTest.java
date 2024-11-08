@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.*;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;
@@ -24,6 +25,7 @@ import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private TestDataSetupService testDataSetupService;

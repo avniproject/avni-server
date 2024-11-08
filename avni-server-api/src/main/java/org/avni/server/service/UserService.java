@@ -84,7 +84,6 @@ public class UserService implements NonScopeAwareService {
         return savedUser;
     }
 
-    @Transactional
     public void addToDefaultUserGroup(User user) {
         if (user.getOrganisationId() != null) { //Not a super-admin
             Group group = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
@@ -130,7 +129,6 @@ public class UserService implements NonScopeAwareService {
         return userRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
     }
 
-    @Transactional
     public User findByUuid(String uuid) {
         return userRepository.findByUuid(uuid);
     }

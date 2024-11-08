@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +11,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
 @Sql({"/test-data-openchs-organisation.sql"})
+@Transactional
 public class SampleControllerIntegrationTest extends AbstractControllerIntegrationTest {
 
     @Before

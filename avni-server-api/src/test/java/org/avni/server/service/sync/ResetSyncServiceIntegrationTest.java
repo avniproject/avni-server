@@ -1,5 +1,6 @@
 package org.avni.server.service.sync;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserRepository;

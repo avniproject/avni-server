@@ -7,6 +7,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,9 +69,8 @@ public class AddressLevelServiceTest {
         ));
 
         String orgConfig = "[{\"subjectTypeUUID\": \"first-subject-type-uuid\", \"locationTypeUUIDs\": [\"first-address-level-type-uuid\"]},{\"subjectTypeUUID\": \"second-subject-type-uuid\", \"locationTypeUUIDs\": [\"second-address-level-type-uuid\"]}]";
-        ObjectMapper objectMapper = new ObjectMapper();
         when(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())).thenReturn(
-                asList(objectMapper.readValue(orgConfig, Map[].class))
+                asList(ObjectMapperSingleton.getObjectMapper().readValue(orgConfig, Map[].class))
         );
         when(addressLevelTypeRepository.findAllByUuidIn(singletonList("first-address-level-type-uuid")))
                 .thenReturn(singletonList(createAddressLevelType(1L)));

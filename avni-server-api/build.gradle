@@ -70,7 +70,7 @@ dependencies {
     implementation "com.zaxxer:HikariCP"
     implementation "org.apache.poi:poi:3.16-beta2"
     implementation "org.apache.poi:poi-ooxml:3.16-beta2"
-    implementation 'org.apache.httpcomponents:httpclient'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
     implementation 'com.auth0:jwks-rsa:0.3.0'
     implementation 'com.auth0:java-jwt:3.3.0'
 //    implementation(group: 'org.hibernate', name: 'hibernate-search-orm', version: '5.9.2.Final') {

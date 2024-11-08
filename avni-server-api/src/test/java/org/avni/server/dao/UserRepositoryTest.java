@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
@@ -11,6 +12,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @Sql({"/test-data.sql"})
+@Transactional
 public class UserRepositoryTest extends AbstractControllerIntegrationTest {
     @Autowired
     private UserRepository userRepository;

@@ -5,6 +5,7 @@ import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.TestWebContextService;
 import org.junit.After;
 import org.junit.Before;
@@ -49,7 +50,7 @@ public abstract class AbstractControllerIntegrationTest {
     @Autowired
     private TestWebContextService testWebContextService;
 
-    protected static ObjectMapper mapper = new ObjectMapper();
+    protected static ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
 
     @PersistenceContext
     private EntityManager em;
@@ -66,10 +67,14 @@ public abstract class AbstractControllerIntegrationTest {
 
     @After
     public void teardown() {
-        UserContextHolder.clear();
         template.getRestTemplate().setInterceptors(new ArrayList<>());
         testWebContextService.setRoles();
         em.getEntityManagerFactory().getCache().evictAll();
+        try {
+            em.createNativeQuery("reset role;").executeUpdate();
+        } catch (Exception ignored) {
+        }
+        UserContextHolder.clear();
     }
 
     protected void post(String path, Object json) {

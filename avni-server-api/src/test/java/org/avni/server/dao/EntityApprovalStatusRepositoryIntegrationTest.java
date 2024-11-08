@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.Subject;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.ApprovalStatus;
@@ -23,6 +24,7 @@ import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class EntityApprovalStatusRepositoryIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;

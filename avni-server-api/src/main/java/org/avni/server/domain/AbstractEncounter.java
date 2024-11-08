@@ -39,7 +39,7 @@ public class AbstractEncounter extends SyncAttributeEntity {
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.EncounterCancelDateTime)
-    private DateTime cancelDateTime;
+    private Instant cancelDateTime;
 
     @Column(name = ColumnNames.EncounterCancelObservations)
     @Type(value = ObservationCollectionUserType.class)
@@ -114,7 +114,7 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public DateTime getCancelDateTime() {
-        return cancelDateTime;
+        return DateTimeUtil.toJodaDateTime(cancelDateTime);
     }
 
     public boolean isCancelled() {
@@ -122,7 +122,7 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public void setCancelDateTime(DateTime cancelDateTime) {
-        this.cancelDateTime = cancelDateTime;
+        this.cancelDateTime = DateTimeUtil.toInstant(cancelDateTime);
     }
 
     public ObservationCollection getCancelObservations() {

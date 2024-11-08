@@ -7,7 +7,7 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 public final class ObjectMapperSingleton {
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JodaModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private ObjectMapperSingleton() {
     }

@@ -1,5 +1,6 @@
 package org.avni.server.service.identifier;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.dao.IdentifierUserAssignmentRepository;
@@ -18,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class IdentifierUserAssignmentRepositoryTest extends AbstractControllerIntegrationTest {
     @Autowired
     private IdentifierSourceRepository identifierSourceRepository;

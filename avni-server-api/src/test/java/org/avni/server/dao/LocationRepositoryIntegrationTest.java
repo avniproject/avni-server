@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Sql({"/test-data.sql"})
+@Transactional
 public class LocationRepositoryIntegrationTest extends AbstractControllerIntegrationTest {
 
     @Autowired

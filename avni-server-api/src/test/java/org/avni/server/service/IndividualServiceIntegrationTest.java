@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.Individual;
 import org.junit.Before;
@@ -10,6 +11,7 @@ import org.springframework.test.context.jdbc.Sql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Sql(scripts = {"/test-data.sql"})
+@Transactional
 public class IndividualServiceIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private IndividualService individualService;

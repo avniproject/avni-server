@@ -6,6 +6,8 @@ import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
 
 import jakarta.persistence.*;
+
+import java.util.Objects;
 import java.util.UUID;
 
 @MappedSuperclass
@@ -74,10 +76,10 @@ public class CHSBaseEntity implements IdHolder {
 
         IdHolder otherIdHolder = lazyInitializer2 == null ? (IdHolder) other : (IdHolder) lazyInitializer2.getImplementation();
 
-        if (otherIdHolder.getId() == null && a.getId() == null && otherIdHolder.getUuid() == null && a.getUuid() == null) return otherIdHolder == a;
+        if (a.getId() != null && Objects.equals(a.getId(), otherIdHolder.getId())) return true;
+        if (a.getUuid() != null && Objects.equals(a.getUuid(), otherIdHolder.getUuid())) return true;
 
-        if (a.getId() != null ? !a.getId().equals(otherIdHolder.getId()) : otherIdHolder.getId() != null) return false;
-        return a.getUuid() != null ? a.getUuid().equals(otherIdHolder.getUuid()) : otherIdHolder.getUuid() == null;
+        return false;
     }
 
     @Override
@@ -86,5 +88,4 @@ public class CHSBaseEntity implements IdHolder {
         result = 31 * result + (uuid != null ? uuid.hashCode() : 0);
         return result;
     }
-
 }

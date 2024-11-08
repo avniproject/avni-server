@@ -44,7 +44,7 @@ public class FormMappingRepositoryTest extends AbstractControllerIntegrationTest
             formMappingRepository.saveFormMapping(formMapping);
             fail("Successfully saved form mapping");
         } catch (JpaSystemException ignored) {
-            ignored.printStackTrace();
+//            ignored.printStackTrace();
         }
     }
 
