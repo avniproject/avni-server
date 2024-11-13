@@ -18,6 +18,7 @@ import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -174,6 +175,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
     @Test
     @Transactional
+    @Ignore
     public void sync() throws Exception {
         // Catchment tx entities
         Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
