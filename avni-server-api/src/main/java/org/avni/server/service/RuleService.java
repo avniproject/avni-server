@@ -364,9 +364,7 @@ public class RuleService implements NonScopeAwareService {
     private <R extends BaseRuleResponseEntity> R createHttpHeaderAndSendRequest(String url, Object contractObject, RuleFailureLog ruleFailureLog, Class<R> responseType) throws RuleExecutionException {
         try {
             ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-            mapper.registerModule(new JodaModule());
-            String ruleResponse = restClient.post(url, contractObject);
-            R ruleResponseEntity = mapper.readValue(ruleResponse, responseType);
+            R ruleResponseEntity = (R) restClient.post(url, contractObject, responseType);
             if (ruleResponseEntity.getStatus().equals("failure")) {
                 RuleError ruleError = ruleResponseEntity.getError();
                 saveRuleError(ruleFailureLog, ruleError.getMessage(), ruleError.getStack());

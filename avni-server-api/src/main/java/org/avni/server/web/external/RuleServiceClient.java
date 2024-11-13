@@ -27,11 +27,11 @@ public class RuleServiceClient {
         this.restTemplate = restTemplate;
     }
 
-    public <T> String post(String api, T jsonObj) throws HttpClientErrorException {
+    public Object post(String api, Object jsonObj, Class responseType) throws HttpClientErrorException {
         String uri = NODE_SERVER_HOST.concat(api);
         HttpEntity<Object> entityCredentials = new HttpEntity<>(jsonObj, constructHeaders());
         try {
-            return restTemplate.postForObject(uri, entityCredentials, String.class);
+            return restTemplate.postForObject(uri, entityCredentials, responseType);
         } catch (HttpClientErrorException e) {
             logger.info("rule " + api + " not found");
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "rule " + api + " not found");

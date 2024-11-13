@@ -288,6 +288,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     }
 
     @Test
+    @Transactional
     public void syncShouldSyncEverythingBeforeNow() throws Exception {
         setUser(organisationData.getUser().getUsername());
 

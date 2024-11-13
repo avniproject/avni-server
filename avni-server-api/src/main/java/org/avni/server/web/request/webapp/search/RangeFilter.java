@@ -4,6 +4,9 @@ public abstract class RangeFilter<T> {
     private T minValue;
     private T maxValue;
 
+    public RangeFilter() {
+    }
+
     public RangeFilter(T minValue, T maxValue) {
         this.minValue = minValue;
         this.maxValue = maxValue;
