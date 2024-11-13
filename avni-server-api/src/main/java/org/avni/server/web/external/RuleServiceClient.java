@@ -5,6 +5,7 @@ import org.avni.server.framework.security.AuthenticationFilter;
 import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,13 +17,18 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class RuleServiceClient {
+    private final RestTemplate restTemplate;
     @Value("${node.server.url}")
     private String NODE_SERVER_HOST;
-    private Logger logger = LoggerFactory.getLogger(RuleServiceClient.class);
+    private final Logger logger = LoggerFactory.getLogger(RuleServiceClient.class);
+
+    @Autowired
+    public RuleServiceClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     public <T> String post(String api, T jsonObj) throws HttpClientErrorException {
         String uri = NODE_SERVER_HOST.concat(api);
-        RestTemplate restTemplate = new RestTemplate();
         HttpEntity<Object> entityCredentials = new HttpEntity<>(jsonObj, constructHeaders());
         try {
             return restTemplate.postForObject(uri, entityCredentials, String.class);

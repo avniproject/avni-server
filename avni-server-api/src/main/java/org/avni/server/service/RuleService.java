@@ -373,6 +373,7 @@ public class RuleService implements NonScopeAwareService {
             }
             return ruleResponseEntity;
         } catch (Exception e) {
+            logger.error("Error while executing rule", e);
             saveRuleError(ruleFailureLog, e.getMessage(), getStackTrace(e));
             RuleError ruleError = new RuleError();
             ruleError.setMessage(e.getMessage());
