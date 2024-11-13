@@ -90,11 +90,12 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         IdentifierUserAssignment identifierUserAssignment = getIdentifierUserAssignment(request);
         identifierUserAssignment.setVoided(request.isVoided());
         try {
-            identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
+            IdentifierUserAssignment saved = identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
+            return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(saved));
         } catch (IdentifierOverlappingException | ValidationException e) {
             return WebResponseUtil.createBadRequestResponse(e, logger);
         }
-        return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
+
     }
 
     @DeleteMapping(value = "/web/identifierUserAssignment/{id}")
