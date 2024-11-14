@@ -124,4 +124,8 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     public static Date toUtilDate(DateTime dateTime) {
         return dateTime == null ? null : dateTime.toDate();
     }
+
+    public static Date toUtilDate(Instant dateTime) {
+        return dateTime == null ? null : new Date(dateTime.toEpochMilli());
+    }
 }

@@ -1,6 +1,8 @@
 package org.avni.server.framework.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.deser.DateTimeDeserializer;
+import com.fasterxml.jackson.datatype.joda.deser.key.DateTimeKeyDeserializer;
 import org.avni.server.framework.hibernate.DummyInterceptor;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.MappedInterceptor;
@@ -34,10 +37,5 @@ public class ApiConfiguration implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(dummyInterceptor);
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return ObjectMapperSingleton.getObjectMapper();
     }
 }

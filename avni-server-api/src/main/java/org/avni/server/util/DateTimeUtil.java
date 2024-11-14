@@ -78,6 +78,13 @@ public class DateTimeUtil {
         return new DateTime(instant.toEpochMilli());
     }
 
+    public static DateTime toJodaDateTime(ZonedDateTime zonedDateTime) {
+        if (zonedDateTime == null) {
+            return null;
+        }
+        return new DateTime(zonedDateTime.toInstant().toEpochMilli());
+    }
+
     public static java.time.Instant toInstant(Date date) {
         if (date == null) {
             return null;

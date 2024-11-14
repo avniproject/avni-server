@@ -1,9 +1,12 @@
 package org.avni.server;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.deser.DateTimeDeserializer;
 import com.google.common.cache.CacheBuilder;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.domain.User;
 import org.avni.server.framework.jpa.CHSAuditorAware;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.keycloak.adapters.KeycloakConfigResolver;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
@@ -24,6 +27,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -173,5 +177,12 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
                         .build().asMap(), DISALLOW_NULL_VALUES);
             }
         };
+    }
+
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
+        return objectMapper;
     }
 }

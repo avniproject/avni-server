@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.avni.server.web.api.CommonFieldNames.EXTERNAL_ID;
 
@@ -98,7 +99,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
 
     public static SubjectResponse fromSubject(Individual subject, SubjectResponseOptions options, ConceptRepository conceptRepository, ConceptService conceptService, List<GroupSubject> groups, S3Service s3Service) {
         SubjectResponse subjectResponse = fromSubject(subject, options, conceptRepository, conceptService, s3Service);
-        subjectResponse.put("Groups", groups.stream().map(GroupSubject::getGroupSubjectUUID));
+        subjectResponse.put("Groups", groups.stream().map(GroupSubject::getGroupSubjectUUID).collect(Collectors.toList()));
         return subjectResponse;
     }
 }

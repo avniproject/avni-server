@@ -8,6 +8,7 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 public final class ObjectMapperSingleton {
     private static final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JodaModule())
+            .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
