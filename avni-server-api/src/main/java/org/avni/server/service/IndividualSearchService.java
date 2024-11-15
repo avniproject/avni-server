@@ -5,11 +5,13 @@ import org.avni.server.dao.SubjectSearchRepository;
 import org.avni.server.dao.search.SubjectSearchQueryBuilder;
 import org.avni.server.projection.SearchSubjectEnrolledProgram;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -28,11 +30,13 @@ public class IndividualSearchService {
     }
 
     public LinkedHashMap<String, Object> search(SubjectSearchRequest subjectSearchRequest) {
+        long startTime = new DateTime().getMillis();
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
-        logger.info("Found " + searchResults.size() + " individuals");
-        BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder());
-        logger.info("Total count of individuals: " + totalCount);
+        long resultsEnd = new DateTime().getMillis();
+        BigInteger totalCount = subjectSearchRequest.getTotalElements() == null ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : new BigInteger(subjectSearchRequest.getTotalElements());
+        long countEnd = new DateTime().getMillis();
+        logger.info(String.format("Subject search: Time: %d secs, Results: %dms, Count: %dms. Total Records: %d. Executed count query: %b",  TimeUnit.MILLISECONDS.toSeconds(countEnd - startTime), (resultsEnd - startTime), (countEnd - resultsEnd), totalCount, subjectSearchRequest.getTotalElements() == null));
         return constructIndividual(searchResults, totalCount);
     }
 
