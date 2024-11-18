@@ -12,8 +12,6 @@ import org.joda.time.DateTime;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
-import java.time.Instant;
-
 @Entity(name = "subject_program_eligibility")
 public class SubjectProgramEligibility extends OrganisationAwareEntity {
     @ManyToOne(targetEntity = Individual.class, fetch = FetchType.LAZY)
@@ -30,7 +28,7 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     private boolean isEligible;
 
     @Column
-    private Instant checkDate;
+    private DateTime checkDate;
 
     @Column
     @Type(value = ObservationCollectionUserType.class)
@@ -61,11 +59,11 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     }
 
     public DateTime getCheckDate() {
-        return DateTimeUtil.toJodaDateTime(checkDate);
+        return checkDate;
     }
 
     public void setCheckDate(DateTime checkDate) {
-        this.checkDate = DateTimeUtil.toInstant(checkDate);
+        this.checkDate = checkDate;
     }
 
     public ObservationCollection getObservations() {

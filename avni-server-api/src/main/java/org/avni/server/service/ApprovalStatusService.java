@@ -18,7 +18,7 @@ public class ApprovalStatusService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return approvalStatusRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
+        return approvalStatusRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
     }
 }
 

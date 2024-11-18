@@ -64,6 +64,6 @@ public class NewsService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return newsRepository.existsByPublishedDateNotNullAndLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
+        return newsRepository.existsByPublishedDateNotNullAndLastModifiedDateTimeGreaterThan(CHSEntity.toDate(lastModifiedDateTime));
     }
 }

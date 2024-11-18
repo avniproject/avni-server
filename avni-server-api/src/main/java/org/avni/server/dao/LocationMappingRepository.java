@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -30,8 +29,8 @@ public interface LocationMappingRepository extends ReferenceDataRepository<Paren
             "order by llm.last_modified_date_time asc, llm.id asc", nativeQuery = true)
     Page<ParentLocationMapping> getSyncResults(
             long catchmentId,
-            Instant lastModifiedDateTime,
-            Instant now,
+            Date lastModifiedDateTime,
+            Date now,
             long organisationId,
             Pageable pageable
     );
@@ -44,17 +43,17 @@ public interface LocationMappingRepository extends ReferenceDataRepository<Paren
             "         inner join location_location_mapping llm on al1.id = llm.location_id\n" +
             "where c.id = :catchmentId \n" +
             "  and llm.last_modified_date_time > :lastModifiedDateTime ;", nativeQuery = true)
-    Long getChangedRowCount(long catchmentId, Instant lastModifiedDateTime);
+    Long getChangedRowCount(long catchmentId, Date lastModifiedDateTime);
 
     @Override
     default Page<ParentLocationMapping> getSyncResults(SyncParameters syncParameters) {
         Long organisationId = UserContextHolder.getOrganisation().getId();
-        return getSyncResults(syncParameters.getCatchment().getId(), DateTimeUtil.toInstant(syncParameters.getLastModifiedDateTime()), DateTimeUtil.toInstant(syncParameters.getNow()), organisationId, syncParameters.getPageable());
+        return getSyncResults(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate(), syncParameters.getNow().toDate(), organisationId, syncParameters.getPageable());
     }
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return getChangedRowCount(syncParameters.getCatchment().getId(), DateTimeUtil.toInstant(syncParameters.getLastModifiedDateTime())) > 0;
+        return getChangedRowCount(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate()) > 0;
     }
 
     default ParentLocationMapping findByName(String name) {

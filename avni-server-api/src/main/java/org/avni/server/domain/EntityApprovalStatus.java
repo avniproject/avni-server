@@ -1,14 +1,13 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.Instant;
 
 @Entity
 @BatchSize(size = 100)
@@ -42,7 +41,8 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
 
     @Column
     @NotNull
-    private Instant statusDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime statusDateTime;
 
     @Column(name = "address_id")
     private Long addressId;
@@ -104,11 +104,11 @@ public class EntityApprovalStatus extends SyncAttributeEntity {
     }
 
     public DateTime getStatusDateTime() {
-        return DateTimeUtil.toJodaDateTime(statusDateTime);
+        return statusDateTime;
     }
 
     public void setStatusDateTime(DateTime statusDateTime) {
-        this.statusDateTime = DateTimeUtil.toInstant(statusDateTime);
+        this.statusDateTime = statusDateTime;
     }
 
     public String getEntityTypeUuid() {

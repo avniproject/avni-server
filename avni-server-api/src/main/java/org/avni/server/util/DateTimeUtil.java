@@ -6,9 +6,7 @@ import org.joda.time.Instant;
 import org.joda.time.LocalDate;
 
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 
 public class DateTimeUtil {
@@ -50,49 +48,4 @@ public class DateTimeUtil {
         return java.time.Duration.between(start, end).toMillis();
     }
 
-    public static LocalDate toJodaDate(java.time.Instant instant) {
-        if (instant == null) {
-            return null;
-        }
-        return DateTimeUtil.toJodaDateTime(instant).toLocalDate();
-    }
-
-    public static java.time.Instant toInstant(LocalDate localDate) {
-        if (localDate == null) {
-            return null;
-        }
-        return localDate.toDate().toInstant();
-    }
-
-    public static java.time.Instant toInstant(DateTime createdDateTime) {
-        if (createdDateTime == null) {
-            return null;
-        }
-        return createdDateTime.toDate().toInstant();
-    }
-
-    public static DateTime toJodaDateTime(java.time.Instant instant) {
-        if (instant == null) {
-            return null;
-        }
-        return new DateTime(instant.toEpochMilli());
-    }
-
-    public static DateTime toJodaDateTime(ZonedDateTime zonedDateTime) {
-        if (zonedDateTime == null) {
-            return null;
-        }
-        return new DateTime(zonedDateTime.toInstant().toEpochMilli());
-    }
-
-    public static java.time.Instant toInstant(Date date) {
-        if (date == null) {
-            return null;
-        }
-        return date.toInstant();
-    }
-
-    public static java.time.Instant toInstant(Calendar calendar) {
-        return calendar == null ? null : calendar.toInstant();
-    }
 }

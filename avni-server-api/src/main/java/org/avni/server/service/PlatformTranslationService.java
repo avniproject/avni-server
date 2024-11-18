@@ -21,7 +21,7 @@ public class PlatformTranslationService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return platformTranslationRepository.existsByPlatformAndLastModifiedDateTimeGreaterThan(Platform.Android, DateTimeUtil.toInstant(lastModifiedDateTime));
+        return platformTranslationRepository.existsByPlatformAndLastModifiedDateTimeGreaterThan(Platform.Android, CHSEntity.toDate(lastModifiedDateTime));
     }
 }
 

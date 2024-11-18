@@ -15,23 +15,14 @@ import java.util.Date;
 public interface FindByLastModifiedDateTime<T> {
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<T> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);
 
     default Page<T> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            Date lastModifiedDateTime,
-            Date now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
-                DateTimeUtil.toInstant(now), pageable);
-    }
-
-    default Page<T> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            DateTime lastModifiedDateTime,
-            DateTime now,
-            Pageable pageable) {
-        return findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
-                DateTimeUtil.toInstant(now), pageable);
+        return findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(CHSEntity.toDate(lastModifiedDateTime), CHSEntity.toDate(now), pageable);
     }
 }

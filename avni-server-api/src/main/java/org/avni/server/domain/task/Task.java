@@ -4,6 +4,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.User;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
@@ -12,8 +13,6 @@ import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "task")
@@ -34,10 +33,12 @@ public class Task extends OrganisationAwareEntity {
     private TaskStatus taskStatus;
 
     @Column
-    private Instant scheduledOn;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime scheduledOn;
 
     @Column
-    private Instant completedOn;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime completedOn;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_user_id")
@@ -89,19 +90,19 @@ public class Task extends OrganisationAwareEntity {
     }
 
     public DateTime getScheduledOn() {
-        return DateTimeUtil.toJodaDateTime(scheduledOn);
+        return scheduledOn;
     }
 
     public void setScheduledOn(DateTime scheduledOn) {
-        this.scheduledOn = DateTimeUtil.toInstant(scheduledOn);
+        this.scheduledOn = scheduledOn;
     }
 
     public DateTime getCompletedOn() {
-        return DateTimeUtil.toJodaDateTime(completedOn);
+        return completedOn;
     }
 
     public void setCompletedOn(DateTime completedOn) {
-        this.completedOn = DateTimeUtil.toInstant(completedOn);
+        this.completedOn = completedOn;
     }
 
     public User getAssignedTo() {

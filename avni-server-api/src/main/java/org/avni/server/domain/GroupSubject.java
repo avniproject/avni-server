@@ -2,14 +2,13 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "group_subject")
@@ -33,10 +32,12 @@ public class GroupSubject extends OrganisationAwareEntity {
     private GroupRole groupRole;
 
     @Column
-    private Instant membershipStartDate;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime membershipStartDate;
 
     @Column
-    private Instant membershipEndDate;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime membershipEndDate;
 
     @Column(name = "member_subject_address_id")
     private Long memberSubjectAddressId;
@@ -75,19 +76,19 @@ public class GroupSubject extends OrganisationAwareEntity {
     }
 
     public DateTime getMembershipStartDate() {
-        return DateTimeUtil.toJodaDateTime(membershipStartDate);
+        return membershipStartDate;
     }
 
     public void setMembershipStartDate(DateTime membershipStartDate) {
-        this.membershipStartDate = DateTimeUtil.toInstant(membershipStartDate);
+        this.membershipStartDate = membershipStartDate;
     }
 
     public DateTime getMembershipEndDate() {
-        return DateTimeUtil.toJodaDateTime(membershipEndDate);
+        return membershipEndDate;
     }
 
     public void setMembershipEndDate(DateTime membershipEndDate) {
-        this.membershipEndDate = DateTimeUtil.toInstant(membershipEndDate);
+        this.membershipEndDate = membershipEndDate;
     }
 
     public String getGroupSubjectUUID() {

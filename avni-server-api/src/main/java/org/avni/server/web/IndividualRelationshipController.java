@@ -91,7 +91,7 @@ public class IndividualRelationshipController extends AbstractController<Individ
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
-        return wrap(individualRelationshipRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime), DateTimeUtil.toInstant(now), pageable));
+        return wrap(individualRelationshipRepository.findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime, now, pageable));
     }
 
     @RequestMapping(value = "/individualRelationship/v2", method = RequestMethod.GET)

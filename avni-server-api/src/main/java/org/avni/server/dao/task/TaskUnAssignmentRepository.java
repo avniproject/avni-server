@@ -9,15 +9,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.Date;
 
 @Repository
 public interface TaskUnAssignmentRepository extends TransactionalDataRepository<TaskUnAssignment>, FindByLastModifiedDateTime<TaskUnAssignment> {
 
-    Page<TaskUnAssignment> findByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Instant lastModifiedDateTime, Instant now, Pageable pageable);
+    Page<TaskUnAssignment> findByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Date lastModifiedDateTime, Date now, Pageable pageable);
 
-    Slice<TaskUnAssignment> findSliceByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Instant lastModifiedDateTime, Instant now, Pageable pageable);
+    Slice<TaskUnAssignment> findSliceByUnassignedUserAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Date lastModifiedDateTime, Date now, Pageable pageable);
 
-    boolean existsByUnassignedUserAndLastModifiedDateTimeGreaterThan(User user, Instant lastModifiedDateTime);
+    boolean existsByUnassignedUserAndLastModifiedDateTimeGreaterThan(User user, Date lastModifiedDateTime);
 }

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.domain.framework.IdHolder;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ValidationUtil;
@@ -17,7 +18,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,15 +63,16 @@ public class User implements IdHolder {
     @ManyToOne(targetEntity = User.class)
     private User createdBy;
 
-    @Column
-    private Instant createdDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
     @ManyToOne(targetEntity = User.class)
     private User lastModifiedBy;
 
-    private Instant lastModifiedDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime lastModifiedDateTime;
 
     @Column
     private boolean isVoided;
@@ -258,7 +259,7 @@ public class User implements IdHolder {
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
+        this.createdDateTime = createdDateTime;
     }
 
     public void setLastModifiedBy(User lastModifiedBy) {
@@ -266,7 +267,7 @@ public class User implements IdHolder {
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
+        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public User getCreatedBy() {
@@ -282,7 +283,7 @@ public class User implements IdHolder {
     }
 
     public DateTime getCreatedDateTime() {
-        return DateTimeUtil.toJodaDateTime(createdDateTime);
+        return createdDateTime;
     }
 
     public User getLastModifiedBy() {
@@ -290,7 +291,7 @@ public class User implements IdHolder {
     }
 
     public DateTime getLastModifiedDateTime() {
-        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
+        return lastModifiedDateTime;
     }
 
     public JsonObject getSyncSettings() {

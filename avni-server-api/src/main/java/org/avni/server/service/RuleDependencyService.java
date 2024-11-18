@@ -33,6 +33,6 @@ public class RuleDependencyService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return ruleDependencyRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
+        return ruleDependencyRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
     }
 }

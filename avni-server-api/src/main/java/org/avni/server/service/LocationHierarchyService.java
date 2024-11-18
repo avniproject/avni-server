@@ -128,7 +128,7 @@ public class LocationHierarchyService implements NonScopeAwareService {
         ArrayList<Long> addressLevelTypeIds = (ArrayList<Long>) this.getLowestAddressLevelTypeHierarchiesForOrganisation();
         if (addressLevelTypeIds != null) {
             List<AddressLevelType> addressLevelTypes = addressLevelTypeRepository.findAllByIdIn(addressLevelTypeIds);
-            return locationRepository.existsByLastModifiedDateTimeAfterAndTypeIn(DateTimeUtil.toInstant(lastModifiedDateTime), addressLevelTypes);
+            return locationRepository.existsByLastModifiedDateTimeAfterAndTypeIn(CHSEntity.toDate(lastModifiedDateTime), addressLevelTypes);
         }
         return false;
     }

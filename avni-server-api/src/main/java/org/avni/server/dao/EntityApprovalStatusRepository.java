@@ -23,8 +23,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Repository
@@ -35,8 +35,8 @@ public interface EntityApprovalStatusRepository extends TransactionalDataReposit
     @PreAuthorize("hasAnyAuthority('user')")
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<EntityApprovalStatus> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);
 
     default Page<EntityApprovalStatus> findEntityApprovalStatuses(EntityApprovalStatusSearchParams searchParams, Pageable pageable) {

@@ -14,7 +14,6 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.criteria.*;
 
-import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -24,10 +23,10 @@ import java.util.Map;
 @RepositoryRestResource(collectionResourceRel = "encounter", path = "encounter", exported = false)
 public interface EncounterRepository extends TransactionalDataRepository<Encounter>, OperatingIndividualScopeAwareRepository<Encounter>, SubjectTreeItemRepository {
     Page<Encounter> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            Instant lastModifiedDateTime, Instant now, Pageable pageable);
+            Date lastModifiedDateTime, Date now, Pageable pageable);
 
     Page<Encounter> findByIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
+            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     @Override
     default Specification<Encounter> syncTypeIdSpecification(Long typeId) {
@@ -83,13 +82,12 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
 
     default Specification<Encounter> withEncounterEarliestVisitDateTime(DateTime earliestVisitDateTime) {
         return (Root<Encounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                earliestVisitDateTime == null ? null : cb.equal(root.get("earliestVisitDateTime").as(Instant.class), DateTimeUtil.toInstant(earliestVisitDateTime));
+                earliestVisitDateTime == null ? null : cb.equal(root.get("earliestVisitDateTime").as(java.sql.Date.class), earliestVisitDateTime.toDate());
     }
 
     default Specification<Encounter> withEncounterDateTime(DateTime encounterDateTime) {
         return (Root<Encounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                encounterDateTime == null ? null : cb.equal(root.get("encounterDateTime").as(Instant.class),
-                        DateTimeUtil.toInstant(encounterDateTime));
+                encounterDateTime == null ? null : cb.equal(root.get("encounterDateTime").as(java.sql.Date.class), encounterDateTime.toDate());
     }
 
     default Specification<Encounter> withNotNullEncounterDateTime() {

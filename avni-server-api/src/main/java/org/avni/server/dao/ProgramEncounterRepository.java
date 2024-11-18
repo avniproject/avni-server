@@ -16,7 +16,6 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.criteria.*;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.List;
@@ -29,7 +28,7 @@ import static org.springframework.data.jpa.domain.Specification.where;
 public interface ProgramEncounterRepository extends TransactionalDataRepository<ProgramEncounter>, FindByLastModifiedDateTime<ProgramEncounter>, OperatingIndividualScopeAwareRepository<ProgramEncounter>, SubjectTreeItemRepository {
 
     Page<ProgramEncounter> findByProgramEnrolmentIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
+            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     @Override
     default Specification<ProgramEncounter> syncTypeIdSpecification(Long typeId) {
@@ -53,7 +52,7 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
             "group by enc.program_enrolment_id " +
             "order by count desc " +
             "limit 1", nativeQuery = true)
-    Long getMaxProgramEncounterCountBetween(String programEncounterTypeUUID, Instant startDate, Instant endDate);
+    Long getMaxProgramEncounterCountBetween(String programEncounterTypeUUID, Calendar startDate, Calendar endDate);
 
     @Query(value = "select count(enc.id) as count " +
             "from program_encounter enc " +
@@ -66,7 +65,7 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
 
     default Long getMaxProgramEncounterCount(String encounterTypeUUID, Calendar startDate, Calendar endDate) {
         Long aLong = startDate == null ? getMaxProgramEncounterCount(encounterTypeUUID) :
-                getMaxProgramEncounterCountBetween(encounterTypeUUID, DateTimeUtil.toInstant(startDate), DateTimeUtil.toInstant(endDate));
+                getMaxProgramEncounterCountBetween(encounterTypeUUID, startDate, endDate);
         return aLong == null ? 0 : aLong;
     }
 
@@ -85,14 +84,12 @@ public interface ProgramEncounterRepository extends TransactionalDataRepository<
 
     default Specification<ProgramEncounter> withProgramEncounterEarliestVisitDateTime(DateTime earliestVisitDateTime) {
         return (Root<ProgramEncounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                earliestVisitDateTime == null ? null : cb.equal(root.get("earliestVisitDateTime").as(Instant.class),
-                        DateTimeUtil.toInstant(earliestVisitDateTime));
+                earliestVisitDateTime == null ? null : cb.equal(root.get("earliestVisitDateTime").as(java.sql.Date.class), earliestVisitDateTime.toDate());
     }
 
     default Specification<ProgramEncounter> withProgramEncounterDateTime(DateTime encounterDateTime) {
         return (Root<ProgramEncounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                encounterDateTime == null ? null : cb.equal(root.get("encounterDateTime").as(Instant.class),
-                        DateTimeUtil.toInstant(encounterDateTime));
+                encounterDateTime == null ? null : cb.equal(root.get("encounterDateTime").as(java.sql.Date.class), encounterDateTime.toDate());
     }
 
     default Specification<ProgramEncounter> withNotNullEncounterDateTime() {

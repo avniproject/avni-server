@@ -12,7 +12,6 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -25,11 +24,11 @@ public interface StandardReportCardTypeRepository extends AvniJpaRepository<Stan
 
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<StandardReportCardType> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable);
 
-    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
     List<StandardReportCardType> findAllByTypeIn(Set<StandardReportCardTypeType> defaultDashboardStandardCardTypeTypes);
 }

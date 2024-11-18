@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.criteria.*;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +23,7 @@ import java.util.Set;
 public interface ChecklistRepository extends TransactionalDataRepository<Checklist>, OperatingIndividualScopeAwareRepository<Checklist>, SubjectTreeItemRepository {
 
     Page<Checklist> findByProgramEnrolmentIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
+            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     Checklist findByProgramEnrolmentId(long programEnrolmentId);
 

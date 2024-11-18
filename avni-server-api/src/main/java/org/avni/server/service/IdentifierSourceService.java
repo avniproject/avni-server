@@ -62,7 +62,7 @@ public class IdentifierSourceService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return identifierSourceRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
+        return identifierSourceRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
     }
 
     public void saveIdSources(IdentifierSourceContractWeb[] identifierSourceContractWebs) {

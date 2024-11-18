@@ -18,7 +18,6 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.criteria.*;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,7 +29,7 @@ import static org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil.joinUs
 @RepositoryRestResource(collectionResourceRel = "individualRelationship", path = "individualRelationship", exported = false)
 public interface IndividualRelationshipRepository extends TransactionalDataRepository<IndividualRelationship>, FindByLastModifiedDateTime<IndividualRelationship>, OperatingIndividualScopeAwareRepository<IndividualRelationship>, SubjectTreeItemRepository {
     Page<IndividualRelationship> findByIndividualaAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
+            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
 
     @Query(value = "select ir from IndividualRelationship ir where ir.individuala = :individual or ir.individualB = :individual")
     Set<IndividualRelationship> findByIndividual(Individual individual);

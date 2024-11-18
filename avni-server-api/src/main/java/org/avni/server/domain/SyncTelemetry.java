@@ -1,6 +1,7 @@
 package org.avni.server.domain;
 
 import org.avni.server.framework.hibernate.JSONObjectUserType;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
@@ -8,8 +9,6 @@ import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "sync_telemetry")
@@ -29,10 +28,12 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     private JsonObject entityStatus;
 
     @Column
-    private Instant syncStartTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime syncStartTime;
 
     @Column
-    private Instant syncEndTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime syncEndTime;
 
     @Column
     private String appVersion;
@@ -83,19 +84,19 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     }
 
     public DateTime getSyncStartTime() {
-        return DateTimeUtil.toJodaDateTime(syncStartTime);
+        return syncStartTime;
     }
 
     public void setSyncStartTime(DateTime syncStartTime) {
-        this.syncStartTime = DateTimeUtil.toInstant(syncStartTime);
+        this.syncStartTime = syncStartTime;
     }
 
     public DateTime getSyncEndTime() {
-        return DateTimeUtil.toJodaDateTime(syncEndTime);
+        return syncEndTime;
     }
 
     public void setSyncEndTime(DateTime syncEndTime) {
-        this.syncEndTime = DateTimeUtil.toInstant(syncEndTime);
+        this.syncEndTime = syncEndTime;
     }
 
     public String getAppVersion() {

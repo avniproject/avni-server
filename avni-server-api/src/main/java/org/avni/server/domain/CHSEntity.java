@@ -13,7 +13,6 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.Instant;
 import java.util.Date;
 
 @MappedSuperclass
@@ -29,7 +28,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
 
     @CreatedDate
     @NotNull
-    private Instant createdDateTime;
+    private Date createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
@@ -40,7 +39,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
 
     @LastModifiedDate
     @NotNull
-    private Instant lastModifiedDateTime;
+    private Date lastModifiedDateTime;
 
     @JsonIgnore
     public User getCreatedBy() {
@@ -52,11 +51,11 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     public DateTime getCreatedDateTime() {
-        return DateTimeUtil.toJodaDateTime(createdDateTime);
+        return new DateTime(createdDateTime);
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime.toDate().toInstant();
+        this.createdDateTime = createdDateTime.toDate();
     }
 
     @JsonIgnore
@@ -73,11 +72,11 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     private DateTime toJodaDateTime() {
-        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
+        return new DateTime(lastModifiedDateTime);
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime.toDate().toInstant();
+        this.lastModifiedDateTime = lastModifiedDateTime.toDate();
     }
 
     @Column(name = "version")
@@ -117,15 +116,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
         return getLastModifiedBy().getUsername();
     }
 
-    public static Instant toDate(DateTime dateTime) {
-        return DateTimeUtil.toInstant(dateTime);
-    }
-
-    public static Date toUtilDate(DateTime dateTime) {
+    public static Date toDate(DateTime dateTime) {
         return dateTime == null ? null : dateTime.toDate();
-    }
-
-    public static Date toUtilDate(Instant dateTime) {
-        return dateTime == null ? null : new Date(dateTime.toEpochMilli());
     }
 }

@@ -1,13 +1,12 @@
 package org.avni.server.domain;
 
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "video_telemetric")
@@ -25,10 +24,12 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Double videoEndTime;
 
     @Column(name = "player_close_time")
-    private Instant playerCloseTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime playerCloseTime;
 
     @Column(name = "player_open_time")
-    private Instant playerOpenTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime playerOpenTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
@@ -44,7 +45,8 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Long organisationId;
 
     @Column(name="created_datetime")
-    private Instant createdDatetime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime createdDatetime;
 
     public Double getVideoStartTime() {
         return videoStartTime;
@@ -63,19 +65,19 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getPlayerCloseTime() {
-        return DateTimeUtil.toJodaDateTime(playerCloseTime);
+        return playerCloseTime;
     }
 
     public void setPlayerCloseTime(DateTime playerCloseTime) {
-        this.playerCloseTime = DateTimeUtil.toInstant(playerCloseTime);
+        this.playerCloseTime = playerCloseTime;
     }
 
     public DateTime getPlayerOpenTime() {
-        return DateTimeUtil.toJodaDateTime(playerOpenTime);
+        return playerOpenTime;
     }
 
     public void setPlayerOpenTime(DateTime playerOpenTime) {
-        this.playerOpenTime = DateTimeUtil.toInstant(playerOpenTime);
+        this.playerOpenTime = playerOpenTime;
     }
 
     public Video getVideo() {
@@ -103,10 +105,10 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getCreatedDatetime() {
-        return DateTimeUtil.toJodaDateTime(createdDatetime);
+        return createdDatetime;
     }
 
     public void setCreatedDatetime(DateTime createdDatetime) {
-        this.createdDatetime = DateTimeUtil.toInstant(createdDatetime);
+        this.createdDatetime = createdDatetime;
     }
 }
