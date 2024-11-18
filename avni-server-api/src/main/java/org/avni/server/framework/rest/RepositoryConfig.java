@@ -1,17 +1,24 @@
 package org.avni.server.framework.rest;
 
+import org.avni.server.StringToJodaDateTimeConverter;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
 import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.domain.organisation.OrganisationStatus;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.data.rest.core.config.RepositoryRestConfiguration;
 import org.springframework.data.rest.webmvc.config.RepositoryRestConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 
 @Configuration
 public class RepositoryConfig implements RepositoryRestConfigurer {
+    @Override
+    public void configureConversionService(ConfigurableConversionService conversionService) {
+        conversionService.addConverter(new StringToJodaDateTimeConverter());
+    }
+
     @Override
     public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
         config.exposeIdsFor(User.class);
@@ -60,4 +67,6 @@ public class RepositoryConfig implements RepositoryRestConfigurer {
          httpMethods.disable(HttpMethod.PATCH));
          */
     }
+
+
 }
