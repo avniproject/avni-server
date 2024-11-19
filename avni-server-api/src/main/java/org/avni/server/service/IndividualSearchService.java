@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -34,13 +36,11 @@ public class IndividualSearchService {
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
         long resultsEnd = new DateTime().getMillis();
-        BigInteger totalCount = subjectSearchRequest.getTotalElements() == null ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : new BigInteger(subjectSearchRequest.getTotalElements());
-        long countEnd = new DateTime().getMillis();
-        logger.info(String.format("Subject search: Time: %d secs, Results: %dms, Count: %dms. Total Records: %d. Executed count query: %b",  TimeUnit.MILLISECONDS.toSeconds(countEnd - startTime), (resultsEnd - startTime), (countEnd - resultsEnd), totalCount, subjectSearchRequest.getTotalElements() == null));
-        return constructIndividual(searchResults, totalCount);
+        logger.info(String.format("Subject search: Time Taken: %dms", (resultsEnd - startTime)));
+        return constructIndividual(searchResults);
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, BigInteger totalCount) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
@@ -64,7 +64,6 @@ public class IndividualSearchService {
                             .collect(Collectors.toList()));
                     individualRecord.put("addressLevel", titleLineages.get(((BigInteger) individualRecord.get("addressId")).longValue()));
                 }).collect(Collectors.toList());
-        recordsMap.put("totalElements", totalCount);
         recordsMap.put("listOfRecords", listOfRecords);
         return recordsMap;
     }

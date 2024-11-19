@@ -23,7 +23,6 @@ public class SubjectSearchRequest {
     private String userGroup;
     private String assignedTo;
     private DateTime createdOn;
-    private String totalElements;
 
     public String getSubjectType() {
         return subjectType;
@@ -164,13 +163,5 @@ public class SubjectSearchRequest {
 
     public void setCreatedOn(DateTime createdOn) {
         this.createdOn = createdOn;
-    }
-
-    public String getTotalElements() {
-        return totalElements;
-    }
-
-    public void setTotalElements(String totalElements) {
-        this.totalElements = totalElements;
     }
 }
