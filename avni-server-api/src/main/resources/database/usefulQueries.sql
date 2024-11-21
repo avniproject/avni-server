@@ -859,6 +859,21 @@ pg_dump --dbname=openchs --username=openchs --role=<org_role> --file=/Users/test
 psql -U openchs --host=localhost --port=6015 -d openchs -f /Users/test/target-dump-update.sql
 
 -- to drop roles. check the oid value
-select 'drop role "' || a.rolname || '";' FROM pg_roles a
-WHERE pg_has_role('openchs', a.oid, 'member') AND a.rolname <> 'openchs' and a.oid > 1443729
+select 'drop role "' || a.rolname || '";'
+FROM pg_roles a
+WHERE pg_has_role('openchs', a.oid, 'member')
+  AND a.rolname <> 'openchs'
+  and a.oid > 1443729
 order by a.oid;
+
+
+-- START // To gain admin role option for openchs user, useful when newly creating openchs / avni_org DB
+CREATE ROLE openchs;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO openchs;
+
+GRANT ALL PRIVILEGES ON DATABASE "postgres" to openchs;
+
+ALTER USER openchs WITH SUPERUSER;
+
+-- END // To gain admin role option for openchs user, useful when newly creating openchs / avni_org DB
