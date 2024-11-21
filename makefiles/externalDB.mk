@@ -39,8 +39,7 @@ else
 	psql -U openchs -d avni_staging_released < $(dumpFile)
 endif
 
-create-local-db-i
-mpl-user: ## Creates new implementation db user in local staging database
+create-local-db-impl-user: ## Creates new implementation db user in local staging database
 ifndef user
 	@echo "Provde the variable user"
 	exit 1
