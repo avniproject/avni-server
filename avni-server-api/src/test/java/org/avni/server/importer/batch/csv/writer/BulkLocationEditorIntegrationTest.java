@@ -41,10 +41,12 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
     @Override
     public void setUp() throws Exception {
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
-        AddressLevelType block = new AddressLevelTypeBuilder().name("Block").level(2d).withUuid(UUID.randomUUID()).build();
-        AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID()).build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID()).build();
-        testDataSetupService.saveLocationTypes(Arrays.asList(block, district, state));
+        testDataSetupService.saveLocationTypes(Collections.singletonList(state));
+        AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).parent(state).withUuid(UUID.randomUUID()).build();
+        testDataSetupService.saveLocationTypes(Collections.singletonList(district));
+        AddressLevelType block = new AddressLevelTypeBuilder().name("Block").level(2d).parent(district).withUuid(UUID.randomUUID()).build();
+        testDataSetupService.saveLocationTypes(Collections.singletonList(block));
         Concept codedConcept = testConceptService.createCodedConcept("Coded Concept", "Answer 1", "Answer 2");
         Concept textConcept = testConceptService.createConcept("Text Concept", ConceptDataType.Text);
         Form locationForm = new TestFormBuilder()
@@ -200,12 +202,19 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
                 verifyExists("Bihar", "District2", "Block21"),
                 verifyNotExists("Bihar, District2, Block21Town"));
 
-        // change to parent at a different level from current parent's level
+        // change to parent of a different type from allowed parent's type
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar, District2, Block21", " Block21Town", "Bihar", "23.45,43.85"),
                 error("Only parent of location type 'District' is allowed for Block21."),
                 verifyExists("Bihar", "District2", "Block21"),
                 verifyNotExists("Bihar, District2, Block21Town"));
+
+        // attempt to change root level location to an invalid parent
+        failure(header("Location with full hierarchy", "Parent location with full hierarchy"),
+                dataRow("Bihar", "Bihar, District2"),
+                error("No parent is allowed for Bihar since it is a top level location."),
+                verifyExists("Bihar"),
+                verifyNotExists("District2, Bihar"));
 
         treatAsDescriptor(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Can be found from Admin -> Locations -> Click Export. Used to specify which location's fields need to be updated. mandatory field",
