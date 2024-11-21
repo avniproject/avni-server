@@ -137,8 +137,6 @@ endif
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
 		--exclude-table-data='batch_*' \
-		--exclude-table='qrtz_*' \
-		--exclude-table='scheduled_job_run' \
 		--exclude-table='public.individual_copy' \
 		--exclude-table='public.program_enrolment_copy' \
 		--exclude-table='public.encounter_copy' \
