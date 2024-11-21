@@ -1,0 +1,6 @@
+"Id","Subject Type","First Name","Last Name","Profile Picture","Date Of Birth","Date Of Birth Verified","Date Of Registration","Registration Location","Gender"
+"Identifier for this row. Optional. If not provided, this will create a new item. You can use either the uuid for this row if you want to update it, or an assigned identifier you have from a previous system you are trying to import.","Allowed values:{Person, Household, Group, Individual}","Mandatory field","Optional","Url/link that points to the picture","Date format: yyyy-mm-dd","Allowed values: {yes, no, y, n, 1, 0}","Date format: yyyy-mm-dd","Allowed values: {latitude, longitude}","Allowed values: {female, male, other Gender}"
+"123e4567-e89b-12d3-a456-426614174000","Individual","user","dummy","https://example.com/profile1.jpg","2024-12-12","yes","2024-12-12","7.123","female"
+"123e4567-e89b-12d3-a456-426614174000","Individual","user","dummy","https://example.com/profile1.jpg","2024-01-12","n","2024-12-12","9.09","female"
+"123e4567-e89b-12d3-a456-426614174000","Individual","user","dummy","https://example.com/profile1.jpg","2024-12-12","yes","2024-12-12","8.21","female"
+"",

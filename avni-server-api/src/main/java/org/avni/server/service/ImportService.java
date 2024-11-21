@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Service
@@ -203,8 +204,8 @@ public class ImportService implements ImportLocationsConstants {
 
     private String listAsSeparatedString(List<String> rowItems) {
         return rowItems.stream()
-                .map(rowItem -> String.format(STRING_PLACEHOLDER_BLOCK, rowItem))
-                .collect(Collectors.joining(STRING_CONSTANT_SEPARATOR));
+                .map(rowItem -> String.format("\"%s\"", rowItem.replace("\"", "")))
+                .collect(Collectors.joining(","));
     }
 
     private String buildHeaderRowForLocations(LocationWriter.LocationUploadMode locationUploadMode, List<AddressLevelType> addressLevelTypes,
@@ -324,13 +325,128 @@ public class ImportService implements ImportLocationsConstants {
         return addToResponse(response, formMapping);
     }
 
-    private String getSubjectSampleFile(String[] uploadSpec, String response, SubjectType subjectType) {
-        SubjectHeaders subjectHeaders = new SubjectHeaders(subjectType);
-        response = addToResponse(response, Arrays.asList(subjectHeaders.getAllHeaders()));
-        response = addToResponse(response, addressLevelTypeRepository.getAllNames());
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[1]).getUuid(), null, null, FormType.IndividualProfile);
-        return addToResponse(response, formMapping);
+  private String getSubjectSampleFile(String[] uploadSpec, String response, SubjectType subjectType) {
+    StringBuilder sampleFileBuilder = new StringBuilder();
+    
+    try (InputStream csvFileResourceStream = this.getClass().getResourceAsStream("/bulkuploads/sample/subjects.csv")) {
+        BufferedReader csvReader = new BufferedReader(new InputStreamReader(csvFileResourceStream));
+        
+        List<String> formElementHeaders = appendHeaderRow(sampleFileBuilder, csvReader, subjectType);
+        
+        appendDescriptionRow(sampleFileBuilder, csvReader, formElementHeaders, 
+            formMappingRepository.getRequiredFormMapping(subjectType.getUuid(), null, null, FormType.IndividualProfile));
+        
+        appendSampleRows(sampleFileBuilder, csvReader, formElementHeaders, 
+            formMappingRepository.getRequiredFormMapping(subjectType.getUuid(), null, null, FormType.IndividualProfile));
+        
+        appendEntryRow(sampleFileBuilder, csvReader, formElementHeaders);
+        
+    } catch (IOException e) {
+        throw new RuntimeException(e);
     }
+    
+    return sampleFileBuilder.toString();
+}
+
+private List<String> appendHeaderRow(StringBuilder sampleFileBuilder, BufferedReader csvReader, 
+                                   SubjectType subjectType) throws IOException {
+    String headerRow = csvReader.readLine();
+    
+    FormMapping formMapping = formMappingRepository.getRequiredFormMapping(
+        subjectType.getUuid(), 
+        null, 
+        null, 
+        FormType.IndividualProfile
+    );
+    
+    List<String> formElementHeaders = formMapping.getForm().getApplicableFormElements().stream()
+        .filter(formElement -> !ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType()))
+        .map(this::getHeaderName)
+        .collect(Collectors.toList());
+    
+    String fullHeaderRow = formElementHeaders.isEmpty() ? headerRow : 
+        headerRow + "," + String.join(",", formElementHeaders);
+    sampleFileBuilder.append(fullHeaderRow);
+    
+    return formElementHeaders;
+}
+
+private void appendDescriptionRow(StringBuilder sampleFileBuilder, BufferedReader csvReader,
+                                List<String> formElementHeaders, FormMapping formMapping) throws IOException {
+    String descriptionRow = csvReader.readLine();
+    
+    if (!formElementHeaders.isEmpty()) {
+        String formElementDescriptions = formElementHeaders.stream()
+            .map((String h) -> {
+                String headerName = h.replace("\"", "");
+                FormElement formElement = formMapping.getForm().getApplicableFormElements().stream()
+                    .filter(fe -> getHeaderName(fe).replace("\"", "").equals(headerName))
+                    .findFirst()
+                    .orElse(null);
+                return String.format("\"%s\"", ALLOWED_VALUES + 
+                    (formElement != null ? conceptService.getSampleValuesForSyncConcept(formElement.getConcept()) : ""));
+            })
+            .collect(Collectors.joining(","));
+        descriptionRow = descriptionRow + "," + formElementDescriptions;
+    }
+    
+    sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(descriptionRow);
+}
+
+private void appendSampleRows(StringBuilder sampleFileBuilder, BufferedReader csvReader,
+                            List<String> formElementHeaders, FormMapping formMapping) throws IOException {
+    IntStream.range(0, 3)
+        .mapToObj(i -> {
+            try {
+                return csvReader.readLine();
+            } catch (IOException e) {
+                return null;
+            }
+        })
+        .filter(Objects::nonNull)
+        .forEach(sampleRow -> {
+            if (!formElementHeaders.isEmpty()) {
+                String formElementSamples = formElementHeaders.stream()
+                    .map((String h) -> {
+                        String headerName = h.replace("\"", "");
+                        FormElement formElement = formMapping.getForm().getApplicableFormElements().stream()
+                            .filter(fe -> getHeaderName(fe).replace("\"", "").equals(headerName))
+                            .findFirst()
+                            .orElse(null);
+                            
+                        if (formElement != null) {
+                            String conceptValues = conceptService.getSampleValuesForSyncConcept(formElement.getConcept())
+                                .replaceAll("[{}]", "");
+                            String[] values = conceptValues.split(",");
+                            if (values.length > 0) {
+                                return String.format("\"%s\"", values[0].trim());
+                            }
+                        }
+                        
+                        return "\"Any Text\""; 
+                    })
+                    .collect(Collectors.joining(","));
+                
+                sampleRow = sampleRow + "," + formElementSamples;
+            }
+            
+            sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(sampleRow);
+        });
+}
+
+private void appendEntryRow(StringBuilder sampleFileBuilder, BufferedReader csvReader,
+                          List<String> formElementHeaders) throws IOException {
+    String entryRow = csvReader.readLine();
+    
+    if (!formElementHeaders.isEmpty()) {
+        String formElementEntries = formElementHeaders.stream()
+            .map(header -> "\"\"")
+            .collect(Collectors.joining(","));
+        entryRow = entryRow + "," + formElementEntries;
+    }
+    
+    sampleFileBuilder.append(STRING_CONSTANT_NEW_LINE).append(entryRow);
+}
 
     private String getProgramEnrolmentSampleFile(String[] uploadSpec, String response, Program program) {
         response = addToResponse(response, Arrays.asList(new ProgramEnrolmentHeaders(program).getAllHeaders()));
