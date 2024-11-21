@@ -10,16 +10,16 @@ restore-org-dump:
 ifndef dumpFile
 	@echo "Provde the dumpFile variable"
 	exit 1
+endif
 ifndef dbRole
 	@echo "Provde the dbRole variable"
 	exit 1
-else
-	sed -i '' 's/from form/from public.form/g' "$(dumpFile)"
-	sed -i '' 's/inner join form/inner join public.form/g' "$(dumpFile)"
-	make _clean_db _build_db database=avni_org
-	make create-local-db-impl-user db=avni_org user=$(dbRole)
-	make restore-dump-only dumpFile=$(dumpFile)
 endif
+	-sed -i '' 's/from form/from public.form/g' "$(dumpFile)"
+	-sed -i '' 's/inner join form/inner join public.form/g' "$(dumpFile)"
+	-make _clean_db _build_db database=avni_org
+	-make create-local-db-impl-user db=avni_org user=$(dbRole)
+	-make restore-dump-only dumpFile=$(dumpFile)
 
 restore-staging-dump:
 ifndef dumpFile
@@ -39,7 +39,8 @@ else
 	psql -U openchs -d avni_staging_released < $(dumpFile)
 endif
 
-create-local-db-impl-user: ## Creates new implementation db user in local staging database
+create-local-db-i
+mpl-user: ## Creates new implementation db user in local staging database
 ifndef user
 	@echo "Provde the variable user"
 	exit 1
