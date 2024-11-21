@@ -76,4 +76,15 @@ public class AddressLevelCreatorTest {
         verify(locationRepository).findByTitleAndType(eq("child"), eq(child), any());
         verify(locationRepository).findByTitleLineageIgnoreCase("aParent, child");
     }
+
+    @Test
+    public void shouldFetchFromLineageIfMoreThanOneAddressFoundAndValueForLowestIsEmpty() throws Exception {
+        Row row = new Row(new String[]{"Block", "GP"}, new String[]{"aParent", " "});
+        AddressLevel aParent = new AddressLevelBuilder().title("aParent").type(parent).build();
+
+        when(locationRepository.findByTitleAndType(eq("aParent"), eq(parent), any())).thenReturn(Collections.singletonList(aParent));
+
+        AddressLevel addressLevel = new AddressLevelCreator(locationRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
+        assertThat(addressLevel).isEqualTo(aParent);
+    }
 }

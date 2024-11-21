@@ -23,6 +23,9 @@ public class AuthDetailsController {
     @Value("${avni.webapp.timeout.in.minutes}")
     private int webAppTimeoutInMinutes;
 
+    @Value("${avni.environment}")
+    private String avniEnvironment;
+
     @Autowired
     public AuthDetailsController(AvniKeycloakConfig avniKeycloakConfig, AdapterConfig adapterConfig, CognitoConfig cognitoConfig) {
         this.avniKeycloakConfig = avniKeycloakConfig;
@@ -45,7 +48,7 @@ public class AuthDetailsController {
         String cognitoConfigClientId = cognitoConfig.getClientId();
         return new AuthDetailsController.CompositeIDPDetails( keycloakAuthServerUrl, keycloakClientId,
                 keycloakGrantType, keycloakScope, avniKeycloakConfig.getRealm(), cognitoConfigPoolId,
-                cognitoConfigClientId, idpType, webAppTimeoutInMinutes);
+                cognitoConfigClientId, idpType, webAppTimeoutInMinutes, avniEnvironment);
     }
 
     public static class CompositeIDPDetails {
@@ -55,11 +58,11 @@ public class AuthDetailsController {
         private final Cognito cognito;
 
         public CompositeIDPDetails( String authServerUrl, String keycloakClientId, String grantType, String scope, String keycloakRealm,
-                                   String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes) {
+                                   String poolId, String clientId, IdpType idpType, int webAppTimeoutInMinutes, String avniEnvironment) {
             this.idpType = idpType;
             this.keycloak = new Keycloak(authServerUrl, keycloakClientId, grantType, scope, keycloakRealm);
             this.cognito = new Cognito(poolId, clientId);
-            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes);
+            this.genericConfig = new GenericConfig(webAppTimeoutInMinutes, avniEnvironment);
         }
 
         public Keycloak getKeycloak() {
@@ -134,13 +137,19 @@ public class AuthDetailsController {
 
         public static class GenericConfig {
             private final int webAppTimeoutInMinutes;
+            private final String avniEnvironment;
 
-            public GenericConfig(int webAppTimeoutInMinutes) {
+            public GenericConfig(int webAppTimeoutInMinutes, String avniEnvironment) {
                 this.webAppTimeoutInMinutes = webAppTimeoutInMinutes;
+                this.avniEnvironment = avniEnvironment;
             }
 
             public int getWebAppTimeoutInMinutes() {
                 return webAppTimeoutInMinutes;
+            }
+
+            public String getAvniEnvironment() {
+                return avniEnvironment;
             }
         }
     }

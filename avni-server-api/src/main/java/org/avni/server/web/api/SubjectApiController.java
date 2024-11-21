@@ -52,6 +52,8 @@ public class SubjectApiController {
     private final AddressLevelService addressLevelService;
     private final String V3_REQUIRES_ADDRESS_MAP = String.format("version 3 and above requires '%s' instead of '%s'", ADDRESS_MAP, ADDRESS);
     private final String ADDRESS_MAP_NO_RESULTS = String.format("Address corresponding to '%s' not found", ADDRESS_MAP);
+    private final String INVALID_ADDRESS_TYPE_FOR_SUBJECT_TYPE = "Address '%s' of type '%s' is not valid for subject type '%s'";
+    private final SubjectTypeService subjectTypeService;
 
 
     @Autowired
@@ -60,7 +62,7 @@ public class SubjectApiController {
                                 LocationService locationService, SubjectTypeRepository subjectTypeRepository,
                                 LocationRepository locationRepository, GenderRepository genderRepository,
                                 SubjectMigrationService subjectMigrationService, IndividualService individualService,
-                                S3Service s3Service, MediaObservationService mediaObservationService, AccessControlService accessControlService, AddressLevelService addressLevelService) {
+                                S3Service s3Service, MediaObservationService mediaObservationService, AccessControlService accessControlService, AddressLevelService addressLevelService, SubjectTypeService subjectTypeService) {
         this.conceptService = conceptService;
         this.individualRepository = individualRepository;
         this.conceptRepository = conceptRepository;
@@ -75,6 +77,7 @@ public class SubjectApiController {
         this.mediaObservationService = mediaObservationService;
         this.accessControlService = accessControlService;
         this.addressLevelService = addressLevelService;
+        this.subjectTypeService = subjectTypeService;
     }
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
@@ -213,9 +216,17 @@ public class SubjectApiController {
             throw new IllegalArgumentException(V3_REQUIRES_ADDRESS_MAP);
         }
         Optional<AddressLevel> addressLevel = versionGreaterThan2 ? addressLevelService.findByAddressMap(request.getAddressMap()) : locationRepository.findByTitleLineageIgnoreCase(request.getAddress());
-        if (!addressLevel.isPresent() && !subjectType.isAllowEmptyLocation()) {
-            throw new IllegalArgumentException(versionGreaterThan2 ? ADDRESS_MAP_NO_RESULTS : String.format("Address '%s' not found", request.getAddress()));
+        if (!addressLevel.isPresent()) {
+            if (!subjectType.isAllowEmptyLocation()) {
+                throw new IllegalArgumentException(versionGreaterThan2 ? ADDRESS_MAP_NO_RESULTS : String.format("Address '%s' not found", request.getAddress()));
+            }
+        } else {
+            AddressLevel address = addressLevel.get();
+            if (!subjectTypeService.getRegistrableLocationTypes(subjectType).contains(address.getType())) {
+                throw new IllegalArgumentException(String.format(INVALID_ADDRESS_TYPE_FOR_SUBJECT_TYPE, versionGreaterThan2 ? request.getAddressMap() : request.getAddress(), address.getType().getName(), subjectType.getName()));
+            }
         }
+
         setExternalId(subject, request.getExternalId());
         subject.setFirstName(request.getFirstName());
         setMiddleName(subject, subjectType, request.getMiddleName());
@@ -298,7 +309,8 @@ public class SubjectApiController {
         if (request.containsKey(ADDRESS) || request.containsKey(ADDRESS_MAP)) {
             Optional<AddressLevel> addressLevel;
             AddressLevel newAddressLevel;
-            if (ApiRequestContextHolder.isVersionGreaterThan(2)) {
+            boolean versionGreaterThan2 = ApiRequestContextHolder.isVersionGreaterThan(2);
+            if (versionGreaterThan2) {
                 if (!request.containsKey(ADDRESS_MAP)) {
                     throw new IllegalArgumentException(String.format("version 3 and above requires '%s' instead of '%s'", ADDRESS_MAP, ADDRESS));
                 }
@@ -309,6 +321,10 @@ public class SubjectApiController {
                 String locationTitleLineage = (String) request.get(ADDRESS);
                 addressLevel = locationRepository.findByTitleLineageIgnoreCase(locationTitleLineage);
                 newAddressLevel = addressLevel.orElseThrow(() -> new IllegalArgumentException(String.format("Address '%s' not found", locationTitleLineage)));
+            }
+
+            if (!subjectTypeService.getRegistrableLocationTypes(subjectType).contains(newAddressLevel.getType())) {
+                throw new IllegalArgumentException(String.format(INVALID_ADDRESS_TYPE_FOR_SUBJECT_TYPE, versionGreaterThan2 ? request.get(ADDRESS_MAP) : request.get(ADDRESS), newAddressLevel.getType().getName(), subjectType.getName()));
             }
 
             subject.setAddressLevel(newAddressLevel);

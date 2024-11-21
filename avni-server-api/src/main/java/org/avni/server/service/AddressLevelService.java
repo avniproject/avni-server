@@ -160,15 +160,11 @@ public class AddressLevelService {
 
         if (addressLevels.size() != addressMap.size()) return Optional.empty();
 
-        String typeHierarchyForAddressMap = addressLevels.stream().map(al -> String.valueOf(al.getTypeId())).collect(Collectors.joining("."));
         String lineageForAddressMap = addressLevels.stream().map(al -> String.valueOf(al.getId())).collect(Collectors.joining("."));
 
-        TreeSet<String> addressLevelTypeHierarchies = locationHierarchyService.fetchAndFilterHierarchies();
-        if (addressLevelTypeHierarchies.stream().anyMatch(hierarchy -> hierarchy.equals(typeHierarchyForAddressMap))) {
-            AddressLevel matchedAddressLevel = addressLevels.get(addressLevels.size() - 1);
-            if (matchedAddressLevel.getLineage().equals(lineageForAddressMap)) {
-                return Optional.of(matchedAddressLevel);
-            }
+        AddressLevel matchedAddressLevel = addressLevels.get(addressLevels.size() - 1);
+        if (matchedAddressLevel.getLineage().equals(lineageForAddressMap)) {
+            return Optional.of(matchedAddressLevel);
         }
         return Optional.empty();
     }
