@@ -65,6 +65,8 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private TestDataSetupService testDataSetupService;
     @Autowired
     private UserSubjectAssignmentService userSubjectAssignmentService;
+    @Autowired
+    private GeneralRepository generalRepository;
 
     private TestDataSetupService.TestOrganisationData organisationData;
     private TestDataSetupService.TestCatchmentData catchmentData;
@@ -74,6 +76,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
     private SubjectType subjectTypeWithNoAccess;
     private Program programWithNoAccess;
     private GroupRole groupRoleForGroupSubjectTypeWithCatchmentBasedSync;
+    private GroupRole groupRoleForGroupSubjectTypeWithDirectAssignment;
     private Concept conceptForAttributeBasedSync;
     private SubjectType subjectTypeWithSyncAttributeBasedSync;
     private SubjectType groupSubjectTypeWithSyncAttributeBasedSync;
@@ -167,6 +170,13 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
         groupRoleRepository.save(new TestGroupRoleBuilder().withMandatoryFieldsForNewEntity().withGroupSubjectType(groupSubjectTypeForDirectAssignment).withMemberSubjectType(subjectTypeForDirectAssignment).build());
 
+        groupRoleForGroupSubjectTypeWithDirectAssignment = groupRoleRepository.save(
+                new TestGroupRoleBuilder()
+                        .withMandatoryFieldsForNewEntity()
+                        .withGroupSubjectType(groupSubjectTypeForDirectAssignment)
+                        .withMemberSubjectType(subjectTypeForDirectAssignment)
+                        .build());
+
         testGroupService.giveViewSubjectPrivilegeTo(organisationData.getGroup(), subjectTypeWithCatchmentBasedSync, subjectTypeForDirectAssignment, subjectTypeWithSyncAttributeBasedSync, groupSubjectTypeWithSyncAttributeBasedSync, groupSubjectTypeForCatchmentBasedSync, groupSubjectTypeForDirectAssignment);
         testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), subjectTypeWithCatchmentBasedSync, programWithCatchmentBasedSync);
         testGroupService.giveViewProgramPrivilegeTo(organisationData.getGroup(), subjectTypeForDirectAssignment, programForDirectAssignment);
@@ -175,7 +185,6 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
 
     @Test
     @Transactional
-    @Ignore
     public void sync() throws Exception {
         // Catchment tx entities
         Individual inTheCatchment = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectTypeWithCatchmentBasedSync).withLocation(catchmentData.getAddressLevel1()).build());
@@ -282,7 +291,7 @@ public class TransactionDataSyncTest extends AbstractControllerIntegrationTest {
         assertTrue(hasEntity(enrolmentAssignedNow, enrolments));
         // Group Subject
         Individual assignedGroupSubject = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(groupSubjectTypeForDirectAssignment).withLocation(catchmentData.getAddressLevel1()).build());
-        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithCatchmentBasedSync).withMember(assigned).withGroup(assignedGroupSubject).build());
+        GroupSubject groupSubjectInDirectAssignment = testGroupSubjectService.save(new TestGroupSubjectBuilder().withGroupRole(groupRoleForGroupSubjectTypeWithDirectAssignment).withMember(assigned).withGroup(assignedGroupSubject).build());
         userSubjectAssignmentService.assignSubjects(organisationData.getUser(), Collections.singletonList(assignedGroupSubject), false);
 
         groupSubjects = getGroupSubjects(groupSubjectTypeForDirectAssignment);
