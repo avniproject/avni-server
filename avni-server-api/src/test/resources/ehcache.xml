@@ -1,43 +1,60 @@
-<!--
-- Uncomment the cacheEventListenerFactory and set log to debug if you want to debug cache behaviour
-- This file will be used only if an external file is not configured through the AVNI_EHCACHE_FILE environment variable
-- Default disk store is set to the user's home directory.
-- Separate caches are defined so that they can be evicted selectively. These can be
--->
-<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ehcache.xsd"
-         updateCheck="true" monitoring="autodetect" dynamicConfig="true"
-         maxBytesLocalHeap="10M" statistics="true">
-    <diskStore path="user.home/.ehcache"/>
-    <cache name="org.avni.server.domain.Concept" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.8.xsd">
+
+    <cache-template name="default">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+    </cache-template>
+
+    <cache alias="org.avni.server.domain.ConceptAnswer">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <cache name="org.avni.server.domain.ConceptAnswer" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+
+    <cache alias="org.avni.server.domain.Concept">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <cache name="org.avni.server.domain.User" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+
+    <cache alias="org.avni.server.domain.User">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <cache name="org.avni.server.domain.AddressLevel" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+
+    <cache alias="org.avni.server.domain.AddressLevel">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <cache name="org.avni.server.domain.VirtualCatchment" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+
+    <cache alias="org.avni.server.domain.VirtualCatchment">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <cache name="org.avni.server.domain.Catchment" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+
+    <cache alias="org.avni.server.domain.Catchment">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <cache name="org.avni.server.domain.Concept.conceptAnswers" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
+
+    <cache alias="org.avni.server.domain.Concept.conceptAnswers">
+        <expiry>
+            <ttl unit="seconds">86400</ttl>
+        </expiry>
+        <heap unit="entries">10000</heap>
     </cache>
-    <defaultCache maxEntriesLocalHeap="0" eternal="false" timeToIdleSeconds="300" timeToLiveSeconds="600" statistics="true">
-        <persistence strategy="localTempSwap"/>
-<!--        <cacheEventListenerFactory class="org.avni.server.framework.hibernate.AvniCacheEventListenerFactory"  listenFor="all"/>-->
-    </defaultCache>
-</ehcache>
+</config>

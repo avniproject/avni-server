@@ -8,6 +8,7 @@ include makefiles/externalDB.mk
 include makefiles/prod.mk
 include makefiles/api-test-data.mk
 include makefiles/lfe.mk
+include makefiles/gradle.mk
 
 help:
 	@IFS=$$'\n' ; \
