@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
+
 @Component
 public class BulkLocationEditor extends BulkLocationModifier {
     private final LocationService locationService;
@@ -45,11 +47,14 @@ public class BulkLocationEditor extends BulkLocationModifier {
                 allErrorMsgs.add(String.format("Provided new location parent does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations - '%s'", newLocationParentTitleLineage));
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
-            AddressLevelType currentParentType = null;
-            AddressLevel currentParent = existingLocationAddressLevel.get().getParentLocation();
-            if (currentParent != null) {currentParentType = currentParent.getType();}
-            if (!newLocationParentAddressLevel.getType().equals(currentParentType)) {
-                allErrorMsgs.add(String.format("Only parent of location type \'%s\' is allowed for %s.", currentParentType.getName(), existingLocationAddressLevel.get().getTitle()));
+
+            AddressLevelType allowedParentType = existingLocationAddressLevel.get().getType().getParent();
+            if (!nullSafeEquals(allowedParentType, newLocationParentAddressLevel.getType())) {
+                if (allowedParentType != null) {
+                    allErrorMsgs.add(String.format("Only parent of location type \'%s\' is allowed for %s.", allowedParentType.getName(), existingLocationAddressLevel.get().getTitle()));
+                } else {
+                    allErrorMsgs.add(String.format("No parent is allowed for %s since it is a top level location.", existingLocationAddressLevel.get().getTitle()));
+                }
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }
         }
