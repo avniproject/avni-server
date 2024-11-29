@@ -24,7 +24,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     private final Logger logger;
 
     protected static final String ENCOUNTER_FILTER = "i.id in (select e.individual_id from encounter e where e.encounter_date_time is not null and e.is_voided is false\n";
-    protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.encounter_date_time is not null and penr.is_voided is false\n";
+    protected static final String PROGRAM_ENROLMENT_FILTER = "i.id in (select penr.individual_id from program_enrolment penr where penr.enrolment_date_time is not null and penr.is_voided is false\n";
     protected static final String PROGRAM_ENCOUNTER_FILTER = "i.id in (select penr.individual_id from program_enrolment penr join program_encounter penc on penc.program_enrolment_id = penr.id where penc.encounter_date_time is not null and penc.is_voided is false and penr.is_voided is false\n";
     protected static final String ADDRESS_FILTER = "i.address_id in (select al.id from address_level al where 1=1\n";
     protected static final String SEARCH_ALL_FILTER = "i.id in (select i.id from individual i join program_enrolment penr on penr.individual_id = i.id\n";
