@@ -1,15 +1,13 @@
 package org.avni.server.web;
+
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.metabase.DatabaseService;
-import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.dao.metabase.MetabaseConnector;
-import org.avni.server.dao.metabase.DatabaseRepository;
-import org.avni.server.service.metabase.MetabaseService;
-import org.avni.server.service.metabase.MetabaseUserService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.metabase.DatabaseService;
+import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.response.metabase.CreateQuestionsResponse;
 import org.avni.server.web.response.metabase.SetupStatusResponse;
 import org.avni.server.web.response.metabase.SetupToggleResponse;
@@ -20,15 +18,13 @@ import org.springframework.web.bind.annotation.*;
 public class MetabaseController {
     private final DatabaseService databaseService;
     private final MetabaseService metabaseService;
-    private final MetabaseUserService userService;
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
 
-    public MetabaseController(DatabaseService databaseService,MetabaseService metabaseService, MetabaseUserService userService , MetabaseConnector metabaseConnector,DatabaseRepository databaseRepository,AccessControlService accessControlService ,OrganisationConfigService organisationConfigService) {
+    public MetabaseController(DatabaseService databaseService, MetabaseService metabaseService, AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
         this.databaseService = databaseService;
         this.metabaseService = metabaseService;
-        this.userService = userService;
-        this.accessControlService= accessControlService;
+        this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
     }
 
