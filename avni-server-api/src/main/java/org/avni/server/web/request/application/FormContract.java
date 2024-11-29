@@ -7,19 +7,13 @@ import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.ReferenceDataContract;
-
-import java.io.InvalidObjectException;
-
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
 import org.joda.time.DateTime;
+
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_NAME;
-import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_UUID;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"name", "uuid", "formType", "userUUID", "formElementGroups"})
@@ -90,25 +84,6 @@ public class FormContract extends ReferenceDataContract {
 
     public Long getOrganisationId() {
         return organisationId;
-    }
-
-    public void validate() throws InvalidObjectException {
-        HashSet<String> uniqueConcepts = new HashSet<>();
-        for (FormElementGroupContract formElementGroup : getFormElementGroups()) {
-            for (FormElementContract formElement : formElementGroup.getFormElements()) {
-                String conceptUuid = formElement.getConcept().getUuid();
-                String conceptName = formElement.getConcept().getName();
-                if (!formElement.isVoided() && !formElement.isChildFormElement() &&
-                        !PLACEHOLDER_CONCEPT_NAME.matcher(conceptName == null ? "" : conceptName).matches() &&
-                        !conceptUuid.equals(PLACEHOLDER_CONCEPT_UUID) &&
-                        !uniqueConcepts.add(conceptUuid)) {
-                    throw new InvalidObjectException(String.format(
-                            "Cannot use same concept twice. Form{uuid='%s',..} uses Concept{uuid='%s',..} twice",
-                            getUuid(),
-                            conceptUuid));
-                }
-            }
-        }
     }
 
     public SubjectType getSubjectType() {

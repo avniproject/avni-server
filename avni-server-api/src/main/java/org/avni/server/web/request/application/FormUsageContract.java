@@ -11,6 +11,7 @@ public class FormUsageContract {
     private String formElementGroupUUID;
     private String formElementUUID;
     private String formElementGroupName;
+    private String formElementQGGroupName;
     private String formElementName;
 
     static public FormUsageContract fromEntity(FormElement formElement) {
@@ -23,6 +24,7 @@ public class FormUsageContract {
         formUsageContract.setFormName(form.getName());
         formUsageContract.setFormUUID(form.getUuid());
         formUsageContract.setFormElementGroupName(formElementGroup.getName());
+        formUsageContract.setFormElementQGGroupName(formElement.isPartOfQuestionGroup() ? formElement.getGroup().getName() : null);
         formUsageContract.setformElementName(formElement.getName());
         return formUsageContract;
     }
@@ -82,5 +84,11 @@ public class FormUsageContract {
         return formElementName;
     }
 
+    public String getFormElementQGGroupName() {
+        return formElementQGGroupName;
+    }
 
+    public void setFormElementQGGroupName(String formElementQGGroupName) {
+        this.formElementQGGroupName = formElementQGGroupName;
+    }
 }

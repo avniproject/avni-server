@@ -16,7 +16,4 @@ public class ReactAdminUtil {
         return errorMap;
     }
 
-    public static String getVoidedName(String name, Long id) {
-        return String.format("%s (voided~%d)", name, id);
-    }
 }

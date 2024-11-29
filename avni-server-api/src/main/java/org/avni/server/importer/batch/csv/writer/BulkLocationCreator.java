@@ -1,7 +1,7 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
-import org.avni.server.application.FormElement;
+import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
@@ -16,6 +16,7 @@ import org.avni.server.service.LocationService;
 import org.avni.server.util.CollectionUtil;
 import org.avni.server.util.S;
 import org.avni.server.web.request.LocationContract;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +37,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public static final String ParentMissingOfLocation = "Parent missing for location provided";
     public static final String NoLocationProvided = "No location provided";
 
+    @Autowired
     public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService) {
         super(locationRepository, observationCreator);
         this.locationService = locationService;
@@ -94,7 +96,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         additionalHeaders.removeIf(StringUtils::isEmpty);
         if (!additionalHeaders.isEmpty()) {
             List<String> locationPropertyNames = formService.getFormElementNamesForLocationTypeForms()
-                    .stream().map(FormElement::getName).collect(Collectors.toList());
+                    .stream().map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList());
             locationPropertyNames.add(LocationHeaders.gpsCoordinates);
             if ((!locationPropertyNames.containsAll(additionalHeaders))) {
                 allErrorMsgs.add(UnknownHeadersErrorMessage);
@@ -103,7 +105,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         }
     }
 
-    private AddressLevel createAddressLevel(Row row, AddressLevel parent, String header, List<String> locationTypeNames) {
+    private AddressLevel createAddressLevel(Row row, AddressLevel parent, String header, List<String> locationTypeNames) throws BuilderException {
         AddressLevel location;
         location = locationRepository.findChildLocation(parent, row.get(header));
         if (location == null) {
@@ -151,6 +153,6 @@ public class BulkLocationCreator extends BulkLocationModifier {
 
     private boolean skipRow(Row row, List<String> hierarchicalLocationTypeNames) {
         List<String> values = row.get(hierarchicalLocationTypeNames);
-        return CollectionUtil.anyStartsWith(values, ImportLocationsConstants.Example);
+        return CollectionUtil.anyStartsWith(values, ImportLocationsConstants.EXAMPLE);
     }
 }

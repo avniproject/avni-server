@@ -44,10 +44,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
@@ -189,10 +186,10 @@ public class IndividualController extends AbstractController<Individual> impleme
             Pageable pageable) {
         IndividualRepository repo = this.individualRepository;
         return repo.findAll(
-                where(repo.getFilterSpecForName(name))
-                        .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
-                        .and(repo.getFilterSpecForVoid(false))
-                , pageable)
+                        where(repo.getFilterSpecForName(name))
+                                .and(repo.getFilterSpecForSubjectTypeId(subjectTypeUUID))
+                                .and(repo.getFilterSpecForVoid(false))
+                        , pageable)
                 .map(t -> projectionFactory.createProjection(IndividualWebProjection.class, t));
     }
 
@@ -268,13 +265,13 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional
     public AvniEntityResponse voidSubject(@PathVariable String uuid) {
         try {
-        Individual individual = individualRepository.findByUuid(uuid);
+            Individual individual = individualRepository.findByUuid(uuid);
             txDataControllerHelper.checkSubjectAccess(individual);
-        if (individual == null) {
+            if (individual == null) {
                 return AvniEntityResponse.error("Subject not found");
-        }
-        accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
-        individualService.voidSubject(individual);
+            }
+            accessControlService.checkSubjectPrivilege(PrivilegeType.VoidSubject, individual);
+            individualService.voidSubject(individual);
             return new AvniEntityResponse(individual);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException | BadRequestError e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -352,21 +349,22 @@ public class IndividualController extends AbstractController<Individual> impleme
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
+        accessControlService.checkHasAnyOfSpecificSubjectPrivileges(Arrays.asList(PrivilegeType.EditSubject, PrivilegeType.RegisterSubject), individualRequest.getSubjectTypeUUID());
         try {
-        logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
+            logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
             Individual savedIndividual = individualRepository.findEntity(individualRequest.getUuid());
             //Subject is changed after this line, hence the following line cannot be moved down closer to its usage
             SubjectPartitionData subjectPartitionData = SubjectPartitionData.create(savedIndividual);
 
-        Individual individual = createIndividual(individualRequest);
+            Individual individual = createIndividual(individualRequest);
 
-        FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
-        entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
+            FormMapping formMapping = formMappingService.findBy(individual.getSubjectType(), null, null, FormType.IndividualProfile);
+            entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Subject, individual.getId(), ApprovalStatus.Status.Pending, individual.getSubjectType().getUuid(), formMapping);
             // Sync attribute values are picked from the field on individual and not from observations, hence this should be done after the individual is saved
             txDataControllerHelper.checkSubjectAccess(individual, subjectPartitionData);
-        logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
+            logger.info(String.format("Saved individual with UUID %s", individualRequest.getUuid()));
 
-        return new AvniEntityResponse(individual);
+            return new AvniEntityResponse(individual);
         } catch (TxDataControllerHelper.TxDataPartitionAccessDeniedException e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return AvniEntityResponse.error(e.getMessage());
@@ -389,7 +387,7 @@ public class IndividualController extends AbstractController<Individual> impleme
             logger.error(errorMessage);
             individual.updateAudit();
         } else {
-        individual.setObservations(observations);
+            individual.setObservations(observations);
         }
 
         Individual savedIndividual = individualService.save(individual);
@@ -430,5 +428,4 @@ public class IndividualController extends AbstractController<Individual> impleme
             return locationRepository.findByTitleIgnoreCase(individualRequest.getAddressLevel());
         }
     }
-
 }

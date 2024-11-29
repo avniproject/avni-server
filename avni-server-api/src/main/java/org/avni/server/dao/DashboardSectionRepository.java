@@ -7,6 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "dashboardSection", path = "dashboardSection")
-public interface DashboardSectionRepository extends ReferenceDataRepository<DashboardSection>, FindByLastModifiedDateTime<DashboardSection>, JpaSpecificationExecutor<DashboardSection> {
-
+public interface DashboardSectionRepository extends ReferenceDataRepository<DashboardSection>, JpaSpecificationExecutor<DashboardSection>, EndOfLife1EndpointRepository<DashboardSection> {
 }

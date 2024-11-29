@@ -43,7 +43,6 @@ public class AddressLevelContractWeb {
         addressLevelContractWeb.setLevel(locationProjection.getLevel());
         addressLevelContractWeb.setParentId(locationProjection.getParentId());
         addressLevelContractWeb.setLineage(locationProjection.getLineage());
-        addressLevelContractWeb.setTitleLineage(locationProjection.getTitleLineage());
         addressLevelContractWeb.setUuid(locationProjection.getUuid());
         return addressLevelContractWeb;
     }

@@ -8,7 +8,6 @@ import java.util.List;
 
 @NoRepositoryBean
 public interface AvniJpaRepository<T, ID> extends JpaRepository<T, ID> {
-
     @Override
     @RestResource(exported = false)
     <S extends T> S save(S entity);

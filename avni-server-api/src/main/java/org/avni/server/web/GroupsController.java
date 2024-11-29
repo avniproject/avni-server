@@ -6,10 +6,10 @@ import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.GroupsService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.GroupContract;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -125,7 +125,7 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
             return ResponseEntity.badRequest().body(String.format("Default group %s cannot be deleted", group.getName()));
 
         group.setVoided(true);
-        group.setName((ReactAdminUtil.getVoidedName(group.getName(), group.getId())));
+        group.setName((EntityUtil.getVoidedName(group.getName(), group.getId())));
         group.updateAudit();
         groupRepository.save(group);
 

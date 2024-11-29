@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
@@ -13,8 +14,16 @@ import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.avni.server.domain.StandardReportCardTypeType.OverdueVisits;
+import static org.avni.server.domain.StandardReportCardTypeType.ScheduledVisits;
+import static org.avni.server.mapper.dashboard.DefaultDashboardConstants.*;
 
 @Service
 public class CardService implements NonScopeAwareService {
@@ -62,8 +71,10 @@ public class CardService implements NonScopeAwareService {
         return cardRepository.save(existingCard);
     }
 
-    public void deleteCard(ReportCard card) {
+    public void deleteCard(Long id) {
+        ReportCard card = cardRepository.findEntity(id);
         card.setVoided(true);
+        card.setName(EntityUtil.getVoidedName(card.getName(), card.getId()));
         cardRepository.save(card);
     }
 
@@ -84,6 +95,7 @@ public class CardService implements NonScopeAwareService {
                     reportCardWebRequest.getStandardReportCardInputPrograms(),
                     reportCardWebRequest.getStandardReportCardInputEncounterTypes(), reportCardWebRequest.getStandardReportCardInputRecentDuration(), reportCard);
         } else {
+            reportCard.resetStandardReportCardInput();
             reportCard.setStandardReportCardType(null);
         }
     }
@@ -105,20 +117,27 @@ public class CardService implements NonScopeAwareService {
     }
 
     private void buildStandardReportCardInputs(StandardReportCardType type, List<String> subjectTypes, List<String> programs, List<String> encounterTypes, ValueUnit recentDuration, ReportCard card) {
+        if (!type.getType().isInputStandardReportCardType()) {
+            card.resetStandardReportCardInput();
+            return;
+        }
+
         card.setStandardReportCardInputSubjectTypes(subjectTypes);
         card.setStandardReportCardInputPrograms(programs);
         card.setStandardReportCardInputEncounterTypes(encounterTypes);
 
-        if (isRecentStandardReportCard(type.getName())) {
-            if (recentDuration == null) {
-                throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
-            }
-            card.setStandardReportCardInputRecentDuration(recentDuration);
-        }
+        buildStandardReportCardInputRecentDuration(type, recentDuration, card);
     }
 
-    private boolean isRecentStandardReportCard(String cardTypeName) {
-        return cardTypeName.toLowerCase().contains("recent");
+    private void buildStandardReportCardInputRecentDuration(StandardReportCardType type, ValueUnit recentDuration, ReportCard card) {
+        if (!type.getType().isRecentStandardReportCardType()) {
+            card.resetStandardReportCardInputRecentDuration();
+            return;
+        }
+        if (recentDuration == null) {
+            throw new BadRequestError("Recent Duration required for Recent type Standard Report cards");
+        }
+        card.setStandardReportCardInputRecentDuration(recentDuration);
     }
 
     private void buildCard(ReportCardContract reportCardRequest, ReportCard card) {
@@ -138,25 +157,26 @@ public class CardService implements NonScopeAwareService {
     }
 
     public ValueUnit buildDurationForRecentTypeCards(String recentDurationString) {
-        if (recentDurationString == null) return null;
+        if (!StringUtils.hasText(recentDurationString)) {
+            return ValueUnit.getDefaultRecentDuration();
+        }
         try {
             return ObjectMapperSingleton.getObjectMapper().readValue(recentDurationString, ValueUnit.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private void assertNewNameIsUnique(String newName, String oldName) {
-        if (!newName.equals(oldName)) {
+        if (!newName.trim().equalsIgnoreCase(oldName.trim())) {
             assertNoExistingCardWithName(newName);
         }
     }
 
     private void assertNoExistingCardWithName(String name) {
-        ReportCard existingCard = cardRepository.findByName(name);
-        if (existingCard != null) {
-            throw new BadRequestError(String.format("Card %s already exists", name));
+        List<ReportCard> existingCards = cardRepository.findByNameIgnoreCaseAndIsVoidedFalse(name);
+        if (existingCards != null && existingCards.size() > 0) {
+            throw new BadRequestError(String.format("Report card with same name (%s) already exists", name));
         }
     }
 
@@ -187,30 +207,32 @@ public class CardService implements NonScopeAwareService {
         }
     }
 
-    public Map<String, ReportCard> createDefaultDashboardCards(Organisation organisation) {
-        List<String> defaultDashboardStandardCardTypeNames = Arrays.asList("Scheduled visits", "Overdue visits", "Total", "Recent registrations", "Recent enrolments", "Recent visits", "Due checklist");
-        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByNameIn(defaultDashboardStandardCardTypeNames);
-        Map<String, ReportCard> savedCards = new HashMap<>();
+    public Map<StandardReportCardTypeType, ReportCard> createDefaultDashboardCards(Organisation organisation) {
+        Map<StandardReportCardTypeType, String> defaultDashboardCards = CARD_TYPE_UUID_MAPPING;
+        List<StandardReportCardType> standardReportCardTypes = standardReportCardTypeRepository.findAllByTypeIn(defaultDashboardCards.keySet());
+        Map<StandardReportCardTypeType, ReportCard> savedCards = new HashMap<>();
         standardReportCardTypes.forEach(standardReportCardType -> {
             ReportCard reportCard = new ReportCard();
-            reportCard.setUuid(UUID.randomUUID().toString());
+            reportCard.setUuid(defaultDashboardCards.get(standardReportCardType.getType()));
             reportCard.setStandardReportCardType(standardReportCardType);
             reportCard.setOrganisationId(organisation.getId());
-            reportCard.setName(standardReportCardType.getName());
-            reportCard.setColour("#ffffff");
-            reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
-            reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
-            reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
-            if (isRecentStandardReportCard(standardReportCardType.getName())) {
-                reportCard.setStandardReportCardInputRecentDuration(new ValueUnit("1", "days"));
+            reportCard.setName(standardReportCardType.getDescription());
+            reportCard.setColour(WHITE_BG_COLOUR);
+            if (standardReportCardType.getType().isInputStandardReportCardType()) {
+                reportCard.setStandardReportCardInputPrograms(Collections.emptyList());
+                reportCard.setStandardReportCardInputEncounterTypes(Collections.emptyList());
+                reportCard.setStandardReportCardInputSubjectTypes(Collections.emptyList());
             }
-            if (standardReportCardType.getName().equals("Overdue visits")) {
-                reportCard.setColour("#d32f2f");
+            if (standardReportCardType.getType().isRecentStandardReportCardType()) {
+                reportCard.setStandardReportCardInputRecentDuration(ValueUnit.getDefaultRecentDuration());
             }
-            if (standardReportCardType.getName().equals("Scheduled visits")) {
-                reportCard.setColour("#388e3c");
+            if (standardReportCardType.getType().equals(OverdueVisits)) {
+                reportCard.setColour(RED_BG_COLOUR);
             }
-            savedCards.put(reportCard.getName(), cardRepository.save(reportCard));
+            if (standardReportCardType.getType().equals(ScheduledVisits)) {
+                reportCard.setColour(GREEN_BG_COLOUR);
+            }
+            savedCards.put(standardReportCardType.getType(), cardRepository.save(reportCard));
         });
         return savedCards;
     }

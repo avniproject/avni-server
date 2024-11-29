@@ -3,8 +3,8 @@ package org.avni.server.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.KeyType;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.application.projections.LocationProjection;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
@@ -15,6 +15,7 @@ import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,25 +28,27 @@ public class AddressLevelService {
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelCache addressLevelCache;
     private final ObjectMapper objectMapper;
+    private final LocationHierarchyService locationHierarchyService;
 
     public AddressLevelService(LocationRepository locationRepository,
                                AddressLevelTypeRepository addressLevelTypeRepository,
                                OrganisationConfigService organisationConfigService,
-                               AddressLevelCache addressLevelCache) {
+                               AddressLevelCache addressLevelCache, LocationHierarchyService locationHierarchyService) {
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationConfigService = organisationConfigService;
         this.addressLevelCache = addressLevelCache;
+        this.locationHierarchyService = locationHierarchyService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     public List<Long> getAddressLevelsByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
         return filterByCatchmentAndSubjectType(catchment, subjectType)
-                .map(VirtualCatchmentProjection::getAddresslevel_id)
+                .map(CatchmentAddressProjection::getAddresslevel_id)
                 .collect(Collectors.toList());
     }
 
-    private Stream<VirtualCatchmentProjection> filterByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
+    private Stream<CatchmentAddressProjection> filterByCatchmentAndSubjectType(Catchment catchment, SubjectType subjectType) {
         Optional<SubjectTypeSetting> customRegistrationLocationSetting = getCustomRegistrationSetting(subjectType);
 
         if (customRegistrationLocationSetting.isPresent() && !customRegistrationLocationSetting.get().getLocationTypeUUIDs().isEmpty()) {
@@ -53,6 +56,7 @@ public class AddressLevelService {
                             customRegistrationLocationSetting.get().getLocationTypeUUIDs())
                     .stream()
                     .map(CHSBaseEntity::getId)
+                    .sorted()
                     .collect(Collectors.toList());
 
             return addressLevelCache.getAddressLevelsForCatchmentAndMatchingAddressLevelTypeIds(catchment, matchingAddressLevelTypeIds).stream();
@@ -137,5 +141,31 @@ public class AddressLevelService {
             titleLineages.put(addressId, lineage);
         });
         return titleLineages;
+    }
+
+    public Optional<AddressLevel> findByAddressMap(Map<String, String> addressMap) {
+        if (addressMap == null || addressMap.isEmpty()) {
+            return Optional.empty();
+        }
+        Set<AddressLevel> fetchedAddressLevels = addressMap.entrySet().stream().map(entry -> locationRepository.findLocation(entry.getValue(), entry.getKey()))
+                .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(al -> StringUtils.countOccurrencesOf(al.getLineage(), ".")))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (fetchedAddressLevels.isEmpty()) return Optional.empty();
+
+        List<Long> addressLevelIds = fetchedAddressLevels.stream().map(AddressLevel::getId).collect(Collectors.toList());
+        List<AddressLevel> addressLevels = fetchedAddressLevels.stream().filter(al -> al.getParentId() == null || addressLevelIds.contains(al.getParentId())).collect(Collectors.toList());
+
+        if (addressLevels.size() != addressMap.size()) return Optional.empty();
+
+        String lineageForAddressMap = addressLevels.stream().map(al -> String.valueOf(al.getId())).collect(Collectors.joining("."));
+
+        AddressLevel matchedAddressLevel = addressLevels.get(addressLevels.size() - 1);
+        if (matchedAddressLevel.getLineage().equals(lineageForAddressMap)) {
+            return Optional.of(matchedAddressLevel);
+        }
+        return Optional.empty();
     }
 }

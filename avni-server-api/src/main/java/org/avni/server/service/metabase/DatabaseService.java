@@ -62,11 +62,10 @@ public class DatabaseService implements QuestionCreationService{
     }
 
     @Override
-    public void createQuestionForTable(String tableName, String schema) {
+    public void createQuestionForTable(String tableName) {
         Database database = getGlobalDatabase();
 
-        TableDetails tableDetails = new TableDetails();
-        tableDetails.setName(tableName);
+        TableDetails tableDetails = new TableDetails(tableName);
         TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails);
 
         databaseRepository.createQuestionForASingleTable(database, fetchedTableDetails);
@@ -120,8 +119,7 @@ public class DatabaseService implements QuestionCreationService{
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
 
         for (String entityName : filteredEntities) {
-            TableDetails entityTableDetails = new TableDetails();
-            entityTableDetails.setName(entityName);
+            TableDetails entityTableDetails = new TableDetails(entityName);
             TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), entityTableDetails);
             createQuestionForTable(fetchedEntityTableDetails, fetchedAddressTableDetails, addressFieldDetails, entityFieldDetails);
         }
@@ -148,7 +146,7 @@ public class DatabaseService implements QuestionCreationService{
         List<String> filteredTables = filterOutExistingQuestions(individualTables); 
 
         for (String tableName : filteredTables) {
-            createQuestionForTable(tableName, "!public");
+            createQuestionForTable(tableName);
         }
     }
 

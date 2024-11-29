@@ -10,6 +10,7 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.task.TaskType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.FormWebProjection;
 import org.avni.server.projection.IdentifierAssignmentProjection;
@@ -19,7 +20,6 @@ import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.avni.server.web.validation.ValidationException;
 import org.avni.server.util.BadRequestError;
-import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.FormMappingContract;
 import org.avni.server.web.request.FormatContract;
@@ -141,7 +141,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     public ResponseEntity<?> save(@RequestBody FormContract formRequest) {
         logger.info(format("Saving form: %s, with UUID: %s", formRequest.getName(), formRequest.getUuid()));
         try {
-            formRequest.validate();
+            formService.validateForm(formRequest);
             formService.checkIfLocationConceptsHaveBeenUsed(formRequest);
             formService.saveForm(formRequest);
         } catch (BuilderException | InvalidObjectException | FormBuilderException e) {
@@ -178,7 +178,7 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
                 formMappingService.createOrUpdateFormMapping(formMappingContract);
             }
             existingForm.setVoided(!existingForm.isVoided());
-            existingForm.setName(ReactAdminUtil.getVoidedName(existingForm.getName(), existingForm.getId()));
+            existingForm.setName(EntityUtil.getVoidedName(existingForm.getName(), existingForm.getId()));
             accessControlService.checkPrivilege(FormType.getPrivilegeType(existingForm));
             formRepository.save(existingForm);
         } catch (Exception e) {

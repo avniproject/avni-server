@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.*;
-import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.AddressLevel;
@@ -12,7 +11,6 @@ import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.LocationHierarchyService;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestLocationService;
@@ -21,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
 
@@ -44,10 +41,12 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
     @Override
     public void setUp() throws Exception {
         TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation();
-        AddressLevelType block = new AddressLevelTypeBuilder().name("Block").level(2d).withUuid(UUID.randomUUID()).build();
-        AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID()).build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID()).build();
-        testDataSetupService.saveLocationTypes(Arrays.asList(block, district, state));
+        testDataSetupService.saveLocationTypes(Collections.singletonList(state));
+        AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).parent(state).withUuid(UUID.randomUUID()).build();
+        testDataSetupService.saveLocationTypes(Collections.singletonList(district));
+        AddressLevelType block = new AddressLevelTypeBuilder().name("Block").level(2d).parent(district).withUuid(UUID.randomUUID()).build();
+        testDataSetupService.saveLocationTypes(Collections.singletonList(block));
         Concept codedConcept = testConceptService.createCodedConcept("Coded Concept", "Answer 1", "Answer 2");
         Concept textConcept = testConceptService.createConcept("Text Concept", ConceptDataType.Text);
         Form locationForm = new TestFormBuilder()
@@ -185,22 +184,43 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         // lineage with spaces
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar,  District3,  Block31", " Block31New", "Bihar,  District3", "23.45,43.85"),
-                error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes 'Bihar,  District3,  Block31'"),
+                error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations 'Bihar,  District3,  Block31'"),
+                verifyExists("Bihar", "District3", "Block31"),
+                verifyNotExists("Bihar, District3, Block31New"));
+
+        // lineage without spaces
+        failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
+                dataRow("Bihar,District3,Block31", " Block31New", "Bihar,  District3", "23.45,43.85"),
+                error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations 'Bihar,District3,Block31'"),
                 verifyExists("Bihar", "District3", "Block31"),
                 verifyNotExists("Bihar, District3, Block31New"));
 
         // change to non existing parent
         failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar, District2, Block21", " Block21Town", "Bihar,  DistrictN", "23.45,43.85"),
-                error("Provided new Location parent does not exist in Avni. Please add it or check for spelling mistakes 'Bihar,  DistrictN'"),
+                error("Provided new location parent does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations - 'Bihar,  DistrictN'"),
                 verifyExists("Bihar", "District2", "Block21"),
                 verifyNotExists("Bihar, District2, Block21Town"));
+
+        // change to parent of a different type from allowed parent's type
+        failure(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
+                dataRow("Bihar, District2, Block21", " Block21Town", "Bihar", "23.45,43.85"),
+                error("Only parent of location type 'District' is allowed for Block21."),
+                verifyExists("Bihar", "District2", "Block21"),
+                verifyNotExists("Bihar, District2, Block21Town"));
+
+        // attempt to change root level location to an invalid parent
+        failure(header("Location with full hierarchy", "Parent location with full hierarchy"),
+                dataRow("Bihar", "Bihar, District2"),
+                error("No parent is allowed for Bihar since it is a top level location."),
+                verifyExists("Bihar"),
+                verifyNotExists("District2, Bihar"));
 
         treatAsDescriptor(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Can be found from Admin -> Locations -> Click Export. Used to specify which location's fields need to be updated. mandatory field",
                         "Enter new name here ONLY if it needs to be updated",
                         "Hierarchy of parent location that should contain the child location",
-                        "Ex: 23.45,43.85"));
+                        "Example: 23.45,43.85"));
 
         // missing header - nothing provided
         failsOnMissingHeader(

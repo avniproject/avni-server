@@ -1,8 +1,8 @@
 package org.avni.server.domain.metabase;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.util.ObjectMapperSingleton;
 
 // Refer docs : https://www.metabase.com/docs/latest/api/card#post-apicard
 public class MetabaseRequestBody {
@@ -24,11 +24,11 @@ public class MetabaseRequestBody {
         this.collectionId = collectionId;
     }
 
-    public ObjectNode toJson(ObjectMapper objectMapper) {
-        ObjectNode rootNode = objectMapper.createObjectNode();
+    public ObjectNode toJson() {
+        ObjectNode rootNode = ObjectMapperSingleton.getObjectMapper().createObjectNode();
         rootNode.put("name", name);
 
-        ObjectNode datasetQueryNode = objectMapper.createObjectNode();
+        ObjectNode datasetQueryNode = ObjectMapperSingleton.getObjectMapper().createObjectNode();
         datasetQueryNode.put("database", datasetQuery.getDatabaseId());
         datasetQueryNode.put("type", "query");
         datasetQueryNode.set("query", datasetQuery.toJson());

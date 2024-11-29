@@ -5,6 +5,7 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.AddressLevelTypes;
 import org.avni.server.importer.batch.model.Row;
+import org.jadira.usertype.spi.utils.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,10 @@ public class AddressLevelCreator {
     }
 
     public AddressLevel findAddressLevel(Row row,
-                                         AddressLevelTypes addressLevelTypes) throws Exception {
+                                         AddressLevelTypes addressLevelTypes) {
         AddressLevelTypes orderedLocationTypes = addressLevelTypes.getLowToHigh();
-        AddressLevelType firstMatch = orderedLocationTypes.stream().filter(addressLevelType -> row.get(addressLevelType.getName()) != null)
+        AddressLevelType firstMatch = orderedLocationTypes.stream()
+                .filter(addressLevelType -> row.get(addressLevelType.getName()) != null && !StringUtils.isEmpty(row.get(addressLevelType.getName()).trim()))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No matching location types found. If subject type has registration locations then only those will be used for matching."));
 

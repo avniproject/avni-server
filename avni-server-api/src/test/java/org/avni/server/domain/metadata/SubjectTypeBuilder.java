@@ -31,6 +31,11 @@ public class SubjectTypeBuilder {
         return this;
     }
 
+    public SubjectTypeBuilder setId(Long id) {
+        subjectType.setId(id);
+        return this;
+    }
+
     public SubjectTypeBuilder setMandatoryFieldsForNewEntity() {
         String s = UUID.randomUUID().toString();
         return setName(s).setUuid(s).setShouldSyncByLocation(true).setType(Subject.Individual).setActive(true);

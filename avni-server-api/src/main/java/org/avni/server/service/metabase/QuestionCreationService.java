@@ -4,5 +4,5 @@ import org.avni.server.domain.metabase.TableDetails;
 
 public interface QuestionCreationService {
     void createQuestionForTable(TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressFieldDetails, FieldDetails tableFieldDetails) throws Exception;
-    void createQuestionForTable(String tableName, String schema) throws Exception;
+    void createQuestionForTable(String tableName) throws Exception;
 }

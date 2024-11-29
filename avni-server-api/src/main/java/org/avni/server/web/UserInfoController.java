@@ -1,4 +1,4 @@
-package org.avni.server.web;
+    package org.avni.server.web;
 
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.OrganisationRepository;
@@ -162,6 +162,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             user.setOperatingIndividualScope(OperatingIndividualScope.valueOf(userContract.getOperatingIndividualScope()));
             user.setSettings(userContract.getSettings());
             userService.setPhoneNumber(userContract.getPhoneNumber(), user, RegionUtil.getCurrentUserRegion());
+            user.setEmail(userContract.getEmail());
             user.setAuditInfo(userService.getCurrentUser());
             User savedUser = userService.save(user);
             if (newUser) userService.addToDefaultUserGroup(savedUser);

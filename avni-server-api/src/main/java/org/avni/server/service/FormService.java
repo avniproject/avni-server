@@ -4,6 +4,7 @@ import org.avni.server.application.*;
 import org.avni.server.builder.FormBuilder;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.ConceptRepository;
+import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
@@ -11,12 +12,17 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.application.FormContract;
 import org.avni.server.web.request.application.FormElementContract;
 import org.avni.server.web.request.application.FormElementGroupContract;
+import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 
-import org.joda.time.DateTime;
-
+import java.io.InvalidObjectException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_NAME;
+import static org.avni.server.application.FormElement.PLACEHOLDER_CONCEPT_UUID;
+import static org.avni.server.domain.ConceptDataType.multiSelectTypes;
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
 @Service
 public class FormService implements NonScopeAwareService {
@@ -24,12 +30,14 @@ public class FormService implements NonScopeAwareService {
     private final OrganisationConfigService organisationConfigService;
     private final ConceptRepository conceptRepository;
     private final AccessControlService accessControlService;
+    private final FormElementRepository formElementRepository;
 
-    public FormService(FormRepository formRepository, OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AccessControlService accessControlService) {
+    public FormService(FormRepository formRepository, OrganisationConfigService organisationConfigService, ConceptRepository conceptRepository, AccessControlService accessControlService, FormElementRepository formElementRepository) {
         this.formRepository = formRepository;
         this.organisationConfigService = organisationConfigService;
         this.conceptRepository = conceptRepository;
         this.accessControlService = accessControlService;
+        this.formElementRepository = formElementRepository;
     }
 
     public void saveForm(FormContract formRequest) throws FormBuilderException {
@@ -135,5 +143,46 @@ public class FormService implements NonScopeAwareService {
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
         return formRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+    }
+
+    public void validateForm(FormContract formContract) throws InvalidObjectException {
+        HashSet<String> uniqueConcepts = new HashSet<>();
+
+        for (FormElementGroupContract formElementGroup : formContract.getFormElementGroups()) {
+            for (FormElementContract formElement : formElementGroup.getFormElements()) {
+                String conceptUuid = formElement.getConcept().getUuid();
+                String conceptName = formElement.getConcept().getName();
+                if (!formElement.isVoided() && !formElement.isChildFormElement() &&
+                        !PLACEHOLDER_CONCEPT_NAME.matcher(conceptName == null ? "" : conceptName).matches() &&
+                        !conceptUuid.equals(PLACEHOLDER_CONCEPT_UUID) &&
+                        !uniqueConcepts.add(conceptUuid)) {
+                    throw new InvalidObjectException(String.format(
+                            "Cannot use same concept twice. Form{uuid='%s',..} uses Concept{name='%s',..} twice",
+                            formContract.getUuid(),
+                            conceptName));
+                }
+                String conceptDataType = formElement.getConcept().getDataType();
+                if (conceptDataType != null && multiSelectTypes.contains(ConceptDataType.valueOf(conceptDataType))) {
+                    FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
+                    if (existingFormElement != null) {
+                        if (!existingFormElement.getType().equals(formElement.getType())) {
+                            throw new InvalidObjectException(String.format("Cannot change from Single to Multi Select or vice versa for form element: %s", existingFormElement.getName()));
+                        }
+                    }
+                }
+                if  (formElement.getConcept().isQuestionGroup()) {
+                    FormElement existingFormElement = formElementRepository.findByUuid(formElement.getUuid());
+                    if (existingFormElement != null) {
+                        KeyValue existingKeyValue = existingFormElement.getKeyValues().get(KeyType.repeatable);
+                        KeyValue newKeyValue = formElement.getKeyValues().get(KeyType.repeatable);
+                        Boolean existingRepeatable = existingKeyValue != null ? (Boolean) existingKeyValue.getValue() : null;
+                        Boolean newRepeatable = newKeyValue != null ? (Boolean) newKeyValue.getValue() : null;
+                        if (!((existingRepeatable == null && (newRepeatable == null || newRepeatable.equals(Boolean.FALSE))) || nullSafeEquals(existingRepeatable, newRepeatable))) {
+                            throw new InvalidObjectException(String.format("Cannot change from Repeatable to Non Repeatable or vice versa for form element: %s", existingFormElement.getName()));
+                        }
+                    }
+                }
+            }
+        }
     }
 }

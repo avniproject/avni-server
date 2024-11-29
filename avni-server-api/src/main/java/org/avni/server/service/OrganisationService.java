@@ -861,8 +861,10 @@ public class OrganisationService {
 
     public void deleteNonRepositoryMetadata(Organisation organisation) {
         String decisionConceptsDeletionQuery = "delete from decision_concept dc using concept c where dc.concept_id = c.id and c.organisation_id = %d and c.organisation_id > 1";
+        String decisionConceptsFromFormsDeletionQuery = "delete from decision_concept dc using form f where dc.form_id = f.id and f.organisation_id = %d and f.organisation_id > 1";
         String nonApplicableFormElementDeletionQuery = "delete from non_applicable_form_element where organisation_id = %d and organisation_id > 1";
         jdbcTemplate.execute(String.format(decisionConceptsDeletionQuery, organisation.getId()));
+        jdbcTemplate.execute(String.format(decisionConceptsFromFormsDeletionQuery, organisation.getId()));
         jdbcTemplate.execute(String.format(nonApplicableFormElementDeletionQuery, organisation.getId()));
     }
 

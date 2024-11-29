@@ -2,6 +2,7 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Concept;
+import org.joda.time.DateTime;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
 
@@ -75,5 +76,11 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
         T entity = this.findEntity(id);
         entity.setVoided(true);
         this.save(entity);
+    }
+
+    boolean existsByLastModifiedDateTimeGreaterThan(Date lastModifiedDateTime);
+
+    default boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime) {
+        return existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime == null ? null : lastModifiedDateTime.toDate());
     }
 }

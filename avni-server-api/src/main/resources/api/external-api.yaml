@@ -172,6 +172,14 @@ paths:
           schema:
             type: string
             default: 1
+        - name: includeCatchments
+          in: query
+          required: false
+          style: form
+          explode: true
+          description: "Iff true, the catchment details of the subject will be included in the response."
+          schema:
+            type: boolean
       requestBody:
         content:
           application/json:
@@ -214,6 +222,14 @@ paths:
           schema:
             type: string
             default: 1
+        - name: includeCatchments
+          in: query
+          required: false
+          style: form
+          explode: true
+          description: "Iff true, the catchment details of the subject will be included in the response."
+          schema:
+            type: boolean
       requestBody:
         content:
           application/json:
@@ -259,6 +275,14 @@ paths:
           schema:
             type: string
             default: 1
+        - name: includeCatchments
+          in: query
+          required: false
+          style: form
+          explode: true
+          description: "Iff true, the catchment details of the subject will be included in the response."
+          schema:
+            type: boolean
       responses:
         "200":
           description: successful
@@ -292,6 +316,14 @@ paths:
           schema:
             type: string
             default: 1
+        - name: includeCatchments
+          in: query
+          required: false
+          style: form
+          explode: true
+          description: "Iff true, the catchment details of the subject will be included in the response."
+          schema:
+            type: boolean
       requestBody:
         content:
           application/json:
@@ -1476,6 +1508,8 @@ components:
           type: string
           description: Complete address of the subject
           example: "India, Uttarakhand, Dehradun"
+        Address map:
+          $ref: '#/components/schemas/AddressMap'
         Location ID:
           type: string
           format: uuid
@@ -1835,6 +1869,12 @@ components:
           type: boolean
         audit:
           $ref: '#/components/schemas/Audit'
+    AddressMap:
+      type: object
+      additionalProperties:
+        type: string
+      description: 'Map with location type name to location name key value pairs representing an address. Required when passing version as 3 and up.'
+      example: '{"Country": "India", "State: "Uttarakhand", "City": "Dehradun"}'
     GeoLocation:
       type: object
       properties:

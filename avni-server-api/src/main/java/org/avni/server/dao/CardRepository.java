@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "card", path = "card")
-public interface CardRepository extends ReferenceDataRepository<ReportCard>, FindByLastModifiedDateTime<ReportCard>, JpaSpecificationExecutor<ReportCard> {
+public interface CardRepository extends ReferenceDataRepository<ReportCard>, JpaSpecificationExecutor<ReportCard>, EndOfLife1EndpointRepository<ReportCard> {
 
     @Query("select c.name from ReportCard c where c.isVoided = false")
     List<String> getAllNames();
@@ -18,4 +18,6 @@ public interface CardRepository extends ReferenceDataRepository<ReportCard>, Fin
     List<ReportCard> findAllByIconFileS3KeyNotNull();
 
     List<ReportCard> findAllByIsVoidedFalseOrderByName();
+
+    List<ReportCard> findByNameIgnoreCaseAndIsVoidedFalse(String name);
 }

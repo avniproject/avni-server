@@ -1,0 +1,1 @@
+alter table users add column ignore_sync_settings_in_DEA boolean not null default false;

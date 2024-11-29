@@ -49,6 +49,12 @@ public class SubjectApiController {
     private final S3Service s3Service;
     private final MediaObservationService mediaObservationService;
     private final AccessControlService accessControlService;
+    private final AddressLevelService addressLevelService;
+    private final String V3_REQUIRES_ADDRESS_MAP = String.format("version 3 and above requires '%s' instead of '%s'", ADDRESS_MAP, ADDRESS);
+    private final String ADDRESS_MAP_NO_RESULTS = String.format("Address corresponding to '%s' not found", ADDRESS_MAP);
+    private final String INVALID_ADDRESS_TYPE_FOR_SUBJECT_TYPE = "Address '%s' of type '%s' is not valid for subject type '%s'";
+    private final SubjectTypeService subjectTypeService;
+
 
     @Autowired
     public SubjectApiController(ConceptService conceptService, IndividualRepository individualRepository,
@@ -56,7 +62,7 @@ public class SubjectApiController {
                                 LocationService locationService, SubjectTypeRepository subjectTypeRepository,
                                 LocationRepository locationRepository, GenderRepository genderRepository,
                                 SubjectMigrationService subjectMigrationService, IndividualService individualService,
-                                S3Service s3Service, MediaObservationService mediaObservationService, AccessControlService accessControlService) {
+                                S3Service s3Service, MediaObservationService mediaObservationService, AccessControlService accessControlService, AddressLevelService addressLevelService, SubjectTypeService subjectTypeService) {
         this.conceptService = conceptService;
         this.individualRepository = individualRepository;
         this.conceptRepository = conceptRepository;
@@ -70,6 +76,8 @@ public class SubjectApiController {
         this.s3Service = s3Service;
         this.mediaObservationService = mediaObservationService;
         this.accessControlService = accessControlService;
+        this.addressLevelService = addressLevelService;
+        this.subjectTypeService = subjectTypeService;
     }
 
     @RequestMapping(value = "/api/subjects", method = RequestMethod.GET)
@@ -111,10 +119,10 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity post(@RequestBody ApiSubjectRequest request) throws IOException {
+    public ResponseEntity post(@RequestBody ApiSubjectRequest request, @RequestParam(value = "includeCatchments", required = false) Boolean includeCatchments) throws IOException {
         accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, request.getSubjectType());
         Individual subject = getOrCreateSubject(request.getExternalId());
-        return updateSubjectAndSave(request, subject, SubjectResponseOptions.forSubjectUpdate());
+        return updateSubjectAndSave(request, subject, SubjectResponseOptions.forSubjectUpdate(includeCatchments));
     }
 
     private ResponseEntity updateSubjectAndSave(@RequestBody ApiSubjectRequest request, Individual subject, SubjectResponseOptions options) throws IOException {
@@ -132,10 +140,10 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request) throws IOException, ValidationException {
+    public ResponseEntity put(@PathVariable String id, @RequestBody ApiSubjectRequest request, @RequestParam(value = "includeCatchments", required = false) Boolean includeCatchments) throws IOException, ValidationException {
         accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, request.getSubjectType());
         Individual subject = loadSubject(id, request.getExternalId());
-        return updateSubjectAndSave(request, subject, SubjectResponseOptions.forSubjectUpdate());
+        return updateSubjectAndSave(request, subject, SubjectResponseOptions.forSubjectUpdate(includeCatchments));
     }
 
     private Individual loadSubject(String id, String externalId) {
@@ -153,7 +161,7 @@ public class SubjectApiController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
     @ResponseBody
-    public ResponseEntity patch(@PathVariable String id, @RequestBody Map<String, Object> request) throws IOException {
+    public ResponseEntity patch(@PathVariable String id, @RequestBody Map<String, Object> request, @RequestParam(value = "includeCatchments", required = false) Boolean includeCatchments) throws IOException {
         accessControlService.checkSubjectPrivilege(PrivilegeType.EditSubject, (String) request.get(SUBJECT_TYPE));
         Individual subject = loadSubject(id, (String) request.get(CommonFieldNames.EXTERNAL_ID));
         try {
@@ -164,13 +172,13 @@ public class SubjectApiController {
         Set<String> observationKeys = request.containsKey(OBSERVATIONS) ? ((Map<String, Object>) request.get(OBSERVATIONS)).keySet() : new HashSet<>();
         mediaObservationService.patchMediaObservations(subject.getObservations(), observationKeys);
         Individual savedIndividual = individualService.save(subject);
-        return new ResponseEntity<>(SubjectResponse.fromSubject(savedIndividual, SubjectResponseOptions.forSubjectUpdate(), conceptRepository, conceptService, s3Service), HttpStatus.OK);
+        return new ResponseEntity<>(SubjectResponse.fromSubject(savedIndividual, SubjectResponseOptions.forSubjectUpdate(includeCatchments), conceptRepository, conceptService, s3Service), HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/api/subject/{id}")
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @ResponseBody
-    public ResponseEntity<SubjectResponse> delete(@PathVariable("id") String legacyIdOrUuid) {
+    public ResponseEntity<SubjectResponse> delete(@PathVariable("id") String legacyIdOrUuid, @RequestParam(value = "includeCatchments", required = false) Boolean includeCatchments) {
         Individual subject = individualRepository.findByLegacyIdOrUuid(legacyIdOrUuid);
         if (subject == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -179,7 +187,7 @@ public class SubjectApiController {
         List<GroupSubject> groupsOfAllMemberSubjects = groupSubjectRepository.findAllByMemberSubjectIn(Collections.singletonList(subject));
         subject = individualService.voidSubject(subject);
         return new ResponseEntity<>(SubjectResponse.fromSubject(subject,
-                SubjectResponseOptions.forSubjectUpdate(), conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
+                SubjectResponseOptions.forSubjectUpdate(includeCatchments), conceptRepository, conceptService, groupsOfAllMemberSubjects, s3Service), HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/api/subjectTree")
@@ -203,10 +211,22 @@ public class SubjectApiController {
     private void updateSubjectDetails(Individual subject, ApiSubjectRequest request) throws ValidationException {
         SubjectType subjectType = getSubjectType(request.getSubjectType());
         subject.setSubjectType(subjectType);
-        Optional<AddressLevel> addressLevel = locationRepository.findByTitleLineageIgnoreCase(request.getAddress());
-        if (!addressLevel.isPresent() && !subjectType.isAllowEmptyLocation()) {
-            throw new IllegalArgumentException(String.format("Address '%s' not found", request.getAddress()));
+        boolean versionGreaterThan2 = ApiRequestContextHolder.isVersionGreaterThan(2);
+        if (versionGreaterThan2 && (request.getAddressMap() == null || request.getAddressMap().isEmpty())) {
+            throw new IllegalArgumentException(V3_REQUIRES_ADDRESS_MAP);
         }
+        Optional<AddressLevel> addressLevel = versionGreaterThan2 ? addressLevelService.findByAddressMap(request.getAddressMap()) : locationRepository.findByTitleLineageIgnoreCase(request.getAddress());
+        if (!addressLevel.isPresent()) {
+            if (!subjectType.isAllowEmptyLocation()) {
+                throw new IllegalArgumentException(versionGreaterThan2 ? ADDRESS_MAP_NO_RESULTS : String.format("Address '%s' not found", request.getAddress()));
+            }
+        } else {
+            AddressLevel address = addressLevel.get();
+            if (!subjectTypeService.getRegistrableLocationTypes(subjectType).contains(address.getType())) {
+                throw new IllegalArgumentException(String.format(INVALID_ADDRESS_TYPE_FOR_SUBJECT_TYPE, versionGreaterThan2 ? request.getAddressMap() : request.getAddress(), address.getType().getName(), subjectType.getName()));
+            }
+        }
+
         setExternalId(subject, request.getExternalId());
         subject.setFirstName(request.getFirstName());
         setMiddleName(subject, subjectType, request.getMiddleName());
@@ -286,10 +306,27 @@ public class SubjectApiController {
         if (request.containsKey(OBSERVATIONS))
             RequestUtils.patchObservations((Map<String, Object>) request.get(OBSERVATIONS), conceptRepository, subject.getObservations());
 
-        if (request.containsKey(ADDRESS)) {
-            String locationTitleLineage = (String) request.get(ADDRESS);
-            Optional<AddressLevel> addressLevel = locationRepository.findByTitleLineageIgnoreCase(locationTitleLineage);
-            AddressLevel newAddressLevel = addressLevel.orElseThrow(() -> new IllegalArgumentException(String.format("Address '%s' not found", locationTitleLineage)));
+        if (request.containsKey(ADDRESS) || request.containsKey(ADDRESS_MAP)) {
+            Optional<AddressLevel> addressLevel;
+            AddressLevel newAddressLevel;
+            boolean versionGreaterThan2 = ApiRequestContextHolder.isVersionGreaterThan(2);
+            if (versionGreaterThan2) {
+                if (!request.containsKey(ADDRESS_MAP)) {
+                    throw new IllegalArgumentException(String.format("version 3 and above requires '%s' instead of '%s'", ADDRESS_MAP, ADDRESS));
+                }
+                Map<String, String> addressMap = (Map<String, String>) request.get(ADDRESS_MAP);
+                addressLevel = addressLevelService.findByAddressMap(addressMap);
+                newAddressLevel = addressLevel.orElseThrow(() -> new IllegalArgumentException(ADDRESS_MAP_NO_RESULTS));
+            } else {
+                String locationTitleLineage = (String) request.get(ADDRESS);
+                addressLevel = locationRepository.findByTitleLineageIgnoreCase(locationTitleLineage);
+                newAddressLevel = addressLevel.orElseThrow(() -> new IllegalArgumentException(String.format("Address '%s' not found", locationTitleLineage)));
+            }
+
+            if (!subjectTypeService.getRegistrableLocationTypes(subjectType).contains(newAddressLevel.getType())) {
+                throw new IllegalArgumentException(String.format(INVALID_ADDRESS_TYPE_FOR_SUBJECT_TYPE, versionGreaterThan2 ? request.get(ADDRESS_MAP) : request.get(ADDRESS), newAddressLevel.getType().getName(), subjectType.getName()));
+            }
+
             subject.setAddressLevel(newAddressLevel);
             subjectMigrationService.markSubjectMigrationIfRequired(subject.getUuid(), null, newAddressLevel, null, subject.getObservations(), false);
         }

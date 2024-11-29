@@ -34,6 +34,15 @@ import java.util.stream.Collectors;
 
 @Service
 public class ConceptService implements NonScopeAwareService {
+    public static final String STRING_CONSTANT_ANY_NUMBER = "Any Number";
+    public static final String STRING_CONSTANT_ANY_TEXT = "Any Text";
+    public static final String STRING_CONSTANT_DELIMITER = ", ";
+    public static final String STRING_CONSTANT_PREFIX = "{";
+    public static final String STRING_CONSTANT_SUFFIX = "}";
+    public static final String STRING_CONSTANT_EXAMPLE_NUMBER = "123";
+    public static final String STRING_CONSTANT_EXAMPLE_TEXT = "ABC";
+    public static final String EMPTY_STRING = "";
+
     private final Logger logger;
     private final ConceptRepository conceptRepository;
     private final ConceptAnswerRepository conceptAnswerRepository;
@@ -374,13 +383,22 @@ public class ConceptService implements NonScopeAwareService {
         }).findFirst();
     }
 
-    public String getSampleValuesForSyncConcept(Concept concept) {
+    public String getAllowedValuesForSyncConcept(Concept concept) {
         switch (ConceptDataType.valueOf(concept.getDataType())) {
-            case Numeric: return "Any Number";
-            case Text: return "Any Text";
+            case Numeric: return STRING_CONSTANT_ANY_NUMBER;
+            case Text: return STRING_CONSTANT_ANY_TEXT;
             case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName())
-                    .collect(Collectors.joining(", ", "{", "}"));
+                    .collect(Collectors.joining(STRING_CONSTANT_DELIMITER, STRING_CONSTANT_PREFIX, STRING_CONSTANT_SUFFIX));
             default: return String.format("Appropriate value for a %s type concept", concept.getDataType());
+        }
+    }
+
+    public String getExampleValuesForSyncConcept(Concept concept) {
+        switch (ConceptDataType.valueOf(concept.getDataType())) {
+            case Numeric: return STRING_CONSTANT_EXAMPLE_NUMBER;
+            case Text: return STRING_CONSTANT_EXAMPLE_TEXT;
+            case Coded: return concept.getSortedAnswers().map(sca -> sca.getAnswerConcept().getName()).findAny().get();
+            default: return EMPTY_STRING;
         }
     }
 }

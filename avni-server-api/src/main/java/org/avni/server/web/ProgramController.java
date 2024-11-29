@@ -9,6 +9,7 @@ import org.avni.server.domain.Individual;
 import org.avni.server.domain.OperationalProgram;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.service.FormMappingParameterObject;
 import org.avni.server.service.FormMappingService;
 import org.avni.server.service.FormService;
@@ -27,7 +28,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -151,8 +151,8 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
         if (program == null)
             return ResponseEntity.notFound().build();
 
-        operationalProgram.setName(ReactAdminUtil.getVoidedName(operationalProgram.getName(), operationalProgram.getId()));
-        program.setName(ReactAdminUtil.getVoidedName(program.getName(), program.getId()));
+        operationalProgram.setName(EntityUtil.getVoidedName(operationalProgram.getName(), operationalProgram.getId()));
+        program.setName(EntityUtil.getVoidedName(program.getName(), program.getId()));
         operationalProgram.setVoided(true);
         program.setVoided(true);
         operationalProgramRepository.save(operationalProgram);

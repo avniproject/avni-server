@@ -1,15 +1,13 @@
 package org.avni.server.web;
 
-import org.apache.commons.collections.ListUtils;
 import org.avni.server.application.Form;
-import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalEncounterTypeRepository;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.OperationalEncounterType;
-import org.avni.server.domain.Program;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.service.EncounterTypeService;
 import org.avni.server.service.FormMappingParameterObject;
 import org.avni.server.service.FormMappingService;
@@ -17,8 +15,6 @@ import org.avni.server.service.FormService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.contract.EncounterTypeContract;
-import org.avni.server.web.contract.ProgramContract;
-import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EntityTypeContract;
 import org.avni.server.web.request.webapp.EncounterTypeContractWeb;
 import org.slf4j.Logger;
@@ -29,7 +25,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -214,9 +209,9 @@ public class EncounterTypeController extends AbstractController<EncounterType> i
         if (encounterType == null)
             return ResponseEntity.notFound().build();
 
-        operationalEncounterType.setName(ReactAdminUtil.getVoidedName(operationalEncounterType.getName(), operationalEncounterType.getId()));
+        operationalEncounterType.setName(EntityUtil.getVoidedName(operationalEncounterType.getName(), operationalEncounterType.getId()));
         operationalEncounterType.setVoided(true);
-        encounterType.setName(ReactAdminUtil.getVoidedName(encounterType.getName(), encounterType.getId()));
+        encounterType.setName(EntityUtil.getVoidedName(encounterType.getName(), encounterType.getId()));
         encounterType.setVoided(true);
         operationalEncounterTypeRepository.save(operationalEncounterType);
         encounterTypeRepository.save(encounterType);

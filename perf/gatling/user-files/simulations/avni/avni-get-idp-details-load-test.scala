@@ -4,7 +4,7 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import scala.concurrent.duration._
 
-class avniGetCognitoLoadTest extends Simulation {
+class avniGetIdpDetailsLoadTest extends Simulation {
  
   val httpProtocol = http
   .baseUrl("https://staging.avniproject.org") 
@@ -14,9 +14,9 @@ class avniGetCognitoLoadTest extends Simulation {
 .userAgentHeader("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36") 
 
 
-val scn = scenario("Simple Get cognito-details Request")
+val scn = scenario("Simple Get idp-details Request")
   .exec(http("Get HTTP")
-  .get("/cognito-details"))
+  .get("/idp-details"))
   setUp(scn.inject(rampUsers(50).during(30)).protocols(httpProtocol))
 
 }

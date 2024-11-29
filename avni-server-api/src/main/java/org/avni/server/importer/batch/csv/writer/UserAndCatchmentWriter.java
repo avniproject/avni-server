@@ -9,6 +9,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.util.CollectionUtil;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
@@ -24,10 +25,10 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static org.avni.server.domain.OperatingIndividualScope.ByCatchment;
+import static org.avni.server.domain.UserSettings.DATE_PICKER_MODE_OPTIONS;
 import static org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders.*;
 
 @Component
@@ -44,16 +45,17 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private final ResetSyncService resetSyncService;
 
     private static final String ERR_MSG_MANDATORY_OR_INVALID_FIELD = "Invalid or Empty value specified for mandatory field %s.";
-    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes '%s'.";
+    private static final String ERR_MSG_LOCATION_FIELD = "Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations '%s'.";
     private static final String ERR_MSG_LOCALE_FIELD = "Provided value '%s' for Preferred Language is invalid.";
     private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid.";
     private static final String ERR_MSG_INVALID_PHONE_NUMBER = "Provided value '%s' for phone number is invalid.";
+    private static final String ERR_MSG_INVALID_TRACK_LOCATION = "Provided value '%s' for track location is invalid.";
+    private static final String ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE = "Provided value '%s' for enable beneficiary mode is invalid.";
     private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers.";
     private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
     private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'. " +
             "To input this value, add this as an answer to the coded concept '%s'.";
-    private static final String METADATA_ROW_START_STRING = "Mandatory field.";
-    private static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList("calendar", "spinner");
+    public static final String METADATA_ROW_START_STRING = "Mandatory field";
 
     @Autowired
     public UserAndCatchmentWriter(CatchmentService catchmentService,
@@ -88,10 +90,9 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         List<String> headerList = new ArrayList<>(Arrays.asList(headers));
         List<String> allErrorMsgs = new ArrayList<>();
         UsersAndCatchmentsHeaders usersAndCatchmentsHeaders = new UsersAndCatchmentsHeaders();
-        List<String> expectedStandardHeaders = Arrays.asList(usersAndCatchmentsHeaders.getAllHeaders());
         List<String> syncAttributeHeadersForSubjectTypes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
-        checkForMissingHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
-        checkForUnknownHeaders(headerList, allErrorMsgs, expectedStandardHeaders, syncAttributeHeadersForSubjectTypes);
+        checkForMissingHeaders(headerList, allErrorMsgs, Arrays.asList(usersAndCatchmentsHeaders.getMandatoryHeaders()), syncAttributeHeadersForSubjectTypes);
+        checkForUnknownHeaders(headerList, allErrorMsgs, Arrays.asList(usersAndCatchmentsHeaders.getAllHeaders()), syncAttributeHeadersForSubjectTypes);
         if (!allErrorMsgs.isEmpty()) {
             throw new RuntimeException(createMultiErrorMessage(allErrorMsgs));
         }
@@ -133,11 +134,11 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
-        Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByName(language);
+        Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByNameIgnoreCase(language);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
-        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, beneficiaryMode);
+        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE));
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
@@ -157,10 +158,10 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setSyncSettings(syncSettings);
 
         user.setSettings(new JsonObject()
-                .with("locale", locale)
-                .with("trackLocation", trackLocation)
-                .withEmptyCheckAndTrim("datePickerMode", datePickerMode)
-                .with("showBeneficiaryMode", beneficiaryMode)
+                .with(UserSettings.LOCALE, locale)
+                .with(UserSettings.TRACK_LOCATION, UserSettings.createTrackLocation(trackLocation))
+                .withEmptyCheckAndTrim(UserSettings.DATE_PICKER_MODE, UserSettings.createDatePickerMode(datePickerMode))
+                .with(UserSettings.ENABLE_BENEFICIARY_MODE, UserSettings.createEnableBeneficiaryMode(beneficiaryMode))
                 .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix));
 
         user.setOrganisationId(organisation.getId());
@@ -174,7 +175,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, Boolean beneficiaryMode) {
+    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser) {
         addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, CATCHMENT_NAME));
         if (!addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, USERNAME)))
             extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
@@ -187,11 +188,10 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         addErrMsgIfValidationFails(StringUtils.isEmpty(location), rowValidationErrorMsgs, format(ERR_MSG_LOCATION_FIELD, fullAddress));
         addErrMsgIfValidationFails(StringUtils.isEmpty(locale), rowValidationErrorMsgs, format(ERR_MSG_LOCALE_FIELD, language));
-        addErrMsgIfValidationFails(StringUtils.isEmpty(datePickerMode) || !DATE_PICKER_MODE_OPTIONS.contains(datePickerMode),
-                rowValidationErrorMsgs, format(ERR_MSG_DATE_PICKER_FIELD, datePickerMode));
+        addErrMsgIfValidationFails(!StringUtils.isEmpty(datePickerMode) && !CollectionUtil.containsIgnoreCase(DATE_PICKER_MODE_OPTIONS, datePickerMode), rowValidationErrorMsgs, format(ERR_MSG_DATE_PICKER_FIELD, datePickerMode));
 
-        addErrMsgIfValidationFails(trackLocation == null, rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, TRACK_LOCATION));
-        addErrMsgIfValidationFails(beneficiaryMode == null, rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, ENABLE_BENEFICIARY_MODE));
+        addErrMsgIfValidationFails(trackLocation == null && !StringUtils.isEmpty(trackLocationValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_TRACK_LOCATION, trackLocationValueProvidedByUser));
+        addErrMsgIfValidationFails(beneficiaryMode == null && !StringUtils.isEmpty(beneficiaryModeValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE, beneficiaryModeValueProvidedByUser));
 
         if (!rowValidationErrorMsgs.isEmpty()) {
             throw new RuntimeException(createMultiErrorMessage(rowValidationErrorMsgs));
@@ -199,7 +199,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     }
 
     private static String createMultiErrorMessage(List<String> errorMsgs) {
-        return errorMsgs.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining("; "));
+        return String.join(" ", errorMsgs);
     }
 
     private void extractUserNameValidationErrMsg(List<String> rowValidationErrorMsgs, String nameOfUser) {

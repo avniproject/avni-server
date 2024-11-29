@@ -2,11 +2,7 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
@@ -24,8 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -34,8 +29,6 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
     private TestDataSetupService testDataSetupService;
     @Autowired
     private TestConceptService testConceptService;
-    @Autowired
-    private FormRepository formRepository;
     @Autowired
     private TestLocationService testLocationService;
     @Autowired
@@ -49,13 +42,13 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
 
     @Override
     public void setUp() {
-        TestDataSetupService.TestOrganisationData organisationData = testDataSetupService.setupOrganisation("example", "User Group 1");
+        testDataSetupService.setupOrganisation("example", "User Group 1");
         AddressLevelType block = new AddressLevelTypeBuilder().name("Block").level(2d).withUuid(UUID.randomUUID()).build();
         AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID()).build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID()).build();
         testDataSetupService.saveLocationTypes(Arrays.asList(block, district, state));
         Concept codedConcept = testConceptService.createCodedConcept("Sync Concept", "Answer 1", "Answer 2");
-        Concept textConcept = testConceptService.createConcept("Text Concept", ConceptDataType.Text);
+        testConceptService.createConcept("Text Concept", ConceptDataType.Text);
 
         testSubjectTypeService.createWithDefaults(
                 new SubjectTypeBuilder()
@@ -81,8 +74,23 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
         return b;
     }
 
-    private boolean userCreated(boolean b) {
+    private boolean userCreatedDetails(boolean b) {
         return b;
+    }
+
+    private boolean userCreatedDetails(String userName, String datePickerMode, String language, boolean trackLocation, boolean enableBeneficiaryMode, String userGroup) {
+        User user = userRepository.findByUsername(userName);
+        UserSettings userSettings = user.getUserSettings();
+        assertEquals(userSettings.getDatePickerMode(), datePickerMode);
+        assertEquals(userSettings.getLocale(), language);
+        assertEquals(userSettings.isTrackLocation(), trackLocation);
+        assertEquals(userSettings.isEnableBeneficiaryMode(), enableBeneficiaryMode);
+        assertTrue(user.isPartOfUserGroup(userGroup));
+        return true;
+    }
+
+    private String[] has(String... errors) {
+        return errors;
     }
 
     private void success(String[] headers, String[] cells, boolean catchmentCreated, boolean userCreated) throws IDPException {
@@ -99,7 +107,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
             assertEquals(userRepository.count(), numberOfUsers);
     }
 
-    private void failure(String[] headers, String[] cells, String... errorMessages) throws IDPException {
+    private void failure(String[] headers, String[] cells, String[] errorMessages) throws IDPException {
         try {
             userAndCatchmentWriter.write(Collections.singletonList(new Row(headers, cells)));
             fail();
@@ -119,7 +127,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
         }
     }
 
-    private void failsOnMissingHeader(String[] headers, String... errorMessages) throws IDPException {
+    private void failsOnMissingHeader(String[] headers, String[] errorMessages, String... nonExistentErrorMessages) throws IDPException {
         try {
             userAndCatchmentWriter.write(Collections.singletonList(new Row(headers, new String[]{})));
             fail();
@@ -135,12 +143,42 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                         fail("Expected error message: " + s + " not present in: " + message);
                     }
                 });
+                Arrays.stream(nonExistentErrorMessages).forEach(s -> {
+                    if (message.contains(s)) {
+                        e.printStackTrace();
+                        fail("Unexpected error message: " + s + " present in: " + message);
+                    }
+                });
             }
         }
     }
 
     private void treatAsDescriptor(String[] headers, String... additionalHeaders) throws IDPException {
         success(headers, additionalHeaders, false, false);
+    }
+
+    private String language(String language) {
+        return language;
+    }
+
+    private boolean trackLocation(boolean b) {
+        return b;
+    }
+
+    private boolean enableBeneficiaryMode(boolean b) {
+        return b;
+    }
+
+    private String userGroup(String userGroup) {
+        return userGroup;
+    }
+
+    private String datePickerMode(String spinner) {
+        return spinner;
+    }
+
+    private String user(String user) {
+        return user;
     }
 
     @Test
@@ -150,95 +188,116 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 1", "username1@example", "User 1", "username1@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
                 catchmentCreated(true),
-                userCreated(true));
+                userCreatedDetails(true));
         // existing catchment new user
         success(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 1", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
                 catchmentCreated(false),
-                userCreated(true));
+                userCreatedDetails(true));
         // new catchment existing user
         success(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 3", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
                 catchmentCreated(true),
-                userCreated(false));
+                userCreatedDetails(false));
         // existing catchment existing user
         success(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 3", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
                 catchmentCreated(false),
-                userCreated(false));
+                userCreatedDetails(false));
         // with spaces
         success(
                 header(" Location with full hierarchy", " Catchment Name", "Username ", " Full Name of User", "Email Address", "Mobile Number", " Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", " Identifier Prefix", " User Groups", " SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow(" Bihar, District1, Block11", " Catchment 4", " username3@example", " User 3", " username3@example.com ", " 9455509147 ", "English ", "true ", " spinner", " false", "", " User Group 1", " Answer 1"),
                 catchmentCreated(true),
-                userCreated(true));
+                userCreatedDetails(true));
+        // without mandatory fields
+        success(
+                header(" Location with full hierarchy", " Catchment Name", "Username ", " Full Name of User", "Email Address", "Mobile Number", " Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", " Identifier Prefix", " User Groups", " SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
+                dataRow(" Bihar, District1, Block11", " Catchment 5", " username6@example", " User 6", " username6@example.com ", " 9455509147 ", "English ", "", " spinner", " ", "", " User Group 1", " Answer 1"),
+                catchmentCreated(true),
+                userCreatedDetails(true));
+        // without mandatory fields and including in header
+        success(
+                header(" Location with full hierarchy", " Catchment Name", "Username ", " Full Name of User", "Email Address", "Mobile Number", " Preferred Language", "Date picker mode", " Identifier Prefix", " User Groups", " SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
+                dataRow(" Bihar, District1, Block11", " Catchment 6", " username7@example", " User 7", " username6@example.com ", " 9455509147 ", "English ", " spinner", "", " User Group 1", " Answer 1"),
+                catchmentCreated(true),
+                userCreatedDetails(true));
+        // without mandatory fields and including in header including ones with default value
+        success(
+                header(" Location with full hierarchy", " Catchment Name", "Username ", " Full Name of User", "Email Address", "Mobile Number",  " SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
+                dataRow(" Bihar, District1, Block11", " Catchment 6", " username8@example", " User 8", " username8@example.com ", " 9455509147 ", "Answer 1"),
+                catchmentCreated(false),
+                userCreatedDetails(true));
+        userCreatedDetails(user("username8@example"), datePickerMode("calendar"), language("en"), trackLocation(false), enableBeneficiaryMode(false), userGroup("Everyone"));
 
         // wrong - username, email, phone number, language, track location, date picker mode, enable beneficiary mode
         failure(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 1", "username1@exmplee", "User 1", "username1@examplecom", "9455047", "Irish", "truee", "spinnerr", "falsee", "", "User Group 1", "Answer 1"),
-                hasError("Invalid username 'username1@exmplee'. Include correct userSuffix @example at the end"),
-                hasError("Invalid email address username1@examplecom"),
-                hasError("Provided value 'Mobile Number' for phone number is invalid."),
-                hasError("Provided value 'Irish' for Preferred Language is invalid."),
-                hasError("Provided value 'spinnerr' for Date picker mode is invalid."),
-                hasError("Invalid or Empty value specified for mandatory field Track Location"),
-                hasError("Invalid or Empty value specified for mandatory field Enable Beneficiary")
+                has(
+                        error("Invalid username 'username1@exmplee'. Include correct userSuffix @example at the end"),
+                        error("Invalid email address username1@examplecom"),
+                        error("Provided value 'Mobile Number' for phone number is invalid."),
+                        error("Provided value 'Irish' for Preferred Language is invalid."),
+                        error("Provided value 'spinnerr' for Date picker mode is invalid."),
+                        error("Provided value 'truee' for track location is invalid."),
+                        error("Provided value 'falsee' for enable beneficiary mode is invalid.")
+                )
         );
         // empty - catchment name, username, Full Name of User, email, phone number, track location, date picker mode, enable beneficiary mode
         failure(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", " ", "", " ", " ", " ", " ", " ", "", "", "", "User Group 1", "Answer 1"),
-                hasError("Invalid or Empty value specified for mandatory field Catchment Name."),
-                hasError("Invalid or Empty value specified for mandatory field Username."),
-                hasError("Invalid or Empty value specified for mandatory field Full Name of User."),
-                hasError("Invalid or Empty value specified for mandatory field Email Address."),
-                hasError("Invalid or Empty value specified for mandatory field Mobile Number."),
-                hasError("Provided value '' for Date picker mode is invalid."),
-                hasError("Invalid or Empty value specified for mandatory field Track Location."),
-                hasError("Invalid or Empty value specified for mandatory field Enable Beneficiary")
+                has(
+                        error("Invalid or Empty value specified for mandatory field Catchment Name."),
+                        error("Invalid or Empty value specified for mandatory field Username."),
+                        error("Invalid or Empty value specified for mandatory field Full Name of User."),
+                        error("Invalid or Empty value specified for mandatory field Email Address."),
+                        error("Invalid or Empty value specified for mandatory field Mobile Number.")
+                )
         );
 
         // invalid User Group Name
         failure(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 3", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1345", "Answer 1"),
-                hasError("Group 'User Group 1345' not found")
+                has(error("Group 'User Group 1345' not found"))
         );
         // same user group twice
         success(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 3", "username4@example", "User 4", "username4@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1,User Group 1", "Answer 1"),
                 catchmentCreated(false),
-                userCreated(true)
+                userCreatedDetails(true)
         );
 
         // invalid sync attribute
         failure(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 3", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1223"),
-                hasError("'Answer 1223' is not a valid value for the concept 'Sync Concept'.")
+                has(error("'Answer 1223' is not a valid value for the concept 'Sync Concept'."))
         );
 
         // Wrong location hierarchy
         failure(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, NoBlock11", "Catchment 3", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
-                hasError("Provided Location does not exist in Avni. Please add it or check for spelling mistakes 'Bihar, District1, NoBlock11'.")
+                has(error("Provided Location does not exist in Avni. Please add it or check for spelling mistakes and ensure space between two locations 'Bihar, District1, NoBlock11'"))
         );
 
         // Missing headers - sync attributes
         failsOnMissingHeader(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups"),
-                hasError("Mandatory columns are missing from uploaded file - SubjectTypeWithSyncAttributeBasedSync->Sync Concept. Please refer to sample file for the list of mandatory headers.")
+                has(error("Mandatory columns are missing from uploaded file - SubjectTypeWithSyncAttributeBasedSync->Sync Concept. Please refer to sample file for the list of mandatory headers."))
         );
         // Missing headers - all
         failsOnMissingHeader(
                 header(),
-                hasError("Mandatory columns are missing from uploaded file - Track Location, Identifier Prefix, Catchment Name, Full Name of User, Mobile Number, Enable Beneficiary mode, User Groups, Username, SubjectTypeWithSyncAttributeBasedSync->Sync Concept, Preferred Language, Location with full hierarchy, Date picker mode, Email Address. Please refer to sample file for the list of mandatory headers.")
+                has(error("Mandatory columns are missing from uploaded file - Mobile Number, Username, SubjectTypeWithSyncAttributeBasedSync->Sync Concept, Catchment Name, Location with full hierarchy, Full Name of User, Email Address.")),
+                doesntHaveError("\"Mandatory columns are missing from uploaded file - Identifier Prefix, Mobile Number, User Groups, Username, SubjectTypeWithSyncAttributeBasedSync->Sync Concept, Preferred Language, Catchment Name, Location with full hierarchy, Date picker mode, Full Name of User, Email Address. Please refer to sample file for the list of mandatory headers.")
         );
 
         // allow additional cells in data row
@@ -246,8 +305,17 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 3", "username5@example", "User 5", "username5@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1", "Foo"),
                 catchmentCreated(false),
-                userCreated(true)
+                userCreatedDetails(true)
         );
+
+        // case in-sensitive columns for date picker mode, preferred language, track location, enable beneficiary mode, user groups
+        success(
+                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
+                dataRow("Bihar, District1, Block11", "Catchment 3", "username9@example", "User 9", "username9@example.com", "9455509147", "ENglish", "TruE", "SPinner", "FalsE", "", "User GROUP 1", "Answer 1"),
+                catchmentCreated(false),
+                userCreatedDetails(true)
+        );
+        userCreatedDetails(user("username9@example"), datePickerMode("spinner"), language("en"), trackLocation(true), enableBeneficiaryMode(false), userGroup("User Group 1"));
 
         treatAsDescriptor(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),

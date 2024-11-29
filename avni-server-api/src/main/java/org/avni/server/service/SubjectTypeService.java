@@ -45,6 +45,7 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final UserService userService;
+    private final LocationHierarchyService locationHierarchyService;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -55,7 +56,7 @@ public class SubjectTypeService implements NonScopeAwareService {
                               JobLauncher userSubjectTypeCreateJobLauncher,
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService, OrganisationConfigService organisationConfigService,
-                              AddressLevelTypeRepository addressLevelTypeRepository, UserService userService) {
+                              AddressLevelTypeRepository addressLevelTypeRepository, UserService userService, LocationHierarchyService locationHierarchyService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -66,6 +67,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.conceptService = conceptService;
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.locationHierarchyService = locationHierarchyService;
         logger = LoggerFactory.getLogger(this.getClass());
         this.userService = userService;
     }
@@ -251,7 +253,7 @@ public class SubjectTypeService implements NonScopeAwareService {
 
         return Arrays.stream(syncAttributes).
                 filter(Objects::nonNull).sorted().
-                map(sa -> String.format("\"Mandatory field. Allowed values: %s\"", conceptService.getSampleValuesForSyncConcept(conceptService.get(sa))))
+                map(sa -> String.format("\"Mandatory field. Allowed values: %s\"", conceptService.getAllowedValuesForSyncConcept(conceptService.get(sa))))
                 .collect(Collectors.toList());
     }
 
@@ -270,10 +272,29 @@ public class SubjectTypeService implements NonScopeAwareService {
             throw new RuntimeException("No address level types found");
         }
 
-        if (registrationSetting == null) {
-            return new AddressLevelTypes(locationTypes);
+        List<String> customRegistrationLevelTypeUuids = (registrationSetting != null && registrationSetting.getLocationTypeUUIDs() != null && !registrationSetting.getLocationTypeUUIDs().isEmpty())
+                ? registrationSetting.getLocationTypeUUIDs() : null;
+        TreeSet<String> validLocationHierarchies = locationHierarchyService.fetchAndFilterHierarchies();
+        List<List<String>> hierarchies = validLocationHierarchies.stream()
+                .map(hierarchy -> Arrays.asList(hierarchy.split("\\.")))
+                .collect(Collectors.toList());
+
+        if (customRegistrationLevelTypeUuids != null) {
+            List<String> customLevelTypeIds = registrationSetting.getAddressLevelTypes(locationTypes).stream().map(alt -> alt.getId().toString()).collect(Collectors.toList());
+
+            Set<String> addressIds = hierarchies.stream()
+                    .map(typesInHierarchy -> typesInHierarchy.stream()
+                            .map(altId -> customLevelTypeIds.contains(altId) ? typesInHierarchy.subList(typesInHierarchy.indexOf(altId), typesInHierarchy.size()) : null)
+                            .filter(Objects::nonNull)
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toList()))
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toSet());
+
+            return new AddressLevelTypes(locationTypes.stream().filter(alt -> addressIds.contains(alt.getId().toString())).collect(Collectors.toList()));
         } else {
-            return registrationSetting.getAddressLevelTypes(locationTypes);
+            List<String> lowestAddressIds = hierarchies.stream().map(lh -> lh.get(lh.size() - 1)).collect(Collectors.toList());
+            return new AddressLevelTypes(locationTypes.stream().filter(alt -> lowestAddressIds.contains(alt.getId().toString())).collect(Collectors.toList()));
         }
     }
 

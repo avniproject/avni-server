@@ -7,6 +7,7 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.S3Service;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.media.MediaFolder;
 import org.avni.server.util.AvniFiles;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.avni.server.web.validation.ValidationException;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -159,10 +161,12 @@ public class MediaController {
     }
 
     @PostMapping("/media/saveImage")
-    public ResponseEntity<?> saveImage(@RequestParam MultipartFile file, @RequestParam String bucketName) {
-        String uuid = UUID.randomUUID().toString();
-        User user = UserContextHolder.getUserContext().getUser();
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+    public ResponseEntity<?> saveImage(@RequestParam MultipartFile file, @RequestParam String folderName) {
+        MediaFolder folder = MediaFolder.valueOfLabel(folderName);
+        if (folder == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body(String.format("Unsupported folderName %s", folderName));
+        }
+
         File tempSourceFile;
         try {
             tempSourceFile = AvniFiles.convertMultiPartToFile(file, "");
@@ -170,17 +174,31 @@ public class MediaController {
             if (AvniFiles.ImageType.Unknown.equals(imageType)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use .bmp, .jpg, .jpeg, .png, .gif file.");
             }
-            if (bucketName.equals("icons") && isInvalidDimension(tempSourceFile, imageType)) {
+            if (folder.equals(MediaFolder.ICONS) && isInvalidDimension(tempSourceFile, imageType)) {
+                accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
+                    PrivilegeType.EditSubjectType,
+                    PrivilegeType.EditOfflineDashboardAndReportCard
+                ));
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 75 X 75 or smaller.");
             }
-            if (bucketName.equals("news") && isInvalidImageSize(file)) {
+            if (folder.equals(MediaFolder.NEWS) && isInvalidImageSize(file)) {
+                accessControlService.checkPrivilege(PrivilegeType.EditNews);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).contentType(MediaType.TEXT_PLAIN).body("Unsupported file. Use image of size 500KB or smaller.");
             }
-            String targetFilePath = format("%s/%s%s", bucketName, uuid, imageType.EXT);
+            if (folder.equals(MediaFolder.PROFILE_PICS)) {
+                // not checking privileges for specific subject type here as that will be checked while saving the entity
+                accessControlService.checkHasAnyOfSpecificPrivileges(Arrays.asList(
+                    PrivilegeType.RegisterSubject,
+                    PrivilegeType.EditSubject
+                ));
+            }
+            String uuid = UUID.randomUUID().toString();
+            String targetFilePath = format("%s/%s%s", folderName, uuid, imageType.EXT);
             URL s3FileUrl = s3Service.uploadImageFile(tempSourceFile, targetFilePath);
             return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(s3FileUrl.toString());
         } catch (Exception e) {
-            logger.error(format("Image upload failed. bucketName: '%s' file:'%s', user:'%s'", bucketName, file.getOriginalFilename(), user.getUsername()), e);
+            User user = UserContextHolder.getUserContext().getUser();
+            logger.error(format("Image upload failed. folderName: '%s' file:'%s', user:'%s'", folderName, file.getOriginalFilename(), user.getUsername()), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(format("Unable to save Image. %s", e.getMessage())));
         }
     }

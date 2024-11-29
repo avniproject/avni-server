@@ -35,7 +35,7 @@ public class BaseSubjectSearchQueryBuilder<T> {
     private static final String ADDRESS_LEVEL_JOIN = "left outer join address_level al on al.id = i.address_id";
     private String orderByClause = "";
 
-    private final Set<String> whereClauses = new HashSet<>();
+    protected final Set<String> whereClauses = new HashSet<>();
     private final Set<String> joinClauses = new LinkedHashSet<>();
     private final Map<String, Object> parameters = new HashMap<>();
     private boolean forCount;
@@ -190,13 +190,6 @@ public class BaseSubjectSearchQueryBuilder<T> {
         String parameter = "genders";
         addParameter(parameter, genders);
         whereClauses.add("gender.uuid in :genders");
-        return (T) this;
-    }
-
-    public T withSubjectTypeFilter(String subjectType) {
-        if (subjectType == null) return (T) this;
-        addParameter("subjectTypeUuid", subjectType);
-        whereClauses.add("st.uuid = :subjectTypeUuid");
         return (T) this;
     }
 

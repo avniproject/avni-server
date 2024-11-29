@@ -8,9 +8,7 @@ import java.util.List;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "groupDashboard", path = "groupDashboard")
-
-public interface GroupDashboardRepository extends ReferenceDataRepository<GroupDashboard>, FindByLastModifiedDateTime<GroupDashboard> {
-
+public interface GroupDashboardRepository extends ReferenceDataRepository<GroupDashboard>, EndOfLife1EndpointRepository<GroupDashboard> {
     default GroupDashboard findByName(String name) {
         throw new UnsupportedOperationException("No field 'name' in GroupDashboard");
     }

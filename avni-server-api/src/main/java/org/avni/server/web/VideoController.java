@@ -4,13 +4,12 @@ import org.avni.server.builder.VideoBuilder;
 import org.avni.server.dao.VideoRepository;
 import org.avni.server.domain.Video;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.service.VideoService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.VideoContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
@@ -80,7 +79,7 @@ public class VideoController {
             return ResponseEntity.notFound().build();
         }
         video.setVoided(true);
-        video.setTitle(ReactAdminUtil.getVoidedName(video.getTitle(), video.getId()));
+        video.setTitle(EntityUtil.getVoidedName(video.getTitle(), video.getId()));
         videoRepository.save(video);
         return ResponseEntity.ok().build();
     }

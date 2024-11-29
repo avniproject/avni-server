@@ -3,6 +3,7 @@ package org.avni.server.domain.metabase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.util.ObjectMapperSingleton;
 
 public class MetabaseQueryBuilder {
     private final Database database;
@@ -10,10 +11,10 @@ public class MetabaseQueryBuilder {
     private final ObjectMapper objectMapper;
     private ObjectNode queryNode;
 
-    public MetabaseQueryBuilder(Database database, ArrayNode joinsArray, ObjectMapper objectMapper) {
+    public MetabaseQueryBuilder(Database database, ArrayNode joinsArray) {
         this.database = database;
         this.joinsArray = joinsArray;
-        this.objectMapper = objectMapper;
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
         this.queryNode = objectMapper.createObjectNode();
     }
 

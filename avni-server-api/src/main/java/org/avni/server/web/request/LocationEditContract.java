@@ -6,7 +6,6 @@ public class LocationEditContract extends ReferenceDataContract {
     private Long level;
     private Long typeId;
 
-
     public Long getParentId() {
         return parentId;
     }

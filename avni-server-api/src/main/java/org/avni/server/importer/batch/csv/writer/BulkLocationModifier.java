@@ -3,6 +3,8 @@ package org.avni.server.importer.batch.csv.writer;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
+import org.avni.server.domain.ObservationCollection;
+import org.avni.server.geo.Point;
 import org.avni.server.importer.batch.csv.creator.LocationCreator;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
@@ -22,8 +24,10 @@ public abstract class BulkLocationModifier {
 
     protected void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) {
         LocationCreator locationCreator = new LocationCreator();
-        location.setGpsCoordinates(locationCreator.getGeoLocation(row, LocationHeaders.gpsCoordinates, allErrorMsgs));
-        location.setLocationProperties(observationCreator.getObservations(row, headers, allErrorMsgs, FormType.Location, location.getLocationProperties()));
+        Point gpsCoordinates = locationCreator.getGeoLocation(row, LocationHeaders.gpsCoordinates, allErrorMsgs);
+        if (gpsCoordinates != null) location.setGpsCoordinates(gpsCoordinates);
+        ObservationCollection locationProperties = observationCreator.getObservations(row, headers, allErrorMsgs, FormType.Location, location.getLocationProperties());
+        if (!locationProperties.isEmpty()) location.setLocationProperties(locationProperties);
         locationRepository.save(location);
     }
 }

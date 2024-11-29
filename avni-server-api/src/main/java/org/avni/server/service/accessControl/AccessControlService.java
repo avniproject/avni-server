@@ -53,6 +53,18 @@ public class AccessControlService {
         }
     }
 
+    public void checkHasAnyOfSpecificPrivileges(List<PrivilegeType> privilegeTypes) {
+        this.checkHasAnyOfSpecificPrivileges(UserContextHolder.getUser(), privilegeTypes);
+    }
+
+    public void checkHasAnyOfSpecificPrivileges(User contextUser, List<PrivilegeType> privilegeTypes) {
+        if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && privilegeRepository.isAnyOfSpecificAllowedForAdmin(privilegeTypes))) return;
+
+        List<String> privilegeTypeNames = privilegeTypes.stream().map(Enum::name).collect(Collectors.toList());
+        if (!userRepository.hasAnyOfSpecificPrivileges(privilegeTypeNames, contextUser.getId())) {
+            throw AvniAccessException.createNoPrivilegeException(privilegeTypes);
+        }
+    }
     private boolean userExistsAndHasAllPrivileges(User contextUser) {
         if (contextUser == null) throw new AvniNoUserSessionException("User not logged in");
         return userRepository.hasAllPrivileges(contextUser.getId());
@@ -68,6 +80,10 @@ public class AccessControlService {
 
     public void checkSubjectPrivilege(PrivilegeType privilegeType, @NotNull String subjectTypeUUID) {
         this.checkSubjectPrivilege(UserContextHolder.getUser(), privilegeType, subjectTypeUUID);
+    }
+
+    public void checkHasAnyOfSpecificSubjectPrivileges(List<PrivilegeType> privilegeTypes, @NotNull String subjectTypeUUID) {
+        this.checkHasAnyOfSpecificSubjectPrivileges(UserContextHolder.getUser(), privilegeTypes, subjectTypeUUID);
     }
 
     public void checkSubjectPrivilege(PrivilegeType privilegeType, Individual individual) {
@@ -97,6 +113,15 @@ public class AccessControlService {
         if (subjectType == null) return;
         if (!userRepository.hasSubjectPrivilege(privilegeType.name(), subjectType.getId(), contextUser.getId())) {
             throw AvniAccessException.createNoPrivilegeException(privilegeType, subjectTypeUUID, SubjectType.class);
+        }
+    }
+
+    public void checkHasAnyOfSpecificSubjectPrivileges(User contextUser, List<PrivilegeType> privilegeTypes, @NotNull String subjectTypeUUID) {
+        if (userExistsAndHasAllPrivileges(contextUser)) return;
+        SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
+        if (subjectType == null) return;
+        if (!userRepository.hasAnyOfSpecificSubjectPrivileges(privilegeTypes.stream().map(Enum::name).collect(Collectors.toList()), subjectType.getId(), contextUser.getId())) {
+            throw AvniAccessException.createNoPrivilegeException(privilegeTypes);
         }
     }
 
@@ -230,7 +255,7 @@ public class AccessControlService {
             return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.NotDirectlyAssignedToThisUser);
         }
 
-        if (subjectType.isAnySyncRegistrationConceptUsable()) {
+        if (!currentUser.isIgnoreSyncSettingsInDEA() && subjectType.isAnySyncRegistrationConceptUsable()) {
             List<UserSyncSettings> syncSettingsList = currentUser.getSyncSettingsList();
             UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
             if (userSyncSettingsForSubjectType == null) {

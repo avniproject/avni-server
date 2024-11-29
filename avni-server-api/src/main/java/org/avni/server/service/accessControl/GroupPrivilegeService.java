@@ -178,6 +178,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
     public void savePrivilegesFromBundle(GroupPrivilegeBundleContract[] groupPrivilegeBundleContracts, Organisation organisation) {
         List<GroupPrivilege> groupPrivileges = groupPrivilegeRepository.findByImplVersion(GroupPrivilege.IMPL_VERSION);
         Map<PrivilegeType, Privilege> privilegeMapByType = privilegeRepository.findAll().stream().collect(Collectors.toMap(Privilege::getType, Function.identity()));
+        Map<String, Privilege> privilegeMapByTypeUUID = privilegeRepository.findAll().stream().collect(Collectors.toMap(Privilege::getUuid, Function.identity()));
         List<SubjectType> subjectTypes = subjectTypeRepository.findAll();
         List<Program> programs = programRepository.findAll();
         List<EncounterType> encounterTypes = encounterTypeRepository.findAll();
@@ -187,10 +188,13 @@ public class GroupPrivilegeService implements NonScopeAwareService {
         Arrays.stream(groupPrivilegeBundleContracts).forEach(groupPrivilegeBundleContract -> {
             try {
                 Group targetedGroup = getGroup(groupPrivilegeBundleContract, organisation, groups);
+                Privilege bundleContractPrivilege = Objects.isNull(groupPrivilegeBundleContract.getPrivilegeType())
+                        ? privilegeMapByTypeUUID.get(groupPrivilegeBundleContract.getPrivilegeUUID())
+                        : privilegeMapByType.get(groupPrivilegeBundleContract.getPrivilegeType());
                 GroupPrivilege groupPrivilege = groupPrivileges.stream().filter(gp ->
                     Objects.equals(targetedGroup.getUuid(), gp.getGroupUuid())
-                    // rely on type since privilege uuid could be different across different installations
-                    && Objects.equals(groupPrivilegeBundleContract.getPrivilegeType(), gp.getPrivilege().getType())
+                    // rely on type since bundleContractPrivilege uuid could be different across different installations
+                    && Objects.equals(bundleContractPrivilege.getType(), gp.getPrivilege().getType())
                     && Objects.equals(groupPrivilegeBundleContract.getSubjectTypeUUID(), gp.getSubjectTypeUuid())
                     && Objects.equals(groupPrivilegeBundleContract.getProgramUUID(), gp.getProgramUuid())
                     && Objects.equals(groupPrivilegeBundleContract.getProgramEncounterTypeUUID(), gp.getProgramEncounterTypeUuid())
@@ -201,7 +205,7 @@ public class GroupPrivilegeService implements NonScopeAwareService {
                     groupPrivilege = new GroupPrivilege();
                     //don't use uuid from request for bundle uploads since there could be records with matching uuid with older impl_version in db and unique org_uuid constraint is violated
                     groupPrivilege.assignUUID();
-                    groupPrivilege.setPrivilege(privilegeMapByType.get(groupPrivilegeBundleContract.getPrivilegeType()));
+                    groupPrivilege.setPrivilege(bundleContractPrivilege);
                     groupPrivilege.setSubjectType(CollectionUtil.findByUuid(subjectTypes, groupPrivilegeBundleContract.getSubjectTypeUUID()));
                     groupPrivilege.setProgram(CollectionUtil.findByUuid(programs, groupPrivilegeBundleContract.getProgramUUID()));
                     groupPrivilege.setEncounterType(CollectionUtil.findByUuid(encounterTypes, groupPrivilegeBundleContract.getEncounterTypeUUID()));

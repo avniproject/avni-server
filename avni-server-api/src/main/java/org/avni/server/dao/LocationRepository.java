@@ -1,7 +1,7 @@
 package org.avni.server.dao;
 
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.application.projections.LocationProjection;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
@@ -18,17 +18,14 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.QueryHint;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "locations", path = "locations")
 public interface LocationRepository extends ReferenceDataRepository<AddressLevel>, FindByLastModifiedDateTime<AddressLevel>, OperatingIndividualScopeAwareRepository<AddressLevel> {
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where al.id in (:ids)",
@@ -59,7 +56,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     AddressLevel findByTitleAndCatchmentsUuid(String title, String uuid);
 
     String locationProjectionBaseQuery = "select al.id, al.uuid, al.title, al.type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(al.lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(al.lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where (:title is null or lower(al.title) like lower(concat('%', :title,'%'))) " +
@@ -153,10 +150,10 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
         return this.findLocationByTitleTypeAndParentName(title, type, parentName);
     }
 
-    AddressLevel findByTitleIgnoreCaseAndTypeNameAndIsVoidedFalse(String title, String type);
+    List<AddressLevel> findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse(String title, String type);
 
-    default AddressLevel findLocation(String title, String type) {
-        return this.findByTitleIgnoreCaseAndTypeNameAndIsVoidedFalse(title, type);
+    default List<AddressLevel> findLocation(String title, String type) {
+        return this.findByTitleIgnoreCaseAndTypeNameIgnoreCaseAndIsVoidedFalse(title, type);
     }
 
     @RestResource(path = "findByParent", rel = "findByParent")
@@ -194,21 +191,28 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     @Query(value = "select * from address_level where lineage ~ cast(:lquery as lquery)", nativeQuery = true)
     List<AddressLevel> getAllChildLocations(@Param("lquery") String lquery);
 
-    @Query(value = "select * from virtual_catchment_address_mapping_table where catchment_id = :catchmentId", nativeQuery = true)
-    List<VirtualCatchmentProjection> getVirtualCatchmentsForCatchmentId(@Param("catchmentId") Long catchmentId);
+    String CATCHMENT_ADDRESS_MAPPING_BASE_QUERY = "select row_number() over () as id, c.id as catchment_id, al1.id as addresslevel_id, al1.type_id as type_id from catchment c\n" +
+            "                         inner join catchment_address_mapping cam on c.id = cam.catchment_id\n" +
+            "                         inner join address_level al on cam.addresslevel_id = al.id\n" +
+            "                         inner join address_level al1 on al.lineage @> al1.lineage\n";
+    String CATCHMENT_ADDRESS_MAPPING_GROUP_BY = " group by 2, 3";
+    @Query(value = CATCHMENT_ADDRESS_MAPPING_BASE_QUERY + "where c.id = :catchmentId" + CATCHMENT_ADDRESS_MAPPING_GROUP_BY, nativeQuery = true)
+    List<CatchmentAddressProjection> getCatchmentAddressesForCatchmentId(@Param("catchmentId") Long catchmentId);
 
-    @Query(value = "select * from virtual_catchment_address_mapping_table where catchment_id = :catchmentId and type_id in (:typeIds)", nativeQuery = true)
-    List<VirtualCatchmentProjection> getVirtualCatchmentsForCatchmentIdAndLocationTypeId(@Param("catchmentId") Long catchmentId, List<Long> typeIds);
+    @Query(value = CATCHMENT_ADDRESS_MAPPING_BASE_QUERY + "where c.id = :catchmentId and al1.type_id in (:typeIds)" + CATCHMENT_ADDRESS_MAPPING_GROUP_BY, nativeQuery = true)
+    List<CatchmentAddressProjection> getCatchmentAddressesForCatchmentIdAndLocationTypeId(@Param("catchmentId") Long catchmentId, List<Long> typeIds);
 
-    @Query(value = "select * from virtual_catchment_address_mapping_table where addresslevel_id in (:addressLevelIds)", nativeQuery = true)
-    List<VirtualCatchmentProjection> getVirtualCatchmentsForAddressLevelIds(@Param("addressLevelIds") List<Long> addressLevelIds);
+    @Query(value = CATCHMENT_ADDRESS_MAPPING_BASE_QUERY + "where al1.id in (:addressLevelIds)" + CATCHMENT_ADDRESS_MAPPING_GROUP_BY, nativeQuery = true)
+    List<CatchmentAddressProjection> getCatchmentAddressesForAddressLevelIds(@Param("addressLevelIds") List<Long> addressLevelIds);
+
+    @Query(value = CATCHMENT_ADDRESS_MAPPING_BASE_QUERY + "where c.id = :catchmentId and al1.id = :addressLevelId" + CATCHMENT_ADDRESS_MAPPING_GROUP_BY, nativeQuery = true)
+    List<CatchmentAddressProjection> getCatchmentAddressForCatchmentIdAndAddressLevelId(@Param("addressLevelId") Long addressLevelId, @Param("catchmentId") Long catchmentId);
 
     @Query(value = "select title_lineage from title_lineage_locations_function(:addressId)", nativeQuery = true)
     String getTitleLineageById(Long addressId);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
             "cast(lineage as text) as lineage, " +
-            "null as titleLineage, " +
             "alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
@@ -217,7 +221,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     Page<LocationProjection> findNonVoidedLocations(Pageable pageable);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where al.is_voided = false " +
@@ -227,7 +231,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     List<LocationProjection> findNonVoidedLocationsByTypeId(Long typeId);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId, " +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al " +
             "left join address_level_type alt on alt.id = al.type_id " +
             "where al.is_voided = false " +
@@ -236,7 +240,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     LocationProjection findNonVoidedLocationsByUuid(String uuid);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId,\n" +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al\n" +
             "left join address_level_type alt on alt.id = al.type_id\n" +
             "where lineage @>" +
@@ -247,7 +251,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
     List<LocationProjection> getParentsWithMaxLevelTypeId(String uuid, Long maxLevelTypeId);
 
     @Query(value = "select al.id, al.uuid, title, type_id as typeId, alt.name as typeString, al.parent_id as parentId,\n" +
-            "cast(lineage as text) as lineage, null as titleLineage, alt.level " +
+            "cast(lineage as text) as lineage, alt.level " +
             "from address_level al\n" +
             "left join address_level_type alt on alt.id = al.type_id\n" +
             "where lineage @>" +

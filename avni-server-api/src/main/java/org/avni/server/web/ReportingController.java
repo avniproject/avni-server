@@ -2,7 +2,7 @@ package org.avni.server.web;
 
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.projections.VirtualCatchmentProjection;
+import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
@@ -205,9 +205,9 @@ public class ReportingController {
                     .map(UserGroup::getUser)
                     .map(User::getId)
                     .collect(Collectors.toSet());
-            List<Long> catchmentIds = locationRepository.getVirtualCatchmentsForAddressLevelIds(locationIds)
+            List<Long> catchmentIds = locationRepository.getCatchmentAddressesForAddressLevelIds(locationIds)
                     .stream()
-                    .map(VirtualCatchmentProjection::getCatchment_id)
+                    .map(CatchmentAddressProjection::getCatchment_id)
                     .collect(Collectors.toList());
             return userRepository.findByCatchment_IdInAndIsVoidedFalse(catchmentIds)
                     .stream()
@@ -215,9 +215,9 @@ public class ReportingController {
                     .filter(groupUserIds::contains)
                     .collect(Collectors.toSet());
         } else if (!locationIds.isEmpty()) {
-            List<Long> catchmentIds = locationRepository.getVirtualCatchmentsForAddressLevelIds(locationIds)
+            List<Long> catchmentIds = locationRepository.getCatchmentAddressesForAddressLevelIds(locationIds)
                     .stream()
-                    .map(VirtualCatchmentProjection::getCatchment_id).collect(Collectors.toList());
+                    .map(CatchmentAddressProjection::getCatchment_id).collect(Collectors.toList());
             return userRepository.findByCatchment_IdInAndIsVoidedFalse(catchmentIds)
                     .stream()
                     .map(User::getId).collect(Collectors.toSet());

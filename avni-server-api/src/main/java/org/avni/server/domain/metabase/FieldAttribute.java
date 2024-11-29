@@ -2,6 +2,7 @@ package org.avni.server.domain.metabase;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.avni.server.util.ObjectMapperSingleton;
 
 public enum FieldAttribute {
     ALL("all"),
@@ -24,8 +25,8 @@ public enum FieldAttribute {
         return attributeName;
     }
 
-    public ObjectNode toJson(ObjectMapper objectMapper, Object value) {
-        ObjectNode attributeNode = objectMapper.createObjectNode();
+    public ObjectNode toJson(Object value) {
+        ObjectNode attributeNode = ObjectMapperSingleton.getObjectMapper().createObjectNode();
         attributeNode.put(attributeName, value.toString());
         return attributeNode;
     }

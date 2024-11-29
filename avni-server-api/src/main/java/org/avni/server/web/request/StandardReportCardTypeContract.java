@@ -15,6 +15,7 @@ public class StandardReportCardTypeContract {
     private boolean isVoided = false;
     private DateTime createdDateTime;
     private DateTime lastModifiedDateTime;
+    private String type;
 
     public static StandardReportCardTypeContract fromEntity(StandardReportCardType standardReportCardType) {
         StandardReportCardTypeContract contract = new StandardReportCardTypeContract();
@@ -25,6 +26,7 @@ public class StandardReportCardTypeContract {
         contract.setDescription(standardReportCardType.getDescription());
         contract.setCreatedDateTime(standardReportCardType.getCreatedDateTime());
         contract.setLastModifiedDateTime(standardReportCardType.getLastModifiedDateTime());
+        contract.setType(String.valueOf(standardReportCardType.getType()));
         return contract;
     }
 
@@ -82,5 +84,13 @@ public class StandardReportCardTypeContract {
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

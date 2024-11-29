@@ -84,20 +84,6 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
         this.bugsnag = bugsnag;
     }
 
-    @Transactional
-    public ProgramEncounter matchingEncounter(String programEnrolmentUUID, String encounterTypeName, DateTime encounterDateTime) {
-        ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(programEnrolmentUUID);
-        if (programEnrolment == null) {
-            throw new IllegalArgumentException(String.format("ProgramEnrolment not found with UUID '%s'", programEnrolmentUUID));
-        }
-        return programEnrolment.getProgramEncounters().stream()
-            .filter(programEncounter ->
-                programEncounter.getEncounterType().getName().equals(encounterTypeName)
-                    && programEncounter.dateFallsWithIn(encounterDateTime))
-            .findAny()
-            .orElse(null);
-    }
-
     public EnrolmentContract constructEnrolments(String uuid) {
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findByUuid(uuid);
         EnrolmentContract enrolmentContract = new EnrolmentContract();
@@ -274,32 +260,13 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
 
     @Messageable(EntityType.ProgramEnrolment)
     public ProgramEnrolment voidEnrolment(ProgramEnrolment programEnrolment) {
-        assertNoUnVoidedProgramEncounters(programEnrolment);
         programEnrolment.setVoided(true);
         return programEnrolmentRepository.saveEntity(programEnrolment);
-    }
-
-    private void assertNoUnVoidedProgramEncounters(ProgramEnrolment programEnrolment) {
-        long unVoidedProgramEncounters = programEnrolment.nonVoidedEncounters().count();
-        if (unVoidedProgramEncounters != 0) {
-            String programName = programEnrolment.getProgram().getName();
-            throw new BadRequestError(String.format("There are non deleted program encounters for the program %s", programName));
-        }
     }
 
     @Override
     public boolean isScopeEntityChanged(DateTime lastModifiedDateTime, String programUUID) {
         return true;
-//        Program program = programRepository.findByUuid(programUUID);
-//        FormMapping formMapping = formMappingRepository.getAllProgramEnrolmentFormMappings()
-//                .stream()
-//                .filter(fm -> fm.getProgramUuid().equals(programUUID))
-//                .findFirst()
-//                .orElse(null);
-//        User user = UserContextHolder.getUserContext().getUser();
-//        return program != null &&
-//                formMapping != null &&
-//                isChanged(user, lastModifiedDateTime, program.getId(), formMapping.getSubjectType());
     }
 
     @Override
