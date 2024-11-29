@@ -10,12 +10,16 @@ restore-org-dump:
 ifndef dumpFile
 	@echo "Provde the dumpFile variable"
 	exit 1
-else
-	sed -i '' 's/from form/from public.form/g' "$(dumpFile)"
-	sed -i '' 's/inner join form/inner join public.form/g' "$(dumpFile)"
-	make _clean_db _build_db database=avni_org
-	make restore-dump-only dumpFile=$(dumpFile)
 endif
+ifndef dbRole
+	@echo "Provde the dbRole variable"
+	exit 1
+endif
+	-sed -i '' 's/from form/from public.form/g' "$(dumpFile)"
+	-sed -i '' 's/inner join form/inner join public.form/g' "$(dumpFile)"
+	-make _clean_db _build_db database=avni_org
+	-make create-local-db-impl-user db=avni_org user=$(dbRole)
+	-make restore-dump-only dumpFile=$(dumpFile)
 
 restore-staging-dump:
 ifndef dumpFile
@@ -137,8 +141,6 @@ endif
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \
 		--exclude-table-data='batch_*' \
-		--exclude-table='qrtz_*' \
-		--exclude-table='scheduled_job_run' \
 		--exclude-table='public.individual_copy' \
 		--exclude-table='public.program_enrolment_copy' \
 		--exclude-table='public.encounter_copy' \
