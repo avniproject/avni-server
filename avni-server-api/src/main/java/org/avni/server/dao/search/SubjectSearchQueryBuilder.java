@@ -63,29 +63,26 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withEncounterDateFilter(DateRange encounterDateRange) {
         if (encounterDateRange == null || encounterDateRange.isEmpty()) return this;
-        return withJoin(ENCOUNTER_JOIN)
-                .withRangeFilter(encounterDateRange,
+        return withRangeFilter(encounterDateRange,
                         "encounterDate",
                         "e.encounter_date_time >= cast(:rangeParam as date)",
-                        "e.encounter_date_time <= cast(:rangeParam as date)", false);
+                        "e.encounter_date_time <= cast(:rangeParam as date)", ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEncounterDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withJoin(String.format(PROGRAM_ENCOUNTER_JOIN, "join"))
-                .withRangeFilter(dateRange,
+        return withRangeFilter(dateRange,
                         "programEncounterDate",
                         "pe.encounter_date_time >= cast(:rangeParam as date)",
-                        "pe.encounter_date_time <= cast(:rangeParam as date)", false);
+                        "pe.encounter_date_time <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withJoin(PROGRAM_ENCOUNTER_JOIN)
-                .withRangeFilter(dateRange,
+        return withRangeFilter(dateRange,
                         "programEnrolmentDate",
                         "penr.enrolment_date_time >= cast(trim(:rangeParam) as date)",
-                        "penr.enrolment_date_time <= cast(trim(:rangeParam) as date)", false);
+                        "penr.enrolment_date_time <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
     }
 
     @Override
