@@ -12,7 +12,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
     public static final String SubjectTypeJoin = "         left outer join subject_type st on i.subject_type_id = st.id and st.is_voided is false\n";
 
     public SqlQuery build(SubjectType subjectType) {
-        String baseQuery = "select $DISTINCT i.id as \"id\",\n" +
+        String baseQuery = "select i.id as \"id\",\n" +
                 "                i.first_name as \"firstName\",\n" +
                 "                i.last_name as \"lastName\",\n" +
                 "                i.profile_picture as \"profilePicture\",\n" +
@@ -39,6 +39,8 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
     public SubjectSearchQueryBuilder withSubjectSearchFilter(SubjectSearchRequest request, SubjectType subjectType) {
         return this
                 .withNameFilter(request.getName())
+                .withConceptsFilter(request.getConcept())
+                .withSearchAll(request.getSearchAll())
                 .withSubjectTypeFilter(subjectType)
                 .withGenderFilter(request.getGender())
                 .withAgeFilter(request.getAge())
@@ -47,9 +49,7 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
                 .withProgramEnrolmentDateFilter(request.getProgramEnrolmentDate())
                 .withProgramEncounterDateFilter(request.getProgramEncounterDate())
                 .withAddressIdsFilter(request.getAddressIds())
-                .withConceptsFilter(request.getConcept())
                 .withIncludeVoidedFilter(request.getIncludeVoided())
-                .withSearchAll(request.getSearchAll())
                 .withPaginationFilters(request.getPageElement())
                 .withCustomFields(request.getSubjectType());
     }
@@ -63,30 +63,26 @@ public class SubjectSearchQueryBuilder extends BaseSubjectSearchQueryBuilder<Sub
 
     public SubjectSearchQueryBuilder withEncounterDateFilter(DateRange encounterDateRange) {
         if (encounterDateRange == null || encounterDateRange.isEmpty()) return this;
-        return withJoin(ENCOUNTER_JOIN, true)
-                .withRangeFilter(encounterDateRange,
+        return withRangeFilter(encounterDateRange,
                         "encounterDate",
                         "e.encounter_date_time >= cast(:rangeParam as date)",
-                        "e.encounter_date_time <= cast(:rangeParam as date)");
+                        "e.encounter_date_time <= cast(:rangeParam as date)", ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEncounterDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withJoin(PROGRAM_ENROLMENT_JOIN, true)
-                .withJoin(PROGRAM_ENCOUNTER_JOIN, true)
-                .withRangeFilter(dateRange,
+        return withRangeFilter(dateRange,
                         "programEncounterDate",
                         "pe.encounter_date_time >= cast(:rangeParam as date)",
-                        "pe.encounter_date_time <= cast(:rangeParam as date)");
+                        "pe.encounter_date_time <= cast(:rangeParam as date)", PROGRAM_ENCOUNTER_FILTER);
     }
 
     public SubjectSearchQueryBuilder withProgramEnrolmentDateFilter(DateRange dateRange) {
         if (dateRange == null || dateRange.isEmpty()) return this;
-        return withJoin(PROGRAM_ENROLMENT_JOIN, true)
-                .withRangeFilter(dateRange,
+        return withRangeFilter(dateRange,
                         "programEnrolmentDate",
                         "penr.enrolment_date_time >= cast(trim(:rangeParam) as date)",
-                        "penr.enrolment_date_time <= cast(trim(:rangeParam) as date)");
+                        "penr.enrolment_date_time <= cast(trim(:rangeParam) as date)", PROGRAM_ENROLMENT_FILTER);
     }
 
     @Override

@@ -5,11 +5,15 @@ import org.avni.server.dao.SubjectSearchRepository;
 import org.avni.server.dao.search.SubjectSearchQueryBuilder;
 import org.avni.server.projection.SearchSubjectEnrolledProgram;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -28,15 +32,15 @@ public class IndividualSearchService {
     }
 
     public LinkedHashMap<String, Object> search(SubjectSearchRequest subjectSearchRequest) {
+        long startTime = new DateTime().getMillis();
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
-        logger.info("Found " + searchResults.size() + " individuals");
-        BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder());
-        logger.info("Total count of individuals: " + totalCount);
-        return constructIndividual(searchResults, totalCount);
+        long resultsEnd = new DateTime().getMillis();
+        logger.info(String.format("Subject search: Time Taken: %dms. Sorted: %s", (resultsEnd - startTime), subjectSearchRequest.getPageElement().getSortColumn()));
+        return constructIndividual(searchResults);
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, BigInteger totalCount) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
@@ -60,7 +64,6 @@ public class IndividualSearchService {
                             .collect(Collectors.toList()));
                     individualRecord.put("addressLevel", titleLineages.get(((BigInteger) individualRecord.get("addressId")).longValue()));
                 }).collect(Collectors.toList());
-        recordsMap.put("totalElements", totalCount);
         recordsMap.put("listOfRecords", listOfRecords);
         return recordsMap;
     }
