@@ -63,7 +63,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
 
     @PostMapping(value = "/web/identifierUserAssignment")
     @Transactional
-    ResponseEntity saveIdentifierAssignment(@RequestBody IdentifierUserAssignmentContractWeb request) {
+    public ResponseEntity saveIdentifierAssignment(@RequestBody IdentifierUserAssignmentContractWeb request) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierUserAssignment);
         IdentifierUserAssignment identifierUserAssignment = getIdentifierUserAssignment(request);
 
@@ -116,6 +116,8 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         identifierUserAssignment.setIdentifierSource(request.getIdentifierSourceId() == null ? null : identifierSourceRepository.findOne(request.getIdentifierSourceId()));
         identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
         identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
+        identifierUserAssignment.setId(request.getId());
+        identifierUserAssignment.setOrganisationId(request.getOrganisationId());
         return identifierUserAssignment;
     }
 }

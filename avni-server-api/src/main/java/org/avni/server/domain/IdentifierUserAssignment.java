@@ -73,14 +73,14 @@ public class IdentifierUserAssignment extends OrganisationAwareEntity {
 
     public void validate() throws ValidationException {
         String prefix = identifierSource.getType().equals(IdentifierGeneratorType.userPoolBasedIdentifierGenerator) ? identifierSource.getPrefix() : assignedTo.getUserSettings().getIdPrefix();
-        if (Long.parseLong(identifierStart.replace(prefix, "")) > Long.parseLong(identifierEnd.replace(prefix, "")))
-            throw new ValidationException("Identifier start should be less than identifier end");
-
-        if (identifierSource.getType().equals(IdentifierGeneratorType.userBasedIdentifierGenerator) && assignedTo.getUserSettings().getIdPrefix() == null)
+        if (identifierSource.getType().equals(IdentifierGeneratorType.userBasedIdentifierGenerator) && (assignedTo.getUserSettings().getIdPrefix() == null || assignedTo.getUserSettings().getIdPrefix().isEmpty()))
             throw new ValidationException("Id prefix is not assigned to the user");
 
         if (!(identifierStart.startsWith(prefix) && identifierEnd.startsWith(prefix)))
             throw new ValidationException("Both Identifier Start and End should match the prefix " + prefix);
+
+        if (Long.parseLong(identifierStart.replace(prefix, "")) > Long.parseLong(identifierEnd.replace(prefix, "")))
+            throw new ValidationException("Identifier start should be less than identifier end");
     }
 
     @Override
