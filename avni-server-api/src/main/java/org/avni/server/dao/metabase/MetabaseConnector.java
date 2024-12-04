@@ -9,6 +9,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.Map;
 
 @Repository
@@ -22,7 +23,7 @@ public class MetabaseConnector {
     protected String apiKey;
 
     public MetabaseConnector(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplateBuilder.additionalCustomizers(new RestTemplateStandardCookieCustomizer()).build();
     }
 
     protected HttpHeaders getHeaders() {
