@@ -2,16 +2,17 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class DatabaseRepository extends MetabaseConnector {
@@ -75,13 +76,14 @@ public class DatabaseRepository extends MetabaseConnector {
         try {
             String jsonResponse = getForObject(url, String.class);
             List<CollectionInfoResponse> collections = objectMapper.readValue(
-                    jsonResponse, new TypeReference<List<CollectionInfoResponse>>() {}
+                    jsonResponse, new TypeReference<List<CollectionInfoResponse>>() {
+                    }
             );
 
             return collections.stream()
                     .filter(collection -> collection.getName().equals(database.getName()))
                     .findFirst()
-                    .orElseThrow(null);
+                    .orElse(null);
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve collection", e);
         }
@@ -103,7 +105,7 @@ public class DatabaseRepository extends MetabaseConnector {
                 VisualizationType.TABLE,
                 null,
                 objectMapper.createObjectNode(),
-                getCollectionByName(database).getIdAsInt()
+                getCollectionForDatabase(database).getIdAsInt()
         );
 
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(), JsonNode.class);
@@ -120,10 +122,18 @@ public class DatabaseRepository extends MetabaseConnector {
                 VisualizationType.TABLE,
                 null,
                 objectMapper.createObjectNode(),
-                getCollectionByName(database).getIdAsInt()
+                getCollectionForDatabase(database).getIdAsInt()
         );
 
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(), JsonNode.class);
+    }
+
+    private CollectionInfoResponse getCollectionForDatabase(Database database) {
+        CollectionInfoResponse collectionByName = getCollectionByName(database);
+        if (Objects.isNull(collectionByName)) {
+            throw new RuntimeException(String.format("Failed to fetch collection for database %s", database.getName()));
+        }
+        return collectionByName;
     }
 
     public FieldDetails getFieldDetailsByName(Database database, TableDetails tableDetails, FieldDetails fieldDetails) {
