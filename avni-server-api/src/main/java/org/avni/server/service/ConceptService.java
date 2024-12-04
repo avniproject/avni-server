@@ -339,6 +339,7 @@ public class ConceptService implements NonScopeAwareService {
             conceptContract.setName(concept.getName());
             conceptContract.setId(concept.getId());
             conceptContract.setUuid(concept.getUuid());
+            conceptContract.setVoided(ca.isVoided());
             conceptUsageContract.addConcepts(conceptContract);
             addDependentFormDetails(conceptUsageContract, concept);
         });
