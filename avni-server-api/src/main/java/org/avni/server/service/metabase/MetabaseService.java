@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetabaseService {
 
+    public static final String ORG_DB_USER_PASSWORD = "password";
+    public static final String DB_ENGINE = "postgres";
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
@@ -44,7 +46,7 @@ public class MetabaseService {
 
         globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
         if (globalDatabase == null) {
-            Database newDatabase = new Database(name, "postgres", new DatabaseDetails(avniDatabase, dbUser));
+            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, ORG_DB_USER_PASSWORD));
             globalDatabase = databaseRepository.save(newDatabase);
         }
 

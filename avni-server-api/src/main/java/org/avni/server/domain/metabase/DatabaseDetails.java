@@ -8,19 +8,21 @@ public class DatabaseDetails {
     private String port;
     private String db;
     private String user;
+    private String password;
 
     public DatabaseDetails() {
     }
 
-    public DatabaseDetails(String host, String port, String db, String user) {
+    public DatabaseDetails(String host, String port, String db, String user, String password) {
         this.host = host;
         this.port = port;
         this.db = db;
         this.user = user;
+        this.password = password;
     }
 
-    public DatabaseDetails(AvniDatabase avniDatabase, String dbUser) {
-        this(avniDatabase.getAvniDatabaseServer(), avniDatabase.getAvniDatabasePort(), avniDatabase.getAvniDatabaseName(), dbUser);
+    public DatabaseDetails(AvniDatabase avniDatabase, String dbUser, String dbUserPassword) {
+        this(avniDatabase.getAvniDatabaseServer(), avniDatabase.getAvniDatabasePort(), avniDatabase.getAvniDatabaseName(), dbUser, dbUserPassword);
     }
 
     public String getHost() {
@@ -37,5 +39,9 @@ public class DatabaseDetails {
 
     public String getUser() {
         return user;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }
