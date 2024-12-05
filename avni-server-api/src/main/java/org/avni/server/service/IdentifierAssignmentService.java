@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class IdentifierAssignmentService implements NonScopeAwareService {
+public class IdentifierAssignmentService implements DeviceAwareService {
 
     private IdentifierSourceRepository identifierSourceRepository;
 
@@ -38,18 +38,18 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
 
 
     @Transactional
-    public void generateIdentifiersIfNecessary(User user) {
+    public void generateIdentifiersIfNecessary(User user, String deviceId) {
         List<IdentifierSource> allAuthorisedIdentifierSources = identifierSourceRepository.getAllAuthorisedIdentifierSources(user.getCatchment());
         for (IdentifierSource identifierSource : allAuthorisedIdentifierSources) {
-            generateIdentifiersIfNecessary(user, identifierSource);
+            generateIdentifiersIfNecessary(user, identifierSource, deviceId);
         }
     }
 
     @Transactional
-    public void generateIdentifiersIfNecessary(User user, IdentifierSource identifierSource) {
-        if (shouldGenerateIdentifiers(user, identifierSource)) {
+    public void generateIdentifiersIfNecessary(User user, IdentifierSource identifierSource, String deviceId) {
+        if (shouldGenerateIdentifiers(user, identifierSource, deviceId)) {
             IdentifierGenerator identifierGenerator = context.getBean(identifierSource.getType().name(), IdentifierGenerator.class);
-            identifierGenerator.generateIdentifiers(identifierSource, user);
+            identifierGenerator.generateIdentifiers(identifierSource, user, deviceId);
         }
     }
 
@@ -65,15 +65,14 @@ public class IdentifierAssignmentService implements NonScopeAwareService {
                 }).collect(Collectors.toList());
     }
 
-    private boolean shouldGenerateIdentifiers(User user, IdentifierSource identifierSource) {
-        Integer spareIdentifierAssignments = identifierAssignmentRepository.countIdentifierAssignmentByIdentifierSourceEqualsAndAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNullAndUsedIsFalse(identifierSource, user);
+    private boolean shouldGenerateIdentifiers(User user, IdentifierSource identifierSource, String deviceId) {
+        Integer spareIdentifierAssignments = identifierAssignmentRepository.countIdentifierAssignmentByIdentifierSourceEqualsAndAssignedToEqualsAndIndividualIsNullAndProgramEnrolmentIsNullAndUsedIsFalseAndDeviceIdEquals(identifierSource, user, deviceId);
         return spareIdentifierAssignments < identifierSource.getMinimumBalance();
     }
 
     @Override
-    public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
+    public boolean isSyncRequiredForDevice(DateTime lastModifiedDateTime, String deviceId) {
         User user = UserContextHolder.getUserContext().getUser();
-        this.generateIdentifiersIfNecessary(user);
-        return identifierAssignmentRepository.existsByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNull(user, CHSEntity.toDate(lastModifiedDateTime));
-    }
+        this.generateIdentifiersIfNecessary(user, deviceId);
+        return identifierAssignmentRepository.existsByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullAndDeviceIdEquals(user, CHSEntity.toDate(lastModifiedDateTime), deviceId);    }
 }

@@ -27,8 +27,8 @@ public class UserPoolBasedIdentifierGeneratorTest {
 
         IdentifierGenerator identifierGenerator = new UserBasedIdentifierGenerator(prefixedUserPoolBasedIdentifierGenerator);
 
-        identifierGenerator.generateIdentifiers(identifierSource, user);
+        identifierGenerator.generateIdentifiers(identifierSource, user, null);
 
-        verify(prefixedUserPoolBasedIdentifierGenerator).generateIdentifiers(identifierSource, user, "ABC");
+        verify(prefixedUserPoolBasedIdentifierGenerator).generateIdentifiers(identifierSource, user, "ABC", null);
     }
 }

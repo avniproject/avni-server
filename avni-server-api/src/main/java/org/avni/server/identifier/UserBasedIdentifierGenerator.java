@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import static org.avni.server.service.DeviceAwareService.WEB_DEVICE_ID;
+
 @Service
 @Qualifier("userBasedIdentifierGenerator")
 public class UserBasedIdentifierGenerator implements IdentifierGenerator {
@@ -18,15 +20,15 @@ public class UserBasedIdentifierGenerator implements IdentifierGenerator {
     }
 
     @Override
-    public void generateIdentifiers(IdentifierSource identifierSource, User user) {
+    public void generateIdentifiers(IdentifierSource identifierSource, User user, String deviceId) {
         String idPrefix = getIdPrefix(user);
-        prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(identifierSource, user, idPrefix);
+        prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(identifierSource, user, idPrefix, deviceId);
     }
 
     @Override
     public IdentifierAssignment generateSingleIdentifier(IdentifierSource identifierSource, User user) {
         String idPrefix = getIdPrefix(user);
-        IdentifierAssignment identifierAssignment = prefixedUserPoolBasedIdentifierGenerator.generateSingleIdentifier(identifierSource, user, idPrefix);
+        IdentifierAssignment identifierAssignment = prefixedUserPoolBasedIdentifierGenerator.generateSingleIdentifier(identifierSource, user, idPrefix, WEB_DEVICE_ID);
         return identifierAssignment;
     }
 
