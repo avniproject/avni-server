@@ -89,12 +89,13 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
 
         IdentifierUserAssignment identifierUserAssignment = getIdentifierUserAssignment(request);
         identifierUserAssignment.setVoided(request.isVoided());
+        IdentifierUserAssignment updatedIdentifierUserAssignment;
         try {
-            identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
+            updatedIdentifierUserAssignment = identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
         } catch (IdentifierOverlappingException | ValidationException e) {
             return WebResponseUtil.createBadRequestResponse(e, logger);
         }
-        return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
+        return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(updatedIdentifierUserAssignment));
     }
 
     @DeleteMapping(value = "/web/identifierUserAssignment/{id}")
@@ -116,8 +117,6 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         identifierUserAssignment.setIdentifierSource(request.getIdentifierSourceId() == null ? null : identifierSourceRepository.findOne(request.getIdentifierSourceId()));
         identifierUserAssignment.setIdentifierStart(request.getIdentifierStart());
         identifierUserAssignment.setIdentifierEnd(request.getIdentifierEnd());
-        identifierUserAssignment.setId(request.getId());
-        identifierUserAssignment.setOrganisationId(request.getOrganisationId());
         return identifierUserAssignment;
     }
 }
