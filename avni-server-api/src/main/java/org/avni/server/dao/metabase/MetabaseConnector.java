@@ -23,7 +23,7 @@ public class MetabaseConnector {
     protected String apiKey;
 
     public MetabaseConnector(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplate = restTemplateBuilder.additionalCustomizers(new RestTemplateStandardCookieCustomizer()).build();
+        this.restTemplate = restTemplateBuilder.build();
     }
 
     protected HttpHeaders getHeaders() {

@@ -1,7 +1,6 @@
 package org.avni.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.deser.DateTimeDeserializer;
 import com.google.common.cache.CacheBuilder;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.domain.User;
@@ -15,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -22,12 +22,12 @@ import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -184,5 +184,17 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
         return objectMapper;
+    }
+
+    @Bean
+    @Qualifier("customRestTemplateCustomizer")
+    public CustomRestTemplateCustomizer customRestTemplateCustomizer() {
+        return new CustomRestTemplateCustomizer();
+    }
+
+    @Bean
+    @DependsOn(value = {"customRestTemplateCustomizer"})
+    public RestTemplateBuilder restTemplateBuilder() {
+        return new RestTemplateBuilder(customRestTemplateCustomizer());
     }
 }
