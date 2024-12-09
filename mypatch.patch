@@ -29,8 +29,8 @@ index 00000000..fd35b7b1
 +import org.avni.server.domain.EntityType;
 +import org.avni.server.domain.OrganisationAwareEntity;
 +
-+import javax.persistence.*;
-+import javax.validation.constraints.NotNull;
++import jakarta.persistence.*;
++import jakarta.validation.constraints.NotNull;
 +
 +@Entity
 +@Table(name = "account_admin")

@@ -17,8 +17,6 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -101,13 +99,12 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
         syncAttributes.add(ConceptContract.create(concept));
     }
 
-    @Transactional
     public LinkedHashMap<String, Object> searchSubjects(SubjectSearchRequest subjectSearchRequest) {
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
         List<Long> subjectIds = searchResults.stream().map(s -> Long.parseLong(s.get("id").toString())).collect(Collectors.toList());
         List<UserSubjectAssignment> userSubjectAssignmentBySubjectIds = userSubjectAssignmentRepository.findUserSubjectAssignmentBySubject_IdIn(subjectIds);
         List<Long> addressIds = searchResults.stream()
-                .map(searchResult -> ((BigInteger) searchResult.get("addressId")).longValue())
+                .map(searchResult -> (Long) searchResult.get("addressId"))
                 .collect(Collectors.toList());
         Map<Long, String> titleLineages = addressLevelService.getTitleLineages(addressIds);
         Map<String, List<User>> groupedSubjects = userSubjectAssignmentBySubjectIds.stream()
@@ -123,10 +120,10 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
                     .orElseGet(Stream::empty)
                     .map(uw -> pf.createProjection(UserWebProjection.class, uw)).collect(Collectors.toList());
             searchResult.put("assignedUsers", userWebProjections);
-            searchResult.put("addressLevel", titleLineages.get(((BigInteger) searchResult.get("addressId")).longValue()));
+            searchResult.put("addressLevel", titleLineages.get((Long) searchResult.get("addressId")));
         }
 
-        BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
+        Long totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
 
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<>();
         recordsMap.put("totalElements", totalCount);

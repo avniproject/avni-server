@@ -2,15 +2,15 @@ package org.avni.server.web.resourceProcessors;
 
 import org.avni.server.domain.ProgramEnrolment;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.EntityModel;
 
 public class ProgramEnrolmentResourceProcessor extends ResourceProcessor<ProgramEnrolment> {
     @Override
-    public Resource<ProgramEnrolment> process(Resource<ProgramEnrolment> resource) {
+    public EntityModel<ProgramEnrolment> process(EntityModel<ProgramEnrolment> resource) {
         ProgramEnrolment programEnrolment = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(programEnrolment.getProgram().getUuid(), "programUUID"));
-        resource.add(new Link(programEnrolment.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(programEnrolment.getProgram().getUuid(), "programUUID"));
+        resource.add(Link.of(programEnrolment.getIndividual().getUuid(), "individualUUID"));
         return resource;
     }
 }

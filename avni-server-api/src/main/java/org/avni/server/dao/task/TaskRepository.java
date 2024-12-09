@@ -16,7 +16,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,11 +28,11 @@ import java.util.Map;
 @RepositoryRestResource(collectionResourceRel = "task", path = "task", exported = false)
 public interface TaskRepository extends TransactionalDataRepository<Task>, FindByLastModifiedDateTime<Task> {
 
-    Page<Task> findByAssignedToAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Date lastModifiedDateTime, Date now, Pageable pageable);
+    Page<Task> findByAssignedToAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
-    Slice<Task> findSliceByAssignedToAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Date lastModifiedDateTime, Date now, Pageable pageable);
+    Slice<Task> findSliceByAssignedToAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(User user, Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
-    boolean existsByAssignedToAndLastModifiedDateTimeGreaterThan(User user, Date lastModifiedDateTime);
+    boolean existsByAssignedToAndLastModifiedDateTimeGreaterThan(User user, Instant lastModifiedDateTime);
 
     default Page<Task> search(TaskSearchCriteria searchCriteria, boolean isUnassigned, Pageable pageable) {
         Specification<Task> spec = (Root<Task> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -18,10 +19,10 @@ public interface NewsRepository extends TransactionalDataRepository<News>, FindB
 
     List<News> findByPublishedDateNotNullAndIsVoidedFalse();
 
-    Page<News> findByPublishedDateNotNullAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(Date lastModifiedDateTime, Date now, Pageable pageable);
+    Page<News> findByPublishedDateNotNullAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
-    Slice<News> findSliceByPublishedDateNotNullAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(Date lastModifiedDateTime, Date now, Pageable pageable);
+    Slice<News> findSliceByPublishedDateNotNullAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
-    boolean existsByPublishedDateNotNullAndLastModifiedDateTimeGreaterThan(Date lastModifiedDateTime);
+    boolean existsByPublishedDateNotNullAndLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
 }
 

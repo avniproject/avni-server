@@ -2,8 +2,8 @@ package org.avni.messaging.domain;
 
 import org.avni.server.domain.OrganisationAwareEntity;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "message_receiver")

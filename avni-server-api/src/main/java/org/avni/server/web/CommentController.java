@@ -19,13 +19,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -118,7 +118,7 @@ public class CommentController extends AbstractController<Comment> implements Re
 
     @GetMapping(value = {"/comment/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<Comment>> getCommentsByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<Comment>> getCommentsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,
@@ -132,7 +132,7 @@ public class CommentController extends AbstractController<Comment> implements Re
 
     @GetMapping(value = {"/comment"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Comment>> getCommentsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<Comment>> getCommentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,
@@ -145,13 +145,13 @@ public class CommentController extends AbstractController<Comment> implements Re
     }
 
     @Override
-    public Resource<Comment> process(Resource<Comment> resource) {
+    public EntityModel<Comment> process(EntityModel<Comment> resource) {
         Comment comment = resource.getContent();
         CommentThread commentThread = comment.getCommentThread();
         resource.removeLinks();
-        resource.add(new Link(comment.getSubjectUUID(), "individualUUID"));
+        resource.add(Link.of(comment.getSubjectUUID(), "individualUUID"));
         if (commentThread != null) {
-            resource.add(new Link(commentThread.getUuid(), "commentThreadUUID"));
+            resource.add(Link.of(commentThread.getUuid(), "commentThreadUUID"));
         }
         addAuditFields(comment, resource);
         return resource;

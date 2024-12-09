@@ -19,11 +19,11 @@ import org.avni.server.web.request.webapp.IdentifierUserAssignmentContractWeb;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -46,7 +46,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
 
     @GetMapping(value = "/web/identifierUserAssignment")
     @ResponseBody
-    public PagedResources<Resource<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
+    public CollectionModel<EntityModel<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
         Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageable);
         Page<IdentifierUserAssignmentContractWeb> response = nonVoided.map(IdentifierUserAssignmentContractWeb::fromIdentifierUserAssignment);
         return wrap(response);
@@ -90,11 +90,12 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
         IdentifierUserAssignment identifierUserAssignment = getIdentifierUserAssignment(request);
         identifierUserAssignment.setVoided(request.isVoided());
         try {
-            identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
+            IdentifierUserAssignment saved = identifierUserAssignmentService.update(existingIdentifierUserAssignment, identifierUserAssignment);
+            return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(saved));
         } catch (IdentifierOverlappingException | ValidationException e) {
             return WebResponseUtil.createBadRequestResponse(e, logger);
         }
-        return ResponseEntity.ok(IdentifierUserAssignmentContractWeb.fromIdentifierUserAssignment(identifierUserAssignment));
+
     }
 
     @DeleteMapping(value = "/web/identifierUserAssignment/{id}")

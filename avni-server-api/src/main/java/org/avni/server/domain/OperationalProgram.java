@@ -3,8 +3,8 @@ package org.avni.server.domain;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "operational_program")

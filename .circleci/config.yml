@@ -94,7 +94,7 @@ commands:
 jobs:
   test:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:21.0
 
       - image: circleci/postgres:12.7
         environment:
@@ -133,7 +133,7 @@ jobs:
           destination: testReports
   build:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:21.0
     resource_class: medium
 
     working_directory: ~/avni-server
@@ -244,7 +244,7 @@ jobs:
 
   UAT_deploy:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:21.0
     working_directory: ~/
     steps:
       - deploy:
@@ -266,7 +266,7 @@ jobs:
 
   PERF_deploy:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:21.0
     working_directory: ~/
     steps:
       - aws-cli/setup:
@@ -334,7 +334,7 @@ workflows:
     - build:
         <<: *tags_filter
         requires:
-          - test     
+          - test
     - build_docker_image:
         context:
           - dockerhub

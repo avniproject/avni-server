@@ -1,13 +1,14 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.web.contract.ValueUnit;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class ReportCard extends OrganisationAwareEntity {
     private StandardReportCardType standardReportCardType;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject standardReportCardInput = new JsonObject(new HashMap<>());
 
     public String getName() {

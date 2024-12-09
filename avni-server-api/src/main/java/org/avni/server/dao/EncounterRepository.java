@@ -2,6 +2,7 @@ package org.avni.server.dao;
 
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +12,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
+import jakarta.persistence.criteria.*;
+
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -21,10 +24,10 @@ import java.util.Map;
 @RepositoryRestResource(collectionResourceRel = "encounter", path = "encounter", exported = false)
 public interface EncounterRepository extends TransactionalDataRepository<Encounter>, OperatingIndividualScopeAwareRepository<Encounter>, SubjectTreeItemRepository {
     Page<Encounter> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            Date lastModifiedDateTime, Date now, Pageable pageable);
+            Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
     Page<Encounter> findByIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
+            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
     @Override
     default Specification<Encounter> syncTypeIdSpecification(Long typeId) {
@@ -80,12 +83,13 @@ public interface EncounterRepository extends TransactionalDataRepository<Encount
 
     default Specification<Encounter> withEncounterEarliestVisitDateTime(DateTime earliestVisitDateTime) {
         return (Root<Encounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                earliestVisitDateTime == null ? null : cb.equal(root.get("earliestVisitDateTime").as(java.sql.Date.class), earliestVisitDateTime.toDate());
+                earliestVisitDateTime == null ? null : cb.equal(root.get("earliestVisitDateTime").as(Instant.class), DateTimeUtil.toInstant(earliestVisitDateTime));
     }
 
     default Specification<Encounter> withEncounterDateTime(DateTime encounterDateTime) {
         return (Root<Encounter> root, CriteriaQuery<?> query, CriteriaBuilder cb) ->
-                encounterDateTime == null ? null : cb.equal(root.get("encounterDateTime").as(java.sql.Date.class), encounterDateTime.toDate());
+                encounterDateTime == null ? null : cb.equal(root.get("encounterDateTime").as(Instant.class),
+                        DateTimeUtil.toInstant(encounterDateTime));
     }
 
     default Specification<Encounter> withNotNullEncounterDateTime() {

@@ -4,8 +4,8 @@ import org.avni.server.domain.Gender;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "individual_relation_gender_mapping")

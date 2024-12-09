@@ -1,10 +1,13 @@
 package org.avni.server.domain;
 
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "video_telemetric")
@@ -22,10 +25,10 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Double videoEndTime;
 
     @Column(name = "player_close_time")
-    private DateTime playerCloseTime;
+    private Instant playerCloseTime;
 
     @Column(name = "player_open_time")
-    private DateTime playerOpenTime;
+    private Instant playerOpenTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @NotNull
@@ -41,7 +44,7 @@ public class VideoTelemetric extends CHSBaseEntity {
     private Long organisationId;
 
     @Column(name="created_datetime")
-    private DateTime createdDatetime;
+    private Instant createdDatetime;
 
     public Double getVideoStartTime() {
         return videoStartTime;
@@ -60,19 +63,19 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getPlayerCloseTime() {
-        return playerCloseTime;
+        return DateTimeUtil.toJodaDateTime(playerCloseTime);
     }
 
     public void setPlayerCloseTime(DateTime playerCloseTime) {
-        this.playerCloseTime = playerCloseTime;
+        this.playerCloseTime = DateTimeUtil.toInstant(playerCloseTime);
     }
 
     public DateTime getPlayerOpenTime() {
-        return playerOpenTime;
+        return DateTimeUtil.toJodaDateTime(playerOpenTime);
     }
 
     public void setPlayerOpenTime(DateTime playerOpenTime) {
-        this.playerOpenTime = playerOpenTime;
+        this.playerOpenTime = DateTimeUtil.toInstant(playerOpenTime);
     }
 
     public Video getVideo() {
@@ -100,10 +103,10 @@ public class VideoTelemetric extends CHSBaseEntity {
     }
 
     public DateTime getCreatedDatetime() {
-        return createdDatetime;
+        return DateTimeUtil.toJodaDateTime(createdDatetime);
     }
 
     public void setCreatedDatetime(DateTime createdDatetime) {
-        this.createdDatetime = createdDatetime;
+        this.createdDatetime = DateTimeUtil.toInstant(createdDatetime);
     }
 }

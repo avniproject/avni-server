@@ -20,13 +20,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -59,7 +59,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @GetMapping(value = {"/commentThread/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<CommentThread>> getCommentThreadsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,
@@ -73,7 +73,7 @@ public class CommentThreadController extends AbstractController<CommentThread> i
 
     @GetMapping(value = {"/commentThread"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<CommentThread>> getCommentThreadsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<CommentThread>> getCommentThreadsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid") String subjectTypeUuid,

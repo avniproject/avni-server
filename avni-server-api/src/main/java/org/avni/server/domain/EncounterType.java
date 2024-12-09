@@ -2,14 +2,15 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
 import org.avni.server.application.projections.BaseProjection;
 import org.hibernate.annotations.Type;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public class EncounterType extends OrganisationAwareEntity implements NamedEntit
     private String encounterEligibilityCheckRule;
 
     @Column(name = "encounter_eligibility_check_declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule encounterEligibilityCheckDeclarativeRule;
 
     private Boolean active;

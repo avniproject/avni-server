@@ -10,7 +10,7 @@ import org.avni.server.domain.task.TaskType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "form_mapping")

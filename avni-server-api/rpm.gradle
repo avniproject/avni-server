@@ -1,10 +1,8 @@
 import groovy.json.JsonSlurper
 
-apply plugin: "nebula.ospackage"
-
+apply plugin: "com.netflix.nebula.ospackage"
 
 ospackage {
-
     packageName = 'avni-server'
     release = System.env.CIRCLE_BUILD_NUM ?: 0
     version = "${project.version.replace('-SNAPSHOT', '')}"
@@ -15,9 +13,8 @@ ospackage {
     signingKeyId("72845CB15D05862A")
     signingKeyPassphrase("$System.env.KEY_PASSWORD")
 
-
     conflicts("java-1.7.0-openjdk")
-    requires("java-1.8.0-openjdk")
+    requires("java-1.21.0-openjdk")
     preInstall file("${project.rootProject.rootDir}/infra/rpm/scripts/preInstall.sh")
     postInstall file("${project.rootProject.rootDir}/infra/rpm/scripts/postInstall.sh")
     preUninstall file("${project.rootProject.rootDir}/infra/rpm/scripts/preUninstall.sh")

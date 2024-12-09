@@ -188,7 +188,6 @@ public class FormMappingService implements NonScopeAwareService {
         formMapping.setSubjectType(subjectType);
     }
 
-    @Transactional(readOnly = true)
     public LinkedHashMap<String, FormElement> getAllFormElementsAndDecisionMap(String subjectTypeUUID, String programUUID, String encounterTypeUUID, FormType formType) {
         return getEntityConceptMap(formMappingRepository.getRequiredFormMapping(subjectTypeUUID, programUUID, encounterTypeUUID, formType), false);
     }

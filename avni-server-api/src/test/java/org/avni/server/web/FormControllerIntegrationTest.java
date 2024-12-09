@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.hibernate.Hibernate;
 import org.junit.Before;
@@ -76,7 +77,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
 
     @Test
     public void findByEntityId() {
-        Page<FormMapping> fmPage = formMappingRepository.findByProgramId(1L, new PageRequest(0, 1));
+        Page<FormMapping> fmPage = formMappingRepository.findByProgramId(1L, PageRequest.of(0, 1));
         assertEquals(1, fmPage.getContent().size());
     }
 

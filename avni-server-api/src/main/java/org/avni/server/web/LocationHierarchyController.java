@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class LocationHierarchyController implements RestControllerResourceProces
 
     @GetMapping(value = "/locationHierarchy/search/lastModified")
     @ResponseBody
-    public PagedResources<Resource<AddressLevel>> getAddressLevels(
+    public CollectionModel<EntityModel<AddressLevel>> getAddressLevels(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             Pageable pageable) {
         try {

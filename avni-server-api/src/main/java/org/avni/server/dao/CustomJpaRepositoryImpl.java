@@ -8,13 +8,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import java.io.Serializable;
 import java.util.List;
 
 public class CustomJpaRepositoryImpl<T extends CHSEntity, ID extends Serializable> extends SimpleJpaRepository<T, ID> implements CustomCHSJpaRepository<T, ID> {
-
     public CustomJpaRepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
     }
@@ -23,6 +22,11 @@ public class CustomJpaRepositoryImpl<T extends CHSEntity, ID extends Serializabl
     public Slice<T> findAllAsSlice(Specification<T> specification, Pageable pageable) {
         TypedQuery<T> query = getQuery(specification, pageable);
         return pageable.isUnpaged() ? new SliceImpl<>(query.getResultList()) : readSlice(query, pageable, specification);
+    }
+
+    @Override
+    public void deleteInBatch(Iterable<T> entities) {
+        entities.forEach(this::delete);
     }
 
     private Slice<T> readSlice(TypedQuery<T> query, Pageable pageable, Specification<T> specification){

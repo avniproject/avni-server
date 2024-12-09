@@ -1,19 +1,23 @@
 package org.avni.server.framework.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.deser.DateTimeDeserializer;
+import com.fasterxml.jackson.datatype.joda.deser.key.DateTimeKeyDeserializer;
 import org.avni.server.framework.hibernate.DummyInterceptor;
-import org.avni.server.framework.sync.MetadataResourceInterceptor;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.MappedInterceptor;
 
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class ApiConfiguration extends WebMvcConfigurerAdapter {
+public class ApiConfiguration implements WebMvcConfigurer {
     private final ApiResourceInterceptor apiResourceInterceptor;
     private DummyInterceptor dummyInterceptor;
 
@@ -32,7 +36,6 @@ public class ApiConfiguration extends WebMvcConfigurerAdapter {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        super.addInterceptors(registry);
         registry.addInterceptor(dummyInterceptor);
     }
 }

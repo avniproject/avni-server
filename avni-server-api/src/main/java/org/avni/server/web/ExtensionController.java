@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,9 +29,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.HandlerMapping;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -84,7 +84,7 @@ public class ExtensionController implements RestControllerResourceProcessor<S3Ex
     }
 
     @GetMapping(value = "/extensions")
-    public PagedResources<Resource<S3ExtensionFile>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
+    public CollectionModel<EntityModel<S3ExtensionFile>> listExtensionFiles(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Optional<DateTime> lastModifiedDateTime) {
         return wrap(new PageImpl<>(s3Service.listExtensionFiles(lastModifiedDateTime)));
     }
 

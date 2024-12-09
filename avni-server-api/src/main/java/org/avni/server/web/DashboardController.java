@@ -11,6 +11,7 @@ import org.avni.server.mapper.dashboard.DashboardMapper;
 import org.avni.server.mapper.dashboard.DefaultDashboardConstants;
 import org.avni.server.service.DashboardService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.DashboardWebRequest;
 import org.avni.server.web.response.reports.DashboardWebResponse;
 import org.avni.server.web.validation.ValidationException;
@@ -19,12 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -116,17 +118,17 @@ public class DashboardController implements RestControllerResourceProcessor<Dash
     //This is here because dashboardCardMapping used to get synced earlier which is no longer required now
     @Deprecated
     @RequestMapping(value = "/dashboardCardMapping/search/lastModified", method = RequestMethod.GET)
-    public PagedResources<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-                                                                        @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now) {
+    public CollectionModel<?> getByIndividualsOfCatchmentAndLastModified(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now) {
         return wrap(new PageImpl<>(Collections.emptyList()));
     }
 
     @GetMapping(value = "/v2/dashboard/search/lastModified")
-    public PagedResources<Resource<Dashboard>> getDashboards(@RequestParam("lastModifiedDateTime")
-                                                             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-                                                             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
-                                                             Pageable pageable) {
-        return wrap(dashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+    public CollectionModel<EntityModel<Dashboard>> getDashboards(@RequestParam("lastModifiedDateTime")
+                                                                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+                                                                 @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+                                                                 Pageable pageable) {
+        return wrap(dashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
                 CHSEntity.toDate(now), pageable));
     }
 }

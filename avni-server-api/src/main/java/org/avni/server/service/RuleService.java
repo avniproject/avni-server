@@ -28,7 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -364,15 +364,14 @@ public class RuleService implements NonScopeAwareService {
     private <R extends BaseRuleResponseEntity> R createHttpHeaderAndSendRequest(String url, Object contractObject, RuleFailureLog ruleFailureLog, Class<R> responseType) throws RuleExecutionException {
         try {
             ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-            mapper.registerModule(new JodaModule());
-            String ruleResponse = restClient.post(url, contractObject);
-            R ruleResponseEntity = mapper.readValue(ruleResponse, responseType);
+            R ruleResponseEntity = (R) restClient.post(url, contractObject, responseType);
             if (ruleResponseEntity.getStatus().equals("failure")) {
                 RuleError ruleError = ruleResponseEntity.getError();
                 saveRuleError(ruleFailureLog, ruleError.getMessage(), ruleError.getStack());
             }
             return ruleResponseEntity;
         } catch (Exception e) {
+            logger.error("Error while executing rule", e);
             saveRuleError(ruleFailureLog, e.getMessage(), getStackTrace(e));
             RuleError ruleError = new RuleError();
             ruleError.setMessage(e.getMessage());

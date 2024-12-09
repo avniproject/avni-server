@@ -1,19 +1,17 @@
 package org.avni.server.application;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
+import jakarta.persistence.*;
 
 @Embeddable
 public class Format {
 
-    @Column(name = "valid_format_regex", nullable = false)
+    @Column(name = "valid_format_regex")
     private String regex;
 
-    @Column(name = "valid_format_description_key", nullable = false)
+    @Column(name = "valid_format_description_key")
     private String descriptionKey;
 
     public Format(){
-
     }
 
     public Format(String regex, String descriptionKey){

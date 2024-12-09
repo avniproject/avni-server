@@ -5,13 +5,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
+import org.avni.server.geo.PointType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.LocalDate;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +44,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     private String profilePicture;
 
-    private LocalDate dateOfBirth;
+    private Instant dateOfBirth;
 
     private boolean dateOfBirthVerified;
 
@@ -57,7 +62,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     @NotNull
     @Column(name = ColumnNames.RegistrationDate)
-    private LocalDate registrationDate;
+    private Instant registrationDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")
@@ -77,10 +82,10 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     private Set<UserSubjectAssignment> userSubjectAssignments = new HashSet<>();
 
     @Column(name = ColumnNames.IndividualObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
-    @Type(type = "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point registrationLocation;
 
@@ -92,20 +97,20 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
         individual.firstName = firstName;
         individual.lastName = lastName;
         individual.profilePicture = profilePicture;
-        individual.dateOfBirth = dateOfBirth;
+        individual.dateOfBirth = DateTimeUtil.toInstant(dateOfBirth);
         individual.dateOfBirthVerified = dateOfBirthVerified;
         individual.gender = gender;
         individual.addressLevel = address;
-        individual.registrationDate = registrationDate;
+        individual.registrationDate = DateTimeUtil.toInstant(registrationDate);
         return individual;
     }
 
     public LocalDate getDateOfBirth() {
-        return dateOfBirth;
+        return DateTimeUtil.toJodaDate(dateOfBirth);
     }
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
+        this.dateOfBirth = DateTimeUtil.toInstant(dateOfBirth);
     }
 
     public boolean isDateOfBirthVerified() {
@@ -169,11 +174,11 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     }
 
     public LocalDate getRegistrationDate() {
-        return registrationDate;
+        return DateTimeUtil.toJodaDate(registrationDate);
     }
 
     public void setRegistrationDate(LocalDate registrationDate) {
-        this.registrationDate = registrationDate;
+        this.registrationDate = DateTimeUtil.toInstant(registrationDate);
     }
 
     public void addEnrolment(ProgramEnrolment programEnrolment) {

@@ -1,7 +1,10 @@
 package org.avni.messaging.contract.glific;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GlificError {
     private List<GlificErrorLocation> locations;
     private String message;

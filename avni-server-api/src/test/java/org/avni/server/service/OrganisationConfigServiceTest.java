@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.JsonObject;
@@ -8,11 +9,7 @@ import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Optional;
 
@@ -21,10 +18,9 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({UserContextHolder.class})
+@Transactional
 public class OrganisationConfigServiceTest {
-
     @Test
     public void shouldRetrieveOptionalObjectFromOrganisationSettings() {
         OrganisationConfigRepository organisationRepository = mock(OrganisationConfigRepository.class);
@@ -47,11 +43,12 @@ public class OrganisationConfigServiceTest {
     @Test
     public void shouldCheckIfMessagingFeatureEnabled() {
         OrganisationConfigRepository organisationConfigRepository = mock(OrganisationConfigRepository.class);
-        PowerMockito.mockStatic(UserContextHolder.class);
-        UserContext userContext = mock(UserContext.class);
         long organisationId = 25l;
-        when(userContext.getOrganisationId()).thenReturn(organisationId);
-        Mockito.when(UserContextHolder.getUserContext()).thenReturn(userContext);
+        UserContext context = new UserContext();
+        Organisation organisation = new Organisation();
+        organisation.setId(organisationId);
+        context.setOrganisation(organisation);
+        UserContextHolder.create(context);
 
         OrganisationConfig organisationConfigWithoutMessagingEnabled = new OrganisationConfig();
         organisationConfigWithoutMessagingEnabled.setSettings(new JsonObject());

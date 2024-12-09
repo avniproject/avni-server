@@ -1,6 +1,9 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.*;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.geo.PointType;
+import org.avni.server.ltree.LTreeType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Immutable;
@@ -9,8 +12,8 @@ import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.geo.Point;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,7 +44,7 @@ public class AddressLevel extends OrganisationAwareEntity {
     private Set<AddressLevel> subLocations = new HashSet<>();
 
     @Column(unique = true)
-    @Type(type = "org.avni.server.ltree.LTreeType")
+    @Type(value = LTreeType.class)
     private String lineage;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "location")
@@ -57,11 +60,11 @@ public class AddressLevel extends OrganisationAwareEntity {
     private Set<Catchment> virtualCatchments = new HashSet<>();
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection locationProperties;
 
-    @Type(type = "org.avni.server.geo.PointType")
     @Column
+    @Type(value = PointType.class)
     private Point gpsCoordinates;
 
     private String legacyId;

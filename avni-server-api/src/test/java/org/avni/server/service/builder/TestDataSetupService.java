@@ -10,7 +10,7 @@ import org.avni.server.web.TestWebContextService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.mail.Address;
+import jakarta.mail.Address;
 import java.util.*;
 import java.util.stream.Collectors;
 

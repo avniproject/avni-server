@@ -1,10 +1,16 @@
 package org.avni.server;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.deser.DateTimeDeserializer;
 import com.google.common.cache.CacheBuilder;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.domain.User;
 import org.avni.server.framework.jpa.CHSAuditorAware;
-import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
+import org.avni.server.util.ObjectMapperSingleton;
+import org.keycloak.adapters.KeycloakConfigResolver;
+import org.keycloak.adapters.KeycloakDeployment;
+import org.keycloak.adapters.KeycloakDeploymentBuilder;
+import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,11 +27,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -58,10 +66,44 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     @Value("${avni.custom.query.max.rows}")
     private int maxRows;
 
+    @Value("${avni.keycloak.realm}")
+    private String realm;
+
+    @Value("${keycloak.resource}")
+    private String keycloakResource;
+
+    @Value("${keycloak.auth-server-url}")
+    private String keycloakAuthServerUrl;
+
+    @Value("${keycloak.ssl-required}")
+    private String sslRequired;
+
+    @Value("${keycloak.credentials.secret}")
+    private String keycloakCredentialsSecret;
+
+    @Value("${keycloak.use-resource-role-mappings}")
+    private boolean useResourceRoleMappings;
+
     @Autowired
     public AvniSpringConfiguration(Environment environment, @Qualifier("dataSource") DataSource dataSource) {
         this.environment = environment;
         this.dataSource = dataSource;
+    }
+
+    // https://stackoverflow.com/questions/62571413/spring-keycloak-adapter-loads-open-id-configuration-for-every-single-request
+    @Bean
+    public AdapterConfig adapterConfig() {
+        AdapterConfig adapterConfig = new AdapterConfig();
+        adapterConfig.setRealm(realm);
+        adapterConfig.setResource(keycloakResource);
+        adapterConfig.setAuthServerUrl(keycloakAuthServerUrl);
+        adapterConfig.setSslRequired(sslRequired);
+
+        HashMap<String, Object> credentials = new HashMap<>();
+        credentials.put("secret", keycloakCredentialsSecret);
+        adapterConfig.setCredentials(credentials);
+        adapterConfig.setUseResourceRoleMappings(useResourceRoleMappings);
+        return adapterConfig;
     }
 
     @Bean
@@ -96,8 +138,13 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
     }
 
     @Bean
-    public KeycloakSpringBootConfigResolver keycloakConfigResolver() {
-        return new KeycloakSpringBootConfigResolver();
+    public KeycloakDeployment keycloakDeployment(AdapterConfig adapterConfig) {
+        return KeycloakDeploymentBuilder.build(adapterConfig);
+    }
+
+    @Bean
+    public KeycloakConfigResolver keycloakConfigResolver(KeycloakDeployment keycloakDeployment) {
+        return request -> keycloakDeployment;
     }
 
     @Bean
@@ -130,5 +177,12 @@ public class AvniSpringConfiguration extends WebMvcAutoConfiguration {
                         .build().asMap(), DISALLOW_NULL_VALUES);
             }
         };
+    }
+
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
+        return objectMapper;
     }
 }

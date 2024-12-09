@@ -9,12 +9,11 @@ import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.response.SyncSubjectResponse;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class SubjectSyncResponseBuilderService {
     private IndividualRepository individualRepository;
     private ChecklistService checklistService;

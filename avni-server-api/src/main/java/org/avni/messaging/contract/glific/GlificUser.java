@@ -1,10 +1,12 @@
 package org.avni.messaging.contract.glific;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.avni.messaging.domain.GlificSystemConfig;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GlificUser implements Serializable {
     private final String phone;
     private final String password;

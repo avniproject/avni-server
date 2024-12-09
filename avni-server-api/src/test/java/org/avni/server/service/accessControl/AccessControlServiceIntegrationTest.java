@@ -1,5 +1,6 @@
 package org.avni.server.service.accessControl;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.SubjectPartitionCheckStatus;
@@ -22,6 +23,7 @@ import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class AccessControlServiceIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;

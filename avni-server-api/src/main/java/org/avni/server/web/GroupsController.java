@@ -14,13 +14,13 @@ import org.avni.server.web.request.GroupContract;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +39,7 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
     }
 
     @GetMapping(value = "group")
-    public PagedResources<Resource<GroupContract>> get(Pageable pageable) {
+    public CollectionModel<EntityModel<GroupContract>> get(Pageable pageable) {
         Page<Group> all = groupRepository.findPageByIsVoidedFalse(pageable);
         Page<GroupContract> groupContracts = all.map(GroupContract::fromEntity);
         return wrap(groupContracts);
@@ -53,7 +53,7 @@ public class GroupsController implements RestControllerResourceProcessor<GroupCo
     }
 
     @GetMapping(value = "/group/search/find")
-    public PagedResources<Resource<GroupContract>> find(
+    public CollectionModel<EntityModel<GroupContract>> find(
             @RequestParam(value = "isNotEveryoneGroup", defaultValue = "true") Boolean isNotEveryoneGroup,
             Pageable pageable) {
         Page<GroupContract> groupContracts = null;

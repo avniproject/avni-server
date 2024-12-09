@@ -5,6 +5,7 @@ import org.avni.server.framework.security.AuthenticationFilter;
 import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,16 +17,21 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class RuleServiceClient {
+    private final RestTemplate restTemplate;
     @Value("${node.server.url}")
     private String NODE_SERVER_HOST;
-    private Logger logger = LoggerFactory.getLogger(RuleServiceClient.class);
+    private final Logger logger = LoggerFactory.getLogger(RuleServiceClient.class);
 
-    public <T> String post(String api, T jsonObj) throws HttpClientErrorException {
+    @Autowired
+    public RuleServiceClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public Object post(String api, Object jsonObj, Class responseType) throws HttpClientErrorException {
         String uri = NODE_SERVER_HOST.concat(api);
-        RestTemplate restTemplate = new RestTemplate();
         HttpEntity<Object> entityCredentials = new HttpEntity<>(jsonObj, constructHeaders());
         try {
-            return restTemplate.postForObject(uri, entityCredentials, String.class);
+            return restTemplate.postForObject(uri, entityCredentials, responseType);
         } catch (HttpClientErrorException e) {
             logger.info("rule " + api + " not found");
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND, "rule " + api + " not found");

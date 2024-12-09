@@ -2,13 +2,11 @@ package org.avni.server.domain.extenalSystem;
 
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity(name="external_system_config")
 public class ExternalSystemConfig extends OrganisationAwareEntity {
@@ -20,7 +18,7 @@ public class ExternalSystemConfig extends OrganisationAwareEntity {
 
     @NotNull
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject config;
 
     public SystemName getSystemName() {

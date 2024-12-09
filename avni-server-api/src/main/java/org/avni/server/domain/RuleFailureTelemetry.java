@@ -1,9 +1,12 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.enums.ruleFailure.AppType;
 import org.avni.server.domain.enums.ruleFailure.EntityType;
 import org.avni.server.domain.enums.ruleFailure.SourceType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -14,9 +17,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
+import java.time.Instant;
 import java.util.Date;
 
 @Entity
@@ -65,10 +66,10 @@ public class RuleFailureTelemetry {
     private String stacktrace;
 
     @Column
-    private DateTime closedDateTime;
+    private Instant closedDateTime;
 
     @Column
-    private DateTime errorDateTime;
+    private Instant errorDateTime;
 
     @Column
     private Boolean isClosed;
@@ -85,7 +86,7 @@ public class RuleFailureTelemetry {
     private User createdBy;
 
     @CreatedDate
-    private Date createdDateTime;
+    private Instant createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
@@ -96,7 +97,7 @@ public class RuleFailureTelemetry {
     private User lastModifiedBy;
 
     @LastModifiedDate
-    private Date lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     @Column(name = "version")
     private int version;
@@ -106,7 +107,7 @@ public class RuleFailureTelemetry {
     }
 
     public DateTime getCreatedDateTime() {
-        return new DateTime(createdDateTime);
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public User getLastModifiedBy() {
@@ -214,19 +215,19 @@ public class RuleFailureTelemetry {
     }
 
     public DateTime getClosedDateTime() {
-        return closedDateTime;
+        return DateTimeUtil.toJodaDateTime(closedDateTime);
     }
 
     public void setClosedDateTime(DateTime closedDateTime) {
-        this.closedDateTime = closedDateTime;
+        this.closedDateTime = DateTimeUtil.toInstant(closedDateTime);
     }
 
     public DateTime getErrorDateTime() {
-        return errorDateTime;
+        return DateTimeUtil.toJodaDateTime(errorDateTime);
     }
 
     public void setErrorDateTime(DateTime errorDateTime) {
-        this.errorDateTime = errorDateTime;
+        this.errorDateTime = DateTimeUtil.toInstant(errorDateTime);
     }
 
     public Boolean getClosed() {

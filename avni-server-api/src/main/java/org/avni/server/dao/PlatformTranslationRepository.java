@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Date;
 
 @Repository
@@ -19,10 +20,10 @@ public interface PlatformTranslationRepository extends CustomCHSJpaRepository<Pl
 
     Page<PlatformTranslation> findByPlatformAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             Platform platform,
-            Date lastModifiedDateTime,
-            Date now,
+            Instant lastModifiedDateTime,
+            Instant now,
             Pageable pageable);
 
-    boolean existsByPlatformAndLastModifiedDateTimeGreaterThan(Platform platform, Date lastModifiedDateTime);
+    boolean existsByPlatformAndLastModifiedDateTimeGreaterThan(Platform platform, Instant lastModifiedDateTime);
 
 }

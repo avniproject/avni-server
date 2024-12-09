@@ -2,7 +2,7 @@ package org.avni.server.application.menu;
 
 import org.avni.server.domain.OrganisationAwareEntity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "menu_item")

@@ -2,8 +2,7 @@ package org.avni.server.web.request.webapp;
 
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.identifier.IdentifierGeneratorType;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 @Relation(collectionRelation = "identifierSource")
 public class IdentifierSourceContractWeb {

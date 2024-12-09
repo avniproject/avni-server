@@ -13,11 +13,11 @@ import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestLocationService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.junit.Test;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -96,7 +96,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
     private void success(String[] headers, String[] cells, boolean catchmentCreated, boolean userCreated) throws IDPException {
         long numberOfUsers = userRepository.count();
         long numberOfCatchments = catchmentRepository.count();
-        userAndCatchmentWriter.write(Collections.singletonList(new Row(headers, cells)));
+        userAndCatchmentWriter.write(Chunk.of(new Row(headers, cells)));
         if (catchmentCreated)
             assertEquals(catchmentRepository.count(), numberOfCatchments + 1);
         else
@@ -109,7 +109,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
 
     private void failure(String[] headers, String[] cells, String[] errorMessages) throws IDPException {
         try {
-            userAndCatchmentWriter.write(Collections.singletonList(new Row(headers, cells)));
+            userAndCatchmentWriter.write(Chunk.of(new Row(headers, cells)));
             fail();
         } catch (RuntimeException e) {
             String message = e.getMessage();
@@ -129,7 +129,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
 
     private void failsOnMissingHeader(String[] headers, String[] errorMessages, String... nonExistentErrorMessages) throws IDPException {
         try {
-            userAndCatchmentWriter.write(Collections.singletonList(new Row(headers, new String[]{})));
+            userAndCatchmentWriter.write(Chunk.of(new Row(headers, new String[]{})));
             fail();
         } catch (RuntimeException e) {
             String message = e.getMessage();

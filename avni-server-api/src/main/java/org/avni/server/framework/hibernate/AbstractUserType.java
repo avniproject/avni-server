@@ -5,10 +5,9 @@ import org.hibernate.usertype.UserType;
 
 import java.io.*;
 
-abstract class AbstractUserType implements UserType {
-
+abstract class AbstractUserType<T> implements UserType<T> {
     @Override
-    public Object deepCopy(final Object value) throws HibernateException {
+    public T deepCopy(final Object value) throws HibernateException {
         try {
             // use serialization to create a deep copy
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -19,7 +18,7 @@ abstract class AbstractUserType implements UserType {
             bos.close();
 
             ByteArrayInputStream bais = new ByteArrayInputStream(bos.toByteArray());
-            return new ObjectInputStream(bais).readObject();
+            return (T) new ObjectInputStream(bais).readObject();
         } catch (ClassNotFoundException | IOException ex) {
             throw new HibernateException(ex);
         }
@@ -36,13 +35,13 @@ abstract class AbstractUserType implements UserType {
     }
 
     @Override
-    public Object assemble(final Serializable cached, final Object owner) throws HibernateException {
-        return this.deepCopy(cached);
+    public T assemble(final Serializable cached, final Object owner) throws HibernateException {
+        return (T) this.deepCopy(cached);
     }
 
     @Override
-    public Object replace(final Object original, final Object target, final Object owner) throws HibernateException {
-        return this.deepCopy(original);
+    public T replace(final Object original, final Object target, final Object owner) throws HibernateException {
+        return (T) this.deepCopy(original);
     }
 
     @Override
@@ -51,11 +50,10 @@ abstract class AbstractUserType implements UserType {
     }
 
     @Override
-    public boolean equals(final Object obj1, final Object obj2) throws HibernateException {
+    public boolean equals(final T obj1, final T obj2) {
         if (obj1 == null) {
             return obj2 == null;
         }
         return obj1.equals(obj2);
     }
-
 }

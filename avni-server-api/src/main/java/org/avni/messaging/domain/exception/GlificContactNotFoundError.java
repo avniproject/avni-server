@@ -1,6 +1,6 @@
 package org.avni.messaging.domain.exception;
 
-import javax.ws.rs.NotFoundException;
+import jakarta.ws.rs.NotFoundException;
 
 public class GlificContactNotFoundError extends NotFoundException {
     public GlificContactNotFoundError(String msg) {

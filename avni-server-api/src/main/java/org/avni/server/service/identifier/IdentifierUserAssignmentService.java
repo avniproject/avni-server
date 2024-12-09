@@ -37,7 +37,7 @@ public class IdentifierUserAssignmentService {
         }
     }
 
-    public void update(IdentifierUserAssignment existingIdentifierUserAssignment, IdentifierUserAssignment newIdentifierUserAssignment) throws IdentifierOverlappingException, ValidationException {
+    public IdentifierUserAssignment update(IdentifierUserAssignment existingIdentifierUserAssignment, IdentifierUserAssignment newIdentifierUserAssignment) throws IdentifierOverlappingException, ValidationException {
         newIdentifierUserAssignment.validate();
 
         IdentifierSource identifierSource = newIdentifierUserAssignment.getIdentifierSource();
@@ -52,7 +52,7 @@ public class IdentifierUserAssignmentService {
                     || (overlappingWithAssignments.size() == 1 && !(overlappingWithAssignments.get(0).getId().equals(existingIdentifierUserAssignment.getId()))))
                 throw new IdentifierOverlappingException(overlappingWithAssignments);
 
-            identifierUserAssignmentRepository.updateExistingWithNew(existingIdentifierUserAssignment, newIdentifierUserAssignment);
+            return identifierUserAssignmentRepository.updateExistingWithNew(existingIdentifierUserAssignment, newIdentifierUserAssignment);
         }
     }
 }

@@ -9,8 +9,8 @@ import org.keycloak.events.EventType;
 import org.keycloak.representations.idm.EventRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.ServerErrorException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.ServerErrorException;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class KeycloakIdpServiceTest {
-    
+
     public static final String USER_KEYCLOAK_UUID = "user-keycloak-uuid";
     public static final String USERNAME = "user";
     public static final int EXPECTED_NUMBER_OF_EVENTS_TO_FETCH = 5;

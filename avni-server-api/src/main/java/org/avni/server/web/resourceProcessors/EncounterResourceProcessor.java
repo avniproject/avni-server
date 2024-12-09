@@ -2,15 +2,15 @@ package org.avni.server.web.resourceProcessors;
 
 import org.avni.server.domain.Encounter;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.EntityModel;
 
 public class EncounterResourceProcessor extends ResourceProcessor<Encounter>{
     @Override
-    public Resource<Encounter> process(Resource<Encounter> resource) {
+    public EntityModel<Encounter> process(EntityModel<Encounter> resource) {
         Encounter encounter = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
-        resource.add(new Link(encounter.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(encounter.getEncounterType().getUuid(), "encounterTypeUUID"));
+        resource.add(Link.of(encounter.getIndividual().getUuid(), "individualUUID"));
         return resource;
     }
 }

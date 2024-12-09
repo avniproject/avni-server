@@ -15,7 +15,7 @@ import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.QueryHint;
+import jakarta.persistence.QueryHint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

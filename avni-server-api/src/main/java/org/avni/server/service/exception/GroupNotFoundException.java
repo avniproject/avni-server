@@ -1,6 +1,6 @@
 package org.avni.server.service.exception;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.*;
 
 public class GroupNotFoundException extends EntityNotFoundException {
 

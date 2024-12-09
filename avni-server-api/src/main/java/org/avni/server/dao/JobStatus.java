@@ -1,8 +1,6 @@
 package org.avni.server.dao;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity

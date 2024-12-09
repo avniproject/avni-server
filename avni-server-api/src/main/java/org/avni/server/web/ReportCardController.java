@@ -9,6 +9,7 @@ import org.avni.server.mapper.dashboard.ReportCardMapper;
 import org.avni.server.service.CardService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.avni.server.web.response.reports.ReportCardWebResponse;
 import org.joda.time.DateTime;
@@ -16,13 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -95,21 +96,21 @@ public class ReportCardController implements RestControllerResourceProcessor<Rep
     }
 
     @GetMapping(value = "/v2/card/search/lastModified")
-    public PagedResources<Resource<ReportCard>> getReportCards(@RequestParam("lastModifiedDateTime")
+    public CollectionModel<EntityModel<ReportCard>> getReportCards(@RequestParam("lastModifiedDateTime")
                                                                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                         @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                         Pageable pageable) {
-        return wrap(cardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(cardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
                 CHSEntity.toDate(now), pageable));
     }
 
     @Override
-    public Resource<ReportCard> process(Resource<ReportCard> resource) {
+    public EntityModel<ReportCard> process(EntityModel<ReportCard> resource) {
         ReportCard entity = resource.getContent();
         resource.removeLinks();
         StandardReportCardType standardReportCardType = entity.getStandardReportCardType();
         if (standardReportCardType != null)
-            resource.add(new Link(standardReportCardType.getUuid(), "standardReportCardUUID"));
+            resource.add(Link.of(standardReportCardType.getUuid(), "standardReportCardUUID"));
         addAuditFields(entity, resource);
         return resource;
     }

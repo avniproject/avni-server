@@ -16,6 +16,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -72,7 +73,7 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     }
 
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         Map<String, Object> body = new HashMap<>();
         List<ApiError> errors = ex.getBindingResult()
                 .getFieldErrors()
@@ -89,7 +90,7 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
         return new ResponseEntity(new RestControllerErrorResponse(errorBodyBuilder.getErrorBody(message)), httpStatus);
     }
 
-    @ExceptionHandler(value = {MaxUploadSizeExceededException.class, SizeLimitExceededException.class})
+    @ExceptionHandler(value = {SizeLimitExceededException.class})
     public ResponseEntity fileUploadSizeLimitExceededError(Exception e) {
         return ResponseEntity.badRequest().body(String.format("Maximum upload file size exceeded; ensure file size is less than %s.", maxFileSize));
     }
@@ -121,8 +122,8 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     }
 
     @Override
-    protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
         bugsnagReporter.logAndReportToBugsnag(ex);
-        return super.handleExceptionInternal(ex, errorBodyBuilder.getErrorBody(body), headers, status, request);
+        return super.handleExceptionInternal(ex, errorBodyBuilder.getErrorBody(body), headers, statusCode, request);
     }
 }

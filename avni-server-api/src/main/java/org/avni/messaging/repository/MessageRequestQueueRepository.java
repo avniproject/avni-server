@@ -6,12 +6,14 @@ import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.MessageRule;
 import org.avni.server.dao.CHSRepository;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -19,11 +21,12 @@ import java.util.stream.Stream;
 @Repository
 public interface MessageRequestQueueRepository extends CHSRepository<MessageRequest> {
 
-    Stream<MessageRequest> findAllByDeliveryStatusNotAndIsVoidedFalseAndScheduledDateTimeBetween(MessageDeliveryStatus messageDeliveryStatus, DateTime then, DateTime now);
+    Stream<MessageRequest> findAllByDeliveryStatusNotAndIsVoidedFalseAndScheduledDateTimeBetween(MessageDeliveryStatus messageDeliveryStatus, Instant then, Instant now);
     Optional<MessageRequest> findByEntityIdAndMessageRule(Long entityId, MessageRule messageRule);
 
     default Stream<MessageRequest> findDueMessageRequests(Duration duration) {
-        return findAllByDeliveryStatusNotAndIsVoidedFalseAndScheduledDateTimeBetween(MessageDeliveryStatus.Sent, DateTime.now().minus(duration), DateTime.now());
+        return findAllByDeliveryStatusNotAndIsVoidedFalseAndScheduledDateTimeBetween(MessageDeliveryStatus.Sent,
+                DateTimeUtil.toInstant(DateTime.now().minus(duration)), DateTimeUtil.toInstant(DateTime.now()));
     }
 
     @Modifying(clearAutomatically = true, flushAutomatically=true)

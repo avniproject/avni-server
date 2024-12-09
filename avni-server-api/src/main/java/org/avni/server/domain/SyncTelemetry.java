@@ -1,11 +1,15 @@
 package org.avni.server.domain;
 
+import org.avni.server.framework.hibernate.JSONObjectUserType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "sync_telemetry")
@@ -21,14 +25,14 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     private String syncStatus;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject entityStatus;
 
     @Column
-    private DateTime syncStartTime;
+    private Instant syncStartTime;
 
     @Column
-    private DateTime syncEndTime;
+    private Instant syncEndTime;
 
     @Column
     private String appVersion;
@@ -40,7 +44,7 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     private String deviceName;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject deviceInfo;
 
     @Column
@@ -79,19 +83,19 @@ public class SyncTelemetry extends OrganisationAwareEntity{
     }
 
     public DateTime getSyncStartTime() {
-        return syncStartTime;
+        return DateTimeUtil.toJodaDateTime(syncStartTime);
     }
 
     public void setSyncStartTime(DateTime syncStartTime) {
-        this.syncStartTime = syncStartTime;
+        this.syncStartTime = DateTimeUtil.toInstant(syncStartTime);
     }
 
     public DateTime getSyncEndTime() {
-        return syncEndTime;
+        return DateTimeUtil.toJodaDateTime(syncEndTime);
     }
 
     public void setSyncEndTime(DateTime syncEndTime) {
-        this.syncEndTime = syncEndTime;
+        this.syncEndTime = DateTimeUtil.toInstant(syncEndTime);
     }
 
     public String getAppVersion() {

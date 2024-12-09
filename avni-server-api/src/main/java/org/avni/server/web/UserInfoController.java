@@ -23,8 +23,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
+
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -92,7 +94,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/v2/me", method = RequestMethod.GET)
-    public PagedResources<Resource<UserInfoContract>> getMyProfile() {
+    public CollectionModel<EntityModel<UserInfoContract>> getMyProfile() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();
@@ -101,7 +103,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/me/v3", method = RequestMethod.GET)
-    public SlicedResources<Resource<UserInfoContract>> getMyProfileAsSlice() {
+    public SlicedResources<EntityModel<UserInfoContract>> getMyProfileAsSlice() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();

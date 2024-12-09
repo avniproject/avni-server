@@ -8,18 +8,19 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.app.dashboard.DashboardFilter;
 import org.avni.server.service.GroupDashboardService;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.GroupDashboardContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -99,20 +100,20 @@ public class GroupDashboardController implements RestControllerResourceProcessor
     }
 
     @GetMapping(value = "/v2/groupDashboard/search/lastModified")
-    public PagedResources<Resource<GroupDashboard>> getDashboardFilters(@RequestParam("lastModifiedDateTime")
+    public CollectionModel<EntityModel<GroupDashboard>> getDashboardFilters(@RequestParam("lastModifiedDateTime")
                                                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                                          @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                                          Pageable pageable) {
-        return wrap(groupDashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(lastModifiedDateTime.toDate(),
+        return wrap(groupDashboardRepository.findByLastModifiedDateTimeIsGreaterThanEqualAndLastModifiedDateTimeLessThanEqualOrderByLastModifiedDateTimeAscIdAsc(DateTimeUtil.toInstant(lastModifiedDateTime),
                 CHSEntity.toDate(now), pageable));
     }
 
     @Override
-    public Resource<GroupDashboard> process(Resource<GroupDashboard> resource) {
+    public EntityModel<GroupDashboard> process(EntityModel<GroupDashboard> resource) {
         GroupDashboard entity = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(entity.getDashboard().getUuid(), "dashboardUUID"));
-        resource.add(new Link(entity.getGroup().getUuid(), "groupUUID"));
+        resource.add(Link.of(entity.getDashboard().getUuid(), "dashboardUUID"));
+        resource.add(Link.of(entity.getGroup().getUuid(), "groupUUID"));
         addAuditFields(entity, resource);
         return resource;
     }

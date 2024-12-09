@@ -20,8 +20,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.ResourceProcessor;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.RepresentationModelProcessor;
 
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
@@ -42,60 +42,60 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<DashboardFilter>> DashboardFilterProcessor() {
-        return new ResourceProcessor<Resource<DashboardFilter>>() {
+    public RepresentationModelProcessor<EntityModel<DashboardFilter>> DashboardFilterProcessor() {
+        return new RepresentationModelProcessor<EntityModel<DashboardFilter>>() {
             @Override
-            public Resource<DashboardFilter> process(Resource<DashboardFilter> resource) {
+            public EntityModel<DashboardFilter> process(EntityModel<DashboardFilter> resource) {
                 DashboardFilter content = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(content.getDashboard().getUuid(), "dashboardUUID"));
+                resource.add(Link.of(content.getDashboard().getUuid(), "dashboardUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<TaskStatus>> TaskStatusProcessor() {
-        return new ResourceProcessor<Resource<TaskStatus>>() {
+    public RepresentationModelProcessor<EntityModel<TaskStatus>> TaskStatusProcessor() {
+        return new RepresentationModelProcessor<EntityModel<TaskStatus>>() {
             @Override
-            public Resource<TaskStatus> process(Resource<TaskStatus> resource) {
+            public EntityModel<TaskStatus> process(EntityModel<TaskStatus> resource) {
                 TaskStatus taskStatus = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(taskStatus.getTaskType().getUuid(), "taskTypeUUID"));
+                resource.add(Link.of(taskStatus.getTaskType().getUuid(), "taskTypeUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<DashboardSectionCardMapping>> DashboardSectionCardMappingProcessor() {
-        return new ResourceProcessor<Resource<DashboardSectionCardMapping>>() {
+    public RepresentationModelProcessor<EntityModel<DashboardSectionCardMapping>> DashboardSectionCardMappingProcessor() {
+        return new RepresentationModelProcessor<EntityModel<DashboardSectionCardMapping>>() {
             @Override
-            public Resource<DashboardSectionCardMapping> process(Resource<DashboardSectionCardMapping> resource) {
+            public EntityModel<DashboardSectionCardMapping> process(EntityModel<DashboardSectionCardMapping> resource) {
                 DashboardSectionCardMapping dashboardSectionCardMapping = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(dashboardSectionCardMapping.getCard().getUuid(), "cardUUID"));
-                resource.add(new Link(dashboardSectionCardMapping.getDashboardSection().getUuid(), "dashboardSectionUUID"));
+                resource.add(Link.of(dashboardSectionCardMapping.getCard().getUuid(), "cardUUID"));
+                resource.add(Link.of(dashboardSectionCardMapping.getDashboardSection().getUuid(), "dashboardSectionUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<OperationalSubjectType>> OperationalSubjectTypeProcessor() {
-        return new ResourceProcessor<Resource<OperationalSubjectType>>() {
+    public RepresentationModelProcessor<EntityModel<OperationalSubjectType>> OperationalSubjectTypeProcessor() {
+        return new RepresentationModelProcessor<EntityModel<OperationalSubjectType>>() {
             @Override
-            public Resource<OperationalSubjectType> process(Resource<OperationalSubjectType> resource) {
+            public EntityModel<OperationalSubjectType> process(EntityModel<OperationalSubjectType> resource) {
                 OperationalSubjectType operationalSubjectType = resource.getContent();
                 resource.removeLinks();
                 if (operationalSubjectType.getSubjectType().getSyncRegistrationConcept1() != null) {
-                    resource.add(new Link(operationalSubjectType.getSubjectType().getSyncRegistrationConcept1(), "syncRegistrationConcept1"));
+                    resource.add(Link.of(operationalSubjectType.getSubjectType().getSyncRegistrationConcept1(), "syncRegistrationConcept1"));
                 }
                 if (operationalSubjectType.getSubjectType().getSyncRegistrationConcept2() != null) {
-                    resource.add(new Link(operationalSubjectType.getSubjectType().getSyncRegistrationConcept2(), "syncRegistrationConcept2"));
+                    resource.add(Link.of(operationalSubjectType.getSubjectType().getSyncRegistrationConcept2(), "syncRegistrationConcept2"));
                 }
                 if (operationalSubjectType.getSubjectType().getNameHelpText() != null) {
-                    resource.add(new Link(operationalSubjectType.getSubjectType().getNameHelpText(), "nameHelpText"));
+                    resource.add(Link.of(operationalSubjectType.getSubjectType().getNameHelpText(), "nameHelpText"));
                 }
                 return resource;
             }
@@ -103,46 +103,46 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<GroupDashboard>> GroupDashboardProcessor() {
-        return new ResourceProcessor<Resource<GroupDashboard>>() {
+    public RepresentationModelProcessor<EntityModel<GroupDashboard>> GroupDashboardProcessor() {
+        return new RepresentationModelProcessor<EntityModel<GroupDashboard>>() {
             @Override
-            public Resource<GroupDashboard> process(Resource<GroupDashboard> resource) {
+            public EntityModel<GroupDashboard> process(EntityModel<GroupDashboard> resource) {
                 GroupDashboard groupDashboard = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(groupDashboard.getGroup().getUuid(), "groupUUID"));
-                resource.add(new Link(groupDashboard.getDashboard().getUuid(), "dashboardUUID"));
+                resource.add(Link.of(groupDashboard.getGroup().getUuid(), "groupUUID"));
+                resource.add(Link.of(groupDashboard.getDashboard().getUuid(), "dashboardUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<EntityApprovalStatus>> EntityApprovalStatusProcessor() {
-        return new ResourceProcessor<Resource<EntityApprovalStatus>>() {
+    public RepresentationModelProcessor<EntityModel<EntityApprovalStatus>> EntityApprovalStatusProcessor() {
+        return new RepresentationModelProcessor<EntityModel<EntityApprovalStatus>>() {
             @Autowired
             private EntityApprovalStatusService entityApprovalStatusService;
 
             @Override
-            public Resource<EntityApprovalStatus> process(Resource<EntityApprovalStatus> resource) {
+            public EntityModel<EntityApprovalStatus> process(EntityModel<EntityApprovalStatus> resource) {
                 EntityApprovalStatus entityApprovalStatus = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(entityApprovalStatusService.getEntityUuid(entityApprovalStatus), "entityUUID"));
-                resource.add(new Link(entityApprovalStatus.getApprovalStatus().getUuid(), "approvalStatusUUID"));
+                resource.add(Link.of(entityApprovalStatusService.getEntityUuid(entityApprovalStatus), "entityUUID"));
+                resource.add(Link.of(entityApprovalStatus.getApprovalStatus().getUuid(), "approvalStatusUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<ReportCard>> CardProcessor() {
-        return new ResourceProcessor<Resource<ReportCard>>() {
+    public RepresentationModelProcessor<EntityModel<ReportCard>> CardProcessor() {
+        return new RepresentationModelProcessor<EntityModel<ReportCard>>() {
             @Override
-            public Resource<ReportCard> process(Resource<ReportCard> resource) {
+            public EntityModel<ReportCard> process(EntityModel<ReportCard> resource) {
                 ReportCard card = resource.getContent();
                 StandardReportCardType standardReportCardType = card.getStandardReportCardType();
                 resource.removeLinks();
                 if (standardReportCardType != null) {
-                    resource.add(new Link(standardReportCardType.getUuid(), "standardReportCardUUID"));
+                    resource.add(Link.of(standardReportCardType.getUuid(), "standardReportCardUUID"));
                 }
                 return resource;
             }
@@ -150,28 +150,28 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<IndividualRelationshipType>> IndividualRelationshipTypeProcessor() {
-        return new ResourceProcessor<Resource<IndividualRelationshipType>>() {
+    public RepresentationModelProcessor<EntityModel<IndividualRelationshipType>> IndividualRelationshipTypeProcessor() {
+        return new RepresentationModelProcessor<EntityModel<IndividualRelationshipType>>() {
             @Override
-            public Resource<IndividualRelationshipType> process(Resource<IndividualRelationshipType> resource) {
+            public EntityModel<IndividualRelationshipType> process(EntityModel<IndividualRelationshipType> resource) {
                 IndividualRelationshipType individualRelationshipType = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(individualRelationshipType.getIndividualAIsToB().getUuid(), "individualAIsToBRelationUUID"));
-                resource.add(new Link(individualRelationshipType.getIndividualBIsToA().getUuid(), "individualBIsToBRelationUUID"));
+                resource.add(Link.of(individualRelationshipType.getIndividualAIsToB().getUuid(), "individualAIsToBRelationUUID"));
+                resource.add(Link.of(individualRelationshipType.getIndividualBIsToA().getUuid(), "individualBIsToBRelationUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<IndividualRelationGenderMapping>> IndividualRelationGenderMappingProcessor() {
-        return new ResourceProcessor<Resource<IndividualRelationGenderMapping>>() {
+    public RepresentationModelProcessor<EntityModel<IndividualRelationGenderMapping>> IndividualRelationGenderMappingProcessor() {
+        return new RepresentationModelProcessor<EntityModel<IndividualRelationGenderMapping>>() {
             @Override
-            public Resource<IndividualRelationGenderMapping> process(Resource<IndividualRelationGenderMapping> resource) {
+            public EntityModel<IndividualRelationGenderMapping> process(EntityModel<IndividualRelationGenderMapping> resource) {
                 IndividualRelationGenderMapping individualRelationGenderMapping = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(individualRelationGenderMapping.getRelation().getUuid(), "relationUUID"));
-                resource.add(new Link(individualRelationGenderMapping.getGender().getUuid(), "genderUUID"));
+                resource.add(Link.of(individualRelationGenderMapping.getRelation().getUuid(), "relationUUID"));
+                resource.add(Link.of(individualRelationGenderMapping.getGender().getUuid(), "genderUUID"));
                 return resource;
             }
         };
@@ -179,19 +179,19 @@ public class Avni {
 
 
     @Bean
-    public ResourceProcessor<Resource<FormElement>> formElementProcessor() {
-        return new ResourceProcessor<Resource<FormElement>>() {
+    public RepresentationModelProcessor<EntityModel<FormElement>> formElementProcessor() {
+        return new RepresentationModelProcessor<EntityModel<FormElement>>() {
             @Override
-            public Resource<FormElement> process(Resource<FormElement> resource) {
+            public EntityModel<FormElement> process(EntityModel<FormElement> resource) {
                 FormElement formElement = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(formElement.getFormElementGroup().getUuid(), "formElementGroupUUID"));
-                resource.add(new Link(formElement.getConcept().getUuid(), "conceptUUID"));
+                resource.add(Link.of(formElement.getFormElementGroup().getUuid(), "formElementGroupUUID"));
+                resource.add(Link.of(formElement.getConcept().getUuid(), "conceptUUID"));
                 if (formElement.getGroup() != null) {
-                    resource.add(new Link(formElement.getGroup().getUuid(), "groupQuestionUUID"));
+                    resource.add(Link.of(formElement.getGroup().getUuid(), "groupQuestionUUID"));
                 }
                 if (formElement.getDocumentation() != null) {
-                    resource.add(new Link(formElement.getDocumentation().getUuid(), "documentationUUID"));
+                    resource.add(Link.of(formElement.getDocumentation().getUuid(), "documentationUUID"));
                 }
                 return resource;
             }
@@ -199,72 +199,72 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<FormElementGroup>> formElementGroupProcessor() {
-        return new ResourceProcessor<Resource<FormElementGroup>>() {
+    public RepresentationModelProcessor<EntityModel<FormElementGroup>> formElementGroupProcessor() {
+        return new RepresentationModelProcessor<EntityModel<FormElementGroup>>() {
             @Override
-            public Resource<FormElementGroup> process(Resource<FormElementGroup> resource) {
+            public EntityModel<FormElementGroup> process(EntityModel<FormElementGroup> resource) {
                 FormElementGroup formElementGroup = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(formElementGroup.getForm().getUuid(), "formUUID"));
+                resource.add(Link.of(formElementGroup.getForm().getUuid(), "formUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<DocumentationItem>> documentationItemsProcessor() {
-        return new ResourceProcessor<Resource<DocumentationItem>>() {
+    public RepresentationModelProcessor<EntityModel<DocumentationItem>> documentationItemsProcessor() {
+        return new RepresentationModelProcessor<EntityModel<DocumentationItem>>() {
             @Override
-            public Resource<DocumentationItem> process(Resource<DocumentationItem> resource) {
+            public EntityModel<DocumentationItem> process(EntityModel<DocumentationItem> resource) {
                 DocumentationItem documentationItem = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(documentationItem.getDocumentation().getUuid(), "documentationUUID"));
+                resource.add(Link.of(documentationItem.getDocumentation().getUuid(), "documentationUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<ConceptAnswer>> conceptAnswerProcessor() {
-        return new ResourceProcessor<Resource<ConceptAnswer>>() {
+    public RepresentationModelProcessor<EntityModel<ConceptAnswer>> conceptAnswerProcessor() {
+        return new RepresentationModelProcessor<EntityModel<ConceptAnswer>>() {
             @Override
-            public Resource<ConceptAnswer> process(Resource<ConceptAnswer> resource) {
+            public EntityModel<ConceptAnswer> process(EntityModel<ConceptAnswer> resource) {
                 ConceptAnswer conceptAnswer = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(conceptAnswer.getConcept().getUuid(), "conceptUUID"));
-                resource.add(new Link(conceptAnswer.getAnswerConcept().getUuid(), "conceptAnswerUUID"));
+                resource.add(Link.of(conceptAnswer.getConcept().getUuid(), "conceptUUID"));
+                resource.add(Link.of(conceptAnswer.getAnswerConcept().getUuid(), "conceptAnswerUUID"));
                 return resource;
             }
         };
     }
 
     @Bean
-    public ResourceProcessor<Resource<FormMapping>> FormMappingProcessor() {
-        return new ResourceProcessor<Resource<FormMapping>>() {
+    public RepresentationModelProcessor<EntityModel<FormMapping>> FormMappingProcessor() {
+        return new RepresentationModelProcessor<EntityModel<FormMapping>>() {
             @Override
-            public Resource<FormMapping> process(Resource<FormMapping> resource) {
+            public EntityModel<FormMapping> process(EntityModel<FormMapping> resource) {
                 FormMapping formMapping = resource.getContent();
                 resource.removeLinks();
                 Form form = formMapping.getForm();
                 if (form != null) {
-                    resource.add(new Link(formMapping.getForm().getUuid(), "formUUID"));
+                    resource.add(Link.of(formMapping.getForm().getUuid(), "formUUID"));
 
 
                     String programUuid = formMapping.getProgramUuid();
                     if (programUuid != null) {
-                        resource.add(new Link(programUuid, "entityUUID"));
+                        resource.add(Link.of(programUuid, "entityUUID"));
                     }
 
                     if (formMapping.getSubjectType() != null) {
-                        resource.add(new Link(formMapping.getSubjectType().getUuid(), "subjectTypeUUID"));
+                        resource.add(Link.of(formMapping.getSubjectType().getUuid(), "subjectTypeUUID"));
                     }
                     if (formMapping.getTaskType() != null) {
-                        resource.add(new Link(formMapping.getTaskTypeUuid(), "taskTypeUUID"));
+                        resource.add(Link.of(formMapping.getTaskTypeUuid(), "taskTypeUUID"));
                     }
 
                     String encounterTypeUuid = formMapping.getEncounterTypeUuid();
                     if (encounterTypeUuid != null) {
-                        resource.add(new Link(encounterTypeUuid, "observationsTypeEntityUUID"));
+                        resource.add(Link.of(encounterTypeUuid, "observationsTypeEntityUUID"));
                     }
 
                     return resource;
@@ -275,10 +275,10 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<Rule>> RuleProcessor() {
-        return new ResourceProcessor<Resource<Rule>>() {
+    public RepresentationModelProcessor<EntityModel<Rule>> RuleProcessor() {
+        return new RepresentationModelProcessor<EntityModel<Rule>>() {
             @Override
-            public Resource<Rule> process(Resource<Rule> resource) {
+            public EntityModel<Rule> process(EntityModel<Rule> resource) {
                 Rule rule = resource.getContent();
                 resource.removeLinks();
                 RuledEntityType entityType = rule.getEntity().getType();
@@ -286,7 +286,7 @@ public class Avni {
                 String key = RuledEntityType.isForm(entityType) ? "formUUID"
                         : RuledEntityType.isProgram(entityType) ? "programUUID" : null;
                 if (entityUUID != null && key != null) {
-                    resource.add(new Link(entityUUID, key));
+                    resource.add(Link.of(entityUUID, key));
                 }
                 return resource;
             }
@@ -294,18 +294,18 @@ public class Avni {
     }
 
     @Bean
-    public ResourceProcessor<Resource<ChecklistItemDetail>> ChecklistItemDetailProcessor() {
-        return new ResourceProcessor<Resource<ChecklistItemDetail>>() {
+    public RepresentationModelProcessor<EntityModel<ChecklistItemDetail>> ChecklistItemDetailProcessor() {
+        return new RepresentationModelProcessor<EntityModel<ChecklistItemDetail>>() {
             @Override
-            public Resource<ChecklistItemDetail> process(Resource<ChecklistItemDetail> resource) {
+            public EntityModel<ChecklistItemDetail> process(EntityModel<ChecklistItemDetail> resource) {
                 ChecklistItemDetail content = resource.getContent();
                 resource.removeLinks();
-                resource.add(new Link(content.getChecklistDetail().getUuid(), "checklistDetailUUID"));
-                resource.add(new Link(content.getConcept().getUuid(), "conceptUUID"));
-                resource.add(new Link(content.getForm().getUuid(), "formUUID"));
+                resource.add(Link.of(content.getChecklistDetail().getUuid(), "checklistDetailUUID"));
+                resource.add(Link.of(content.getConcept().getUuid(), "conceptUUID"));
+                resource.add(Link.of(content.getForm().getUuid(), "formUUID"));
                 ChecklistItemDetail leadChecklistItemDetail = content.getLeadChecklistItemDetail();
                 if (leadChecklistItemDetail != null) {
-                    resource.add(new Link(leadChecklistItemDetail.getUuid(), "leadDetailUUID"));
+                    resource.add(Link.of(leadChecklistItemDetail.getUuid(), "leadDetailUUID"));
                 }
                 return resource;
             }

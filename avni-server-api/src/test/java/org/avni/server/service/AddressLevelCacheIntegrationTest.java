@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.LocationRepository;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class AddressLevelCacheIntegrationTest extends AbstractControllerIntegrationTest {
 
     private static final long ADDRESS_LEVEL_TYPE_ID = 1L;

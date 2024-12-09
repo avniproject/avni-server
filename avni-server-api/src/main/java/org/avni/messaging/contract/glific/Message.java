@@ -1,5 +1,6 @@
 package org.avni.messaging.contract.glific;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "receiver",
     "type"
 })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
 
     @JsonProperty("body")
@@ -33,13 +35,13 @@ public class Message {
 
     /**
      * No args constructor for use in serialization
-     * 
+     *
      */
     public Message() {
     }
 
     /**
-     * 
+     *
      * @param receiver
      * @param insertedAt
      * @param sender

@@ -23,14 +23,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
-import javax.validation.Valid;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,19 +67,19 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @GetMapping(value = "catchment")
-    public PagedResources<Resource<CatchmentContract>> get(Pageable pageable) {
+    public CollectionModel<EntityModel<CatchmentContract>> get(Pageable pageable) {
         Page<Catchment> all = catchmentRepository.findPageByIsVoidedFalse(pageable);
         Page<CatchmentContract> catchmentContracts = all.map(CatchmentContract::fromEntity);
         return wrap(catchmentContracts);
     }
 
     @GetMapping(value = "catchment/{id}")
-    public Resource<CatchmentContract> getById(@PathVariable Long id) {
+    public EntityModel<CatchmentContract> getById(@PathVariable Long id) {
         Catchment catchment = catchmentRepository.findOne(id);
         CatchmentContract catchmentContract = CatchmentContract.fromEntity(catchment);
         boolean fastSyncExists = s3Service.fileExists(String.format("MobileDbBackup-%s", catchment.getUuid()));
         catchmentContract.setFastSyncExists(fastSyncExists);
-        return new Resource<>(catchmentContract);
+        return EntityModel.of(catchmentContract);
     }
 
     @GetMapping(value = "catchment/search/findAllById")
@@ -89,7 +89,7 @@ public class CatchmentController implements RestControllerResourceProcessor<Catc
     }
 
     @GetMapping(value = "catchment/search/find")
-    public PagedResources<Resource<CatchmentContract>> find(@RequestParam(value = "name") String name, Pageable pageable) {
+    public CollectionModel<EntityModel<CatchmentContract>> find(@RequestParam(value = "name") String name, Pageable pageable) {
         Page<Catchment> catchments = catchmentRepository.findByIsVoidedFalseAndNameIgnoreCaseStartingWithOrderByNameAsc(name, pageable);
         Page<CatchmentContract> catchmentContracts = catchments.map(CatchmentContract::fromEntity);
         return wrap(catchmentContracts);

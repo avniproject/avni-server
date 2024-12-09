@@ -10,19 +10,20 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+
 @Repository
 @RepositoryRestResource(collectionResourceRel = "approvalStatus", path = "approvalStatus")
 public interface ApprovalStatusRepository extends AvniJpaRepository<ApprovalStatus, Long> {
-
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<ApprovalStatus> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
             Pageable pageable);
 
     ApprovalStatus findByUuid(String uuid);
 
     ApprovalStatus findByStatus(ApprovalStatus.Status status);
 
-    boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
 }

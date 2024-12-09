@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.StandardReportCardTypeRepository;
+import org.avni.server.util.DateTimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,6 @@ public class StandardReportCardTypeService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return standardReportCardTypeRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+        return standardReportCardTypeRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
     }
 }

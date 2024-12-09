@@ -1,11 +1,14 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +32,7 @@ public class Checklist extends OrganisationAwareEntity {
 
     @NotNull
     @Column
-    private DateTime baseDate;
+    private Instant baseDate;
 
     public ChecklistDetail getChecklistDetail() {
         return checklistDetail;
@@ -48,11 +51,11 @@ public class Checklist extends OrganisationAwareEntity {
     }
 
     public DateTime getBaseDate() {
-        return baseDate;
+        return DateTimeUtil.toJodaDateTime(baseDate);
     }
 
     public void setBaseDate(DateTime baseDate) {
-        this.baseDate = baseDate;
+        this.baseDate = DateTimeUtil.toInstant(baseDate);
     }
 
     public List<ChecklistItem> getItems() {

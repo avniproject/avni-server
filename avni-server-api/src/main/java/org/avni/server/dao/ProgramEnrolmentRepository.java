@@ -16,9 +16,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
@@ -37,14 +39,14 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "and i.isVoided = false " +
             "and coalesce(enl.enrolmentDateTime, enl.programExitDateTime) between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR i.addressLevel.id in :locationIds)")
-    Stream<ProgramEnrolment> findNonVoidedEnrolments(Long programId, List<Long> locationIds, DateTime startDateTime, DateTime endDateTime);
+    Stream<ProgramEnrolment> findNonVoidedEnrolments(Long programId, List<Long> locationIds, Instant startDateTime, Instant endDateTime);
 
     @Query("select enl from ProgramEnrolment enl " +
             "join enl.individual i " +
             "where enl.program.id = :programId " +
             "and coalesce(enl.enrolmentDateTime, enl.programExitDateTime) between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR i.addressLevel.id in :locationIds)")
-    Stream<ProgramEnrolment> findAllEnrolments(Long programId, List<Long> locationIds, DateTime startDateTime, DateTime endDateTime);
+    Stream<ProgramEnrolment> findAllEnrolments(Long programId, List<Long> locationIds, Instant startDateTime, Instant endDateTime);
 
     //group by is added for distinct enl records
     @Query("select enl from ProgramEnrolment enl " +
@@ -58,7 +60,7 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "and coalesce(enc.encounterDateTime, enc.cancelDateTime) between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR i.addressLevel.id in :locationIds) " +
             "group by enl.id")
-    Stream<ProgramEnrolment> findNonVoidedProgramEncounters(List<Long> locationIds, DateTime startDateTime, DateTime endDateTime, Long encounterTypeId, Long programId);
+    Stream<ProgramEnrolment> findNonVoidedProgramEncounters(List<Long> locationIds, Instant startDateTime, Instant endDateTime, Long encounterTypeId, Long programId);
 
     @Query("select enl from ProgramEnrolment enl " +
             "join enl.programEncounters enc " +
@@ -68,11 +70,11 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
             "and coalesce(enc.encounterDateTime, enc.cancelDateTime) between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR i.addressLevel.id in :locationIds) " +
             "group by enl.id")
-    Stream<ProgramEnrolment> findAllProgramEncounters(List<Long> locationIds, DateTime startDateTime, DateTime endDateTime, Long encounterTypeId, Long programId);
+    Stream<ProgramEnrolment> findAllProgramEncounters(List<Long> locationIds, Instant startDateTime, Instant endDateTime, Long encounterTypeId, Long programId);
 
     Page<ProgramEnrolment> findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanAndProgramNameOrderByLastModifiedDateTimeAscIdAsc(
-            Date lastModifiedDateTime,
-            Date now,
+            Instant lastModifiedDateTime,
+            Instant now,
             String program,
             Pageable pageable);
 
@@ -88,8 +90,8 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
     ProgramEnrolment findByLegacyId(String id);
 
     Page<ProgramEnrolment> findByLastModifiedDateTimeGreaterThanAndLastModifiedDateTimeLessThanOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
             Pageable pageable);
 
     @Override
@@ -106,7 +108,6 @@ public interface ProgramEnrolmentRepository extends TransactionalDataRepository<
         ) > 0;
     }
 
-    @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update program_enrolment enl set " +
             "address_id = :addressId, " +

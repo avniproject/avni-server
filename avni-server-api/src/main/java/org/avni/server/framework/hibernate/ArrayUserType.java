@@ -1,16 +1,13 @@
 package org.avni.server.framework.hibernate;
 
-import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.usertype.UserType;
 
 import java.sql.*;
 
-public class ArrayUserType extends AbstractUserType implements UserType {
-
+public class ArrayUserType extends AbstractUserType<String[]> {
     @Override
-    public int[] sqlTypes() {
-        return new int[]{Types.ARRAY};
+    public int getSqlType() {
+        return Types.ARRAY;
     }
 
     @Override
@@ -19,25 +16,24 @@ public class ArrayUserType extends AbstractUserType implements UserType {
     }
 
     @Override
-    public Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner)
-            throws HibernateException, SQLException {
-        Array array = rs.getArray(names[0]);
-        return array != null ? array.getArray() : null;
+    public String[] nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+        Array array = rs.getArray(position);
+        return array != null ? (String[]) array.getArray() : null;
     }
 
     @Override
-    public void nullSafeSet(PreparedStatement st, Object value, int index, SharedSessionContractImplementor session)
-            throws HibernateException, SQLException {
+    public void nullSafeSet(PreparedStatement st, String[] value, int index, SharedSessionContractImplementor session) throws SQLException {
         if (value != null && st != null) {
-            Array array = session.connection().createArrayOf("text", (String[]) value);
+            Connection connection = session.getJdbcConnectionAccess().obtainConnection();
+            Array array = connection.createArrayOf("text", value);
             st.setArray(index, array);
         } else {
-            st.setNull(index, sqlTypes()[0]);
+            st.setNull(index, Types.ARRAY);
         }
     }
 
     @Override
-    public boolean equals(Object x, Object y) throws HibernateException {
+    public boolean equals(String[] x, String[] y) {
         if (x == null && y == null) {
             return true;
         }
@@ -53,8 +49,8 @@ public class ArrayUserType extends AbstractUserType implements UserType {
             return false;
         }
 
-        String[] xArray = (String[]) x;
-        String[] yArray = (String[]) y;
+        String[] xArray = x;
+        String[] yArray = y;
         if (xArray.length != yArray.length) {
             return false;
         }

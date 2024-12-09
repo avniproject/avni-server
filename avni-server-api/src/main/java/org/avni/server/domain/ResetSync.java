@@ -2,7 +2,7 @@ package org.avni.server.domain;
 
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "reset_sync")

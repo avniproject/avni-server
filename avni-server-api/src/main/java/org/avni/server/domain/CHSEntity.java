@@ -2,7 +2,10 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -10,8 +13,7 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.Date;
 
 @MappedSuperclass
@@ -27,7 +29,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
 
     @CreatedDate
     @NotNull
-    private Date createdDateTime;
+    private Instant createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
@@ -38,7 +40,7 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
 
     @LastModifiedDate
     @NotNull
-    private Date lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     @JsonIgnore
     public User getCreatedBy() {
@@ -50,11 +52,11 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     public DateTime getCreatedDateTime() {
-        return new DateTime(createdDateTime);
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime.toDate();
+        this.createdDateTime = createdDateTime.toDate().toInstant();
     }
 
     @JsonIgnore
@@ -71,11 +73,11 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
     }
 
     private DateTime toJodaDateTime() {
-        return new DateTime(lastModifiedDateTime);
+        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime.toDate();
+        this.lastModifiedDateTime = lastModifiedDateTime.toDate().toInstant();
     }
 
     @Column(name = "version")
@@ -115,7 +117,15 @@ public class CHSEntity extends CHSBaseEntity implements Auditable {
         return getLastModifiedBy().getUsername();
     }
 
-    public static Date toDate(DateTime dateTime) {
+    public static Instant toDate(DateTime dateTime) {
+        return DateTimeUtil.toInstant(dateTime);
+    }
+
+    public static Date toUtilDate(DateTime dateTime) {
         return dateTime == null ? null : dateTime.toDate();
+    }
+
+    public static Date toUtilDate(Instant dateTime) {
+        return dateTime == null ? null : new Date(dateTime.toEpochMilli());
     }
 }

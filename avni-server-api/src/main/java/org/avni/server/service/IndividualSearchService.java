@@ -9,7 +9,6 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,7 +45,7 @@ public class IndividualSearchService {
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
                 .collect(Collectors.toList());
         List<Long> addressIds = individualList.stream()
-                .map(individualRecord -> ((BigInteger) individualRecord.get("addressId")).longValue())
+                .map(individualRecord -> (Long) individualRecord.get("addressId"))
                 .collect(Collectors.toList());
 
         List<SearchSubjectEnrolledProgram> searchSubjectEnrolledPrograms = !individualIds.isEmpty() ?
@@ -62,7 +61,7 @@ public class IndividualSearchService {
                             .filter(x -> x.getId().equals(individualId))
                             .map(SearchSubjectEnrolledProgram::getProgram)
                             .collect(Collectors.toList()));
-                    individualRecord.put("addressLevel", titleLineages.get(((BigInteger) individualRecord.get("addressId")).longValue()));
+                    individualRecord.put("addressLevel", titleLineages.get((Long) individualRecord.get("addressId")));
                 }).collect(Collectors.toList());
         recordsMap.put("listOfRecords", listOfRecords);
         return recordsMap;

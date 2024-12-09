@@ -40,20 +40,20 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.rest.webmvc.support.RepositoryEntityLinks;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.criteria.Predicate;
-import javax.transaction.Transactional;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 import java.io.InvalidObjectException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 public class FormController implements RestControllerResourceProcessor<BasicFormDetails> {
@@ -100,14 +100,14 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
     }
 
     @GetMapping(value = "/web/forms")
-    public PagedResources<Resource<BasicFormDetails>> getAllFormsWeb(
+    public CollectionModel<EntityModel<BasicFormDetails>> getAllFormsWeb(
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "includeVoided", required = false) boolean includeVoided,
             Pageable pageable) {
         Long organisationId = UserContextHolder.getUserContext().getOrganisation().getId();
-        Sort sortWithId = pageable.getSort().and(new Sort("id"));
+        Sort sortWithId = pageable.getSort().and(Sort.by("id"));
 
-        PageRequest pageRequest = new PageRequest(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortWithId);
 
         Page<Form> forms = formRepository.findAll((root, query, builder) -> {
             Predicate predicate = builder.equal(root.get("organisationId"), organisationId);
@@ -390,11 +390,11 @@ public class FormController implements RestControllerResourceProcessor<BasicForm
             Form form = fm.getForm();
             BasicFormDetails formDetail = new BasicFormDetails(form, program.getOperationalProgramName());
             formDetail.add(linkTo(methodOn(FormController.class).getForms(programId, pageable)).withSelfRel());
-            Link formLink = entityLinks.linkToSingleResource(Form.class, form.getId());
+            Link formLink = entityLinks.linkToItemResource(Form.class, form.getId());
             formDetail.add(formLink);
-            formDetail.add(new Link(formLink.getHref() + "/formElementGroups", "formElementGroups"));
-            formDetail.add(entityLinks.linkToSingleResource(User.class, form.getCreatedBy().getId()).withRel("createdBy"));
-            formDetail.add(entityLinks.linkToSingleResource(User.class, form.getLastModifiedBy().getId()).withRel("lastModifiedBy"));
+            formDetail.add(Link.of(formLink.getHref() + "/formElementGroups", "formElementGroups"));
+            formDetail.add(entityLinks.linkToItemResource(User.class, form.getCreatedBy().getId()).withRel("createdBy"));
+            formDetail.add(entityLinks.linkToItemResource(User.class, form.getLastModifiedBy().getId()).withRel("lastModifiedBy"));
             return formDetail;
         }).collect(Collectors.toList());
     }

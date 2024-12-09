@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.*;
@@ -20,8 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -32,6 +33,7 @@ import static org.junit.Assert.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;
@@ -60,8 +62,8 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
     private TestDataSetupService.TestOrganisationData organisationData;
 
     private List<SubjectMigration> getMigrations(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now) {
-        PagedResources<Resource<SubjectMigration>> migrations = subjectMigrationController.getMigrationsByCatchmentAndLastModified(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
-        return migrations.getContent().stream().map(Resource::getContent).collect(Collectors.toList());
+        CollectionModel<EntityModel<SubjectMigration>> migrations = subjectMigrationController.getMigrationsByCatchmentAndLastModified(lastModifiedDateTime, now, subjectType.getUuid(), PageRequest.of(0, 10));
+        return migrations.getContent().stream().map(EntityModel::getContent).collect(Collectors.toList());
     }
 
     private boolean hasMigrationFor(SubjectType subjectType, DateTime lastModifiedDateTime, DateTime now, Individual subject) {

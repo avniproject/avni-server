@@ -6,6 +6,7 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.DateTimeUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -16,8 +17,10 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.QueryHint;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.QueryHint;
+import jakarta.validation.constraints.NotNull;
+
+import java.time.Instant;
 import java.util.*;
 
 @Repository
@@ -41,7 +44,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "  and c.organisation_id = :organisationId\n" +
             "  and al1.last_modified_date_time between :lastModifiedDateTime and :now\n" +
             "order by al1.last_modified_date_time asc, al1.id asc", nativeQuery = true)
-    Page<AddressLevel> getSyncResults(long catchmentId, Date lastModifiedDateTime, Date now, long organisationId, Pageable pageable);
+    Page<AddressLevel> getSyncResults(long catchmentId, Instant lastModifiedDateTime, Instant now, long organisationId, Pageable pageable);
 
     @Query(value = "select count(*)\n" +
             "from catchment c\n" +
@@ -50,7 +53,7 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
             "         inner join address_level al1 on al.lineage @> al1.lineage \n" +
             "where c.id = :catchmentId\n" +
             "  and al1.last_modified_date_time > :lastModifiedDateTime\n", nativeQuery = true)
-    Long getChangedRowCount(long catchmentId, Date lastModifiedDateTime);
+    Long getChangedRowCount(long catchmentId, Instant lastModifiedDateTime);
 
 
     AddressLevel findByTitleAndCatchmentsUuid(String title, String uuid);
@@ -95,19 +98,20 @@ public interface LocationRepository extends ReferenceDataRepository<AddressLevel
 
     List<AddressLevel> findByCatchments(Catchment catchment);
 
-    Page<AddressLevel> findByLastModifiedDateTimeAfterAndTypeIn(Date lastModifiedDateTime, Collection<@NotNull AddressLevelType> type, Pageable pageable);
+    Page<AddressLevel> findByLastModifiedDateTimeAfterAndTypeIn(Instant lastModifiedDateTime, Collection<@NotNull AddressLevelType> type, Pageable pageable);
 
-    boolean existsByLastModifiedDateTimeAfterAndTypeIn(Date lastModifiedDateTime, Collection<@NotNull AddressLevelType> type);
+    boolean existsByLastModifiedDateTimeAfterAndTypeIn(Instant lastModifiedDateTime, Collection<@NotNull AddressLevelType> type);
 
     @Override
     default Page<AddressLevel> getSyncResults(SyncParameters syncParameters) {
         Long organisationId = UserContextHolder.getOrganisation().getId();
-        return getSyncResults(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate(), syncParameters.getNow().toDate(), organisationId, syncParameters.getPageable());
+        return getSyncResults(syncParameters.getCatchment().getId(), DateTimeUtil.toInstant(syncParameters.getLastModifiedDateTime()),
+                DateTimeUtil.toInstant(syncParameters.getNow()), organisationId, syncParameters.getPageable());
     }
 
     @Override
     default boolean isEntityChanged(SyncParameters syncParameters) {
-        return getChangedRowCount(syncParameters.getCatchment().getId(), syncParameters.getLastModifiedDateTime().toDate()) > 0;
+        return getChangedRowCount(syncParameters.getCatchment().getId(), DateTimeUtil.toInstant(syncParameters.getLastModifiedDateTime())) > 0;
     }
 
     default AddressLevel findByName(String name) {

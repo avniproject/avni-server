@@ -1,11 +1,11 @@
 package org.avni.messaging.domain;
 
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.ArrayUserType;
+import org.avni.server.framework.hibernate.NextTriggerDetailsUserType;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "manual_message")
@@ -14,11 +14,11 @@ public class ManualMessage extends OrganisationAwareEntity {
     private String messageTemplateId;
 
     @Column(columnDefinition = "text[]")
-    @Type(type = "parameters")
+    @Type(value = ArrayUserType.class)
     private String[] parameters;
 
     @Column
-    @Type(type = "nextTriggerDetails")
+    @Type(value = NextTriggerDetailsUserType.class)
     private NextTriggerDetails nextTriggerDetails;
 
     public ManualMessage(String messageTemplateId, String[] parameters) {

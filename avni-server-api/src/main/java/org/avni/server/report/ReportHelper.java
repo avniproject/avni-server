@@ -7,7 +7,7 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.util.S;
 import org.springframework.stereotype.Component;
 
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.*;
 import java.util.List;
 
 import static java.lang.String.format;

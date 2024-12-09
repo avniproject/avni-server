@@ -3,7 +3,7 @@ package org.avni.server.application;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "non_applicable_form_element")
