@@ -200,3 +200,6 @@ exec-sql: ## Usage: make exec-sql sqlfile=</path/to/sql>
 # remote
 tail-prod:
 	ssh avni-server-prod "tail -f /var/log/openchs/openchs.log"
+
+show-dependency-graph:
+	./gradlew avni-server-api:dependencies
