@@ -151,8 +151,6 @@ jobs:
 
       - run: sudo apt-get install make openssl
 
-      - run: make upload-rpm
-
       - save_cache:
           paths:
             - ~/.m2
