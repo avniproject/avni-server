@@ -8,12 +8,14 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MetabaseService {
 
-    public static final String ORG_DB_USER_PASSWORD = "password";
+    @Value("${avni.org.password}")
+    private String AVNI_DEFAULT_PASSWORD;
     public static final String DB_ENGINE = "postgres";
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
@@ -46,7 +48,7 @@ public class MetabaseService {
 
         globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
         if (globalDatabase == null) {
-            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, ORG_DB_USER_PASSWORD));
+            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, AVNI_DEFAULT_PASSWORD));
             globalDatabase = databaseRepository.save(newDatabase);
         }
 

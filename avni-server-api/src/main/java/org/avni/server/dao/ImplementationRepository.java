@@ -22,10 +22,6 @@ public interface ImplementationRepository extends AvniCrudRepository<Organisatio
     @Procedure(value = "create_db_user")
     void createDBUser(String name, String pass);
 
-    default void createDBUser(Organisation organisation) {
-        this.createDBUser(organisation.getDbUser(), "password");
-    }
-
     @Procedure(value = "create_implementation_schema")
     void createImplementationSchema(String schemaName, String dbUser);
 

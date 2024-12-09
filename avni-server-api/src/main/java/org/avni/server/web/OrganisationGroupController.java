@@ -15,6 +15,7 @@ import org.avni.server.web.validation.ValidationException;
 import org.avni.server.web.request.OrganisationGroupContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,9 @@ import java.util.Set;
 
 @RestController
 public class OrganisationGroupController implements RestControllerResourceProcessor<OrganisationGroup> {
+
+    @Value("${avni.org.password}")
+    private String AVNI_DEFAULT_PASSWORD;
     private final Logger logger;
     private final OrganisationGroupRepository organisationGroupRepository;
     private final OrganisationRepository organisationRepository;
@@ -52,8 +56,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
         if (organisationGroupRepository.findByName(request.getName()) != null) {
             throw new ValidationException(String.format("Organisation group %s already exists", request.getName()));
         }
-        String tempPassword = "password";
-        implementationRepository.createDBUser(request.getDbUser(), tempPassword);
+        implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_PASSWORD);
         OrganisationGroup organisationGroup = new OrganisationGroup();
         organisationGroup.setDbUser(request.getDbUser());
         organisationGroup.assignUUIDIfRequired();
