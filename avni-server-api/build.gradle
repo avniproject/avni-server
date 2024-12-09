@@ -35,9 +35,11 @@ java {
 
 repositories { mavenCentral() }
 
-//bootJar {
-//    mainClassName = 'org.avni.Avni'
-//}
+bootJar {
+    archiveBaseName = "avni-server"
+    version = "0.0.1-SNAPSHOT"
+    mainClass = 'org.avni.Avni'
+}
 
 configurations {
     dev
