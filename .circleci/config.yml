@@ -111,6 +111,8 @@ jobs:
 
       - run: sudo apt-get install make openssl
 
+      - run: make build_server
+
       - save_cache:
           paths:
             - ~/.m2
