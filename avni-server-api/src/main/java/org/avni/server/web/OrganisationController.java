@@ -31,7 +31,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     private final OrganisationStatusRepository organisationStatusRepository;
 
     @Value("${avni.org.password}")
-    private String AVNI_DEFAULT_PASSWORD;
+    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
 
     @Autowired
     public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService, OrganisationCategoryRepository organisationCategoryRepository, OrganisationStatusRepository organisationStatusRepository) {
@@ -49,7 +49,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     public ResponseEntity save(@RequestBody OrganisationContract request) {
         accessControlService.assertIsSuperAdmin();
         Organisation org = organisationRepository.findByUuid(request.getUuid());
-        implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_PASSWORD);
+        implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
         implementationRepository.createImplementationSchema(request.getSchemaName(), request.getDbUser());
         if (org == null) {
             org = new Organisation();

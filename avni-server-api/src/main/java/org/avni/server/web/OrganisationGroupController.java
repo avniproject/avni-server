@@ -30,7 +30,7 @@ import java.util.Set;
 public class OrganisationGroupController implements RestControllerResourceProcessor<OrganisationGroup> {
 
     @Value("${avni.org.password}")
-    private String AVNI_DEFAULT_PASSWORD;
+    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
     private final Logger logger;
     private final OrganisationGroupRepository organisationGroupRepository;
     private final OrganisationRepository organisationRepository;
@@ -56,7 +56,7 @@ public class OrganisationGroupController implements RestControllerResourceProces
         if (organisationGroupRepository.findByName(request.getName()) != null) {
             throw new ValidationException(String.format("Organisation group %s already exists", request.getName()));
         }
-        implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_PASSWORD);
+        implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
         OrganisationGroup organisationGroup = new OrganisationGroup();
         organisationGroup.setDbUser(request.getDbUser());
         organisationGroup.assignUUIDIfRequired();

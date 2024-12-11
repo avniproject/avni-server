@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 public class MetabaseService {
 
     @Value("${avni.org.password}")
-    private String AVNI_DEFAULT_PASSWORD;
+    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
     public static final String DB_ENGINE = "postgres";
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
@@ -48,7 +48,7 @@ public class MetabaseService {
 
         globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
         if (globalDatabase == null) {
-            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, AVNI_DEFAULT_PASSWORD));
+            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
             globalDatabase = databaseRepository.save(newDatabase);
         }
 
