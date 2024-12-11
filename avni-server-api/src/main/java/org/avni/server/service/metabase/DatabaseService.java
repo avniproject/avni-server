@@ -4,8 +4,9 @@ import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Arrays;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,10 +82,12 @@ public class DatabaseService implements QuestionCreationService{
 
         for (List<String> row : rows) {
             String type = row.get(DatasetColumn.TYPE.getIndex());
-            if (type.equalsIgnoreCase(TableType.INDIVIDUAL.getTypeName()) ||
-                    type.equalsIgnoreCase(TableType.HOUSEHOLD.getTypeName()) ||
-                    type.equalsIgnoreCase(TableType.GROUP.getTypeName()) ||
-                    type.equalsIgnoreCase(TableType.PERSON.getTypeName())) {
+            String schemaName = row.get(DatasetColumn.SCHEMA_NAME.getIndex());
+            if (schemaName.equalsIgnoreCase(getGlobalDatabase().getName()) &&
+                    (type.equalsIgnoreCase(TableType.INDIVIDUAL.getTypeName()) ||
+                            type.equalsIgnoreCase(TableType.HOUSEHOLD.getTypeName()) ||
+                            type.equalsIgnoreCase(TableType.GROUP.getTypeName()) ||
+                            type.equalsIgnoreCase(TableType.PERSON.getTypeName()))) {
                 subjectTypeNames.add(row.get(DatasetColumn.NAME.getIndex()));
             }
         }
@@ -98,18 +101,20 @@ public class DatabaseService implements QuestionCreationService{
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
 
-        List<String> programNames = new ArrayList<>();
+        List<String> programAndEncounterNames = new ArrayList<>();
 
         for (List<String> row : rows) {
             String type = row.get(DatasetColumn.TYPE.getIndex());
-            if (type.equalsIgnoreCase(TableType.PROGRAM_ENCOUNTER.getTypeName()) ||
-                    type.equalsIgnoreCase(TableType.ENCOUNTER.getTypeName()) ||
-                    type.equalsIgnoreCase(TableType.PROGRAM_ENROLMENT.getTypeName())) {
-                programNames.add(row.get(DatasetColumn.NAME.getIndex()));
+            String schemaName = row.get(DatasetColumn.SCHEMA_NAME.getIndex());
+            if (schemaName.equalsIgnoreCase(getGlobalDatabase().getName()) &&
+                    (type.equalsIgnoreCase(TableType.PROGRAM_ENCOUNTER.getTypeName()) ||
+                            type.equalsIgnoreCase(TableType.ENCOUNTER.getTypeName()) ||
+                            type.equalsIgnoreCase(TableType.PROGRAM_ENROLMENT.getTypeName()))) {
+                programAndEncounterNames.add(row.get(DatasetColumn.NAME.getIndex()));
             }
         }
 
-        return programNames;
+        return programAndEncounterNames;
     }
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
