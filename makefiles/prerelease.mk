@@ -9,7 +9,7 @@ open-cognito-prerelease:
 	open https://ap-south-1.console.aws.amazon.com/cognito/v2/idp/user-pools/ap-south-1_vfNvMvMk9/users?region=ap-south-1
 
 start_server_prerelease: build_server
-	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
+	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/avni_server
 
 	AVNI_IDP_TYPE=cognito \
 	OPENCHS_CLIENT_ID=$(OPENCHS_CLIENT_ID) \
