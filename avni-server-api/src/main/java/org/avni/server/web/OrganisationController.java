@@ -30,7 +30,7 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     private final OrganisationCategoryRepository organisationCategoryRepository;
     private final OrganisationStatusRepository organisationStatusRepository;
 
-    @Value("${avni.org.password}")
+    @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
 
     @Autowired

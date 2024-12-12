@@ -18,8 +18,8 @@ public class TestOrganisationService {
     private final UserRepository userRepository;
     private final TestWebContextService testWebContextService;
     private final OrganisationService organisationService;
-    @Value("${avni.org.password}")
-    private String DEFAUT_PASSWORD;
+    @Value("${avni.default.org.user.db.password}")
+    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
 
     @Autowired
     public TestOrganisationService(ImplementationRepository implementationRepository, OrganisationRepository organisationRepository, UserRepository userRepository, TestWebContextService testWebContextService, OrganisationService organisationService) {
@@ -33,7 +33,7 @@ public class TestOrganisationService {
     public void createOrganisation(Organisation organisation, User adminUser) {
         organisationRepository.save(organisation);
         User orgUser = createUser(organisation, adminUser);
-        implementationRepository.createDBUser(organisation.getDbUser(),DEFAUT_PASSWORD);
+        implementationRepository.createDBUser(organisation.getDbUser(),AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
         testWebContextService.setUser(orgUser);
         organisationService.setupBaseOrganisationMetadata(organisation);
     }

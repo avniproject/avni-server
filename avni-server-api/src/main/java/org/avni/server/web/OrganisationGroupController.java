@@ -29,7 +29,7 @@ import java.util.Set;
 @RestController
 public class OrganisationGroupController implements RestControllerResourceProcessor<OrganisationGroup> {
 
-    @Value("${avni.org.password}")
+    @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
     private final Logger logger;
     private final OrganisationGroupRepository organisationGroupRepository;

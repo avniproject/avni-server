@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetabaseService {
 
-    @Value("${avni.org.password}")
+    @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
     public static final String DB_ENGINE = "postgres";
     private final OrganisationService organisationService;
