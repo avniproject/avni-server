@@ -2,7 +2,12 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.avni.server.domain.framework.IdHolder;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -10,21 +15,18 @@ import org.avni.server.web.validation.ValidationException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
-import org.hibernate.proxy.HibernateProxyHelper;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Entity
 @Table(name = "users")
 @BatchSize(size = 100)
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class User {
+public class User implements IdHolder {
     public static final String DEFAULT_SUPER_ADMIN = "5fed2907-df3a-4867-aef5-c87f4c78a31a";
 
     @Column
@@ -61,14 +63,15 @@ public class User {
     @ManyToOne(targetEntity = User.class)
     private User createdBy;
 
-    private DateTime createdDateTime;
+    @Column
+    private Instant createdDateTime;
 
     @JsonIgnore
     @JoinColumn(name = "last_modified_by_id")
     @ManyToOne(targetEntity = User.class)
     private User lastModifiedBy;
 
-    private DateTime lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     @Column
     private boolean isVoided;
@@ -97,11 +100,11 @@ public class User {
     private OperatingIndividualScope operatingIndividualScope;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject settings;
 
     @Column(name = "sync_settings")
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject syncSettings;
 
     @Column(name = "ignore_sync_settings_in_dea")
@@ -234,13 +237,7 @@ public class User {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || HibernateProxyHelper.getClassWithoutInitializingProxy(this) != HibernateProxyHelper.getClassWithoutInitializingProxy(o)) return false;
-
-        User other = (User) o;
-
-        if (getId() != null ? !getId().equals(other.getId()) : other.getId() != null) return false;
-        return getUuid() != null ? getUuid().equals(other.getUuid()) : other.getUuid() == null;
+        return CHSBaseEntity.equals(this, o);
     }
 
     @Override
@@ -261,7 +258,7 @@ public class User {
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime;
+        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
     }
 
     public void setLastModifiedBy(User lastModifiedBy) {
@@ -269,7 +266,7 @@ public class User {
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime;
+        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
     }
 
     public User getCreatedBy() {
@@ -285,7 +282,7 @@ public class User {
     }
 
     public DateTime getCreatedDateTime() {
-        return createdDateTime;
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public User getLastModifiedBy() {
@@ -293,7 +290,7 @@ public class User {
     }
 
     public DateTime getLastModifiedDateTime() {
-        return lastModifiedDateTime;
+        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
     }
 
     public JsonObject getSyncSettings() {

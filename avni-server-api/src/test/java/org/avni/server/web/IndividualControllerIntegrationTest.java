@@ -1,12 +1,12 @@
 package org.avni.server.web;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.JsonObject;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;

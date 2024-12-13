@@ -1,5 +1,6 @@
 package org.avni.server.report;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Program;
@@ -7,7 +8,6 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.util.S;
 import org.springframework.stereotype.Component;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 import static java.lang.String.format;

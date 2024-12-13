@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.criteria.*;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
@@ -11,7 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 

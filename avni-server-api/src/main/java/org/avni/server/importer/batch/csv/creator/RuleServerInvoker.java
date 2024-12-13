@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
 import org.avni.server.application.Form;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.Individual;
@@ -51,15 +50,13 @@ public class RuleServerInvoker {
 
     private UploadRuleServerResponseContract invokeRuleServer(Row row, Form form, Object entity, List<String> allErrorMsgs) throws Exception {
         ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-        mapper.registerModule(new JodaModule());
         UploadRuleServerRequestContract contract = UploadRuleServerRequestContract.buildRuleServerContract(row, form, entity);
-        String ruleResponse = restClient.post("/api/upload", contract);
-        UploadRuleServerResponseContract uploadRuleServerResponseContract = mapper.readValue(ruleResponse, UploadRuleServerResponseContract.class);
-        allErrorMsgs.addAll(uploadRuleServerResponseContract.getErrors());
+        UploadRuleServerResponseContract ruleResponse = (UploadRuleServerResponseContract) restClient.post("/api/upload", contract, UploadRuleServerResponseContract.class);
+        allErrorMsgs.addAll(ruleResponse.getErrors());
         if (allErrorMsgs.size() > 0) {
             throw new Exception(String.join(", ", allErrorMsgs));
         }
-        return uploadRuleServerResponseContract;
+        return ruleResponse;
     }
 
     public UploadRuleServerResponseContract getRuleServerResult(Row row, Form form, Individual individual, List<String> allErrorMsgs) throws Exception {

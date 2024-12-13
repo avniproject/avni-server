@@ -1,19 +1,18 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.criteria.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +21,7 @@ import java.util.Set;
 public interface ChecklistItemRepository extends TransactionalDataRepository<ChecklistItem>, OperatingIndividualScopeAwareRepository<ChecklistItem>, SubjectTreeItemRepository {
 
     Page<ChecklistItem> findByChecklistProgramEnrolmentIndividualAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
+            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
     ChecklistItem findByChecklistUuidAndChecklistItemDetailUuid(String checklistUUID, String checklistItemDetailUUID);
 

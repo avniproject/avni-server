@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.Subject;
 import org.avni.server.application.SubjectTypeSettingKey;
 import org.avni.server.common.BulkItemSaveException;
@@ -17,7 +18,10 @@ import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.*;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
@@ -25,7 +29,6 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;

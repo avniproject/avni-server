@@ -1,14 +1,17 @@
 package org.avni.server.domain.program;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.Program;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 
 @Entity(name = "subject_program_eligibility")
 public class SubjectProgramEligibility extends OrganisationAwareEntity {
@@ -26,10 +29,10 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     private boolean isEligible;
 
     @Column
-    private DateTime checkDate;
+    private Instant checkDate;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     public Individual getSubject() {
@@ -57,11 +60,11 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     }
 
     public DateTime getCheckDate() {
-        return checkDate;
+        return DateTimeUtil.toJodaDateTime(checkDate);
     }
 
     public void setCheckDate(DateTime checkDate) {
-        this.checkDate = checkDate;
+        this.checkDate = DateTimeUtil.toInstant(checkDate);
     }
 
     public ObservationCollection getObservations() {

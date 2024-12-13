@@ -2,20 +2,14 @@ package org.avni.server.web;
 
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.ProgramEnrolmentRepository;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

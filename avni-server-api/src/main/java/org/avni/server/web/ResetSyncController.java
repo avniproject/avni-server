@@ -8,9 +8,9 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,7 +29,7 @@ public class ResetSyncController extends AbstractController<ResetSync> implement
 
     @RequestMapping(value = "/resetSyncs", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<ResetSync>> fetchByLastModified(
+    public CollectionModel<EntityModel<ResetSync>> fetchByLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -38,11 +38,11 @@ public class ResetSyncController extends AbstractController<ResetSync> implement
     }
 
     @Override
-    public Resource<ResetSync> process(Resource<ResetSync> resource) {
+    public EntityModel<ResetSync> process(EntityModel<ResetSync> resource) {
         ResetSync resetSync = resource.getContent();
         resource.removeLinks();
         if (resetSync.getSubjectType() != null) {
-            resource.add(new Link(resetSync.getSubjectType().getUuid(), "subjectTypeUUID"));
+            resource.add(Link.of(resetSync.getSubjectType().getUuid(), "subjectTypeUUID"));
         }
         return resource;
     }

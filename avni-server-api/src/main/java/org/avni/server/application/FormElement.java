@@ -1,16 +1,19 @@
 package org.avni.server.application;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Null;
 import org.avni.server.domain.*;
 import org.avni.server.common.ValidationResult;
+import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
+import org.avni.server.framework.hibernate.KeyValuesUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 import org.avni.server.web.validation.ValidationException;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +38,7 @@ public class FormElement extends OrganisationAwareEntity {
     private boolean isMandatory;
 
     @Column
-    @Type(type = "keyValues")
+    @Type(value = KeyValuesUserType.class)
     private KeyValues keyValues;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -61,7 +64,7 @@ public class FormElement extends OrganisationAwareEntity {
     private String rule;
 
     @Column(name = "declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule declarativeRule;
 
     @ManyToOne(fetch = FetchType.LAZY)

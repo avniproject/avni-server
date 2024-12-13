@@ -1,11 +1,10 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.BatchSize;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.util.S;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "comment")

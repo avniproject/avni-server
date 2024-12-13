@@ -2,6 +2,11 @@ package org.avni.server.web;
 
 import com.amazonaws.services.cognitoidp.model.AWSCognitoIdentityProviderException;
 import com.amazonaws.services.cognitoidp.model.UsernameExistsException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.transaction.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
 import org.avni.server.domain.Account;
@@ -32,11 +37,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;

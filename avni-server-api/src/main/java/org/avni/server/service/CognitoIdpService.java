@@ -6,6 +6,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProvider;
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
 import com.amazonaws.services.cognitoidp.model.*;
+import jakarta.annotation.PostConstruct;
 import org.avni.messaging.domain.EntityType;
 import org.avni.server.common.Messageable;
 import org.avni.server.domain.OrganisationConfig;
@@ -20,7 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.Optional;
 
 import static org.avni.server.application.OrganisationConfigSettingKey.donotRequirePasswordChangeOnFirstLogin;

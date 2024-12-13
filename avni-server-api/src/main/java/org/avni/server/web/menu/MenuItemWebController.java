@@ -1,23 +1,23 @@
 package org.avni.server.web.menu;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.menu.MenuItem;
 import org.avni.server.dao.application.MenuItemRepository;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.application.MenuItemService;
-import org.avni.server.web.response.AvniEntityResponse;
-import org.avni.server.web.response.MenuItemWebResponse;
 import org.avni.server.web.AbstractController;
 import org.avni.server.web.RestControllerResourceProcessor;
 import org.avni.server.web.request.application.menu.MenuItemContract;
+import org.avni.server.web.response.AvniEntityResponse;
+import org.avni.server.web.response.MenuItemWebResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,7 +66,7 @@ public class MenuItemWebController extends AbstractController<MenuItem> implemen
 
     @RequestMapping(value = "/web/menuItem", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<MenuItemWebResponse> getAll() {
+    public CollectionModel<MenuItemWebResponse> getAll() {
         return wrapListAsPage(menuItemRepository.findAllByIsVoidedFalse().stream().map(MenuItemWebResponse::new).collect(Collectors.toList()));
     }
 

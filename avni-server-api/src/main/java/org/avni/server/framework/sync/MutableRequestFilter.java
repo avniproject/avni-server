@@ -1,6 +1,9 @@
 package org.avni.server.framework.sync;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.avni.server.framework.json.JsonEncoder;
 import org.owasp.encoder.Encode;
 import org.slf4j.Logger;
@@ -9,9 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;

@@ -1,10 +1,11 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.*;
 import org.avni.server.domain.Group;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.avni.server.domain.accessControl.Privilege;
-import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
@@ -13,7 +14,6 @@ import org.avni.server.web.request.GroupPrivilegeWebRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

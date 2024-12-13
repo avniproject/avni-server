@@ -1,5 +1,6 @@
 package org.avni.server.dao.individualRelationship;
 
+import jakarta.persistence.criteria.*;
 import org.avni.server.dao.*;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.Individual;
@@ -9,16 +10,14 @@ import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.avni.server.framework.security.UserContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -28,7 +27,7 @@ import static org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil.joinUs
 @RepositoryRestResource(collectionResourceRel = "individualRelationship", path = "individualRelationship", exported = false)
 public interface IndividualRelationshipRepository extends TransactionalDataRepository<IndividualRelationship>, FindByLastModifiedDateTime<IndividualRelationship>, OperatingIndividualScopeAwareRepository<IndividualRelationship>, SubjectTreeItemRepository {
     Page<IndividualRelationship> findByIndividualaAddressLevelVirtualCatchmentsIdAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            long catchmentId, Date lastModifiedDateTime, Date now, Pageable pageable);
+            long catchmentId, Instant lastModifiedDateTime, Instant now, Pageable pageable);
 
     @Query(value = "select ir from IndividualRelationship ir where ir.individuala = :individual or ir.individualB = :individual")
     Set<IndividualRelationship> findByIndividual(Individual individual);

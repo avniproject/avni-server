@@ -184,14 +184,6 @@ open_test_results:
 	open avni-server-api/build/reports/tests/test/index.html
 open-test-results: open_test_results
 
-build-rpm:
-	./gradlew clean avni-server-api:buildRpm -x test --info --stacktrace
-
-upload-rpm:
-	@openssl aes-256-cbc -a -md md5 -in infra/rpm/keys/openchs.asc.enc -d -out infra/rpm/keys/openchs.asc -k ${ENCRYPTION_KEY}
-	-rm -rf avni-server-api/build
-	./gradlew clean avni-server-api:uploadRpm -x test --info --stacktrace --rerun-tasks
-
 # <exec-sql>
 exec-sql: ## Usage: make exec-sql sqlfile=</path/to/sql>
 	psql -Uopenchs -f $(sqlfile)
@@ -200,3 +192,6 @@ exec-sql: ## Usage: make exec-sql sqlfile=</path/to/sql>
 # remote
 tail-prod:
 	ssh avni-prod "tail -f /var/log/avni_server/chs.log"
+
+show-dependency-graph:
+	./gradlew avni-server-api:dependencies

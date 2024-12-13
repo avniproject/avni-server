@@ -1,10 +1,9 @@
 package org.avni.server.domain.task;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.hibernate.annotations.BatchSize;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "task_status")

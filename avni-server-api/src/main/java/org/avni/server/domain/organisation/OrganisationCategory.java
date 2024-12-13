@@ -1,8 +1,7 @@
 package org.avni.server.domain.organisation;
 
+import jakarta.persistence.Entity;
 import org.avni.server.domain.CHSEntity;
-
-import javax.persistence.Entity;
 
 @Entity
 public class OrganisationCategory extends CHSEntity {

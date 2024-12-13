@@ -2,15 +2,19 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.geo.Point;
+import org.avni.server.geo.PointType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.avni.server.geo.Point;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -38,25 +42,25 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     @Column(name = ColumnNames.EnrolmentDateTime)
     @NotNull
-    private DateTime enrolmentDateTime;
+    private Instant enrolmentDateTime;
 
     @Column(name = ProgramEnrolmentObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.ProgramExitDateTime)
-    private DateTime programExitDateTime;
+    private Instant programExitDateTime;
 
-    @Type(type= "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point enrolmentLocation;
 
-    @Type(type= "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point exitLocation;
 
     @Column(name = ProgramEnrolmentExitObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection programExitObservations;
 
     @Column
@@ -122,11 +126,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public DateTime getEnrolmentDateTime() {
-        return enrolmentDateTime;
+        return DateTimeUtil.toJodaDateTime(enrolmentDateTime);
     }
 
     public void setEnrolmentDateTime(DateTime enrolmentDateTime) {
-        this.enrolmentDateTime = enrolmentDateTime;
+        this.enrolmentDateTime = DateTimeUtil.toInstant(enrolmentDateTime);
     }
 
     public ObservationCollection getObservations() {
@@ -138,11 +142,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public DateTime getProgramExitDateTime() {
-        return programExitDateTime;
+        return DateTimeUtil.toJodaDateTime(programExitDateTime);
     }
 
     public void setProgramExitDateTime(DateTime programExitDateTime) {
-        this.programExitDateTime = programExitDateTime;
+        this.programExitDateTime = DateTimeUtil.toInstant(programExitDateTime);
     }
 
     public ObservationCollection getProgramExitObservations() {

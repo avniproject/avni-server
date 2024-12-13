@@ -1,15 +1,18 @@
 package org.avni.server.domain.task;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.User;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 
 @Entity
 @Table(name = "task")
@@ -30,17 +33,17 @@ public class Task extends OrganisationAwareEntity {
     private TaskStatus taskStatus;
 
     @Column
-    private DateTime scheduledOn;
+    private Instant scheduledOn;
 
     @Column
-    private DateTime completedOn;
+    private Instant completedOn;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_user_id")
     private User assignedTo;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection metadata;
 
     @ManyToOne(targetEntity = Individual.class, fetch = FetchType.LAZY)
@@ -48,7 +51,7 @@ public class Task extends OrganisationAwareEntity {
     private Individual subject;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column
@@ -85,19 +88,19 @@ public class Task extends OrganisationAwareEntity {
     }
 
     public DateTime getScheduledOn() {
-        return scheduledOn;
+        return DateTimeUtil.toJodaDateTime(scheduledOn);
     }
 
     public void setScheduledOn(DateTime scheduledOn) {
-        this.scheduledOn = scheduledOn;
+        this.scheduledOn = DateTimeUtil.toInstant(scheduledOn);
     }
 
     public DateTime getCompletedOn() {
-        return completedOn;
+        return DateTimeUtil.toJodaDateTime(completedOn);
     }
 
     public void setCompletedOn(DateTime completedOn) {
-        this.completedOn = completedOn;
+        this.completedOn = DateTimeUtil.toInstant(completedOn);
     }
 
     public User getAssignedTo() {

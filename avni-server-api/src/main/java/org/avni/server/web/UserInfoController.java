@@ -1,42 +1,44 @@
     package org.avni.server.web;
 
-import org.avni.server.dao.CatchmentRepository;
-import org.avni.server.dao.OrganisationRepository;
-import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.*;
-import org.avni.server.domain.accessControl.GroupPrivilege;
-import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.*;
-import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.service.accessControl.GroupPrivilegeService;
-import org.avni.server.util.PhoneNumberUtil;
-import org.avni.server.util.RegionUtil;
-import org.avni.server.web.request.GroupPrivilegeContract;
-import org.avni.server.web.request.UserBulkUploadContract;
-import org.avni.server.web.request.UserInfoClientContract;
-import org.avni.server.web.request.UserInfoContract;
-import org.avni.server.web.response.slice.SlicedResources;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.SliceImpl;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+    import jakarta.transaction.Transactional;
+    import org.avni.server.dao.CatchmentRepository;
+    import org.avni.server.dao.OrganisationRepository;
+    import org.avni.server.dao.UserRepository;
+    import org.avni.server.domain.*;
+    import org.avni.server.domain.accessControl.GroupPrivilege;
+    import org.avni.server.domain.accessControl.PrivilegeType;
+    import org.avni.server.framework.security.UserContextHolder;
+    import org.avni.server.service.IDPException;
+    import org.avni.server.service.IdpServiceFactory;
+    import org.avni.server.service.OrganisationConfigService;
+    import org.avni.server.service.UserService;
+    import org.avni.server.service.accessControl.AccessControlService;
+    import org.avni.server.service.accessControl.GroupPrivilegeService;
+    import org.avni.server.util.RegionUtil;
+    import org.avni.server.web.request.GroupPrivilegeContract;
+    import org.avni.server.web.request.UserBulkUploadContract;
+    import org.avni.server.web.request.UserInfoClientContract;
+    import org.avni.server.web.request.UserInfoContract;
+    import org.avni.server.web.response.slice.SlicedResources;
+    import org.joda.time.DateTime;
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.data.domain.PageImpl;
+    import org.springframework.data.domain.SliceImpl;
+    import org.springframework.hateoas.CollectionModel;
+    import org.springframework.hateoas.EntityModel;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.RequestBody;
+    import org.springframework.web.bind.annotation.RequestMapping;
+    import org.springframework.web.bind.annotation.RequestMethod;
+    import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+    import java.util.Arrays;
+    import java.util.List;
+    import java.util.UUID;
+    import java.util.stream.Collectors;
 
 @RestController
 public class UserInfoController implements RestControllerResourceProcessor<UserInfoContract> {
@@ -92,7 +94,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/v2/me", method = RequestMethod.GET)
-    public PagedResources<Resource<UserInfoContract>> getMyProfile() {
+    public CollectionModel<EntityModel<UserInfoContract>> getMyProfile() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();
@@ -101,7 +103,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
     }
 
     @RequestMapping(value = "/me/v3", method = RequestMethod.GET)
-    public SlicedResources<Resource<UserInfoContract>> getMyProfileAsSlice() {
+    public SlicedResources<EntityModel<UserInfoContract>> getMyProfileAsSlice() {
         UserContext userContext = UserContextHolder.getUserContext();
         User user = userContext.getUser();
         Organisation organisation = userContext.getOrganisation();

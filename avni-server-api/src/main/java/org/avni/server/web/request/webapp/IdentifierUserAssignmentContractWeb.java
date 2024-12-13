@@ -2,7 +2,7 @@ package org.avni.server.web.request.webapp;
 
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.IdentifierUserAssignment;
-import org.springframework.hateoas.core.Relation;
+import org.springframework.hateoas.server.core.Relation;
 
 @Relation(collectionRelation = "identifierUserAssignment")
 public class IdentifierUserAssignmentContractWeb {

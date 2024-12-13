@@ -1,10 +1,9 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import org.hibernate.annotations.BatchSize;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 @Entity
 @Table(name = "msg91_config")

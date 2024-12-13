@@ -7,14 +7,13 @@ import org.avni.server.service.S3Service;
 import org.avni.server.util.CollectionUtil;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
@@ -29,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -38,20 +38,19 @@ import static org.avni.server.importer.batch.csv.writer.UserAndCatchmentWriter.M
 import static org.avni.server.service.ImportLocationsConstants.EXAMPLE;
 
 @Configuration
-@EnableBatchProcessing
+//@EnableBatchProcessing
 @EnableScheduling
 public class BatchConfiguration {
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
     private final JobRepository jobRepository;
+    private final PlatformTransactionManager platformTransactionManager;
     private final S3Service s3Service;
 
     @Autowired
-    public BatchConfiguration(JobBuilderFactory jobBuilderFactory, StepBuilderFactory stepBuilderFactory, JobRepository jobRepository,
+    public BatchConfiguration(JobRepository jobRepository,
+                              PlatformTransactionManager platformTransactionManager,
                               @Qualifier("BatchS3Service")  S3Service s3Service) {
-        this.jobBuilderFactory = jobBuilderFactory;
-        this.stepBuilderFactory = stepBuilderFactory;
         this.jobRepository = jobRepository;
+        this.platformTransactionManager = platformTransactionManager;
         this.s3Service = s3Service;
     }
 
@@ -75,7 +74,7 @@ public class BatchConfiguration {
 
     @Bean
     public Job importJob(ErrorFileCreatorListener listener, Step importStep) {
-        return jobBuilderFactory.get("importJob")
+        return new JobBuilder("importJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .flow(importStep)
@@ -87,8 +86,8 @@ public class BatchConfiguration {
     public Step importStep(FlatFileItemReader<Row> csvFileItemReader,
                            CsvFileItemWriter csvFileItemWriter,
                            ErrorFileWriterListener errorFileWriterListener) {
-        return stepBuilderFactory.get("importStep")
-                .<Row, Row>chunk(1)
+        return new StepBuilder("importStep", jobRepository)
+                .<Row, Row>chunk(1, platformTransactionManager)
                 .reader(csvFileItemReader)
                 .writer(csvFileItemWriter)
                 .faultTolerant()
@@ -104,7 +103,7 @@ public class BatchConfiguration {
 
     @Bean
     public JobLauncher bgJobLauncher() {
-        return new SimpleJobLauncher() {{
+        return new TaskExecutorJobLauncher() {{
             setJobRepository(jobRepository);
             setTaskExecutor(new ThreadPoolTaskExecutor() {{
                 setCorePoolSize(1);

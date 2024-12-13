@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.individualRelationship.IndividualRelationRepository;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.individualRelationship.IndividualRelation;
@@ -8,10 +9,8 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.IndividualRelationContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 

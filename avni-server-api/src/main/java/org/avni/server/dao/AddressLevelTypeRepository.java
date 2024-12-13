@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.AddressLevelTypes;
 import org.springframework.data.jpa.repository.Query;
@@ -8,7 +9,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.List;
 

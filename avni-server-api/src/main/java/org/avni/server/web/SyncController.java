@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.annotation.PostConstruct;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SyncableItem;
@@ -22,8 +23,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.avni.server.dao.sync.SyncEntityName.*;

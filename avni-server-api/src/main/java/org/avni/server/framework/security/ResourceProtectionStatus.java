@@ -1,8 +1,8 @@
 package org.avni.server.framework.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 

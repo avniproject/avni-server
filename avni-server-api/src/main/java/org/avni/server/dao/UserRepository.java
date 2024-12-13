@@ -1,10 +1,11 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.QueryHint;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.web.request.api.RequestUtils;
-import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,8 +16,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.EntityNotFoundException;
-import javax.persistence.QueryHint;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +25,6 @@ import static org.avni.server.domain.User.DEFAULT_SUPER_ADMIN;
 @Repository
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
 public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
-
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
     User findByUsername(String username);
 
@@ -62,7 +61,7 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
             "(((:organisationIds) is not null and u.organisationId in (:organisationIds) and u.isOrgAdmin = true) or aa.account.id in (:accountIds))")
     User getOne(Long id, List<Long> accountIds, List<Long> organisationIds);
 
-    boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
 
     List<User> findByCatchment_IdInAndIsVoidedFalse(List<Long> catchmentIds);
 

@@ -8,11 +8,12 @@ import org.avni.server.domain.Individual;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.S3Service;
 import org.avni.server.web.request.api.SubjectResponseOptions;
-import org.jadira.usertype.spi.utils.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.avni.server.web.api.CommonFieldNames.EXTERNAL_ID;
 
@@ -38,7 +39,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
             Response.putIfPresent(observations, "Middle name", subject.getMiddleName());
         Response.putIfPresent(observations, "Last name", subject.getLastName());
         if (subject.getSubjectType().isAllowProfilePicture()
-                && StringUtils.isNotEmpty(subject.getProfilePicture())) {
+                && !StringUtils.isEmpty(subject.getProfilePicture())) {
             URL url = s3Service.generateMediaDownloadUrl(subject.getProfilePicture());
             observations.put("Profile picture", url.toString());
         }
@@ -97,7 +98,7 @@ public class SubjectResponse extends LinkedHashMap<String, Object> {
 
     public static SubjectResponse fromSubject(Individual subject, SubjectResponseOptions options, ConceptRepository conceptRepository, ConceptService conceptService, List<GroupSubject> groups, S3Service s3Service) {
         SubjectResponse subjectResponse = fromSubject(subject, options, conceptRepository, conceptService, s3Service);
-        subjectResponse.put("Groups", groups.stream().map(GroupSubject::getGroupSubjectUUID));
+        subjectResponse.put("Groups", groups.stream().map(GroupSubject::getGroupSubjectUUID).collect(Collectors.toList()));
         return subjectResponse;
     }
 }

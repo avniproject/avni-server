@@ -1,8 +1,8 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
 
 @MappedSuperclass
 public class OrganisationAwareEntity extends CHSEntity {
@@ -19,7 +19,7 @@ public class OrganisationAwareEntity extends CHSEntity {
 
     @JsonIgnore
     public Auditable getLastModified(Auditable auditable) {
-        return super.getLastModifiedDateTime().isAfter(auditable.getLastModifiedDateTime()) ? this : auditable;
+        return super.getLastModifiedDateTime().isBefore(auditable.getLastModifiedDateTime()) ? auditable : this;
     }
 
 }

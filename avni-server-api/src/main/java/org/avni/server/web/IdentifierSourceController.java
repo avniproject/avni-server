@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.CatchmentRepository;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.CHSEntity;
@@ -7,20 +8,18 @@ import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.identifier.IdentifierGeneratorType;
-import org.avni.server.service.accessControl.AccessControlService;
-import org.joda.time.DateTime;
 import org.avni.server.service.UserService;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.IdentifierSourceContract;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.List;
 
 @RestController
@@ -41,7 +40,7 @@ public class IdentifierSourceController extends AbstractController<IdentifierSou
     }
 
     @RequestMapping(value = "/identifierSource/search/lastModified", method = RequestMethod.GET)
-    public PagedResources<Resource<IdentifierSource>> get(
+    public CollectionModel<EntityModel<IdentifierSource>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {

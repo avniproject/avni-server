@@ -1,9 +1,9 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
 
-import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 

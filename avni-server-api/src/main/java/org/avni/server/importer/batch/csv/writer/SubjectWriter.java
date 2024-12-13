@@ -12,13 +12,14 @@ import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
-import org.jadira.usertype.spi.utils.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -76,8 +77,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     @Override
-    public void write(List<? extends Row> rows) throws Exception {
-        for (Row row : rows) write(row);
+    public void write(Chunk<? extends Row> chunk) throws Exception {
+        for (Row row : chunk.getItems()) write(row);
     }
 
     private void write(Row row) throws Exception {
@@ -136,10 +137,10 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private void setProfilePicture(SubjectType subjectType, Individual individual, Row row, List<String> errorMsgs) {
         try {
             String profilePicUrl = row.get(SubjectHeaders.profilePicture);
-            if(StringUtils.isNotEmpty(profilePicUrl) && subjectType.isAllowProfilePicture()) {
+            if(!StringUtils.isEmpty(profilePicUrl) && subjectType.isAllowProfilePicture()) {
                 individual.setProfilePicture(s3Service
                         .uploadProfilePic(profilePicUrl, null));
-            } else if(StringUtils.isNotEmpty(profilePicUrl)) {
+            } else if(!StringUtils.isEmpty(profilePicUrl)) {
                 errorMsgs.add(String.format("Not allowed to set '%s'", SubjectHeaders.profilePicture));
             }
         } catch (Exception e) {

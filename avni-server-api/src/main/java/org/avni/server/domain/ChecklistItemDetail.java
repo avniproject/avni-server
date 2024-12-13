@@ -1,11 +1,11 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.application.Form;
+import org.avni.server.framework.hibernate.ChecklistItemUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import org.avni.server.application.Form;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "checklist_item_detail")
@@ -17,7 +17,7 @@ public class ChecklistItemDetail extends OrganisationAwareEntity {
     private Concept concept;
 
     @Column(name = "status")
-    @Type(type = "status")
+    @Type(value = ChecklistItemUserType.class)
     private ChecklistItemStatus checklistItemStatus;
 
     @JoinColumn(name = "dependent_on", nullable = true)

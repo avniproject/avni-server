@@ -1,6 +1,6 @@
 package org.avni.server.web;
 
-import org.joda.time.DateTime;
+import jakarta.transaction.Transactional;
 import org.avni.server.builder.VideoTelemetricBuilder;
 import org.avni.server.dao.VideoRepository;
 import org.avni.server.dao.VideoTelemetricRepository;
@@ -10,17 +10,13 @@ import org.avni.server.domain.Video;
 import org.avni.server.domain.VideoTelemetric;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.VideoTelemetricContract;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.transaction.Transactional;
 
 @RestController
 public class VideoTelemetricController implements RestControllerResourceProcessor<VideoTelemetric> {

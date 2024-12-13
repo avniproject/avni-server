@@ -1,14 +1,13 @@
 package org.avni.server.web;
 
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.QueryRepository;
 import org.avni.server.web.request.CustomQueryRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import javax.transaction.Transactional;
 
 @RestController
 public class CustomQueryController {

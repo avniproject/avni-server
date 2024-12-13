@@ -1,22 +1,25 @@
 package org.avni.server.web;
 
-import org.avni.server.domain.CHSEntity;
-import org.joda.time.DateTime;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.CHSEntity;
 import org.avni.server.service.LocationHierarchyService;
 import org.avni.server.service.OrganisationConfigService;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +43,7 @@ public class LocationHierarchyController implements RestControllerResourceProces
 
     @GetMapping(value = "/locationHierarchy/search/lastModified")
     @ResponseBody
-    public PagedResources<Resource<AddressLevel>> getAddressLevels(
+    public CollectionModel<EntityModel<AddressLevel>> getAddressLevels(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             Pageable pageable) {
         try {

@@ -1,7 +1,7 @@
 buildscript {
     ext {
-        springBootVersion = '2.0.0.RELEASE'
-        osPackageVersion = "6.2.1"
+        springBootVersion = '3.3.5'
+        osPackageVersion = "11.10.0"
     }
     repositories { mavenCentral() }
     dependencies {
@@ -12,86 +12,104 @@ buildscript {
 
 plugins {
     id 'org.springframework.boot' version "${springBootVersion}"
-    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
-    id "nebula.ospackage" version "6.2.1"
+    id 'io.spring.dependency-management' version '1.1.6'
+    id "com.netflix.nebula.ospackage" version "11.10.0"
     id 'java'
 }
 
-ext { springBootVersion = '2.0.0.RELEASE' }
+ext { springBootVersion = '3.3.5' }
 //todo: Remove when upgrading Spring version. This was introduced to use SameSiteCookies
-ext['tomcat.version'] = '9.0.80'
+//ext['tomcat.version'] = '9.0.80'
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'idea'
-apply from: 'rpm.gradle'
 apply plugin: 'io.spring.dependency-management'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
 repositories { mavenCentral() }
 
 bootJar {
-    baseName = "avni-server"
+    archiveBaseName = "avni-server"
     version = "0.0.1-SNAPSHOT"
-    mainClassName = 'org.avni.Avni'
+    mainClass = 'org.avni.Avni'
 }
 
 configurations {
     dev
+    all*.exclude group: 'org.slf4j', module: 'slf4j-reload4j'
     all*.exclude group: 'org.slf4j', module: 'slf4j-simple'
 }
 
 dependencies {
-    compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.5.46'
-    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
-    compile "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
-    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
-    compile "org.springframework.boot:spring-boot-starter-data-rest:${springBootVersion}"
-    compile("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
+    implementation group: 'org.apache.tomcat', name: 'tomcat-jdbc'
+    implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-data-rest:${springBootVersion}"
+    implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
     testImplementation "com.github.tomakehurst:wiremock-jre8-standalone:2.34.0"
-    compile "org.postgresql:postgresql:9.4-1200-jdbc41"
-    implementation 'org.springframework.boot:spring-boot-starter-batch'
-    testImplementation 'org.springframework.batch:spring-batch-test'
-    compile "joda-time:joda-time:2.9.4"
-    compile group: 'org.jadira.usertype', name: 'usertype.core', version: '6.0.1.GA'
-    compile "org.flywaydb:flyway-core:4.0.3"
-    compile "org.flywaydb.flyway-test-extensions:flyway-spring-test:4.0"
-    compile "com.zaxxer:HikariCP:2.5.1"
-    compile "org.apache.poi:poi:3.16-beta2"
-    compile "org.apache.poi:poi-ooxml:3.16-beta2"
-    compile 'org.apache.httpcomponents:httpclient:4.5.9'
-    compile 'com.auth0:jwks-rsa:0.3.0'
-    compile 'com.auth0:java-jwt:3.3.0'
-    compile group: 'org.hibernate', name: 'hibernate-search-orm', version: '5.9.2.Final'
-    compile 'com.bugsnag:bugsnag:3.+'
-    compile 'com.amazonaws:aws-java-sdk-s3'
-    compile 'com.amazonaws:aws-java-sdk-cognitoidp'
-    compile 'commons-validator:commons-validator:1.4.1'
-    compile 'org.passay:passay:1.6.3'
+    implementation "org.postgresql:postgresql"
+    implementation("org.springframework.boot:spring-boot-starter-batch:${springBootVersion}")
+    testImplementation 'org.springframework.batch:spring-batch-test:5.1.2'
+    implementation "joda-time:joda-time:2.10.10"
+    implementation("org.hibernate:hibernate-java8:5.6.15.Final") {
+        exclude(group: 'org.hibernate', module: 'hibernate-core')
+    }
+    runtimeOnly("javax.transaction:jta:1.1")
+//    implementation(group: 'org.jadira.usertype', name: 'usertype.core', version: '7.0.0.CR1') {
+//        exclude(group: 'org.hibernate', module: 'hibernate-core')
+//    }
+    implementation "org.flywaydb:flyway-core:10.20.1"
+    runtimeOnly("org.flywaydb:flyway-database-postgresql:10.20.1")
+    implementation "org.flywaydb.flyway-test-extensions:flyway-spring6-test:10.0.0"
+    implementation "com.zaxxer:HikariCP"
+    implementation "org.apache.poi:poi:3.16-beta2"
+    implementation "org.apache.poi:poi-ooxml:3.16-beta2"
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
+    implementation 'com.auth0:jwks-rsa:0.3.0'
+    implementation 'com.auth0:java-jwt:3.3.0'
+//    implementation(group: 'org.hibernate', name: 'hibernate-search-orm', version: '5.9.2.Final') {
+//        exclude(group: 'org.hibernate', module: 'hibernate-core')
+//    }
+    implementation 'com.bugsnag:bugsnag:3.+'
+    implementation 'com.amazonaws:aws-java-sdk-s3'
+    implementation 'com.amazonaws:aws-java-sdk-cognitoidp'
+    implementation 'commons-validator:commons-validator:1.4.1'
+    implementation 'org.passay:passay:1.6.3'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
-    implementation 'org.keycloak:keycloak-spring-boot-starter:21.0.2'
-    implementation 'org.keycloak:keycloak-admin-client:21.0.2'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.6'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.6'
-    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.6'
-    implementation 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.12.6'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.12.6'
-    implementation 'org.hibernate:hibernate-ehcache:5.2.14.Final'
+    implementation 'org.keycloak:keycloak-spring-boot-starter:24.0.4'
+    implementation 'org.keycloak:keycloak-admin-client:24.0.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.4'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.4'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.4'
+    implementation 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.4'
+    implementation('org.hibernate:hibernate-ehcache:5.6.15.Final') {
+        exclude(group: 'org.hibernate', module: 'hibernate-core')
+    }
+    runtimeOnly("javax.xml.bind:jaxb-api:2.3.1")
+    runtimeOnly('org.ehcache:ehcache:3.10.8')
+    runtimeOnly("org.hibernate:hibernate-jcache:6.5.1.Final")
     implementation 'javax.cache:cache-api:1.1.1'
     dev "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
-    testCompile "org.mockito:mockito-core:2.23.4"
-    testCompile 'org.powermock:powermock-core:2.0.9'
-    testCompile 'org.powermock:powermock-api-mockito2:2.0.9'
-    testCompile 'org.powermock:powermock-module-junit4:2.0.9'
-    runtime("org.springframework.boot:spring-boot-properties-migrator")
+    testImplementation "org.mockito:mockito-core:3.12.4"
+    testImplementation 'org.powermock:powermock-core:2.0.9'
+    testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
+    testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
+    runtimeOnly("org.springframework.boot:spring-boot-properties-migrator")
     implementation 'org.apache.tika:tika-core:2.7.0'
-    compile 'org.owasp.encoder:encoder:1.2.3'
+    implementation 'org.owasp.encoder:encoder:1.2.3'
     implementation 'org.apache.commons:commons-csv:1.10.0'
-    compile 'com.googlecode.libphonenumber:libphonenumber:8.12.32'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.32'
     testImplementation 'org.slf4j:slf4j-reload4j:2.0.6'
-    compile 'com.google.guava:guava:33.2.1-jre'
+    implementation 'com.google.guava:guava:33.2.1-jre'
+    implementation 'org.codehaus.jettison:jettison:1.5.4'
 }
 
 bootRun {

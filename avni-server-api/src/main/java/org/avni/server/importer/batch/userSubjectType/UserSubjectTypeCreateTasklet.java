@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.userSubjectType;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.UserService;
@@ -13,8 +14,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import javax.transaction.Transactional;
 
 @Component
 @JobScope

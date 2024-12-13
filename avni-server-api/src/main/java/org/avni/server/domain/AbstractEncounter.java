@@ -1,13 +1,17 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
+import org.avni.server.geo.PointType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.Objects;
 
 @MappedSuperclass
@@ -21,30 +25,30 @@ public class AbstractEncounter extends SyncAttributeEntity {
     private EncounterType encounterType;
 
     @Column
-    private DateTime earliestVisitDateTime;
+    private Instant earliestVisitDateTime;
 
     @Column
-    private DateTime maxVisitDateTime;
+    private Instant maxVisitDateTime;
 
     @Column(name = ColumnNames.EncounterDateTime)
-    private DateTime encounterDateTime;
+    private Instant encounterDateTime;
 
     @Column(name = ColumnNames.EncounterObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.EncounterCancelDateTime)
-    private DateTime cancelDateTime;
+    private Instant cancelDateTime;
 
     @Column(name = ColumnNames.EncounterCancelObservations)
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection cancelObservations;
 
-    @Type(type = "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point encounterLocation;
 
-    @Type(type = "org.avni.server.geo.PointType")
+    @Type(value = PointType.class)
     @Column
     private Point cancelLocation;
 
@@ -66,14 +70,14 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public DateTime getEncounterDateTime() {
-        return encounterDateTime;
+        return DateTimeUtil.toJodaDateTime(encounterDateTime);
     }
 
     public void setEncounterDateTime(DateTime encounterDateTime, User currentUser) {
         if (this.encounterDateTime == null && encounterDateTime != null) {
             this.filledBy = currentUser;
         }
-        this.encounterDateTime = encounterDateTime;
+        this.encounterDateTime = DateTimeUtil.toInstant(encounterDateTime);
     }
 
     public ObservationCollection getObservations() {
@@ -93,23 +97,23 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public DateTime getEarliestVisitDateTime() {
-        return earliestVisitDateTime;
+        return DateTimeUtil.toJodaDateTime(earliestVisitDateTime);
     }
 
     public void setEarliestVisitDateTime(DateTime earliestVisitDateTime) {
-        this.earliestVisitDateTime = earliestVisitDateTime;
+        this.earliestVisitDateTime = DateTimeUtil.toInstant(earliestVisitDateTime);
     }
 
     public DateTime getMaxVisitDateTime() {
-        return maxVisitDateTime;
+        return DateTimeUtil.toJodaDateTime(maxVisitDateTime);
     }
 
     public void setMaxVisitDateTime(DateTime maxVisitDateTime) {
-        this.maxVisitDateTime = maxVisitDateTime;
+        this.maxVisitDateTime = DateTimeUtil.toInstant(maxVisitDateTime);
     }
 
     public DateTime getCancelDateTime() {
-        return cancelDateTime;
+        return DateTimeUtil.toJodaDateTime(cancelDateTime);
     }
 
     public boolean isCancelled() {
@@ -117,7 +121,7 @@ public class AbstractEncounter extends SyncAttributeEntity {
     }
 
     public void setCancelDateTime(DateTime cancelDateTime) {
-        this.cancelDateTime = cancelDateTime;
+        this.cancelDateTime = DateTimeUtil.toInstant(cancelDateTime);
     }
 
     public ObservationCollection getCancelObservations() {

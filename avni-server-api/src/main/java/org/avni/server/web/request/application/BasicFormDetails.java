@@ -2,14 +2,14 @@ package org.avni.server.web.request.application;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.joda.time.DateTime;
 import org.avni.server.application.Form;
-import org.springframework.hateoas.ResourceSupport;
+import org.joda.time.DateTime;
+import org.springframework.hateoas.RepresentationModel;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({ "name", "uuid", "formType", "programName", "createdDateTime",
         "lastModifiedDate", "createdBy", "lastModifiedBy", "createdByUUID", "lastModifiedByUUID" })
-public class BasicFormDetails extends ResourceSupport {
+public class BasicFormDetails extends RepresentationModel {
 
     private String name;
     private String uuid;

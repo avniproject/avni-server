@@ -1,29 +1,28 @@
 package org.avni.server.web;
 
 
-import org.avni.server.domain.CHSEntity;
-import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.service.accessControl.AccessControlService;
-import org.joda.time.DateTime;
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserGroup;
+import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.UserGroupContract;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,7 +44,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     }
 
     @RequestMapping(value = "/myGroups/search/lastModified", method = RequestMethod.GET)
-    public PagedResources<Resource<UserGroup>> get(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+    public CollectionModel<EntityModel<UserGroup>> get(@RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
                                                    @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
                                                    Pageable pageable) {
         User user = UserContextHolder.getUserContext().getUser();

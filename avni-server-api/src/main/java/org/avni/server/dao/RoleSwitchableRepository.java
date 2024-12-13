@@ -1,10 +1,9 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.avni.server.framework.security.UserContextHolder;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
 public abstract class RoleSwitchableRepository {
     @PersistenceContext

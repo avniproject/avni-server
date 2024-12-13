@@ -1,11 +1,11 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.identifier.IdentifierGeneratorType;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "identifier_source")
@@ -32,7 +32,7 @@ public class IdentifierSource extends OrganisationAwareEntity {
     private Long batchGenerationSize;
 
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject options;
 
     @Column

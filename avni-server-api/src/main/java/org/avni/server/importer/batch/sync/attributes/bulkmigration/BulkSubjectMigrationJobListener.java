@@ -3,6 +3,7 @@ package org.avni.server.importer.batch.sync.attributes.bulkmigration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.BulkUploadS3Service;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.BulkSubjectMigrationRequest;
 import org.slf4j.Logger;
@@ -61,7 +62,9 @@ public class BulkSubjectMigrationJobListener extends JobExecutionListenerSupport
     public void afterJob(JobExecution jobExecution) {
         Map<String, String> failedMigrations = (Map<String, String>) jobExecution.getExecutionContext().get("failedMigrations");
         logger.info("Finished Bulk Subject Migration Job {} mode: {} failedCount: {} exitStatus: {} waitTime: {}ms processingTime: {}ms fileName: {}",
-                uuid, mode, failedMigrations.size(), jobExecution.getExitStatus(), jobExecution.getStartTime().getTime() - jobExecution.getCreateTime().getTime(), jobExecution.getEndTime().getTime() - jobExecution.getStartTime().getTime(), fileName);
+                uuid, mode, failedMigrations.size(), jobExecution.getExitStatus(),
+                DateTimeUtil.getMilliSecondsDuration(jobExecution.getCreateTime(), jobExecution.getEndTime()),
+                DateTimeUtil.getMilliSecondsDuration(jobExecution.getStartTime(), jobExecution.getEndTime()), fileName);
         try {
             writeFailuresToFileAndUploadToS3(failedMigrations);
         } catch (Exception e) {

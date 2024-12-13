@@ -1,5 +1,6 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.criteria.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.JsonObjectUtil;
@@ -8,7 +9,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 

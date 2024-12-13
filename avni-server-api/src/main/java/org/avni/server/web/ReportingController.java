@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.projections.CatchmentAddressProjection;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

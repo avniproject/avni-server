@@ -1,15 +1,14 @@
 package org.avni.server.framework.api;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.avni.server.web.api.ApiRequestContext;
 import org.avni.server.web.api.ApiRequestContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
-public class ApiResourceInterceptor extends HandlerInterceptorAdapter {
+public class ApiResourceInterceptor implements HandlerInterceptor {
     public static final String ONE = new Integer(1).toString();
 
     @Override

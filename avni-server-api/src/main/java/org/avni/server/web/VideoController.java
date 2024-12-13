@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.builder.VideoBuilder;
 import org.avni.server.dao.VideoRepository;
 import org.avni.server.domain.Video;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
 

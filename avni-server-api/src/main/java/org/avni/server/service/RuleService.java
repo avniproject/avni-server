@@ -1,26 +1,27 @@
 package org.avni.server.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
+import jakarta.transaction.Transactional;
 import org.avni.messaging.domain.EntityType;
+import org.avni.server.application.Form;
+import org.avni.server.application.RuleType;
 import org.avni.server.dao.*;
+import org.avni.server.dao.application.FormRepository;
+import org.avni.server.dao.individualRelationship.RuleFailureLogRepository;
 import org.avni.server.domain.*;
+import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.external.RuleServiceClient;
 import org.avni.server.web.request.EntityTypeContract;
+import org.avni.server.web.request.RuleRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.*;
+import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
 import org.avni.server.web.request.rules.constructWrappers.*;
 import org.avni.server.web.request.rules.request.*;
 import org.avni.server.web.request.rules.response.*;
-import org.avni.server.application.Form;
-import org.avni.server.application.RuleType;
-import org.avni.server.dao.application.FormRepository;
-import org.avni.server.dao.individualRelationship.RuleFailureLogRepository;
-import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.web.request.RuleRequest;
-import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
 import org.avni.server.web.request.rules.validateRules.RuleValidationService;
 import org.avni.server.web.validation.ValidationException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,13 +29,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.transaction.Transactional;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
-import org.joda.time.DateTime;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -364,15 +364,14 @@ public class RuleService implements NonScopeAwareService {
     private <R extends BaseRuleResponseEntity> R createHttpHeaderAndSendRequest(String url, Object contractObject, RuleFailureLog ruleFailureLog, Class<R> responseType) throws RuleExecutionException {
         try {
             ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-            mapper.registerModule(new JodaModule());
-            String ruleResponse = restClient.post(url, contractObject);
-            R ruleResponseEntity = mapper.readValue(ruleResponse, responseType);
+            R ruleResponseEntity = (R) restClient.post(url, contractObject, responseType);
             if (ruleResponseEntity.getStatus().equals("failure")) {
                 RuleError ruleError = ruleResponseEntity.getError();
                 saveRuleError(ruleFailureLog, ruleError.getMessage(), ruleError.getStack());
             }
             return ruleResponseEntity;
         } catch (Exception e) {
+            logger.error("Error while executing rule", e);
             saveRuleError(ruleFailureLog, e.getMessage(), getStackTrace(e));
             RuleError ruleError = new RuleError();
             ruleError.setMessage(e.getMessage());

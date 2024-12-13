@@ -1,15 +1,18 @@
 package org.avni.server.domain.individualRelationship;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Type;
-import org.joda.time.DateTime;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.util.DateTimeUtil;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 
 @Entity
 @Table(name = "individual_relationship")
@@ -33,13 +36,13 @@ public class IndividualRelationship extends OrganisationAwareEntity {
     private Individual individualB;
 
     @Column
-    private DateTime enterDateTime;
+    private Instant enterDateTime;
 
     @Column
-    private DateTime exitDateTime;
+    private Instant exitDateTime;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection exitObservations;
 
     public IndividualRelationshipType getRelationship() {
@@ -67,19 +70,19 @@ public class IndividualRelationship extends OrganisationAwareEntity {
     }
 
     public DateTime getEnterDateTime() {
-        return enterDateTime;
+        return DateTimeUtil.toJodaDateTime(enterDateTime);
     }
 
     public void setEnterDateTime(DateTime enterDateTime) {
-        this.enterDateTime = enterDateTime;
+        this.enterDateTime = DateTimeUtil.toInstant(enterDateTime);
     }
 
     public DateTime getExitDateTime() {
-        return exitDateTime;
+        return DateTimeUtil.toJodaDateTime(exitDateTime);
     }
 
     public void setExitDateTime(DateTime exitDateTime) {
-        this.exitDateTime = exitDateTime;
+        this.exitDateTime = DateTimeUtil.toInstant(exitDateTime);
     }
 
     public ObservationCollection getExitObservations() {

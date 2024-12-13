@@ -1,5 +1,7 @@
 package org.avni.server.service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.RoleSwitchableRepository;
@@ -8,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 import java.util.List;
 
 @Component

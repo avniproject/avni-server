@@ -4,46 +4,6 @@ orbs:
   aws-cli: circleci/aws-cli@4.1.1
 
 commands:
-  deploy:
-    description: Deployment of server
-    parameters:
-      hostname:
-        type: string
-        default: "ssh.staging.openchs.org"
-    steps:
-      - attach_workspace:
-          at: ~/artifacts
-
-      - run: sudo apt-get install make openssl
-
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt-get -y -qq update
-            sudo apt-get -y -qq install python3-pip
-            sudo pip3 install awscli --upgrade
-
-      - run:
-          name: Copy build to server
-          command: |
-            scp -o StrictHostKeyChecking=no ~/artifacts/avni-server-*.noarch.rpm ec2-user@<< parameters.hostname >>:/tmp/avni-server.rpm
-
-      - run:
-          name: Deploy server
-          command: |
-            ssh -o StrictHostKeyChecking=no ec2-user@<< parameters.hostname >> \<< EOF
-            sudo service openchs stop 2>&1 >/dev/null
-            sleep 5
-            sudo yum clean all 2>&1 >/dev/null
-            sudo rm -rf /var/cache/yum 2>&1 >/dev/null
-            sudo yum -y updateinfo 2>&1 >/dev/null
-            sudo yum -y remove avni-server openchs-server java-1.7.0-openjdk 2>&1 >/dev/null
-            sudo yum -y install /tmp/avni-server.rpm 2>&1 >/dev/null
-            sudo service openchs start 2>&1 >/dev/null
-            sleep 20
-            sudo rm -rf /tmp/avni-server.rpm
-            EOF
-
   deploy_as_service:
     description: Deployment of avni-server as a systemd service
     parameters:
@@ -94,7 +54,7 @@ commands:
 jobs:
   test:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:21.0
 
       - image: circleci/postgres:12.7
         environment:
@@ -133,7 +93,7 @@ jobs:
           destination: testReports
   build:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/openjdk:21.0
     resource_class: medium
 
     working_directory: ~/avni-server
@@ -151,7 +111,7 @@ jobs:
 
       - run: sudo apt-get install make openssl
 
-      - run: make upload-rpm
+      - run: make build_server
 
       - save_cache:
           paths:
@@ -162,20 +122,11 @@ jobs:
 
       - run: mkdir -p ~/artifacts;
 
-      - run: cp minor_version ~/artifacts/minor_version;
-
-      - run: cp major_version ~/artifacts/major_version;
-
-      - run: cp ~/avni-server/avni-server-api/build/distributions/avni-server-*.noarch.rpm ~/artifacts/;
-
       - run: cp ~/avni-server/avni-server-api/build/libs/avni-server-*.jar ~/artifacts/;
 
       - persist_to_workspace:
           root: ~/artifacts
           paths:
-            - minor_version
-            - major_version
-            - avni-server-*.noarch.rpm
             - avni-server-*.jar
 
       - store_artifacts:
@@ -242,14 +193,6 @@ jobs:
       - deploy_as_service:
           env: "staging"
 
-  UAT_deploy:
-    docker:
-      - image: circleci/openjdk:8-jdk
-    working_directory: ~/
-    steps:
-      - deploy:
-          hostname: "ssh.uat.openchs.org"
-
   PRERELEASE_deploy:
     docker:
       - image: cimg/deploy:2023.09
@@ -266,7 +209,7 @@ jobs:
 
   PERF_deploy:
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: cimg/deploy:2023.09
     working_directory: ~/
     steps:
       - aws-cli/setup:
@@ -275,8 +218,8 @@ jobs:
       - setup_server_access:
           instance-id: "i-0f30399b30e24a49b"
           availability-zone: "ap-south-1a"
-      - deploy:
-          hostname: "ssh.perf.avniproject.org"
+      - deploy_as_service:
+          env: "prerelease"
 
   PROD_deploy:
     docker:
@@ -334,7 +277,7 @@ workflows:
     - build:
         <<: *tags_filter
         requires:
-          - test     
+          - test
     - build_docker_image:
         context:
           - dockerhub
@@ -353,14 +296,6 @@ workflows:
         context: non-prod-deploy
         requires:
           - STAGING_approve
-    - UAT_approve:
-        type: approval
-        requires:
-        - build
-    - UAT_deploy:
-        context: non-prod-deploy
-        requires:
-        - UAT_approve
     - PRERELEASE_approve:
         type: approval
         requires:

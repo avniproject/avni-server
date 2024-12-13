@@ -1,12 +1,12 @@
 package org.avni.server.web.api;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.txData.ObservationCollectionBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.service.builder.*;
-import org.avni.server.web.request.api.SubjectResponseOptions;
 import org.avni.server.web.response.ResponsePage;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class SubjectApiControllerIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;

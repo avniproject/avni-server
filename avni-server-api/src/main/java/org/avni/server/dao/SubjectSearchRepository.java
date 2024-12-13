@@ -1,21 +1,20 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.search.SearchBuilder;
 import org.avni.server.dao.search.SqlQuery;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
-import org.hibernate.query.internal.NativeQueryImpl;
+import org.hibernate.query.sql.internal.NativeQueryImpl;
 import org.hibernate.transform.AliasToEntityMapResultTransformer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.transaction.Transactional;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +52,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
     }
 
     @Transactional
-    public BigInteger getTotalCount(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
+    public Long getTotalCount(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
         SubjectType subjectType = StringUtils.isEmpty(searchRequest.getSubjectType()) ? null : subjectTypeRepository.findByUuid(searchRequest.getSubjectType());
         SqlQuery query = searchBuilder.getSQLCountQuery(searchRequest, subjectType);
         try {
@@ -63,7 +62,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
                 sql.setParameter(name, value);
             });
 
-            return (BigInteger) sql.getSingleResult();
+            return (Long) sql.getSingleResult();
         } finally {
             setRoleBackToUser();
         }

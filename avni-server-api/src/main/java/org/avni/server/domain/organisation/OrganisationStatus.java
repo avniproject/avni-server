@@ -2,7 +2,7 @@ package org.avni.server.domain.organisation;
 
 import org.avni.server.domain.CHSEntity;
 
-import javax.persistence.Entity;
+import jakarta.persistence.*;
 
 @Entity
 public class OrganisationStatus extends CHSEntity {

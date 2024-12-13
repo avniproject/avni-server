@@ -1,16 +1,16 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.application.projections.BaseProjection;
+import org.avni.server.projection.ConceptProjection;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.avni.server.application.projections.BaseProjection;
-import org.avni.server.projection.ConceptProjection;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Entity

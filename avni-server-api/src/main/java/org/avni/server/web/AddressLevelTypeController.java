@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -20,7 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;

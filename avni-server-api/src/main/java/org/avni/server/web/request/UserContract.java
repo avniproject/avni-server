@@ -1,8 +1,8 @@
 package org.avni.server.web.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.avni.server.domain.OperatingIndividualScope;
 import org.avni.server.domain.JsonObject;
+import org.avni.server.domain.OperatingIndividualScope;
 import org.avni.server.domain.User;
 import org.joda.time.DateTime;
 
@@ -45,9 +45,9 @@ public class UserContract extends ReferenceDataContract {
         userContract.setCatchmentId(user.getCatchmentId().orElse(null));
         userContract.setSettings(user.getSettings());
         userContract.setCreatedBy(user.getCreatedByUserName());
-        userContract.setCreatedDateTime(user.getCreatedDateTime());
+        userContract.setCreatedDateTime(user.getCreatedDateTime().toDateTime());
         userContract.setLastModifiedBy(user.getLastModifiedByUserName());
-        userContract.setLastModifiedDateTime(user.getLastModifiedDateTime());
+        userContract.setLastModifiedDateTime(user.getLastModifiedDateTime().toDateTime());
         userContract.setGroupIds(user.getUserGroups().stream()
                 .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
         userContract.setUserGroupNames(user.getUserGroups().stream()

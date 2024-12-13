@@ -1,11 +1,12 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.application.RuleType;
+import org.avni.server.framework.hibernate.RuleDataUserType;
+import org.avni.server.framework.hibernate.RuledEntityUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-import org.avni.server.application.RuleType;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity(name = "rule")
 @BatchSize(size = 100)
@@ -13,7 +14,7 @@ public class Rule extends OrganisationAwareEntity {
 
     @NotNull
     @Column(name="entity")
-    @Type(type = "ruledEntity")
+    @Type(value = RuledEntityUserType.class)
     private RuledEntity entity;
 
     @NotNull
@@ -30,7 +31,7 @@ public class Rule extends OrganisationAwareEntity {
     private String fnName;
 
     @Column
-    @Type(type = "ruleData")
+    @Type(value = RuleDataUserType.class)
     private RuleData data;
 
     @ManyToOne(fetch = FetchType.LAZY)

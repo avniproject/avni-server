@@ -2,9 +2,8 @@ package org.avni.server.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
-
-import javax.persistence.*;
 
 @Entity
 @Table(name = "answer_concept_migration")

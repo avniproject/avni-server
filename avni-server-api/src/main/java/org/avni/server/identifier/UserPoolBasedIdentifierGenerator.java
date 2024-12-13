@@ -1,13 +1,12 @@
 package org.avni.server.identifier;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.domain.IdentifierAssignment;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import javax.transaction.Transactional;
 
 import static org.avni.server.service.DeviceAwareService.WEB_DEVICE_ID;
 

@@ -1,11 +1,11 @@
 package org.avni.server.domain.task;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.ArrayUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "task_type")
@@ -21,7 +21,7 @@ public class TaskType extends OrganisationAwareEntity {
     private TaskTypeName type;
 
     @Column(columnDefinition = "text[]")
-    @Type(type = "metadataSearchFields")
+    @Type(value = ArrayUserType.class)
     private String[] metadataSearchFields;
 
     public String getName() {

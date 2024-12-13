@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.AccountRepository;
 import org.avni.server.domain.Account;
 import org.avni.server.domain.AccountAdmin;
@@ -16,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.Set;
 

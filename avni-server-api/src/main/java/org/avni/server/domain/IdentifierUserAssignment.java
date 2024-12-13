@@ -1,9 +1,8 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.*;
 import org.avni.server.domain.identifier.IdentifierGeneratorType;
 import org.hibernate.annotations.BatchSize;
-
-import javax.persistence.*;
 
 @Entity
 @Table(name = "identifier_user_assignment")

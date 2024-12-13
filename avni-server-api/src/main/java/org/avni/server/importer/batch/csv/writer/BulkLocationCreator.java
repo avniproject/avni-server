@@ -1,6 +1,7 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import com.google.common.collect.Sets;
+import jakarta.transaction.Transactional;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
@@ -20,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 

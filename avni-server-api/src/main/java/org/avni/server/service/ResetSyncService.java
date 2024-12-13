@@ -4,6 +4,7 @@ import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.application.projections.CatchmentAddressProjection;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.JsonObjectUtil;
 import org.avni.server.web.request.CatchmentContract;
 import org.avni.server.web.request.UserContract;
@@ -163,6 +164,6 @@ public class ResetSyncService {
     }
 
     public Page<ResetSync> getByLastModifiedForUser(DateTime lastModifiedDateTime, DateTime now, User user, Pageable pageable) {
-        return resetSyncRepository.findAllByUserIsNullOrUserAndLastModifiedDateTimeBetweenOrderByLastModifiedDateTimeAscIdAsc(user, lastModifiedDateTime.toDate(), now.toDate(), pageable);
+        return resetSyncRepository.findAllByUserIsNullOrUserAndLastModifiedDateTimeBetweenOrderByLastModifiedDateTimeAscIdAsc(user, DateTimeUtil.toInstant(lastModifiedDateTime), DateTimeUtil.toInstant(now), pageable);
     }
 }

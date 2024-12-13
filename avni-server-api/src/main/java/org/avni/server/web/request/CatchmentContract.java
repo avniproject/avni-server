@@ -1,9 +1,9 @@
 package org.avni.server.web.request;
 
 import org.avni.server.domain.Catchment;
-import org.springframework.hateoas.core.Relation;
-
 import org.joda.time.DateTime;
+import org.springframework.hateoas.server.core.Relation;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

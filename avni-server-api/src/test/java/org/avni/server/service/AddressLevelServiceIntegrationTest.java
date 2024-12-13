@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.AddressLevel;
@@ -21,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class AddressLevelServiceIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestDataSetupService testDataSetupService;

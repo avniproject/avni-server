@@ -1,5 +1,6 @@
 package org.avni.server.web.task;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -7,17 +8,15 @@ import org.avni.server.domain.task.Task;
 import org.avni.server.service.ConceptService;
 import org.avni.server.service.TaskService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.web.response.Response;
-import org.avni.server.web.response.TaskSearchResponse;
 import org.avni.server.web.request.task.TaskAssignmentRequest;
 import org.avni.server.web.request.task.TaskFilterCriteria;
+import org.avni.server.web.response.Response;
+import org.avni.server.web.response.TaskSearchResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.Map;
 

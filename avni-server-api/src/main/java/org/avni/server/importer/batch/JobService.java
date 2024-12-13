@@ -1,10 +1,11 @@
 package org.avni.server.importer.batch;
 
+import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.JobStatus;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.ObjectInfo;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.*;
@@ -19,10 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Date;
 
 import static java.lang.String.format;
 import static org.springframework.batch.core.BatchStatus.*;
@@ -50,16 +49,16 @@ public class JobService {
     public void retryJobsFailedInLast2Hours() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
         for (JobExecution jobExecution : jobExplorer.findRunningJobExecutions(importJob.getName())) {
             BatchStatus status = jobExecution.getStatus();
-            Date lastUpdated = jobExecution.getLastUpdated();
-            Date nowMinus2Hours = new DateTime().minusHours(2).toDate();
-            if (nowMinus2Hours.before(lastUpdated) && Arrays.asList(STARTING, STARTED, UNKNOWN).contains(status)) {
+            LocalDateTime lastUpdated = jobExecution.getLastUpdated();
+            LocalDateTime nowMinus2Hours = LocalDateTime.now().minusHours(2);
+            if (nowMinus2Hours.isBefore(lastUpdated) && Arrays.asList(STARTING, STARTED, UNKNOWN).contains(status)) {
                 jobExecution.upgradeStatus(BatchStatus.FAILED);
-                jobExecution.setEndTime(new Date());
+                jobExecution.setEndTime(LocalDateTime.now());
                 jobRepository.update(jobExecution);
                 for (StepExecution stepExecution : jobExecution.getStepExecutions()) {
                     if (Arrays.asList(STARTING, STARTED, UNKNOWN).contains(stepExecution.getStatus())) {
                         stepExecution.upgradeStatus(BatchStatus.FAILED);
-                        stepExecution.setEndTime(new Date());
+                        stepExecution.setEndTime(LocalDateTime.now());
                         jobRepository.update(stepExecution);
                     }
                 }

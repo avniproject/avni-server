@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,7 +45,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     @RequestMapping(value = "/userSubjectAssignment", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public PagedResources<Resource<UserSubjectAssignment>> getTasks(
+    public CollectionModel<EntityModel<UserSubjectAssignment>> getTasks(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -56,7 +56,7 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     @RequestMapping(value = "/userSubjectAssignment/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public SlicedResources<Resource<UserSubjectAssignment>> getTasksAsSlice(
+    public SlicedResources<EntityModel<UserSubjectAssignment>> getTasksAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -91,10 +91,10 @@ public class UserSubjectAssignmentController extends AbstractController<UserSubj
     }
 
     @Override
-    public Resource<UserSubjectAssignment> process(Resource<UserSubjectAssignment> resource) {
+    public EntityModel<UserSubjectAssignment> process(EntityModel<UserSubjectAssignment> resource) {
         UserSubjectAssignment userSubjectAssignment = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(userSubjectAssignment.getSubject().getUuid(), "subjectUUID"));
+        resource.add(Link.of(userSubjectAssignment.getSubject().getUuid(), "subjectUUID"));
         addAuditFields(userSubjectAssignment, resource);
         return resource;
     }

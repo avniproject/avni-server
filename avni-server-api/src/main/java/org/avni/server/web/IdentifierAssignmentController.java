@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.IdentifierAssignmentRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -15,13 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import javax.transaction.Transactional;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
 
@@ -58,7 +57,7 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     @RequestMapping(value = "/identifierAssignment", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public PagedResources<Resource<IdentifierAssignment>> get(
+    public CollectionModel<EntityModel<IdentifierAssignment>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam(value = "deviceId", required = false) String deviceId,
             Pageable pageable) {
@@ -71,7 +70,7 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     @RequestMapping(value = "/identifierAssignment/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public SlicedResources<Resource<IdentifierAssignment>> getAsSlice(
+    public SlicedResources<EntityModel<IdentifierAssignment>> getAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam(value = "deviceId", required = false) String deviceId,
             Pageable pageable) {
@@ -108,16 +107,16 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     }
 
     @Override
-    public Resource<IdentifierAssignment> process(Resource<IdentifierAssignment> resource) {
+    public EntityModel<IdentifierAssignment> process(EntityModel<IdentifierAssignment> resource) {
         IdentifierAssignment identifierAssignment = resource.getContent();
         resource.removeLinks();
         if (identifierAssignment.getProgramEnrolment() != null) {
-            resource.add(new Link(identifierAssignment.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+            resource.add(Link.of(identifierAssignment.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
         }
         if (identifierAssignment.getIndividual() != null) {
-            resource.add(new Link(identifierAssignment.getIndividual().getUuid(), "individualUUID"));
+            resource.add(Link.of(identifierAssignment.getIndividual().getUuid(), "individualUUID"));
         }
-        resource.add(new Link(identifierAssignment.getIdentifierSource().getUuid(), "identifierSourceUUID"));
+        resource.add(Link.of(identifierAssignment.getIdentifierSource().getUuid(), "identifierSourceUUID"));
         addAuditFields(identifierAssignment, resource);
         return resource;
     }

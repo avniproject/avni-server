@@ -6,7 +6,6 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.common.Messageable;
 import org.avni.server.dao.*;
-import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.geo.Point;
@@ -19,9 +18,8 @@ import org.avni.server.web.api.EncounterSearchRequest;
 import org.avni.server.web.request.EncounterContract;
 import org.avni.server.web.request.EntityTypeContract;
 import org.avni.server.web.request.api.RequestUtils;
-import org.joda.time.DateTime;
-import org.avni.server.dao.individualRelationship.RuleFailureLogRepository;
 import org.avni.server.web.request.rules.RulesContractWrapper.VisitSchedule;
+import org.joda.time.DateTime;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,7 +36,7 @@ import java.util.stream.Stream;
 
 import static org.avni.server.web.request.api.ApiBaseEncounterRequest.*;
 import static org.avni.server.web.request.api.ApiSubjectRequest.OBSERVATIONS;
-import static org.springframework.data.jpa.domain.Specifications.where;
+import static org.springframework.data.jpa.domain.Specification.where;
 
 @Service
 public class EncounterService implements ScopeAwareService<Encounter> {

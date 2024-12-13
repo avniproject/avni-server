@@ -2,17 +2,19 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.DynamicInsert;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.Format;
 import org.avni.server.application.Subject;
 import org.avni.server.application.projections.BaseProjection;
+import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
+import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.web.request.GroupRoleContract;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.Type;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,7 +60,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
 
     //  Check keys in SubjectTypeSettingKeys
     @Column
-    @Type(type = "jsonObject")
+    @Type(value = JSONObjectUserType.class)
     private JsonObject settings;
 
     @Embedded
@@ -116,7 +118,7 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
     private String programEligibilityCheckRule;
 
     @Column(name = "program_eligibility_check_declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule programEligibilityCheckDeclarativeRule;
 
     private String nameHelpText;

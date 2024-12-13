@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
 import java.io.ByteArrayOutputStream;
 import java.util.zip.ZipOutputStream;
 

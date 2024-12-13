@@ -11,7 +11,6 @@ import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.geo.Point;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.BadRequestError;
 import org.avni.server.web.request.*;
 import org.avni.server.web.request.rules.RulesContractWrapper.ChecklistContract;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
@@ -24,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

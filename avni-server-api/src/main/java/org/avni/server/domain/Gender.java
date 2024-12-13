@@ -4,8 +4,8 @@ import org.avni.server.application.projections.BaseProjection;
 import org.hibernate.annotations.BatchSize;
 import org.springframework.data.rest.core.config.Projection;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "gender")

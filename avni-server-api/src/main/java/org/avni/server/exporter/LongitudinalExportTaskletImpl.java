@@ -1,17 +1,18 @@
 package org.avni.server.exporter;
 
+import jakarta.persistence.EntityManager;
 import org.avni.server.service.ExportS3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.core.io.FileSystemResource;
 
-import javax.persistence.EntityManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -86,7 +87,8 @@ public class LongitudinalExportTaskletImpl implements LongitudinalExportTasklet 
 
     private void writeToFile(List<ExportItemRow> rows) throws Exception {
         if (rows.size() == 0) return;
-        writer.write(rows);
+
+        writer.write(Chunk.of(rows.toArray(new ExportItemRow[0])));
     }
 
     @Override

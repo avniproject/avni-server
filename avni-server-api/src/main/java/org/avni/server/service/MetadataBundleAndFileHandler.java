@@ -2,8 +2,7 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,8 +17,7 @@ import java.util.zip.ZipInputStream;
 
 @Service
 public class MetadataBundleAndFileHandler {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
 
     protected File extractZip(MultipartFile zipFile) throws IOException {
         File tempDir = Files.createTempDirectory("metadata-zip").toFile();
@@ -77,7 +75,7 @@ public class MetadataBundleAndFileHandler {
 
                 Map<String, Object> jsonMapFile = new HashMap<>();
                 if (jsonContent.toString().trim().startsWith("[")) {
-                    List<Map<String, Object>> jsonArray = objectMapper.readValue(jsonContent.toString(), new TypeReference<List<Map<String, Object>>>() {});
+                    List<Map<String, Object>> jsonArray = ObjectMapperSingleton.getObjectMapper().readValue(jsonContent.toString(), new TypeReference<List<Map<String, Object>>>() {});
                     for (Map<String, Object> jsonObject : jsonArray) {
                         String uuid = (String) jsonObject.get("uuid");
                         if (uuid != null) {

@@ -1,16 +1,16 @@
 package org.avni.server.web.resourceProcessors;
 
 import org.avni.server.domain.Checklist;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
 
 public class ChecklistResourceProcessor extends ResourceProcessor<Checklist> {
     @Override
-    public Resource<Checklist> process(Resource<Checklist> resource) {
+    public EntityModel<Checklist> process(EntityModel<Checklist> resource) {
         Checklist checklist = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(checklist.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
-        resource.add(new Link(checklist.getChecklistDetail().getUuid(), "checklistDetailUUID"));
+        resource.add(Link.of(checklist.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        resource.add(Link.of(checklist.getChecklistDetail().getUuid(), "checklistDetailUUID"));
         return resource;
     }
 

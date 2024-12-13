@@ -1,25 +1,24 @@
 package org.avni.server.web.response.slice;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.core.ResolvableType;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 
-import org.springframework.hateoas.Resources;
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * DTO to implement binding response representations of sliceable collections.
  *
  */
-public class SlicedResources<T> extends Resources<T> {
+public class SlicedResources<T> extends CollectionModel<T> {
 
     public static SlicedResources<?> NO_PAGE = new SlicedResources<Object>();
 
@@ -51,7 +50,7 @@ public class SlicedResources<T> extends Resources<T> {
      * @param links
      */
     public SlicedResources(Collection<T> content, SlicedResources.SliceMetadata metadata, Iterable<Link> links) {
-        super(content, links);
+        super(content, links, ResolvableType.NONE);
         this.metadata = metadata;
     }
 
@@ -73,13 +72,13 @@ public class SlicedResources<T> extends Resources<T> {
      * @return
      */
     @SuppressWarnings("unchecked")
-    public static <T extends Resource<S>, S> SlicedResources<T> wrap(Iterable<S> content, SlicedResources.SliceMetadata metadata) {
+    public static <T extends EntityModel<S>, S> SlicedResources<T> wrap(Iterable<S> content, SlicedResources.SliceMetadata metadata) {
 
         Assert.notNull(content, "Content must not be null!");
         ArrayList<T> resources = new ArrayList<T>();
 
         for (S element : content) {
-            resources.add((T) new Resource<S>(element));
+            resources.add((T) EntityModel.of(element));
         }
 
         return new SlicedResources<T>(resources, metadata);
@@ -92,7 +91,7 @@ public class SlicedResources<T> extends Resources<T> {
      */
     @JsonIgnore
     public Link getNextLink() {
-        return getLink(Link.REL_NEXT);
+        return Link.of("foo");
     }
 
     /**
@@ -102,7 +101,7 @@ public class SlicedResources<T> extends Resources<T> {
      */
     @JsonIgnore
     public Link getPreviousLink() {
-        return getLink(Link.REL_PREVIOUS);
+        return Link.of("foo");
     }
 
     /*
@@ -164,12 +163,6 @@ public class SlicedResources<T> extends Resources<T> {
 
         protected SliceMetadata() {}
 
-        /**
-         * Creates a new {@link SlicedModel.SliceMetadata} from the given size, and slice number.
-         *
-         * @param size must be greater or equal to zero.
-         * @param number zero-indexed slice number, greater or equal to zero.
-         */
         public SliceMetadata(long size, long number) {
 
             Assert.isTrue(size > -1, "Size must not be negative!");

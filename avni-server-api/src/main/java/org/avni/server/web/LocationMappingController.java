@@ -1,24 +1,23 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.LocationMappingSyncRepository;
 import org.avni.server.dao.sync.SyncEntityName;
 import org.avni.server.domain.ParentLocationMapping;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
-import org.springframework.hateoas.PagedResources;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.transaction.Transactional;
 
 @RestController
 public class LocationMappingController implements RestControllerResourceProcessor<ParentLocationMapping> {
@@ -37,7 +36,7 @@ public class LocationMappingController implements RestControllerResourceProcesso
 
     @RequestMapping(value = {"/locationMapping/search/lastModified", "/locationMapping/search/byCatchmentAndLastModified"}, method = RequestMethod.GET)
     @Transactional
-    public PagedResources<Resource<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<ParentLocationMapping>> getParentLocationMappingsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {
@@ -45,11 +44,11 @@ public class LocationMappingController implements RestControllerResourceProcesso
     }
 
     @Override
-    public Resource<ParentLocationMapping> process(Resource<ParentLocationMapping> resource) {
+    public EntityModel<ParentLocationMapping> process(EntityModel<ParentLocationMapping> resource) {
         ParentLocationMapping content = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(content.getLocation().getUuid(), "locationUUID"));
-        resource.add(new Link(content.getParentLocation().getUuid(), "parentLocationUUID"));
+        resource.add(Link.of(content.getLocation().getUuid(), "locationUUID"));
+        resource.add(Link.of(content.getParentLocation().getUuid(), "parentLocationUUID"));
         return resource;
     }
 

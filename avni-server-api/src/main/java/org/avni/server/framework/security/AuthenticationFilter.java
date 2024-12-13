@@ -2,6 +2,10 @@ package org.avni.server.framework.security;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.avni.server.config.IdpType;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.accessControl.AvniAccessException;
@@ -11,20 +15,15 @@ import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.util.ErrorBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.util.StringUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
 import static org.avni.server.framework.security.ResourceProtectionStatus.isProtected;
 
-public class AuthenticationFilter extends BasicAuthenticationFilter {
+public class AuthenticationFilter extends OncePerRequestFilter {
     public static final String USER_NAME_HEADER = "USER-NAME";
     public static final String AUTH_TOKEN_HEADER = "AUTH-TOKEN";
     public static final String ORGANISATION_UUID = "ORGANISATION-UUID";
@@ -36,8 +35,8 @@ public class AuthenticationFilter extends BasicAuthenticationFilter {
     private final List<String> blacklistedUrls;
     private final ErrorBodyBuilder errorBodyBuilder;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder) throws IOException {
-        super(authenticationManager);
+    public AuthenticationFilter(AuthService authService, IdpType idpType, String defaultUserName, String avniBlacklistedUrlsFile, ErrorBodyBuilder errorBodyBuilder) throws IOException {
+        super();
         this.authService = authService;
         this.idpType = idpType;
         this.defaultUserName = defaultUserName;

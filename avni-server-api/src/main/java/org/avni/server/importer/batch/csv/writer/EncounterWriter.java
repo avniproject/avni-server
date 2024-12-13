@@ -9,12 +9,13 @@ import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Individual;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
+import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeaders;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -66,8 +67,8 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     }
 
     @Override
-    public void write(List<? extends Row> rows) throws Exception {
-        for (Row row : rows) write(row);
+    public void write(Chunk<? extends Row> chunk) throws Exception {
+        for (Row row : chunk.getItems()) write(row);
     }
 
     private void write(Row row) throws Exception {

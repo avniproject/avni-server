@@ -1,6 +1,7 @@
 
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -21,10 +22,10 @@ import org.springframework.test.context.jdbc.Sql;
 import java.util.Collections;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Transactional
 public class UserSubjectAssignmentServiceIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private TestSubjectTypeService testSubjectTypeService;

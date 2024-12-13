@@ -6,15 +6,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Repository
 public interface ResetSyncRepository extends TransactionalDataRepository<ResetSync> {
 
     Page<ResetSync> findAllByUserIsNullOrUserAndLastModifiedDateTimeBetweenOrderByLastModifiedDateTimeAscIdAsc(
             User user,
-            Date lastModifiedDateTime,
-            Date now,
+            Instant lastModifiedDateTime,
+            Instant now,
             Pageable pageable
     );
 }

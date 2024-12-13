@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.dao.IdentifierUserAssignmentRepository;
 import org.avni.server.dao.UserRepository;
@@ -8,13 +9,11 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.IdentifierUserAssignmentContract;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.transaction.Transactional;
 import java.util.List;
 
 @RestController

@@ -1,13 +1,11 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.QueryHint;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.web.response.ConceptNameUuidAndDatatype;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -15,10 +13,8 @@ import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.QueryHint;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Repository

@@ -1,5 +1,6 @@
 package org.avni.server.web.rules;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.RuleFailureTelemetryRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.RuleFailureTelemetry;
@@ -9,15 +10,13 @@ import org.avni.server.web.RestControllerResourceProcessor;
 import org.avni.server.web.request.RuleFailureTelemetryRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.transaction.Transactional;
 
 @RestController
 public class RuleFailureTelemetryController implements RestControllerResourceProcessor<RuleFailureTelemetry> {
@@ -30,7 +29,7 @@ public class RuleFailureTelemetryController implements RestControllerResourcePro
 
     @RequestMapping(value = "ruleFailureTelemetry", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<RuleFailureTelemetry>> getEmpty(Pageable pageable) {
+    public CollectionModel<EntityModel<RuleFailureTelemetry>> getEmpty(Pageable pageable) {
         return empty(pageable);
     }
 

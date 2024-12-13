@@ -1,10 +1,13 @@
 package org.avni.server.common;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.TestWebContextService;
 import org.junit.After;
 import org.junit.Before;
@@ -12,15 +15,13 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -50,7 +51,7 @@ public abstract class AbstractControllerIntegrationTest {
     @Autowired
     private TestWebContextService testWebContextService;
 
-    protected static ObjectMapper mapper = new ObjectMapper();
+    protected static ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
 
     @PersistenceContext
     private EntityManager em;
@@ -67,10 +68,14 @@ public abstract class AbstractControllerIntegrationTest {
 
     @After
     public void teardown() {
-        UserContextHolder.clear();
         template.getRestTemplate().setInterceptors(new ArrayList<>());
         testWebContextService.setRoles();
         em.getEntityManagerFactory().getCache().evictAll();
+        try {
+            em.createNativeQuery("reset role;").executeUpdate();
+        } catch (Exception ignored) {
+        }
+        UserContextHolder.clear();
     }
 
     protected void post(String path, Object json) {

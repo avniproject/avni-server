@@ -5,10 +5,10 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.AddressLevelTypes;
 import org.avni.server.importer.batch.model.Row;
-import org.jadira.usertype.spi.utils.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,19 +2,17 @@ package org.avni.server.service;
 
 import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.IndividualRepository;
-import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.domain.GroupSubject;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.accessControl.GroupPrivileges;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.avni.server.web.response.SyncSubjectResponse;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class SubjectSyncResponseBuilderService {
     private IndividualRepository individualRepository;
     private ChecklistService checklistService;

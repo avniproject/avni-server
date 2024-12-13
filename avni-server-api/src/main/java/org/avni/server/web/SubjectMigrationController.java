@@ -25,11 +25,13 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -72,7 +74,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigrations/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<SubjectMigration>> getMigrationsByCatchmentAndLastModifiedAsSlice(
+    public SlicedResources<EntityModel<SubjectMigration>> getMigrationsByCatchmentAndLastModifiedAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -86,7 +88,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
 
     @RequestMapping(value = "/subjectMigrations", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<SubjectMigration>> getMigrationsByCatchmentAndLastModified(
+    public CollectionModel<EntityModel<SubjectMigration>> getMigrationsByCatchmentAndLastModified(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String subjectTypeUuid,
@@ -99,15 +101,15 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
     }
 
     @Override
-    public Resource<SubjectMigration> process(Resource<SubjectMigration> resource) {
+    public EntityModel<SubjectMigration> process(EntityModel<SubjectMigration> resource) {
         SubjectMigration content = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(content.getIndividual().getUuid(), "individualUUID"));
-        resource.add(new Link(content.getSubjectType().getUuid(), "subjectTypeUUID"));
+        resource.add(Link.of(content.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(content.getSubjectType().getUuid(), "subjectTypeUUID"));
         if (content.getOldAddressLevel() != null)
-            resource.add(new Link(content.getOldAddressLevel().getUuid(), "oldAddressLevelUUID"));
+            resource.add(Link.of(content.getOldAddressLevel().getUuid(), "oldAddressLevelUUID"));
         if (content.getNewAddressLevel() != null)
-            resource.add(new Link(content.getNewAddressLevel().getUuid(), "newAddressLevelUUID"));
+            resource.add(Link.of(content.getNewAddressLevel().getUuid(), "newAddressLevelUUID"));
         addAuditFields(content, resource);
         return resource;
     }

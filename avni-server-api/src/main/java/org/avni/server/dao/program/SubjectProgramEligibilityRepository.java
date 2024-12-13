@@ -1,5 +1,6 @@
 package org.avni.server.dao.program;
 
+import jakarta.persistence.criteria.*;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SubjectTreeItemRepository;
 import org.avni.server.dao.SyncParameters;
@@ -16,7 +17,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.IdentifierSourceRepository;
 import org.avni.server.domain.IdentifierSource;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -10,14 +11,11 @@ import org.avni.server.web.request.webapp.IdentifierSourceContractWeb;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import javax.transaction.Transactional;
 
 @RestController
 public class IdentifierSourceWebController extends AbstractController<IdentifierSource> implements RestControllerResourceProcessor<IdentifierSourceContractWeb> {
@@ -34,7 +32,7 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
     }
 
     @GetMapping(value = "/web/identifierSource/search/findAllById")
-    public PagedResources<Resource<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
+    public CollectionModel<EntityModel<IdentifierSourceContractWeb>> findAllById(Long ids, Pageable pageable) {
         accessControlService.checkPrivilege(PrivilegeType.EditIdentifierSource);
         Long[] id = {ids};
         return wrap(identifierSourceRepository.findByIdIn(id, pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
@@ -42,7 +40,7 @@ public class IdentifierSourceWebController extends AbstractController<Identifier
 
     @GetMapping(value = "/web/identifierSource")
     @ResponseBody
-    public PagedResources<Resource<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
+    public CollectionModel<EntityModel<IdentifierSourceContractWeb>> getAll(Pageable pageable) {
         return wrap(identifierSourceRepository.findPageByIsVoidedFalse(pageable).map(IdentifierSourceContractWeb::fromIdentifierSource));
     }
 

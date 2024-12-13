@@ -6,24 +6,23 @@ import org.hibernate.HibernateException;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.usertype.UserType;
 
-import java.io.*;
+import java.io.StringWriter;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public abstract class AbstractJsonbUserType extends AbstractUserType implements UserType {
+public abstract class AbstractJsonbUserType<T> extends AbstractUserType<T> implements UserType<T> {
     public final static ObjectMapper mapper = new ObjectMapper().registerModule(new JodaModule());
 
     @Override
-    public int[] sqlTypes() {
-        return new int[]{Types.JAVA_OBJECT};
+    public int getSqlType() {
+        return Types.JAVA_OBJECT;
     }
 
     @Override
-    public Object nullSafeGet(final ResultSet rs, final String[] names, final SharedSessionContractImplementor session,
-                              final Object owner) throws HibernateException, SQLException {
-        final String cellContent = rs.getString(names[0]);
+    public T nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+        final String cellContent = rs.getString(position);
         if (cellContent == null) {
             return null;
         }

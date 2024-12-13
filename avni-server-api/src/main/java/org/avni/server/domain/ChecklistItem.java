@@ -1,12 +1,15 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.framework.hibernate.ObservationCollectionUserType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.time.Instant;
 
 @Entity
 @Table(name = "checklist_item")
@@ -14,10 +17,10 @@ import javax.validation.constraints.NotNull;
 @BatchSize(size = 100)
 public class ChecklistItem extends OrganisationAwareEntity {
     @Column
-    private DateTime completionDate;
+    private Instant completionDate;
 
     @Column
-    @Type(type = "observations")
+    @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,11 +33,11 @@ public class ChecklistItem extends OrganisationAwareEntity {
     private Checklist checklist;
 
     public DateTime getCompletionDate() {
-        return completionDate;
+        return DateTimeUtil.toJodaDateTime(completionDate);
     }
 
     public void setCompletionDate(DateTime completionDate) {
-        this.completionDate = completionDate;
+        this.completionDate = DateTimeUtil.toInstant(completionDate);
     }
 
     public Checklist getChecklist() {

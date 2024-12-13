@@ -26,7 +26,6 @@ public class MenuItemService implements NonScopeAwareService {
         return menuItemRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
     }
 
-    @Transactional
     public List<MenuItem> findAll() {
         return menuItemRepository.findAll();
     }
@@ -36,12 +35,10 @@ public class MenuItemService implements NonScopeAwareService {
         return menuItemRepository.save(menuItem);
     }
 
-    @Transactional
     public MenuItem find(String uuid) {
         return menuItemRepository.findByUuid(uuid);
     }
 
-    @Transactional
     public MenuItem find(Long id) {
         return menuItemRepository.findEntity(id);
     }

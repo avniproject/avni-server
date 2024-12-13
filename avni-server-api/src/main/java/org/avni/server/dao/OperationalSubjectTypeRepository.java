@@ -10,8 +10,8 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
-import java.util.Date;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "operationalSubjectType", path = "operationalSubjectType")
@@ -19,8 +19,8 @@ public interface OperationalSubjectTypeRepository extends ImplReferenceDataRepos
     @RestResource(path = "lastModified", rel = "lastModified")
     @Query("select ost from OperationalSubjectType ost where ost.lastModifiedDateTime between :lastModifiedDateTime and :now or ost.subjectType.lastModifiedDateTime between :lastModifiedDateTime and :now order by CASE WHEN ost.subjectType.lastModifiedDateTime > ost.lastModifiedDateTime THEN ost.subjectType.lastModifiedDateTime ELSE ost.lastModifiedDateTime END")
     Page<OperationalSubjectType> findByLastModifiedDateTimeIsBetweenOrSubjectTypeLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
             Pageable pageable);
 
     @Query("select s.name from OperationalSubjectType s where s.isVoided = false")

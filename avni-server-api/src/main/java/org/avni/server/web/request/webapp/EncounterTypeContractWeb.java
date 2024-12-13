@@ -2,8 +2,8 @@ package org.avni.server.web.request.webapp;
 
 import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.OperationalEncounterType;
-import org.springframework.hateoas.core.Relation;
 import org.joda.time.DateTime;
+import org.springframework.hateoas.server.core.Relation;
 
 
 /**

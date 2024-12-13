@@ -1,6 +1,7 @@
 package org.avni.server.service;
 
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.Form;
 import org.avni.server.application.KeyType;
 import org.avni.server.dao.IdentifierAssignmentRepository;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 

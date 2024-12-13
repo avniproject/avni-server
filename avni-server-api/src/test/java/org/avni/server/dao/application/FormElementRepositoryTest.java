@@ -1,5 +1,6 @@
 package org.avni.server.dao.application;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.application.FormElementRepository;
 import org.joda.time.DateTime;
@@ -19,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 @Sql(scripts = {"/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class FormElementRepositoryTest extends AbstractControllerIntegrationTest {
     @Autowired
     private FormElementRepository formElementRepository;
@@ -29,7 +31,7 @@ public class FormElementRepositoryTest extends AbstractControllerIntegrationTest
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        pageRequest = new PageRequest(0, 100);
+        pageRequest = PageRequest.of(0, 100);
         setUser("demo-admin");
     }
 

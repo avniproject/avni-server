@@ -1,9 +1,9 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.RuleDependencyRepository;
-import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.RuleDependency;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.RuleDependencyRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +32,6 @@ public class RuleDependencyService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return ruleDependencyRepository.existsByLastModifiedDateTimeGreaterThan(CHSEntity.toDate(lastModifiedDateTime));
+        return ruleDependencyRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
     }
 }

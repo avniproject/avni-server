@@ -1,12 +1,11 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.avni.server.domain.AddressLevel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
-
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 
 @Repository
 public class LocationSyncRepository extends RoleSwitchableRepository implements SyncableRepository<AddressLevel> {

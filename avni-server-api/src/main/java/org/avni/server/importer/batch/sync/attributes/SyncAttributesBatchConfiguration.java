@@ -2,37 +2,33 @@ package org.avni.server.importer.batch.sync.attributes;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-@EnableBatchProcessing
+//@EnableBatchProcessing
 public class SyncAttributesBatchConfiguration {
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
     private final JobRepository jobRepository;
+    private final PlatformTransactionManager platformTransactionManager;
 
     @Autowired
-    public SyncAttributesBatchConfiguration(JobBuilderFactory jobBuilderFactory,
-                                            StepBuilderFactory stepBuilderFactory,
-                                            JobRepository jobRepository) {
-        this.jobBuilderFactory = jobBuilderFactory;
-        this.stepBuilderFactory = stepBuilderFactory;
+    public SyncAttributesBatchConfiguration(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
         this.jobRepository = jobRepository;
+        this.platformTransactionManager = platformTransactionManager;
     }
 
     @Bean
     public JobLauncher syncAttributesJobLauncher() {
-        return new SimpleJobLauncher() {{
+        return new TaskExecutorJobLauncher() {{
             setJobRepository(jobRepository);
             setTaskExecutor(new ThreadPoolTaskExecutor() {{
                 setCorePoolSize(1);
@@ -45,8 +41,7 @@ public class SyncAttributesBatchConfiguration {
 
     @Bean
     public Job syncAttributesJob(SyncAttributesJobListener listener, Step updateSyncAttributesStep) {
-        return jobBuilderFactory
-                .get("syncAttributesJob")
+        return new JobBuilder("syncAttributesJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .start(updateSyncAttributesStep)
@@ -55,10 +50,8 @@ public class SyncAttributesBatchConfiguration {
 
     @Bean
     public Step updateSyncAttributesStep(UpdateSyncAttributesTasklet tasklet) {
-        return stepBuilderFactory.get("updateSyncAttributesStep")
-                .tasklet(tasklet)
+        return new StepBuilder("updateSyncAttributesStep", jobRepository)
+                .tasklet(tasklet, platformTransactionManager)
                 .build();
     }
 }
-
-

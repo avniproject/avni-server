@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @RestController
 public class PlatformTranslationController implements RestControllerResourceProcessor<PlatformTranslation> {
@@ -54,7 +54,7 @@ public class PlatformTranslationController implements RestControllerResourceProc
     }
 
     @RequestMapping(value = "/platformTranslation/search/lastModified", method = RequestMethod.GET)
-    public PagedResources<Resource<PlatformTranslation>> get(
+    public CollectionModel<EntityModel<PlatformTranslation>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable) {

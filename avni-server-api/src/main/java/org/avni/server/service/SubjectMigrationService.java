@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.*;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.sync.SyncEntityName;
@@ -16,8 +17,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class SubjectMigrationService implements ScopeAwareService<SubjectMigration> {

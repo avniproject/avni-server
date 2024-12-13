@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -25,15 +26,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.Collections;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
@@ -93,7 +93,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @GetMapping(value = {"/programEnrolment/v2"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programUuid", required = false) String programUuid,
@@ -111,7 +111,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
 
     @GetMapping(value = {"/programEnrolment", /* Deprecated -> */ "/programEnrolment/search/lastModified", "/programEnrolment/search/byIndividualsOfCatchmentAndLastModified"})
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<ProgramEnrolment>> getProgramEnrolmentsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "programUuid", required = false) String programUuid,
@@ -177,11 +177,11 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     }
 
     @Override
-    public Resource<ProgramEnrolment> process(Resource<ProgramEnrolment> resource) {
+    public EntityModel<ProgramEnrolment> process(EntityModel<ProgramEnrolment> resource) {
         ProgramEnrolment programEnrolment = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(programEnrolment.getProgram().getUuid(), "programUUID"));
-        resource.add(new Link(programEnrolment.getIndividual().getUuid(), "individualUUID"));
+        resource.add(Link.of(programEnrolment.getProgram().getUuid(), "programUUID"));
+        resource.add(Link.of(programEnrolment.getIndividual().getUuid(), "individualUUID"));
         addAuditFields(programEnrolment, resource);
         return resource;
     }

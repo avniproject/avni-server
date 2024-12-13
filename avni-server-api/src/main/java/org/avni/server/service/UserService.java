@@ -6,6 +6,7 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.WebResponseUtil;
@@ -82,7 +83,6 @@ public class UserService implements NonScopeAwareService {
         return savedUser;
     }
 
-    @Transactional
     public void addToDefaultUserGroup(User user) {
         if (user.getOrganisationId() != null) { //Not a super-admin
             Group group = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
@@ -125,10 +125,9 @@ public class UserService implements NonScopeAwareService {
 
     @Override
     public boolean isNonScopeEntityChanged(DateTime lastModifiedDateTime) {
-        return userRepository.existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime);
+        return userRepository.existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
     }
 
-    @Transactional
     public User findByUuid(String uuid) {
         return userRepository.findByUuid(uuid);
     }

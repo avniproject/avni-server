@@ -1,12 +1,13 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.Platform;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormElementGroupRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.*;
 import org.avni.server.domain.Locale;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 

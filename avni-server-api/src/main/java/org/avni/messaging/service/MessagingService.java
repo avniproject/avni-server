@@ -126,7 +126,6 @@ public class MessagingService {
         }
     }
 
-    @Transactional
     public Page<MessageRule> findByEntityTypeAndEntityTypeId(EntityType entityType, Long entityTypeId, Pageable pageable) {
         return messageRuleRepository.findByEntityTypeAndEntityTypeId(entityType, entityTypeId, pageable);
     }
@@ -162,7 +161,6 @@ public class MessagingService {
         requests.forEach(this::sendMessage);
     }
 
-    @Transactional
     public void scheduleManualMessage(String receiverId, ReceiverType receiverType, String messageTemplateId, String[] parameters, DateTime scheduledDateTime) {
         ManualMessage manualMessage = new ManualMessage(messageTemplateId, parameters);
         manualMessage.assignUUIDIfRequired();

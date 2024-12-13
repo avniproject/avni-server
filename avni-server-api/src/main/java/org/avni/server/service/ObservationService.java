@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
@@ -22,7 +23,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.NotNull;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.AbstractMap.SimpleEntry;

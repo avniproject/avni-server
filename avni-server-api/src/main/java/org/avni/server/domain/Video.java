@@ -1,9 +1,8 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import org.hibernate.annotations.BatchSize;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 @Entity
 @Table(name = "video")

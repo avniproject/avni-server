@@ -4,10 +4,10 @@ import org.springframework.batch.core.JobParameter;
 
 import java.io.Serializable;
 
-public class CustomJobParameter<T extends Serializable> extends JobParameter {
+public class CustomJobParameter<T extends Serializable> extends JobParameter<T> {
     private final T customParam;
     public CustomJobParameter(T customParam){
-        super("");
+        super(customParam, (Class<T>) customParam.getClass());
         this.customParam = customParam;
     }
     public T getValue(){

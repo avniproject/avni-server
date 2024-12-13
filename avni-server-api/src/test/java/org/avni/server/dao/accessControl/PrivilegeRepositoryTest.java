@@ -1,5 +1,6 @@
 package org.avni.server.dao.accessControl;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.PrivilegeRepository;
 import org.avni.server.domain.accessControl.Privilege;
@@ -17,6 +18,7 @@ import static org.junit.Assert.assertNotEquals;
 
 @Sql(scripts = {"/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(scripts = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+@Transactional
 public class PrivilegeRepositoryTest extends AbstractControllerIntegrationTest {
     @Autowired
     private PrivilegeRepository privilegeRepository;

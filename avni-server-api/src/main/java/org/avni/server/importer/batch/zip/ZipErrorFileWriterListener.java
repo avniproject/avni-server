@@ -5,16 +5,17 @@ import org.avni.server.service.BulkUploadS3Service;
 import org.avni.server.util.ExceptionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.annotation.*;
+import org.springframework.batch.core.annotation.OnProcessError;
+import org.springframework.batch.core.annotation.OnReadError;
+import org.springframework.batch.core.annotation.OnSkipInWrite;
+import org.springframework.batch.core.annotation.OnWriteError;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.lang.String.format;
 
@@ -49,7 +50,7 @@ public class ZipErrorFileWriterListener {
     }
 
     @OnWriteError
-    public void onWriteError(Exception e, List o) {
+    public void onWriteError(Exception e, Chunk o) {
         logger.error("onWriteError", e);
     }
 

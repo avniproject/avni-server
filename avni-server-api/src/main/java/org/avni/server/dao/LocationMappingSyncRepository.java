@@ -1,13 +1,11 @@
 package org.avni.server.dao;
 
-import org.avni.server.domain.AddressLevel;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.avni.server.domain.ParentLocationMapping;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
-
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 
 /**
  * LocationSyncRepository uses the postgres @> keyword for sync, which does not index well and creates poor plans.

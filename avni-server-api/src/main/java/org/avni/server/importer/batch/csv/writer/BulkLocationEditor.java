@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

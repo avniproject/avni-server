@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.ChecklistDetailRepository;
@@ -16,7 +17,6 @@ import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.accessControl.GroupPrivilegeService;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 

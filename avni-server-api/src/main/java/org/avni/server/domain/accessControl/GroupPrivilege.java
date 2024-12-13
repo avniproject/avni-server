@@ -1,11 +1,10 @@
 package org.avni.server.domain.accessControl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.*;
 import org.hibernate.annotations.BatchSize;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "group_privilege")

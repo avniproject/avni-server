@@ -1,12 +1,15 @@
 package org.avni.server.domain.accessControl;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.PrivilegeEntityType;
+import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
+
+import java.time.Instant;
 
 @Entity
 @Table(name = "privilege")
@@ -29,25 +32,25 @@ public class Privilege extends CHSBaseEntity {
     private PrivilegeEntityType entityType;
 
     @Column
-    private DateTime createdDateTime;
+    private Instant createdDateTime;
 
     @Column
-    private DateTime lastModifiedDateTime;
+    private Instant lastModifiedDateTime;
 
     public DateTime getCreatedDateTime() {
-        return createdDateTime;
+        return DateTimeUtil.toJodaDateTime(createdDateTime);
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = createdDateTime;
+        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
     }
 
     public DateTime getLastModifiedDateTime() {
-        return lastModifiedDateTime;
+        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = lastModifiedDateTime;
+        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
     }
 
     public String getName() {

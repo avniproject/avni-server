@@ -9,7 +9,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -22,19 +22,19 @@ public interface UserSubjectAssignmentRepository extends ReferenceDataRepository
 
     List<UserSubjectAssignment> findUserSubjectAssignmentBySubject_IdIn(List<Long> subjectIds);
 
-    boolean existsByUserAndIsVoidedTrueAndLastModifiedDateTimeGreaterThan(User user, Date lastModifiedDateTime);
+    boolean existsByUserAndIsVoidedTrueAndLastModifiedDateTimeGreaterThan(User user, Instant lastModifiedDateTime);
 
     Page<UserSubjectAssignment> findByUserAndIsVoidedTrueAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             User user,
-            Date lastModifiedDate,
-            Date now,
+            Instant lastModifiedDate,
+            Instant now,
             Pageable pageable
     );
 
     Slice<UserSubjectAssignment> findSliceByUserAndIsVoidedTrueAndLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
             User user,
-            Date lastModifiedDate,
-            Date now,
+            Instant lastModifiedDate,
+            Instant now,
             Pageable pageable
     );
 

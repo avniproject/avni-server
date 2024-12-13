@@ -1,29 +1,27 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
+import org.avni.server.dao.IdentifierSourceRepository;
+import org.avni.server.dao.IdentifierUserAssignmentRepository;
+import org.avni.server.dao.UserRepository;
+import org.avni.server.domain.IdentifierUserAssignment;
 import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.identifier.IdentifierOverlappingException;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.identifier.IdentifierUserAssignmentService;
+import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.util.WebResponseUtil;
+import org.avni.server.web.request.webapp.IdentifierUserAssignmentContractWeb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.RestController;
-import org.avni.server.dao.IdentifierSourceRepository;
-import org.avni.server.dao.IdentifierUserAssignmentRepository;
-import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.IdentifierUserAssignment;
-import org.avni.server.util.ReactAdminUtil;
-import org.avni.server.web.request.webapp.IdentifierUserAssignmentContractWeb;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import javax.transaction.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -46,7 +44,7 @@ public class IdentifierUserAssignmentWebController extends AbstractController<Id
 
     @GetMapping(value = "/web/identifierUserAssignment")
     @ResponseBody
-    public PagedResources<Resource<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
+    public CollectionModel<EntityModel<IdentifierUserAssignmentContractWeb>> getAll(Pageable pageable) {
         Page<IdentifierUserAssignment> nonVoided = identifierUserAssignmentRepository.findPageByIsVoidedFalse(pageable);
         Page<IdentifierUserAssignmentContractWeb> response = nonVoided.map(IdentifierUserAssignmentContractWeb::fromIdentifierUserAssignment);
         return wrap(response);

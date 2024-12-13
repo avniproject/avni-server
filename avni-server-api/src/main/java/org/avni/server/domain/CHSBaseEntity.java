@@ -1,13 +1,16 @@
 package org.avni.server.domain;
 
-import org.hibernate.proxy.HibernateProxyHelper;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.domain.framework.IdHolder;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.util.Objects;
 import java.util.UUID;
 
 @MappedSuperclass
-public class CHSBaseEntity {
+public class CHSBaseEntity implements IdHolder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     @Id
@@ -58,13 +61,24 @@ public class CHSBaseEntity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || HibernateProxyHelper.getClassWithoutInitializingProxy(this) != HibernateProxyHelper.getClassWithoutInitializingProxy(o)) return false;
+        return CHSBaseEntity.equals(this, o);
+    }
 
-        CHSBaseEntity that = (CHSBaseEntity) o;
+    public static boolean equals(IdHolder a, Object other) {
+        if (a == other) return true;
 
-        if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) return false;
-        return getUuid() != null ? getUuid().equals(that.getUuid()) : that.getUuid() == null;
+        LazyInitializer lazyInitializer2 = HibernateProxy.extractLazyInitializer(other);
+
+        if (other == null) return false;
+        if (lazyInitializer2 != null && a.getClass() != lazyInitializer2.getImplementationClass()) return false;
+        if (lazyInitializer2 == null && a.getClass() != other.getClass()) return false;
+
+        IdHolder otherIdHolder = lazyInitializer2 == null ? (IdHolder) other : (IdHolder) lazyInitializer2.getImplementation();
+
+        if (a.getId() != null && Objects.equals(a.getId(), otherIdHolder.getId())) return true;
+        if (a.getUuid() != null && Objects.equals(a.getUuid(), otherIdHolder.getUuid())) return true;
+
+        return false;
     }
 
     @Override

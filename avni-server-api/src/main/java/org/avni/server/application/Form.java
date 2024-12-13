@@ -5,10 +5,11 @@ import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.DeclarativeRule;
 import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -41,22 +42,22 @@ public class Form extends OrganisationAwareEntity {
     private String checklistsRule;
 
     @Column(name = "validation_declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule validationDeclarativeRule;
 
     @Column(name = "decision_declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule decisionDeclarativeRule;
 
     @Column(name = "visit_schedule_declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule visitScheduleDeclarativeRule;
 
     @Column(name = "task_schedule_rule")
     private String taskScheduleRule;
 
     @Column(name = "task_schedule_declarative_rule")
-    @Type(type = "declarativeRule")
+    @Type(value = DeclarativeRuleUserType.class)
     private DeclarativeRule taskScheduleDeclarativeRule;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")

@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import jakarta.transaction.Transactional;
 import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.ChecklistRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
@@ -17,13 +18,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.Collections;
 
 import static org.avni.server.web.resourceProcessors.ResourceProcessor.addAuditFields;
@@ -66,7 +66,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
 
     @RequestMapping(value = "/txNewChecklistEntity/search/byIndividualsOfCatchmentAndLastModified", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Checklist>> getByIndividualsOfCatchmentAndLastModified(
+    public CollectionModel<EntityModel<Checklist>> getByIndividualsOfCatchmentAndLastModified(
             @RequestParam("catchmentId") long catchmentId,
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
@@ -77,7 +77,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
 
     @RequestMapping(value = "/txNewChecklistEntity/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<Checklist>> getChecklistsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
@@ -92,7 +92,7 @@ public class ChecklistController extends AbstractController<Checklist> implement
 
     @RequestMapping(value = "/txNewChecklistEntity", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<Checklist>> getChecklistsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<Checklist>> getChecklistsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "checklistDetailUuid", required = false) String checklistDetailUuid,
@@ -106,12 +106,12 @@ public class ChecklistController extends AbstractController<Checklist> implement
     }
 
     @Override
-    public Resource<Checklist> process(Resource<Checklist> resource) {
+    public EntityModel<Checklist> process(EntityModel<Checklist> resource) {
         Checklist checklist = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(checklist.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
+        resource.add(Link.of(checklist.getProgramEnrolment().getUuid(), "programEnrolmentUUID"));
         if (checklist.getChecklistDetail() != null) {
-            resource.add(new Link(checklist.getChecklistDetail().getUuid(), "checklistDetailUUID"));
+            resource.add(Link.of(checklist.getChecklistDetail().getUuid(), "checklistDetailUUID"));
         }
         addAuditFields(checklist, resource);
         return resource;

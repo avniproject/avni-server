@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
 public class QueryRepositoryTest extends AbstractControllerIntegrationTest {
 
     @Autowired

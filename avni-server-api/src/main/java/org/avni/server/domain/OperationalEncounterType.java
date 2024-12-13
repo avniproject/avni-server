@@ -1,10 +1,9 @@
 package org.avni.server.domain;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "operational_encounter_type")

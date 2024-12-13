@@ -1,11 +1,11 @@
 package org.avni.server.web;
 
-import org.avni.server.dao.*;
+import jakarta.transaction.Transactional;
+import org.avni.server.dao.GroupRoleRepository;
+import org.avni.server.dao.GroupSubjectRepository;
+import org.avni.server.dao.IndividualRepository;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.sync.SyncEntityName;
-import org.avni.server.domain.GroupRole;
-import org.avni.server.domain.GroupSubject;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.GroupSubjectService;
@@ -26,13 +26,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,7 +68,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/groupSubject/v2", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public SlicedResources<Resource<GroupSubject>> getGroupSubjectsByOperatingIndividualScopeAsSlice(
+    public SlicedResources<EntityModel<GroupSubject>> getGroupSubjectsByOperatingIndividualScopeAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String groupSubjectTypeUuid,
@@ -83,7 +82,7 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
 
     @RequestMapping(value = "/groupSubject", method = RequestMethod.GET)
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public PagedResources<Resource<GroupSubject>> getGroupSubjectsByOperatingIndividualScope(
+    public CollectionModel<EntityModel<GroupSubject>> getGroupSubjectsByOperatingIndividualScope(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
             @RequestParam("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             @RequestParam(value = "subjectTypeUuid", required = false) String groupSubjectTypeUuid,
@@ -159,12 +158,12 @@ public class GroupSubjectController extends AbstractController<GroupSubject> imp
     }
 
     @Override
-    public Resource<GroupSubject> process(Resource<GroupSubject> resource) {
+    public EntityModel<GroupSubject> process(EntityModel<GroupSubject> resource) {
         GroupSubject groupSubject = resource.getContent();
         resource.removeLinks();
-        resource.add(new Link(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));
-        resource.add(new Link(groupSubject.getMemberSubject().getUuid(), "memberSubjectUUID"));
-        resource.add(new Link(groupSubject.getGroupRole().getUuid(), "groupRoleUUID"));
+        resource.add(Link.of(groupSubject.getGroupSubject().getUuid(), "groupSubjectUUID"));
+        resource.add(Link.of(groupSubject.getMemberSubject().getUuid(), "memberSubjectUUID"));
+        resource.add(Link.of(groupSubject.getGroupRole().getUuid(), "groupRoleUUID"));
         addAuditFields(groupSubject, resource);
         return resource;
     }
