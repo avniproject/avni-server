@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ public class IndividualSearchService {
         return constructIndividual(searchResults,totalCount);
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList,BigInteger totalCount) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, BigInteger totalCount) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))

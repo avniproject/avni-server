@@ -17,6 +17,7 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -123,7 +124,7 @@ public class UserSubjectAssignmentService implements NonScopeAwareService {
             searchResult.put("addressLevel", titleLineages.get((Long) searchResult.get("addressId")));
         }
 
-        Long totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
+        BigInteger totalCount = subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectAssignmentSearchQueryBuilder());
 
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<>();
         recordsMap.put("totalElements", totalCount);
