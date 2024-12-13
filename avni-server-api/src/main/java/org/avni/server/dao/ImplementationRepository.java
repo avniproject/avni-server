@@ -22,10 +22,6 @@ public interface ImplementationRepository extends AvniCrudRepository<Organisatio
     @Query(value = "select create_db_user(:name, :pass)", nativeQuery = true)
     void createDBUser(String name, String pass);
 
-    default void createDBUser(Organisation organisation) {
-        this.createDBUser(organisation.getDbUser(), "password");
-    }
-
     @Query(value = "select create_implementation_schema(:schemaName, :dbUser)", nativeQuery = true)
     void createImplementationSchema(String schemaName, String dbUser);
 

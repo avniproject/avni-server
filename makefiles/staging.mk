@@ -1,12 +1,12 @@
 # I have setup the environment variables in my bash_profile so that I can just run it whenever I want in live mode. You could do that too (Vivek).
 tunnel_staging_db:
-	ssh avni-server-staging -L 6015:stagingdb.openchs.org:5432
+	ssh avni-staging -L 6015:stagingdb.openchs.org:5432
 
 tunnel_staging_server_for_debug:
-	ssh avni-server-staging -L 5005:127.0.0.1:5005
+	ssh avni-staging -L 5005:127.0.0.1:5005
 
 start_server_staging: build_server
-	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
+	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/avni_server
 
 	AVNI_IDP_TYPE=cognito \
 	OPENCHS_CLIENT_ID=$(OPENCHS_STAGING_APP_CLIENT_ID) \
@@ -19,7 +19,7 @@ start_server_staging: build_server
     	java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 debug_server_staging: build_server
-	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/openchs
+	-mkdir -p /tmp/openchs && sudo ln -s /tmp/openchs /var/log/avni_server
 	OPENCHS_DATABASE_URL=jdbc:postgresql://localhost:5433/openchs?currentSchema=public \
 	AVNI_IDP_TYPE=cognito \
 	OPENCHS_CLIENT_ID=$(OPENCHS_STAGING_APP_CLIENT_ID) \
@@ -31,7 +31,7 @@ debug_server_staging: build_server
 		java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 tail-staging-log:
-	ssh avni-server-staging "tail -f -n1000 /var/log/openchs/openchs.log"
+	ssh avni-staging "tail -f -n1000 /var/log/avni_server/chs.log"
 
 open-user-media-staging:
 ifndef orgMedia

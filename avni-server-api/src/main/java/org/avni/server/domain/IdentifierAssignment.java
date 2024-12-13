@@ -37,16 +37,19 @@ public class IdentifierAssignment extends OrganisationAwareEntity {
     @NotNull
     private boolean used;
 
+    private String deviceId;
+
     public IdentifierAssignment() {
         super();
     }
 
-    public IdentifierAssignment(IdentifierSource identifierSource, String identifier, Long assignmentOrder, User assignedTo) {
+    public IdentifierAssignment(IdentifierSource identifierSource, String identifier, Long assignmentOrder, User assignedTo, String deviceId) {
         this();
         this.identifierSource = identifierSource;
         this.identifier = identifier;
         this.assignmentOrder = assignmentOrder;
         this.assignedTo = assignedTo;
+        this.deviceId = deviceId;
     }
 
     public IdentifierSource getIdentifierSource() {
@@ -103,5 +106,13 @@ public class IdentifierAssignment extends OrganisationAwareEntity {
 
     public void setUsed(boolean used) {
         this.used = used;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
+    }
+
+    public void setDeviceId(String deviceId) {
+        this.deviceId = deviceId;
     }
 }

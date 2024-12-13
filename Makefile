@@ -164,11 +164,11 @@ start_server_wo_gradle:
 
 # LIVE
 log_live:
-	tail -f /var/log/openchs/openchs.log
+	tail -f /var/log/avni_server/chs.log
 # /LIVE
 
 tail-local-log:
-	tail -f -n1000 /var/log/openchs/openchs.log
+	tail -f -n1000 /var/log/avni_server/chs.log
 
 debug_server_live: build_server
 	OPENCHS_MODE=live OPENCHS_CLIENT_ID=$(STAGING_APP_CLIENT_ID) OPENCHS_USER_POOL=$(STAGING_USER_POOL_ID) java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
@@ -191,7 +191,7 @@ exec-sql: ## Usage: make exec-sql sqlfile=</path/to/sql>
 
 # remote
 tail-prod:
-	ssh avni-server-prod "tail -f /var/log/openchs/openchs.log"
+	ssh avni-prod "tail -f /var/log/avni_server/chs.log"
 
 show-dependency-graph:
 	./gradlew avni-server-api:dependencies

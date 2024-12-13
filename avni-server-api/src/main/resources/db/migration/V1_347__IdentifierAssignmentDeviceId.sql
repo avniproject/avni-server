@@ -1,0 +1,1 @@
+alter table identifier_assignment add column device_id varchar;

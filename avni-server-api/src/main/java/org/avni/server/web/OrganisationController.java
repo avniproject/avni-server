@@ -7,6 +7,7 @@ import org.avni.server.service.OrganisationService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.OrganisationContract;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
@@ -29,6 +30,9 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     private final OrganisationCategoryRepository organisationCategoryRepository;
     private final OrganisationStatusRepository organisationStatusRepository;
 
+    @Value("${avni.org.password}")
+    private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
+
     @Autowired
     public OrganisationController(OrganisationRepository organisationRepository, AccountRepository accountRepository, ImplementationRepository implementationRepository, AccessControlService accessControlService, OrganisationService organisationService, OrganisationCategoryRepository organisationCategoryRepository, OrganisationStatusRepository organisationStatusRepository) {
         this.organisationRepository = organisationRepository;
@@ -44,9 +48,8 @@ public class OrganisationController implements RestControllerResourceProcessor<O
     @Transactional
     public ResponseEntity save(@RequestBody OrganisationContract request) {
         accessControlService.assertIsSuperAdmin();
-        String tempPassword = "password";
         Organisation org = organisationRepository.findByUuid(request.getUuid());
-        implementationRepository.createDBUser(request.getDbUser(), tempPassword);
+        implementationRepository.createDBUser(request.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD);
         implementationRepository.createImplementationSchema(request.getSchemaName(), request.getDbUser());
         if (org == null) {
             org = new Organisation();

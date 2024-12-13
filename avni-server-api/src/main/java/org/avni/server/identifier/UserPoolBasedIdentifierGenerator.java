@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 
+import static org.avni.server.service.DeviceAwareService.WEB_DEVICE_ID;
+
 
 @Service
 @Qualifier("userPoolBasedIdentifierGenerator")
@@ -23,14 +25,14 @@ public class UserPoolBasedIdentifierGenerator implements IdentifierGenerator {
 
     @Override
     @Transactional
-    public void generateIdentifiers(IdentifierSource identifierSource, User user) {
+    public void generateIdentifiers(IdentifierSource identifierSource, User user, String deviceId) {
         String prefix = identifierSource.getPrefix();
-        prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(identifierSource, user, prefix);
+        prefixedUserPoolBasedIdentifierGenerator.generateIdentifiers(identifierSource, user, prefix, deviceId);
     }
 
     @Override
     public IdentifierAssignment generateSingleIdentifier(IdentifierSource identifierSource, User user) {
         String prefix = identifierSource.getPrefix();
-        return prefixedUserPoolBasedIdentifierGenerator.generateSingleIdentifier(identifierSource, user, prefix);
+        return prefixedUserPoolBasedIdentifierGenerator.generateSingleIdentifier(identifierSource, user, prefix, WEB_DEVICE_ID);
     }
 }

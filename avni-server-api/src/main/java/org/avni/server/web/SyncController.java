@@ -38,6 +38,7 @@ public class SyncController {
     private final Environment environment;
     private final Map<SyncEntityName, ScopeAwareService> scopeAwareServiceMap = new HashMap<>();
     private final Map<SyncEntityName, NonScopeAwareService> nonScopeAwareServiceMap = new HashMap<>();
+    private final Map<SyncEntityName, DeviceAwareService> deviceAwareServiceMap = new HashMap<>();
     private final IndividualService individualService;
     private final EncounterService encounterService;
     private final ProgramEnrolmentService programEnrolmentService;
@@ -210,6 +211,7 @@ public class SyncController {
     public void init() {
         populateScopeAwareRepositoryMap();
         populateEntityNameToTableMap();
+        populateDeviceAwareServiceMap();
     }
 
     private void populateScopeAwareRepositoryMap() {
@@ -235,7 +237,6 @@ public class SyncController {
     }
 
     private void populateEntityNameToTableMap() {
-        nonScopeAwareServiceMap.put(IdentifierAssignment, identifierAssignmentService);
         nonScopeAwareServiceMap.put(ChecklistDetail, checklistDetailService);
         nonScopeAwareServiceMap.put(Rule, ruleService);
         nonScopeAwareServiceMap.put(RuleDependency, ruleDependencyService);
@@ -286,6 +287,10 @@ public class SyncController {
         nonScopeAwareServiceMap.put(UserSubjectAssignment, userSubjectAssignmentService);
     }
 
+    private void populateDeviceAwareServiceMap() {
+        deviceAwareServiceMap.put(IdentifierAssignment, identifierAssignmentService);
+    }
+
     /**
      * @param entitySyncStatusContracts : This would contain all entries from EntitySyncStatus table maintained on avni-client,
      *                                  which get populated based on all type of entities synced previously
@@ -294,14 +299,15 @@ public class SyncController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetailsWithScopeAwareEAS(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
                                                              @RequestParam(value = "isStockApp", required = false) boolean isStockApp,
-                                                             @RequestParam(value = "includeUserSubjectType", required = false, defaultValue = "false") boolean includeUserSubjectType) {
+                                                             @RequestParam(value = "includeUserSubjectType", required = false, defaultValue = "false") boolean includeUserSubjectType,
+                                                             @RequestParam(value = "deviceId", required = false) String deviceId) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
         Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(true, includeUserSubjectType);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
         try {
-            List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true);
+            List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, true, deviceId);
             logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
             return ResponseEntity.ok().body(new JsonObject()
                     .with("syncDetails", changedEntities)
@@ -324,13 +330,14 @@ public class SyncController {
     @PreAuthorize(value = "hasAnyAuthority('user')")
     public ResponseEntity<?> getSyncDetails(@RequestBody List<EntitySyncStatusContract> entitySyncStatusContracts,
                                             @RequestParam(value = "isStockApp", required = false) boolean isStockApp,
-                                            @RequestParam(value = "includeUserSubjectType", required = false, defaultValue = "false") boolean includeUserSubjectType) {
+                                            @RequestParam(value = "includeUserSubjectType", required = false, defaultValue = "false") boolean includeUserSubjectType,
+                                            @RequestParam(value = "deviceId", required = false) String deviceId) {
         DateTime now = new DateTime();
         DateTime nowMinus10Seconds = getNowMinus10Seconds();
         Set<SyncableItem> allSyncableItems = syncDetailService.getAllSyncableItems(false, includeUserSubjectType);
         long afterSyncDetailsService = new DateTime().getMillis();
         logger.info(String.format("Time taken for syncDetailsService %d", afterSyncDetailsService - now.getMillis()));
-        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, false);
+        List<EntitySyncStatusContract> changedEntities = getChangedEntities(entitySyncStatusContracts, allSyncableItems, false, deviceId);
         logger.info(String.format("Time taken for stuff %d", new DateTime().getMillis() - afterSyncDetailsService));
         return ResponseEntity.ok().body(new JsonObject()
                 .with("syncDetails", changedEntities)
@@ -339,7 +346,7 @@ public class SyncController {
         );
     }
 
-    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> clientSyncStatuses, Set<SyncableItem> serverSyncableItems, boolean scopeAwareEAS) {
+    private List<EntitySyncStatusContract> getChangedEntities(List<EntitySyncStatusContract> clientSyncStatuses, Set<SyncableItem> serverSyncableItems, boolean scopeAwareEAS, String deviceId) {
         serverSyncableItems.forEach(syncableItem -> {
             if (clientSyncStatuses.stream().noneMatch(clientSyncStatus -> clientSyncStatus.matchesEntity(syncableItem))) {
                 clientSyncStatuses.add(EntitySyncStatusContract.createForEntityWithSubType(syncableItem.getSyncEntityName(), syncableItem.getEntityTypeUuid()));
@@ -348,7 +355,7 @@ public class SyncController {
         removeDisabledEntities(clientSyncStatuses, serverSyncableItems);
 
         return clientSyncStatuses.stream()
-                .filter((entitySyncStatusContract) -> filterChangedEntities(entitySyncStatusContract, scopeAwareEAS))
+                .filter((entitySyncStatusContract) -> filterChangedEntities(entitySyncStatusContract, scopeAwareEAS, deviceId))
                 .collect(Collectors.toList());
     }
 
@@ -388,7 +395,7 @@ public class SyncController {
                 allSyncableItems.stream().noneMatch(entitySyncStatusContract::matchesEntity));
     }
 
-    private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract, boolean scopeAwareEAS) {
+    private boolean filterChangedEntities(EntitySyncStatusContract entitySyncStatusContract, boolean scopeAwareEAS, String deviceId) {
         String entityName = entitySyncStatusContract.getEntityName();
         DateTime loadedSince = entitySyncStatusContract.getLoadedSince();
         if (scopeAwareEAS) nonScopeAwareServiceMap.remove(EntityApprovalStatus);
@@ -400,6 +407,11 @@ public class SyncController {
         SyncEntityName syncEntityName = valueOf(entityName);
         ScopeAwareService scopeAwareService = this.scopeAwareServiceMap.get(syncEntityName);
         NonScopeAwareService nonScopeAwareService = this.nonScopeAwareServiceMap.get(syncEntityName);
+        DeviceAwareService deviceAwareService = this.deviceAwareServiceMap.get(syncEntityName);
+
+        if (deviceAwareService != null) {
+            return deviceAwareService.isSyncRequiredForDevice(loadedSince, deviceId);
+        }
 
         if (nonScopeAwareService != null) {
             return nonScopeAwareService.isNonScopeEntityChanged(loadedSince);

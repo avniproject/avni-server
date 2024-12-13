@@ -41,7 +41,7 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
     }
 
     @Transactional
-    public void generateIdentifiers(IdentifierSource identifierSource, User user, String prefix) {
+    public void generateIdentifiers(IdentifierSource identifierSource, User user, String prefix, String deviceId) {
         List<IdentifierUserAssignment> identifierUserAssignments = identifierUserAssignmentRepository.getAllNonExhaustedUserAssignments(user, identifierSource);
         Long batchGenerationSize = identifierSource.getBatchGenerationSize();
         NextIdentifierUserAssignment nextIdentifierUserAssignment = new NextIdentifierUserAssignment(identifierUserAssignments, batchGenerationSize);
@@ -49,7 +49,7 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
 
         while(nextIdentifierUserAssignment.hasNext()) {
             IdentifierUserAssignment identifierUserAssignment = nextIdentifierUserAssignment.next();
-            generatedIdentifiers.add(assignNextIdentifier(identifierUserAssignment, prefix));
+            generatedIdentifiers.add(assignNextIdentifier(identifierUserAssignment, prefix, deviceId));
         }
 
         identifierUserAssignmentRepository.saveAll(identifierUserAssignments);
@@ -57,14 +57,16 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
     }
 
     @Transactional
-    public IdentifierAssignment generateSingleIdentifier(IdentifierSource identifierSource, User user, String prefix) {
+    public IdentifierAssignment generateSingleIdentifier(IdentifierSource identifierSource, User user, String prefix, String deviceId) {
         List<IdentifierUserAssignment> identifierUserAssignments = identifierUserAssignmentRepository.getAllNonExhaustedUserAssignments(user, identifierSource);
         NextIdentifierUserAssignment nextIdentifierUserAssignment = new NextIdentifierUserAssignment(identifierUserAssignments, 1L);
         List<IdentifierAssignment> generatedIdentifiers = new ArrayList<>();
 
         while(nextIdentifierUserAssignment.hasNext()) {
             IdentifierUserAssignment identifierUserAssignment = nextIdentifierUserAssignment.next();
-            generatedIdentifiers.add(assignNextIdentifier(identifierUserAssignment, prefix));
+            IdentifierAssignment identifierAssignment = assignNextIdentifier(identifierUserAssignment, prefix, deviceId);
+            identifierAssignment.setUsed(true);
+            generatedIdentifiers.add(identifierAssignment);
         }
 
         identifierUserAssignmentRepository.saveAll(identifierUserAssignments);
@@ -72,7 +74,7 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
         return generatedIdentifiers.stream().findFirst().orElse(null);
     }
 
-    private IdentifierAssignment assignNextIdentifier(IdentifierUserAssignment identifierUserAssignment, String prefix) {
+    private IdentifierAssignment assignNextIdentifier(IdentifierUserAssignment identifierUserAssignment, String prefix, String deviceId) {
         String lastAssignedIdentifier = identifierUserAssignment.getLastAssignedIdentifier();
         IdentifierSource identifierSource = identifierUserAssignment.getIdentifierSource();
         long newIdentifierOrder; String newIdentifierStr, newIdentifierStrWithPrefix;
@@ -92,7 +94,7 @@ public class PrefixedUserPoolBasedIdentifierGenerator {
 
         identifierUserAssignment.setLastAssignedIdentifier(newIdentifierStrWithPrefix);
 
-        IdentifierAssignment identifierAssignment = new IdentifierAssignment(identifierSource, newIdentifierStrWithPrefix, newIdentifierOrder, identifierUserAssignment.getAssignedTo());
+        IdentifierAssignment identifierAssignment = new IdentifierAssignment(identifierSource, newIdentifierStrWithPrefix, newIdentifierOrder, identifierUserAssignment.getAssignedTo(), deviceId);
         identifierAssignment.assignUUID();
         return identifierAssignment;
     }

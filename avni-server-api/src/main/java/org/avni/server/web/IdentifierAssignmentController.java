@@ -60,11 +60,12 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     @Transactional
     public CollectionModel<EntityModel<IdentifierAssignment>> get(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam(value = "deviceId", required = false) String deviceId,
             Pageable pageable) {
         User currentUser = userService.getCurrentUser();
-        identifierAssignmentService.generateIdentifiersIfNecessary(currentUser);
+        identifierAssignmentService.generateIdentifiersIfNecessary(currentUser, deviceId);
 
-        return wrap(identifierAssignmentRepository.findByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullOrderByAssignmentOrderAsc(currentUser, CHSEntity.toDate(lastModifiedDateTime), pageable));
+        return wrap(identifierAssignmentRepository.findByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullAndDeviceIdEqualsOrderByAssignmentOrderAsc(currentUser, CHSEntity.toDate(lastModifiedDateTime), deviceId, pageable));
     }
 
     @RequestMapping(value = "/identifierAssignment/v2", method = RequestMethod.GET)
@@ -72,11 +73,12 @@ public class IdentifierAssignmentController extends AbstractController<Identifie
     @Transactional
     public SlicedResources<EntityModel<IdentifierAssignment>> getAsSlice(
             @RequestParam("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @RequestParam(value = "deviceId", required = false) String deviceId,
             Pageable pageable) {
         User currentUser = userService.getCurrentUser();
-        identifierAssignmentService.generateIdentifiersIfNecessary(currentUser);
+        identifierAssignmentService.generateIdentifiersIfNecessary(currentUser, deviceId);
 
-        return wrap(identifierAssignmentRepository.findSliceByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullOrderByAssignmentOrderAsc(currentUser, CHSEntity.toDate(lastModifiedDateTime), pageable));
+        return wrap(identifierAssignmentRepository.findSliceByAssignedToAndLastModifiedDateTimeGreaterThanAndIsVoidedFalseAndIndividualIsNullAndProgramEnrolmentIsNullAndDeviceIdEqualsOrderByAssignmentOrderAsc(currentUser, CHSEntity.toDate(lastModifiedDateTime), deviceId, pageable));
     }
 
     @RequestMapping(value = "/identifierAssignments", method = RequestMethod.POST)
