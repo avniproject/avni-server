@@ -10,6 +10,7 @@ public class SubjectSearchRequest {
     private String name;
     private IntegerRange age;
     private Boolean includeVoided;
+    private Boolean includeDisplayCount;
     private List<Integer> addressIds = new ArrayList<>();
     private List<Concept> concept;
     private List<String> gender;
@@ -54,6 +55,14 @@ public class SubjectSearchRequest {
 
     public void setIncludeVoided(Boolean includeVoided) {
         this.includeVoided = includeVoided;
+    }
+
+    public Boolean getIncludeDisplayCount() {
+        return includeDisplayCount;
+    }
+
+    public void setIncludeDisplayCount(Boolean includeDisplayCount) {
+        this.includeDisplayCount = includeDisplayCount;
     }
 
     public List<Integer> getAddressIds() {

@@ -36,11 +36,12 @@ public class IndividualSearchService {
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
         long resultsEnd = new DateTime().getMillis();
+        BigInteger totalCount = subjectSearchRequest.getIncludeDisplayCount().booleanValue() == true ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : new BigInteger("-1");
         logger.info(String.format("Subject search: Time Taken: %dms. Sorted: %s", (resultsEnd - startTime), subjectSearchRequest.getPageElement().getSortColumn()));
-        return constructIndividual(searchResults);
+        return constructIndividual(searchResults,totalCount);
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList,BigInteger totalCount) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))
@@ -64,6 +65,7 @@ public class IndividualSearchService {
                             .collect(Collectors.toList()));
                     individualRecord.put("addressLevel", titleLineages.get(((BigInteger) individualRecord.get("addressId")).longValue()));
                 }).collect(Collectors.toList());
+        recordsMap.put("totalElements", totalCount);
         recordsMap.put("listOfRecords", listOfRecords);
         return recordsMap;
     }
