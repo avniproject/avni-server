@@ -79,7 +79,7 @@ public class AvniJobRepository {
                 "         left join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id\n" +
                 "where i.job_name = 'syncAttributesJob'\n" +
                 "  and bjep.parameter_name = 'subjectTypeId'\n" +
-                "  and long_val = :subjectTypeId\n" +
+                "  and bjep.parameter_value = :subjectTypeId::text\n" +
                 "  and start_time is not null\n" +
                 "order by start_time desc\n" +
                 "limit 1;";
