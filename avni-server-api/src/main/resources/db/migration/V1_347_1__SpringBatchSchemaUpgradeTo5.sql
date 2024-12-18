@@ -1,14 +1,25 @@
-update batch_job_execution_params bjep
-set string_val = long_val::text
-where type_cd = 'LONG';
-
-update batch_job_execution_params bjep
-set string_val = date_val::text
-where type_cd = 'DATE';
-
-update batch_job_execution_params bjep
-set string_val = double_val::text
-where type_cd = 'DOUBLE';
+DO
+$$
+    BEGIN
+        IF EXISTS
+            (SELECT 1
+             FROM information_schema.tables
+             WHERE table_schema = 'public'
+               AND table_name = 'BATCH_JOB_EXECUTION_PARAMS'
+            )
+        THEN
+            UPDATE BATCH_JOB_EXECUTION_PARAMS bjep
+            set string_val = long_val::text
+            where type_cd = 'LONG';
+            UPDATE BATCH_JOB_EXECUTION_PARAMS bjep
+            set string_val = date_val::text
+            where type_cd = 'DATE';
+            UPDATE BATCH_JOB_EXECUTION_PARAMS bjep
+            set string_val = double_val::text
+            where type_cd = 'DOUBLE';
+        END IF;
+    END
+$$;
 
 ALTER TABLE if exists BATCH_STEP_EXECUTION
     ADD CREATE_TIME TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00';
