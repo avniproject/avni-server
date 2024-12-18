@@ -564,89 +564,102 @@ where entity.audit_id = a.id
 
 -- Find out scheduled jobs in the system
 
-select *from (select bje.job_execution_id                                                                          execution_id,
-                     bje.status                                                                                    status,
-                     bje.exit_code                                                                                 exit_code,
-                     bji.job_name                                                                                  "Type of Job",
-                     bje.create_time                                                                               create_time,
-                     bje.start_time                                                                                start_time,
-                     bje.end_time                                                                                  end_time,
-                     string_agg(case when bjep.parameter_name = 'uuid' then bjep.string_val else '' end::text, '') uuid,
-                     string_agg(case when bjep.parameter_name = 'fileName' then bjep.string_val else '' end::text,
-                                '')                                                                                fileName,
-                     sum(case when bjep.parameter_name = 'noOfLines' then bjep.long_val else 0 end)                noOfLines,
-                     string_agg(case when bjep.parameter_name = 's3Key' then bjep.string_val else '' end::text,
-                                '')                                                                                s3Key,
-                     sum(case when bjep.parameter_name = 'userId' then bjep.long_val else 0 end)                   userId,
-                     string_agg(case when bjep.parameter_name = 'type' then bjep.string_val::text else '' end::text,
-                                '')                                                                                job_type,
-                     max(case
-                             when bjep.parameter_name = 'startDate' then bjep.date_val::timestamp
-                             else null::timestamp end::timestamp)                                                  startDate,
-                     max(case
-                             when bjep.parameter_name = 'endDate' then bjep.date_val::timestamp
-                             else null::timestamp end::timestamp)                                                  endDate,
-                     string_agg(case
-                                    when bjep.parameter_name = 'subjectTypeUUID' then bjep.string_val::text
-                                    else '' end::text,
-                                '')                                                                                subjectTypeUUID,
-                     string_agg(
-                             case when bjep.parameter_name = 'programUUID' then bjep.string_val::text else '' end::text,
-                             '')                                                                                   programUUID,
-                     string_agg(case
-                                    when bjep.parameter_name = 'encounterTypeUUID' then bjep.string_val::text
-                                    else '' end::text,
-                                '')                                                                                encounterTypeUUID,
-                     string_agg(
-                             case when bjep.parameter_name = 'reportType' then bjep.string_val::text else '' end::text,
-                             '')                                                                                   reportType,
-                     max(bse.read_count)                                                                           read_count,
-                     max(bse.write_count)                                                                          write_count,
-                     max(bse.write_skip_count)                                                                     write_skip_count
-              from batch_job_execution bje
-                       left outer join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
-                       left outer join batch_step_execution bse on bje.job_execution_id = bse.job_execution_id
-                       left join batch_job_instance bji on bji.job_instance_id = bje.job_instance_id
-              group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time,
-                       bji.job_name
-              order by bje.create_time desc) jobs;
+select *
+from (select bje.job_execution_id                                                                               execution_id,
+             bje.status                                                                                         status,
+             bje.exit_code                                                                                      exit_code,
+             bji.job_name                                                                                       "Type of Job",
+             bje.create_time                                                                                    create_time,
+             bje.start_time                                                                                     start_time,
+             bje.end_time                                                                                       end_time,
+             string_agg(case when bjep.parameter_name = 'uuid' then bjep.parameter_value else '' end::text, '') uuid,
+             string_agg(case when bjep.parameter_name = 'fileName' then bjep.parameter_value else '' end::text,
+                        '')                                                                                     fileName,
+             sum(case
+                     when bjep.parameter_name = 'noOfLines' then CAST(nullif(bjep.parameter_value, '') AS integer)
+                     else 0 end)                                                                                noOfLines,
+             string_agg(case when bjep.parameter_name = 's3Key' then bjep.parameter_value else '' end::text,
+                        '')                                                                                     s3Key,
+             sum(case
+                     when bjep.parameter_name = 'userId' then CAST(nullif(bjep.parameter_value, '') AS integer)
+                     else 0 end)                                                                                userId,
+             string_agg(case when bjep.parameter_name = 'type' then bjep.parameter_value::text else '' end::text,
+                        '')                                                                                     job_type,
+             max(case
+                     when bjep.parameter_name = 'startDate' then CAST(nullif(bjep.parameter_value, '') AS timestamp)
+                     else null::timestamp end::timestamp)                                                       startDate,
+             max(case
+                     when bjep.parameter_name = 'endDate' then CAST(nullif(bjep.parameter_value, '') AS timestamp)
+                     else null::timestamp end::timestamp)                                                       endDate,
+             string_agg(case
+                            when bjep.parameter_name = 'subjectTypeUUID' then bjep.parameter_value::text
+                            else '' end::text,
+                        '')                                                                                     subjectTypeUUID,
+             string_agg(
+                     case when bjep.parameter_name = 'programUUID' then bjep.parameter_value::text else '' end::text,
+                     '')                                                                                        programUUID,
+             string_agg(case
+                            when bjep.parameter_name = 'encounterTypeUUID' then bjep.parameter_value::text
+                            else '' end::text,
+                        '')                                                                                     encounterTypeUUID,
+             string_agg(
+                     case when bjep.parameter_name = 'reportType' then bjep.parameter_value::text else '' end::text,
+                     '')                                                                                        reportType,
+             max(bse.read_count)                                                                                read_count,
+             max(bse.write_count)                                                                               write_count,
+             max(bse.write_skip_count)                                                                          write_skip_count
+      from batch_job_execution bje
+               left outer join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+               left outer join batch_step_execution bse on bje.job_execution_id = bse.job_execution_id
+               left join batch_job_instance bji on bji.job_instance_id = bje.job_instance_id
+      group by bje.job_execution_id, bje.status, bje.exit_code, bje.create_time, bje.start_time, bje.end_time,
+               bji.job_name
+      order by bje.create_time desc) jobs;
 
 
 -- Commands to show status of Started and Pending Background jobs that were triggered today:
 
 select users.username, jobs.*
-from (select bje.job_execution_id                                                                           execution_id,
-             bje.status                                                                                     status,
-             bje.exit_code                                                                                  exit_code,
-             bji.job_name                                                                                   "Type of Job",
-             bje.create_time                                                                                create_time,
-             bje.start_time                                                                                 start_time,
-             bje.end_time                                                                                   end_time,
-             string_agg(case when bjep.parameter_name = 'uuid' then bjep.string_val else '' end::text, '')  uuid,
-             string_agg(case when bjep.parameter_name = 'fileName' then bjep.string_val else '' end::text,
-                        '')                                                                                 fileName,
-             sum(case when bjep.parameter_name = 'noOfLines' then bjep.long_val else 0 end)                 noOfLines,
-             string_agg(case when bjep.parameter_name = 's3Key' then bjep.string_val else '' end::text, '') s3Key,
-             sum(case when bjep.parameter_name = 'userId' then bjep.long_val else 0 end)                    userId,
-             string_agg(case when bjep.parameter_name = 'type' then bjep.string_val::text else '' end::text,
-                        '')                                                                                 job_type,
+from (select bje.job_execution_id                                                                                execution_id,
+             bje.status                                                                                          status,
+             bje.exit_code                                                                                       exit_code,
+             bji.job_name                                                                                        "Type of Job",
+             bje.create_time                                                                                     create_time,
+             bje.start_time                                                                                      start_time,
+             bje.end_time                                                                                        end_time,
+             string_agg(case when bjep.parameter_name = 'uuid' then bjep.parameter_value else '' end::text, '')  uuid,
+             string_agg(case when bjep.parameter_name = 'fileName' then bjep.parameter_value else '' end::text,
+                        '')                                                                                      fileName,
+             sum(case
+                     when bjep.parameter_name = 'noOfLines' then CAST(nullif(bjep.parameter_value, '') AS integer)
+                     else 0 end)                                                                                 noOfLines,
+             string_agg(case when bjep.parameter_name = 's3Key' then bjep.parameter_value else '' end::text, '') s3Key,
+             sum(case
+                     when bjep.parameter_name = 'userId' then CAST(nullif(bjep.parameter_value, '') AS integer)
+                     else 0 end)                                                                                 userId,
+             string_agg(case when bjep.parameter_name = 'type' then bjep.parameter_value::text else '' end::text,
+                        '')                                                                                      job_type,
              max(case
-                     when bjep.parameter_name = 'startDate' then bjep.date_val::timestamp
-                     else null::timestamp end::timestamp)                                                   startDate,
+                     when bjep.parameter_name = 'startDate' then CAST(nullif(bjep.parameter_value, '') AS timestamp)
+                     else null::timestamp end::timestamp)                                                        startDate,
              max(case
-                     when bjep.parameter_name = 'endDate' then bjep.date_val::timestamp
-                     else null::timestamp end::timestamp)                                                   endDate,
-             string_agg(case when bjep.parameter_name = 'subjectTypeUUID' then bjep.string_val::text else '' end::text,
-                        '')                                                                                 subjectTypeUUID,
-             string_agg(case when bjep.parameter_name = 'programUUID' then bjep.string_val::text else '' end::text,
-                        '')                                                                                 programUUID,
+                     when bjep.parameter_name = 'endDate' then CAST(nullif(bjep.parameter_value, '') AS timestamp)
+                     else null::timestamp end::timestamp)                                                        endDate,
+             string_agg(case
+                            when bjep.parameter_name = 'subjectTypeUUID' then bjep.parameter_value::text
+                            else '' end::text,
+                        '')                                                                                      subjectTypeUUID,
+             string_agg(case when bjep.parameter_name = 'programUUID' then bjep.parameter_value::text else '' end::text,
+                        '')                                                                                      programUUID,
              string_agg(
-                     case when bjep.parameter_name = 'encounterTypeUUID' then bjep.string_val::text else '' end::text,
-                     '')                                                                                    encounterTypeUUID,
-             string_agg(case when bjep.parameter_name = 'reportType' then bjep.string_val::text else '' end::text,
-                        '')                                                                                 reportType,
-             max(bse.read_count)                                                                            read_count,
-             max(bse.write_count)                                                                           write_count,
+                     case
+                         when bjep.parameter_name = 'encounterTypeUUID' then bjep.parameter_value::text
+                         else '' end::text,
+                     '')                                                                                         encounterTypeUUID,
+             string_agg(case when bjep.parameter_name = 'reportType' then bjep.parameter_value::text else '' end::text,
+                        '')                                                                                      reportType,
+             max(bse.read_count)                                                                                 read_count,
+             max(bse.write_count)                                                                                write_count,
              max(bse.write_skip_count)                                                                      write_skip_count
       from batch_job_execution bje
                left outer join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
@@ -665,7 +678,7 @@ select * from batch_job_execution bje
 inner join batch_job_instance bji on bje.job_instance_id = bji.job_instance_id
   inner join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
     and bjep.parameter_name = 'organisationUUID'
-  and string_val = (select uuid from organisation where name = '')
+    and parameter_value = (select uuid from organisation where name = '')
 where bji.job_name = 'importZipJob';
 
 -- Commands to forcefully terminate a Spring-Batch job
