@@ -9,9 +9,9 @@ import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
+import org.avni.server.domain.S3ExtensionFile;
 import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.media.MediaFolder;
@@ -348,7 +348,11 @@ public abstract class StorageService implements S3Service {
             logger.info(format("[dev] Save file locally. '%s'", objectKey));
             return tempFile.getAbsolutePath();
         }
-        s3Client.putObject(new PutObjectRequest(bucketName, objectKey, tempFile));
+        String mimeType = URLConnection.guessContentTypeFromName(objectKey);
+        ObjectMetadata objectMetadata = new ObjectMetadata();
+        objectMetadata.setContentType(mimeType);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectKey, tempFile).withMetadata(objectMetadata);
+        s3Client.putObject(putObjectRequest);
         tempFile.delete();
         return objectKey;
     }
