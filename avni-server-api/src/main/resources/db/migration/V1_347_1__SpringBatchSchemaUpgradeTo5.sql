@@ -5,16 +5,16 @@ $$
             (SELECT 1
              FROM information_schema.tables
              WHERE table_schema = 'public'
-               AND table_name = 'BATCH_JOB_EXECUTION_PARAMS'
+               AND table_name = 'batch_job_execution_params'
             )
         THEN
-            UPDATE BATCH_JOB_EXECUTION_PARAMS bjep
+            UPDATE batch_job_execution_params bjep
             set string_val = long_val::text
             where type_cd = 'LONG';
-            UPDATE BATCH_JOB_EXECUTION_PARAMS bjep
+            UPDATE batch_job_execution_params bjep
             set string_val = date_val::text
             where type_cd = 'DATE';
-            UPDATE BATCH_JOB_EXECUTION_PARAMS bjep
+            UPDATE batch_job_execution_params bjep
             set string_val = double_val::text
             where type_cd = 'DOUBLE';
         END IF;
