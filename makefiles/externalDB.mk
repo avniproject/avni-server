@@ -86,8 +86,8 @@ tunnel-prerelease-db:
 	make tunnel-db host=avni-prerelease dbServer=prereleasedb.avniproject.org
 tunnel-prod-read-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.read.openchs.org
-tunnel-metabase:
-	make tunnel-db host=avni-metabase dbServer=reportingdb.cnwnxgm8rsnb.ap-south-1.rds.amazonaws.com
+tunnel-metabase-db:
+	make tunnel-db host=reporting-metabase dbServer=reportingdb.cnwnxgm8rsnb.ap-south-1.rds.amazonaws.com
 tunnel-prod-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.openchs.org
 tunnel-lfe-prod-db:
