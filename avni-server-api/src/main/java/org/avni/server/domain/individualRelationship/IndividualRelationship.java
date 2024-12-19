@@ -1,9 +1,13 @@
 package org.avni.server.domain.individualRelationship;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
-import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;

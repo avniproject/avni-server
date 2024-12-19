@@ -15,7 +15,6 @@ import org.avni.server.domain.individualRelationship.IndividualRelationshipType;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.request.IndividualRelationshipRequest;
 import org.avni.server.web.response.slice.SlicedResources;
 import org.joda.time.DateTime;

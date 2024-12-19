@@ -6,6 +6,7 @@ import org.avni.server.domain.Catchment;
 import org.avni.server.domain.User;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.web.request.api.RequestUtils;
+import org.joda.time.DateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -15,8 +16,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
-
-import jakarta.persistence.*;
 
 import java.util.List;
 import java.util.Optional;

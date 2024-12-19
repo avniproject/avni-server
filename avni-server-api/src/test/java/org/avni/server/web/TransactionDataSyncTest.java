@@ -2,6 +2,7 @@ package org.avni.server.web;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
+import org.avni.server.dao.GeneralRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
@@ -20,7 +21,6 @@ import org.avni.server.web.request.EntitySyncStatusContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;

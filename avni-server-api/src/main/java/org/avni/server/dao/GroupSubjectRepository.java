@@ -4,6 +4,7 @@ import jakarta.persistence.criteria.*;
 import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.joda.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -16,9 +17,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
-import jakarta.persistence.criteria.*;
-
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
