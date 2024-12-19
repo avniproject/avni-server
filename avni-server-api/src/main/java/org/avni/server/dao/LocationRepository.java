@@ -8,7 +8,6 @@ import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Catchment;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.util.DateTimeUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -19,10 +18,10 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import jakarta.persistence.QueryHint;
-import jakarta.validation.constraints.NotNull;
-
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "locations", path = "locations")

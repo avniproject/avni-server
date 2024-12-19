@@ -11,7 +11,6 @@ import org.avni.server.geo.PointType;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import java.time.Instant;
 import java.util.Objects;
 
 @MappedSuperclass

@@ -10,7 +10,6 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.ConstraintViolationExceptionAcrossOrganisations;
-import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.JsonObjectUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,8 +18,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
-
-import jakarta.persistence.criteria.*;
 
 import java.util.ArrayList;
 import java.util.Date;

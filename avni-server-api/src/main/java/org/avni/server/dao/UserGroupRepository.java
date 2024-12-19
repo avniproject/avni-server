@@ -1,7 +1,5 @@
 package org.avni.server.dao;
 
-import java.util.Date;
-import org.avni.server.domain.User;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserGroup;
@@ -13,7 +11,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 

@@ -4,13 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
-import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "sync_telemetry")

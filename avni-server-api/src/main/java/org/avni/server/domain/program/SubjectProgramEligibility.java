@@ -7,12 +7,8 @@ import org.avni.server.domain.ObservationCollection;
 import org.avni.server.domain.OrganisationAwareEntity;
 import org.avni.server.domain.Program;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
-import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "subject_program_eligibility")
 public class SubjectProgramEligibility extends OrganisationAwareEntity {
