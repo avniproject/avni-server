@@ -16,7 +16,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
+import jakarta.persistence.criteria.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
@@ -27,8 +28,8 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
     @PreAuthorize("hasAnyAuthority('user')")
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<GroupSubject> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);
 
     default GroupSubject findByName(String name) {
@@ -75,7 +76,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
             "and m.isVoided = false " +
             "and g.registrationDate between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR g.addressLevel.id in :locationIds)")
-    Stream<GroupSubject> findNonVoidedGroupSubjects(Long subjectTypeId, List<Long> locationIds, Instant startDateTime, Instant endDateTime);
+    Stream<GroupSubject> findNonVoidedGroupSubjects(Long subjectTypeId, List<Long> locationIds, LocalDate startDateTime, LocalDate endDateTime);
 
     @Query("select gs from GroupSubject gs " +
             "join gs.groupSubject g " +
@@ -83,7 +84,7 @@ public interface GroupSubjectRepository extends TransactionalDataRepository<Grou
             "where g.subjectType.id = :subjectTypeId " +
             "and g.registrationDate between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR g.addressLevel.id in :locationIds)")
-    Stream<GroupSubject> findAllGroupSubjects(Long subjectTypeId, List<Long> locationIds, Instant startDateTime, Instant endDateTime);
+    Stream<GroupSubject> findAllGroupSubjects(Long subjectTypeId, List<Long> locationIds, LocalDate startDateTime, LocalDate endDateTime);
 
 
     default Specification<GroupSubject> syncStrategySpecification(SyncParameters syncParameters) {

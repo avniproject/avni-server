@@ -1,13 +1,15 @@
 package org.avni.server.domain;
 
 
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
+import org.avni.server.util.DateTimeUtil;
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
-
-import java.time.Instant;
 
 @Entity
 @BatchSize(size = 100)
@@ -27,9 +29,11 @@ public class ApprovalStatus {
     @Column
     private boolean isVoided;
     @Column
-    private Instant createdDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime createdDateTime;
     @Column
-    private Instant lastModifiedDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime lastModifiedDateTime;
 
     public Long getId() {
         return id;
@@ -64,19 +68,19 @@ public class ApprovalStatus {
     }
 
     public DateTime getCreatedDateTime() {
-        return DateTimeUtil.toJodaDateTime(createdDateTime);
+        return createdDateTime;
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
+        this.createdDateTime = createdDateTime;
     }
 
     public DateTime getLastModifiedDateTime() {
-        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
+        return lastModifiedDateTime;
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
+        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public enum Status {

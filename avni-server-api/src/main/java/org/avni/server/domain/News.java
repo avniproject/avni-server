@@ -8,7 +8,9 @@ import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import java.time.Instant;
+import jakarta.persistence.Column;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "news")
@@ -16,7 +18,7 @@ import java.time.Instant;
 public class News extends OrganisationAwareEntity {
     @NotNull
     private String title;
-    private Instant publishedDate;
+    private DateTime publishedDate;
     private String heroImage;
     private String content;
     @Column(name = "contenthtml")
@@ -31,11 +33,11 @@ public class News extends OrganisationAwareEntity {
     }
 
     public DateTime getPublishedDate() {
-        return DateTimeUtil.toJodaDateTime(publishedDate);
+        return publishedDate;
     }
 
     public void setPublishedDate(DateTime publishedDate) {
-        this.publishedDate = DateTimeUtil.toInstant(publishedDate);
+        this.publishedDate = publishedDate;
     }
 
     public String getHeroImage() {

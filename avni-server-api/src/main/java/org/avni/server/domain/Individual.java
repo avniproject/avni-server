@@ -7,15 +7,14 @@ import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
+import org.avni.server.framework.hibernate.JodaLocalDateConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
 import org.avni.server.geo.PointType;
-import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.LocalDate;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +42,8 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     private String profilePicture;
 
-    private Instant dateOfBirth;
+    @Convert(converter = JodaLocalDateConverter.class)
+    private LocalDate dateOfBirth;
 
     private boolean dateOfBirthVerified;
 
@@ -61,7 +61,7 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
 
     @NotNull
     @Column(name = ColumnNames.RegistrationDate)
-    private Instant registrationDate;
+    private LocalDate registrationDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gender_id")
@@ -96,20 +96,20 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
         individual.firstName = firstName;
         individual.lastName = lastName;
         individual.profilePicture = profilePicture;
-        individual.dateOfBirth = DateTimeUtil.toInstant(dateOfBirth);
+        individual.dateOfBirth = dateOfBirth;
         individual.dateOfBirthVerified = dateOfBirthVerified;
         individual.gender = gender;
         individual.addressLevel = address;
-        individual.registrationDate = DateTimeUtil.toInstant(registrationDate);
+        individual.registrationDate = registrationDate;
         return individual;
     }
 
     public LocalDate getDateOfBirth() {
-        return DateTimeUtil.toJodaDate(dateOfBirth);
+        return dateOfBirth;
     }
 
     public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = DateTimeUtil.toInstant(dateOfBirth);
+        this.dateOfBirth = dateOfBirth;
     }
 
     public boolean isDateOfBirthVerified() {
@@ -173,11 +173,11 @@ public class Individual extends SyncAttributeEntity implements MessageableEntity
     }
 
     public LocalDate getRegistrationDate() {
-        return DateTimeUtil.toJodaDate(registrationDate);
+        return registrationDate;
     }
 
     public void setRegistrationDate(LocalDate registrationDate) {
-        this.registrationDate = DateTimeUtil.toInstant(registrationDate);
+        this.registrationDate = registrationDate;
     }
 
     public void addEnrolment(ProgramEnrolment programEnrolment) {

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
 import org.avni.server.geo.PointType;
@@ -14,7 +15,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -42,14 +42,16 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
 
     @Column(name = ColumnNames.EnrolmentDateTime)
     @NotNull
-    private Instant enrolmentDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime enrolmentDateTime;
 
     @Column(name = ProgramEnrolmentObservations)
     @Type(value = ObservationCollectionUserType.class)
     private ObservationCollection observations;
 
     @Column(name = ColumnNames.ProgramExitDateTime)
-    private Instant programExitDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime programExitDateTime;
 
     @Type(value = PointType.class)
     @Column
@@ -126,11 +128,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public DateTime getEnrolmentDateTime() {
-        return DateTimeUtil.toJodaDateTime(enrolmentDateTime);
+        return enrolmentDateTime;
     }
 
     public void setEnrolmentDateTime(DateTime enrolmentDateTime) {
-        this.enrolmentDateTime = DateTimeUtil.toInstant(enrolmentDateTime);
+        this.enrolmentDateTime = enrolmentDateTime;
     }
 
     public ObservationCollection getObservations() {
@@ -142,11 +144,11 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public DateTime getProgramExitDateTime() {
-        return DateTimeUtil.toJodaDateTime(programExitDateTime);
+        return programExitDateTime;
     }
 
     public void setProgramExitDateTime(DateTime programExitDateTime) {
-        this.programExitDateTime = DateTimeUtil.toInstant(programExitDateTime);
+        this.programExitDateTime = programExitDateTime;
     }
 
     public ObservationCollection getProgramExitObservations() {

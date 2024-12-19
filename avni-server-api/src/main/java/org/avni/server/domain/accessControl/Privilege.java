@@ -5,11 +5,10 @@ import jakarta.validation.constraints.NotNull;
 
 import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.PrivilegeEntityType;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "privilege")
@@ -32,25 +31,27 @@ public class Privilege extends CHSBaseEntity {
     private PrivilegeEntityType entityType;
 
     @Column
-    private Instant createdDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime createdDateTime;
 
     @Column
-    private Instant lastModifiedDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime lastModifiedDateTime;
 
     public DateTime getCreatedDateTime() {
-        return DateTimeUtil.toJodaDateTime(createdDateTime);
+        return createdDateTime;
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
+        this.createdDateTime = createdDateTime;
     }
 
     public DateTime getLastModifiedDateTime() {
-        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
+        return lastModifiedDateTime;
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
+        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public String getName() {

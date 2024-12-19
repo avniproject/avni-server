@@ -12,7 +12,6 @@ import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,15 +20,15 @@ import java.util.List;
 public interface PrivilegeRepository extends AvniJpaRepository<Privilege, Long> {
     @RestResource(path = "lastModified", rel = "lastModified")
     Page<Privilege> findByLastModifiedDateTimeIsBetweenOrderByLastModifiedDateTimeAscIdAsc(
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) DateTime now,
             Pageable pageable);
 
     Privilege findByUuid(String uuid);
 
     List<Privilege> findAllByIsVoidedFalse();
 
-    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime);
 
     Privilege findByType(PrivilegeType privilegeType);
 

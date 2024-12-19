@@ -3,12 +3,12 @@ package org.avni.server.dao;
 import jakarta.persistence.criteria.*;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Concept;
-import org.avni.server.util.DateTimeUtil;
 import org.joda.time.DateTime;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
 
-import java.time.Instant;
+import jakarta.persistence.criteria.*;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,7 +47,7 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
         return cb.function("TO_CHAR", String.class, path, cb.literal("yyyy-MM-dd"));
     }
 
-    default Specification lastModifiedBetween(Instant lastModifiedDateTime, Instant now) {
+    default Specification lastModifiedBetween(Date lastModifiedDateTime, Date now) {
         Specification<T> spec = (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -60,10 +60,6 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
             return cb.and(predicates.toArray(new Predicate[predicates.size()]));
         };
         return spec;
-    }
-
-    default Specification lastModifiedBetween(Date lastModifiedDateTime, Date now) {
-        return this.lastModifiedBetween(DateTimeUtil.toInstant(lastModifiedDateTime), DateTimeUtil.toInstant(now));
     }
 
     default Specification withConceptValues(Map<Concept, String> concepts, String observationField) {
@@ -84,9 +80,9 @@ public interface CHSRepository<T extends CHSEntity> extends AvniCrudRepository<T
         this.save(entity);
     }
 
-    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(Date lastModifiedDateTime);
 
     default boolean existsByLastModifiedDateTimeGreaterThan(DateTime lastModifiedDateTime) {
-        return existsByLastModifiedDateTimeGreaterThan(DateTimeUtil.toInstant(lastModifiedDateTime));
+        return existsByLastModifiedDateTimeGreaterThan(lastModifiedDateTime == null ? null : lastModifiedDateTime.toDate());
     }
 }

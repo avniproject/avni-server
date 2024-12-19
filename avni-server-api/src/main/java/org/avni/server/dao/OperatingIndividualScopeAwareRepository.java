@@ -20,7 +20,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.NoRepositoryBean;
 
-import java.time.Instant;
+import jakarta.persistence.criteria.*;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -66,7 +67,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (syncParameters.getSubjectType() == null || !syncParameters.getSubjectType().isDirectlyAssignable())
-                predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(DateTimeUtil.toInstant(lastModifiedDateTime)), cb.literal(DateTimeUtil.toInstant(now))));
+                predicates.add(cb.between(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime), cb.literal(now)));
             query.orderBy(cb.asc(root.get("lastModifiedDateTime")), cb.asc(root.get("id")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -84,7 +85,7 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
         Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
         return (Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.greaterThan(root.get("lastModifiedDateTime"), cb.literal(DateTimeUtil.toInstant(lastModifiedDateTime))));
+            predicates.add(cb.greaterThan(root.get("lastModifiedDateTime"), cb.literal(lastModifiedDateTime)));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -135,9 +136,9 @@ public interface OperatingIndividualScopeAwareRepository<T extends CHSEntity> ex
                 predicates.add(cb.equal(userSubjectAssignmentJoin.get("isVoided"), false));
 
                 Date lastModifiedDateTime = syncParameters.getLastModifiedDateTime().toDate();
-                Path<Instant> lastModifiedDateTimePath = userSubjectAssignmentJoin.get("lastModifiedDateTime");
+                Path<Date> lastModifiedDateTimePath = userSubjectAssignmentJoin.get("lastModifiedDateTime");
                 Date now = syncParameters.getNow().toDate();
-                predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(DateTimeUtil.toInstant(lastModifiedDateTime)), cb.literal(DateTimeUtil.toInstant(now))));
+                predicates.add(cb.between(lastModifiedDateTimePath, cb.literal(lastModifiedDateTime), cb.literal(now)));
 
                 query.orderBy(cb.asc(lastModifiedDateTimePath), cb.asc(userSubjectAssignmentJoin.get("id")));
             }

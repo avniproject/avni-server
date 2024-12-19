@@ -11,7 +11,8 @@ import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import java.time.Instant;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity(name = "subject_program_eligibility")
 public class SubjectProgramEligibility extends OrganisationAwareEntity {
@@ -29,7 +30,7 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     private boolean isEligible;
 
     @Column
-    private Instant checkDate;
+    private DateTime checkDate;
 
     @Column
     @Type(value = ObservationCollectionUserType.class)
@@ -60,11 +61,11 @@ public class SubjectProgramEligibility extends OrganisationAwareEntity {
     }
 
     public DateTime getCheckDate() {
-        return DateTimeUtil.toJodaDateTime(checkDate);
+        return checkDate;
     }
 
     public void setCheckDate(DateTime checkDate) {
-        this.checkDate = DateTimeUtil.toInstant(checkDate);
+        this.checkDate = checkDate;
     }
 
     public ObservationCollection getObservations() {

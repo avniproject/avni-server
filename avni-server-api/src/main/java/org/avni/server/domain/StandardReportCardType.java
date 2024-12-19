@@ -1,12 +1,12 @@
 package org.avni.server.domain;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.joda.time.DateTime;
 
-import java.time.Instant;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @BatchSize(size = 100)
@@ -27,9 +27,11 @@ public class StandardReportCardType {
     @Column
     private boolean isVoided;
     @Column
-    private Instant createdDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime createdDateTime;
     @Column
-    private Instant lastModifiedDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime lastModifiedDateTime;
     @Column
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -76,19 +78,19 @@ public class StandardReportCardType {
     }
 
     public DateTime getCreatedDateTime() {
-        return DateTimeUtil.toJodaDateTime(createdDateTime);
+        return createdDateTime;
     }
 
     public void setCreatedDateTime(DateTime createdDateTime) {
-        this.createdDateTime = DateTimeUtil.toInstant(createdDateTime);
+        this.createdDateTime = createdDateTime;
     }
 
     public DateTime getLastModifiedDateTime() {
-        return DateTimeUtil.toJodaDateTime(lastModifiedDateTime);
+        return lastModifiedDateTime;
     }
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
-        this.lastModifiedDateTime = DateTimeUtil.toInstant(lastModifiedDateTime);
+        this.lastModifiedDateTime = lastModifiedDateTime;
     }
 
     public @NotNull StandardReportCardTypeType getType() {

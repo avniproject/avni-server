@@ -17,7 +17,6 @@ plugins {
     id 'java'
 }
 
-ext { springBootVersion = '3.3.5' }
 //todo: Remove when upgrading Spring version. This was introduced to use SameSiteCookies
 //ext['tomcat.version'] = '9.0.80'
 
@@ -49,7 +48,7 @@ configurations {
 dependencies {
     implementation group: 'org.apache.tomcat', name: 'tomcat-jdbc'
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    implementation("org.springframework.boot:spring-boot-starter-cache:${springBootVersion}")
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-data-rest:${springBootVersion}"
     implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
@@ -62,9 +61,6 @@ dependencies {
         exclude(group: 'org.hibernate', module: 'hibernate-core')
     }
     runtimeOnly("javax.transaction:jta:1.1")
-//    implementation(group: 'org.jadira.usertype', name: 'usertype.core', version: '7.0.0.CR1') {
-//        exclude(group: 'org.hibernate', module: 'hibernate-core')
-//    }
     implementation "org.flywaydb:flyway-core:10.20.1"
     runtimeOnly("org.flywaydb:flyway-database-postgresql:10.20.1")
     implementation "org.flywaydb.flyway-test-extensions:flyway-spring6-test:10.0.0"
@@ -74,15 +70,11 @@ dependencies {
     implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
     implementation 'com.auth0:jwks-rsa:0.3.0'
     implementation 'com.auth0:java-jwt:3.3.0'
-//    implementation(group: 'org.hibernate', name: 'hibernate-search-orm', version: '5.9.2.Final') {
-//        exclude(group: 'org.hibernate', module: 'hibernate-core')
-//    }
     implementation 'com.bugsnag:bugsnag:3.+'
     implementation 'com.amazonaws:aws-java-sdk-s3'
     implementation 'com.amazonaws:aws-java-sdk-cognitoidp'
     implementation 'commons-validator:commons-validator:1.4.1'
     implementation 'org.passay:passay:1.6.3'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.keycloak:keycloak-spring-boot-starter:24.0.4'
     implementation 'org.keycloak:keycloak-admin-client:24.0.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.4'
@@ -90,13 +82,19 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.4'
     implementation 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.15.2'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.4'
-    implementation('org.hibernate:hibernate-ehcache:5.6.15.Final') {
+
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    implementation 'javax.cache:cache-api:1.1.1'
+    implementation("org.hibernate.orm:hibernate-jcache:6.5.2.Final") {
+        exclude(group: "org.hibernate.orm", module: "hibernate-core")
+    }
+    runtimeOnly('org.hibernate:hibernate-ehcache:5.6.15.Final') {
         exclude(group: 'org.hibernate', module: 'hibernate-core')
     }
+
+    implementation('org.ehcache:ehcache:3.10.8:jakarta')
+
     runtimeOnly("javax.xml.bind:jaxb-api:2.3.1")
-    runtimeOnly('org.ehcache:ehcache:3.10.8')
-    runtimeOnly("org.hibernate:hibernate-jcache:6.5.1.Final")
-    implementation 'javax.cache:cache-api:1.1.1'
     dev "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
     testImplementation "org.mockito:mockito-core:3.12.4"
     testImplementation 'org.powermock:powermock-core:2.0.9'

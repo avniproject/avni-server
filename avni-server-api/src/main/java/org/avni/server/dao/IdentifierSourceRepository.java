@@ -1,5 +1,6 @@
 package org.avni.server.dao;
-
+import java.time.Instant;
+import java.util.Date;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.IdentifierSource;
 import org.springframework.data.domain.Page;
@@ -27,13 +28,13 @@ public interface IdentifierSourceRepository extends ReferenceDataRepository<Iden
             "order by isource.lastModifiedDateTime asc")
     Page<IdentifierSource> getAllAuthorisedIdentifierSources(
             @Param("catchment") Catchment catchment,
-            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant lastModifiedDateTime,
-            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant now,
+            @Param("lastModifiedDateTime") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date lastModifiedDateTime,
+            @Param("now") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date now,
             Pageable pageable);
 
     @Query("select isource from IdentifierSource isource " +
             "where isource.isVoided=false and (catchment is null or (:catchment is not null and catchment = :catchment)) ")
     List<IdentifierSource> getAllAuthorisedIdentifierSources(@Param("catchment") Catchment catchment);
 
-    boolean existsByLastModifiedDateTimeGreaterThan(Instant lastModifiedDateTime);
+    boolean existsByLastModifiedDateTimeGreaterThan(Date lastModifiedDateTime);
 }

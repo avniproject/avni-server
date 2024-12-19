@@ -205,32 +205,32 @@ public class ExportBatchConfiguration {
 
     private Stream getGroupSubjectStream(String subjectTypeUUID, List<Long> addressParam, LocalDate startDate, LocalDate endDate, Map<String, Sort.Direction> sorts, boolean isVoidedIncluded) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
-        return isVoidedIncluded ? groupSubjectRepository.findAllGroupSubjects(subjectType.getId(), addressParam, DateTimeUtil.toInstant(startDate), DateTimeUtil.toInstant(endDate)) :
-                groupSubjectRepository.findNonVoidedGroupSubjects(subjectType.getId(), addressParam, DateTimeUtil.toInstant(startDate), DateTimeUtil.toInstant(endDate));
+        return isVoidedIncluded ? groupSubjectRepository.findAllGroupSubjects(subjectType.getId(), addressParam, startDate, endDate) :
+                groupSubjectRepository.findNonVoidedGroupSubjects(subjectType.getId(), addressParam, startDate, endDate);
     }
 
     private Stream getEncounterStream(String programUUID, String encounterTypeUUID, List<Long> addressParam, DateTime startDateTime, DateTime endDateTime, boolean isVoidedIncluded) {
         EncounterType encounterType = encounterTypeRepository.findByUuid(encounterTypeUUID);
         if (programUUID == null) {
-            return isVoidedIncluded ? individualRepository.findAllEncounters(addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime), encounterType.getId()) :
-                    individualRepository.findNonVoidedEncounters(addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime), encounterType.getId());
+            return isVoidedIncluded ? individualRepository.findAllEncounters(addressParam, startDateTime, endDateTime, encounterType.getId()) :
+                    individualRepository.findNonVoidedEncounters(addressParam, startDateTime, endDateTime, encounterType.getId());
         } else {
             Program program = programRepository.findByUuid(programUUID);
-            return isVoidedIncluded ? programEnrolmentRepository.findAllProgramEncounters(addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime), encounterType.getId(), program.getId()) :
-                    programEnrolmentRepository.findNonVoidedProgramEncounters(addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime), encounterType.getId(), program.getId());
+            return isVoidedIncluded ? programEnrolmentRepository.findAllProgramEncounters(addressParam, startDateTime, endDateTime, encounterType.getId(), program.getId()) :
+                    programEnrolmentRepository.findNonVoidedProgramEncounters(addressParam, startDateTime, endDateTime, encounterType.getId(), program.getId());
         }
     }
 
     private Stream getEnrolmentStream(String programUUID, List<Long> addressParam, DateTime startDateTime, DateTime endDateTime, boolean isVoidedIncluded) {
         Program program = programRepository.findByUuid(programUUID);
-        return isVoidedIncluded ? programEnrolmentRepository.findAllEnrolments(program.getId(), addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime)) :
-                programEnrolmentRepository.findNonVoidedEnrolments(program.getId(), addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime));
+        return isVoidedIncluded ? programEnrolmentRepository.findAllEnrolments(program.getId(), addressParam, startDateTime, endDateTime) :
+                programEnrolmentRepository.findNonVoidedEnrolments(program.getId(), addressParam, startDateTime, endDateTime);
     }
 
     private Stream getRegistrationStream(String subjectTypeUUID, List<Long> addressParam, LocalDate startDateTime, LocalDate endDateTime, boolean includeVoided) {
         SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUUID);
-        return includeVoided ? individualRepository.findAllIndividuals(subjectType.getId(), addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime)) :
-                individualRepository.findNonVoidedIndividuals(subjectType.getId(), addressParam, DateTimeUtil.toInstant(startDateTime), DateTimeUtil.toInstant(endDateTime));
+        return includeVoided ? individualRepository.findAllIndividuals(subjectType.getId(), addressParam, startDateTime, endDateTime) :
+                individualRepository.findNonVoidedIndividuals(subjectType.getId(), addressParam, startDateTime, endDateTime);
     }
 
     private List<Long> getLocations(List<Long> locationIds) {

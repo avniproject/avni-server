@@ -6,6 +6,8 @@ import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.IndividualWebProjection;
 import org.avni.server.util.S;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,7 +17,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -106,13 +107,13 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
             "and ind.subjectType.id = :subjectTypeId " +
             "and ind.registrationDate between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds,NULL) is null OR ind.addressLevel.id in :locationIds)")
-    Stream<Individual> findNonVoidedIndividuals(Long subjectTypeId, List<Long> locationIds, Instant startDateTime, Instant endDateTime);
+    Stream<Individual> findNonVoidedIndividuals(Long subjectTypeId, List<Long> locationIds, LocalDate startDateTime, LocalDate endDateTime);
 
     @Query("select ind from Individual ind " +
             "where ind.subjectType.id = :subjectTypeId " +
             "and ind.registrationDate between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds,NULL) is null OR ind.addressLevel.id in :locationIds)")
-    Stream<Individual> findAllIndividuals(Long subjectTypeId, List<Long> locationIds, Instant startDateTime, Instant endDateTime);
+    Stream<Individual> findAllIndividuals(Long subjectTypeId, List<Long> locationIds, LocalDate startDateTime, LocalDate endDateTime);
 
     //group by is added for distinct ind records
     @Query("select i from Individual i " +
@@ -123,7 +124,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
             "and coalesce(enc.encounterDateTime, enc.cancelDateTime) between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR i.addressLevel.id in :locationIds)" +
             "group by i.id")
-    Stream<Individual> findNonVoidedEncounters(List<Long> locationIds, Instant startDateTime, Instant endDateTime, Long encounterTypeId);
+    Stream<Individual> findNonVoidedEncounters(List<Long> locationIds, DateTime startDateTime, DateTime endDateTime, Long encounterTypeId);
 
     @Query("select i from Individual i " +
             "join i.encounters enc " +
@@ -131,7 +132,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
             "and coalesce(enc.encounterDateTime, enc.cancelDateTime) between :startDateTime and :endDateTime " +
             "and (coalesce(:locationIds, null) is null OR i.addressLevel.id in :locationIds)" +
             "group by i.id")
-    Stream<Individual> findAllEncounters(List<Long> locationIds, Instant startDateTime, Instant endDateTime, Long encounterTypeId);
+    Stream<Individual> findAllEncounters(List<Long> locationIds, DateTime startDateTime, DateTime endDateTime, Long encounterTypeId);
 
 
     @Query("select i from Individual i where i.uuid =:id or i.legacyId = :id")

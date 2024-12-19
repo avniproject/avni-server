@@ -1,18 +1,12 @@
 package org.avni.server.domain.individualRelationship;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import org.avni.server.domain.Individual;
-import org.avni.server.domain.ObservationCollection;
-import org.avni.server.domain.OrganisationAwareEntity;
+import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "individual_relationship")
@@ -36,10 +30,12 @@ public class IndividualRelationship extends OrganisationAwareEntity {
     private Individual individualB;
 
     @Column
-    private Instant enterDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime enterDateTime;
 
     @Column
-    private Instant exitDateTime;
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime exitDateTime;
 
     @Column
     @Type(value = ObservationCollectionUserType.class)
@@ -70,19 +66,19 @@ public class IndividualRelationship extends OrganisationAwareEntity {
     }
 
     public DateTime getEnterDateTime() {
-        return DateTimeUtil.toJodaDateTime(enterDateTime);
+        return enterDateTime;
     }
 
     public void setEnterDateTime(DateTime enterDateTime) {
-        this.enterDateTime = DateTimeUtil.toInstant(enterDateTime);
+        this.enterDateTime = enterDateTime;
     }
 
     public DateTime getExitDateTime() {
-        return DateTimeUtil.toJodaDateTime(exitDateTime);
+        return exitDateTime;
     }
 
     public void setExitDateTime(DateTime exitDateTime) {
-        this.exitDateTime = DateTimeUtil.toInstant(exitDateTime);
+        this.exitDateTime = exitDateTime;
     }
 
     public ObservationCollection getExitObservations() {
