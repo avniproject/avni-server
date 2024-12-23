@@ -299,7 +299,13 @@ workflows:
     - PRERELEASE_approve:
         type: approval
         requires:
-        - build
+          - build
+        filters:
+          branches:
+            ignore:
+              - master
+              - java-upgrade
+              - 11-tc-1
     - PRERELEASE_deploy:
         context: non-prod-deploy
         requires:
@@ -316,6 +322,12 @@ workflows:
         type: approval
         requires:
           - build
+        filters:
+          branches:
+            ignore:
+              - master
+              - java-upgrade
+              - 11-tc-1
     - PROD_deploy:
         context: prod-deploy
         requires:
