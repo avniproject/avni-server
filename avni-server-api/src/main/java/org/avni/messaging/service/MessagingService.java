@@ -1,6 +1,7 @@
 package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
+import org.avni.messaging.contract.ManualMessageContract;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.domain.*;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
@@ -130,6 +131,18 @@ public class MessagingService {
         return messageRuleRepository.findByEntityTypeAndEntityTypeId(entityType, entityTypeId, pageable);
     }
 
+    @Transactional
+    public void sendMessageSynchronously(ManualMessageContract manualMessageContract)
+            throws GlificNotConfiguredException, RuleExecutionException, PhoneNumberNotAvailableOrIncorrectException {
+        ManualMessage manualMessage = new ManualMessage(manualMessageContract.getMessageTemplateId(), manualMessageContract.getParameters());
+        manualMessage.assignUUIDIfRequired();
+        MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(manualMessageContract.getReceiverType(),
+                new Long(manualMessageContract.getReceiverId()));
+        MessageRequest messageRequest = new MessageRequest(manualMessage, messageReceiver, manualMessageContract.getScheduledDateTime());
+        messageRequest.assignUUIDIfRequired();
+        sendMessageToGlific(messageRequest);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public MessageRequest sendMessage(MessageRequest messageRequest) {
         logger.debug(String.format("Sending message for %d", messageRequest.getId()));
@@ -170,8 +183,8 @@ public class MessagingService {
         messageRequestService.createManualMessageRequest(manualMessage, messageReceiver, scheduledDateTime);
     }
 
-    private void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException, GlificNotConfiguredException {
-        if(messageRequest.getManualMessage() != null)
+    public void sendMessageToGlific(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException, GlificNotConfiguredException {
+        if (messageRequest.getManualMessage() != null)
             sendManualMessage(messageRequest);
         else
             individualMessagingService.sendAutomatedMessage(messageRequest);
