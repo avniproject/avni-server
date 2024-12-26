@@ -5,6 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CustomQueryRepository extends CHSRepository<CustomQuery> {
-
     CustomQuery findAllByName(String name);
 }

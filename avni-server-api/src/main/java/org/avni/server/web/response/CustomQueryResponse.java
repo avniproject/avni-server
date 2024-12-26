@@ -4,10 +4,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CustomQueryResponse {
-
-    private Set<String> headers;
-    private List<Collection<Object>> data;
-    private int total;
+    private final Set<String> headers;
+    private final List<Collection<Object>> data;
+    private final int total;
 
     public CustomQueryResponse(List<Map<String, Object>> queryResult) {
         Optional<Map<String, Object>> oneRow = queryResult.stream().findAny();

@@ -1,5 +1,7 @@
 package org.avni.server.dao;
 
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.avni.server.domain.CustomQuery;
 import org.avni.server.web.request.CustomQueryRequest;
 import org.avni.server.web.response.CustomQueryResponse;
@@ -17,21 +19,23 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class QueryRepository {
-    private final NamedParameterJdbcTemplate externalQueryJdbcTemplate;
+public class QueryRepository extends RoleSwitchableRepository {
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final CustomQueryRepository customQueryRepository;
     private final ErrorBodyBuilder errorBodyBuilder;
 
     @Autowired
     public QueryRepository(@Qualifier("externalQueryJdbcTemplate") NamedParameterJdbcTemplate externalQueryJdbcTemplate,
-                           CustomQueryRepository customQueryRepository, ErrorBodyBuilder errorBodyBuilder) {
-        this.externalQueryJdbcTemplate = externalQueryJdbcTemplate;
+                           CustomQueryRepository customQueryRepository, ErrorBodyBuilder errorBodyBuilder,
+                           EntityManager entityManager) {
+        super(entityManager);
+        this.namedParameterJdbcTemplate = externalQueryJdbcTemplate;
         this.customQueryRepository = customQueryRepository;
         this.errorBodyBuilder = errorBodyBuilder;
     }
 
-    QueryRepository(NamedParameterJdbcTemplate externalQueryJdbcTemplate, CustomQueryRepository customQueryRepository) {
-        this(externalQueryJdbcTemplate, customQueryRepository, ErrorBodyBuilder.createForTest());
+    QueryRepository(NamedParameterJdbcTemplate externalQueryJdbcTemplate, CustomQueryRepository customQueryRepository, EntityManager entityManager) {
+        this(externalQueryJdbcTemplate, customQueryRepository, ErrorBodyBuilder.createForTest(), entityManager);
     }
 
     public ResponseEntity<?> runQuery(CustomQueryRequest customQueryRequest) {
@@ -40,7 +44,8 @@ public class QueryRepository {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Query not found with name %s", customQueryRequest.getName()));
         }
         try {
-            List<Map<String, Object>> queryResult = externalQueryJdbcTemplate.queryForList(customQuery.getQuery(), customQueryRequest.getQueryParams());
+            this.setRoleToNone();
+            List<Map<String, Object>> queryResult = namedParameterJdbcTemplate.queryForList(customQuery.getQuery(), customQueryRequest.getQueryParams());
             return ResponseEntity.ok(new CustomQueryResponse(queryResult));
         } catch (DataAccessException e) {
             String errorMessage = ExceptionUtils.getRootCause(e).getMessage();
@@ -50,6 +55,8 @@ public class QueryRepository {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(String.format("Error while executing the query message : \"%s\"", errorMessage)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(String.format("Encountered some error while executing the query message %s", e.getMessage())));
+        } finally {
+            this.setRoleBackToUserSafe();
         }
     }
 }

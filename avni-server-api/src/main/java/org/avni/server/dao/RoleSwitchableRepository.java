@@ -13,6 +13,14 @@ public abstract class RoleSwitchableRepository {
         this.entityManager = entityManager;
     }
 
+    protected void setRoleBackToUserSafe() {
+        try {
+            setRoleBackToUser();
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     protected void setRoleBackToUser() {
         Query setRoleBackToOrgDbUser = entityManager.createNativeQuery("set role \"" + UserContextHolder.getOrganisation().getDbUser() + "\"");
         setRoleBackToOrgDbUser.executeUpdate();
