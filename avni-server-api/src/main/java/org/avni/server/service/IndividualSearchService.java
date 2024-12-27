@@ -36,7 +36,7 @@ public class IndividualSearchService {
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
         long resultsEnd = new DateTime().getMillis();
-        BigInteger totalCount = subjectSearchRequest.getIncludeDisplayCount().booleanValue() == true ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : new BigInteger("-1");
+        BigInteger totalCount = subjectSearchRequest.getIncludeDisplayCount() ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : new BigInteger("-1");
         logger.info(String.format("Subject search: Time Taken: %dms. Sorted: %s", (resultsEnd - startTime), subjectSearchRequest.getPageElement().getSortColumn()));
         return constructIndividual(searchResults,totalCount);
     }
