@@ -74,7 +74,7 @@ public class MessageController {
     public ResponseEntity<MessageDeliveryStatus> sendMsgToContactUser(@RequestBody ManualMessageContract manualMessageContract) {
         accessControlService.checkPrivilege(PrivilegeType.Messaging);
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-
+        // TODO: 25/12/24 Return exception message as well in response to enable reporting insight into the issue
         try {
             messagingService.sendMessageSynchronously(manualMessageContract);
         } catch (GlificNotConfiguredException | PhoneNumberNotAvailableOrIncorrectException e) {

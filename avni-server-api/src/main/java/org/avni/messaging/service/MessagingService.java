@@ -137,7 +137,7 @@ public class MessagingService {
         ManualMessage manualMessage = new ManualMessage(manualMessageContract.getMessageTemplateId(), manualMessageContract.getParameters());
         manualMessage.assignUUIDIfRequired();
         MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(manualMessageContract.getReceiverType(),
-                new Long(manualMessageContract.getReceiverId()));
+                Long.parseLong(manualMessageContract.getReceiverId()));
         MessageRequest messageRequest = new MessageRequest(manualMessage, messageReceiver, manualMessageContract.getScheduledDateTime());
         messageRequest.assignUUIDIfRequired();
         sendMessageToGlific(messageRequest);
