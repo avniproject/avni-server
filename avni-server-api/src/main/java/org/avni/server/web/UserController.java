@@ -9,10 +9,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
-import org.avni.server.domain.Account;
-import org.avni.server.domain.OperatingIndividualScope;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.User;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
@@ -57,6 +54,7 @@ public class UserController {
     private final ResetSyncService resetSyncService;
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
+    private final OrganisationConfigService organisationConfigService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -69,7 +67,7 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService) {
+                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -81,6 +79,7 @@ public class UserController {
         this.resetSyncService = resetSyncService;
         this.subjectTypeRepository = subjectTypeRepository;
         this.accessControlService = accessControlService;
+        this.organisationConfigService = organisationConfigService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -109,7 +108,12 @@ public class UserController {
             user = setUserAttributes(user, userContract, getRegionForUser(userContract));
 
             User savedUser = userService.save(user);
-            idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
+
+            if (savedUser.getOrganisationId() != null) {
+                idpServiceFactory.getIdpService().createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
+            } else {
+                idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
+            }
             accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
             userService.addToDefaultUserGroup(savedUser);
             userService.associateUserToGroups(savedUser, userContract.getGroupIds());
