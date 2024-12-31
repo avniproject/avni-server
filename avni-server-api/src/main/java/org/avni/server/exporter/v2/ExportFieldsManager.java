@@ -113,10 +113,11 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
 
         this.setCoreFields(HeaderCreator.getProgramEnrolmentCoreFields(), program);
         LinkedHashMap<String, FormElement> enrolmentElements = formMappingService.getAllFormElementsAndDecisionMap(subjectExportEntityType.getUuid(), program.getUuid(), null, FormType.ProgramEnrolment);
-        mainFormMap.put(program.getUuid(), enrolmentElements);
+        mainFormMap.put(program.getUuid(), this.getObsFields(program, enrolmentElements, HeaderCreator.getProgramEnrolmentCoreFields()));
+
 
         LinkedHashMap<String, FormElement> enrolmentExitElements = formMappingService.getAllFormElementsAndDecisionMap(subjectExportEntityType.getUuid(), program.getUuid(), null, FormType.ProgramExit);
-        secondaryFormMap.put(program.getUuid(), enrolmentExitElements);
+        secondaryFormMap.put(program.getUuid(), this.getObsFields(program, enrolmentExitElements, HeaderCreator.getProgramEnrolmentCoreFields()));
     }
 
     private void addProgramForm(ExportEntityType program, FormType formType, boolean isOptional) {
