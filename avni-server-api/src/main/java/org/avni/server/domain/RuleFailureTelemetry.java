@@ -87,7 +87,6 @@ public class RuleFailureTelemetry {
     private User createdBy;
 
     @CreatedDate
-    @Convert(converter = JodaDateTimeConverter.class)
     private Date createdDateTime;
 
     @JsonIgnore
@@ -99,7 +98,6 @@ public class RuleFailureTelemetry {
     private User lastModifiedBy;
 
     @LastModifiedDate
-    @Convert(converter = JodaDateTimeConverter.class)
     private Date lastModifiedDateTime;
 
     @Column(name = "version")
