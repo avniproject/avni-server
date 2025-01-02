@@ -19,10 +19,14 @@ import java.util.zip.ZipInputStream;
 public class MetadataBundleAndFileHandler {
     private static final ObjectMapper objectMapper = ObjectMapperSingleton.getObjectMapper();
 
-    protected File extractZip(MultipartFile zipFile) throws IOException {
+    public File extractZip(MultipartFile zipFile) throws IOException {
+        return this.extractZip(zipFile.getInputStream());
+    }
+
+    public File extractZip(InputStream inputStream) throws IOException {
         File tempDir = Files.createTempDirectory("metadata-zip").toFile();
 
-        try (ZipInputStream zipInputStream = new ZipInputStream(zipFile.getInputStream())) {
+        try (ZipInputStream zipInputStream = new ZipInputStream(inputStream)) {
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {

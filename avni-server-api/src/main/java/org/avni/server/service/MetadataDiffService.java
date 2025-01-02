@@ -1,36 +1,44 @@
 package org.avni.server.service;
 
+import org.avni.server.domain.Organisation;
+import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 @Service
 public class MetadataDiffService {
-
     private static final Logger logger = LoggerFactory.getLogger(MetadataDiffService.class);
 
     private final MetadataBundleAndFileHandler bundleAndFileHandler;
     private final MetadataDiffChecker diffChecker;
+    private final BundleService bundleService;
 
     @Autowired
-    public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, MetadataDiffChecker diffChecker) {
+    public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, MetadataDiffChecker diffChecker, BundleService bundleService) {
         this.bundleAndFileHandler = bundleAndFileHandler;
         this.diffChecker = diffChecker;
+        this.bundleService = bundleService;
     }
 
-    public Map<String, Object> compareMetadataZips(MultipartFile zipFile1, MultipartFile zipFile2) {
+    public Map<String, Object> findChangesInBundle(MultipartFile incumbentBundleFile) {
         Map<String, Object> result = new HashMap<>();
         File tempDir1 = null, tempDir2 = null;
 
         try {
-            tempDir1 = bundleAndFileHandler.extractZip(zipFile1);
-            tempDir2 = bundleAndFileHandler.extractZip(zipFile2);
+            Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+            tempDir1 = bundleAndFileHandler.extractZip(incumbentBundleFile);
+            ByteArrayOutputStream bundleOutputStream = bundleService.createBundle(organisation, false);
+            ByteArrayInputStream bundleInputStream = new ByteArrayInputStream(bundleOutputStream.toByteArray());
+            tempDir2 = bundleAndFileHandler.extractZip(bundleInputStream);
 
             List<File> files1 = bundleAndFileHandler.listJsonFiles(tempDir1);
             List<File> files2 = bundleAndFileHandler.listJsonFiles(tempDir2);

@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/web")
 public class MetadataDiffController {
     private final MetadataDiffService metadatadiffService;
 
@@ -20,13 +20,10 @@ public class MetadataDiffController {
         this.metadatadiffService = metadatadiffService;
     }
 
-    @PostMapping("/compare-metadata")
+    @PostMapping("/bundle/findChanges")
     @PreAuthorize("hasAnyAuthority('user')")
-    public ResponseEntity<?> compareMetadataZips(@RequestParam("file1") MultipartFile file1,
-                                                 @RequestParam("file2") MultipartFile file2) throws IOException {
-
-        Map<String, Object> result = metadatadiffService.compareMetadataZips(file1, file2);
-
+    public ResponseEntity<?> compareMetadataZips(@RequestParam("incumbentBundle") MultipartFile incumbentBundle) throws IOException {
+        Map<String, Object> result = metadatadiffService.findChangesInBundle(incumbentBundle);
         return ResponseEntity.ok(result);
     }
 }

@@ -24,12 +24,9 @@ public class MetadataDiffControllerIntegrationTest extends AbstractControllerInt
 
     @Test
     public void testCompareMetadataZips() throws Exception {
-        MockMultipartFile file1 = new MockMultipartFile("file1", "file1.zip", MediaType.MULTIPART_FORM_DATA_VALUE, "zip file content".getBytes());
-        MockMultipartFile file2 = new MockMultipartFile("file2", "file2.zip", MediaType.MULTIPART_FORM_DATA_VALUE, "zip file content".getBytes());
-
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/compare-metadata")
-                        .file(file1)
-                        .file(file2))
+        MockMultipartFile file1 = new MockMultipartFile("incumbentBundle", "file1.zip", MediaType.MULTIPART_FORM_DATA_VALUE, "zip file content".getBytes());
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/web/bundle/findChanges")
+                        .file(file1))
                 .andExpect(status().isOk());
     }
 }

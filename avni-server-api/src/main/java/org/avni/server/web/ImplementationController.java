@@ -6,6 +6,7 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.organisation.OrganisationCategory;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.BundleService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.OrganisationService;
 import org.avni.server.service.UserService;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.ByteArrayOutputStream;
-import java.util.zip.ZipOutputStream;
 
 @RestController
 public class ImplementationController implements RestControllerResourceProcessor<Concept> {
@@ -31,70 +31,22 @@ public class ImplementationController implements RestControllerResourceProcessor
     private final OrganisationConfigService organisationConfigService;
     private final AccessControlService accessControlService;
     private final UserService userService;
+    private final BundleService bundleService;
 
     @Autowired
-    public ImplementationController(OrganisationService organisationService, OrganisationConfigService organisationConfigService, AccessControlService accessControlService, UserService userService) {
+    public ImplementationController(OrganisationService organisationService, OrganisationConfigService organisationConfigService, AccessControlService accessControlService, UserService userService, BundleService bundleService) {
         this.organisationService = organisationService;
         this.organisationConfigService = organisationConfigService;
         this.accessControlService = accessControlService;
         this.userService = userService;
+        this.bundleService = bundleService;
     }
 
     @RequestMapping(value = "/implementation/export/{includeLocations}", method = RequestMethod.GET)
     public ResponseEntity<ByteArrayResource> export(@PathVariable boolean includeLocations) throws Exception {
         accessControlService.checkPrivilege(PrivilegeType.DownloadBundle);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        Long orgId = organisation.getId();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        //ZipOutputStream will be automatically closed because we are using try-with-resources.
-        /**
-         * IMPORTANT: The un-tampered bundle is processed in the order of files inserted while generating the bundle,
-         * which is as per below code.
-         *
-         * Always ensure that bundle is created with content in the same sequence that you want it to be processed during upload.
-         * DISCLAIMER: If the bundle is tampered, for example to remove any forms or concepts, then the sequence of processing of bundle files is unknown
-         */
-        try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            organisationService.addAddressLevelTypesJson(orgId, zos);
-            if (includeLocations) {
-                organisationService.addAddressLevelsJson(orgId, zos);
-                organisationService.addCatchmentsJson(organisation, zos);
-            }
-            organisationService.addSubjectTypesJson(orgId, zos);
-            organisationService.addOperationalSubjectTypesJson(organisation, zos);
-            organisationService.addEncounterTypesJson(organisation, zos);
-            organisationService.addOperationalEncounterTypesJson(organisation, zos);
-            organisationService.addProgramsJson(organisation, zos);
-            organisationService.addOperationalProgramsJson(organisation, zos);
-            organisationService.addConceptsJson(orgId, zos);
-            organisationService.addFormsJson(orgId, zos);
-            organisationService.addFormMappingsJson(orgId, zos);
-            organisationService.addOrganisationConfig(orgId, zos);
-            //Id source is mapped to a catchment so if includeLocations is false we don't add those sources to json
-            organisationService.addIdentifierSourceJson(zos, includeLocations);
-            organisationService.addRelationJson(zos);
-            organisationService.addRelationShipTypeJson(zos);
-            organisationService.addChecklistDetailJson(zos);
-            organisationService.addGroupsJson(zos);
-            organisationService.addGroupRoleJson(zos);
-            organisationService.addGroupPrivilegeJson(zos);
-            organisationService.addVideoJson(zos);
-            organisationService.addReportCards(zos);
-            organisationService.addReportDashboard(zos);
-            organisationService.addGroupDashboardJson(zos);
-            organisationService.addDocumentation(zos);
-            organisationService.addTaskType(zos);
-            organisationService.addTaskStatus(zos);
-            organisationService.addSubjectTypeIcons(zos);
-            organisationService.addReportCardIcons(zos);
-            organisationService.addApplicationMenus(zos);
-            organisationService.addMessageRules(zos);
-            organisationService.addTranslations(orgId, zos);
-            organisationService.addOldRuleDependency(orgId, zos);
-            organisationService.addOldRules(orgId, zos);
-        }
-
+        ByteArrayOutputStream baos = bundleService.createBundle(organisation, includeLocations);
         byte[] baosByteArray = baos.toByteArray();
 
         return ResponseEntity.ok()
