@@ -14,36 +14,36 @@ public class MetadataDiffChecker {
     public static final String REMOVED = "removed";
     public static final String NO_MODIFICATION = "noModification";
 
-     MetadataDiffOutputGenerator metadataDiffOutputGenerator;
+    MetadataDiffOutputGenerator metadataDiffOutputGenerator;
 
     public MetadataDiffChecker(MetadataDiffOutputGenerator metadataDiffOutputGenerator) {
         this.metadataDiffOutputGenerator = metadataDiffOutputGenerator;
     }
 
-    protected Map<String, Object> findDifferences(Map<String, Object> jsonMap1, Map<String, Object> jsonMap2) {
+    public Map<String, Object> findDifferences(Map<String, Object> incumbentJsonValues, Map<String, Object> existingConfigJsonValues) {
         Map<String, Object> differences = new HashMap<>();
         boolean hasDifferences = false;
         String uuid = "null";
-        for (Map.Entry<String, Object> entry : jsonMap1.entrySet()) {
-            uuid = entry.getKey();
-            Object json1 = entry.getValue();
-            Object json2 = jsonMap2.get(uuid);
-            if (json2 != null) {
-                Map<String, Object> diff = findJsonDifferences(castToStringObjectMap(json1), castToStringObjectMap(json2));
+        for (Map.Entry<String, Object> incumbentJsonEntry : incumbentJsonValues.entrySet()) {
+            uuid = incumbentJsonEntry.getKey();
+            Object incumbentJsonValue = incumbentJsonEntry.getValue();
+            Object existingConfigJsonValue = existingConfigJsonValues.get(uuid);
+            if (existingConfigJsonValue != null) {
+                Map<String, Object> diff = findJsonDifferences(castToStringObjectMap(incumbentJsonValue), castToStringObjectMap(existingConfigJsonValue));
                 if (!diff.isEmpty()) {
                     differences.put(uuid, diff);
                     hasDifferences = true;
                 }
             } else {
-                differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff( json1, null,REMOVED));
+                differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, null, REMOVED));
                 hasDifferences = true;
             }
         }
 
-        for (Map.Entry<String, Object> entry : jsonMap2.entrySet()) {
-            String uuid2 = entry.getKey();
-            if (!jsonMap1.containsKey(uuid2)) {
-                differences.put(uuid2, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
+        for (Map.Entry<String, Object> entry : existingConfigJsonValues.entrySet()) {
+            String existingConfigUUID = entry.getKey();
+            if (!incumbentJsonValues.containsKey(existingConfigUUID)) {
+                differences.put(existingConfigUUID, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
                 hasDifferences = true;
             }
         }
@@ -54,52 +54,54 @@ public class MetadataDiffChecker {
         return differences;
     }
 
-    protected Map<String, Object> findJsonDifferences(Map<String, Object> json1, Map<String, Object> json2) {
+    protected Map<String, Object> findJsonDifferences(Map<String, Object> incumbentJsonValues, Map<String, Object> existingConfigJsonValues) {
         Map<String, Object> differences = new LinkedHashMap<>();
-        if (json1 == null && json2 == null) {
+        if (incumbentJsonValues == null && existingConfigJsonValues == null) {
             return differences;
         }
 
-        if (json1 == null) {
-            json2.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, value, ADDED)));
+        if (incumbentJsonValues == null) {
+            existingConfigJsonValues.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, value, ADDED)));
             return differences;
         }
 
-        if (json2 == null) {
-            json1.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value, null, REMOVED)));
+        if (existingConfigJsonValues == null) {
+            incumbentJsonValues.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value, null, REMOVED)));
             return differences;
         }
 
-        for (Map.Entry<String, Object> entry : json1.entrySet()) {
-            String key = entry.getKey();
-            Object value1 = entry.getValue();
-            Object value2 = json2.get(key);
+        for (Map.Entry<String, Object> incumbentJsonEntry : incumbentJsonValues.entrySet()) {
+            String incumbentJsonKey = incumbentJsonEntry.getKey();
+            Object incumbentJsonValue = incumbentJsonEntry.getValue();
+            Object existingConfigValue = existingConfigJsonValues.get(incumbentJsonKey);
 
-            if (key.equals("id")) {
+            if (incumbentJsonKey.equals("id")) {
                 continue;
             }
-            if (value2 == null) {
-                differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, null, REMOVED));
+            if (existingConfigValue == null && incumbentJsonValue != null) {
+                differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, null, ADDED));
+            } else if (existingConfigValue != null && incumbentJsonValue == null) {
+                differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, null, REMOVED));
             } else {
-                if (value1 instanceof Map && value2 instanceof Map) {
-                    Map<String, Object> subDiff = findJsonDifferences((Map<String, Object>) value1, (Map<String, Object>) value2);
+                if (incumbentJsonValue instanceof Map && existingConfigValue instanceof Map) {
+                    Map<String, Object> subDiff = findJsonDifferences((Map<String, Object>) incumbentJsonValue, (Map<String, Object>) existingConfigValue);
                     if (!subDiff.isEmpty()) {
-                        differences.put(key, metadataDiffOutputGenerator.createObjectDiff(subDiff, MODIFIED));
+                        differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createObjectDiff(subDiff, MODIFIED));
                     }
-                } else if (value1 instanceof List && value2 instanceof List) {
-                    List<Map<String, Object>> listDiff = findArrayDifferences((List<Object>) value1, (List<Object>) value2);
+                } else if (incumbentJsonValue instanceof List && existingConfigValue instanceof List) {
+                    List<Map<String, Object>> listDiff = findArrayDifferences((List<Object>) incumbentJsonValue, (List<Object>) existingConfigValue);
                     if (!listDiff.isEmpty()) {
-                        differences.put(key, metadataDiffOutputGenerator.createArrayDiff(listDiff, MODIFIED));
+                        differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createArrayDiff(listDiff, MODIFIED));
                     }
-                } else if (!value1.equals(value2)) {
-                    differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value1, value2, MODIFIED));
+                } else if (!Objects.equals(incumbentJsonValue, existingConfigValue)) {
+                    differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, existingConfigValue, MODIFIED));
                 }
             }
         }
 
-        for (Map.Entry<String, Object> entry : json2.entrySet()) {
+        for (Map.Entry<String, Object> entry : existingConfigJsonValues.entrySet()) {
             String key = entry.getKey();
-            if (!json1.containsKey(key)) {
+            if (!incumbentJsonValues.containsKey(key)) {
                 differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
             }
         }
@@ -143,6 +145,7 @@ public class MetadataDiffChecker {
         }
         return differences;
     }
+
     private Map<String, Object> castToStringObjectMap(Object obj) {
         if (obj instanceof Map) {
             return (Map<String, Object>) obj;

@@ -1,0 +1,1457 @@
+[ {
+  "uuid" : "2944e9a3-4b56-45ab-ab81-b09a55cba7d9",
+  "id" : 76,
+  "name" : "Phulwari",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+    "id" : 114,
+    "name" : " ",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "2944e9a3-4b56-45ab-ab81-b09a55cba7d9",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "c6f18444-547a-4a8b-bab2-cf014e062bf5",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "81d7a219-6a42-49b5-9299-54019c23c0c2",
+      "voided" : false
+    }, {
+      "uuid" : "29b3c9fb-f202-4d90-8a46-bdcd5fdd460f",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "2aca9fc8-3374-443f-8cf6-bc6976ce0986",
+      "voided" : false
+    }, {
+      "uuid" : "88205350-e574-47b4-837e-b48e591e488b",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "a2565c80-9e34-4252-ae8e-b812711c3b09",
+      "voided" : false
+    }, {
+      "uuid" : "356c1c16-d763-45af-ad5d-4e6014c740ef",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "b0806590-fa08-4433-b8e6-fe19773b134a",
+      "voided" : false
+    }, {
+      "uuid" : "ab4fdeb2-88d1-4678-a400-9d053b450f7c",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "316cd15a-0e2b-42b7-adaa-c163def1798e",
+      "voided" : false
+    }, {
+      "uuid" : "68cb8d9f-153c-4bb7-b718-60a73cfe71e2",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "dcb00da8-13db-435e-94a4-0168fb318d7c",
+      "voided" : false
+    }, {
+      "uuid" : "e8a663a0-51a8-4eef-8c38-138a078e14fb",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "272b871d-d241-4a63-99aa-ca502dfd04c0",
+      "voided" : false
+    }, {
+      "uuid" : "d0044183-6f6d-4819-ad79-c03b6ba8e2e5",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "775e53dd-e12e-4ccc-abcf-361b92275f6d",
+      "reportCardUUID" : "fd4535a8-5a28-4481-92b6-23e85f4d9e1a",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ {
+    "uuid" : "70c944f7-8a38-4fda-a71d-325b74130de3",
+    "id" : 74,
+    "name" : "Oedema",
+    "filterConfig" : {
+      "type" : "Concept",
+      "subjectTypeUUID" : null,
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : {
+        "scope" : "programEncounter",
+        "programUUIDs" : [ "20016e73-3115-439d-8d8b-3bd4ab5c24b1", "ca85f732-a277-44ab-8c57-32e79efba7a1" ],
+        "encounterTypeUUIDs" : [ "84e99d1e-de73-41aa-85c6-3e1b780dd52b" ],
+        "conceptUUID" : "95dd3094-6c99-4622-8614-bf5d33a509e4"
+      }
+    },
+    "voided" : false
+  }, {
+    "uuid" : "9b159fb2-774d-43e8-86f0-20e535a88ad4",
+    "id" : 72,
+    "name" : "Gen",
+    "filterConfig" : {
+      "type" : "Gender",
+      "subjectTypeUUID" : null,
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : false
+  }, {
+    "uuid" : "f45825df-c273-4eb6-bc9c-6f65e1b5cd35",
+    "id" : 80,
+    "name" : "household",
+    "filterConfig" : {
+      "type" : "GroupSubject",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "widget" : null,
+      "groupSubjectTypeFilter" : {
+        "subjectTypeUUID" : "a2eee202-b440-4120-ada1-f3a820820f9c"
+      },
+      "observationBasedFilter" : null
+    },
+    "voided" : true
+  }, {
+    "uuid" : "aef83631-59e6-4b6c-ab2a-601eac4f999c",
+    "id" : 75,
+    "name" : "Play",
+    "filterConfig" : {
+      "type" : "Address",
+      "subjectTypeUUID" : null,
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : false
+  }, {
+    "uuid" : "0b1b22a6-5c2e-4fd4-9df9-0961c8eaa143",
+    "id" : 82,
+    "name" : "As on date",
+    "filterConfig" : {
+      "type" : "AsOnDate",
+      "subjectTypeUUID" : null,
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : false
+  }, {
+    "uuid" : "fa14443b-1b38-4ace-9d57-676994e81ec1",
+    "id" : 77,
+    "name" : "enc date",
+    "filterConfig" : {
+      "type" : "ProgramEncounterDate",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "widget" : "Range",
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : true
+  }, {
+    "uuid" : "c463bcc0-53f7-4d4a-a662-6920028b2cd9",
+    "id" : 78,
+    "name" : "enc",
+    "filterConfig" : {
+      "type" : "SubjectType",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : false
+  }, {
+    "uuid" : "bb0af551-41b3-4e38-809e-187fe2ae4757",
+    "id" : 73,
+    "name" : "ST",
+    "filterConfig" : {
+      "type" : "SubjectType",
+      "subjectTypeUUID" : null,
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : true
+  }, {
+    "uuid" : "11ffebe4-e526-44d9-b0c7-89330a20010a",
+    "id" : 79,
+    "name" : "group",
+    "filterConfig" : {
+      "type" : "GroupSubject",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "widget" : null,
+      "groupSubjectTypeFilter" : {
+        "subjectTypeUUID" : "a2eee202-b440-4120-ada1-f3a820820f9c"
+      },
+      "observationBasedFilter" : null
+    },
+    "voided" : true
+  }, {
+    "uuid" : "e383d87d-eb32-4a59-b309-4217a01998a6",
+    "id" : 76,
+    "name" : "regis date",
+    "filterConfig" : {
+      "type" : "ProgramEncounterDate",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "widget" : null,
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : null
+    },
+    "voided" : true
+  }, {
+    "uuid" : "d67cbbf0-8da6-42ad-ad72-b49c2264b0de",
+    "id" : 81,
+    "name" : "primitve",
+    "filterConfig" : {
+      "type" : "Concept",
+      "subjectTypeUUID" : "c3e43b29-2a63-49bf-870b-8365d2dd9251",
+      "widget" : "Default",
+      "groupSubjectTypeFilter" : null,
+      "observationBasedFilter" : {
+        "scope" : "programEnrolment",
+        "programUUIDs" : [ "ca85f732-a277-44ab-8c57-32e79efba7a1" ],
+        "encounterTypeUUIDs" : [ ],
+        "conceptUUID" : "6e50431c-6cb0-495f-9735-dd431c9970ff"
+      }
+    },
+    "voided" : false
+  } ],
+  "voided" : false
+}, {
+  "uuid" : "0404edb0-053d-4069-a169-b4266a6c46d7",
+  "id" : 205,
+  "name" : "MCH",
+  "description" : "MCH Worker",
+  "sections" : [ {
+    "uuid" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+    "id" : 331,
+    "name" : "MCH",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "0404edb0-053d-4069-a169-b4266a6c46d7",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "474542ba-5b2f-4347-b239-84d0fcb86cba",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "07d5855f-9511-4d30-a781-2ecf70dc8454",
+      "voided" : false
+    }, {
+      "uuid" : "9afe0ae5-85bb-41ed-aa4d-3435d2fa2665",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "d3c179d8-7e9e-4586-9122-11ca730c8b2b",
+      "voided" : false
+    }, {
+      "uuid" : "24599181-7a24-47ea-874c-108b4b869f73",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "714f70b0-2fa2-40b4-88b3-b232027ba044",
+      "voided" : false
+    }, {
+      "uuid" : "5dc10f82-39c4-46ca-9e3d-ae607840a5fc",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "652e1c49-78b6-439b-946a-7d983fab839b",
+      "voided" : false
+    }, {
+      "uuid" : "1af1576c-8caa-475d-8271-cffaa4713c8b",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "cc082b55-dde0-4f9f-81b8-c84e261e0f6d",
+      "reportCardUUID" : "1a5d5185-4358-4e6b-b055-33ecb5e60245",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : true
+}, {
+  "uuid" : "dd0a9aaa-9319-4c46-910a-a5dbd4d81e8e",
+  "id" : 206,
+  "name" : "MCH Worker",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+    "id" : 332,
+    "name" : "MCH",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "dd0a9aaa-9319-4c46-910a-a5dbd4d81e8e",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "24c6c34e-d4ff-4128-9ff3-4b817d088eed",
+      "displayOrder" : 10.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "a69ee3f3-1bf2-4052-b541-096e0336f4bf",
+      "voided" : false
+    }, {
+      "uuid" : "7364a53c-65c1-4111-a420-2b05cf9a664f",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "714f70b0-2fa2-40b4-88b3-b232027ba044",
+      "voided" : false
+    }, {
+      "uuid" : "3fb73566-00db-485d-8db3-f338bf2b10ce",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "652e1c49-78b6-439b-946a-7d983fab839b",
+      "voided" : false
+    }, {
+      "uuid" : "aec90c79-31cc-43d7-bf74-ddaad1363633",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "0a7823fd-fb2d-4ce0-8917-a866b682c11c",
+      "voided" : false
+    }, {
+      "uuid" : "3d0634b9-1abc-488c-9d00-d2d1b5fa71a4",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "d3c179d8-7e9e-4586-9122-11ca730c8b2b",
+      "voided" : false
+    }, {
+      "uuid" : "bd697a90-9637-42de-9d69-ba0be92a18e3",
+      "displayOrder" : 11.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "b8b674e0-4f1a-4950-9d98-17549dff76ef",
+      "voided" : false
+    }, {
+      "uuid" : "bbb625f8-2732-4a85-84e9-15b63942ddb7",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "1a5d5185-4358-4e6b-b055-33ecb5e60245",
+      "voided" : false
+    }, {
+      "uuid" : "60a1e157-e0c4-4f05-98e4-830e9a23643b",
+      "displayOrder" : 9.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "f0d443ab-054b-45d6-bb14-b944cb31499c",
+      "voided" : true
+    }, {
+      "uuid" : "2f80bc42-2b28-4ab6-a2e3-eb21a08b9a32",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "07d5855f-9511-4d30-a781-2ecf70dc8454",
+      "voided" : false
+    }, {
+      "uuid" : "b2b00f34-98fe-4568-b6b9-cbb4d765bed2",
+      "displayOrder" : 9.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "2d77b95b-18d7-4f1a-9c35-f2990d8c93da",
+      "voided" : false
+    }, {
+      "uuid" : "7f7a278c-3f8f-44b8-b4f6-c917fdab5f98",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "7a87002b-4d06-441d-988a-0e872090744e",
+      "voided" : false
+    }, {
+      "uuid" : "b01e156b-2bf4-4215-a1a0-3ec93090698a",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "1b481da4-53c1-49d5-b4c6-19104538b9ac",
+      "voided" : false
+    }, {
+      "uuid" : "d620570f-f477-4ec5-af4d-20f9b6d2619f",
+      "displayOrder" : 12.0,
+      "dashboardSectionUUID" : "5cbae050-a593-4027-9d90-6a5d4c56e756",
+      "reportCardUUID" : "f0d443ab-054b-45d6-bb14-b944cb31499c",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+  "id" : 207,
+  "name" : "Senior Health Worker",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "96d63a9e-3ab2-4387-9a21-e7c90b71e3b8",
+    "id" : 338,
+    "name" : "Asthma",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 11.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "dd492cbe-f5d7-4af5-a0c3-177775c22a3c",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "96d63a9e-3ab2-4387-9a21-e7c90b71e3b8",
+      "reportCardUUID" : "ce748329-e7ff-45fc-9adc-96d9fbc08c1f",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "0c4d0356-9495-4c71-91ec-ea55529d88b7",
+    "id" : 334,
+    "name" : "Cancer",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 9.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "dae2e7f5-fc65-4212-b359-06a55cdda630",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "0c4d0356-9495-4c71-91ec-ea55529d88b7",
+      "reportCardUUID" : "0532f87d-ebf9-4d59-8fc7-1a9e44c6d308",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "8c11ef4a-f812-4d49-8133-40f67790c268",
+    "id" : 345,
+    "name" : "Mental illness",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 5.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "8e5182b3-dea6-4c13-a263-0fddaea29666",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "8c11ef4a-f812-4d49-8133-40f67790c268",
+      "reportCardUUID" : "33cf3b20-e4ad-4906-96ca-bb7dac2e9374",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "ce24284f-a3b7-4107-8905-13a0a58925bb",
+    "id" : 335,
+    "name" : "Arthritis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 8.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "27814499-962c-4f02-99bd-c7cdd09ea0d9",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "ce24284f-a3b7-4107-8905-13a0a58925bb",
+      "reportCardUUID" : "8107e159-5369-428d-ad64-3e4637430612",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "e80c5699-f946-4b20-93a7-09ac93f671fb",
+    "id" : 336,
+    "name" : "Epilepsy",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 2.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "cee0f2f7-5478-4c39-8b44-0ad0d0229d71",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "e80c5699-f946-4b20-93a7-09ac93f671fb",
+      "reportCardUUID" : "cfc073a1-69c5-47d5-a1ba-3d039d6fe7a3",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "d21cbae3-3c21-4bc7-b7c7-251fa9dfebcd",
+    "id" : 339,
+    "name" : "Hypertension",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 6.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "cefcf379-50fe-4d30-9ef7-0789363ee5f5",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "d21cbae3-3c21-4bc7-b7c7-251fa9dfebcd",
+      "reportCardUUID" : "b03730c8-a748-4b6c-bbf7-0b0b38b78950",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "9a58c7d8-75df-49b5-9b77-66938975545f",
+    "id" : 333,
+    "name" : "Heart Disease",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 12.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "17a5aa0c-735c-436b-b7c1-70877165e953",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "9a58c7d8-75df-49b5-9b77-66938975545f",
+      "reportCardUUID" : "2aff9b9d-605e-4caa-9938-93999368b4db",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "2263318a-4a3b-490e-8cf1-7e631f20c60b",
+    "id" : 337,
+    "name" : "Diabetes",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 4.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "97a9ffe7-daaf-4e42-b284-f4d45e8a1fae",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "2263318a-4a3b-490e-8cf1-7e631f20c60b",
+      "reportCardUUID" : "79008668-9943-4a95-b2c3-3f6686294192",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "0a194050-bfa3-453d-83c4-b27b8e8ae3a0",
+    "id" : 341,
+    "name" : "Thyroidism",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 7.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "c07280a6-4403-4c1c-84ca-3a9f7e8d7879",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "0a194050-bfa3-453d-83c4-b27b8e8ae3a0",
+      "reportCardUUID" : "1c593b2a-cec3-4097-b581-a33afb572fc5",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "fd2377f6-6f99-4c2c-8398-9b3772367105",
+    "id" : 340,
+    "name" : "Tuberculosis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 3.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ca477a02-1985-4bf8-aa95-feae5277d7e5",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "fd2377f6-6f99-4c2c-8398-9b3772367105",
+      "reportCardUUID" : "6ef7c3de-d13d-4c97-95c7-6c2c653cdf60",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "c4e0b176-0983-4198-9a32-05927ee90153",
+    "id" : 342,
+    "name" : "COPD",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 10.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "c6d6937f-4139-4337-844b-c1e3d43503e8",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "c4e0b176-0983-4198-9a32-05927ee90153",
+      "reportCardUUID" : "6d5e93de-d417-4f8c-9c29-82ec516429f4",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "2cbfebbb-2ab4-48b8-8dfa-0b3298594619",
+    "id" : 343,
+    "name" : "Sickle cell ",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "55f99e68-4e17-4bd8-9be7-8b7ad28b0b2f",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "2cbfebbb-2ab4-48b8-8dfa-0b3298594619",
+      "reportCardUUID" : "50b185ae-206c-4cf6-98c6-a33aad07fdb8",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "a8542c66-eea2-48f8-9f53-345f8725f772",
+    "id" : 344,
+    "name" : "Stroke",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 13.0,
+    "dashboardUUID" : "d64115d3-8101-48d2-8e82-bc7cfe8ac517",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "29f51652-b045-41d9-b5dc-ec91336b391e",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "a8542c66-eea2-48f8-9f53-345f8725f772",
+      "reportCardUUID" : "9e1817d0-67b0-470c-957a-dec569ddfcf3",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : true
+}, {
+  "uuid" : "f6740cbf-f2c4-4efe-b0cf-fe7b5bb412c5",
+  "id" : 208,
+  "name" : "Epilepsy",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+    "id" : 346,
+    "name" : "Epilepsy",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "f6740cbf-f2c4-4efe-b0cf-fe7b5bb412c5",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ee2b1077-cc39-4a88-9b43-2e16cac81acd",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "6932845d-fbdc-4280-b976-211d15f0be9a",
+      "voided" : false
+    }, {
+      "uuid" : "0a71ffec-9a9a-441d-99e5-3b9070e9b251",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "649d4807-c2a4-4ee4-8266-fdd4789f7655",
+      "voided" : false
+    }, {
+      "uuid" : "7f4651e1-fa90-4a09-b463-fa44318c1e35",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "84d0fc77-9d5b-4a63-9587-c02c73972aef",
+      "voided" : false
+    }, {
+      "uuid" : "2cf13db6-eded-4acd-8d0b-c15984500dfc",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "0cdf349e-f990-41ce-81ea-a6daf40f0b87",
+      "voided" : false
+    }, {
+      "uuid" : "2bd33344-cd8f-4d66-a4af-46e20e0b67d4",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "3a0159bf-0f03-4a5a-bb05-f2c0a0983538",
+      "voided" : false
+    }, {
+      "uuid" : "22683091-80ea-4acb-a186-636efe4b9e9a",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "cfc073a1-69c5-47d5-a1ba-3d039d6fe7a3",
+      "voided" : false
+    }, {
+      "uuid" : "b3abc152-c470-486e-a8db-fd393c61f5c7",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "8b1a43fd-48e0-4e26-857d-8f95331931d6",
+      "voided" : false
+    }, {
+      "uuid" : "004c8692-9109-4708-8243-df7ab8a5450b",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "e2166522-d600-4547-9ccc-d6613d102d7a",
+      "reportCardUUID" : "2ffcd69b-ca50-4f51-b041-32c6c27e9bab",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "6755e709-c280-40ae-a885-0af11b7a2cb9",
+  "id" : 209,
+  "name" : "Tuberculosis",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+    "id" : 347,
+    "name" : "Tuberculosis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "6755e709-c280-40ae-a885-0af11b7a2cb9",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "17c43947-d855-4ba0-9dd5-d6f5b3e87456",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "d676d1f3-f587-4826-ad98-c9f9feb6c480",
+      "voided" : false
+    }, {
+      "uuid" : "7deb30fd-5528-45ac-90b5-7772f7429d8b",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "7242c61a-9996-402b-8583-644731365bfd",
+      "voided" : false
+    }, {
+      "uuid" : "ad8601ea-0a9b-46f1-9731-e2c656ec11fd",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "61cba681-abe9-4096-a000-06edd8d80095",
+      "voided" : false
+    }, {
+      "uuid" : "b3a13065-9cd0-48d0-98a1-30c67e8b92a3",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "6ef7c3de-d13d-4c97-95c7-6c2c653cdf60",
+      "voided" : false
+    }, {
+      "uuid" : "2de2d264-e828-4a66-8659-2c321dd64820",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "38bd2fd0-59b8-4c9b-b3a6-18772b276173",
+      "voided" : false
+    }, {
+      "uuid" : "2c76fc1d-5b77-4bf9-9240-c87e24b73ce8",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "a86fddc5-cf83-4f48-b7cd-47eeba6ee9b6",
+      "voided" : false
+    }, {
+      "uuid" : "51fcb682-2355-48c8-86e9-978660451a21",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "854c2f48-cf84-4265-8350-e08931c80cc4",
+      "voided" : false
+    }, {
+      "uuid" : "aa1a396d-de5d-4d73-94a7-3f7a6dbc9470",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "78edef6a-2151-4ba6-8a1e-cb6027c1731e",
+      "reportCardUUID" : "8b5a8d92-2261-4a54-b846-da202e4ea117",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "714d18df-ebf1-4b92-b45b-a1f9c9033439",
+  "id" : 210,
+  "name" : "TB - INH Prophylaxis",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+    "id" : 348,
+    "name" : "TB - INH Prophylaxis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "714d18df-ebf1-4b92-b45b-a1f9c9033439",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "158c4e95-5eed-4dea-abd8-1c21b62a8c87",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "9ff927de-e8ee-4477-9d80-8d23e785bf2d",
+      "voided" : false
+    }, {
+      "uuid" : "a7b2bc9d-8b46-42ad-9b28-058c57179345",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "1caece16-d79e-47a3-b433-8e7fb6cc0ef8",
+      "voided" : false
+    }, {
+      "uuid" : "f40b1138-a17f-479d-bae5-5227e70bf12f",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "12c5a81f-11f2-47c7-8e34-25218371ace1",
+      "voided" : false
+    }, {
+      "uuid" : "ba1ea65a-6294-40c3-a253-1610e6744914",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "986e3271-2f84-41dc-a6b8-7988a1d3076a",
+      "reportCardUUID" : "ef185368-49f8-4411-b3d9-6473a6b6e8d0",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "33272b0b-fd56-4ff6-9f9f-2ff1b273f0c1",
+  "id" : 211,
+  "name" : "Diabetes",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+    "id" : 349,
+    "name" : "Diabetes",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "33272b0b-fd56-4ff6-9f9f-2ff1b273f0c1",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "93cf89a1-c6ad-42ed-8f7f-f1a548901024",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "1cbd6d2a-413a-4148-93fe-f6ae6cc8e7f1",
+      "voided" : false
+    }, {
+      "uuid" : "3029f206-9b7a-49b8-9725-b808676911b3",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "0c2da478-3ec9-494f-a723-2a6a58acc70c",
+      "voided" : false
+    }, {
+      "uuid" : "d1920cee-c06a-4f2a-9128-386b97ddbbcd",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "b885e838-05c4-4f47-b2be-a390b85028d1",
+      "voided" : false
+    }, {
+      "uuid" : "87426883-6af2-41b1-b77d-88ed193d2a84",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "0125e8b9-4556-4367-95bd-31bd7d10c5f1",
+      "voided" : false
+    }, {
+      "uuid" : "072ccd92-788f-48ae-b8a7-a9f20e5f6a7d",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "9c72eb10-84f6-4aee-8c6e-4a42ba83e874",
+      "voided" : false
+    }, {
+      "uuid" : "16478dfa-5dab-493e-bb7f-5b1c77310461",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "79008668-9943-4a95-b2c3-3f6686294192",
+      "voided" : false
+    }, {
+      "uuid" : "c93e617b-310e-487a-8eb2-45840056a560",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "7ced3386-737d-478f-a871-34a218fbe2fc",
+      "voided" : false
+    }, {
+      "uuid" : "2f4af8f7-d395-48fb-8db3-73eb49355d2a",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "ba534ff6-243f-49c0-989f-18cf39299d0f",
+      "reportCardUUID" : "f5fecd5a-00f5-4435-9360-3643c5a43105",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "f9baab59-e415-4e9e-9633-abb2468a043c",
+  "id" : 212,
+  "name" : "Mental Illness",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+    "id" : 350,
+    "name" : "Mental Illness",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "f9baab59-e415-4e9e-9633-abb2468a043c",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "4a79edfc-9abf-44f4-b624-5ead62764072",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "753ec903-7f09-4bc9-a053-6d2f73231ff1",
+      "voided" : false
+    }, {
+      "uuid" : "8a245867-bda1-4d6c-8c28-3ed3661c7a4d",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "33cf3b20-e4ad-4906-96ca-bb7dac2e9374",
+      "voided" : false
+    }, {
+      "uuid" : "de8b774f-6283-4849-ba51-a5fd6c4995c1",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "0ca1dba1-a4c7-4edf-a517-95848de4f71d",
+      "voided" : false
+    }, {
+      "uuid" : "0939438d-7d83-470c-ae00-c8aa4efa1ef6",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "de1b927b-2cdf-4160-b13a-8817db4b0e76",
+      "reportCardUUID" : "f14f5bd4-3ffe-43c3-be27-d6d754d2e940",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "0883dda7-4894-447b-b096-88fb10ffea14",
+  "id" : 213,
+  "name" : "Thyroidism",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+    "id" : 351,
+    "name" : "Thyroidism",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "0883dda7-4894-447b-b096-88fb10ffea14",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "35601c61-9469-4a43-8bfc-6009bdad3709",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "1c593b2a-cec3-4097-b581-a33afb572fc5",
+      "voided" : false
+    }, {
+      "uuid" : "3def5c45-4260-4357-b74b-4c265260c3fb",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "8273fcb7-e396-426e-8b73-a0f74ccf0319",
+      "voided" : false
+    }, {
+      "uuid" : "3fb33193-9dc9-43d9-a43f-3e8594a31cfe",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "4b4cd81c-2006-4dd9-b596-263a0918143f",
+      "voided" : false
+    }, {
+      "uuid" : "de367920-eee0-4f62-8012-e0836b0d56f0",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "9eaf308b-68c8-41c7-8f2f-0a04f7187864",
+      "reportCardUUID" : "84ccada6-b9b5-4a63-90fa-a8e5c6ea7d7b",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "ef534291-6e6a-405b-b825-2340f7b2ceb1",
+  "id" : 214,
+  "name" : "Arthritis",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "e0b1306b-510d-4c0b-8120-386b0a123ba4",
+    "id" : 746,
+    "name" : "foo",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 100.0,
+    "dashboardUUID" : "ef534291-6e6a-405b-b825-2340f7b2ceb1",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "aab764b5-6510-4a0c-bc12-eccc5b46c8b9",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "e0b1306b-510d-4c0b-8120-386b0a123ba4",
+      "reportCardUUID" : "2aca9fc8-3374-443f-8cf6-bc6976ce0986",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+    "id" : 742,
+    "name" : "Arthritis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ef534291-6e6a-405b-b825-2340f7b2ceb1",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "a4509e3c-fa49-4a42-845d-7f23a87d0e30",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+      "reportCardUUID" : "8107e159-5369-428d-ad64-3e4637430612",
+      "voided" : false
+    }, {
+      "uuid" : "b6233e67-9c0f-45c9-ace2-4b6ffb4cb506",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+      "reportCardUUID" : "2aca9fc8-3374-443f-8cf6-bc6976ce0986",
+      "voided" : true
+    }, {
+      "uuid" : "de0d657d-c9a1-45fc-a05e-d6b0684632a6",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+      "reportCardUUID" : "8912ff1a-17d7-4524-bd24-91b165bdae63",
+      "voided" : false
+    }, {
+      "uuid" : "22f746e2-095e-44e6-b66e-8166971abf63",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+      "reportCardUUID" : "3f303c6c-39f1-4219-85a9-6fa41aa8144e",
+      "voided" : false
+    }, {
+      "uuid" : "794f295a-cf78-4add-a169-e50e42941510",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+      "reportCardUUID" : "2aca9fc8-3374-443f-8cf6-bc6976ce0986",
+      "voided" : true
+    }, {
+      "uuid" : "4f0595cf-bcd3-4a7b-ad32-a8320a2f705e",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "910b9f40-3163-4bd7-940e-5af9b0e21f62",
+      "reportCardUUID" : "a96ce5fa-f54c-4215-8fbe-eae04becd29f",
+      "voided" : false
+    } ],
+    "voided" : false
+  }, {
+    "uuid" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+    "id" : 745,
+    "name" : "Arthritis",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ef534291-6e6a-405b-b825-2340f7b2ceb1",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "c1196046-864b-411a-8a66-7e3b84f089cb",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "8107e159-5369-428d-ad64-3e4637430612",
+      "voided" : false
+    }, {
+      "uuid" : "ff586345-f98b-46a1-ae02-992869262ddc",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "a96ce5fa-f54c-4215-8fbe-eae04becd29f",
+      "voided" : false
+    }, {
+      "uuid" : "840cef75-949c-4299-bbd7-a17a7d1bfd14",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "8912ff1a-17d7-4524-bd24-91b165bdae63",
+      "voided" : false
+    }, {
+      "uuid" : "2bac207f-393a-4fe0-82d4-bcce6f91c5b0",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "6410252f-40b8-4ce0-8fe3-5295c335abc0",
+      "reportCardUUID" : "3f303c6c-39f1-4219-85a9-6fa41aa8144e",
+      "voided" : false
+    } ],
+    "voided" : true
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "bf0d924c-9b47-4c75-9792-351a2ec8ab61",
+  "id" : 215,
+  "name" : "Cancer",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+    "id" : 353,
+    "name" : "Cancer",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "bf0d924c-9b47-4c75-9792-351a2ec8ab61",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "05c15bce-702f-4faa-adde-aa846a14dc7c",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "674134d7-534b-4241-8470-c75ba1e86e29",
+      "voided" : false
+    }, {
+      "uuid" : "5a7f1697-14df-423f-9487-3cf88edf6fd6",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "aabe39bc-b0de-460f-95dd-49c2a471c70c",
+      "voided" : false
+    }, {
+      "uuid" : "3cf4834c-6863-4cf9-ac47-8a9bc6af71e7",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "0532f87d-ebf9-4d59-8fc7-1a9e44c6d308",
+      "voided" : false
+    }, {
+      "uuid" : "451ccd25-775f-490e-96a3-441db991b115",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "24ad397b-9cdd-44e4-88d9-e08b19636c76",
+      "reportCardUUID" : "01e23c94-c0be-4260-9bb9-5d06e5be44cf",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "ad8c8632-20ee-48bd-8df5-d7416f55b89a",
+  "id" : 216,
+  "name" : "COPD",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+    "id" : 354,
+    "name" : "COPD",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ad8c8632-20ee-48bd-8df5-d7416f55b89a",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "045d7928-be5c-4a2f-bafc-22d72ff4aaa6",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "737e9151-69ef-4155-bbe2-396612d88e5d",
+      "voided" : false
+    }, {
+      "uuid" : "9397b8a5-16ec-4088-8a7b-4f3eda46f6bc",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "c1831c7f-93d9-40e2-b84b-83d199f2180f",
+      "voided" : false
+    }, {
+      "uuid" : "5d52b330-9760-4a48-8fd9-6105ed70c739",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "6d5e93de-d417-4f8c-9c29-82ec516429f4",
+      "voided" : false
+    }, {
+      "uuid" : "3a3d5f7f-fb5d-46b3-8f8d-62c09667f121",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "ecad4472-71b5-47b5-853b-dfab5895c946",
+      "reportCardUUID" : "f4cd4fe1-2bc5-4094-a07c-843ad7fd05db",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "bc010a4f-1533-4dbf-9241-47770ea93274",
+  "id" : 217,
+  "name" : "Asthma",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+    "id" : 355,
+    "name" : "Asthma",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "bc010a4f-1533-4dbf-9241-47770ea93274",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "2f38c0d0-9880-4192-aedd-db3971d0ebfe",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "bf31a98c-59a7-4ec9-a937-7b28be5f28e4",
+      "voided" : false
+    }, {
+      "uuid" : "9e8148d1-addc-4c05-879c-a9a3ffcabe73",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "ce748329-e7ff-45fc-9adc-96d9fbc08c1f",
+      "voided" : false
+    }, {
+      "uuid" : "04c37608-22eb-4ae0-bd36-91c57a4e5ac8",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "9f473ac8-d88e-4349-a9d8-e027dccfd309",
+      "voided" : false
+    }, {
+      "uuid" : "fe3bc1cb-d0ca-4582-981c-e7e20f74bca6",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "dd8846e8-a5b1-4948-9810-7af90def00ce",
+      "reportCardUUID" : "697cd956-77d4-4f72-b228-0a46a3012090",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "ab3cb78c-7b5a-41c2-8cbe-734a000f7156",
+  "id" : 218,
+  "name" : "Heart Disease",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+    "id" : 356,
+    "name" : "Heart Disease",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "ab3cb78c-7b5a-41c2-8cbe-734a000f7156",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "ef2d1b55-1f3f-4234-98c0-510453aff3ab",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "0eba1b5b-5ae4-44f3-aa67-052cd6e6bcad",
+      "voided" : false
+    }, {
+      "uuid" : "7c7713a6-9bce-49e0-88f0-9df9dcafee15",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "2aff9b9d-605e-4caa-9938-93999368b4db",
+      "voided" : false
+    }, {
+      "uuid" : "71ffe9e7-e3c5-4d6c-860c-7ef627ebdfa8",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "5472e86a-8462-4e6f-a38c-8f98b0c0500e",
+      "voided" : false
+    }, {
+      "uuid" : "b77d34be-f9ee-4304-bd84-b5bc6517a820",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "6d5d74c6-8f1d-48d0-99a6-022ec1c8f182",
+      "reportCardUUID" : "56846115-a55c-4fb6-b09a-925d852edd3d",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "d1c6e0e9-ff4e-444b-864c-4b4c3ec3edcc",
+  "id" : 219,
+  "name" : "Stroke",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+    "id" : 357,
+    "name" : "Stroke",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "d1c6e0e9-ff4e-444b-864c-4b4c3ec3edcc",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "7e137202-d780-4f70-ad15-4e5d9a96ab20",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "9e1817d0-67b0-470c-957a-dec569ddfcf3",
+      "voided" : false
+    }, {
+      "uuid" : "afe1b587-bfca-49fc-8c19-29c4f92cd871",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "d9f4faea-46a9-461a-8185-427efbcd8826",
+      "voided" : false
+    }, {
+      "uuid" : "ec0d63e7-222b-4c46-bea7-288967777c03",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "52e52939-3e95-4435-9c24-6137a1f76793",
+      "voided" : false
+    }, {
+      "uuid" : "967a9823-af49-48e5-a243-c9b5f0c8b894",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "88d7f0a0-448f-4110-a5f3-de5a76a22cd5",
+      "reportCardUUID" : "e645dcfb-0604-4b04-8446-b2841091c30b",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "92d88f41-122a-4c76-94e7-e3e41aeac040",
+  "id" : 220,
+  "name" : "Sickle cell disease",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "0a360879-a015-4866-9367-ea3787ef0f53",
+    "id" : 358,
+    "name" : "Sickle cell ",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "92d88f41-122a-4c76-94e7-e3e41aeac040",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "82585e79-f6b8-4ae6-8522-4f0fa7dd5fff",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "3e30c318-c5e0-4cd4-bff9-ec93b2990dd3",
+      "voided" : false
+    }, {
+      "uuid" : "eecca1e6-582e-4bea-8f0c-18de9795461f",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "50b185ae-206c-4cf6-98c6-a33aad07fdb8",
+      "voided" : false
+    }, {
+      "uuid" : "6a1a8a95-2c6a-44a8-9513-6c6a4a7146c0",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "183098dc-513d-4a80-a3bf-30e6d3bb4bc5",
+      "voided" : false
+    }, {
+      "uuid" : "792fbe65-532a-48e5-9722-b0446908bac4",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "c969cd59-f044-462a-86f7-6ddaa044e7c2",
+      "voided" : false
+    }, {
+      "uuid" : "63c51502-1026-4ccd-a39c-ebfa085cebca",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "7c041866-b474-4bdb-b1bd-01d917cfa5a3",
+      "voided" : false
+    }, {
+      "uuid" : "80178d06-ea8c-42e4-9949-ee5b9e711d57",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "b570afa0-6e2e-48df-9890-8594b1354393",
+      "voided" : false
+    }, {
+      "uuid" : "6492d786-1f43-4314-909d-a30fe553fe91",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "6fc60081-c131-495e-9f53-b119a8804818",
+      "voided" : false
+    }, {
+      "uuid" : "1bf57515-3056-463a-8ea6-96a75cc9e8f1",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "0a360879-a015-4866-9367-ea3787ef0f53",
+      "reportCardUUID" : "62531360-ea1d-454c-b808-61b94886ae8f",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "d8fd0af5-7d79-4395-bece-e55178bef200",
+  "id" : 221,
+  "name" : "Hypertension",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+    "id" : 359,
+    "name" : "Hypertension",
+    "description" : "",
+    "viewType" : "Tile",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "d8fd0af5-7d79-4395-bece-e55178bef200",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "13b2b569-f4f6-4782-b4d1-083bb1e00535",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "d440e5e0-3354-4b60-ad78-f5e6da477615",
+      "voided" : false
+    }, {
+      "uuid" : "a44a1087-2617-4187-8720-13d605964ff1",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "72dac2cc-6996-4feb-8d06-86503d559d09",
+      "voided" : false
+    }, {
+      "uuid" : "c5e31bc8-472e-4a1f-88ba-a2d6cffcce2f",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "64b11b19-c8ec-4be7-8863-112cea42bc3d",
+      "voided" : false
+    }, {
+      "uuid" : "669e4b29-82e3-4058-9141-83c147edf313",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "eeef0262-c617-44ea-8c23-09de64e076a3",
+      "voided" : false
+    }, {
+      "uuid" : "d60e6c59-7e95-4cdc-93f7-3620b089c3ab",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "b03730c8-a748-4b6c-bbf7-0b0b38b78950",
+      "voided" : false
+    }, {
+      "uuid" : "008ca90a-a628-4f09-b106-7228926990da",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "8dc59921-c018-4f49-9614-cb0ad048f0ad",
+      "voided" : false
+    }, {
+      "uuid" : "22aadc7a-c03b-4b13-aa41-5acb3785af8e",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "ea14603d-337f-44f4-aa1f-fc7dcde4d6d6",
+      "voided" : false
+    }, {
+      "uuid" : "e6b72f37-5f37-4f7d-bd41-8229e3e90e63",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "2fba86f3-c30b-4920-90f2-63b0cfe6134b",
+      "reportCardUUID" : "5f778156-3fc9-426a-bfeb-fa706efe3daa",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "6bf0d361-017f-4637-8473-5684b6e45977",
+  "id" : 222,
+  "name" : "Phulwari Supervisor",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "e95ffa59-4def-4355-823b-920c8104a359",
+    "id" : 360,
+    "name" : "Phulwari Supervisor",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "6bf0d361-017f-4637-8473-5684b6e45977",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "b64e9df7-4100-4113-84a9-017412fe76ca",
+      "displayOrder" : 6.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "a306c0ec-e784-4eaa-b7ba-b35345f8db77",
+      "voided" : false
+    }, {
+      "uuid" : "e9c6900b-b323-444c-9f79-023545de19f0",
+      "displayOrder" : 8.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "e3ab6f53-5fae-43fd-be42-ae295eafaa61",
+      "voided" : false
+    }, {
+      "uuid" : "a8157a66-256e-486e-8df2-1488e15911ad",
+      "displayOrder" : 7.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "44ccb000-c6b0-4614-9bed-0fd604aaef27",
+      "voided" : false
+    }, {
+      "uuid" : "2c10b4e7-0447-414d-b91f-95f440c66400",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "edb02b8a-6cb7-458c-bd73-e0db744e51f4",
+      "voided" : false
+    }, {
+      "uuid" : "195f7bec-12c2-4d9a-9e19-b0354c20b2fa",
+      "displayOrder" : 9.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "de331278-bb9a-43fa-9226-c9b08bcce400",
+      "voided" : false
+    }, {
+      "uuid" : "f1ab0593-7d02-4d3b-a938-8ee7141bba5e",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "cf51b682-a1c8-415b-9d3c-ffb851da5e21",
+      "voided" : false
+    }, {
+      "uuid" : "96be6dda-f809-4de3-ab5a-97635b2d4cef",
+      "displayOrder" : 3.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "b6f9836c-df88-4ad9-bdf7-dbe123c33cad",
+      "voided" : false
+    }, {
+      "uuid" : "e931a175-0367-4638-a62e-1ed78ffa5bad",
+      "displayOrder" : 4.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "f3142e6c-de7f-4184-9365-e3e40585cb41",
+      "voided" : false
+    }, {
+      "uuid" : "3ee400b7-5b85-4406-b927-6cf503c7662f",
+      "displayOrder" : 9.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "de331278-bb9a-43fa-9226-c9b08bcce400",
+      "voided" : false
+    }, {
+      "uuid" : "fc084cb9-9508-45de-92f2-348f7b3f3251",
+      "displayOrder" : 10.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "3782cd68-addc-4490-b41f-80dc32f5cd2e",
+      "voided" : false
+    }, {
+      "uuid" : "effdd9b2-a1e0-4e60-a601-7add8d81e66b",
+      "displayOrder" : 5.0,
+      "dashboardSectionUUID" : "e95ffa59-4def-4355-823b-920c8104a359",
+      "reportCardUUID" : "46e45568-0860-4f37-a91d-24f9e7c0d1e7",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : false
+}, {
+  "uuid" : "df4e151b-ba51-438c-b173-b6893462750a",
+  "id" : 248,
+  "name" : "Test Dashboard",
+  "description" : "",
+  "sections" : [ {
+    "uuid" : "648c8d96-293a-4278-90b8-51367c3d7b41",
+    "id" : 420,
+    "name" : "Program Encs",
+    "description" : "",
+    "viewType" : "List",
+    "displayOrder" : 1.0,
+    "dashboardUUID" : "df4e151b-ba51-438c-b173-b6893462750a",
+    "dashboardSectionCardMappings" : [ {
+      "uuid" : "388f1139-061a-4202-8457-9270ec93bd98",
+      "displayOrder" : 2.0,
+      "dashboardSectionUUID" : "648c8d96-293a-4278-90b8-51367c3d7b41",
+      "reportCardUUID" : "f5fecd5a-00f5-4435-9360-3643c5a43105",
+      "voided" : false
+    }, {
+      "uuid" : "4f9c89a6-820d-40fc-a666-8cd55e500636",
+      "displayOrder" : 1.0,
+      "dashboardSectionUUID" : "648c8d96-293a-4278-90b8-51367c3d7b41",
+      "reportCardUUID" : "272b871d-d241-4a63-99aa-ca502dfd04c0",
+      "voided" : false
+    } ],
+    "voided" : false
+  } ],
+  "filters" : [ ],
+  "voided" : true
+} ]

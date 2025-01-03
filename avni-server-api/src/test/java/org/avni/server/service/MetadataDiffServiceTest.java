@@ -1,9 +1,10 @@
 package org.avni.server.service;
 
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.UserContext;
 import org.avni.server.domain.factory.UserContextBuilder;
+import org.avni.server.domain.metadata.MetadataChangeReport;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.util.FileUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,17 +44,35 @@ public class MetadataDiffServiceTest {
     }
 
     @Test
-    public void testCompareMetadataZips() throws IOException {
-        MultipartFile zipFile1 = createMultipartFile("file1.json", "{\"key\":\"value1\"}");
-        when(bundleService.createBundle(any(), anyBoolean())).thenReturn(createBundleOutputStream("file1.json", "{\"key\":\"value2\"}"));
-        Map<String, Object> differences = metadataDiffService.findChangesInBundle(zipFile1);
-
-        assertNotNull(differences);
-        assertEquals(1, differences.size());
+    public void shouldFindDiff() throws IOException {
+        assertEquals(1, compareJsons("{\"key\":\"value1\"}", "{\"key\":\"value2\"}").size());
     }
 
-    private MultipartFile createMultipartFile(String fileName, String jsonContent) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = createBundleOutputStream(fileName, jsonContent);
+    @Test
+    public void sameFileShouldNtHaveChanges() throws IOException, URISyntaxException {
+        assertTrue(hasNoChangesInSameFile("/metadataDiff/programs.json"));
+        assertTrue(hasNoChangesInSameFile("/metadataDiff/reportDashboard.json"));
+        assertTrue(hasNoChangesInSameFile("/metadataDiff/identifierSource.json"));
+    }
+
+    private boolean hasNoChangesInSameFile(String fileName) throws IOException, URISyntaxException {
+        String json1 = FileUtil.readFileContentsFromClasspath(fileName);
+        MetadataChangeReport changes = compareJsons(json1, json1);
+        return changes.getNumberOfModifications() == 0;
+    }
+
+    private MetadataChangeReport compareJsons(String incumbentJson, String json2) throws IOException {
+        MultipartFile zipFile1 = createMultipartFile(incumbentJson);
+        currentJson(json2);
+        return metadataDiffService.findChangesInBundle(zipFile1);
+    }
+
+    private void currentJson(String jsonContent) throws IOException {
+        when(bundleService.createBundle(any(), anyBoolean())).thenReturn(createBundleOutputStream("file1.json", jsonContent));
+    }
+
+    private MultipartFile createMultipartFile(String jsonContent) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = createBundleOutputStream("file1.json", jsonContent);
         return new MockMultipartFile("file", "test.zip", "application/zip", byteArrayOutputStream.toByteArray());
     }
 
