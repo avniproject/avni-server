@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metadata.MetadataChangeReport;
+import org.avni.server.domain.metadata.ObjectCollectionChangeReport;
 import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +25,9 @@ public class MetadataDiffService {
     private final BundleService bundleService;
 
     @Autowired
-    public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, MetadataDiffChecker diffChecker, BundleService bundleService) {
+    public MetadataDiffService(MetadataBundleAndFileHandler bundleAndFileHandler, BundleService bundleService) {
         this.bundleAndFileHandler = bundleAndFileHandler;
-        this.diffChecker = diffChecker;
+        this.diffChecker = new MetadataDiffChecker();
         this.bundleService = bundleService;
     }
 
@@ -44,41 +45,41 @@ public class MetadataDiffService {
             List<File> incumbentFiles = bundleAndFileHandler.listJsonFiles(incumbmentDir);
             List<File> existingConfigBundleFiles = bundleAndFileHandler.listJsonFiles(existingConfigBundleDir);
 
-            Map<String, Map<String, Object>> incumbentJsonFileValues = bundleAndFileHandler.parseJsonFiles(incumbentFiles, incumbmentDir);
-            Map<String, Map<String, Object>> existingConfigJsonFileValues = bundleAndFileHandler.parseJsonFiles(existingConfigBundleFiles, existingConfigBundleDir);
+            Map<String, Map<String, Object>> incumbentJsons = bundleAndFileHandler.parseJsonFiles(incumbentFiles, incumbmentDir);
+            Map<String, Map<String, Object>> existingConfigJsons = bundleAndFileHandler.parseJsonFiles(existingConfigBundleFiles, existingConfigBundleDir);
 
-            Set<String> incumbentJsonFiles = incumbentJsonFileValues.keySet();
-            Set<String> existingConfigJsonFiles = existingConfigJsonFileValues.keySet();
+            Set<String> incumbentJsonFiles = incumbentJsons.keySet();
+            Set<String> existingConfigJsonFiles = existingConfigJsons.keySet();
 
             Set<String> commonFileNames = new HashSet<>(incumbentJsonFiles);
             commonFileNames.retainAll(existingConfigJsonFiles);
 
             for (String fileName : commonFileNames) {
-                Map<String, Object> incumbentJsonValues = incumbentJsonFileValues.get(fileName);
-                Map<String, Object> existingConfigJsonValues = existingConfigJsonFileValues.get(fileName);
+                Map<String, Object> incumbentJsonFile = incumbentJsons.get(fileName);
+                Map<String, Object> existingConfigJsonFile = existingConfigJsons.get(fileName);
 
-                if (incumbentJsonValues != null && existingConfigJsonValues != null) {
-                    Map<String, Object> fileDifferences = diffChecker.findDifferences(incumbentJsonValues, existingConfigJsonValues);
-                    if (!fileDifferences.isEmpty()) {
-                        metadataChangeReport.put(fileName, fileDifferences);
+                if (incumbentJsonFile != null && existingConfigJsonFile != null) {
+                    ObjectCollectionChangeReport fileReport = diffChecker.findCollectionDifference(incumbentJsonFile, existingConfigJsonFile);
+                    if (!fileReport.hasNoChange()) {
+                        metadataChangeReport.addChange(fileName, fileReport);
                     }
                 }
             }
 
             Set<String> filesMissingInIncumbent = findMissingFiles(incumbentJsonFiles, existingConfigJsonFiles);
             if (!filesMissingInIncumbent.isEmpty()) {
-                metadataChangeReport.putAll(missingFilesMap(filesMissingInIncumbent, "Missing Files in UAT ZIP"));
+                metadataChangeReport.setMissingInNew(filesMissingInIncumbent);
             }
 
             Set<String> filesMissingInExisting = findMissingFiles(existingConfigJsonFiles, incumbentJsonFiles);
             if (!filesMissingInExisting.isEmpty()) {
-                metadataChangeReport.putAll(missingFilesMap(filesMissingInExisting, "Missing Files in PROD ZIP"));
+                metadataChangeReport.setMissingInExisting(filesMissingInExisting);
             }
         } catch (IOException e) {
             logger.error("Error comparing metadata ZIPs: " + e.getMessage(), e);
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("error", "Error comparing metadata ZIPs: " + e.getMessage());
-            metadataChangeReport.put("error", errorResult);
+            metadataChangeReport.setError(errorResult);
         } finally {
             if (incumbmentDir != null) {
                 deleteDirectory(incumbmentDir);
@@ -94,12 +95,6 @@ public class MetadataDiffService {
         Set<String> missingInIncumbentFiles = new HashSet<>(incumbentJsonFiles);
         missingInIncumbentFiles.removeAll(existingConfigJsonFiles);
         return missingInIncumbentFiles;
-    }
-
-    protected Map<String, Object> missingFilesMap(Set<String> missingFiles, String message) {
-        Map<String, Object> missingFilesMap = new LinkedHashMap<>();
-        missingFilesMap.put(message, missingFiles);
-        return missingFilesMap;
     }
 
     protected void deleteDirectory(File directory) {

@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.avni.server.domain.metadata.MetadataChangeReport;
 import org.avni.server.service.MetadataDiffService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -23,7 +24,7 @@ public class MetadataDiffController {
     @PostMapping("/bundle/findChanges")
     @PreAuthorize("hasAnyAuthority('user')")
     public ResponseEntity<?> compareMetadataZips(@RequestParam("incumbentBundle") MultipartFile incumbentBundle) throws IOException {
-        Map<String, Object> result = metadatadiffService.findChangesInBundle(incumbentBundle);
-        return ResponseEntity.ok(result);
+        MetadataChangeReport metadataChangeReport = metadatadiffService.findChangesInBundle(incumbentBundle);
+        return ResponseEntity.ok(metadataChangeReport);
     }
 }

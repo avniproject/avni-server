@@ -1,155 +1,97 @@
 package org.avni.server.service;
 
+import org.avni.server.domain.metadata.ChangeType;
+import org.avni.server.domain.metadata.ObjectChangeReport;
+import org.avni.server.domain.metadata.FieldChangeReport;
+import org.avni.server.domain.metadata.ObjectCollectionChangeReport;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Service
 public class MetadataDiffChecker {
-
-    public static final String MODIFIED = "modified";
-    public static final String ADDED = "added";
-    public static final String REMOVED = "removed";
-    public static final String NO_MODIFICATION = "noModification";
-
-    MetadataDiffOutputGenerator metadataDiffOutputGenerator;
-
-    public MetadataDiffChecker(MetadataDiffOutputGenerator metadataDiffOutputGenerator) {
-        this.metadataDiffOutputGenerator = metadataDiffOutputGenerator;
-    }
-
-    public Map<String, Object> findDifferences(Map<String, Object> incumbentJsonValues, Map<String, Object> existingConfigJsonValues) {
-        Map<String, Object> differences = new HashMap<>();
-        boolean hasDifferences = false;
-        String uuid = "null";
-        for (Map.Entry<String, Object> incumbentJsonEntry : incumbentJsonValues.entrySet()) {
-            uuid = incumbentJsonEntry.getKey();
-            Object incumbentJsonValue = incumbentJsonEntry.getValue();
-            Object existingConfigJsonValue = existingConfigJsonValues.get(uuid);
-            if (existingConfigJsonValue != null) {
-                Map<String, Object> diff = findJsonDifferences(castToStringObjectMap(incumbentJsonValue), castToStringObjectMap(existingConfigJsonValue));
-                if (!diff.isEmpty()) {
-                    differences.put(uuid, diff);
-                    hasDifferences = true;
-                }
+    public ObjectCollectionChangeReport findCollectionDifference(Map<String, Object> incumbentEntityEntries, Map<String, Object> existingConfigEntityEntries) {
+        ObjectCollectionChangeReport collectionChangeReport = new ObjectCollectionChangeReport();
+        for (Map.Entry<String, Object> incumbentEntityEntry : incumbentEntityEntries.entrySet()) {
+            String uuid = incumbentEntityEntry.getKey();
+            Map<String, Object> incumbentEntity = (Map<String, Object>) incumbentEntityEntry.getValue();
+            Object existingEntity = existingConfigEntityEntries.get(uuid);
+            if (existingEntity == null) {
+                collectionChangeReport.addObjectReport(ObjectChangeReport.added(uuid, incumbentEntity));
             } else {
-                differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, null, REMOVED));
-                hasDifferences = true;
+                ObjectChangeReport diff = findObjectDifference(uuid, incumbentEntity, (Map<String, Object>) existingEntity);
+                collectionChangeReport.addObjectReport(diff);
             }
         }
 
-        for (Map.Entry<String, Object> entry : existingConfigJsonValues.entrySet()) {
-            String existingConfigUUID = entry.getKey();
-            if (!incumbentJsonValues.containsKey(existingConfigUUID)) {
-                differences.put(existingConfigUUID, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
-                hasDifferences = true;
+        for (Map.Entry<String, Object> existingEntry : existingConfigEntityEntries.entrySet()) {
+            String existingConfigUUID = existingEntry.getKey();
+            if (!incumbentEntityEntries.containsKey(existingConfigUUID)) {
+                collectionChangeReport.addObjectReport(ObjectChangeReport.removed(existingConfigUUID, existingEntry.getValue()));
             }
         }
-
-        if (!hasDifferences) {
-            differences.put(uuid, metadataDiffOutputGenerator.createFieldDiff(null, null, NO_MODIFICATION));
-        }
-        return differences;
+        return collectionChangeReport;
     }
 
-    protected Map<String, Object> findJsonDifferences(Map<String, Object> incumbentJsonValues, Map<String, Object> existingConfigJsonValues) {
-        Map<String, Object> differences = new LinkedHashMap<>();
-        if (incumbentJsonValues == null && existingConfigJsonValues == null) {
-            return differences;
-        }
+    private ObjectChangeReport findObjectDifference(String parentObjectUuid, Map<String, Object> incumbentObject, Map<String, Object> existingObject) {
+        ObjectChangeReport objectChangeReport = ObjectChangeReport.noChange(parentObjectUuid);
+        for (Map.Entry<String, Object> incumbentFieldEntry : incumbentObject.entrySet()) {
+            String incumbentFieldName = incumbentFieldEntry.getKey();
+            Object incumbentFieldValue = incumbentFieldEntry.getValue();
+            Object existingConfigFieldValue = existingObject.get(incumbentFieldName);
 
-        if (incumbentJsonValues == null) {
-            existingConfigJsonValues.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, value, ADDED)));
-            return differences;
-        }
-
-        if (existingConfigJsonValues == null) {
-            incumbentJsonValues.forEach((key, value) -> differences.put(key, metadataDiffOutputGenerator.createFieldDiff(value, null, REMOVED)));
-            return differences;
-        }
-
-        for (Map.Entry<String, Object> incumbentJsonEntry : incumbentJsonValues.entrySet()) {
-            String incumbentJsonKey = incumbentJsonEntry.getKey();
-            Object incumbentJsonValue = incumbentJsonEntry.getValue();
-            Object existingConfigValue = existingConfigJsonValues.get(incumbentJsonKey);
-
-            if (incumbentJsonKey.equals("id")) {
+            if (incumbentFieldName.equals("id")) {
                 continue;
             }
-            if (existingConfigValue == null && incumbentJsonValue != null) {
-                differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, null, ADDED));
-            } else if (existingConfigValue != null && incumbentJsonValue == null) {
-                differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, null, REMOVED));
+
+            if (incumbentFieldValue == null && existingConfigFieldValue == null) {
+                continue;
+            } else if (existingConfigFieldValue == null && incumbentFieldValue != null) {
+                objectChangeReport.addFieldReport(FieldChangeReport.added(incumbentFieldName));
+            } else if (existingConfigFieldValue != null && incumbentFieldValue == null) {
+                objectChangeReport.addFieldReport(FieldChangeReport.removed(incumbentFieldName));
             } else {
-                if (incumbentJsonValue instanceof Map && existingConfigValue instanceof Map) {
-                    Map<String, Object> subDiff = findJsonDifferences((Map<String, Object>) incumbentJsonValue, (Map<String, Object>) existingConfigValue);
-                    if (!subDiff.isEmpty()) {
-                        differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createObjectDiff(subDiff, MODIFIED));
+                if (incumbentFieldValue instanceof Map && existingConfigFieldValue instanceof Map) {
+                    ObjectChangeReport subObjectReport = findObjectDifference(parentObjectUuid, (Map<String, Object>) incumbentFieldValue,
+                            (Map<String, Object>) existingConfigFieldValue);
+                    if (!subObjectReport.getChangeType().equals(ChangeType.NoChange)) {
+                        objectChangeReport.addFieldReport(FieldChangeReport.objectModified(incumbentFieldName, subObjectReport));
                     }
-                } else if (incumbentJsonValue instanceof List && existingConfigValue instanceof List) {
-                    List<Map<String, Object>> listDiff = findArrayDifferences((List<Object>) incumbentJsonValue, (List<Object>) existingConfigValue);
-                    if (!listDiff.isEmpty()) {
-                        differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createArrayDiff(listDiff, MODIFIED));
+                } else if (incumbentFieldValue instanceof List && existingConfigFieldValue instanceof List) {
+                    ObjectCollectionChangeReport collectionChangeReport = findArrayDifferences((List<Object>) incumbentFieldValue, (List<Object>) existingConfigFieldValue);
+                    if (!collectionChangeReport.hasNoChange()) {
+                        objectChangeReport.addFieldReport(FieldChangeReport.collectionModified(incumbentFieldName, collectionChangeReport));
                     }
-                } else if (!Objects.equals(incumbentJsonValue, existingConfigValue)) {
-                    differences.put(incumbentJsonKey, metadataDiffOutputGenerator.createFieldDiff(incumbentJsonValue, existingConfigValue, MODIFIED));
+                } else if (!Objects.equals(incumbentFieldValue, existingConfigFieldValue)) {
+                    objectChangeReport.addFieldReport(FieldChangeReport.modified(incumbentFieldName, existingConfigFieldValue, incumbentFieldValue));
                 }
             }
         }
 
-        for (Map.Entry<String, Object> entry : existingConfigJsonValues.entrySet()) {
-            String key = entry.getKey();
-            if (!incumbentJsonValues.containsKey(key)) {
-                differences.put(key, metadataDiffOutputGenerator.createFieldDiff(null, entry.getValue(), ADDED));
+        for (Map.Entry<String, Object> existingFieldEntry : existingObject.entrySet()) {
+            String existingFieldName = existingFieldEntry.getKey();
+            if (!incumbentObject.containsKey(existingFieldName)) {
+                objectChangeReport.addFieldReport(FieldChangeReport.removed(existingFieldName));
             }
         }
 
-        return differences;
+        return objectChangeReport;
     }
 
-    protected List<Map<String, Object>> findArrayDifferences(List<Object> array1, List<Object> array2) {
-        List<Map<String, Object>> differences = new ArrayList<>();
-
+    private ObjectCollectionChangeReport findArrayDifferences(List<Object> incumbentArray, List<Object> existingConfigArray) {
         Function<Map<String, Object>, String> getUuid = obj -> (String) obj.get("uuid");
 
-        Map<String, Map<String, Object>> map1 = array1.stream()
+        Map<String, Object> incumbentObjects = incumbentArray.stream()
                 .filter(obj -> obj instanceof Map)
                 .map(obj -> (Map<String, Object>) obj)
                 .collect(Collectors.toMap(getUuid, Function.identity(), (e1, e2) -> e1));
 
-        Map<String, Map<String, Object>> map2 = array2.stream()
+        Map<String, Object> existingConfigObjects = existingConfigArray.stream()
                 .filter(obj -> obj instanceof Map)
                 .map(obj -> (Map<String, Object>) obj)
                 .collect(Collectors.toMap(getUuid, Function.identity(), (e1, e2) -> e1));
 
-        for (String uuid : map2.keySet()) {
-            if (!map1.containsKey(uuid)) {
-                differences.add(metadataDiffOutputGenerator.createFieldDiff(null, map2.get(uuid), ADDED));
-            } else {
-                Map<String, Object> obj1 = map1.get(uuid);
-                Map<String, Object> obj2 = map2.get(uuid);
-
-                Map<String, Object> subDiff = findJsonDifferences(obj1, obj2);
-                if (!subDiff.isEmpty()) {
-                    differences.add(metadataDiffOutputGenerator.createObjectDiff(subDiff, MODIFIED));
-                }
-            }
-        }
-
-        for (String uuid : map1.keySet()) {
-            if (!map2.containsKey(uuid)) {
-                differences.add(metadataDiffOutputGenerator.createFieldDiff(map1.get(uuid), null, REMOVED));
-            }
-        }
-        return differences;
-    }
-
-    private Map<String, Object> castToStringObjectMap(Object obj) {
-        if (obj instanceof Map) {
-            return (Map<String, Object>) obj;
-        }
-        return new HashMap<>();
+        return this.findCollectionDifference(incumbentObjects, existingConfigObjects);
     }
 }

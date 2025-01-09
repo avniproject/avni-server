@@ -65,7 +65,10 @@ public class MetadataBundleAndFileHandler {
         return jsonFiles;
     }
 
-    protected Map<String, Map<String, Object>> parseJsonFiles(List<File> files, File rootDir) throws IOException {
+    /**
+     * Returns a map of relative path of the JSON file in the zip, to a map of UUID and JSON file content
+     **/
+    public Map<String, Map<String, Object>> parseJsonFiles(List<File> files, File rootDir) throws IOException {
         Map<String, Map<String, Object>> jsonMap = new HashMap<>();
 
         for (File file : files) {
@@ -79,7 +82,7 @@ public class MetadataBundleAndFileHandler {
 
                 Map<String, Object> jsonMapFile = new HashMap<>();
                 if (jsonContent.toString().trim().startsWith("[")) {
-                    List<Map<String, Object>> jsonArray = ObjectMapperSingleton.getObjectMapper().readValue(jsonContent.toString(), new TypeReference<List<Map<String, Object>>>() {});
+                    List<Map<String, Object>> jsonArray = objectMapper.readValue(jsonContent.toString(), new TypeReference<List<Map<String, Object>>>() {});
                     for (Map<String, Object> jsonObject : jsonArray) {
                         String uuid = (String) jsonObject.get("uuid");
                         if (uuid != null) {
@@ -100,6 +103,7 @@ public class MetadataBundleAndFileHandler {
         }
         return jsonMap;
     }
+
     private String getRelativePath(File file, File rootDir) {
         String filePath = file.getPath();
         String rootPath = rootDir.getPath();

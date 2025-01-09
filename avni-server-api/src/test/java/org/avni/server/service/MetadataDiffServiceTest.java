@@ -14,9 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -28,7 +26,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class MetadataDiffServiceTest {
-    private MetadataDiffChecker diffChecker;
     private MetadataDiffService metadataDiffService;
     @Mock
     private BundleService bundleService;
@@ -37,15 +34,15 @@ public class MetadataDiffServiceTest {
     public void setUp() {
         initMocks(this);
         MetadataBundleAndFileHandler bundleAndFileHandler = new MetadataBundleAndFileHandler();
-        MetadataDiffOutputGenerator outputGenerator = new MetadataDiffOutputGenerator();
-        diffChecker = new MetadataDiffChecker(outputGenerator);
-        metadataDiffService = new MetadataDiffService(bundleAndFileHandler, diffChecker, bundleService);
+        metadataDiffService = new MetadataDiffService(bundleAndFileHandler, bundleService);
         UserContextHolder.create(new UserContextBuilder().withOrganisation(new Organisation()).build());
     }
 
     @Test
     public void shouldFindDiff() throws IOException {
-        assertEquals(1, compareJsons("{\"key\":\"value1\"}", "{\"key\":\"value2\"}").size());
+        MetadataChangeReport metadataChangeReport = compareJsons("{\"uuid\":\"a\", \"key\":\"value1\"}",
+                "{\"uuid\":\"a\", \"key\":\"value2\"}");
+        assertEquals(1, metadataChangeReport.getNumberOfModifications());
     }
 
     @Test
@@ -88,23 +85,6 @@ public class MetadataDiffServiceTest {
     }
 
     @Test
-    public void testFindDifferences() {
-        Map<String, Object> jsonMap1 = new HashMap<>();
-        Map<String, Object> jsonMap2 = new HashMap<>();
-
-        jsonMap1.put("uuid1", createJsonObject("value1"));
-        jsonMap2.put("uuid1", createJsonObject("value2"));
-        jsonMap2.put("uuid2", createJsonObject("value3"));
-
-        Map<String, Object> differences = diffChecker.findDifferences(jsonMap1, jsonMap2);
-
-        assertNotNull(differences);
-
-        assertTrue(differences.containsKey("uuid1"));
-        assertTrue(differences.containsKey("uuid2"));
-    }
-
-    @Test
     public void testFindMissingFiles() {
         Set<String> fileNames1 = new HashSet<>();
         Set<String> fileNames2 = new HashSet<>();
@@ -119,11 +99,5 @@ public class MetadataDiffServiceTest {
 
         assertTrue(missingFiles.contains("file2.json"));
         assertFalse(missingFiles.contains("file1.json"));
-    }
-
-    private Map<String, Object> createJsonObject(String value) {
-        Map<String, Object> jsonObject = new HashMap<>();
-        jsonObject.put("key", value);
-        return jsonObject;
     }
 }
