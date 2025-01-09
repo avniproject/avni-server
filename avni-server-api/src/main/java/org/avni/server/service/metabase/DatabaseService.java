@@ -155,11 +155,19 @@ public class DatabaseService implements QuestionCreationService{
         }
     }
 
+    public void createAdvancedQuestion() {
+        ensureSyncComplete();
+        Database database = getGlobalDatabase();
+        databaseRepository.createAdvancedQuestion(database);
+    }
+
     public void createQuestions() {
         createQuestionsForSubjectTypes();
 
         createQuestionsForProgramsAndEncounters();
 
         createQuestionsForIndividualTables();
+
+        createAdvancedQuestion();
     }
 }

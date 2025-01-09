@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
@@ -126,6 +127,51 @@ public class DatabaseRepository extends MetabaseConnector {
         );
 
         postForObject(metabaseApiUrl + "/card", requestBody.toJson(), JsonNode.class);
+    }
+
+    public MetabaseQuery createAdvancedQuery(String primaryTableName, String secondaryTableName, QuestionConfig config, Database database) {
+        TableDetails primaryTable = findTableDetailsByName(database, new TableDetails(primaryTableName));
+        FieldDetails primaryField = getFieldDetailsByName(database, primaryTable, new FieldDetails(config.getPrimaryField()));
+
+        TableDetails secondaryTable = findTableDetailsByName(database, new TableDetails(secondaryTableName));
+        FieldDetails breakoutField = getFieldDetailsByName(database, secondaryTable, new FieldDetails(config.getBreakoutField()));
+
+        return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())
+                .forTable(primaryTable)
+                .addAggregation(config.getAggregationType())
+                .addBreakout(breakoutField.getId(), breakoutField.getBaseType(), primaryField.getId())
+                .addFilter(config.getFilters())
+                .build();
+    }
+
+    public void createAdvancedQuestion(Database database) {
+        QuestionConfig config = new QuestionConfig()
+                .withAggregation(AggregationType.COUNT)
+                .withBreakout("name", "subject_type_id")
+                .withFilters(
+                        new FilterCondition(ConditionType.EQUAL, getFieldDetailsByName(database, new TableDetails("individual"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false),
+                        new FilterCondition(ConditionType.EQUAL, getFieldDetailsByName(database, new TableDetails("subject_type"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false,getFieldDetailsByName(database, new TableDetails("individual"), new FieldDetails("subject_type_id")).getId())
+                )
+                .withVisualization(VisualizationType.PIE);
+        MetabaseQuery query = createAdvancedQuery("individual", "subject_type", config, database);
+        postQuestion(
+                "Pie Chart : Count of Non Voided Individuals - Non Voided Subject Type",
+                query,
+                config,
+                getCollectionForDatabase(database).getIdAsInt()
+        );
+    }
+
+    public void postQuestion(String questionName, MetabaseQuery query, QuestionConfig config, int collectionId) {
+        MetabaseRequestBody requestBody = new MetabaseRequestBody(
+                questionName,
+                query,
+                config.getVisualizationType(),
+                null,
+                objectMapper.createObjectNode(),
+                collectionId
+        );
+        postForObject(metabaseApiUrl + "/card", requestBody.toJson(), ObjectNode.class);
     }
 
     private CollectionInfoResponse getCollectionForDatabase(Database database) {

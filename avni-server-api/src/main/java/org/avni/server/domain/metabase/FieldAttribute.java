@@ -8,6 +8,7 @@ public enum FieldAttribute {
     ALL("all"),
     FIELD("field"),
     FIELDS("fields"),
+    SOURCE_FIELD("source-field"),
     SOURCE_TABLE("source-table"),
     ALIAS("alias"),
     CONDITION("condition"),

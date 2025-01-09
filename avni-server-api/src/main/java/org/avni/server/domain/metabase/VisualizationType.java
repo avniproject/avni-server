@@ -3,7 +3,9 @@ package org.avni.server.domain.metabase;
 //Refer documentation : https://www.metabase.com/docs/latest/questions/sharing/visualizing-results
 public enum VisualizationType {
     TABLE("table"),
-    CHART("chart");
+    CHART("chart"),
+    BAR("bar"),
+    PIE("pie");;
 
     private final String typeName;
 
