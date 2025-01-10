@@ -31,6 +31,8 @@ import org.springframework.util.StringUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -403,6 +405,31 @@ public class RuleService implements NonScopeAwareService {
                 throw new ValidationException(String.format("%s with uuid: %s not found for rule with uuid: %s",
                         ruleRequest.getEntityType(), entityUUID, ruleRequest.getUuid()));
             }
+        }
+    }
+
+    public void createUpdateGlobalRule(String ruleCode) {
+        RuleDependency ruleDependency = ruleDependencyRepository.findByUuid(RuleDependency.GLOBAL_RULE_UUID);
+        if (ruleDependency == null) ruleDependency = new RuleDependency();
+        ruleDependency.setCode(ruleCode);
+        ruleDependency.setChecksum(generateChecksum(ruleCode));
+        ruleDependency.setUuid(RuleDependency.GLOBAL_RULE_UUID);
+        ruleDependencyRepository.save(ruleDependency);
+    }
+
+    private static String generateChecksum(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(input.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 }

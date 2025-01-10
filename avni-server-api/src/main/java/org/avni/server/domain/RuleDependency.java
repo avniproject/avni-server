@@ -9,6 +9,8 @@ import java.util.Set;
 @Entity(name = "rule_dependency")
 @BatchSize(size = 100)
 public class RuleDependency extends OrganisationAwareEntity {
+    public static String GLOBAL_RULE_UUID = "8ae72815-5670-40a4-b8b6-e457d0dff8ad";
+
     @NotNull
     @Column(name = "checksum")
     private String checksum;
