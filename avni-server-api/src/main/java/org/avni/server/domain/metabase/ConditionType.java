@@ -2,7 +2,8 @@ package org.avni.server.domain.metabase;
 
 public enum ConditionType {
     EQUAL("="),
-    NOT_EQUAL("!=");
+    NOT_EQUAL("!="),
+    IS_NULL("is-null");
 
     private final String operator;
 

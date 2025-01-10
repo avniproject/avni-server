@@ -162,6 +162,25 @@ public class DatabaseRepository extends MetabaseConnector {
         );
     }
 
+    public void createAdvancedQuestion2(Database database) {
+        QuestionConfig config = new QuestionConfig()
+                .withAggregation(AggregationType.COUNT)
+                .withBreakout("name", "program_id")
+                .withFilters(
+                        new FilterCondition(ConditionType.EQUAL, getFieldDetailsByName(database, new TableDetails("program_enrolment"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false),
+                        new FilterCondition(ConditionType.IS_NULL, getFieldDetailsByName(database, new TableDetails("program_enrolment"), new FieldDetails("program_exit_date_time")).getId() , FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName(),null),
+                        new FilterCondition(ConditionType.EQUAL, getFieldDetailsByName(database, new TableDetails("program"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false,getFieldDetailsByName(database, new TableDetails("program_enrolment"), new FieldDetails("program_id")).getId())
+                )
+                .withVisualization(VisualizationType.PIE);
+        MetabaseQuery query = createAdvancedQuery("program_enrolment", "program", config, database);
+        postQuestion(
+                "Pie Chart : Number of Non exited and Non voided Enrollments for Non Voided Program  ",
+                query,
+                config,
+                getCollectionForDatabase(database).getIdAsInt()
+        );
+    }
+
     public void postQuestion(String questionName, MetabaseQuery query, QuestionConfig config, int collectionId) {
         MetabaseRequestBody requestBody = new MetabaseRequestBody(
                 questionName,

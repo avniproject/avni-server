@@ -5,7 +5,8 @@ package org.avni.server.domain.metabase;
 public enum FieldType {
     INTEGER("type/Integer"),
     TEXT("type/Text"),
-    BOOLEAN("type/Boolean");
+    BOOLEAN("type/Boolean"),
+    DATE_TIME_WITH_LOCAL_TZ("type/DateTimeWithLocalTZ");
 
     private final String typeName;
 

@@ -7,7 +7,7 @@ import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
 
 public class FilterCondition {
     private final ConditionType operator;
-    private final int fieldId;
+    private final Integer fieldId;
     private final String baseType;
     private final Object value;
     private Integer sourceFieldId;
@@ -60,13 +60,14 @@ public class FilterCondition {
 
         fieldArray.add(fieldDetails);
         filterArray.add(fieldArray);
-
-        if (value instanceof String[]) {
-            for (String val : (String[]) value) {
-                filterArray.add(val);
+        if(value!=null){
+            if (value instanceof String[]) {
+                for (String val : (String[]) value) {
+                    filterArray.add(val);
+                }
+            } else {
+                filterArray.addPOJO(value);
             }
-        } else {
-            filterArray.addPOJO(value);
         }
         return filterArray;
 

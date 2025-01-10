@@ -155,10 +155,11 @@ public class DatabaseService implements QuestionCreationService{
         }
     }
 
-    public void createAdvancedQuestion() {
+    public void createAdvancedQuestions() {
         ensureSyncComplete();
         Database database = getGlobalDatabase();
         databaseRepository.createAdvancedQuestion(database);
+        databaseRepository.createAdvancedQuestion2(database);
     }
 
     public void createQuestions() {
@@ -168,6 +169,6 @@ public class DatabaseService implements QuestionCreationService{
 
         createQuestionsForIndividualTables();
 
-        createAdvancedQuestion();
+        createAdvancedQuestions();
     }
 }
