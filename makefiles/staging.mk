@@ -1,7 +1,4 @@
 # I have setup the environment variables in my bash_profile so that I can just run it whenever I want in live mode. You could do that too (Vivek).
-tunnel_staging_db:
-	ssh avni-staging -L 6015:stagingdb.openchs.org:5432
-
 tunnel_staging_server_for_debug:
 	ssh avni-staging -L 5005:127.0.0.1:5005
 
