@@ -50,6 +50,7 @@ public class MetadataDiffServiceTest {
         assertTrue(hasNoChangesInSameFile("/metadataDiff/programs.json"));
         assertTrue(hasNoChangesInSameFile("/metadataDiff/reportDashboard.json"));
         assertTrue(hasNoChangesInSameFile("/metadataDiff/identifierSource.json"));
+        assertTrue(hasNoChangesInSameFile("/metadataDiff/aForm.json"));
     }
 
     private boolean hasNoChangesInSameFile(String fileName) throws IOException, URISyntaxException {
