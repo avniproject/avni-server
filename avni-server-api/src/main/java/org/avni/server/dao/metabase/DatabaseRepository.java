@@ -155,7 +155,7 @@ public class DatabaseRepository extends MetabaseConnector {
                 .withVisualization(VisualizationType.PIE);
         MetabaseQuery query = createAdvancedQuery("individual", "subject_type", config, database);
         postQuestion(
-                "Pie Chart : Count of Non Voided Individuals - Non Voided Subject Type",
+                QuestionName.QUESTION_1.getQuestionName(),
                 query,
                 config,
                 getCollectionForDatabase(database).getIdAsInt()
@@ -174,7 +174,7 @@ public class DatabaseRepository extends MetabaseConnector {
                 .withVisualization(VisualizationType.PIE);
         MetabaseQuery query = createAdvancedQuery("program_enrolment", "program", config, database);
         postQuestion(
-                "Pie Chart : Number of Non exited and Non voided Enrollments for Non Voided Program  ",
+                QuestionName.QUESTION_2.getQuestionName(),
                 query,
                 config,
                 getCollectionForDatabase(database).getIdAsInt()

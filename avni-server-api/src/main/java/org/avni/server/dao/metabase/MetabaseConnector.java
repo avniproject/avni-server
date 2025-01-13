@@ -1,6 +1,7 @@
 package org.avni.server.dao.metabase;
 
 import org.avni.server.domain.metabase.GroupPermissionsBody;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -38,9 +39,14 @@ public class MetabaseConnector {
         return new HttpEntity<>(body, headers);
     }
 
-    protected void sendPutRequest(String url, Map<String, ?> requestBody) {
-        HttpEntity<Map<String, ?>> entity = createHttpEntity(requestBody);
-        restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+    protected void sendPutRequest(String url, Object requestBody) {
+        try {
+            String jsonBody = ObjectMapperSingleton.getObjectMapper().writeValueAsString(requestBody);
+            HttpEntity<String> entity = createHttpEntity(jsonBody);
+            restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Error serializing request body to JSON", e);
+        }
     }
 
     public <T> T postForObject(String url, Object request, Class<T> responseType) {

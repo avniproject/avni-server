@@ -1,9 +1,6 @@
 package org.avni.server.service.metabase;
 
-import org.avni.server.dao.metabase.CollectionPermissionsRepository;
-import org.avni.server.dao.metabase.CollectionRepository;
-import org.avni.server.dao.metabase.DatabaseRepository;
-import org.avni.server.dao.metabase.GroupPermissionsRepository;
+import org.avni.server.dao.metabase.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
@@ -23,8 +20,10 @@ public class MetabaseService {
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
+    private final MetabaseDashboardRepository metabaseDashboardRepository;
     private Database globalDatabase;
     private CollectionInfoResponse globalCollection;
+    private CollectionItem globalDashboard;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
@@ -32,13 +31,15 @@ public class MetabaseService {
                            DatabaseRepository databaseRepository,
                            GroupPermissionsRepository groupPermissionsRepository,
                            CollectionPermissionsRepository collectionPermissionsRepository,
-                           CollectionRepository collectionRepository) {
+                           CollectionRepository collectionRepository,
+                           MetabaseDashboardRepository metabaseDashboardRepository) {
         this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
+        this.metabaseDashboardRepository = metabaseDashboardRepository;
     }
 
     public void setupMetabase() {
@@ -64,6 +65,12 @@ public class MetabaseService {
                 collectionPermissionsRepository.getCollectionPermissionsGraph()
         );
         collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, metabaseGroup.getId(), globalCollection.getIdAsInt());
+
+        globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
+        if(globalDashboard == null){
+            Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(globalCollection.getName(),null,getGlobalCollection().getIdAsInt()));
+            globalDashboard = new CollectionItem(metabaseDashboard.getName(),metabaseDashboard.getId());
+        }
     }
 
     public Database getGlobalDatabase() {
@@ -87,6 +94,16 @@ public class MetabaseService {
             }
         }
         return globalCollection;
+    }
+
+    public CollectionItem getGlobalDashboard() {
+        if (globalDashboard == null) {
+            globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
+            if (globalDashboard == null) {
+                throw new RuntimeException("Global dashboard not found.");
+            }
+        }
+        return globalDashboard;
     }
 
 }

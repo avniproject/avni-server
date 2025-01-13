@@ -1,5 +1,6 @@
 package org.avni.server.service.metabase;
 
+import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +17,15 @@ public class DatabaseService implements QuestionCreationService{
 
     private final DatabaseRepository databaseRepository;
     private final MetabaseService metabaseService;
+    private final MetabaseDashboardRepository metabaseDashboardRepository;
 
     private static final String ADDRESS_TABLE = "Address";
 
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService) {
+    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, MetabaseDashboardRepository metabaseDashboardRepository) {
         this.databaseRepository = databaseRepository;
         this.metabaseService = metabaseService;
+        this.metabaseDashboardRepository = metabaseDashboardRepository;
     }
 
     public Database getGlobalDatabase() {
@@ -31,6 +34,10 @@ public class DatabaseService implements QuestionCreationService{
 
     public CollectionInfoResponse getGlobalCollection() {
         return metabaseService.getGlobalCollection();
+    }
+
+    public CollectionItem getGlobalDashboard(){
+        return metabaseService.getGlobalDashboard();
     }
 
     public SyncStatus getInitialSyncStatus() {
@@ -55,6 +62,25 @@ public class DatabaseService implements QuestionCreationService{
                 .filter(entityName -> !existingItemNames.contains(entityName.toLowerCase()))
                 .collect(Collectors.toList());
     }
+
+    private boolean isQuestionMissing(String questionName) {
+        Set<String> existingItemNames = databaseRepository
+                .getExistingCollectionItems(getGlobalCollection().getIdAsInt())
+                .stream()
+                .map(item -> item.getName().trim().toLowerCase().replace(" ", "_"))
+                .collect(Collectors.toSet());
+
+        return !existingItemNames.contains(questionName.trim().toLowerCase().replace(" ", "_"));
+    }
+
+    private int getCardIdByQuestionName(String questionName) {
+        return databaseRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
+                .filter(item -> item.getName().trim().equalsIgnoreCase(questionName.trim()))
+                .map(CollectionItem::getId)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Question not found: " + questionName));
+    }
+
 
     @Override
     public void createQuestionForTable(TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressFieldDetails, FieldDetails tableFieldDetails) {
@@ -158,8 +184,27 @@ public class DatabaseService implements QuestionCreationService{
     public void createAdvancedQuestions() {
         ensureSyncComplete();
         Database database = getGlobalDatabase();
-        databaseRepository.createAdvancedQuestion(database);
-        databaseRepository.createAdvancedQuestion2(database);
+        if (isQuestionMissing(QuestionName.QUESTION_1.getQuestionName())) {
+            databaseRepository.createAdvancedQuestion(database);
+        }
+
+        if (isQuestionMissing(QuestionName.QUESTION_2.getQuestionName())) {
+            databaseRepository.createAdvancedQuestion2(database);
+        }
+        updateGlobalDashboardWithAdvancedQuestions();
+
+    }
+
+    public void updateGlobalDashboardWithAdvancedQuestions() {
+        List<Dashcard> dashcards = new ArrayList<>();
+        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8));
+        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8));
+
+        DashboardUpdateRequest dashboardUpdateRequest = new DashboardUpdateRequest(
+                dashcards
+        );
+
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), dashboardUpdateRequest);
     }
 
     public void createQuestions() {
