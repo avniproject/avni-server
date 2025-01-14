@@ -1,6 +1,7 @@
 package org.avni.messaging.api;
 
 import org.avni.messaging.contract.ManualMessageContract;
+import org.avni.messaging.contract.SendMessageResponse;
 import org.avni.messaging.contract.glific.GlificMessageTemplate;
 import org.avni.messaging.contract.web.MessageRequestResponse;
 import org.avni.messaging.domain.MessageDeliveryStatus;
@@ -71,18 +72,19 @@ public class MessageController {
     @RequestMapping(value = MessageEndpoint + "/sendMsg", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public ResponseEntity<MessageDeliveryStatus> sendMsgToContactUser(@RequestBody ManualMessageContract manualMessageContract) {
+    public ResponseEntity<SendMessageResponse> sendMsgToContactUser(@RequestBody ManualMessageContract manualMessageContract) {
         accessControlService.checkPrivilege(PrivilegeType.Messaging);
         accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
-        // TODO: 25/12/24 Return exception message as well in response to enable reporting insight into the issue
         try {
             messagingService.sendMessageSynchronously(manualMessageContract);
-        } catch (GlificNotConfiguredException | PhoneNumberNotAvailableOrIncorrectException e) {
-            return ResponseEntity.badRequest().body(MessageDeliveryStatus.NotSent);
+        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
+            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
+        } catch (GlificNotConfiguredException e) {
+            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(MessageDeliveryStatus.Failed);
+            return ResponseEntity.internalServerError().body(new SendMessageResponse(MessageDeliveryStatus.Failed, e.getMessage()));
         }
-        return ResponseEntity.ok(MessageDeliveryStatus.Sent);
+        return ResponseEntity.ok(new SendMessageResponse(MessageDeliveryStatus.Sent, "Success"));
     }
 
     @RequestMapping(value = MessageEndpoint + "/contactGroup/{id}/msgsNotYetSent", method = RequestMethod.GET)
