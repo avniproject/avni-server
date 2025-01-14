@@ -6,10 +6,7 @@ import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +41,10 @@ public class DatabaseService implements QuestionCreationService{
         DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(getGlobalDatabase());
         String status = databaseSyncStatus.getInitialSyncStatus();
         return SyncStatus.fromString(status);
+    }
+
+    private int getFieldId(String tableName, String fieldName) {
+        return databaseRepository.getFieldDetailsByName(getGlobalDatabase(), new TableDetails(tableName), new FieldDetails(fieldName)).getId();
     }
 
     private void ensureSyncComplete() {
@@ -200,14 +201,29 @@ public class DatabaseService implements QuestionCreationService{
         dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8));
         dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8));
 
-        DashboardUpdateRequest dashboardUpdateRequest = new DashboardUpdateRequest(
-                dashcards
-        );
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards));
+        addFilterToDashboard();
 
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), dashboardUpdateRequest);
     }
 
-    public void createQuestions() {
+    public void addFilterToDashboard(){
+        List<Dashcard> updateDashcards = new ArrayList<>();
+
+        List<ParameterMapping> first = new ArrayList<>();
+        first.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(databaseRepository.getFieldDetailsByName(getGlobalDatabase(), new TableDetails("individual"),new FieldDetails("registration_date")).getId(),FieldType.DATE.getTypeName()))));
+        updateDashcards.add(new Dashcard(-1,getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8, Collections.emptyMap(),first));
+
+        List<ParameterMapping> sec = new ArrayList<>();
+        sec.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(databaseRepository.getFieldDetailsByName(getGlobalDatabase(), new TableDetails("program_enrolment"),new FieldDetails("enrolment_date_time")).getId(),FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        updateDashcards.add(new Dashcard(-2,getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8, Collections.emptyMap(),sec));
+
+        List<Parameters> parameters = new ArrayList<>();
+        parameters.add(new Parameters("All Options","all_options","dateTimeId","date/all-options","date"));
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(),new DashboardUpdateRequest(updateDashcards,parameters));
+
+    }
+
+    public void addCollectionItems() {
         createQuestionsForSubjectTypes();
 
         createQuestionsForProgramsAndEncounters();

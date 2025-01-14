@@ -6,6 +6,7 @@ public enum FieldType {
     INTEGER("type/Integer"),
     TEXT("type/Text"),
     BOOLEAN("type/Boolean"),
+    DATE("type/Date"),
     DATE_TIME_WITH_LOCAL_TZ("type/DateTimeWithLocalTZ");
 
     private final String typeName;

@@ -28,7 +28,7 @@ public class Dashcard {
     private Object visualizationSettings;
 
     @JsonProperty("parameter_mappings")
-    private List<Object> parameterMappings;
+    private List<ParameterMapping> parameterMappings;
 
     public Dashcard(int dashboardId, int cardId, Integer dashboardTabId, int row, int col, int sizeX, int sizeY) {
         this.dashboardId = dashboardId;
@@ -40,6 +40,18 @@ public class Dashcard {
         this.sizeY = sizeY;
         this.visualizationSettings = Collections.emptyMap();
         this.parameterMappings = Collections.emptyList();
+    }
+
+    public Dashcard(int dashboardId, int cardId, Integer dashboardTabId, int row, int col, int sizeX, int sizeY, Object visualizationSettings, List<ParameterMapping> parameterMappings) {
+        this.dashboardId = dashboardId;
+        this.cardId = cardId;
+        this.dashboardTabId = dashboardTabId;
+        this.row = row;
+        this.col = col;
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
+        this.visualizationSettings = visualizationSettings;
+        this.parameterMappings = parameterMappings;
     }
 
     public int getDashboardId() {

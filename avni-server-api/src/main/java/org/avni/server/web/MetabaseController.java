@@ -48,7 +48,7 @@ public class MetabaseController {
         if (enabled) {
             metabaseService.setupMetabase();
             try {
-                databaseService.createQuestions();
+                databaseService.addCollectionItems();
                 return new SetupToggleResponse(true, "Metabase setup enabled and questions created successfully.");
             } catch (RuntimeException e) {
                 return new SetupToggleResponse(true, "Metabase setup enabled, but questions could not be created. Database sync is incomplete. Please refresh tables after sync is complete.");
@@ -69,7 +69,7 @@ public class MetabaseController {
     @PostMapping("/create-questions")
     public CreateQuestionsResponse createQuestions() {
         try {
-            databaseService.createQuestions();
+            databaseService.addCollectionItems();
             databaseService.updateGlobalDashboardWithAdvancedQuestions();
             return new CreateQuestionsResponse(true, "Questions created successfully.");
         } catch (RuntimeException e) {
