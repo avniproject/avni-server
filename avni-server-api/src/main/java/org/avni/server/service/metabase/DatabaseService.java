@@ -1,7 +1,9 @@
 package org.avni.server.service.metabase;
 
+import org.avni.server.dao.metabase.CollectionRepository;
 import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.DatabaseRepository;
+import org.avni.server.dao.metabase.QuestionRepository;
 import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,26 +16,30 @@ public class DatabaseService implements QuestionCreationService{
 
     private final DatabaseRepository databaseRepository;
     private final MetabaseService metabaseService;
+    private final CollectionRepository collectionRepository;
+    private final QuestionRepository questionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
 
     private static final String ADDRESS_TABLE = "Address";
 
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, MetabaseDashboardRepository metabaseDashboardRepository) {
+    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository) {
         this.databaseRepository = databaseRepository;
         this.metabaseService = metabaseService;
+        this.collectionRepository = collectionRepository;
+        this.questionRepository = questionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
     }
 
-    public Database getGlobalDatabase() {
+    private Database getGlobalDatabase() {
         return metabaseService.getGlobalDatabase();
     }
 
-    public CollectionInfoResponse getGlobalCollection() {
+    private CollectionInfoResponse getGlobalCollection() {
         return metabaseService.getGlobalCollection();
     }
 
-    public CollectionItem getGlobalDashboard(){
+    private CollectionItem getGlobalDashboard(){
         return metabaseService.getGlobalDashboard();
     }
 
@@ -43,8 +49,8 @@ public class DatabaseService implements QuestionCreationService{
         return SyncStatus.fromString(status);
     }
 
-    private int getFieldId(String tableName, String fieldName) {
-        return databaseRepository.getFieldDetailsByName(getGlobalDatabase(), new TableDetails(tableName), new FieldDetails(fieldName)).getId();
+    private int getFieldId(TableDetails tableDetails, FieldDetails fieldDetails) {
+        return databaseRepository.getFieldDetailsByName(getGlobalDatabase(), tableDetails, fieldDetails).getId();
     }
 
     private void ensureSyncComplete() {
@@ -55,7 +61,7 @@ public class DatabaseService implements QuestionCreationService{
     }
 
     private List<String> filterOutExistingQuestions(List<String> entityNames) {
-        Set<String> existingItemNames = databaseRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
+        Set<String> existingItemNames = collectionRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
                 .map(item -> item.getName().trim().toLowerCase().replace(" ", "_"))
                 .collect(Collectors.toSet());
 
@@ -65,7 +71,7 @@ public class DatabaseService implements QuestionCreationService{
     }
 
     private boolean isQuestionMissing(String questionName) {
-        Set<String> existingItemNames = databaseRepository
+        Set<String> existingItemNames = collectionRepository
                 .getExistingCollectionItems(getGlobalCollection().getIdAsInt())
                 .stream()
                 .map(item -> item.getName().trim().toLowerCase().replace(" ", "_"))
@@ -75,7 +81,7 @@ public class DatabaseService implements QuestionCreationService{
     }
 
     private int getCardIdByQuestionName(String questionName) {
-        return databaseRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
+        return collectionRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
                 .filter(item -> item.getName().trim().equalsIgnoreCase(questionName.trim()))
                 .map(CollectionItem::getId)
                 .findFirst()
@@ -86,7 +92,7 @@ public class DatabaseService implements QuestionCreationService{
     @Override
     public void createQuestionForTable(TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressFieldDetails, FieldDetails tableFieldDetails) {
         Database database = getGlobalDatabase();
-        databaseRepository.createQuestionForTable(database, tableDetails, addressTableDetails, addressFieldDetails, tableFieldDetails);
+        questionRepository.createQuestionForTable(database, tableDetails, addressTableDetails, addressFieldDetails, tableFieldDetails);
     }
 
     @Override
@@ -96,10 +102,10 @@ public class DatabaseService implements QuestionCreationService{
         TableDetails tableDetails = new TableDetails(tableName);
         TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails);
 
-        databaseRepository.createQuestionForASingleTable(database, fetchedTableDetails);
+        questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 
-    public List<String> getSubjectTypeNames() {
+    private List<String> getSubjectTypeNames() {
         TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
 
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
@@ -122,7 +128,7 @@ public class DatabaseService implements QuestionCreationService{
         return subjectTypeNames;
     }
 
-    public List<String> getProgramAndEncounterNames() {
+    private List<String> getProgramAndEncounterNames() {
         TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
 
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
@@ -157,21 +163,21 @@ public class DatabaseService implements QuestionCreationService{
         }
     }
 
-    public void createQuestionsForSubjectTypes() {
+    private void createQuestionsForSubjectTypes() {
         List<String> subjectTypeNames = getSubjectTypeNames();
         FieldDetails addressFieldDetails = new FieldDetails("id");
         FieldDetails subjectFieldDetails = new FieldDetails("address_id");
         createQuestionsForEntities(subjectTypeNames, addressFieldDetails, subjectFieldDetails);
     }
 
-    public void createQuestionsForProgramsAndEncounters() {
+    private void createQuestionsForProgramsAndEncounters() {
         List<String> programAndEncounterNames = getProgramAndEncounterNames();
         FieldDetails addressFieldDetails = new FieldDetails("id");
         FieldDetails programOrEncounterFieldDetails = new FieldDetails("address_id");
         createQuestionsForEntities(programAndEncounterNames, addressFieldDetails, programOrEncounterFieldDetails);
     }
 
-    public void createQuestionsForIndividualTables() {
+    private void createQuestionsForIndividualTables() {
         ensureSyncComplete();
         List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");
 
@@ -182,21 +188,21 @@ public class DatabaseService implements QuestionCreationService{
         }
     }
 
-    public void createAdvancedQuestions() {
+    private void createCustomQuestions() {
         ensureSyncComplete();
         Database database = getGlobalDatabase();
         if (isQuestionMissing(QuestionName.QUESTION_1.getQuestionName())) {
-            databaseRepository.createAdvancedQuestion(database);
+            questionRepository.createSubjectTypeIndividualQuestion(database);
         }
 
         if (isQuestionMissing(QuestionName.QUESTION_2.getQuestionName())) {
-            databaseRepository.createAdvancedQuestion2(database);
+            questionRepository.createProgramEnrollmentsQuestion(database);
         }
-        updateGlobalDashboardWithAdvancedQuestions();
+        updateGlobalDashboardWithCustomQuestions();
 
     }
 
-    public void updateGlobalDashboardWithAdvancedQuestions() {
+    public void updateGlobalDashboardWithCustomQuestions() {
         List<Dashcard> dashcards = new ArrayList<>();
         dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8));
         dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8));
@@ -206,22 +212,33 @@ public class DatabaseService implements QuestionCreationService{
 
     }
 
-    public void addFilterToDashboard(){
+    private void addFilterToDashboard(){
         List<Dashcard> updateDashcards = new ArrayList<>();
-
-        List<ParameterMapping> first = new ArrayList<>();
-        first.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(databaseRepository.getFieldDetailsByName(getGlobalDatabase(), new TableDetails("individual"),new FieldDetails("registration_date")).getId(),FieldType.DATE.getTypeName()))));
-        updateDashcards.add(new Dashcard(-1,getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8, Collections.emptyMap(),first));
-
-        List<ParameterMapping> sec = new ArrayList<>();
-        sec.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(databaseRepository.getFieldDetailsByName(getGlobalDatabase(), new TableDetails("program_enrolment"),new FieldDetails("enrolment_date_time")).getId(),FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
-        updateDashcards.add(new Dashcard(-2,getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8, Collections.emptyMap(),sec));
-
-        List<Parameters> parameters = new ArrayList<>();
-        parameters.add(new Parameters("All Options","all_options","dateTimeId","date/all-options","date"));
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(),new DashboardUpdateRequest(updateDashcards,parameters));
+        updateDashcards.add(new Dashcard(-1,getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8, Collections.emptyMap(),createDashcardParameterMappingForFirstDashcard()));
+        updateDashcards.add(new Dashcard(-2,getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8, Collections.emptyMap(),createDashcardParameterMappingForSecondDashcard()));
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(),new DashboardUpdateRequest(updateDashcards,createParametersForDashboard()));
 
     }
+
+    private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard(){
+        List<ParameterMapping> firstDashcardParameterMapping = new ArrayList<>();
+        firstDashcardParameterMapping.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(getFieldId(new TableDetails(TableName.INDIVIDUAL.getName()),new FieldDetails(FieldName.REGISTRATION_DATE.getName())),FieldType.DATE.getTypeName()))));
+        return firstDashcardParameterMapping;
+    }
+
+    private List<ParameterMapping> createDashcardParameterMappingForSecondDashcard(){
+        List<ParameterMapping> secondDashcardParameterMapping = new ArrayList<>();
+        secondDashcardParameterMapping.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(getFieldId(new TableDetails(TableName.PROGRAM_ENROLMENT.getName()),new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())),FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        return secondDashcardParameterMapping;
+    }
+
+    private List<Parameters> createParametersForDashboard(){
+        List<Parameters> parameters = new ArrayList<>();
+        parameters.add(new Parameters("All Options","all_options","dateTimeId","date/all-options","date"));
+        return parameters;
+    }
+
+
 
     public void addCollectionItems() {
         createQuestionsForSubjectTypes();
@@ -230,6 +247,6 @@ public class DatabaseService implements QuestionCreationService{
 
         createQuestionsForIndividualTables();
 
-        createAdvancedQuestions();
+        createCustomQuestions();
     }
 }

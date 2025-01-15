@@ -9,11 +9,11 @@ import java.util.List;
 
 @Repository
 public class MetabaseDashboardRepository extends MetabaseConnector {
-    private final DatabaseRepository databaseRepository;
+    private final CollectionRepository collectionRepository;
 
-    public MetabaseDashboardRepository(RestTemplateBuilder restTemplateBuilder , DatabaseRepository databaseRepository) {
+    public MetabaseDashboardRepository(RestTemplateBuilder restTemplateBuilder , CollectionRepository collectionRepository) {
         super(restTemplateBuilder);
-        this.databaseRepository = databaseRepository;
+        this.collectionRepository = collectionRepository;
     }
 
     public Dashboard save(CreateDashboardRequest createDashboardRequest) {
@@ -23,7 +23,7 @@ public class MetabaseDashboardRepository extends MetabaseConnector {
 
 
     public CollectionItem getDashboardByName(CollectionInfoResponse globalCollection) {
-        List<CollectionItem> items = databaseRepository.getExistingCollectionItems(globalCollection.getIdAsInt());
+        List<CollectionItem> items = collectionRepository.getExistingCollectionItems(globalCollection.getIdAsInt());
 
         return items.stream()
                 .filter(item -> item.getName().equals(globalCollection.getName()))

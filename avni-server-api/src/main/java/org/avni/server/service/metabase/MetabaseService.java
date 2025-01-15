@@ -53,7 +53,7 @@ public class MetabaseService {
             globalDatabase = databaseRepository.save(newDatabase);
         }
 
-        globalCollection = databaseRepository.getCollectionByName(globalDatabase);
+        globalCollection = collectionRepository.getCollectionByName(globalDatabase);
         if (globalCollection == null) {
             CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
             globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
@@ -88,7 +88,7 @@ public class MetabaseService {
     public CollectionInfoResponse getGlobalCollection() {
         if (globalCollection == null) {
             Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalCollection = databaseRepository.getCollectionByName(new Database(currentOrganisation.getName()));
+            globalCollection = collectionRepository.getCollectionByName(new Database(currentOrganisation.getName()));
             if (globalCollection == null) {
                 throw new RuntimeException("Global database not found.");
             }
