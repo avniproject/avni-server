@@ -1,0 +1,41 @@
+buildscript {
+    ext {
+        springBootVersion = '3.3.5'
+    }
+}
+
+plugins {
+    id 'java'
+}
+
+group = 'org.openchs'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-data-rest:${springBootVersion}"
+    implementation 'javax.cache:cache-api:1.1.1'
+    implementation "joda-time:joda-time:2.10.10"
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.4'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.15.4'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.4'
+    implementation 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.15.4'
+    implementation("org.hibernate:hibernate-java8:5.6.15.Final") {
+        exclude(group: 'org.hibernate', module: 'hibernate-core')
+    }
+    implementation("org.hibernate.orm:hibernate-jcache:6.5.2.Final") {
+        exclude(group: "org.hibernate.orm", module: "hibernate-core")
+    }
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "org.mockito:mockito-core:3.12.4"
+}
+
+test {
+    useJUnitPlatform()
+}
