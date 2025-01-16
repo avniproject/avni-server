@@ -5,4 +5,6 @@ import org.avni.server.domain.User;
 
 public interface IAMAuthService {
     User getUserFromToken(String token) throws SigningKeyNotFoundException;
+
+    String generateTokenForUser(String username, String password);
 }

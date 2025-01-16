@@ -116,11 +116,25 @@ public class IdpServiceFactory {
                 return keycloakAuthService.getUserFromToken(token);
             }
         }
+
+        @Override
+        public String generateTokenForUser(String username, String password) {
+            try {
+                return cognitoAuthService.generateTokenForUser(username, password);
+            } catch (Exception e) {
+                return keycloakAuthService.generateTokenForUser(username, password);
+            }
+        }
     }
 
     public static class NoIAMAuthService implements IAMAuthService {
         @Override
         public User getUserFromToken(String token) throws SigningKeyNotFoundException {
+            return null;
+        }
+
+        @Override
+        public String generateTokenForUser(String username, String password) {
             return null;
         }
     }

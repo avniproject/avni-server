@@ -1,12 +1,13 @@
 package org.avni.server.service;
 
+import com.amazonaws.services.cognitoidp.model.AuthenticationResultType;
 import com.auth0.jwt.interfaces.Verification;
+import org.avni.server.auth.AuthenticationHelper;
 import org.avni.server.config.CognitoConfig;
 import org.avni.server.dao.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,13 @@ public class CognitoAuthServiceImpl extends BaseIAMService {
         logger.debug(String.format("Region: %s", cognitoConfig.getRegion()));
         logger.debug(String.format("Pool Id: %s", cognitoConfig.getPoolId()));
         logger.debug(String.format("Client Id: %s", cognitoConfig.getClientId()));
+    }
+
+    @Override
+    public String generateTokenForUser(String username, String password) {
+        AuthenticationHelper helper = new AuthenticationHelper(cognitoConfig.getPoolId(), cognitoConfig.getClientId());
+        AuthenticationResultType authenticationResultType = helper.performSRPAuthentication(username, password);
+        return authenticationResultType.getIdToken();
     }
 
     protected String getJwkProviderUrl() {

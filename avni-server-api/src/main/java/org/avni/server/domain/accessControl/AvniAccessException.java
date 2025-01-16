@@ -25,4 +25,12 @@ public class AvniAccessException extends RuntimeException {
     public static AvniAccessException createForNotAdmin(User user) {
         return new AvniAccessException(String.format("User %s is not admin", user.getUsername()));
     }
+
+    public static AvniAccessException createForAdmin(User user) {
+        return new AvniAccessException(String.format("User %s is admin, operation disallowed", user.getUsername()));
+    }
+
+    public static AvniAccessException createForUserNotAllowedTokenGeneration(User user) {
+        return new AvniAccessException(String.format("User %s is not allowed to invoke token generation api", user.getUsername()));
+    }
 }

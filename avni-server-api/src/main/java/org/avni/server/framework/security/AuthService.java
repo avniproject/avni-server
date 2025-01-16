@@ -5,7 +5,6 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.avni.server.dao.AccountAdminRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.AccountAdmin;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
@@ -20,7 +19,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -76,6 +78,16 @@ public class AuthService {
             return changeUser(user.get(), organisationUUID);
         }
         throw new RuntimeException(String.format("Not found: User{id='%s'}", userId));
+    }
+
+    public String generateTokenForUser(String username, String password) {
+        becomeSuperUser();
+        IAMAuthService iamAuthService = idpServiceFactory.getAuthService();
+        try {
+            return iamAuthService.generateTokenForUser(username, password);
+        } catch (Exception exception) {
+            throw new AvniNoUserSessionException(exception);
+        }
     }
 
     private Authentication attemptAuthentication(User user, String organisationUUID) {
