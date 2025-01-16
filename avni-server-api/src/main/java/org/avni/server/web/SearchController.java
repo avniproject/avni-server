@@ -4,6 +4,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.Concept;
+import org.avni.server.mapper.ConceptMapper;
 import org.avni.server.web.request.AddressLevelContractWeb;
 import org.avni.server.web.request.AddressLevelTypeContract;
 import org.avni.server.web.request.ConceptContract;
@@ -60,11 +61,10 @@ public class SearchController {
     }
 
     private List<ConceptContract> getConceptContract(List<Concept> concepts) {
+        ConceptMapper conceptMapper = new ConceptMapper();
         return concepts
                 .stream()
-                .map(Concept::toConceptContract)
+                .map(conceptMapper::toConceptContract)
                 .collect(Collectors.toList());
     }
-
-
 }

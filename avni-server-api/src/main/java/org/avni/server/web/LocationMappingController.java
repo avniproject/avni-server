@@ -3,7 +3,7 @@ package org.avni.server.web;
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.LocationMappingRepository;
 import org.avni.server.dao.LocationMappingSyncRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.ParentLocationMapping;
 import org.avni.server.service.ScopeBasedSyncService;
 import org.avni.server.service.UserService;

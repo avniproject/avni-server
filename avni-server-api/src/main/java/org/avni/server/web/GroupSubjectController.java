@@ -5,7 +5,7 @@ import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.GroupSubjectService;

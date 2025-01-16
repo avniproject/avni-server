@@ -11,6 +11,7 @@ import org.joda.time.DateTime;
 import org.springframework.hateoas.server.core.Relation;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This class represents a combined entity representing one to one mapping of SubjectType and OperationalSubjectType.
@@ -71,7 +72,11 @@ public class SubjectTypeContractWeb {
         contract.setModifiedDateTime(operationalSubjectType.getLastModifiedDateTime());
         contract.setGroup(operationalSubjectType.isGroup());
         contract.setHousehold(operationalSubjectType.isHousehold());
-        contract.setGroupRoles(subjectType.getGroupRolesContract());
+        List<GroupRoleContract> groupRoleContracts = subjectType.getGroupRoles().stream()
+                .filter(r -> !r.isVoided())
+                .map(GroupRoleContract::fromEntity)
+                .collect(Collectors.toList());
+        contract.setGroupRoles(groupRoleContracts);
         contract.setActive(subjectType.getActive());
         contract.setAllowEmptyLocation(subjectType.isAllowEmptyLocation());
         contract.setAllowProfilePicture(subjectType.isAllowProfilePicture());

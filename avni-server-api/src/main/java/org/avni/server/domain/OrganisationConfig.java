@@ -8,7 +8,6 @@ import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.domain.framework.BaseJsonObject;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.util.ObjectMapperSingleton;
-import org.avni.server.web.request.webapp.SubjectTypeSetting;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 

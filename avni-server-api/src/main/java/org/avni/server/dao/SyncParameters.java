@@ -1,6 +1,6 @@
 package org.avni.server.dao;
 
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.Catchment;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SubjectType;

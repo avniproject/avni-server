@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.joda.time.DateTime;
 import org.avni.server.framework.security.UserContextHolder;

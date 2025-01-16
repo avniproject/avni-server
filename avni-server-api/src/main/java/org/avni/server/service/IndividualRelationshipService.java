@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.individualRelationship.IndividualRelationship;
 import org.joda.time.DateTime;

@@ -6,7 +6,7 @@ import org.avni.server.dao.GeneralRepository;
 import org.avni.server.dao.GroupRoleRepository;
 import org.avni.server.dao.UserRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.TestUserSyncSettingsBuilder;
 import org.avni.server.domain.factory.UserBuilder;

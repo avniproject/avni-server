@@ -8,7 +8,7 @@ import org.avni.server.domain.util.EntityUtil;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.contract.ReportCardContract;
-import org.avni.server.web.contract.ValueUnit;
+import org.avni.server.domain.ValueUnit;
 import org.avni.server.web.request.reports.ReportCardBundleRequest;
 import org.avni.server.web.request.reports.ReportCardWebRequest;
 import org.joda.time.DateTime;

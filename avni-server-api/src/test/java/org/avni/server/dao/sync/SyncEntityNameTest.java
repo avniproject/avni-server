@@ -1,5 +1,6 @@
 package org.avni.server.dao.sync;
 
+import org.avni.server.domain.sync.SyncEntityName;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

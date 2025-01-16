@@ -1,7 +1,5 @@
 package org.avni.server.common;
 
-import org.avni.server.web.validation.ValidationResultType;
-
 public class ValidationResult {
     private String message;
     private ValidationResultType validationResultType;
@@ -35,5 +33,9 @@ public class ValidationResult {
 
     public boolean hasType(ValidationResultType validationResultType) {
         return this.validationResultType == validationResultType;
+    }
+
+    private enum ValidationResultType {
+        Failure, Warning, Success
     }
 }

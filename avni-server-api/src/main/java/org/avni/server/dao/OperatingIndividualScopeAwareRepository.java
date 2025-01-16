@@ -2,7 +2,7 @@ package org.avni.server.dao;
 
 import jakarta.persistence.criteria.*;
 import org.avni.server.application.Subject;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.dao.sync.TransactionDataCriteriaBuilderUtil;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.JsonObject;

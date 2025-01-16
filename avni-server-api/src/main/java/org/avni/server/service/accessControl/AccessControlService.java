@@ -1,5 +1,6 @@
 package org.avni.server.service.accessControl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -8,6 +9,7 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.CatchmentService;
 import org.avni.server.service.UserService;
 import org.avni.server.service.UserSubjectAssignmentService;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -256,7 +258,7 @@ public class AccessControlService {
         }
 
         if (!currentUser.isIgnoreSyncSettingsInDEA() && subjectType.isAnySyncRegistrationConceptUsable()) {
-            List<UserSyncSettings> syncSettingsList = currentUser.getSyncSettingsList();
+            List<UserSyncSettings> syncSettingsList = getSyncSettingsList(currentUser.getSyncSettings());
             UserSyncSettings userSyncSettingsForSubjectType = syncSettingsList.stream().filter(userSyncSettings -> userSyncSettings.getSubjectTypeUUID().equals(subjectType.getUuid())).findFirst().orElse(null);
             if (userSyncSettingsForSubjectType == null) {
                 return SubjectPartitionCheckStatus.failed(SubjectPartitionCheckStatus.UserSyncAttributeNotConfigured);
@@ -272,5 +274,11 @@ public class AccessControlService {
         }
 
         return SubjectPartitionCheckStatus.passed();
+    }
+
+    private static List<UserSyncSettings> getSyncSettingsList(JsonObject syncSettings) {
+        User.SyncSettingKeys.subjectTypeSyncSettings.name();
+        return ObjectMapperSingleton.getObjectMapper().convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<>() {
+        });
     }
 }

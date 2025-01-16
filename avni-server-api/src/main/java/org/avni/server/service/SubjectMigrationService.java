@@ -3,7 +3,7 @@ package org.avni.server.service;
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.*;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;

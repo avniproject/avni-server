@@ -11,6 +11,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.*;
+import org.avni.server.mapper.ConceptMapper;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.DateTimeUtil;
 import org.avni.server.web.external.request.export.ExportFilters;
@@ -153,7 +154,8 @@ public class ObservationService {
                     break;
                 }
             }
-            observationContract.setConcept(concept.toConceptContract());
+            ConceptMapper conceptMapper = new ConceptMapper();
+            observationContract.setConcept(conceptMapper.toConceptContract(concept));
             observationContract.setValue(value);
             observationContracts.add(observationContract);
         }

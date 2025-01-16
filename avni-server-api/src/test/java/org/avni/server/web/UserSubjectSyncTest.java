@@ -3,7 +3,7 @@ package org.avni.server.web;
 import org.avni.server.application.Subject;
 import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.UserSubjectRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.ProgramEnrolmentBuilder;

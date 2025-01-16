@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
-import org.avni.server.web.contract.ValueUnit;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.springframework.util.StringUtils;

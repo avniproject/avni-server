@@ -22,7 +22,7 @@ import org.avni.server.web.request.CustomRegistrationLocationTypeContract;
 import org.avni.server.web.request.FormMappingContract;
 import org.avni.server.web.request.application.FormContractWeb;
 import org.avni.server.web.request.webapp.IndividualRelationContract;
-import org.avni.server.web.request.webapp.SubjectTypeSetting;
+import org.avni.server.domain.SubjectTypeSetting;
 import org.avni.server.web.request.webapp.task.TaskTypeContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -9,7 +9,6 @@ import org.avni.server.application.Subject;
 import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
-import org.avni.server.web.request.GroupRoleContract;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.Type;
@@ -189,14 +188,6 @@ public class SubjectType extends OrganisationAwareEntity implements NamedEntity 
         OperationalSubjectType operationalSubjectType = getOperationalSubjectType();
         if (operationalSubjectType == null) return null;
         return operationalSubjectType.getName();
-    }
-
-    @JsonIgnore
-    public List<GroupRoleContract> getGroupRolesContract() {
-        return groupRoles.stream()
-                .filter(r -> !r.isVoided())
-                .map(GroupRoleContract::fromEntity)
-                .collect(Collectors.toList());
     }
 
     // Used from projections

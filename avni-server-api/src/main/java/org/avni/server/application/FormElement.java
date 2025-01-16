@@ -1,19 +1,17 @@
 package org.avni.server.application;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.constraints.Null;
-import org.avni.server.domain.*;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.ValidationResult;
+import org.avni.server.domain.*;
 import org.avni.server.framework.hibernate.DeclarativeRuleUserType;
 import org.avni.server.framework.hibernate.KeyValuesUserType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.avni.server.web.validation.ValidationException;
 import org.springframework.util.StringUtils;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -190,7 +188,7 @@ public class FormElement extends OrganisationAwareEntity {
             try {
                 FormElementType.valueOf(this.getType());
             } catch (IllegalArgumentException | NullPointerException e) {
-                throw new ValidationException(String.format("%s - is not a valid form element type, for form element: %s", this.getType(), this.toString()));
+                throw new RuntimeException(String.format("%s - is not a valid form element type, for form element: %s", this.getType(), this.toString()));
             }
         }
         return validationResults;

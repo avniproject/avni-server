@@ -20,7 +20,7 @@ import org.avni.server.web.request.GroupRoleContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
 import org.avni.server.web.request.webapp.SubjectTypeContractWeb;
-import org.avni.server.web.request.webapp.SubjectTypeSetting;
+import org.avni.server.domain.SubjectTypeSetting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

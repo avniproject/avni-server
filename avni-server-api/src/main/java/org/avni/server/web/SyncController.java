@@ -1,7 +1,7 @@
 package org.avni.server.web;
 
 import jakarta.annotation.PostConstruct;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.JsonObject;
 import org.avni.server.domain.SyncableItem;
 import org.avni.server.service.*;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.avni.server.dao.sync.SyncEntityName.*;
+import static org.avni.server.domain.sync.SyncEntityName.*;
 
 @RestController
 public class SyncController {

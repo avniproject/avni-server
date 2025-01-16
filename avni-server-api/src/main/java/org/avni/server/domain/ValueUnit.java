@@ -1,4 +1,4 @@
-package org.avni.server.web.contract;
+package org.avni.server.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.avni.server.util.ObjectMapperSingleton;

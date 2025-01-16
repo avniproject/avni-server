@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.KeyValues;
 import org.avni.server.framework.hibernate.KeyValuesUserType;
-import org.avni.server.web.request.ConceptContract;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DynamicInsert;
@@ -194,42 +193,6 @@ public class Concept extends OrganisationAwareEntity {
             return isSingleSelect ? answerConcept.getUuid() : Arrays.asList(answerConcept.getUuid());
         }
         return value;
-    }
-
-    @JsonIgnore
-    public ConceptContract toConceptContract() {
-        ConceptContract conceptContract = new ConceptContract();
-        conceptContract.setId(this.getId());
-        conceptContract.setName(this.getName());
-        conceptContract.setUuid(this.getUuid());
-        conceptContract.setDataType(this.getDataType());
-        conceptContract.setLowAbsolute(this.getLowAbsolute());
-        conceptContract.setHighAbsolute(this.getHighAbsolute());
-        conceptContract.setLowNormal(this.getLowNormal());
-        conceptContract.setHighNormal(this.getHighNormal());
-        conceptContract.setUnit(this.getUnit());
-        conceptContract.setVoided(this.isVoided());
-
-        if (dataTypeMatches(ConceptDataType.Coded)) {
-            conceptContract.setAnswers(new ArrayList<>());
-            for (ConceptAnswer answer : this.getConceptAnswers()) {
-                Concept answerConcept = answer.getAnswerConcept();
-
-                ConceptContract answerConceptContract = new ConceptContract();
-                answerConceptContract.setUuid(answerConcept.getUuid());
-                answerConceptContract.setName(answerConcept.getName());
-                answerConceptContract.setOrder(answer.getOrder());
-                answerConceptContract.setAbnormal(answer.isAbnormal());
-                answerConceptContract.setUnique(answer.isUnique());
-
-                conceptContract.getAnswers().add(answerConceptContract);
-            }
-        }
-        return conceptContract;
-    }
-
-    private boolean dataTypeMatches(ConceptDataType conceptDataType) {
-        return ConceptDataType.matches(conceptDataType, this.getDataType());
     }
 
     @JsonIgnore

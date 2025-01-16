@@ -1,18 +1,13 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.domain.framework.IdHolder;
 import org.avni.server.framework.hibernate.JSONObjectUserType;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
-import org.avni.server.util.DateTimeUtil;
-import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ValidationUtil;
-import org.avni.server.web.request.syncAttribute.UserSyncSettings;
-import org.avni.server.web.validation.ValidationException;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
@@ -117,11 +112,6 @@ public class User implements IdHolder {
     @JsonIgnore
     public boolean hasAllPrivileges() {
         return getUserGroups().stream().anyMatch(userGroup -> userGroup.getGroup().isHasAllPrivileges());
-    }
-
-    public List<UserSyncSettings> getSyncSettingsList() {
-        User.SyncSettingKeys.subjectTypeSyncSettings.name();
-        return ObjectMapperSingleton.getObjectMapper().convertValue(syncSettings.get(User.SyncSettingKeys.subjectTypeSyncSettings.name()), new TypeReference<List<UserSyncSettings>>() {});
     }
 
     public boolean isPartOfUserGroup(String userGroup) {
@@ -385,7 +375,7 @@ public class User implements IdHolder {
         if (this.uuid == null) this.assignUUID();
     }
 
-    public static void validateEmail(String email) {
+    public static void validateEmail(String email) throws ValidationException {
         if (!EmailValidator.getInstance().isValid(email)) {
             throw new ValidationException(String.format("Invalid email address %s", email));
         }
@@ -396,7 +386,7 @@ public class User implements IdHolder {
      * must be in the format of xxx@yyy
      * where yyy is {@link Organisation#getUsernameSuffix()} and xxx represents user
      */
-    public static void validateUsername(String username, String userSuffix) {
+    public static void validateUsername(String username, String userSuffix) throws ValidationException {
         if (username == null || !username.contains("@") || username.trim().length() < 7) {
             throw new ValidationException(String.format("Invalid username '%s'. It must be at least 7 characters.", username));
         }
@@ -414,7 +404,7 @@ public class User implements IdHolder {
     /**
      * name must not be empty and not have invalid characters
      */
-    public static void validateName(String name) {
+    public static void validateName(String name) throws ValidationException {
         if (ValidationUtil.checkNullOrEmptyOrContainsDisallowedCharacters(name, ValidationUtil.NAME_INVALID_CHARS_PATTERN)) {
             throw new ValidationException(String.format("Invalid name '%s', contains at least one disallowed character %s", name, ValidationUtil.NAME_INVALID_CHARS));
         }

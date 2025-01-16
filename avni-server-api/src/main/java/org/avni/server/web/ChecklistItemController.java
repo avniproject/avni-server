@@ -5,7 +5,7 @@ import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.ChecklistItemDetailRepository;
 import org.avni.server.dao.ChecklistItemRepository;
 import org.avni.server.dao.ChecklistRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Checklist;
 import org.avni.server.domain.ChecklistDetail;

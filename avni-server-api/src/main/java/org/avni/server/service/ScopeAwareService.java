@@ -2,7 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.dao.SyncParameters;
 import org.avni.server.dao.SyncableRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;

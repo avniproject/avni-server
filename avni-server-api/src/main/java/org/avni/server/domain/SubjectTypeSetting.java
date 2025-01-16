@@ -1,7 +1,4 @@
-package org.avni.server.web.request.webapp;
-
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.AddressLevelTypes;
+package org.avni.server.domain;
 
 import java.io.Serializable;
 import java.util.List;

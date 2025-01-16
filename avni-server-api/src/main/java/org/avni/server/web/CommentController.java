@@ -5,7 +5,7 @@ import org.avni.server.dao.CommentRepository;
 import org.avni.server.dao.CommentThreadRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
 import org.avni.server.domain.Individual;

@@ -4,6 +4,7 @@ import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.SubjectSearchRepository;
 import org.avni.server.dao.search.SubjectSearchQueryBuilder;
 import org.avni.server.projection.SearchSubjectEnrolledProgram;
+import org.avni.server.web.request.EnrolmentContract;
 import org.avni.server.web.request.webapp.search.SubjectSearchRequest;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,7 @@ public class IndividualSearchService {
                     Long individualId = Long.valueOf((Integer) individualRecord.get("id"));
                     individualRecord.put("enrolments", searchSubjectEnrolledPrograms.stream()
                             .filter(x -> x.getId().equals(individualId))
-                            .map(SearchSubjectEnrolledProgram::getProgram)
+                            .map(searchSubjectEnrolledProgram -> EnrolmentContract.fromProgram(searchSubjectEnrolledProgram.getProgram()))
                             .collect(Collectors.toList()));
                     individualRecord.put("addressLevel", titleLineages.get((Long) individualRecord.get("addressId")));
                 }).collect(Collectors.toList());

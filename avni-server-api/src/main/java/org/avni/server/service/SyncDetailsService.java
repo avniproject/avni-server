@@ -7,7 +7,7 @@ import org.avni.server.dao.ChecklistDetailRepository;
 import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.ChecklistDetail;
 import org.avni.server.domain.OperationalSubjectType;
 import org.avni.server.domain.SubjectType;

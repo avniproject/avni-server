@@ -1,7 +1,6 @@
 package org.avni.server.projection;
 
 import org.avni.server.domain.Program;
-import org.avni.server.web.request.EnrolmentContract;
 
 public class SearchSubjectEnrolledProgram {
     private Long id;
@@ -16,10 +15,7 @@ public class SearchSubjectEnrolledProgram {
         return id;
     }
 
-    public EnrolmentContract getProgram() {
-        EnrolmentContract enrolmentContract = new EnrolmentContract();
-        enrolmentContract.setOperationalProgramName(program.getOperationalProgramName());
-        enrolmentContract.setProgramColor(program.getColour());
-        return enrolmentContract;
+    public Program getProgram() {
+        return program;
     }
 }

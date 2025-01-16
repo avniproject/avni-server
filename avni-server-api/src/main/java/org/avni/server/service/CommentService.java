@@ -1,7 +1,7 @@
 package org.avni.server.service;
 
 import org.avni.server.dao.*;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.Comment;
 import org.avni.server.domain.CommentThread;
 import org.avni.server.web.request.CommentContract;

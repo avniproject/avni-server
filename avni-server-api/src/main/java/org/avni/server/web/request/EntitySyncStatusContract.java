@@ -1,6 +1,6 @@
 package org.avni.server.web.request;
 
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.SyncableItem;
 import org.joda.time.DateTime;
 

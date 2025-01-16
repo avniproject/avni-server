@@ -3,7 +3,7 @@ package org.avni.server.service;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.program.SubjectProgramEligibilityRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
 import org.avni.server.domain.program.SubjectProgramEligibility;

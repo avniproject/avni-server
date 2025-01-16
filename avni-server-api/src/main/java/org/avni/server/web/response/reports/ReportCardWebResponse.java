@@ -3,7 +3,7 @@ package org.avni.server.web.response.reports;
 import org.avni.server.web.contract.EncounterTypeContract;
 import org.avni.server.web.contract.ProgramContract;
 import org.avni.server.web.contract.ReportCardContract;
-import org.avni.server.web.contract.ValueUnit;
+import org.avni.server.domain.ValueUnit;
 import org.avni.server.web.request.StandardReportCardTypeContract;
 import org.avni.server.web.request.SubjectTypeContract;
 

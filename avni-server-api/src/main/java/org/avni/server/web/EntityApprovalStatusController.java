@@ -7,7 +7,7 @@ import org.avni.server.dao.EncounterTypeRepository;
 import org.avni.server.dao.EntityApprovalStatusRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.SubjectTypeRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.service.EntityApprovalStatusService;
 import org.avni.server.service.FormMappingService;

@@ -14,7 +14,7 @@ import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
 import org.avni.server.web.request.syncAttribute.UserSyncAttributeAssignmentRequest;
-import org.avni.server.web.request.webapp.SubjectTypeSetting;
+import org.avni.server.domain.SubjectTypeSetting;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

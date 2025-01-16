@@ -16,7 +16,7 @@ import org.avni.server.projection.ConceptProjection;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.OrganisationConfigRequest;
-import org.avni.server.web.request.webapp.SubjectTypeSetting;
+import org.avni.server.domain.SubjectTypeSetting;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;

@@ -6,7 +6,7 @@ import org.avni.server.application.projections.LocationProjection;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.LocationSyncRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.service.AddressLevelService;

@@ -1,6 +1,7 @@
 package org.avni.server.web.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.avni.server.domain.Program;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
@@ -109,5 +110,12 @@ public class EnrolmentContract extends ReferenceDataContract{
 
     public void setSubjectUuid(String subjectUuid) {
         this.subjectUuid = subjectUuid;
+    }
+
+    public static EnrolmentContract fromProgram(Program program) {
+        EnrolmentContract enrolmentContract = new EnrolmentContract();
+        enrolmentContract.setOperationalProgramName(program.getOperationalProgramName());
+        enrolmentContract.setProgramColor(program.getColour());
+        return enrolmentContract;
     }
 }

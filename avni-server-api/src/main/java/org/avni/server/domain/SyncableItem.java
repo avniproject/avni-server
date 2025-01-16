@@ -1,6 +1,6 @@
 package org.avni.server.domain;
 
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 
 public class SyncableItem {
     private final SyncEntityName syncEntityName;

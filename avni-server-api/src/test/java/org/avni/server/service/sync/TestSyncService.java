@@ -1,6 +1,6 @@
 package org.avni.server.service.sync;
 
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.web.IndividualController;
 import org.avni.server.web.ProgramEnrolmentController;

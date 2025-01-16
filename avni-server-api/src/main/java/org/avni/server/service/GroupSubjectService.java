@@ -4,7 +4,7 @@ import org.avni.server.dao.GroupSubjectRepository;
 import org.avni.server.dao.OperatingIndividualScopeAwareRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.UserSubjectAssignmentRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.joda.time.DateTime;

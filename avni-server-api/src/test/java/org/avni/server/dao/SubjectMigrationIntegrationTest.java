@@ -2,7 +2,7 @@ package org.avni.server.dao;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.TestUserSyncSettingsBuilder;

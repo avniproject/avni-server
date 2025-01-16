@@ -1,7 +1,6 @@
 package org.avni.server.domain;
 
 import org.avni.server.domain.factory.UserBuilder;
-import org.avni.server.web.validation.ValidationException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -9,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 
 public class UserTest {
     @Test
-    public void validUserName() {
+    public void validUserName() throws ValidationException {
         User.validateUsername("test@example", "example");
     }
 

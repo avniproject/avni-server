@@ -1,4 +1,4 @@
-package org.avni.server.dao.sync;
+package org.avni.server.domain.sync;
 
 import org.apache.commons.collections.ListUtils;
 

@@ -9,7 +9,7 @@ import org.avni.server.builder.BuilderException;
 import org.avni.server.builder.LocationBuilder;
 import org.avni.server.common.BulkItemSaveException;
 import org.avni.server.dao.*;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;

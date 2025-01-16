@@ -1,7 +1,7 @@
 package org.avni.server.web.request.reports;
 
 import org.avni.server.web.contract.ReportCardContract;
-import org.avni.server.web.contract.ValueUnit;
+import org.avni.server.domain.ValueUnit;
 
 import java.util.List;
 

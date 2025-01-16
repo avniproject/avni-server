@@ -5,7 +5,7 @@ import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipRepository;
 import org.avni.server.dao.individualRelationship.IndividualRelationshipTypeRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Individual;
 import org.avni.server.domain.SubjectType;

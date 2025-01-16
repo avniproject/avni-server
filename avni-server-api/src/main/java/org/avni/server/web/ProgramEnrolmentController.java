@@ -5,7 +5,7 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
-import org.avni.server.dao.sync.SyncEntityName;
+import org.avni.server.domain.sync.SyncEntityName;
 import org.avni.server.domain.ApprovalStatus;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Program;
