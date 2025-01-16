@@ -67,7 +67,7 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
 
     List<User> findByCatchmentAndIsVoidedFalse(Catchment catchment);
 
-    default User getUser(String userId) {
+    default User getUser(String userId) throws EntityNotFoundException {
         User user = null;
         if (RequestUtils.isValidUUID(userId)) {
             user = findByUuid(userId);

@@ -24,7 +24,8 @@ public class ResourceProtectionStatus {
             "/service-worker.js",
             "/ping",
             "/web/media",
-            "/config"
+            "/config",
+            "/api/user/generateToken"
     );
 
     public static boolean isProtected(HttpServletRequest request) {
