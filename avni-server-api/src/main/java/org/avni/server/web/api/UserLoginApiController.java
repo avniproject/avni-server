@@ -27,6 +27,9 @@ public class UserLoginApiController {
     @RequestMapping(value = "/api/user/generateToken", method = RequestMethod.POST)
     public ResponseEntity<GenerateTokenResult> generateTokenForUser(@RequestBody GenerateTokenRequest request) throws EntityNotFoundException {
         User user = userRepository.findByUsername(request.getUsername());
+        if (user == null) {
+            throw new EntityNotFoundException("User not found with username: " + request.getUsername());
+        }
         if (!user.getUserSettings().isAllowedToInvokeTokenGenerationAPI()) {
             throw AvniAccessException.createForUserNotAllowedTokenGeneration(user);
         }
