@@ -67,6 +67,13 @@ public class RuleController {
                 HttpStatus.CREATED);
     }
 
+    @RequestMapping(value = "/web/ruleDependency/global", method = RequestMethod.POST)
+    public ResponseEntity<?> createGlobalRule(@RequestBody String ruleCode) {
+        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        ruleService.createUpdateGlobalRule(ruleCode);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     @RequestMapping(value = "/rules", method = RequestMethod.POST)
     public ResponseEntity<?> saveRules(@RequestBody List<RuleRequest> ruleRequests) {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
