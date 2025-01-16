@@ -13,6 +13,7 @@ public class UserSettings {
     public static final String LOCALE = "locale";
     public static final String ENABLE_BENEFICIARY_MODE = "showBeneficiaryMode";
     public static final String TRACK_LOCATION = "trackLocation";
+    public static final String IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API = "isAllowedToInvokeTokenGenerationAPI";
     public static final String DEFAULT_DATE_PICKER_MODE = "calendar";
     public static final String SPINNER_DATE_PICKER_MODE = "spinner";
     public static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList(DEFAULT_DATE_PICKER_MODE, SPINNER_DATE_PICKER_MODE);
@@ -30,6 +31,10 @@ public class UserSettings {
 
     public static Boolean createTrackLocation(Boolean trackLocation) {
         return trackLocation != null && trackLocation;
+    }
+
+    public static Boolean createIsAllowedToInvokeTokenGenerationAPI(Boolean isAllowedToInvokeTokenGenerationAPI) {
+        return isAllowedToInvokeTokenGenerationAPI != null && isAllowedToInvokeTokenGenerationAPI;
     }
 
     public static Boolean createEnableBeneficiaryMode(Boolean enableBeneficiaryMode) {
@@ -59,5 +64,9 @@ public class UserSettings {
 
     public boolean isTrackLocation() {
         return jsonObject.getBoolean(TRACK_LOCATION);
+    }
+
+    public boolean isAllowedToInvokeTokenGenerationAPI() {
+        return jsonObject.getBoolean(IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API);
     }
 }
