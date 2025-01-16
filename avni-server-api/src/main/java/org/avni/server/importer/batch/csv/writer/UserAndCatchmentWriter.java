@@ -30,7 +30,6 @@ import java.util.regex.Pattern;
 import static java.lang.String.format;
 import static org.avni.server.domain.OperatingIndividualScope.ByCatchment;
 import static org.avni.server.domain.UserSettings.DATE_PICKER_MODE_OPTIONS;
-import static org.avni.server.domain.UserSettings.IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API;
 import static org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders.*;
 
 @Component
