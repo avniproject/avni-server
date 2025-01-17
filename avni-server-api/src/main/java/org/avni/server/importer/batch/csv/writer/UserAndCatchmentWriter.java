@@ -51,7 +51,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid.";
     private static final String ERR_MSG_INVALID_PHONE_NUMBER = "Provided value '%s' for phone number is invalid.";
     private static final String ERR_MSG_INVALID_TRACK_LOCATION = "Provided value '%s' for track location is invalid.";
-    private static final String ERR_MSG_INVALID_IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API = "Provided value '%s' for is allowed to invoke token generation API is invalid.";
     private static final String ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE = "Provided value '%s' for enable beneficiary mode is invalid.";
     private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers.";
     private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
@@ -132,7 +131,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String phoneNumber = row.get(MOBILE_NUMBER);
         String language = row.get(PREFERRED_LANGUAGE);
         Boolean trackLocation = row.getBool(TRACK_LOCATION);
-        Boolean isAllowedToInvokeTokenGenerationAPI = row.getBool(IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API);
         String datePickerMode = row.get(DATE_PICKER_MODE);
         Boolean beneficiaryMode = row.getBool(ENABLE_BENEFICIARY_MODE);
         String idPrefix = row.get(IDENTIFIER_PREFIX);
@@ -142,7 +140,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
-        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), isAllowedToInvokeTokenGenerationAPI, row.get(IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE));
+        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE));
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
@@ -164,7 +162,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setSettings(new JsonObject()
                 .with(UserSettings.LOCALE, locale)
                 .with(UserSettings.TRACK_LOCATION, UserSettings.createTrackLocation(trackLocation))
-                .with(UserSettings.IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API, UserSettings.createIsAllowedToInvokeTokenGenerationAPI(isAllowedToInvokeTokenGenerationAPI))
                 .withEmptyCheckAndTrim(UserSettings.DATE_PICKER_MODE, UserSettings.createDatePickerMode(datePickerMode))
                 .with(UserSettings.ENABLE_BENEFICIARY_MODE, UserSettings.createEnableBeneficiaryMode(beneficiaryMode))
                 .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix));
@@ -180,7 +177,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         }
     }
 
-    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean isAllowedToInvokeTokenGenerationAPI, String isAllowedToInvokeTokenGenerationAPIByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser) {
+    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser) {
         addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, CATCHMENT_NAME));
         if (!addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, USERNAME)))
             extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
@@ -196,7 +193,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         addErrMsgIfValidationFails(!StringUtils.isEmpty(datePickerMode) && !CollectionUtil.containsIgnoreCase(DATE_PICKER_MODE_OPTIONS, datePickerMode), rowValidationErrorMsgs, format(ERR_MSG_DATE_PICKER_FIELD, datePickerMode));
 
         addErrMsgIfValidationFails(trackLocation == null && !StringUtils.isEmpty(trackLocationValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_TRACK_LOCATION, trackLocationValueProvidedByUser));
-        addErrMsgIfValidationFails(isAllowedToInvokeTokenGenerationAPI == null && !StringUtils.isEmpty(isAllowedToInvokeTokenGenerationAPIByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API, isAllowedToInvokeTokenGenerationAPIByUser));
         addErrMsgIfValidationFails(beneficiaryMode == null && !StringUtils.isEmpty(beneficiaryModeValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE, beneficiaryModeValueProvidedByUser));
 
         if (!rowValidationErrorMsgs.isEmpty()) {
