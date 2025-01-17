@@ -6,6 +6,7 @@ import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
 import org.avni.server.web.request.GroupContract;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;
@@ -22,6 +23,9 @@ public class GroupsService implements NonScopeAwareService {
 
     public Group saveGroup(GroupContract groupContract, Organisation organisation) {
         Group group;
+        if (groupRepository.findByNameAndOrganisationId(groupContract.getName(), organisation.getId()) != null) {
+            return null;
+        }
         if (groupContract.isNotEveryoneGroup()) {
             group = groupRepository.findByUuid(groupContract.getUuid());
             if (group == null) {

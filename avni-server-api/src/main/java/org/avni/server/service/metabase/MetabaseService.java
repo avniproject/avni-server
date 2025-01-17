@@ -24,6 +24,7 @@ public class MetabaseService {
     private Database globalDatabase;
     private CollectionInfoResponse globalCollection;
     private CollectionItem globalDashboard;
+    private Group metabaseGroup;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
@@ -59,7 +60,10 @@ public class MetabaseService {
             globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
         }
 
-        Group metabaseGroup = groupPermissionsRepository.findOrCreateGroup(name, globalDatabase.getId(), globalCollection.getIdAsInt());
+        metabaseGroup = groupPermissionsRepository.findGroup(name);
+        if(metabaseGroup==null){
+            metabaseGroup= groupPermissionsRepository.CreateGroup(name, globalDatabase.getId());
+        }
 
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
                 collectionPermissionsRepository.getCollectionPermissionsGraph()

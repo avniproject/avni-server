@@ -60,6 +60,12 @@ public class MetabaseConnector {
         return restTemplate.exchange(url, HttpMethod.GET, entity, responseType).getBody();
     }
 
+    protected <T> T deleteForObject(String url, Class<T> responseType) {
+        HttpHeaders headers = getHeaders();
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        return restTemplate.exchange(url, HttpMethod.DELETE, entity, responseType).getBody();
+    }
+
     protected HttpEntity<Map<String, Object>> createJsonEntity(GroupPermissionsBody body) {
         HttpHeaders headers = getHeaders();
         return new HttpEntity<>(body.getBody(), headers);

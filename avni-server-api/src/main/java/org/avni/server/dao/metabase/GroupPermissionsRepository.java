@@ -1,6 +1,8 @@
 package org.avni.server.dao.metabase;
 
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.service.OrganisationService;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Repository;
@@ -11,17 +13,18 @@ import java.util.Map;
 
 @Repository
 public class GroupPermissionsRepository extends MetabaseConnector {
+    private final OrganisationService organisationService;
 
-    public GroupPermissionsRepository(RestTemplateBuilder restTemplateBuilder) {
+    public GroupPermissionsRepository(RestTemplateBuilder restTemplateBuilder, OrganisationService organisationService) {
         super(restTemplateBuilder);
+        this.organisationService = organisationService;
     }
 
-        public Group save(Group permissionsGroup) {
+    public Group save(Group permissionsGroup) {
         String url = metabaseApiUrl + "/permissions/group";
         GroupPermissionsBody body = new GroupPermissionsBody(permissionsGroup.getName());
         HttpEntity<Map<String, Object>> entity = createJsonEntity(body);
-        Group response = restTemplate.postForObject(url, entity, Group.class);
-        return response;
+        return restTemplate.postForObject(url, entity, Group.class);
     }
 
     public GroupPermissionsGraphResponse getPermissionsGraph() {
@@ -47,8 +50,12 @@ public class GroupPermissionsRepository extends MetabaseConnector {
         updatePermissionsGraph(groupPermissions);
     }
 
+    public Group getCurrentOrganisationGroup(){
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        return findGroup(currentOrganisation.getName());
+    }
 
-    public Group findOrCreateGroup(String name, int databaseId, int collectionId) {
+    public Group findGroup(String name){
         List<GroupPermissionResponse> existingGroups = getAllGroups();
 
         for (GroupPermissionResponse group : existingGroups) {
@@ -56,9 +63,14 @@ public class GroupPermissionsRepository extends MetabaseConnector {
                 return new Group(group.getName(), group.getId());
             }
         }
+        return null;
+    }
 
+    public Group CreateGroup(String name, int databaseId) {
         Group newGroup = save(new Group(name));
         updateGroupPermissions(newGroup.getId(), databaseId);
         return newGroup;
     }
+
+
 }

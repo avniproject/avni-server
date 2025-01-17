@@ -4,10 +4,12 @@ import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.GroupsService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.service.metabase.MetabaseService;
+import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.response.metabase.CreateQuestionsResponse;
 import org.avni.server.web.response.metabase.SetupStatusResponse;
 import org.avni.server.web.response.metabase.SetupToggleResponse;
@@ -20,12 +22,14 @@ public class MetabaseController {
     private final MetabaseService metabaseService;
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
+    private final GroupsService groupsService;
 
-    public MetabaseController(DatabaseService databaseService, MetabaseService metabaseService, AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
+    public MetabaseController(DatabaseService databaseService, MetabaseService metabaseService, AccessControlService accessControlService, OrganisationConfigService organisationConfigService, GroupsService groupsService) {
         this.databaseService = databaseService;
         this.metabaseService = metabaseService;
         this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
+        this.groupsService = groupsService;
     }
 
     @PostMapping("/setup")
@@ -42,11 +46,16 @@ public class MetabaseController {
     @PostMapping("/setup-toggle")
     public SetupToggleResponse toggleSetupMetabase(@RequestParam boolean enabled) {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-
         organisationConfigService.setMetabaseSetupEnabled(organisation, enabled);
 
         if (enabled) {
+
+            GroupContract groupContract = new GroupContract();
+            groupContract.setName("Metabase Users");
+            groupsService.saveGroup(groupContract, organisation);
+
             metabaseService.setupMetabase();
+
             try {
                 databaseService.addCollectionItems();
                 return new SetupToggleResponse(true, "Metabase setup enabled and questions created successfully.");

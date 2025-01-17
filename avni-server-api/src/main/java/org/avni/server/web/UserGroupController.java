@@ -5,11 +5,15 @@ import jakarta.transaction.Transactional;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.dao.metabase.GroupPermissionsRepository;
+import org.avni.server.dao.metabase.MetabaseUserRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.metabase.CreateUserRequest;
+import org.avni.server.domain.metabase.UserGroupMemberships;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.web.request.UserGroupContract;
@@ -33,14 +37,18 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final AccessControlService accessControlService;
+    private final MetabaseUserRepository metabaseUserRepository;
+    private final GroupPermissionsRepository groupPermissionsRepository;
 
 
     @Autowired
-    public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository, AccessControlService accessControlService) {
+    public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository, AccessControlService accessControlService, MetabaseUserRepository metabaseUserRepository, GroupPermissionsRepository groupPermissionsRepository) {
         this.userGroupRepository = userGroupRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.accessControlService = accessControlService;
+        this.metabaseUserRepository = metabaseUserRepository;
+        this.groupPermissionsRepository = groupPermissionsRepository;
     }
 
     @RequestMapping(value = "/myGroups/search/lastModified", method = RequestMethod.GET)
@@ -86,6 +94,21 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             usersToBeAdded.add(userGroup);
         }
 
+        if(groupPermissionsRepository.getCurrentOrganisationGroup()!=null){
+            List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.getUserGroupMemberships();
+
+            for (UserGroup value : usersToBeAdded) {
+                if(!metabaseUserRepository.emailExists(value.getUser().getEmail())){
+                    String[] nameParts = value.getUser().getName().split(" ", 2);
+                    String firstName = nameParts[0];
+                    String lastName = (nameParts.length > 1) ? nameParts[1] : null;
+                    metabaseUserRepository.save(new CreateUserRequest(firstName,lastName, value.getUser().getEmail(),userGroupMemberships,"password" ));
+                }
+                else{
+                    metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
+                }
+            }
+        }
         return ResponseEntity.ok(userGroupRepository.saveAll(usersToBeAdded));
     }
 
@@ -99,6 +122,9 @@ public class UserGroupController extends AbstractController<UserGroup> implement
 
         userGroup.setVoided(true);
         userGroupRepository.save(userGroup);
+        if(metabaseUserRepository.emailExists(userGroup.getUser().getEmail())){
+            metabaseUserRepository.deactivateMetabaseUser(userGroup.getUser().getEmail());
+        }
         return new ResponseEntity<>(UserGroupContract.fromEntity(userGroup), HttpStatus.OK);
     }
 }
