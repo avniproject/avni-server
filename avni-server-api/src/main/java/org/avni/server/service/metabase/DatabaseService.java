@@ -1,8 +1,8 @@
 package org.avni.server.service.metabase;
 
 import org.avni.server.dao.metabase.CollectionRepository;
-import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.DatabaseRepository;
+import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.QuestionRepository;
 import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -191,12 +191,14 @@ public class DatabaseService implements QuestionCreationService{
     private void createCustomQuestions() {
         ensureSyncComplete();
         Database database = getGlobalDatabase();
-        if (isQuestionMissing(QuestionName.QUESTION_1.getQuestionName())) {
-            questionRepository.createSubjectTypeIndividualQuestion(database);
+        if (isQuestionMissing(QuestionName.NonVoidedIndividual.getQuestionName())) {
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonVoidedIndividual, VisualizationType.PIE, Collections.EMPTY_LIST);
         }
-
-        if (isQuestionMissing(QuestionName.QUESTION_2.getQuestionName())) {
-            questionRepository.createProgramEnrollmentsQuestion(database);
+        if (isQuestionMissing(QuestionName.NonExitedNonVoidedProgram.getQuestionName())) {
+            FilterCondition additionalFilterCondition = new FilterCondition(ConditionType.IS_NULL,
+                    databaseRepository.getFieldDetailsByName(database, new TableDetails(QuestionName.NonExitedNonVoidedProgram.getPrimaryTableName()),
+                            new FieldDetails("program_exit_date_time")).getId(), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName(), null);
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonExitedNonVoidedProgram, VisualizationType.PIE, Arrays.asList(additionalFilterCondition));
         }
         updateGlobalDashboardWithCustomQuestions();
 
@@ -204,31 +206,31 @@ public class DatabaseService implements QuestionCreationService{
 
     public void updateGlobalDashboardWithCustomQuestions() {
         List<Dashcard> dashcards = new ArrayList<>();
-        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8));
-        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8));
+        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), null, 0, 0, 12, 8));
+        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), null, 0, 12, 12, 8));
 
         metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards));
         addFilterToDashboard();
 
     }
 
-    private void addFilterToDashboard(){
+    private void addFilterToDashboard() {
         List<Dashcard> updateDashcards = new ArrayList<>();
-        updateDashcards.add(new Dashcard(-1,getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()), null, 0, 0, 12, 8, Collections.emptyMap(),createDashcardParameterMappingForFirstDashcard()));
-        updateDashcards.add(new Dashcard(-2,getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()), null, 0, 12, 12, 8, Collections.emptyMap(),createDashcardParameterMappingForSecondDashcard()));
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(),new DashboardUpdateRequest(updateDashcards,createParametersForDashboard()));
+        updateDashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), null, 0, 0, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
+        updateDashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), null, 0, 12, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(updateDashcards, createParametersForDashboard()));
 
     }
 
     private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard(){
         List<ParameterMapping> firstDashcardParameterMapping = new ArrayList<>();
-        firstDashcardParameterMapping.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_1.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(getFieldId(new TableDetails(TableName.INDIVIDUAL.getName()),new FieldDetails(FieldName.REGISTRATION_DATE.getName())),FieldType.DATE.getTypeName()))));
+        firstDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.INDIVIDUAL.getName()), new FieldDetails(FieldName.REGISTRATION_DATE.getName())), FieldType.DATE.getTypeName()))));
         return firstDashcardParameterMapping;
     }
 
     private List<ParameterMapping> createDashcardParameterMappingForSecondDashcard(){
         List<ParameterMapping> secondDashcardParameterMapping = new ArrayList<>();
-        secondDashcardParameterMapping.add(new ParameterMapping("dateTimeId",getCardIdByQuestionName(QuestionName.QUESTION_2.getQuestionName()),new Target(MetabaseTargetType.DIMENSION,new FieldTarget(getFieldId(new TableDetails(TableName.PROGRAM_ENROLMENT.getName()),new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())),FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        secondDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.PROGRAM_ENROLMENT.getName()), new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashcardParameterMapping;
     }
 

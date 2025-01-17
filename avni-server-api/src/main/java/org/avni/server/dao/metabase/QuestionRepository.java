@@ -3,55 +3,45 @@ package org.avni.server.dao.metabase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import com.google.common.collect.ImmutableList;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public class QuestionRepository extends MetabaseConnector {
+    public static final String IS_VOIDED = "is_voided";
+
     private final DatabaseRepository databaseRepository;
 
-    public QuestionRepository(RestTemplateBuilder restTemplateBuilder , DatabaseRepository databaseRepository) {
+    public QuestionRepository(RestTemplateBuilder restTemplateBuilder, DatabaseRepository databaseRepository) {
         super(restTemplateBuilder);
         this.databaseRepository = databaseRepository;
     }
 
-    public void createSubjectTypeIndividualQuestion(Database database) {
+    public void createCustomQuestionOfVisualization(Database database, QuestionName question, VisualizationType visualizationType, List<FilterCondition> additionalFilterConditions) {
         QuestionConfig config = new QuestionConfig()
                 .withAggregation(AggregationType.COUNT)
-                .withBreakout("name", "subject_type_id")
-                .withFilters(
-                        new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails("individual"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false),
-                        new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails("subject_type"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false,databaseRepository.getFieldDetailsByName(database, new TableDetails("individual"), new FieldDetails("subject_type_id")).getId())
-                )
-                .withVisualization(VisualizationType.PIE);
-        MetabaseQuery query = createAdvancedQuery("individual", "subject_type", config, database);
+                .withBreakout(question.getBreakoutField(), question.getPrimaryField())
+                .withFilters(getFilterConditions(additionalFilterConditions, database, question).toArray(FilterCondition[]::new))
+                .withVisualization(visualizationType);
+        MetabaseQuery query = createAdvancedQuery(question.getPrimaryTableName(), question.getSecondaryTableName(), config, database);
         postQuestion(
-                QuestionName.QUESTION_1.getQuestionName(),
+                question.getQuestionName(),
                 query,
                 config,
                 databaseRepository.getCollectionForDatabase(database).getIdAsInt()
         );
     }
 
-    public void createProgramEnrollmentsQuestion(Database database) {
-        QuestionConfig config = new QuestionConfig()
-                .withAggregation(AggregationType.COUNT)
-                .withBreakout("name", "program_id")
-                .withFilters(
-                        new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails("program_enrolment"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false),
-                        new FilterCondition(ConditionType.IS_NULL, databaseRepository.getFieldDetailsByName(database, new TableDetails("program_enrolment"), new FieldDetails("program_exit_date_time")).getId() , FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName(),null),
-                        new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails("program"), new FieldDetails("is_voided")).getId() , FieldType.BOOLEAN.getTypeName(), false,databaseRepository.getFieldDetailsByName(database, new TableDetails("program_enrolment"), new FieldDetails("program_id")).getId())
-                )
-                .withVisualization(VisualizationType.PIE);
-        MetabaseQuery query = createAdvancedQuery("program_enrolment", "program", config, database);
-        postQuestion(
-                QuestionName.QUESTION_2.getQuestionName(),
-                query,
-                config,
-                databaseRepository.getCollectionForDatabase(database).getIdAsInt()
-        );
+    private List<FilterCondition> getFilterConditions(List<FilterCondition> additionalFilterConditions, Database database, QuestionName question) {
+        return ImmutableList.<FilterCondition>builder()
+                .addAll(List.of(new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails(question.getPrimaryTableName()), new FieldDetails(IS_VOIDED)).getId(), FieldType.BOOLEAN.getTypeName(), false),
+                        new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails(question.getSecondaryTableName()), new FieldDetails(IS_VOIDED)).getId(), FieldType.BOOLEAN.getTypeName(), false, databaseRepository.getFieldDetailsByName(database, new TableDetails(question.getPrimaryTableName()), new FieldDetails(question.getPrimaryField())).getId())))
+                .addAll(additionalFilterConditions).build();
     }
 
     private void postQuestion(String questionName, MetabaseQuery query, QuestionConfig config, int collectionId) {
