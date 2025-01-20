@@ -105,7 +105,9 @@ public class UserGroupController extends AbstractController<UserGroup> implement
                     metabaseUserRepository.save(new CreateUserRequest(firstName,lastName, value.getUser().getEmail(),userGroupMemberships,"password" ));
                 }
                 else{
-                    metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
+                    if(!metabaseUserRepository.activeUserExists(value.getUser().getEmail())){
+                        metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
+                    }
                 }
             }
         }

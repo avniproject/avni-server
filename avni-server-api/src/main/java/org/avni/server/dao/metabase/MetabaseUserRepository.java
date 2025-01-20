@@ -33,6 +33,12 @@ public class MetabaseUserRepository extends MetabaseConnector{
                 .orElse(null);
     }
 
+    public boolean activeUserExists(String email) {
+        MetabaseAllUsersResponse response = getAllUsers();
+        return response.getData().stream()
+                .anyMatch(user -> user.getEmail().equalsIgnoreCase(email) && user.isActive());
+    }
+
 
     public boolean emailExists(String email) {
         MetabaseAllUsersResponse response = getAllUsers();
