@@ -6,7 +6,6 @@ import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
 import org.avni.server.web.request.GroupContract;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import org.joda.time.DateTime;

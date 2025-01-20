@@ -1,6 +1,8 @@
 package org.avni.server.web;
 
+import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.Organisation;
+import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.framework.security.UserContextHolder;
@@ -12,7 +14,6 @@ import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.response.metabase.CreateQuestionsResponse;
 import org.avni.server.web.response.metabase.SetupStatusResponse;
-import org.avni.server.web.response.metabase.SetupToggleResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,13 +24,15 @@ public class MetabaseController {
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
     private final GroupsService groupsService;
+    private final OrganisationConfigRepository organisationConfigRepository;
 
-    public MetabaseController(DatabaseService databaseService, MetabaseService metabaseService, AccessControlService accessControlService, OrganisationConfigService organisationConfigService, GroupsService groupsService) {
+    public MetabaseController(DatabaseService databaseService, MetabaseService metabaseService, AccessControlService accessControlService, OrganisationConfigService organisationConfigService, GroupsService groupsService, OrganisationConfigRepository organisationConfigRepository) {
         this.databaseService = databaseService;
         this.metabaseService = metabaseService;
         this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
         this.groupsService = groupsService;
+        this.organisationConfigRepository = organisationConfigRepository;
     }
 
     @PostMapping("/setup")
@@ -44,29 +47,20 @@ public class MetabaseController {
     }
 
     @PostMapping("/setup-toggle")
-    public SetupToggleResponse toggleSetupMetabase(@RequestParam boolean enabled) {
+    public void toggleSetupMetabase() {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        organisationConfigService.setMetabaseSetupEnabled(organisation, enabled);
+        OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
+        organisationConfig.setMetabaseSetupEnabled(true);
+        organisationConfigRepository.save(organisationConfig);
 
-        if (enabled) {
+        GroupContract groupContract = new GroupContract();
+        groupContract.setName("Metabase Users");
+        groupsService.saveGroup(groupContract, organisation);
 
-            GroupContract groupContract = new GroupContract();
-            groupContract.setName("Metabase Users");
-            groupsService.saveGroup(groupContract, organisation);
+        metabaseService.setupMetabase();
+        databaseService.addCollectionItems();
 
-            metabaseService.setupMetabase();
-
-            try {
-                databaseService.addCollectionItems();
-                return new SetupToggleResponse(true, "Metabase setup enabled and questions created successfully.");
-            } catch (RuntimeException e) {
-                return new SetupToggleResponse(true, "Metabase setup enabled, but questions could not be created. Database sync is incomplete. Please refresh tables after sync is complete.");
-            }
-        } else {
-            return new SetupToggleResponse(false, "Metabase setup disabled.");
-        }
     }
-
 
     @GetMapping("/setup-status")
     public SetupStatusResponse getSetupStatus() {
