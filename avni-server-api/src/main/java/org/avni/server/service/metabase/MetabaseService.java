@@ -72,7 +72,7 @@ public class MetabaseService {
 
         globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
         if(globalDashboard == null){
-            Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(globalCollection.getName(),null,getGlobalCollection().getIdAsInt()));
+            Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(null,getGlobalCollection().getIdAsInt()));
             globalDashboard = new CollectionItem(metabaseDashboard.getName(),metabaseDashboard.getId());
         }
     }

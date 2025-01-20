@@ -236,7 +236,7 @@ public class DatabaseService implements QuestionCreationService{
 
     private List<Parameters> createParametersForDashboard(){
         List<Parameters> parameters = new ArrayList<>();
-        parameters.add(new Parameters("All Options","all_options","dateTimeId","date/all-options","date"));
+        parameters.add(new Parameters("Date Range","all_options","dateTimeId","date/all-options","date"));
         return parameters;
     }
 

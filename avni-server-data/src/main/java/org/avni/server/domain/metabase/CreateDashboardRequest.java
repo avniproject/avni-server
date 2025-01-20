@@ -5,8 +5,8 @@ public class CreateDashboardRequest {
     private final String description;
     private final Integer collection_id;
 
-    public CreateDashboardRequest(String name, String description, Integer collection_id) {
-        this.name = name;
+    public CreateDashboardRequest(String description, Integer collection_id) {
+        this.name = "Canned Reports";
         this.description = description;
         this.collection_id = collection_id;
     }
