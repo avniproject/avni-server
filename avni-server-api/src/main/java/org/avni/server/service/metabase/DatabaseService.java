@@ -178,11 +178,11 @@ public class DatabaseService implements QuestionCreationService{
         createQuestionsForEntities(programAndEncounterNames, addressFieldDetails, programOrEncounterFieldDetails);
     }
 
-    private void createQuestionsForIndividualTables() {
+    private void createQuestionsForMiscSingleTables() {
         ensureSyncComplete();
         List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");
 
-        List<String> filteredTables = filterOutExistingQuestions(individualTables); 
+        List<String> filteredTables = filterOutExistingQuestions(individualTables);
 
         for (String tableName : filteredTables) {
             createQuestionForTable(tableName);
@@ -248,7 +248,7 @@ public class DatabaseService implements QuestionCreationService{
 
         createQuestionsForProgramsAndEncounters();
 
-        createQuestionsForIndividualTables();
+        createQuestionsForMiscSingleTables();
 
         createCustomQuestions();
     }
