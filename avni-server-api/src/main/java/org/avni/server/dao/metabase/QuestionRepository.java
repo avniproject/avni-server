@@ -96,10 +96,10 @@ public class QuestionRepository extends MetabaseConnector {
     }
 
     private MetabaseQuery createAdvancedQuery(String primaryTableName, String secondaryTableName, QuestionConfig config, Database database) {
-        TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName));
+        TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName), false);
         FieldDetails primaryField = databaseRepository.getFieldDetailsByName(database, primaryTable, new FieldDetails(config.getPrimaryField()));
 
-        TableDetails secondaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(secondaryTableName));
+        TableDetails secondaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(secondaryTableName), false);
         FieldDetails breakoutField = databaseRepository.getFieldDetailsByName(database, secondaryTable, new FieldDetails(config.getBreakoutField()));
 
         return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())

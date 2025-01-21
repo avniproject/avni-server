@@ -100,13 +100,13 @@ public class DatabaseService implements QuestionCreationService{
         Database database = getGlobalDatabase();
 
         TableDetails tableDetails = new TableDetails(tableName);
-        TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails);
+        TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails, true);
 
         questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 
     private List<String> getSubjectTypeNames() {
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"), false);
 
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
@@ -129,7 +129,7 @@ public class DatabaseService implements QuestionCreationService{
     }
 
     private List<String> getProgramAndEncounterNames() {
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"), false);
 
         DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
         List<List<String>> rows = datasetResponse.getData().getRows();
@@ -152,13 +152,13 @@ public class DatabaseService implements QuestionCreationService{
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
         ensureSyncComplete();
-        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails(ADDRESS_TABLE));
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails(ADDRESS_TABLE), true);
 
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
 
         for (String entityName : filteredEntities) {
             TableDetails entityTableDetails = new TableDetails(entityName);
-            TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), entityTableDetails);
+            TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), entityTableDetails, true);
             createQuestionForTable(fetchedEntityTableDetails, fetchedAddressTableDetails, addressFieldDetails, entityFieldDetails);
         }
     }

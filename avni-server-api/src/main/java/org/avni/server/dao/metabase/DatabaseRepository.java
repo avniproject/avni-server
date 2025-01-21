@@ -87,10 +87,11 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
-    public TableDetails findTableDetailsByName(Database database, TableDetails targetTable) {
+    public TableDetails findTableDetailsByName(Database database, TableDetails targetTable, boolean onlyInOrgSchema) {
         MetabaseDatabaseInfo databaseInfo = getDatabaseDetails(database);
         return databaseInfo.getTables().stream()
-                .filter(tableDetail -> tableDetail.getName().equalsIgnoreCase(targetTable.getName()))
+                .filter(tableDetail -> tableDetail.getName().equalsIgnoreCase(targetTable.getName())
+                        && (tableDetail.getSchema().equalsIgnoreCase(database.getName()) == onlyInOrgSchema))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Table with name " + targetTable.getName() + " not found."));
     }
