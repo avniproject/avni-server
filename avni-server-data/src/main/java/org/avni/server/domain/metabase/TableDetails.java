@@ -5,11 +5,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TableDetails {
+
+    public static final String DEFAULT_PUBLIC_SCHEMA = "public";
+
     public TableDetails() {
     }
 
     public TableDetails(String name) {
+        this(name, DEFAULT_PUBLIC_SCHEMA);
+    }
+
+    public TableDetails(String name, String schema) {
         this.name = name;
+        this.schema = schema;
     }
 
     @JsonProperty("description")

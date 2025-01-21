@@ -60,7 +60,8 @@ public class DatabaseRepository extends MetabaseConnector {
         String snakeCaseTableName = S.toSnakeCase(tableDetails.getName());
 
         return fieldsList.stream()
-                .filter(field -> snakeCaseTableName.equals(field.getTableName()) && fieldDetails.getName().equals(field.getName()))
+                .filter(field -> snakeCaseTableName.equals(field.getTableName()) && fieldDetails.getName().equals(field.getName())
+                        && (field.getSchema().equalsIgnoreCase(database.getName()) == (tableDetails.getSchema().equalsIgnoreCase(database.getName()))))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Field " + fieldDetails.getName() + " not found in table " + tableDetails.getName()));
     }

@@ -99,7 +99,7 @@ public class DatabaseService implements QuestionCreationService{
     public void createQuestionForTable(String tableName) {
         Database database = getGlobalDatabase();
 
-        TableDetails tableDetails = new TableDetails(tableName);
+        TableDetails tableDetails = new TableDetails(tableName, database.getName());
         TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, tableDetails, true);
 
         questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
@@ -152,13 +152,14 @@ public class DatabaseService implements QuestionCreationService{
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
         ensureSyncComplete();
-        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails(ADDRESS_TABLE), true);
+        Database database = getGlobalDatabase();
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, database.getName()), true);
 
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
 
         for (String entityName : filteredEntities) {
-            TableDetails entityTableDetails = new TableDetails(entityName);
-            TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(getGlobalDatabase(), entityTableDetails, true);
+            TableDetails entityTableDetails = new TableDetails(entityName, database.getName());
+            TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, entityTableDetails, true);
             createQuestionForTable(fetchedEntityTableDetails, fetchedAddressTableDetails, addressFieldDetails, entityFieldDetails);
         }
     }
