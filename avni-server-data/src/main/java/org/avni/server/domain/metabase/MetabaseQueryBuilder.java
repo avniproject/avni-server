@@ -23,10 +23,10 @@ public class MetabaseQueryBuilder {
         return this;
     }
 
-    public MetabaseQueryBuilder joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
+    public MetabaseQueryBuilder joinWith(TableDetails joinTargetTable, FieldDetails joinField1, FieldDetails joinField2) {
         ObjectNode joinNode = objectMapper.createObjectNode();
         joinNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
-        joinNode.put(FieldAttribute.ALIAS.getAttributeName(), addressTable.getName());
+        joinNode.put(FieldAttribute.ALIAS.getAttributeName(), joinTargetTable.getName());
 
         ArrayNode conditionArray = objectMapper.createArrayNode();
         conditionArray.add(ConditionType.EQUAL.getOperator());
@@ -40,11 +40,11 @@ public class MetabaseQueryBuilder {
         ArrayNode rightField = objectMapper.createArrayNode();
         rightField.add(FieldAttribute.FIELD.getAttributeName());
         rightField.add(joinField1.getId());
-        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()).put(FieldAttribute.JOIN_ALIAS.getAttributeName(), addressTable.getName()));
+        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()).put(FieldAttribute.JOIN_ALIAS.getAttributeName(), joinTargetTable.getName()));
         conditionArray.add(rightField);
 
         joinNode.set(FieldAttribute.CONDITION.getAttributeName(), conditionArray);
-        joinNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), addressTable.getId());
+        joinNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), joinTargetTable.getId());
         joinsArray.add(joinNode);
         queryNode.set(FieldAttribute.JOINS.getAttributeName(), joinsArray);
 

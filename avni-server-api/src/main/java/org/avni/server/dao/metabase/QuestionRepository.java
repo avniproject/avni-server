@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
+import org.avni.server.domain.JoinTableConfig;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class QuestionRepository extends MetabaseConnector {
@@ -108,5 +110,31 @@ public class QuestionRepository extends MetabaseConnector {
                 .addBreakout(breakoutField.getId(), breakoutField.getBaseType(), primaryField.getId())
                 .addFilter(config.getFilters())
                 .build();
+    }
+
+    public void createQuestionForTableWithMultipleJoins(Database database, TableDetails tableDetails, List<JoinTableConfig> joinTableConfigs) {
+        ArrayNode joinsArray = ObjectMapperSingleton.getObjectMapper().createArrayNode();
+        MetabaseQueryBuilder metabaseQueryBuilder = new MetabaseQueryBuilder(database, joinsArray)
+                .forTable(tableDetails);
+
+        for (JoinTableConfig joinTableConfig : joinTableConfigs) {
+            FieldDetails joinField1 = databaseRepository.getFieldDetailsByName(database, joinTableConfig.getJoinTargetTable(), joinTableConfig.getOriginField());
+            FieldDetails joinField2 = databaseRepository.getFieldDetailsByName(database, Objects.isNull(joinTableConfig.getAlternateJoinSourceTable()) ?
+                    tableDetails : joinTableConfig.getAlternateJoinSourceTable(), joinTableConfig.getDestinationField());
+            metabaseQueryBuilder.joinWith(joinTableConfig.getJoinTargetTable(), joinField1, joinField2);
+        }
+
+        MetabaseQuery query = metabaseQueryBuilder.build();
+
+        MetabaseRequestBody requestBody = new MetabaseRequestBody(
+                tableDetails.getDisplayName(),
+                query,
+                VisualizationType.TABLE,
+                tableDetails.getDescription(),
+                ObjectMapperSingleton.getObjectMapper().createObjectNode(),
+                databaseRepository.getCollectionForDatabase(database).getIdAsInt()
+        );
+
+        databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(), JsonNode.class);
     }
 }

@@ -90,4 +90,12 @@ public class TableDetails {
     public void setName(String name) {
         this.name = name;
     }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
 }

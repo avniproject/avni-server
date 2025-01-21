@@ -4,6 +4,7 @@ import org.avni.server.dao.metabase.CollectionRepository;
 import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.QuestionRepository;
+import org.avni.server.domain.JoinTableConfig;
 import org.avni.server.domain.metabase.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class DatabaseService implements QuestionCreationService{
+public class DatabaseService implements QuestionCreationService {
 
     private final DatabaseRepository databaseRepository;
     private final MetabaseService metabaseService;
@@ -20,7 +21,13 @@ public class DatabaseService implements QuestionCreationService{
     private final QuestionRepository questionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
 
+    private static final String INDIVIDUAL_TABLE = "individual";
+    private static final String ENROLMENT_TABLE = "program_enrolment";
     private static final String ADDRESS_TABLE = "Address";
+    private static final String SUBJECT_TYPE_TABLE = "subject_type";
+    private static final String PROGRAM_TABLE = "program";
+    private static final String GENDER_TABLE = "Gender";
+    private static final String PUBLIC_SCHEMA = "public";
 
     @Autowired
     public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository) {
@@ -178,13 +185,80 @@ public class DatabaseService implements QuestionCreationService{
 
     private void createQuestionsForMiscSingleTables() {
         ensureSyncComplete();
-        List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");
+        List<String> miscSingleTableNames = Arrays.asList("address", "media", "sync_telemetry");
 
-        List<String> filteredTables = filterOutExistingQuestions(individualTables);
+        List<String> filteredTables = filterOutExistingQuestions(miscSingleTableNames);
 
         for (String tableName : filteredTables) {
             createQuestionForTable(tableName);
         }
+    }
+
+    private void createQuestionsForMiscJoinedTables() {
+        ensureSyncComplete();
+        Database database = getGlobalDatabase();
+        List<String> miscJoinedTables = Arrays.asList("individual_type_gender_address", "enrolment_type_individual_address");
+        List<String> filteredTables = filterOutExistingQuestions(miscJoinedTables);
+        for (String tableName : filteredTables) {
+            createQuestionForJoinedTable(database, tableName);
+        }
+    }
+
+    private void createQuestionForJoinedTable(Database database, String tableName) {
+        switch (tableName) {
+            case "individual_type_gender_address":
+                createIndividualTypeGenderAddress(database, tableName);
+                break;
+            case "enrolment_type_individual_address":
+                createEnrolmentTypeIndividualAddress(database, tableName);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void createIndividualTypeGenderAddress(Database database, String displayName) {
+        TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(INDIVIDUAL_TABLE));
+        fetchedEntityTableDetails.setDisplayName(displayName);
+        fetchedEntityTableDetails.setDescription(displayName);
+        List<JoinTableConfig> joinTableConfigs = new ArrayList<>();
+
+        joinTableConfigs.add(configureJoinTable(database, "id", "subject_type_id", SUBJECT_TYPE_TABLE, PUBLIC_SCHEMA));
+        joinTableConfigs.add(configureJoinTable(database, "id", "gender_id", GENDER_TABLE, PUBLIC_SCHEMA));
+        joinTableConfigs.add(configureJoinTable(database, "id", "address_id", ADDRESS_TABLE, database.getName()));
+
+        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs);
+    }
+
+    private void createEnrolmentTypeIndividualAddress(Database database, String displayName) {
+        TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ENROLMENT_TABLE));
+        fetchedEntityTableDetails.setDisplayName(displayName);
+        fetchedEntityTableDetails.setDescription(displayName);
+        List<JoinTableConfig> joinTableConfigs = new ArrayList<>();
+
+        TableDetails individualTable = databaseRepository.findTableDetailsByName(database, new TableDetails(INDIVIDUAL_TABLE));
+
+        joinTableConfigs.add(configureJoinTable(database, "id", "program_id", PROGRAM_TABLE, PUBLIC_SCHEMA));
+        joinTableConfigs.add(configureJoinTable(database, "id", "individual_id", INDIVIDUAL_TABLE, PUBLIC_SCHEMA));
+        joinTableConfigs.add(configureJoinTable(database, "id", "address_id", ADDRESS_TABLE, database.getName(), individualTable));
+
+        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs);
+    }
+
+    private JoinTableConfig configureJoinTable(Database database, String targetTableJoinColumn,
+                                               String sourceTableJoinColumn, String targetTable, String targetTableSchemaName, TableDetails alternateJoinTable) {
+        FieldDetails fieldDetails = new FieldDetails(targetTableJoinColumn);
+        FieldDetails entityFieldDetails = new FieldDetails(sourceTableJoinColumn);
+        TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(targetTable, targetTableSchemaName));
+        return new JoinTableConfig(fetchedTableDetails, fieldDetails, entityFieldDetails, alternateJoinTable);
+    }
+
+    private JoinTableConfig configureJoinTable(Database database, String targetTableJoinColumn,
+                                               String sourceTableJoinColumn, String targetTable, String targetTableSchemaName) {
+        FieldDetails fieldDetails = new FieldDetails(targetTableJoinColumn);
+        FieldDetails entityFieldDetails = new FieldDetails(sourceTableJoinColumn);
+        TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(targetTable, targetTableSchemaName));
+        return new JoinTableConfig(fetchedTableDetails, fieldDetails, entityFieldDetails);
     }
 
     private void createCustomQuestions() {
@@ -247,6 +321,8 @@ public class DatabaseService implements QuestionCreationService{
         createQuestionsForProgramsAndEncounters();
 
         createQuestionsForMiscSingleTables();
+
+        createQuestionsForMiscJoinedTables();
 
         createCustomQuestions();
     }
