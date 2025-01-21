@@ -26,7 +26,7 @@ public class MetabaseDashboardRepository extends MetabaseConnector {
         List<CollectionItem> items = collectionRepository.getExistingCollectionItems(globalCollection.getIdAsInt());
 
         return items.stream()
-                .filter(item -> item.getName().equals(globalCollection.getName()))
+                .filter(item -> item.getName().equals(DashboardName.CANNED_REPORTS.getName()))
                 .findFirst()
                 .orElse(null);
     }

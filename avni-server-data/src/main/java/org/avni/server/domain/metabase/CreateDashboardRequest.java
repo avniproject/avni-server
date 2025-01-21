@@ -6,7 +6,7 @@ public class CreateDashboardRequest {
     private final Integer collection_id;
 
     public CreateDashboardRequest(String description, Integer collection_id) {
-        this.name = "Canned Reports";
+        this.name = DashboardName.CANNED_REPORTS.getName();
         this.description = description;
         this.collection_id = collection_id;
     }
