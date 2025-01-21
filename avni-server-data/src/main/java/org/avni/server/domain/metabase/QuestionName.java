@@ -1,11 +1,11 @@
 package org.avni.server.domain.metabase;
 
 public enum QuestionName {
-    NonVoidedIndividual("Pie Chart : Count of Non Voided Individuals - Non Voided Subject Type", "individual",
+    NonVoidedIndividual("Registrations", "individual",
             "subject_type",
             "subject_type_id",
             "name"),
-    NonExitedNonVoidedProgram("Pie Chart : Number of Non exited and Non voided Enrolments for Non Voided Program", "program_enrolment",
+    NonExitedNonVoidedProgram("Program Enrolments", "program_enrolment",
             "program",
             "program_id",
             "name");
