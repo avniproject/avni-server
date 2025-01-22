@@ -26,11 +26,10 @@ repositories {
 dependencies {
     implementation 'org.graalvm.sdk:graal-sdk:23.0.0' // Adjust version as needed
     implementation 'org.graalvm.js:js:23.0.0' // Adjust version as needed
-    implementation project(path: ':avni-server-data')
+    implementation project(':avni-server-data')
     implementation group: 'org.apache.tomcat', name: 'tomcat-jdbc'
     implementation("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
     implementation("org.springframework.boot:spring-boot-starter-cache:${springBootVersion}")
-    implementation project(path: ':avni-server-data')
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
     implementation "org.springframework.boot:spring-boot-starter-data-rest:${springBootVersion}"
     implementation("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
