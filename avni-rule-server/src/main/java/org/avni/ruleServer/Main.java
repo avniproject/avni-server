@@ -1,17 +1,30 @@
 package org.avni.ruleServer;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
-public class Main {
-    public static void main(String[] args) {
-        String who = args.length == 0 ? "World" : args[0];
-        System.out.println("Hello " + who + " from Java");
+import java.io.IOException;
+import java.nio.file.Paths;
 
-        try (Context context = Context.create()) {
-            String jsCode = "(function myFun(param) { console.log('Hello ' + param + ' from JS'); })";
-            Value function = context.eval("js", jsCode);
-            function.execute(who);
+public class Main {
+    public static void main(String[] args) throws IOException {
+        String jsFilePath = "build/resources/js/main.js";
+
+        try (Context context = Context.newBuilder("js")
+                .allowAllAccess(true) // Allow access to file system if needed
+                .option("js.esm-eval-returns-exports", "true") // Enable ECMAScript modules
+                .build()) {
+
+            // Read and execute the main JavaScript file
+            Source source = Source.newBuilder("js", Paths.get(jsFilePath).toFile())
+                    .mimeType("application/javascript+module")
+                    .build();
+            context.eval(source);
+
+            // Call a function from the JavaScript code (optional)
+            Value result = context.eval(source);
+            System.out.println(result);
         }
     }
 }
