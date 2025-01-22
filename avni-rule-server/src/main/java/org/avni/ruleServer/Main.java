@@ -1,10 +1,15 @@
 package org.avni.ruleServer;
 
+import org.avni.server.dao.CustomJpaRepositoryImpl;
+import org.avni.server.dao.DashboardRepository;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +19,15 @@ import java.nio.file.Paths;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = CustomJpaRepositoryImpl.class)
 public class Main {
-    @Autowired
-    public Main() {
+    public static void main(String[] args) {
+        ApplicationContext applicationContext = SpringApplication.run(Main.class);
+        DashboardRepository dashboardRepository = applicationContext.getBean(DashboardRepository.class);
+        dashboardRepository.findOne(1l);
     }
 
-    public static void main(String[] args) throws IOException {
-        String jsFilePath = "build/resources/js/main.js";
+    public void main2(String[] args) throws IOException {
+        String projectPath = System.getProperty("user.dir");
+        String jsFilePath = "avni-rule-server/build/resources/js/main.js";
 
         try (Context context = Context.newBuilder("js")
                 .allowAllAccess(true) // Allow access to file system if needed
@@ -27,7 +35,7 @@ public class Main {
                 .build()) {
 
             // Read and execute the main JavaScript file
-            Source source = Source.newBuilder("js", Paths.get(jsFilePath).toFile())
+            Source source = Source.newBuilder("js", Paths.get(projectPath, jsFilePath).toFile())
                     .mimeType("application/javascript+module")
                     .build();
             context.eval(source);
