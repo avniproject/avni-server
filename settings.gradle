@@ -2,4 +2,5 @@ rootProject.name = 'avni-server'
 include ':avni-server-api'
 project(':avni-server-api').projectDir = "$rootDir/avni-server-api" as File
 include 'avni-server-data'
+include 'avni-rule-server'
 

@@ -1,0 +1,15 @@
+{
+  "name": "avni-rule-server",
+  "version": "1.0.0",
+  "description": "foo",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "build": "echo 'Build step can be defined here'",
+    "test": "echo 'Test step can be defined here'"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

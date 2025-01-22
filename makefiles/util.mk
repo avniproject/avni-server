@@ -6,3 +6,6 @@ open-github-project:
 
 open-github-org:
 	open https://github.com/avniproject
+
+get-gradle-version:
+	./gradlew --version
