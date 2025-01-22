@@ -1,0 +1,26 @@
+plugins {
+    id "com.github.node-gradle.node" version "7.1.0"
+}
+
+node {
+    version = '22.13.1'
+    npmVersion = '7.24.2'
+    download = true
+}
+
+task npmBuild(type: NpmTask) {
+    args = ['run', 'build']
+}
+
+build.dependsOn npmBuild
+
+
+group = 'org.openchs'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
