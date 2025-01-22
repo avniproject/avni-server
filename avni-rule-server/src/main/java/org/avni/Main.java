@@ -2,6 +2,7 @@ package org.avni;
 
 import org.avni.server.dao.CustomJpaRepositoryImpl;
 import org.avni.server.dao.DashboardRepository;
+import org.avni.server.domain.Dashboard;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
@@ -19,7 +20,8 @@ public class Main {
     public static void main(String[] args) {
         ApplicationContext applicationContext = SpringApplication.run(Main.class);
         DashboardRepository dashboardRepository = applicationContext.getBean(DashboardRepository.class);
-        dashboardRepository.findOne(1l);
+        Dashboard dashboard = dashboardRepository.findOne(1l);
+        System.out.println(dashboard.getName());
     }
 
     public void main2(String[] args) throws IOException {
