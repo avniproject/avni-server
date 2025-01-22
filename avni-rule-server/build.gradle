@@ -1,26 +1,29 @@
 plugins {
-    id "com.github.node-gradle.node" version "7.1.0"
+    id 'java'
+    id 'application'
 }
 
-node {
-    version = '22.13.1'
-    npmVersion = '7.24.2'
-    download = true
+application {
+    mainClass = 'org.avni.ruleServer.Main'
 }
-
-task npmBuild(type: NpmTask) {
-    args = ['run', 'build']
-}
-
-build.dependsOn npmBuild
-
-
-group = 'org.openchs'
-version = '0.0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
+    implementation 'org.graalvm.sdk:graal-sdk:23.0.0' // Adjust version as needed
+    implementation 'org.graalvm.js:js:23.0.0' // Adjust version as needed
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'org.avni.ruleServer.Main'
+        )
+    }
 }
