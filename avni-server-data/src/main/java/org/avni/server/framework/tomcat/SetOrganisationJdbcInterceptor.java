@@ -1,6 +1,5 @@
 package org.avni.server.framework.tomcat;
 
-import com.google.common.base.Strings;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
@@ -9,6 +8,7 @@ import org.avni.server.domain.UserContext;
 import org.avni.server.framework.security.UserContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.sql.Connection;
@@ -16,7 +16,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
-    private static final Logger logger = LoggerFactory.getLogger(TomcatContainerCustomizer.class);
+    private static final Logger logger = LoggerFactory.getLogger(SetOrganisationJdbcInterceptor.class);
 
     @Override
     public void reset(ConnectionPool connectionPool, PooledConnection pooledConnection) {
@@ -31,7 +31,7 @@ public class SetOrganisationJdbcInterceptor extends JdbcInterceptor {
         if (organisation == null) return;
 
         String dbUser = organisation.getDbUser();
-        if (Strings.isNullOrEmpty(dbUser)) return;
+        if (ObjectUtils.isEmpty(dbUser)) return;
 
         try {
             Statement statement = pooledConnection.getConnection().createStatement();
