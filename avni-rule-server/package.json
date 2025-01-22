@@ -2,7 +2,7 @@
   "name": "avni-rule-server",
   "version": "1.0.0",
   "description": "foo",
-  "main": "app.js",
+  "main": "main.js",
   "scripts": {
     "start": "node app.js",
     "build": "echo 'Build step can be defined here'",

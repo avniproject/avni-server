@@ -20,6 +20,13 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
 
+task copyJsFiles(type: Copy) {
+    from 'src/main/js'
+    into "$buildDir/resources/js"
+}
+
+tasks.processResources.dependsOn(copyJsFiles)
+
 jar {
     manifest {
         attributes(
