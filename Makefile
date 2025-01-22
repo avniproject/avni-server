@@ -9,6 +9,7 @@ include makefiles/prod.mk
 include makefiles/api-test-data.mk
 include makefiles/lfe.mk
 include makefiles/gradle.mk
+include makefiles/rule-server.mk
 
 help:
 	@IFS=$$'\n' ; \
