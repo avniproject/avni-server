@@ -24,7 +24,7 @@ public class MetabaseService {
     private Database globalDatabase;
     private CollectionInfoResponse globalCollection;
     private CollectionItem globalDashboard;
-    private Group metabaseGroup;
+    private Group globalMetabaseGroup;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
@@ -60,15 +60,15 @@ public class MetabaseService {
             globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
         }
 
-        metabaseGroup = groupPermissionsRepository.findGroup(name);
-        if(metabaseGroup==null){
-            metabaseGroup= groupPermissionsRepository.CreateGroup(name, globalDatabase.getId());
+        globalMetabaseGroup = groupPermissionsRepository.findGroup(name);
+        if(globalMetabaseGroup ==null){
+            globalMetabaseGroup = groupPermissionsRepository.CreateGroup(name, globalDatabase.getId());
         }
 
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
                 collectionPermissionsRepository.getCollectionPermissionsGraph()
         );
-        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, metabaseGroup.getId(), globalCollection.getIdAsInt());
+        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, globalMetabaseGroup.getId(), globalCollection.getIdAsInt());
 
         globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
         if(globalDashboard == null){
@@ -101,6 +101,7 @@ public class MetabaseService {
     }
 
     public CollectionItem getGlobalDashboard() {
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
         if (globalDashboard == null) {
             globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
             if (globalDashboard == null) {
@@ -108,6 +109,17 @@ public class MetabaseService {
             }
         }
         return globalDashboard;
+    }
+
+    public Group getGlobalMetabaseGroup() {
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        if (globalMetabaseGroup == null) {
+            globalMetabaseGroup = groupPermissionsRepository.findGroup(currentOrganisation.getName());
+            if (globalMetabaseGroup == null) {
+                throw new RuntimeException("Global group not found.");
+            }
+        }
+        return globalMetabaseGroup;
     }
 
 }

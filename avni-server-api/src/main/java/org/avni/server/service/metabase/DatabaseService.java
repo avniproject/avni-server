@@ -43,6 +43,10 @@ public class DatabaseService implements QuestionCreationService{
         return metabaseService.getGlobalDashboard();
     }
 
+    public Group getGlobalMetabaseGroup(){
+        return metabaseService.getGlobalMetabaseGroup();
+    }
+
     public SyncStatus getInitialSyncStatus() {
         DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(getGlobalDatabase());
         String status = databaseSyncStatus.getInitialSyncStatus();
