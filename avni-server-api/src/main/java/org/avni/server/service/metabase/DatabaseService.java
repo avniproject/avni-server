@@ -39,8 +39,12 @@ public class DatabaseService implements QuestionCreationService{
         return metabaseService.getGlobalCollection();
     }
 
-    private CollectionItem getGlobalDashboard(){
+    private CollectionItem getGlobalDashboard() {
         return metabaseService.getGlobalDashboard();
+    }
+
+    public Group getGlobalMetabaseGroup() {
+        return metabaseService.getGlobalMetabaseGroup();
     }
 
     public SyncStatus getInitialSyncStatus() {

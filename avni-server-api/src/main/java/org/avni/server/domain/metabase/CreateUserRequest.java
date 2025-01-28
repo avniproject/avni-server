@@ -1,7 +1,6 @@
 package org.avni.server.domain.metabase;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import java.util.List;
 

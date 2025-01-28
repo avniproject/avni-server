@@ -13,9 +13,11 @@ import org.avni.server.domain.User;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.CreateUserRequest;
+import org.avni.server.domain.metabase.UpdateUserGroupRequest;
 import org.avni.server.domain.metabase.UserGroupMemberships;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.web.request.UserGroupContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,16 +41,17 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     private final AccessControlService accessControlService;
     private final MetabaseUserRepository metabaseUserRepository;
     private final GroupPermissionsRepository groupPermissionsRepository;
-
+    private final DatabaseService databaseService;
 
     @Autowired
-    public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository, AccessControlService accessControlService, MetabaseUserRepository metabaseUserRepository, GroupPermissionsRepository groupPermissionsRepository) {
+    public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository, AccessControlService accessControlService, MetabaseUserRepository metabaseUserRepository, GroupPermissionsRepository groupPermissionsRepository, DatabaseService databaseService) {
         this.userGroupRepository = userGroupRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
         this.accessControlService = accessControlService;
         this.metabaseUserRepository = metabaseUserRepository;
         this.groupPermissionsRepository = groupPermissionsRepository;
+        this.databaseService = databaseService;
     }
 
     @RequestMapping(value = "/myGroups/search/lastModified", method = RequestMethod.GET)
@@ -104,9 +107,12 @@ public class UserGroupController extends AbstractController<UserGroup> implement
                     String lastName = (nameParts.length > 1) ? nameParts[1] : null;
                     metabaseUserRepository.save(new CreateUserRequest(firstName,lastName, value.getUser().getEmail(),userGroupMemberships,"password" ));
                 }
-                else{
-                    if(!metabaseUserRepository.activeUserExists(value.getUser().getEmail())){
+                else {
+                    if (!metabaseUserRepository.activeUserExists(value.getUser().getEmail())) {
                         metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
+                    }
+                    if (!metabaseUserRepository.userExistsInCurrentOrgGroup((value.getUser().getEmail()))) {
+                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(value.getUser().getEmail()).getId(), databaseService.getGlobalMetabaseGroup().getId()));
                     }
                 }
             }
