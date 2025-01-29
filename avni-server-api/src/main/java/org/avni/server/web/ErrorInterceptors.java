@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import jakarta.persistence.EntityNotFoundException;
 import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.HashMap;
@@ -107,7 +107,7 @@ public class ErrorInterceptors extends ResponseEntityExceptionHandler {
     public ResponseEntity unknownException(Exception e) {
         if (e instanceof BadRequestError) {
             return ResponseEntity.badRequest().body(errorBodyBuilder.getErrorBody(e));
-        } else if (e instanceof ResourceNotFoundException) {
+        } else if (e instanceof ResourceNotFoundException || e instanceof EntityNotFoundException) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBodyBuilder.getErrorMessageBody(e));
         } else if (e instanceof AvniNoUserSessionException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorBodyBuilder.getErrorMessageBody(e));
