@@ -47,6 +47,15 @@ public class AccessControlService {
         this.checkPrivilege(UserContextHolder.getUser(), privilegeType);
     }
 
+    public void checkOrgPrivilege(PrivilegeType privilegeType) {
+        User user = UserContextHolder.getUser();
+        if (userExistsAndHasAllPrivileges(user)) return;
+
+        if (!userRepository.hasPrivilege(privilegeType.name(), user.getId())) {
+            throw AvniAccessException.createNoPrivilegeException(privilegeType);
+        }
+    }
+
     public void checkPrivilege(User contextUser, PrivilegeType privilegeType) {
         if (userExistsAndHasAllPrivileges(contextUser) || (contextUser.isAdmin() && privilegeRepository.isAllowedForAdmin(privilegeType))) return;
 
