@@ -84,20 +84,25 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
-        return this.createUserWithPassword(user, defaultPassword(user));
+    public void createUser(User user, OrganisationConfig organisationConfig) {
+        this.createUserWithPassword(user, defaultPassword(user));
+    }
+
+    @Override
+    public void createInActiveUser(User user, OrganisationConfig organisationConfig) throws IDPException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
-        return this.createUserWithPassword(user, password);
+    public void createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
+        this.createUserWithPassword(user, password);
     }
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createSuperAdminWithPassword(User user, String password) {
-        return this.createUserWithPassword(user, password);
+    public void createSuperAdminWithPassword(User user, String password) {
+        this.createUserWithPassword(user, password);
     }
 
     private UserCreateStatus createUserWithPassword(User user, String password) {
@@ -206,6 +211,11 @@ public class KeycloakIdpService extends IdpServiceImpl {
             logger.error(String.format("Error fetching login events for user %s", user.getUsername()), ex);
         }
         return -1;
+    }
+
+    @Override
+    public void activateUser(User user) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     private CredentialRepresentation getCredentialRepresentation(String password) {

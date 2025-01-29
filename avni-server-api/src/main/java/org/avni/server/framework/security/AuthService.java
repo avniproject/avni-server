@@ -31,7 +31,6 @@ public class AuthService {
     public final static List<SimpleGrantedAuthority> ALL_AUTHORITIES = Collections.singletonList(USER_AUTHORITY);
     private final UserRepository userRepository;
     private final OrganisationRepository organisationRepository;
-    private final AccountAdminRepository accountAdminRepository;
     private final UserService userService;
     private final IdpServiceFactory idpServiceFactory;
 
@@ -40,7 +39,6 @@ public class AuthService {
         this.idpServiceFactory = idpServiceFactory;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
-        this.accountAdminRepository = accountAdminRepository;
         this.userService = userService;
     }
 

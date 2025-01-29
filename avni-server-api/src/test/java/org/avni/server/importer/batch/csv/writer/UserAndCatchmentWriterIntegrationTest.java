@@ -233,10 +233,10 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 userCreatedDetails(true));
         userCreatedDetails(user("username8@example"), datePickerMode("calendar"), language("en"), trackLocation(false), enableBeneficiaryMode(false), userGroup("Everyone"));
 
-        // wrong - username, email, phone number, language, track location, date picker mode, enable beneficiary mode
+        // wrong - username, email, phone number, language, track location, date picker mode, enable beneficiary mode, active
         failure(
-                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
-                dataRow("Bihar, District1, Block11", "Catchment 1", "username1@exmplee", "User 1", "username1@examplecom", "9455047", "Irish", "truee", "spinnerr", "falsee", "", "User Group 1", "Answer 1"),
+                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept", "Active"),
+                dataRow("Bihar, District1, Block11", "Catchment 1", "username1@exmplee", "User 1", "username1@examplecom", "9455047", "Irish", "truee", "spinnerr", "falsee", "", "User Group 1", "Answer 1", "yess"),
                 has(
                         error("Invalid username 'username1@exmplee'. Include correct userSuffix @example at the end"),
                         error("Invalid email address username1@examplecom"),
@@ -244,7 +244,8 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                         error("Provided value 'Irish' for Preferred Language is invalid."),
                         error("Provided value 'spinnerr' for Date picker mode is invalid."),
                         error("Provided value 'truee' for track location is invalid."),
-                        error("Provided value 'falsee' for enable beneficiary mode is invalid.")
+                        error("Provided value 'falsee' for enable beneficiary mode is invalid."),
+                        error("Provided value 'yess' for Active is invalid.")
                 )
         );
         // empty - catchment name, username, Full Name of User, email, phone number, track location, date picker mode, enable beneficiary mode
@@ -308,17 +309,17 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 userCreatedDetails(true)
         );
 
-        // case in-sensitive columns for date picker mode, preferred language, track location, enable beneficiary mode, user groups
+        // case in-sensitive columns for date picker mode, preferred language, track location, enable beneficiary mode, user groups, active
         success(
-                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
-                dataRow("Bihar, District1, Block11", "Catchment 3", "username9@example", "User 9", "username9@example.com", "9455509147", "ENglish", "TruE", "SPinner", "FalsE", "", "User GROUP 1", "Answer 1"),
+                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept", "Active"),
+                dataRow("Bihar, District1, Block11", "Catchment 3", "username9@example", "User 9", "username9@example.com", "9455509147", "ENglish", "TruE", "SPinner", "FalsE", "", "User GROUP 1", "Answer 1", "YEs"),
                 catchmentCreated(false),
                 userCreatedDetails(true)
         );
         userCreatedDetails(user("username9@example"), datePickerMode("spinner"), language("en"), trackLocation(true), enableBeneficiaryMode(false), userGroup("User Group 1"));
 
         treatAsDescriptor(
-                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
-                dataRow("Mandatory field. Can be found from Admin -> Locations -> Click Export", "Mandatory field", "Mandatory field", "Mandatory field", "Mandatory field", "Mandatory field. Prefix the mobile number with country code", "Allowed values: {English, Hindi}. Only single value allowed. Default: English", "Allowed values: yes, no. Default: no", "Allowed values: calendar, spinner. Default: calendar", "Allowed values: yes, no. Default: no", "", "Allowed values: {Administrators, Everyone}"));
+                header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept", "Active"),
+                dataRow("Mandatory field. Can be found from Admin -> Locations -> Click Export", "Mandatory field", "Mandatory field", "Mandatory field", "Mandatory field", "Mandatory field. Prefix the mobile number with country code", "Allowed values: {English, Hindi}. Only single value allowed. Default: English", "Allowed values: yes, no. Default: no", "Allowed values: calendar, spinner. Default: calendar", "Allowed values: yes, no. Default: no", "", "Allowed values: {Administrators, Everyone}", "Allowed values: yes, no. Default: yes"));
     }
 }

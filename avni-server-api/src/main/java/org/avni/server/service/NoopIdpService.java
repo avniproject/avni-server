@@ -12,10 +12,13 @@ public class NoopIdpService implements IdpService {
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createUser(User user, OrganisationConfig organisationConfig) {
+    public void createUser(User user, OrganisationConfig organisationConfig) {
         UserCreateStatus userCreateStatus = new UserCreateStatus(user, UserContextHolder.getUser());
         userCreateStatus.setIdpUserCreated(true);
-        return userCreateStatus;
+    }
+
+    @Override
+    public void createInActiveUser(User user, OrganisationConfig organisationConfig) throws IDPException {
     }
 
     @Override
@@ -41,14 +44,14 @@ public class NoopIdpService implements IdpService {
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
-        return this.createUser(user, organisationConfig);
+    public void createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
+        this.createUser(user, organisationConfig);
     }
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createSuperAdminWithPassword(User user, String password) throws IDPException {
-        return this.createUser(user, null);
+    public void createSuperAdminWithPassword(User user, String password) throws IDPException {
+        this.createUser(user, null);
     }
 
     @Override
@@ -58,12 +61,16 @@ public class NoopIdpService implements IdpService {
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) {
-        return this.createUser(user, organisationConfig);
+    public void createUserIfNotExists(User user, OrganisationConfig organisationConfig) {
+        this.createUser(user, organisationConfig);
     }
 
     @Override
     public long getLastLoginTime(User user) {
         return -1L;
+    }
+
+    @Override
+    public void activateUser(User user) {
     }
 }
