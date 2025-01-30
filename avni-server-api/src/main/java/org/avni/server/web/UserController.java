@@ -9,7 +9,10 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
-import org.avni.server.domain.*;
+import org.avni.server.domain.Account;
+import org.avni.server.domain.OperatingIndividualScope;
+import org.avni.server.domain.Organisation;
+import org.avni.server.domain.User;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
@@ -110,7 +113,7 @@ public class UserController {
             User savedUser = userService.save(user);
 
             if (savedUser.getOrganisationId() != null) {
-                idpServiceFactory.getIdpService().createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
+                idpServiceFactory.getIdpService(UserContextHolder.getOrganisation()).createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
             } else {
                 idpServiceFactory.getIdpService().createSuperAdmin(savedUser, userContract.getPassword());
             }
