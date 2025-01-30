@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import java.io.IOException;
 import java.util.*;
 
+import static org.avni.server.exporter.v2.LongitudinalExportRequestFieldNameConstants.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -108,6 +109,9 @@ public class ExportV2CSVFieldExtractorTest {
         when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
 
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c2")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
+
         Concept concept1 = new ConceptBuilder().withUuid("c1").withName("C1").withDataType(ConceptDataType.QuestionGroup).build();
         Concept concept2 = new ConceptBuilder().withUuid("c2").withName("C2").withDataType(ConceptDataType.Text).build();
         Concept concept3 = new ConceptBuilder().withUuid("c3").withName("C3").withDataType(ConceptDataType.Text).build();
@@ -150,6 +154,8 @@ public class ExportV2CSVFieldExtractorTest {
         when(addressLevelService.getAllAddressLevelTypeNames()).thenReturn(Arrays.asList("State", "District", "Block"));
         when(exportJobParametersRepository.findByUuid("st1")).thenReturn(exportJobParameters);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
+        exportOutput = new ExportOutputBuilder().forSubjectType("st1").withFields(Arrays.asList(UUID, "c2", "c3")).build();
+        when(exportJobService.getExportOutput(any())).thenReturn(exportOutput);
 
         Concept concept1 = new ConceptBuilder().withUuid("c1").withName("C1").withDataType(ConceptDataType.QuestionGroup).build();
         Concept concept2 = new ConceptBuilder().withUuid("c2").withName("C2").withDataType(ConceptDataType.Text).build();
