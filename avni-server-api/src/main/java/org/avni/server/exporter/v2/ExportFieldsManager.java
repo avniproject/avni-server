@@ -51,9 +51,8 @@ public class ExportFieldsManager implements ExportEntityTypeVisitor {
                     .stream()
                     .filter(uuidFormElementEntry -> providedFields.contains(uuidFormElementEntry.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> y, LinkedHashMap::new));
-
         } else {
-            return allFormElementsAndDecisions;
+            return Collections.EMPTY_MAP;
         }
     }
 
