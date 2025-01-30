@@ -62,6 +62,14 @@ public class OrganisationConfig extends OrganisationAwareEntity {
         return Optional.ofNullable(this.getConfigValue(organisationConfigSettingKey));
     }
 
+    public boolean getBooleanConfigValue(OrganisationConfigSettingKey organisationConfigSettingKey) {
+        Object configValue = this.getConfigValue(organisationConfigSettingKey);
+        if (configValue == null) {
+            return false;
+        }
+        return configValue.equals(true);
+    }
+
     @JsonIgnore
     public JsonObject getExportSettings() {
         return exportSettings;

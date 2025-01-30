@@ -1,6 +1,6 @@
 package org.avni.server.web.request.auth;
 
-public class ActivateUserRequest {
+public class EnableUserRequest {
     private String username;
 
     public String getUsername() {

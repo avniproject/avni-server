@@ -101,7 +101,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Messageable(EntityType.User)
     @Override
-    public void createSuperAdminWithPassword(User user, String password) {
+    public void createSuperAdmin(User user, String password) {
         this.createUserWithPassword(user, password);
     }
 
@@ -148,11 +148,6 @@ public class KeycloakIdpService extends IdpServiceImpl {
             logger.info(String.format("delete keycloak-user request | username '%s'", user.getUsername()));
         }
         logger.error(String.format("Failed to delete keycloak-user request | username '%s'", user.getUsername()));
-    }
-
-    @Override
-    public void enableUser(User user) {
-        enableOrDisableUser(user, true);
     }
 
     @Override
@@ -214,7 +209,12 @@ public class KeycloakIdpService extends IdpServiceImpl {
     }
 
     @Override
-    public void activateUser(User user) {
+    public void enableUser(User user) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public void resendPassword(User user) {
         throw new UnsupportedOperationException("Not implemented");
     }
 
@@ -276,11 +276,10 @@ public class KeycloakIdpService extends IdpServiceImpl {
                 return "~!@#$%^&*()_+{}|:\"<>?,./;'[]-=\\";
             }
         };
-        String generatedPassword = new PasswordGenerator().generatePassword(8,
+        return new PasswordGenerator().generatePassword(8,
                 new CharacterRule(EnglishCharacterData.LowerCase, 1),
                 new CharacterRule(EnglishCharacterData.UpperCase, 1),
                 new CharacterRule(EnglishCharacterData.Digit, 1),
                 new CharacterRule(asciiSpecialCharacters, 1));
-        return generatedPassword;
     }
 }

@@ -10,6 +10,7 @@ public class CreateUserRequest {
     private String phoneNumber;
     private long organisationId;
     private List<String> userGroupNames;
+    private boolean enabled;
 
     public String getUsername() {
         return username;
@@ -65,5 +66,13 @@ public class CreateUserRequest {
 
     public void setUserGroupNames(List<String> userGroupNames) {
         this.userGroupNames = userGroupNames;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

@@ -62,7 +62,7 @@ public class MetabaseService {
 
         metabaseGroup = groupPermissionsRepository.findGroup(name);
         if(metabaseGroup==null){
-            metabaseGroup= groupPermissionsRepository.CreateGroup(name, globalDatabase.getId());
+            metabaseGroup= groupPermissionsRepository.createGroup(name, globalDatabase.getId());
         }
 
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
@@ -109,5 +109,4 @@ public class MetabaseService {
         }
         return globalDashboard;
     }
-
 }
