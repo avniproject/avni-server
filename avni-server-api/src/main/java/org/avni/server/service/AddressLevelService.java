@@ -11,7 +11,6 @@ import org.avni.server.domain.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.web.request.AddressLevelContract;
 import org.avni.server.web.request.AddressLevelContractWeb;
-import org.avni.server.domain.SubjectTypeSetting;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -93,7 +92,7 @@ public class AddressLevelService {
     public List<String> getAllAddressLevelTypeNames() {
         return addressLevelTypeRepository.findAllByIsVoidedFalse()
                 .stream()
-                .sorted(Comparator.comparingDouble(AddressLevelType::getLevel))
+                .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
                 .map(AddressLevelType::getName)
                 .collect(Collectors.toList());
     }
