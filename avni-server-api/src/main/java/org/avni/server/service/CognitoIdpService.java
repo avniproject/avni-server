@@ -123,7 +123,11 @@ public class CognitoIdpService extends IdpServiceImpl {
                 .withForceAliasCreation(false)
                 .withTemporaryPassword(getDefaultPassword(user))
                 .withMessageAction(MessageActionType.RESEND);
-        cognitoClient.adminCreateUser(adminCreateUserRequest);
+        try {
+            cognitoClient.adminCreateUser(adminCreateUserRequest);
+        } catch (UnsupportedUserStateException e) {
+            logger.info(String.format("The user's password couldn't be sent as it was not temporary '%s'", user.getUsername()));
+        }
     }
 
     @Override

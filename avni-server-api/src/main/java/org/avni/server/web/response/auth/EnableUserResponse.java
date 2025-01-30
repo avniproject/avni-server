@@ -1,8 +1,13 @@
 package org.avni.server.web.response.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class EnableUserResponse {
+    @JsonProperty("Username")
     private String userName;
+    @JsonProperty("Success")
     private boolean success;
+    @JsonProperty("Error message")
     private String errorMessage;
 
     public String getUserName() {
