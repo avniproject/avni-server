@@ -1231,6 +1231,33 @@ paths:
                 $ref: '#/components/schemas/Location'
         "400":
           description: bad input parameter
+  /api/user/enable:
+    post:
+      tags:
+        - User
+      summary: Enable a user
+      parameters:
+        - name: auth-token
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+            description: token provided by cognito/keycloak
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnableUserBody'
+        required: true
+      responses:
+        "200":
+          description: successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnableUserResponse'
   /api/subjectMigration/bulk:
     post:
       tags:
@@ -1845,6 +1872,24 @@ components:
           description: "as key value pairs. key is string and value of type (date, string, number or array of string of name of concepts)"
         Voided:
           type: boolean
+    EnableUserBody:
+        type: object
+        properties:
+            Username:
+              type: string
+              description: "Username of the user to be enabled. This is userId used during login"
+            Success:
+              type: boolean
+              description: "true if the user is enabled successfully"
+            Error message:
+              type: string
+              description: "Error message if the user is not enabled successfully"
+    EnableUserResponse:
+        type: object
+        properties:
+            Username:
+              type: string
+
     Location:
       type: object
       properties:
