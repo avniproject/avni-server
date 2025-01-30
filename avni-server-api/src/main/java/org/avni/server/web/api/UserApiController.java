@@ -5,10 +5,7 @@ import jakarta.transaction.Transactional;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.domain.OperatingIndividualScope;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.OrganisationConfig;
-import org.avni.server.domain.User;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.framework.security.AuthService;
@@ -19,11 +16,11 @@ import org.avni.server.service.IdpServiceFactory;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
-import org.avni.server.web.request.auth.ActivateUserRequest;
+import org.avni.server.web.request.auth.EnableUserRequest;
 import org.avni.server.web.request.auth.CreateUserRequest;
 import org.avni.server.web.request.auth.GenerateTokenRequest;
 import org.avni.server.web.request.auth.GenerateTokenResult;
-import org.avni.server.web.response.auth.ActivateUserResponse;
+import org.avni.server.web.response.auth.EnableUserResponse;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,19 +79,24 @@ public class UserApiController {
         user.setCreatedDateTime(new DateTime());
         user.setLastModifiedDateTime(new DateTime());
         user.setOperatingIndividualScope(OperatingIndividualScope.None);
+        user.setSettings(new JsonObject());
         User savedUser = userRepository.save(user);
         OrganisationConfig organisationConfig = organisationConfigRepository.findByOrganisationId(createUserRequest.getOrganisationId());
         Organisation organisation = organisationRepository.findOne(createUserRequest.getOrganisationId());
         IdpService idpService = idpServiceFactory.getIdpService(organisation);
-        idpService.createInActiveUser(user, organisationConfig);
+        if (createUserRequest.isEnabled()) {
+            idpService.createUser(savedUser, organisationConfig);
+        } else {
+            idpService.createInActiveUser(user, organisationConfig);
+        }
         return ResponseEntity.ok(savedUser.getUuid());
     }
 
-    @RequestMapping(value = "/api/user/activate", method = RequestMethod.POST)
-    public ResponseEntity<ActivateUserResponse> activateUser(@RequestBody ActivateUserRequest request) throws EntityNotFoundException {
+    @RequestMapping(value = "/api/user/enable", method = RequestMethod.POST)
+    public ResponseEntity<EnableUserResponse> enableUser(@RequestBody EnableUserRequest request) throws EntityNotFoundException {
         this.accessControlService.checkOrgPrivilege(PrivilegeType.EditUserConfiguration);
 
-        ActivateUserResponse activateUserResponse = new ActivateUserResponse();
+        EnableUserResponse activateUserResponse = new EnableUserResponse();
         activateUserResponse.setUserName(request.getUsername());
         try {
             User user = userRepository.findByUsername(request.getUsername());
@@ -104,7 +106,7 @@ public class UserApiController {
                 return new ResponseEntity<>(activateUserResponse, HttpStatus.BAD_REQUEST);
             }
             IdpService idpService = idpServiceFactory.getIdpService(UserContextHolder.getOrganisation());
-            idpService.activateUser(user);
+            idpService.enableUser(user);
             activateUserResponse.setSuccess(true);
             return new ResponseEntity<>(activateUserResponse, HttpStatus.OK);
         } catch (Exception e) {

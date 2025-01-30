@@ -12,7 +12,6 @@ import org.avni.server.common.Messageable;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.User;
 import org.avni.server.framework.context.SpringProfiles;
-import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.S;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,51 +57,73 @@ public class CognitoIdpService extends IdpServiceImpl {
         logger.info("Initialized CognitoIDP client");
     }
 
-    @Messageable(EntityType.User)
-    @Override
-    public void createUser(User user, OrganisationConfig organisationConfig) {
-        createUser(user, organisationConfig, false);
+    private AWSStaticCredentialsProvider getCredentialsProvider() {
+        return new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey));
     }
 
-    private void createUser(User user, OrganisationConfig organisationConfig, boolean suppressMessage) {
-        AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, getDefaultPassword(user), suppressMessage);
-        createCognitoUser(createUserRequest, user, organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin));
-    }
+    private void createUser(User user, String password, boolean changePasswordOnFirstLogin, boolean suppressMessage) {
+        logger.info(String.format("Initiating CREATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
+        AdminCreateUserRequest adminCreateUserRequest = new AdminCreateUserRequest()
+                .withUserPoolId(userPoolId)
+                .withUsername(user.getUsername())
+                .withUserAttributes(
+                        new AttributeType().withName("email").withValue(user.getEmail()),
+                        new AttributeType().withName("phone_number").withValue(user.getPhoneNumber()),
+                        new AttributeType().withName("email_verified").withValue("true"),
+                        new AttributeType().withName("phone_number_verified").withValue("true"),
+                        new AttributeType().withName("custom:userUUID").withValue(user.getUuid())
+                )
+                .withTemporaryPassword(password);
 
-    @Override
-    public void createInActiveUser(User user, OrganisationConfig organisationConfig) throws IDPException {
-        this.createUser(user, organisationConfig, true);
-        this.disableUser(user);
-    }
+        if (suppressMessage)
+            adminCreateUserRequest = adminCreateUserRequest.withMessageAction(MessageActionType.SUPPRESS);
+        AdminCreateUserRequest createUserRequest = adminCreateUserRequest;
+        AdminCreateUserResult createUserResult;
+        try {
+            createUserResult = cognitoClient.adminCreateUser(createUserRequest);
+            logger.info(String.format("Created cognito-user | username '%s' | '%s'", user.getUsername(), createUserResult.toString()));
+        } catch (UsernameExistsException usernameExistsException) {
+            logger.warn("Username: {} exists in Cognito", createUserRequest.getUsername());
+        }
 
-    @Messageable(EntityType.User)
-    @Override
-    public void createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
-        createUserWithPassword(user, password, organisationConfig.getConfigValueOptional(donotRequirePasswordChangeOnFirstLogin));
-    }
-
-    private void createUserWithPassword(User user, String password, Optional<Object> doNotRequirePasswordChangeOnFirstLogin) {
-        boolean isTmpPassword = S.isEmpty(password);
-        AdminCreateUserRequest createUserRequest = prepareCreateUserRequest(user, isTmpPassword ? getDefaultPassword(user) : password, false);
-        UserCreateStatus userCreateStatus = createCognitoUser(createUserRequest, user, doNotRequirePasswordChangeOnFirstLogin);
-        if (!isTmpPassword) {
-            boolean passwordResetDone = resetPassword(user, password);
-            userCreateStatus.setNonDefaultPasswordSet(passwordResetDone);
+        try {
+            setPassword(user, password, !changePasswordOnFirstLogin);
+        } catch (Exception e) {
+            logger.warn(String.format("Username: %s exists in Cognito", createUserRequest.getUsername()), e);
         }
     }
 
-    @Messageable(EntityType.User)
-    @Override
-    public void createSuperAdminWithPassword(User user, String password) {
-        this.createUserWithPassword(user, password, Optional.of(true));
+    private void setPassword(User user, String password, boolean permanent) {
+        AdminSetUserPasswordRequest updateUserRequest = new AdminSetUserPasswordRequest()
+                .withUserPoolId(userPoolId)
+                .withUsername(user.getUsername())
+                .withPassword(password)
+                .withPermanent(permanent);
+        cognitoClient.adminSetUserPassword(updateUserRequest);
     }
 
     @Override
-    public void updateUser(User user) {
-        AdminUpdateUserAttributesRequest updateUserRequest = prepareUpdateUserRequest(user);
-        logger.info(String.format("Initiating UPDATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
-        cognitoClient.adminUpdateUserAttributes(updateUserRequest);
-        logger.info(String.format("Updated cognito-user | username '%s'", user.getUsername()));
+    public void enableUser(User user) {
+        logger.info(String.format("Initiating ENABLE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
+        AdminEnableUserRequest adminEnableUserRequest = new AdminEnableUserRequest().withUserPoolId(userPoolId).withUsername(user.getUsername());
+        cognitoClient.adminEnableUser(adminEnableUserRequest);
+        logger.info(String.format("Enabled cognito-user | username '%s'", user.getUsername()));
+
+        this.resendPassword(user);
+    }
+
+    @Override
+    public void resendPassword(User user) {
+        AdminCreateUserRequest adminCreateUserRequest = new AdminCreateUserRequest()
+                .withUserPoolId(userPoolId)
+                .withUsername(user.getUsername())
+                .withUserAttributes(
+                        new AttributeType().withName("phone_number").withValue(user.getPhoneNumber())
+                )
+                .withForceAliasCreation(false)
+                .withTemporaryPassword(getDefaultPassword(user))
+                .withMessageAction(MessageActionType.RESEND);
+        cognitoClient.adminCreateUser(adminCreateUserRequest);
     }
 
     @Override
@@ -119,22 +140,53 @@ public class CognitoIdpService extends IdpServiceImpl {
         logger.info(String.format("Deleted cognito-user | username '%s'", user.getUsername()));
     }
 
+    @Messageable(EntityType.User)
     @Override
-    public void enableUser(User user) {
-        logger.info(String.format("Initiating ENABLE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
-        cognitoClient.adminEnableUser(new AdminEnableUserRequest().withUserPoolId(userPoolId).withUsername(user.getUsername()));
-        logger.info(String.format("Enabled cognito-user | username '%s'", user.getUsername()));
+    public void createUser(User user, OrganisationConfig organisationConfig) {
+        boolean donotRequirePasswordChange = organisationConfig.getBooleanConfigValue(donotRequirePasswordChangeOnFirstLogin);
+        createUser(user, getDefaultPassword(user), donotRequirePasswordChange, false);
+    }
+
+    @Override
+    public void createInActiveUser(User user, OrganisationConfig organisationConfig) throws IDPException {
+        createUser(user, getDefaultPassword(user), true, true);
+        disableUser(user);
+    }
+
+    @Messageable(EntityType.User)
+    @Override
+    public void createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) {
+        boolean donotRequirePasswordChange = organisationConfig.getBooleanConfigValue(donotRequirePasswordChangeOnFirstLogin);
+        boolean isTmpPassword = S.isEmpty(password);
+        createUser(user, isTmpPassword ? getDefaultPassword(user) : password, !donotRequirePasswordChange, false);
+    }
+
+    @Messageable(EntityType.User)
+    @Override
+    public void createSuperAdmin(User user, String password) {
+        boolean isTmpPassword = S.isEmpty(password);
+        createUser(user, isTmpPassword ? getDefaultPassword(user) : password, false, false);
+    }
+
+    @Override
+    public void updateUser(User user) {
+        AdminUpdateUserAttributesRequest updateUserRequest = new AdminUpdateUserAttributesRequest()
+                .withUserPoolId(userPoolId)
+                .withUsername(user.getUsername())
+                .withUserAttributes(
+                        new AttributeType().withName("email").withValue(user.getEmail()),
+                        new AttributeType().withName("phone_number").withValue(user.getPhoneNumber()),
+                        new AttributeType().withName("custom:userUUID").withValue(user.getUuid())
+                );
+        logger.info(String.format("Initiating UPDATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
+        cognitoClient.adminUpdateUserAttributes(updateUserRequest);
+        logger.info(String.format("Updated cognito-user | username '%s'", user.getUsername()));
     }
 
     @Override
     public boolean resetPassword(User user, String password) {
         logger.info(String.format("Initiating reset password cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
-        AdminSetUserPasswordRequest adminSetUserPasswordRequest = new AdminSetUserPasswordRequest()
-                .withUserPoolId(userPoolId)
-                .withUsername(user.getUsername())
-                .withPassword(password)
-                .withPermanent(true);
-        cognitoClient.adminSetUserPassword(adminSetUserPasswordRequest);
+        setPassword(user, password, true);
         logger.info(String.format("password reset for cognito-user | username '%s'", user.getUsername()));
         return true;
     }
@@ -152,79 +204,5 @@ public class CognitoIdpService extends IdpServiceImpl {
     @Override
     public long getLastLoginTime(User user) {
         return -1L;
-    }
-
-    @Override
-    public void activateUser(User user) {
-        String defaultPassword = IdpServiceImpl.getDefaultPassword(user);
-        this.enableUser(user);
-        AdminSetUserPasswordRequest adminSetUserPasswordRequest = new AdminSetUserPasswordRequest()
-                .withUserPoolId(userPoolId)
-                .withUsername(user.getUsername())
-                .withPassword(defaultPassword)
-                .withPermanent(true);
-        cognitoClient.adminSetUserPassword(adminSetUserPasswordRequest);
-    }
-
-    private AWSStaticCredentialsProvider getCredentialsProvider() {
-        return new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey));
-    }
-
-    private AdminUpdateUserAttributesRequest prepareUpdateUserRequest(User user) {
-        return new AdminUpdateUserAttributesRequest()
-                .withUserPoolId(userPoolId)
-                .withUsername(user.getUsername())
-                .withUserAttributes(
-                        new AttributeType().withName("email").withValue(user.getEmail()),
-                        new AttributeType().withName("phone_number").withValue(user.getPhoneNumber()),
-                        new AttributeType().withName("custom:userUUID").withValue(user.getUuid())
-                );
-    }
-
-    private AdminCreateUserRequest prepareCreateUserRequest(User user, String password, boolean suppressMessage) {
-        AdminCreateUserRequest adminCreateUserRequest = new AdminCreateUserRequest()
-                .withUserPoolId(userPoolId)
-                .withUsername(user.getUsername())
-                .withUserAttributes(
-                        new AttributeType().withName("email").withValue(user.getEmail()),
-                        new AttributeType().withName("phone_number").withValue(user.getPhoneNumber()),
-                        new AttributeType().withName("email_verified").withValue("true"),
-                        new AttributeType().withName("phone_number_verified").withValue("true"),
-                        new AttributeType().withName("custom:userUUID").withValue(user.getUuid())
-                )
-                .withTemporaryPassword(password);
-        if (suppressMessage)
-            return adminCreateUserRequest.withMessageAction(MessageActionType.SUPPRESS);
-        return adminCreateUserRequest;
-    }
-
-    private UserCreateStatus createCognitoUser(AdminCreateUserRequest createUserRequest, User user, Optional<Object> doNotRequirePasswordChangeOnFirstLogin) {
-        logger.info(String.format("Initiating CREATE cognito-user request | username '%s' | uuid '%s'", user.getUsername(), user.getUuid()));
-        UserCreateStatus userCreateStatus = new UserCreateStatus(user, UserContextHolder.getUser());
-        AdminCreateUserResult createUserResult;
-        try {
-            createUserResult = cognitoClient.adminCreateUser(createUserRequest);
-            userCreateStatus.setIdpUserCreated(true);
-            logger.info(String.format("Created cognito-user | username '%s' | '%s'", user.getUsername(), createUserResult.toString()));
-        } catch (UsernameExistsException usernameExistsException) {
-            logger.warn("Username: {} exists in Cognito", createUserRequest.getUsername());
-            userCreateStatus.setIdpUserCreated(false);
-        }
-
-        if (doNotRequirePasswordChangeOnFirstLogin.isPresent() && doNotRequirePasswordChangeOnFirstLogin.get().equals(true)) {
-            AdminSetUserPasswordRequest updateUserRequest = new AdminSetUserPasswordRequest()
-                    .withUserPoolId(userPoolId)
-                    .withUsername(user.getUsername())
-                    .withPassword(getDefaultPassword(user))
-                    .withPermanent(true);
-            try {
-                cognitoClient.adminSetUserPassword(updateUserRequest);
-                userCreateStatus.setDefaultPasswordPermanent(true);
-            } catch (Exception e) {
-                logger.warn(String.format("Username: %s exists in Cognito", createUserRequest.getUsername()), e);
-                userCreateStatus.setDefaultPasswordPermanent(false);
-            }
-        }
-        return userCreateStatus;
     }
 }

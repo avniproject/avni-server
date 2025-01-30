@@ -34,10 +34,6 @@ public class NoopIdpService implements IdpService {
     }
 
     @Override
-    public void enableUser(User user) {
-    }
-
-    @Override
     public boolean resetPassword(User user, String password) {
         return true;
     }
@@ -50,7 +46,7 @@ public class NoopIdpService implements IdpService {
 
     @Messageable(EntityType.User)
     @Override
-    public void createSuperAdminWithPassword(User user, String password) throws IDPException {
+    public void createSuperAdmin(User user, String password) throws IDPException {
         this.createUser(user, null);
     }
 
@@ -71,6 +67,10 @@ public class NoopIdpService implements IdpService {
     }
 
     @Override
-    public void activateUser(User user) {
+    public void enableUser(User user) {
+    }
+
+    @Override
+    public void resendPassword(User user) {
     }
 }

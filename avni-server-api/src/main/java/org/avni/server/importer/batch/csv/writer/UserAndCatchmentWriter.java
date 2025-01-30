@@ -176,7 +176,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         } else if (isNewUser && !BooleanUtil.getBoolean(active)) {
             idpService.createInActiveUser(user, organisationConfigService.getOrganisationConfig(organisation));
         } else if (!isNewUser && BooleanUtil.getBoolean(active)) {
-            idpService.activateUser(user);
+            idpService.enableUser(user);
         } else if (!isNewUser && !BooleanUtil.getBoolean(active)) {
             idpService.disableUser(user);
         }

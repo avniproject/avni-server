@@ -14,13 +14,11 @@ public interface IdpService {
 
     void deleteUser(User user);
 
-    void enableUser(User user);
-
     boolean resetPassword(User user, String password) throws IDPException;
 
     void createUserWithPassword(User user, String password, OrganisationConfig organisationConfig) throws IDPException;
 
-    void createSuperAdminWithPassword(User user, String password) throws IDPException;
+    void createSuperAdmin(User user, String password) throws IDPException;
 
     boolean exists(User user);
 
@@ -28,5 +26,7 @@ public interface IdpService {
 
     long getLastLoginTime(User user);
 
-    void activateUser(User user);
+    void enableUser(User user);
+
+    void resendPassword(User user);
 }

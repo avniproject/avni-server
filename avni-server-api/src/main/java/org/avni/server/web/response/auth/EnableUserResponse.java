@@ -1,6 +1,6 @@
 package org.avni.server.web.response.auth;
 
-public class ActivateUserResponse {
+public class EnableUserResponse {
     private String userName;
     private boolean success;
     private String errorMessage;

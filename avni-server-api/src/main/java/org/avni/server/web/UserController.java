@@ -123,7 +123,7 @@ public class UserController {
             if (savedUser.getOrganisationId() != null) {
                 idpServiceFactory.getIdpService().createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
             } else {
-                idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
+                idpServiceFactory.getIdpService().createSuperAdmin(savedUser, userContract.getPassword());
             }
             accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
             userService.addToDefaultUserGroup(savedUser);
