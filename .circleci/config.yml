@@ -18,7 +18,7 @@ commands:
 
       - run: |
           cd ~/
-          curl -L https://github.com/avniproject/avni-infra/archive/master.zip
+          curl -L -O https://github.com/avniproject/avni-infra/archive/master.zip
           mv ~/master.zip ~/infra.zip
 
       - run: |
