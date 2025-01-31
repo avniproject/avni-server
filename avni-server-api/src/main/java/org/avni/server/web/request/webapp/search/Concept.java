@@ -12,10 +12,6 @@ public class Concept {
     private String maxValue;
     private String value;
 
-
-    public Concept() {
-    }
-
     public Concept(String uuid, String searchScope, String dataType, List<String> values, String value) {
         this.uuid = uuid;
         this.searchScope = searchScope;
