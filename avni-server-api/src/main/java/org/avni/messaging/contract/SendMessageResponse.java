@@ -6,9 +6,6 @@ public class SendMessageResponse {
     MessageDeliveryStatus messageDeliveryStatus;
     String errorMessage;
 
-    public SendMessageResponse() {
-    }
-
     public SendMessageResponse(MessageDeliveryStatus messageDeliveryStatus, String errorMessage) {
         this.messageDeliveryStatus = messageDeliveryStatus;
         this.errorMessage = errorMessage;
