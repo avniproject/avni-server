@@ -10,7 +10,6 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigInteger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,12 +36,12 @@ public class IndividualSearchService {
         logger.info("Searching for individuals");
         List<Map<String, Object>> searchResults = subjectSearchRepository.search(subjectSearchRequest, new SubjectSearchQueryBuilder());
         long resultsEnd = new DateTime().getMillis();
-        BigInteger totalCount = subjectSearchRequest.getIncludeDisplayCount() ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : new BigInteger("-1");
+        Long totalCount = subjectSearchRequest.getIncludeDisplayCount() ? subjectSearchRepository.getTotalCount(subjectSearchRequest, new SubjectSearchQueryBuilder()) : -1l;
         logger.info(String.format("Subject search: Time Taken: %dms. Sorted: %s", (resultsEnd - startTime), subjectSearchRequest.getPageElement().getSortColumn()));
-        return constructIndividual(searchResults,totalCount);
+        return constructIndividual(searchResults, totalCount);
     }
 
-    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, BigInteger totalCount) {
+    private LinkedHashMap<String, Object> constructIndividual(List<Map<String, Object>> individualList, Long totalCount) {
         LinkedHashMap<String, Object> recordsMap = new LinkedHashMap<String, Object>();
         List<Long> individualIds = individualList.stream()
                 .map(individualRecord -> Long.valueOf((Integer) individualRecord.get("id")))

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +52,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
     }
 
     @Transactional
-    public BigInteger getTotalCount(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
+    public Long getTotalCount(SubjectSearchRequest searchRequest, SearchBuilder searchBuilder) {
         SubjectType subjectType = StringUtils.isEmpty(searchRequest.getSubjectType()) ? null : subjectTypeRepository.findByUuid(searchRequest.getSubjectType());
         SqlQuery query = searchBuilder.getSQLCountQuery(searchRequest, subjectType);
         try {
@@ -63,7 +62,7 @@ public class SubjectSearchRepository extends RoleSwitchableRepository {
                 sql.setParameter(name, value);
             });
 
-            return (BigInteger) sql.getSingleResult();
+            return (Long) sql.getSingleResult();
         } finally {
             setRoleBackToUser();
         }
