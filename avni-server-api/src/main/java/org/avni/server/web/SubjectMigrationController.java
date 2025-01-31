@@ -143,7 +143,7 @@ public class SubjectMigrationController extends AbstractController<SubjectMigrat
                         .addLong("userId", user.getId(), false)
                         .addString("mode", String.valueOf(mode))
                         .addString("fileName", fileName)
-                        .addParameter("bulkSubjectMigrationParameters", new CustomJobParameter<>(bulkSubjectMigrationRequest))
+                        .addJobParameter("bulkSubjectMigrationParameters", new CustomJobParameter<>(bulkSubjectMigrationRequest))
                         .toJobParameters();
 
         try {

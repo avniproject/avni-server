@@ -2,6 +2,8 @@ package org.avni.server.exporter;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import org.avni.server.dao.AvniJobRepository;
 import org.avni.server.dao.ExportJobParametersRepository;
 import org.avni.server.dao.JobStatus;
@@ -34,8 +36,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -83,18 +85,21 @@ public class ExportJobService {
             logger.error(errorMessage);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
         }
-        JobParameters jobParameters = getCommonJobParams(userContext)
-                .addString("programUUID", exportJobRequest.getProgramUUID(), false)
+        JobParametersBuilder jobParametersBuilder = getCommonJobParams(userContext)
                 .addString("subjectTypeUUID", exportJobRequest.getSubjectTypeUUID(), false)
-                .addString("encounterTypeUUID", exportJobRequest.getEncounterTypeUUID(), false)
                 .addDate("startDate", exportJobRequest.getStartDate(), false)
                 .addDate("endDate", exportJobRequest.getEndDate(), false)
                 .addString("reportType", exportJobRequest.getReportType().name())
-                .addString("addressIds", exportJobRequest.getAddressLevelString())
-                .addString("timeZone", exportJobRequest.getTimeZone())
-                .addString("includeVoided", String.valueOf(exportJobRequest.isIncludeVoided()))
-                .toJobParameters();
-        return launchJob(jobParameters, exportVisitJob);
+                .addString("addressIds", Optional.ofNullable(exportJobRequest.getAddressLevelString()).orElse("[]"))
+                .addString("timeZone", Optional.ofNullable(exportJobRequest.getTimeZone()).orElse("Asia/Calcutta"))
+                .addString("includeVoided", String.valueOf(exportJobRequest.isIncludeVoided()));
+        if (Objects.nonNull(exportJobRequest.getProgramUUID())) {
+            jobParametersBuilder.addString("programUUID", exportJobRequest.getProgramUUID(), false);
+        }
+        if (Objects.nonNull(exportJobRequest.getEncounterTypeUUID())) {
+            jobParametersBuilder.addString("encounterTypeUUID", exportJobRequest.getEncounterTypeUUID(), false);
+        }
+        return launchJob(jobParametersBuilder.toJobParameters(), exportVisitJob);
     }
 
     public ResponseEntity<?> runExportV2Job(ExportV2JobRequest exportJobRequest) {

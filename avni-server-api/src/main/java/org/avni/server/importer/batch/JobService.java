@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static java.lang.String.format;
 import static org.springframework.batch.core.BatchStatus.*;
@@ -68,7 +69,7 @@ public class JobService {
     }
 
     public JobExecution create(String uuid, String type, String fileName, ObjectInfo s3FileInfo, Long userId, String organisationUUID, boolean autoApprove, String locationUploadMode, String locationHierarchy) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
-        JobParameters parameters = new JobParametersBuilder()
+        JobParametersBuilder jobParametersBuilder = new JobParametersBuilder()
                 .addString("organisationUUID", organisationUUID)
                 .addString("uuid", uuid)
                 .addString("fileName", fileName, false)
@@ -77,12 +78,14 @@ public class JobService {
                 .addLong("userId", userId, false)
                 .addString("type", type, false)
                 .addString("autoApprove", String.valueOf(autoApprove))
-                .addString("locationUploadMode", locationUploadMode)
-                .addString("locationHierarchy", locationHierarchy)
-                .toJobParameters();
+                .addString("locationUploadMode", locationUploadMode);
+        if (Objects.nonNull(locationHierarchy)) {
+            jobParametersBuilder.addString("locationHierarchy", locationHierarchy);
+        }
+        JobParameters jobParameters = jobParametersBuilder.toJobParameters();
         logger.info(format("Bulk upload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));
 
-        return type.equals("metadataZip") ? bgJobLauncher.run(importZipJob, parameters) : bgJobLauncher.run(importJob, parameters);
+        return type.equals("metadataZip") ? bgJobLauncher.run(importZipJob, jobParameters) : bgJobLauncher.run(importJob, jobParameters);
     }
 
     @Transactional
