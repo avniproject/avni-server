@@ -9,17 +9,22 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
+import org.avni.server.dao.metabase.MetabaseUserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.metabase.CreateUserRequest;
+import org.avni.server.domain.metabase.UpdateUserGroupRequest;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.request.ChangePasswordRequest;
+import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -55,6 +60,9 @@ public class UserController {
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
+    private final MetabaseUserRepository metabaseUserRepository;
+    private final GroupRepository groupRepository;
+    private  final DatabaseService databaseService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -67,7 +75,7 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
+                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService , MetabaseUserRepository metabaseUserRepository , GroupRepository groupRepository , DatabaseService databaseService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -80,6 +88,9 @@ public class UserController {
         this.subjectTypeRepository = subjectTypeRepository;
         this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
+        this.metabaseUserRepository = metabaseUserRepository;
+        this.groupRepository = groupRepository;
+        this.databaseService = databaseService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -112,7 +123,7 @@ public class UserController {
             if (savedUser.getOrganisationId() != null) {
                 idpServiceFactory.getIdpService().createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
             } else {
-                idpServiceFactory.getIdpService().createSuperAdminWithPassword(savedUser, userContract.getPassword());
+                idpServiceFactory.getIdpService().createSuperAdmin(savedUser, userContract.getPassword());
             }
             accountAdminService.createAccountAdmins(savedUser, userContract.getAccountIds());
             userService.addToDefaultUserGroup(savedUser);
@@ -159,6 +170,40 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             userService.associateUserToGroups(user, userContract.getGroupIds());
+
+            List<GroupContract> groupContracts = groupRepository.findByIdInAndIsVoidedFalse(userContract.getGroupIds().toArray(new Long[0]))
+                    .stream()
+                    .map(GroupContract::fromEntity)
+                    .toList();
+
+            List<String> groupNames = groupContracts.stream()
+                    .map(GroupContract::getName)
+                    .toList();
+
+            if(groupNames.contains("Metabase Users")){
+
+                if(!metabaseUserRepository.emailExists(userContract.getEmail())){
+                    String[] nameParts = userContract.getName().split(" ", 2);
+                    String firstName = nameParts[0];
+                    String lastName = (nameParts.length > 1) ? nameParts[1] : null;
+                    metabaseUserRepository.save(new CreateUserRequest(firstName,lastName, userContract.getEmail(),metabaseUserRepository.getUserGroupMemberships(),"password" ));
+                }
+                else{
+                    if(!metabaseUserRepository.activeUserExists(userContract.getEmail())){
+                        metabaseUserRepository.reactivateMetabaseUser(userContract.getEmail());
+                    }
+                    if(!metabaseUserRepository.userExistsInCurrentOrgGroup((userContract.getEmail()))){
+                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(userContract.getEmail()).getId(),databaseService.getGlobalMetabaseGroup().getId()));
+                    }
+                }
+
+            }
+            else{
+                if(metabaseUserRepository.activeUserExists(userContract.getEmail())){
+                    metabaseUserRepository.deactivateMetabaseUser(userContract.getEmail());
+                }
+            }
+
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (ValidationException ex) {

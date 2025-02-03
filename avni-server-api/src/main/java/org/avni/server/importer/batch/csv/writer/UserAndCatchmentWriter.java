@@ -10,16 +10,14 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
-import org.avni.server.util.CollectionUtil;
-import org.avni.server.util.PhoneNumberUtil;
-import org.avni.server.util.RegionUtil;
-import org.avni.server.util.S;
+import org.avni.server.util.*;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -51,6 +49,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private static final String ERR_MSG_DATE_PICKER_FIELD = "Provided value '%s' for Date picker mode is invalid.";
     private static final String ERR_MSG_INVALID_PHONE_NUMBER = "Provided value '%s' for phone number is invalid.";
     private static final String ERR_MSG_INVALID_TRACK_LOCATION = "Provided value '%s' for track location is invalid.";
+    private static final String ERR_MSG_INVALID_ACTIVE_VALUE = "Provided value '%s' for Active is invalid.";
     private static final String ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE = "Provided value '%s' for enable beneficiary mode is invalid.";
     private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers.";
     private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
@@ -135,12 +134,13 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         Boolean beneficiaryMode = row.getBool(ENABLE_BENEFICIARY_MODE);
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
+        Boolean active = row.getBool(ACTIVE);
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByNameIgnoreCase(language);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         String userSuffix = "@".concat(organisation.getEffectiveUsernameSuffix());
         JsonObject syncSettings = constructSyncSettings(row, rowValidationErrorMsgs);
-        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE));
+        validateRowAndAssimilateErrors(rowValidationErrorMsgs, fullAddress, catchmentName, nameOfUser, username, email, phoneNumber, language, datePickerMode, location, locale, userSuffix, trackLocation, row.get(TRACK_LOCATION), beneficiaryMode, row.get(ENABLE_BENEFICIARY_MODE), active, row.get(ACTIVE));
         Catchment catchment = catchmentService.createOrUpdate(catchmentName, location);
         User user = userRepository.findByUsername(username.trim());
         User currentUser = userService.getCurrentUser();
@@ -170,14 +170,19 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         user.setAuditInfo(currentUser);
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
-        if (isNewUser) {
-            idpServiceFactory.getIdpService(organisation).createUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else {
-            idpServiceFactory.getIdpService(organisation).updateUser(user);
+        IdpService idpService = idpServiceFactory.getIdpService(organisation);
+        if (isNewUser && BooleanUtil.getBoolean(active)) {
+            idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
+        } else if (isNewUser && !BooleanUtil.getBoolean(active)) {
+            idpService.createInActiveUser(user, organisationConfigService.getOrganisationConfig(organisation));
+        } else if (!isNewUser && BooleanUtil.getBoolean(active)) {
+            idpService.enableUser(user);
+        } else if (!isNewUser && !BooleanUtil.getBoolean(active)) {
+            idpService.disableUser(user);
         }
     }
 
-    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser) {
+    private void validateRowAndAssimilateErrors(List<String> rowValidationErrorMsgs, String fullAddress, String catchmentName, String nameOfUser, String username, String email, String phoneNumber, String language, String datePickerMode, AddressLevel location, Locale locale, String userSuffix, Boolean trackLocation, String trackLocationValueProvidedByUser, Boolean beneficiaryMode, String beneficiaryModeValueProvidedByUser, Boolean active, String activeValueProvidedByUser) {
         addErrMsgIfValidationFails(!StringUtils.hasLength(catchmentName), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, CATCHMENT_NAME));
         if (!addErrMsgIfValidationFails(!StringUtils.hasLength(username), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, USERNAME)))
             extractUserUsernameValidationErrMsg(rowValidationErrorMsgs, username, userSuffix);
@@ -188,12 +193,13 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         if (!addErrMsgIfValidationFails(!StringUtils.hasLength(phoneNumber), rowValidationErrorMsgs, format(ERR_MSG_MANDATORY_OR_INVALID_FIELD, MOBILE_NUMBER)))
             addErrMsgIfValidationFails(!PhoneNumberUtil.isValidPhoneNumber(phoneNumber, RegionUtil.getCurrentUserRegion()), rowValidationErrorMsgs, format(ERR_MSG_INVALID_PHONE_NUMBER, MOBILE_NUMBER));
 
-        addErrMsgIfValidationFails(StringUtils.isEmpty(location), rowValidationErrorMsgs, format(ERR_MSG_LOCATION_FIELD, fullAddress));
-        addErrMsgIfValidationFails(StringUtils.isEmpty(locale), rowValidationErrorMsgs, format(ERR_MSG_LOCALE_FIELD, language));
+        addErrMsgIfValidationFails(ObjectUtils.isEmpty(location), rowValidationErrorMsgs, format(ERR_MSG_LOCATION_FIELD, fullAddress));
+        addErrMsgIfValidationFails(ObjectUtils.isEmpty(locale), rowValidationErrorMsgs, format(ERR_MSG_LOCALE_FIELD, language));
         addErrMsgIfValidationFails(!StringUtils.isEmpty(datePickerMode) && !CollectionUtil.containsIgnoreCase(DATE_PICKER_MODE_OPTIONS, datePickerMode), rowValidationErrorMsgs, format(ERR_MSG_DATE_PICKER_FIELD, datePickerMode));
 
         addErrMsgIfValidationFails(trackLocation == null && !StringUtils.isEmpty(trackLocationValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_TRACK_LOCATION, trackLocationValueProvidedByUser));
         addErrMsgIfValidationFails(beneficiaryMode == null && !StringUtils.isEmpty(beneficiaryModeValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE, beneficiaryModeValueProvidedByUser));
+        addErrMsgIfValidationFails(active == null && !StringUtils.isEmpty(activeValueProvidedByUser), rowValidationErrorMsgs, format(ERR_MSG_INVALID_ACTIVE_VALUE, activeValueProvidedByUser));
 
         if (!rowValidationErrorMsgs.isEmpty()) {
             throw new RuntimeException(createMultiErrorMessage(rowValidationErrorMsgs));

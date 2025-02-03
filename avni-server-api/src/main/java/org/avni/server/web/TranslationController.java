@@ -116,26 +116,35 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
     }
 
     @RequestMapping(value = "/translation", method = RequestMethod.GET)
-    public ResponseEntity<?> downloadTranslations(@RequestParam(value = "platform") String platform,
-                                                  @RequestParam(value = "emptyValue", defaultValue = "") String valueForEmptyKey) {
+    public ResponseEntity<?> downloadTranslations(
+            @RequestParam(value = "platform") String platform,
+            @RequestParam(value = "emptyValue", defaultValue = "") String valueForEmptyKey,
+            @RequestParam(value = "includeLocations", defaultValue = "true") boolean includeLocations) {
+
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         OrganisationConfig organisationConfig = organisationConfigRepository.findAll().stream().findFirst().orElse(null);
         if (organisationConfig == null) {
             return ResponseEntity.badRequest().body(String.format("Organisation configuration not set for %s. Unable to fetch data", organisation.getName()));
         }
         List<Translation> translations = translationRepository.findAll();
-        return ResponseEntity.ok().body(generateTranslations(organisationConfig, translations, Platform.valueOf(platform), valueForEmptyKey, organisation));
+        return ResponseEntity.ok().body(generateTranslations(organisationConfig, translations, Platform.valueOf(platform), valueForEmptyKey, organisation, includeLocations));
     }
 
-    private List<TranslationContract> generateTranslations(OrganisationConfig organisationConfig, List<Translation> translations, Platform platform, String valueForEmptyKey, Organisation organisation) {
+    private List<TranslationContract> generateTranslations(
+            OrganisationConfig organisationConfig, List<Translation> translations,
+            Platform platform, String valueForEmptyKey, Organisation organisation,
+            boolean includeLocations) {
+
         List<TranslationContract> translationList = new ArrayList<>();
-        Map<Locale, JsonObject> translationMap = translations.stream().collect(Collectors.toMap(Translation::getLanguage, Translation::getTranslationJson, (a, b) -> b));
+        Map<Locale, JsonObject> translationMap = translations.stream()
+                .collect(Collectors.toMap(Translation::getLanguage, Translation::getTranslationJson, (a, b) -> b));
+
         ((List<String>) organisationConfig.getSettings().get("languages"))
                 .forEach(language -> {
                     JsonObject existingTranslations = translationMap.get(Locale.valueOf(language));
                     Map<String, Object> platformTranslations = generatePlatformTranslations(platform, Locale.valueOf(language), valueForEmptyKey);
                     TranslationContract translation = new TranslationContract();
-                    JsonObject jsonObject = new JsonObject(generateTranslationsWithValue(valueForEmptyKey));
+                    JsonObject jsonObject = new JsonObject(generateTranslationsWithValue(valueForEmptyKey, includeLocations));
                     jsonObject.putAll(addRegistrationAndEnrolmentStrings());
                     jsonObject.putAll(platformTranslations);
                     jsonObject.putAll(existingTranslations != null ? existingTranslations : Collections.emptyMap());
@@ -147,30 +156,39 @@ public class TranslationController implements RestControllerResourceProcessor<Tr
         return translationList;
     }
 
-    private Map<String, Object> generateTranslationsWithValue(String valueForEmptyKey) {
+    private Map<String, Object> generateTranslationsWithValue(String valueForEmptyKey, boolean includeLocations) {
         Map<String, Object> result = new HashMap<>();
-        Arrays.asList(formElementGroupRepository.getAllNames(),
-                formElementRepository.getAllNames(),
-                conceptRepository.getAllNames(),
-                operationalEncounterTypeRepository.getAllNames(),
-                encounterTypeRepository.getAllNames(),
-                operationalProgramRepository.getAllNames(),
-                programRepository.getAllNames(),
-                checklistDetailRepository.getAllNames(),
-                catchmentRepository.getAllNames(),
-                locationRepository.getAllNames(),
-                conceptAnswerRepository.getAllConceptNames(),
-                conceptAnswerRepository.getAllNames(),
-                formRepository.getAllNames(),
-                addressLevelTypeRepository.getAllNames(),
-                operationalSubjectTypeRepository.getAllNames(),
-                cardRepository.getAllNames(),
-                dashboardRepository.getAllNames()
-        ).forEach(list -> list.forEach(e -> {
-            if (e != null) {
-                result.put(e, valueForEmptyKey);
+
+        List<List<String>> sources = new ArrayList<>();
+
+        sources.add(formElementGroupRepository.getAllNames());
+        sources.add(formElementRepository.getAllNames());
+        sources.add(conceptRepository.getAllNames());
+        sources.add(operationalEncounterTypeRepository.getAllNames());
+        sources.add(encounterTypeRepository.getAllNames());
+        sources.add(operationalProgramRepository.getAllNames());
+        sources.add(programRepository.getAllNames());
+        sources.add(checklistDetailRepository.getAllNames());
+        sources.add(catchmentRepository.getAllNames());
+        sources.add(formRepository.getAllNames());
+        sources.add(addressLevelTypeRepository.getAllNames());
+        sources.add(operationalSubjectTypeRepository.getAllNames());
+        sources.add(cardRepository.getAllNames());
+        sources.add(dashboardRepository.getAllNames());
+
+        if (includeLocations) {
+            sources.add(locationRepository.getAllNames());
+        }
+
+        for (List<String> list : sources) {
+            if (list != null) {
+                for (String e : list) {
+                    if (e != null) {
+                        result.put(e, valueForEmptyKey);
+                    }
+                }
             }
-        }));
+        }
         return result;
     }
 

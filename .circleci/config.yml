@@ -16,7 +16,10 @@ commands:
 
       - run: sudo apt-get install make openssl
 
-      - run: curl -L https://github.com/avniproject/avni-infra/archive/master.zip >> ~/infra.zip
+      - run: |
+          cd ~/
+          curl -L -O https://github.com/avniproject/avni-infra/archive/master.zip
+          mv ~/master.zip ~/infra.zip
 
       - run: |
           cd ~/

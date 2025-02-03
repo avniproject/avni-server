@@ -23,11 +23,10 @@ public abstract class IdpServiceImpl implements IdpService {
 
     @Messageable(EntityType.User)
     @Override
-    public UserCreateStatus createUserIfNotExists(User user, OrganisationConfig organisationConfig) throws IDPException {
+    public void createUserIfNotExists(User user, OrganisationConfig organisationConfig) throws IDPException {
         if (!this.exists(user)) {
-            return this.createUser(user, organisationConfig);
+            this.createUser(user, organisationConfig);
         }
-        return null;
     }
 
     public static String getDefaultPassword(User user) {

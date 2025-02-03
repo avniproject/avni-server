@@ -66,11 +66,9 @@ public class GroupPermissionsRepository extends MetabaseConnector {
         return null;
     }
 
-    public Group CreateGroup(String name, int databaseId) {
+    public Group createGroup(String name, int databaseId) {
         Group newGroup = save(new Group(name));
         updateGroupPermissions(newGroup.getId(), databaseId);
         return newGroup;
     }
-
-
 }
