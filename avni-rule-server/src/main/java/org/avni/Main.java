@@ -1,5 +1,6 @@
 package org.avni;
 
+import org.avni.ruleServer.RuleService;
 import org.avni.server.dao.CustomJpaRepositoryImpl;
 import org.avni.server.dao.DashboardRepository;
 import org.avni.server.domain.Dashboard;
@@ -17,15 +18,28 @@ import java.nio.file.Paths;
 @SpringBootApplication
 @EnableJpaRepositories(repositoryBaseClass = CustomJpaRepositoryImpl.class)
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         ApplicationContext applicationContext = SpringApplication.run(Main.class);
-        DashboardRepository dashboardRepository = applicationContext.getBean(DashboardRepository.class);
-        Dashboard dashboard = dashboardRepository.findOne(1l);
-        this.initialiseJavaScript();
-        System.out.println(dashboard.getName());
+        RuleService ruleService = applicationContext.getBean(RuleService.class);
+        ruleService.init();
+//        initialiseJavaScript();
+//        System.out.println(dashboard.getName());
     }
 
-    private void initialiseJavaScript() throws IOException {
+    private static void initialiseJavaScript() throws IOException {
+        String projectPath = System.getProperty("user.dir");
+        String jsFilePath = "avni-rule-server/build/resources/js/main.js";
 
+        try (Context context = Context.newBuilder("js")
+                .allowAllAccess(true)
+                .option("js.esm-eval-returns-exports", "true")
+                .build()) {
+
+            Source source = Source.newBuilder("js", Paths.get(projectPath, jsFilePath).toFile())
+                    .mimeType("application/javascript+module")
+                    .build();
+            Value result = context.eval(source);
+            System.out.println(result);
+        }
     }
 }

@@ -15,13 +15,13 @@ public class RuleService {
     private final DashboardRepository dashboardRepository;
 
     @Autowired
-    public RuleService(DashboardRepository dashboardRepository) {
+    public RuleService(DashboardRepository dashboardRepository, ProgramEnrolmentRepository programEnrolmentRepository) {
         this.dashboardRepository = dashboardRepository;
     }
-    
-    public void init() {
+
+    public void init() throws IOException {
         String projectPath = System.getProperty("user.dir");
-        String jsFilePath = "avni-rule-server/build/resources/js/main.js";
+        String jsFilePath = "avni-rule-server/build/resources/js/ruleSample.js";
 
         Context context = Context.newBuilder("js")
                 .allowAllAccess(true) // Allow access to file system if needed
@@ -30,17 +30,9 @@ public class RuleService {
         Source source = Source.newBuilder("js", Paths.get(projectPath, jsFilePath).toFile())
                 .mimeType("application/javascript+module")
                 .build();
-        Value invokerO = context.eval(source);
-        try (context) {
-            // Read and execute the main JavaScript file
-            
-            
-        } catch (IOException ioException) {
-            throw new RuntimeException(ioException);
-        }
-    }
-
-    public void getDashboardReportCardsCount() {
-        dashboardRepository.getAllNames();
+        Value invoker = context.eval("js", source.getCharacters());
+//        Value mainFunction = invoker.invokeMember("mainFunction");
+        Value mainFunction = invoker.execute();
+//        mainFunction.invokeMember("hello", "bar", dashboardRepository);
     }
 }
