@@ -126,7 +126,19 @@ start_server_perf_test_mode: build_server
 start_server_keycloak: build_server
 	OPENCHS_MODE=on-premise OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=keycloak java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
-start_server_remote_db: build_server
+check_db_server:
+ifndef DBSERVER
+	@echo "Provde the DBSERVER variable"
+	exit 1
+endif
+
+check_db_port:
+ifndef DBPORT
+	@echo "Provde the DBPORT variable"
+	exit 1
+endif
+
+start_server_remote_db: check_db_server check_db_port build_server
 	AVNI_IDP_TYPE=none OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):$(DBPORT)/openchs?currentSchema=public java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 debug_server: build_server
