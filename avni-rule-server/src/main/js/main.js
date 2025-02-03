@@ -1,9 +1,11 @@
-import { greet } from './utils.js';
-
 export function mainFunction() {
-    const message = greet('GraalVM');
-    console.log(message);
-    return message;
+    return {
+        hello: function (foo, springDependencyObject) {
+            console.log('Hello from JavaScript!', foo);
+            const allNames = springDependencyObject.getAllNames();
+            console.log(allNames);
+        }
+    }
 }
 
 mainFunction();
