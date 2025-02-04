@@ -2,13 +2,28 @@
   "name": "avni-rule-server",
   "version": "1.0.0",
   "description": "foo",
-  "main": "main.js",
+  "main": "ruleInvoker.js",
   "scripts": {
-    "build": "echo 'Build step can be defined here'",
+    "build": "webpack --config webpack.config.js",
     "test": "echo 'Test step can be defined here'"
   },
   "dependencies": {
+    "rules-config": "github:openchs/rules-config#982bb007c4f759639063159196edee386b48cac3"
   },
   "devDependencies": {
+    "babel-loader": "^9.2.1",
+    "webpack": "5.97.1",
+    "webpack-cli": "^6.0.1",
+    "copy-webpack-plugin": "^10.2.4",
+    "@babel/cli": "^7.26.4",
+    "@babel/core": "^7.26.7",
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@babel/plugin-proposal-decorators": "^7.25.9",
+    "@babel/plugin-proposal-export-default-from": "^7.25.9",
+    "@babel/plugin-proposal-object-rest-spread": "^7.20.7",
+    "@babel/plugin-transform-destructuring": "^7.25.9",
+    "@babel/preset-env": "^7.26.7",
+    "@babel/preset-flow": "^7.25.9",
+    "@babel/plugin-syntax-export-extensions": "^7.0.0-beta.32"
   }
 }

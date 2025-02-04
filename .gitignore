@@ -40,3 +40,7 @@ dev-commands.txt
 /avni-server-api/log/
 /blacklisted.json
 **/*.env
+/avni-rule-server/src/main/js/node_modules/
+/avni-rule-server/src/main/js/exports/package.json
+/avni-rule-server/src/main/js/exports/ruleInvoker.js
+/avni-rule-server/src/main/js/exports/ruleInvoker.js.LICENSE.txt
