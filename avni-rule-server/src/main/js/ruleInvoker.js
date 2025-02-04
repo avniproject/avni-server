@@ -5,5 +5,5 @@ export function callRule(ruleCode, entity) {
     const ruleFunction = eval(ruleCode);
     console.log("eval completed");
     const imports = {rulesConfig};
-    return ruleFunction({params: {entity: entity}, imports: imports});
+    return ruleFunction({params: {entity: entity, decisions: {enrolmentDecisions: []}}, imports: imports});
 }

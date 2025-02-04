@@ -2,6 +2,7 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.micrometer.observation.Observation;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
@@ -15,8 +16,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.avni.server.common.dbSchema.ColumnNames.ProgramEnrolmentExitObservations;
@@ -206,5 +206,27 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     @JsonIgnore
     public Long getEntityId() {
         return getId();
+    }
+
+    public Observation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
+        List<Observation> observationsList = (parentConceptNameOrUuid == null) ?
+                observations :
+                findGroupedObservation(parentConceptNameOrUuid).getObservations();
+
+        Optional<Observation> observation = observationsList.stream()
+                .filter(obs -> obs.getConcept().getName().equals(conceptNameOrUuid) ||
+                        obs.getConcept().getUuid().equals(conceptNameOrUuid))
+                .findFirst();
+
+        return observation.orElse(null);
+    }
+
+    public List<Observation> findGroupedObservation(String parentConceptNameOrUuid) {
+        Optional<Observation> groupedObservation = observations.stream()
+                .filter(observation -> observation.getConcept().getName().equals(parentConceptNameOrUuid) ||
+                        observation.getConcept().getUuid().equals(parentConceptNameOrUuid))
+                .findFirst();
+
+        return groupedObservation.map(Observation::getValue).orElse(Collections.emptyList());
     }
 }
