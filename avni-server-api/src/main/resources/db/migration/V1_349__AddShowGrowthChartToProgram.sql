@@ -1,0 +1,2 @@
+ALTER TABLE program
+    ADD COLUMN show_growth_chart BOOLEAN DEFAULT FALSE NOT NULL;

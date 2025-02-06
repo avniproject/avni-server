@@ -47,6 +47,9 @@ public class Program extends OrganisationAwareEntity implements NamedEntity {
     private boolean manualEligibilityCheckRequired;
 
     @Column
+    private boolean showGrowthChart;
+
+    @Column
     private boolean allowMultipleEnrolments;
 
     @Column
@@ -153,6 +156,14 @@ public class Program extends OrganisationAwareEntity implements NamedEntity {
 
     public void setManualEligibilityCheckRequired(boolean manualEligibilityCheckRequired) {
         this.manualEligibilityCheckRequired = manualEligibilityCheckRequired;
+    }
+
+    public boolean isShowGrowthChart() {
+        return showGrowthChart;
+    }
+
+    public void setShowGrowthChart(boolean showGrowthChart) {
+        this.showGrowthChart = showGrowthChart;
     }
 
     @Projection(name = "ProgramProjection", types = {Program.class})

@@ -54,7 +54,7 @@ public class ProgramService implements NonScopeAwareService {
         programRepository.save(program);
     }
 
-    public void updateAndSaveProgram(Program program, ProgramContract programContract) {
+    public Program updateAndSaveProgram(Program program, ProgramContract programContract) {
         program.setName(programContract.getName());
         program.setColour(programContract.getColour());
         program.setEnrolmentSummaryRule(programContract.getEnrolmentSummaryRule());
@@ -62,11 +62,12 @@ public class ProgramService implements NonScopeAwareService {
         program.setEnrolmentEligibilityCheckDeclarativeRule(programContract.getEnrolmentEligibilityCheckDeclarativeRule());
         program.setActive(programContract.getActive());
         program.setManualEligibilityCheckRequired(programContract.isManualEligibilityCheckRequired());
+        program.setShowGrowthChart(programContract.isShowGrowthChart());
         program.setManualEnrolmentEligibilityCheckRule(programContract.getManualEnrolmentEligibilityCheckRule());
         program.setManualEnrolmentEligibilityCheckDeclarativeRule(programContract.getManualEnrolmentEligibilityCheckDeclarativeRule());
         program.setAllowMultipleEnrolments(programContract.isAllowMultipleEnrolments());
         program.setVoided(programContract.isVoided());
-        programRepository.save(program);
+        return programRepository.save(program);
     }
 
     public List<Program> getEligiblePrograms(Individual individual) {

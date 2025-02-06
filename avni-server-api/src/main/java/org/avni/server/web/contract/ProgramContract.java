@@ -13,6 +13,7 @@ public class ProgramContract {
     private String enrolmentSummaryRule;
     private DeclarativeRule enrolmentEligibilityCheckDeclarativeRule;
     private boolean manualEligibilityCheckRequired;
+    private boolean showGrowthChart;
     private String manualEnrolmentEligibilityCheckRule;
     private DeclarativeRule manualEnrolmentEligibilityCheckDeclarativeRule;
     private boolean allowMultipleEnrolments;
@@ -23,6 +24,14 @@ public class ProgramContract {
 
     public void setManualEligibilityCheckRequired(boolean manualEligibilityCheckRequired) {
         this.manualEligibilityCheckRequired = manualEligibilityCheckRequired;
+    }
+
+    public boolean isShowGrowthChart() {
+        return showGrowthChart;
+    }
+
+    public void setShowGrowthChart(boolean showGrowthChart) {
+        this.showGrowthChart = showGrowthChart;
     }
 
     public String getManualEnrolmentEligibilityCheckRule() {
