@@ -7,6 +7,7 @@ import org.avni.server.dao.DashboardRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.domain.CHSBaseEntity;
 import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.util.ObjectMapperSingleton;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
@@ -32,7 +33,7 @@ public class RuleService {
 
     public void init() throws IOException {
         String projectPath = System.getProperty("user.dir");
-        String jsFilePath = "avni-rule-server/build/resources/js/ruleInvoker.js";
+//        String jsFilePath = "avni-rule-server/build/resources/js/ruleInvoker.js";
 
         Context context = Context.newBuilder("js")
                 .allowAllAccess(true)
@@ -49,16 +50,11 @@ public class RuleService {
         Value ruleCaller = ruleInvoker.getMember("callRule");
         ProgramEnrolment programEnrolment = programEnrolmentRepository.findOne(138234l);
         Value output = ruleCaller.execute(ruleFileContents, programEnrolment);
-//        Value value = loadNPMModule(context);
-
-//        Value rulesConfig = rulesConfigInvoker.execute();
-        Source source = Source.newBuilder("js", Paths.get(projectPath, jsFilePath).toFile())
-                .mimeType("application/javascript+module")
-                .build();
-
-//        ProgramEnrolment programEnrolment = programEnrolmentRepository.findOne(138234l);
+        System.out.println(output.getMemberKeys());
+        System.out.println(output);
 
 
+//TODO: Do not remove for now. Invoke rule directly
 //        Source ruleSource = Source.newBuilder("js", Paths.get(projectPath, ruleFile).toFile())
 //                .mimeType("application/javascript+module")
 //                .build();
@@ -83,16 +79,5 @@ public class RuleService {
         ruleParams.setDecisions(new ArrayList<>());
         ruleParams.setEntity(entity);
         return ruleParams;
-    }
-
-    private Value loadNPMModule(Context context) {
-        File file = new File("avni-rule-server/build/resources/js/node_modules/rules-config/rules.js");
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append("load('file:/");
-        stringBuffer.append(file.getAbsolutePath());
-        stringBuffer.append("')");
-        context.eval("js", stringBuffer.toString());
-        Value bindings = context.getBindings("js");
-        return bindings;
     }
 }

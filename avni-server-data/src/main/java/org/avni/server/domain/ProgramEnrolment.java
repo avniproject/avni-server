@@ -7,15 +7,17 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.common.dbSchema.ColumnNames;
 import org.avni.server.common.dbSchema.TableNames;
+import org.avni.server.dao.ConceptRepository;
+import org.avni.server.dao.RepositoryProvider;
+import org.avni.server.dao.ruleServer.RuleObservationRepository;
+import org.avni.server.domain.jsRuleSupport.JsModelObservation;
 import org.avni.server.framework.hibernate.JodaDateTimeConverter;
 import org.avni.server.framework.hibernate.ObservationCollectionUserType;
 import org.avni.server.geo.Point;
 import org.avni.server.geo.PointType;
-import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
-import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -210,26 +212,8 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
         return getId();
     }
 
-    public Observation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
-        List<Observation> observationsList = (StringUtils.isEmpty(parentConceptNameOrUuid) ?
-                observations :
-                findGroupedObservation(parentConceptNameOrUuid).getObservations();
-
-        Optional<Observation> observation = observationsList.stream()
-                .filter(obs -> obs.getConcept().getName().equals(conceptNameOrUuid) ||
-                        obs.getConcept().getUuid().equals(conceptNameOrUuid))
-                .findFirst();
-
-        return observation.orElse(null);
-    }
-
-    public List<Observation> findGroupedObservation(String parentConceptNameOrUuid) {
-        BeanProvider
-        Optional<Observation> groupedObservation = observations.entrySet().stream()
-                .filter(observationEntry -> observation.getConcept().getName().equals(parentConceptNameOrUuid) ||
-                        observation.getConcept().getUuid().equals(parentConceptNameOrUuid))
-                .findFirst();
-
-        return groupedObservation.map(Observation::getValue).orElse(Collections.emptyList());
+    public JsModelObservation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
+        RuleObservationRepository ruleObservationRepository = RepositoryProvider.getRuleObservationRepository();
+        return ruleObservationRepository.findObservation(this.getObservations(), conceptNameOrUuid, parentConceptNameOrUuid);
     }
 }

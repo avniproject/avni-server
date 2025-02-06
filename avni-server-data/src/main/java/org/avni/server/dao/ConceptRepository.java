@@ -79,4 +79,6 @@ public interface ConceptRepository extends ReferenceDataRepository<Concept>, Fin
         List<String> supportedDataTypes = ConceptDataType.dashboardFilterSupportedTypes.stream().map(Enum::name).collect(Collectors.toList());
         return findByIsVoidedFalseAndNameIgnoreCaseContainsAndDataTypeIn(namePart, supportedDataTypes);
     }
+
+    Concept findByNameOrUuid(String name, String uuid);
 }

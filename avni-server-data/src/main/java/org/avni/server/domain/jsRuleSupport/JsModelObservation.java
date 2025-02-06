@@ -1,13 +1,11 @@
 package org.avni.server.domain.jsRuleSupport;
 
 public class JsModelObservation {
-    private JsModelObservation jsModelObservation;
+    private final String name;
+    private final Object value;
 
-    public JsModelObservation getJsModelObservation() {
-        return jsModelObservation;
-    }
-
-    public void setJsModelObservation(JsModelObservation jsModelObservation) {
-        this.jsModelObservation = jsModelObservation;
+    public JsModelObservation(String name, Object value) {
+        this.name = name;
+        this.value = value;
     }
 }
