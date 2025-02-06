@@ -154,7 +154,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     }
 
     private void deactivateUserOnMetabase(UserGroup userGroup) {
-        if (metabaseUserRepository.emailExists(userGroup.getUser().getEmail())) {
+        if (metabaseUserRepository.activeUserExists(userGroup.getUser().getEmail(), true)) {
             metabaseUserRepository.deactivateMetabaseUser(userGroup.getUser().getEmail());
         }
     }

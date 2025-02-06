@@ -205,7 +205,7 @@ public class UserController {
                 }
             }
         } else {
-            if (metabaseUserRepository.activeUserExists(userContract.getEmail())) {
+            if (metabaseUserRepository.activeUserExists(userContract.getEmail(), true)) {
                 metabaseUserRepository.deactivateMetabaseUser(userContract.getEmail());
             }
         }

@@ -39,10 +39,15 @@ public class MetabaseUserRepository extends MetabaseConnector {
                 .orElse(null);
     }
 
-    public boolean activeUserExists(String email) {
+    public boolean activeUserExists(String email, boolean excludeSuperAdmins) {
         MetabaseAllUsersResponse response = getAllUsers();
         return response.getData().stream()
-                .anyMatch(user -> user.getEmail().equalsIgnoreCase(email) && user.isActive());
+                .anyMatch(user -> user.getEmail().equalsIgnoreCase(email) && user.isActive()
+                        && !(excludeSuperAdmins && user.getIsSuperuser()));
+    }
+
+    public boolean activeUserExists(String email) {
+        return activeUserExists(email, false);
     }
 
 
