@@ -15,6 +15,8 @@ import org.avni.server.util.DateTimeUtil;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -209,7 +211,7 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public Observation findObservation(String conceptNameOrUuid, String parentConceptNameOrUuid) {
-        List<Observation> observationsList = (parentConceptNameOrUuid == null) ?
+        List<Observation> observationsList = (StringUtils.isEmpty(parentConceptNameOrUuid) ?
                 observations :
                 findGroupedObservation(parentConceptNameOrUuid).getObservations();
 
@@ -222,8 +224,9 @@ public class ProgramEnrolment extends SyncAttributeEntity implements Messageable
     }
 
     public List<Observation> findGroupedObservation(String parentConceptNameOrUuid) {
-        Optional<Observation> groupedObservation = observations.stream()
-                .filter(observation -> observation.getConcept().getName().equals(parentConceptNameOrUuid) ||
+        BeanProvider
+        Optional<Observation> groupedObservation = observations.entrySet().stream()
+                .filter(observationEntry -> observation.getConcept().getName().equals(parentConceptNameOrUuid) ||
                         observation.getConcept().getUuid().equals(parentConceptNameOrUuid))
                 .findFirst();
 
