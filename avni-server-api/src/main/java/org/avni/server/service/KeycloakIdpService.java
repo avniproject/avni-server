@@ -110,6 +110,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
         UserCreateStatus userCreateStatus = new UserCreateStatus(user, UserContextHolder.getUser());
         userCreateStatus.setDefaultPasswordPermanent(true);
         UserRepresentation newUser = getUserRepresentation(user);
+        newUser.setCredentials(List.of(getCredentialRepresentation(password)));
         try {
             Response response = realmResource.users().create(newUser);
             logger.info(String.format("created keycloak-user |  Status: %d | Status Info: %s | username '%s' ",

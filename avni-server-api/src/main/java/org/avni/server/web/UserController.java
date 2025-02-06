@@ -121,7 +121,7 @@ public class UserController {
             User savedUser = userService.save(user);
 
             if (savedUser.getOrganisationId() != null) {
-                idpServiceFactory.getIdpService().createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
+                idpServiceFactory.getIdpService(UserContextHolder.getOrganisation()).createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
             } else {
                 idpServiceFactory.getIdpService().createSuperAdmin(savedUser, userContract.getPassword());
             }
