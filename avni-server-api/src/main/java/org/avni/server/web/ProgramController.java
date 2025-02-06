@@ -84,13 +84,13 @@ public class ProgramController implements RestControllerResourceProcessor<Progra
             return ResponseEntity.badRequest().body(ReactAdminUtil.generateJsonError(String.format("Program %s already exists", request.getName())));
         Program program = new Program();
         program.assignUUIDIfRequired();
-        programService.updateAndSaveProgram(program, request);
+        program = programService.updateAndSaveProgram(program, request);
         OperationalProgram operationalProgram = new OperationalProgram();
         operationalProgram.assignUUIDIfRequired();
         operationalProgram.setName(request.getName());
         operationalProgram.setProgramSubjectLabel(request.getProgramSubjectLabel());
         operationalProgram.setProgram(program);
-        operationalProgramRepository.save(operationalProgram);
+        operationalProgram = operationalProgramRepository.save(operationalProgram);
 
         saveFormsAndMapping(request, program);
 

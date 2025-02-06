@@ -71,6 +71,7 @@ public class ProgramContractWeb extends ProgramContract {
         contract.setModifiedDateTime(operationalProgram.getLastModifiedDateTime());
         contract.setEnrolmentEligibilityCheckDeclarativeRule(operationalProgram.getEnrolmentEligibilityCheckDeclarativeRule());
         contract.setManualEligibilityCheckRequired(operationalProgram.isManualEligibilityCheckRequired());
+        contract.setShowGrowthChart(operationalProgram.isShowGrowthChart());
         contract.setManualEnrolmentEligibilityCheckRule(operationalProgram.getManualEnrolmentEligibilityCheckRule());
         contract.setManualEnrolmentEligibilityCheckDeclarativeRule(operationalProgram.getManualEnrolmentEligibilityCheckDeclarativeRule());
         contract.setAllowMultipleEnrolments(operationalProgram.getProgram().isAllowMultipleEnrolments());

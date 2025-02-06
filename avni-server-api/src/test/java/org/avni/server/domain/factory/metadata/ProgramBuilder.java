@@ -74,6 +74,11 @@ public class ProgramBuilder {
         return this;
     }
 
+    public ProgramBuilder setIsShowGrowthChart(boolean isShowGrowthChart) {
+        program.setShowGrowthChart(isShowGrowthChart);
+        return this;
+    }
+
     public Program build() {
         return program;
     }
