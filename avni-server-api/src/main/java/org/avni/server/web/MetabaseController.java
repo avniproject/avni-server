@@ -1,6 +1,7 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.OrganisationConfigRepository;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -14,7 +15,10 @@ import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.response.metabase.CreateQuestionsResponse;
 import org.avni.server.web.response.metabase.SetupStatusResponse;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/metabase")
@@ -54,7 +58,7 @@ public class MetabaseController {
         organisationConfigRepository.save(organisationConfig);
 
         GroupContract groupContract = new GroupContract();
-        groupContract.setName("Metabase Users");
+        groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
 
         metabaseService.setupMetabase();

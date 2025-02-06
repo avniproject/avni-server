@@ -1,10 +1,10 @@
 package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import org.avni.server.domain.accessControl.GroupPrivilege;
 import org.hibernate.annotations.BatchSize;
 
-import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,6 +14,8 @@ import java.util.Set;
 public class Group extends OrganisationAwareEntity {
     public static final String Administrators = "Administrators";
     public static final String Everyone = "Everyone";
+    public static final String METABASE_USERS = "Metabase Users";
+    ;
 
     @Column
     private String name;
@@ -54,6 +56,6 @@ public class Group extends OrganisationAwareEntity {
     }
 
     public boolean isOneOfTheDefaultGroups() {
-        return Administrators.equals(name) || Everyone.equals(name);
+        return Administrators.equals(name) || Everyone.equals(name) || METABASE_USERS.equals(name);
     }
 }
