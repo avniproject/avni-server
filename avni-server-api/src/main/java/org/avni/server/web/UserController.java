@@ -19,6 +19,7 @@ import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.metabase.DatabaseService;
+import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
@@ -62,6 +63,7 @@ public class UserController {
     private final MetabaseUserRepository metabaseUserRepository;
     private final GroupRepository groupRepository;
     private final DatabaseService databaseService;
+    private final MetabaseService metabaseService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -74,7 +76,7 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService, MetabaseUserRepository metabaseUserRepository, GroupRepository groupRepository, DatabaseService databaseService) {
+                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService, MetabaseUserRepository metabaseUserRepository, GroupRepository groupRepository, DatabaseService databaseService, MetabaseService metabaseService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -90,6 +92,7 @@ public class UserController {
         this.metabaseUserRepository = metabaseUserRepository;
         this.groupRepository = groupRepository;
         this.databaseService = databaseService;
+        this.metabaseService = metabaseService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -169,7 +172,8 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
-            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+                    metabaseService.checkIfSelfServiceIsEnabled(false)) {
                 performMetabaseUserUpsert(userContract, associatedUserGroups);
             }
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));

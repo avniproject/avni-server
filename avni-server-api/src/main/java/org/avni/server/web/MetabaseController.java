@@ -42,16 +42,19 @@ public class MetabaseController {
     @PostMapping("/setup")
     public void setupMetabase() {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
+        metabaseService.checkIfSelfServiceIsEnabled(true);
         metabaseService.setupMetabase();
     }
 
     @GetMapping("/sync-status")
     public SyncStatus getSyncStatus() {
+        metabaseService.checkIfSelfServiceIsEnabled(true);
         return databaseService.getInitialSyncStatus();
     }
 
     @PostMapping("/setup-toggle")
     public void toggleSetupMetabase() {
+        metabaseService.checkIfSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
         organisationConfig.setMetabaseSetupEnabled(true);
@@ -68,6 +71,7 @@ public class MetabaseController {
 
     @GetMapping("/setup-status")
     public SetupStatusResponse getSetupStatus() {
+        metabaseService.checkIfSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         boolean isEnabled = organisationConfigService.isMetabaseSetupEnabled(organisation);
         return new SetupStatusResponse(isEnabled);
@@ -75,6 +79,7 @@ public class MetabaseController {
 
     @PostMapping("/create-questions")
     public CreateQuestionsResponse createQuestions() {
+        metabaseService.checkIfSelfServiceIsEnabled(true);
         try {
             databaseService.addCollectionItems();
             databaseService.updateGlobalDashboardWithCustomQuestions();

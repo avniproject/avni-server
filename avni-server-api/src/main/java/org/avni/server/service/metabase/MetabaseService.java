@@ -4,16 +4,25 @@ import org.avni.server.dao.metabase.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 public class MetabaseService {
+    private static final String DB_ENGINE = "postgres";
+    private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
 
     @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
-    public static final String DB_ENGINE = "postgres";
+
+    @Value("${avni.self.service.enabled}")
+    private boolean avniSelfServiceIsEnabled;
+
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
@@ -120,6 +129,14 @@ public class MetabaseService {
             }
         }
         return globalMetabaseGroup;
+    }
+
+    public boolean checkIfSelfServiceIsEnabled(boolean ifNotEnabledThrowException) {
+        if (ifNotEnabledThrowException && !avniSelfServiceIsEnabled) {
+            logger.debug("Self-service reporting is disabled.");
+            throw new HttpClientErrorException(HttpStatus.FAILED_DEPENDENCY);
+        }
+        return avniSelfServiceIsEnabled;
     }
 
 }
