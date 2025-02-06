@@ -36,6 +36,9 @@
         .addComplication("Leprosy")
         .when.valueInEnrolment("Name of chronic disease")
         .containsAnswerConceptName("Leprosy");
-    decisions.enrolmentDecisions.push(complicationsBuilder.getComplications());
+    console.log("added all complications");
+    const complications = complicationsBuilder.getComplications();
+    console.log("got complications", JSON.stringify(complications));
+    decisions.enrolmentDecisions.push(complications);
     return decisions;
 };

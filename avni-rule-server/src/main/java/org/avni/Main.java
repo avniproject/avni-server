@@ -22,8 +22,6 @@ public class Main {
         ApplicationContext applicationContext = SpringApplication.run(Main.class);
         RuleService ruleService = applicationContext.getBean(RuleService.class);
         ruleService.init();
-//        initialiseJavaScript();
-//        System.out.println(dashboard.getName());
     }
 
     private static void initialiseJavaScript() throws IOException {
