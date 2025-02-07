@@ -116,6 +116,8 @@ public class UserApiController {
                 return new ResponseEntity<>(activateUserResponse, HttpStatus.BAD_REQUEST);
             }
             IdpService idpService = idpServiceFactory.getIdpService(UserContextHolder.getOrganisation());
+            user.setDisabledInCognito(false);
+            userRepository.save(user);
             idpService.enableUser(user);
             activateUserResponse.setSuccess(true);
             return new ResponseEntity<>(activateUserResponse, HttpStatus.OK);
