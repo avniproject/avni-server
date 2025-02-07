@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class DatabaseService implements QuestionCreationService {
+public class DatabaseService implements IQuestionCreationService {
 
     private static final String ADDRESS_TABLE = "Address";
 
