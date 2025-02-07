@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
+import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -22,6 +23,7 @@ public class AddressLevelCreatorTest {
     private AddressLevelType parent;
     private AddressLevelType child;
     private final LocationRepository locationRepository = mock(LocationRepository.class);
+    private final AddressLevelTypeRepository addressLevelTypeRepository = mock(AddressLevelTypeRepository.class);
 
     @Before
     public void setup() {
@@ -43,7 +45,7 @@ public class AddressLevelCreatorTest {
 
         when(locationRepository.findByTitleAndType(eq("gp1"), eq(child), any())).thenReturn(Collections.singletonList(gp1AddressLevel));
 
-        AddressLevel addressLevel = new AddressLevelCreator(locationRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
+        AddressLevel addressLevel = new AddressLevelCreator(locationRepository, addressLevelTypeRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
         assertThat(addressLevel).isEqualTo(gp1AddressLevel);
 
         verify(locationRepository).findByTitleAndType(eq("gp1"), eq(child), any());
@@ -56,7 +58,7 @@ public class AddressLevelCreatorTest {
         AddressLevel gp1AddressLevel = new AddressLevelBuilder().title("gp1").type(child).build();
 
         when(locationRepository.findByTitleAndType(eq("gp1"), eq(child), any())).thenReturn(Collections.singletonList(gp1AddressLevel));
-        new AddressLevelCreator(locationRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
+        new AddressLevelCreator(locationRepository, addressLevelTypeRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
     }
 
     @Test
@@ -69,8 +71,9 @@ public class AddressLevelCreatorTest {
 
         when(locationRepository.findByTitleAndType(eq("child"), eq(child), any())).thenReturn(asList(aChild, anotherChild));
         when(locationRepository.findByTitleLineageIgnoreCase("aParent, child")).thenReturn(Optional.of(aChild));
+        when(addressLevelTypeRepository.getAllAddressLevelTypes()).thenReturn(new AddressLevelTypes(child, parent));
 
-        AddressLevel addressLevel = new AddressLevelCreator(locationRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
+        AddressLevel addressLevel = new AddressLevelCreator(locationRepository, addressLevelTypeRepository).findAddressLevel(row, addressLevelTypeRepository.getAllAddressLevelTypes());
         assertThat(addressLevel).isEqualTo(aChild);
 
         verify(locationRepository).findByTitleAndType(eq("child"), eq(child), any());
@@ -83,8 +86,9 @@ public class AddressLevelCreatorTest {
         AddressLevel aParent = new AddressLevelBuilder().title("aParent").type(parent).build();
 
         when(locationRepository.findByTitleAndType(eq("aParent"), eq(parent), any())).thenReturn(Collections.singletonList(aParent));
+        when(addressLevelTypeRepository.getAllAddressLevelTypes()).thenReturn(new AddressLevelTypes(child, parent));
 
-        AddressLevel addressLevel = new AddressLevelCreator(locationRepository).findAddressLevel(row, new AddressLevelTypes(child, parent));
+        AddressLevel addressLevel = new AddressLevelCreator(locationRepository, addressLevelTypeRepository).findAddressLevel(row, addressLevelTypeRepository.getAllAddressLevelTypes());
         assertThat(addressLevel).isEqualTo(aParent);
     }
 }

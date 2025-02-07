@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
+import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
@@ -16,10 +17,12 @@ import java.util.List;
 @Service
 public class AddressLevelCreator {
     private final LocationRepository locationRepository;
+    private final AddressLevelTypeRepository addressLevelTypeRepository;
 
     @Autowired
-    public AddressLevelCreator(LocationRepository locationRepository) {
+    public AddressLevelCreator(LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository) {
         this.locationRepository = locationRepository;
+        this.addressLevelTypeRepository = addressLevelTypeRepository;
     }
 
     public AddressLevel findAddressLevel(Row row,
@@ -38,7 +41,7 @@ public class AddressLevelCreator {
             case 1:
                 return matchingAddressLevels.get(0);
             default:
-                return getAddressLevelByLineage(row, addressLevelTypes);
+                return getAddressLevelByLineage(row, new AddressLevelTypes(addressLevelTypeRepository.getAllAddressLevelTypes()));
         }
     }
 
