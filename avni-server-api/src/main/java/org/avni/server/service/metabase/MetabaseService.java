@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.RequestScope;
 
+import java.time.Duration;
+
 @Service
 @RequestScope
 public class MetabaseService {
@@ -28,7 +30,7 @@ public class MetabaseService {
     private final String organisationName;
     private final String organisationDbUser;
 
-    //    // Following attributes are to be used within "Request" scope only
+    // Following attributes are to be used within "Request" scope only
     private Database globalDatabase;
     private CollectionInfoResponse globalCollection;
     private CollectionItem globalDashboard;
@@ -94,10 +96,22 @@ public class MetabaseService {
 
     public void setupMetabase() {
         setupGlobalDatabase();
+        sleepAwhile(10);
         setupGlobalCollection();
+        sleepAwhile(10);
         setupGlobalMetabaseGroup();
+        sleepAwhile(10);
         setupCollectionPermissions();
+        sleepAwhile(10);
         setupGlobalDashboard();
+    }
+
+    public void sleepAwhile(long secondsToSleep) {
+        try {
+            Thread.sleep(Duration.ofSeconds(secondsToSleep));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public Database getGlobalDatabase() {
