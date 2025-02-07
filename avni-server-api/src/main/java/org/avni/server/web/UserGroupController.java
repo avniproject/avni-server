@@ -107,7 +107,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         }
         if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 firstUserGroupContract.getGroupName().contains(Group.METABASE_USERS) &&
-                metabaseService.checkIfSelfServiceIsEnabled(false)) {
+                organisationConfigService.checkIfSelfServiceIsEnabled(false)) {
             upsertUsersOnMetabase(usersToBeAdded);
         }
         return ResponseEntity.ok(userGroupRepository.saveAll(usersToBeAdded));
@@ -147,7 +147,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         userGroupRepository.save(userGroup);
         if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 userGroup.getGroupName().contains(Group.METABASE_USERS) &&
-                metabaseService.checkIfSelfServiceIsEnabled(false)) {
+                organisationConfigService.checkIfSelfServiceIsEnabled(false)) {
             deactivateUserOnMetabase(userGroup);
         }
         return new ResponseEntity<>(UserGroupContract.fromEntity(userGroup), HttpStatus.OK);

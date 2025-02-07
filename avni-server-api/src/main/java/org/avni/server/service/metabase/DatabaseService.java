@@ -12,15 +12,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class DatabaseService implements QuestionCreationService{
+public class DatabaseService implements QuestionCreationService {
+
+    private static final String ADDRESS_TABLE = "Address";
 
     private final DatabaseRepository databaseRepository;
     private final MetabaseService metabaseService;
     private final CollectionRepository collectionRepository;
     private final QuestionRepository questionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
-
-    private static final String ADDRESS_TABLE = "Address";
 
     @Autowired
     public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository) {
@@ -102,18 +102,12 @@ public class DatabaseService implements QuestionCreationService{
     @Override
     public void createQuestionForTable(String tableName) {
         Database database = getGlobalDatabase();
-
         TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(tableName, database.getName()));
-
         questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 
     private List<String> getSubjectTypeNames() {
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
-
-        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
-        List<List<String>> rows = datasetResponse.getData().getRows();
-
+        List<List<String>> rows = getTableMetadataRows();
         List<String> subjectTypeNames = new ArrayList<>();
 
         for (List<String> row : rows) {
@@ -132,11 +126,7 @@ public class DatabaseService implements QuestionCreationService{
     }
 
     private List<String> getProgramAndEncounterNames() {
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
-
-        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
-        List<List<String>> rows = datasetResponse.getData().getRows();
-
+        List<List<String>> rows = getTableMetadataRows();
         List<String> programAndEncounterNames = new ArrayList<>();
 
         for (List<String> row : rows) {
@@ -153,11 +143,17 @@ public class DatabaseService implements QuestionCreationService{
         return programAndEncounterNames;
     }
 
+    private List<List<String>> getTableMetadataRows() {
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails("table_metadata"));
+        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
+        List<List<String>> rows = datasetResponse.getData().getRows();
+        return rows;
+    }
+
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
         ensureSyncComplete();
         Database database = getGlobalDatabase();
         TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, database.getName()));
-
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
 
         for (String entityName : filteredEntities) {
@@ -183,7 +179,6 @@ public class DatabaseService implements QuestionCreationService{
     private void createQuestionsForMiscSingleTables() {
         ensureSyncComplete();
         List<String> individualTables = Arrays.asList("address", "media", "sync_telemetry");
-
         List<String> filteredTables = filterOutExistingQuestions(individualTables);
 
         for (String tableName : filteredTables) {
@@ -204,7 +199,6 @@ public class DatabaseService implements QuestionCreationService{
             questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonExitedNonVoidedProgram, VisualizationType.PIE, Arrays.asList(additionalFilterCondition));
         }
         updateGlobalDashboardWithCustomQuestions();
-
     }
 
     public void updateGlobalDashboardWithCustomQuestions() {
@@ -243,15 +237,10 @@ public class DatabaseService implements QuestionCreationService{
         return parameters;
     }
 
-
-
     public void addCollectionItems() {
         createQuestionsForSubjectTypes();
-
         createQuestionsForProgramsAndEncounters();
-
         createQuestionsForMiscSingleTables();
-
         createCustomQuestions();
     }
 }

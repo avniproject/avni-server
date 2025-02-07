@@ -3,7 +3,6 @@ package org.avni.server.web;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.framework.security.UserContextHolder;
@@ -42,36 +41,35 @@ public class MetabaseController {
     @PostMapping("/setup")
     public void setupMetabase() {
         accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        metabaseService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfSelfServiceIsEnabled(true);
         metabaseService.setupMetabase();
     }
 
     @GetMapping("/sync-status")
     public SyncStatus getSyncStatus() {
-        metabaseService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfSelfServiceIsEnabled(true);
         return databaseService.getInitialSyncStatus();
     }
 
     @PostMapping("/setup-toggle")
     public void toggleSetupMetabase() {
-        metabaseService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
-        organisationConfig.setMetabaseSetupEnabled(true);
-        organisationConfigRepository.save(organisationConfig);
+        organisationConfigService.setMetabaseSetupEnabled(organisation, true);
+        createMetabaseUsersGroupInAvni(organisation);
+        metabaseService.setupMetabase();
+        databaseService.addCollectionItems();
+    }
 
+    private void createMetabaseUsersGroupInAvni(Organisation organisation) {
         GroupContract groupContract = new GroupContract();
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
-
-        metabaseService.setupMetabase();
-        databaseService.addCollectionItems();
-
     }
 
     @GetMapping("/setup-status")
     public SetupStatusResponse getSetupStatus() {
-        metabaseService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         boolean isEnabled = organisationConfigService.isMetabaseSetupEnabled(organisation);
         return new SetupStatusResponse(isEnabled);
@@ -79,7 +77,7 @@ public class MetabaseController {
 
     @PostMapping("/create-questions")
     public CreateQuestionsResponse createQuestions() {
-        metabaseService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfSelfServiceIsEnabled(true);
         try {
             databaseService.addCollectionItems();
             databaseService.updateGlobalDashboardWithCustomQuestions();
@@ -88,5 +86,4 @@ public class MetabaseController {
             return new CreateQuestionsResponse(false, "Database sync is not complete. Cannot create questions.");
         }
     }
-
 }

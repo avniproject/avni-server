@@ -4,24 +4,18 @@ import org.avni.server.dao.metabase.*;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.context.annotation.RequestScope;
 
 @Service
+@RequestScope
 public class MetabaseService {
     private static final String DB_ENGINE = "postgres";
-    private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
 
     @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
-
-    @Value("${avni.self.service.enabled}")
-    private boolean avniSelfServiceIsEnabled;
 
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
@@ -30,6 +24,11 @@ public class MetabaseService {
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
+    private final Organisation currentOrganisation;
+    private final String organisationName;
+    private final String organisationDbUser;
+
+    //    // Following attributes are to be used within "Request" scope only
     private Database globalDatabase;
     private CollectionInfoResponse globalCollection;
     private CollectionItem globalDashboard;
@@ -50,46 +49,60 @@ public class MetabaseService {
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
+        this.currentOrganisation = organisationService.getCurrentOrganisation();
+        this.organisationName = currentOrganisation.getName();
+        this.organisationDbUser = currentOrganisation.getDbUser();
     }
 
-    public void setupMetabase() {
-        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-        String name = currentOrganisation.getName();
-        String dbUser = currentOrganisation.getDbUser();
-
-        globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
+    private void setupGlobalDatabase() {
+        globalDatabase = databaseRepository.getDatabaseByName(organisationName);
         if (globalDatabase == null) {
-            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
+            Database newDatabase = new Database(organisationName, DB_ENGINE, new DatabaseDetails(avniDatabase, organisationDbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
             globalDatabase = databaseRepository.save(newDatabase);
         }
+    }
 
-        globalCollection = collectionRepository.getCollectionByName(globalDatabase);
+    private void setupGlobalCollection() {
+        globalCollection = collectionRepository.getCollectionByName(organisationName);
         if (globalCollection == null) {
-            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
+            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(organisationName, organisationName + " collection"));
             globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
         }
+    }
 
-        globalMetabaseGroup = groupPermissionsRepository.findGroup(name);
+    private void setupGlobalMetabaseGroup() {
+        globalMetabaseGroup = groupPermissionsRepository.findGroup(organisationName);
         if (globalMetabaseGroup == null) {
-            globalMetabaseGroup = groupPermissionsRepository.createGroup(name, globalDatabase.getId());
+            globalMetabaseGroup = groupPermissionsRepository.createGroup(organisationName, getGlobalDatabase().getId());
         }
+    }
 
+    private void setupCollectionPermissions() {
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
                 collectionPermissionsRepository.getCollectionPermissionsGraph()
         );
-        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, globalMetabaseGroup.getId(), globalCollection.getIdAsInt());
+        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, getGlobalMetabaseGroup().getId(), getGlobalCollection().getIdAsInt());
+    }
 
-        globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
+    private void setupGlobalDashboard() {
+        globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
         if (globalDashboard == null) {
             Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(null, getGlobalCollection().getIdAsInt()));
-            globalDashboard = new CollectionItem(metabaseDashboard.getName(),metabaseDashboard.getId());
+            globalDashboard = new CollectionItem(metabaseDashboard.getName(), metabaseDashboard.getId());
         }
+    }
+
+    public void setupMetabase() {
+        setupGlobalDatabase();
+        setupGlobalCollection();
+        setupGlobalMetabaseGroup();
+        setupCollectionPermissions();
+        setupGlobalDashboard();
     }
 
     public Database getGlobalDatabase() {
         if (globalDatabase == null) {
-            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalDatabase = databaseRepository.getDatabaseByName(new Database(currentOrganisation.getName()));
+            globalDatabase = databaseRepository.getDatabaseByName(organisationName);
             if (globalDatabase == null) {
                 throw new RuntimeException("Global database not found.");
             }
@@ -97,11 +110,9 @@ public class MetabaseService {
         return globalDatabase;
     }
 
-
     public CollectionInfoResponse getGlobalCollection() {
         if (globalCollection == null) {
-            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalCollection = collectionRepository.getCollectionByName(new Database(currentOrganisation.getName()));
+            globalCollection = collectionRepository.getCollectionByName(organisationName);
             if (globalCollection == null) {
                 throw new RuntimeException("Global database not found.");
             }
@@ -110,9 +121,8 @@ public class MetabaseService {
     }
 
     public CollectionItem getGlobalDashboard() {
-        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
         if (globalDashboard == null) {
-            globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
+            globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
             if (globalDashboard == null) {
                 throw new RuntimeException("Global dashboard not found.");
             }
@@ -121,22 +131,12 @@ public class MetabaseService {
     }
 
     public Group getGlobalMetabaseGroup() {
-        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
         if (globalMetabaseGroup == null) {
-            globalMetabaseGroup = groupPermissionsRepository.findGroup(currentOrganisation.getName());
+            globalMetabaseGroup = groupPermissionsRepository.findGroup(organisationName);
             if (globalMetabaseGroup == null) {
                 throw new RuntimeException("Global group not found.");
             }
         }
         return globalMetabaseGroup;
     }
-
-    public boolean checkIfSelfServiceIsEnabled(boolean ifNotEnabledThrowException) {
-        if (ifNotEnabledThrowException && !avniSelfServiceIsEnabled) {
-            logger.debug("Self-service reporting is disabled.");
-            throw new HttpClientErrorException(HttpStatus.FAILED_DEPENDENCY);
-        }
-        return avniSelfServiceIsEnabled;
-    }
-
 }

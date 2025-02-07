@@ -173,7 +173,7 @@ public class UserController {
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
             if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                    metabaseService.checkIfSelfServiceIsEnabled(false)) {
+                    organisationConfigService.checkIfSelfServiceIsEnabled(false)) {
                 performMetabaseUserUpsert(userContract, associatedUserGroups);
             }
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
