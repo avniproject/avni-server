@@ -51,7 +51,7 @@ public class AddressLevelCreator {
         List<String> inputLocations = new ArrayList<>();
         for (AddressLevelType addressLevelType : highToLow) {
             String _location = row.get(addressLevelType.getName());
-            if (_location != null)
+            if (StringUtils.hasText(_location))
                 inputLocations.add(_location);
         }
 
