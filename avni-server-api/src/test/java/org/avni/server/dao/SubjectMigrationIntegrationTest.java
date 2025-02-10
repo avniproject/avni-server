@@ -235,6 +235,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
     public void bulkMigrateProcessesAllRecordsEvenIfOneFails() {
         Individual i1 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel1()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 11").getUuid())).build());
         Individual i2 = testSubjectService.save(new SubjectBuilder().withMandatoryFieldsForNewEntity().withSubjectType(subjectType).withLocation(catchmentData.getAddressLevel2()).withObservations(ObservationCollectionBuilder.withOneObservation(concept1, concept1.getAnswerConcept("Answer 12").getUuid())).build());
+        DateTime lastModifiedDateTimeForI2 = i2.getLastModifiedDateTime();
         AddressLevel voidedAddressLevel = new AddressLevelBuilder().withDefaultValuesForNewEntity().type(catchmentData.getAddressLevelType()).voided(true).build();
         testLocationService.save(voidedAddressLevel);
         Map<String, String> destinationAddressLevels = new HashMap<>();
@@ -248,7 +249,7 @@ public class SubjectMigrationIntegrationTest extends AbstractControllerIntegrati
         assertEquals(i1.getAddressLevel(), catchmentData.getAddressLevel1());
         assertFalse(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), i1));
         assertEquals(i2.getAddressLevel(), catchmentData.getAddressLevel1());
-        assertTrue(hasMigrationFor(subjectType, DateTime.now().minusDays(1), DateTime.now(), i2));
+        assertTrue(i2.getLastModifiedDateTime().isAfter(lastModifiedDateTimeForI2));
     }
 
     @Test

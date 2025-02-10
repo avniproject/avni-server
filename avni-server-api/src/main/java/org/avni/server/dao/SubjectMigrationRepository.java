@@ -42,13 +42,10 @@ public interface SubjectMigrationRepository extends TransactionalDataRepository<
                 List<Long> addressLevels = syncParameters.getAddressLevels();
                 if (addressLevels.size() > 0) {
                     CriteriaBuilder.In<Long> inClause1 = cb.in(root.get("oldAddressLevel").get("id"));
-                    CriteriaBuilder.In<Long> inClause2 = cb.in(root.get("newAddressLevel").get("id"));
                     for (Long id : addressLevels) {
                         inClause1.value(id);
-                        inClause2.value(id);
                     }
                     addressLevelPredicates.add(inClause1);
-                    addressLevelPredicates.add(inClause2);
                 } else {
                     addressLevelPredicates.add(cb.equal(root.get("id"), cb.literal(0)));
                 }
