@@ -112,10 +112,11 @@ public class QuestionRepository extends MetabaseConnector {
                 .build();
     }
 
-    public void createQuestionForTableWithMultipleJoins(Database database, TableDetails tableDetails, List<JoinTableConfig> joinTableConfigs) {
+    public void createQuestionForTableWithMultipleJoins(Database database, TableDetails tableDetails, List<JoinTableConfig> joinTableConfigs,
+                                                        List<FieldDetails> primaryTableFields) {
         ArrayNode joinsArray = ObjectMapperSingleton.getObjectMapper().createArrayNode();
         MetabaseQueryBuilder metabaseQueryBuilder = new MetabaseQueryBuilder(database, joinsArray)
-                .forTable(tableDetails);
+                .forTable(tableDetails, primaryTableFields);
 
         for (JoinTableConfig joinTableConfig : joinTableConfigs) {
             FieldDetails joinField1 = databaseRepository.getFieldDetailsByName(database, joinTableConfig.getJoinTargetTable(), joinTableConfig.getOriginField());

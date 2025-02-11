@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.util.ObjectMapperSingleton;
 
+import java.util.List;
+
 public class MetabaseQueryBuilder {
     private final Database database;
     private final ArrayNode joinsArray;
@@ -20,6 +22,24 @@ public class MetabaseQueryBuilder {
 
     public MetabaseQueryBuilder forTable(TableDetails tableDetails) {
         queryNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), tableDetails.getId());
+        return this;
+    }
+
+    public MetabaseQueryBuilder forTable(TableDetails tableDetails, List<FieldDetails> primaryTableFields) {
+        queryNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), tableDetails.getId());
+        if(primaryTableFields != null && !primaryTableFields.isEmpty()) {
+            ArrayNode selectedFields = objectMapper.createArrayNode();
+            primaryTableFields.forEach(field -> {
+                ArrayNode selectedField = objectMapper.createArrayNode();
+                selectedField.add(FieldAttribute.FIELD.getAttributeName());
+                selectedField.add(field.getId());
+                selectedField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()));
+                selectedFields.add(selectedField);
+            });
+            queryNode.set(FieldAttribute.FIELDS.getAttributeName(), selectedFields);
+        } else {
+            queryNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
+        }
         return this;
     }
 

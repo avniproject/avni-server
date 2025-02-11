@@ -15,14 +15,6 @@ import java.util.stream.Collectors;
 @Service
 public class DatabaseService implements IQuestionCreationService {
 
-    private static final String ADDRESS_TABLE = "Address";
-
-    private final DatabaseRepository databaseRepository;
-    private final MetabaseService metabaseService;
-    private final CollectionRepository collectionRepository;
-    private final QuestionRepository questionRepository;
-    private final MetabaseDashboardRepository metabaseDashboardRepository;
-
     private static final String INDIVIDUAL_TABLE = "individual";
     private static final String ENROLMENT_TABLE = "program_enrolment";
     private static final String ADDRESS_TABLE = "Address";
@@ -30,6 +22,12 @@ public class DatabaseService implements IQuestionCreationService {
     private static final String PROGRAM_TABLE = "program";
     private static final String GENDER_TABLE = "Gender";
     private static final String PUBLIC_SCHEMA = "public";
+
+    private final DatabaseRepository databaseRepository;
+    private final MetabaseService metabaseService;
+    private final CollectionRepository collectionRepository;
+    private final QuestionRepository questionRepository;
+    private final MetabaseDashboardRepository metabaseDashboardRepository;
 
     @Autowired
     public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository) {
@@ -219,7 +217,8 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createIndividualTypeGenderAddress(Database database, String displayName) {
-        TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(INDIVIDUAL_TABLE));
+        TableDetails primaryTableDetails = new TableDetails(INDIVIDUAL_TABLE);
+        TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, primaryTableDetails);
         fetchedEntityTableDetails.setDisplayName(displayName);
         fetchedEntityTableDetails.setDescription(displayName);
         List<JoinTableConfig> joinTableConfigs = new ArrayList<>();
@@ -228,7 +227,16 @@ public class DatabaseService implements IQuestionCreationService {
         joinTableConfigs.add(configureJoinTable(database, "id", "gender_id", GENDER_TABLE, PUBLIC_SCHEMA));
         joinTableConfigs.add(configureJoinTable(database, "id", "address_id", ADDRESS_TABLE, database.getName()));
 
-        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs);
+        //todo add rest of the fields
+        List<FieldDetails> primaryTableFields = List.of(
+                databaseRepository.getFieldDetailsByName(database, primaryTableDetails, new FieldDetails("id")),
+                databaseRepository.getFieldDetailsByName(database, primaryTableDetails, new FieldDetails("uuid")),
+                databaseRepository.getFieldDetailsByName(database, primaryTableDetails, new FieldDetails("subject_type_id")),
+                databaseRepository.getFieldDetailsByName(database, primaryTableDetails, new FieldDetails("first_name")),
+                databaseRepository.getFieldDetailsByName(database, primaryTableDetails, new FieldDetails("last_name")));
+
+
+        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs, primaryTableFields);
     }
 
     private void createEnrolmentTypeIndividualAddress(Database database, String displayName) {
@@ -243,7 +251,7 @@ public class DatabaseService implements IQuestionCreationService {
         joinTableConfigs.add(configureJoinTable(database, "id", "individual_id", INDIVIDUAL_TABLE, PUBLIC_SCHEMA));
         joinTableConfigs.add(configureJoinTable(database, "id", "address_id", ADDRESS_TABLE, database.getName(), individualTable));
 
-        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs);
+        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs, Collections.emptyList()); //todo
     }
 
     private JoinTableConfig configureJoinTable(Database database, String targetTableJoinColumn,
