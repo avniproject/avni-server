@@ -3,7 +3,6 @@ package org.avni.server.web;
 import org.avni.server.dao.OrganisationConfigRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.GroupsService;
@@ -38,21 +37,14 @@ public class MetabaseController {
         this.organisationConfigRepository = organisationConfigRepository;
     }
 
-    @PostMapping("/setup")
-    public void setupMetabase() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        organisationConfigService.checkIfSelfServiceIsEnabled(true);
-        metabaseService.setupMetabase();
-    }
-
     @GetMapping("/sync-status")
     public SyncStatus getSyncStatus() {
         organisationConfigService.checkIfSelfServiceIsEnabled(true);
         return databaseService.getInitialSyncStatus();
     }
 
-    @PostMapping("/setup-toggle")
-    public void toggleSetupMetabase() {
+    @PostMapping("/setup")
+    public void setupMetabase() {
         organisationConfigService.checkIfSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         organisationConfigService.setMetabaseSetupEnabled(organisation, true);
