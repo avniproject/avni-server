@@ -53,7 +53,7 @@ public class OrganisationConfigService implements NonScopeAwareService {
     public OrganisationConfigService(OrganisationConfigRepository organisationConfigRepository,
                                      ProjectionFactory projectionFactory,
                                      ConceptRepository conceptRepository,
-                                     @Value("${avni.self.service.enabled}") boolean avniSelfServiceIsEnabled,
+                                     @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniSelfServiceIsEnabled,
                                      @Lazy LocationHierarchyService locationHierarchyService) {
         this.organisationConfigRepository = organisationConfigRepository;
         this.projectionFactory = projectionFactory;
