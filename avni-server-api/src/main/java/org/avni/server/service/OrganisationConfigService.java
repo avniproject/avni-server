@@ -2,21 +2,17 @@ package org.avni.server.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.avni.server.application.KeyType;
 import org.avni.server.application.OrganisationConfigSettingKey;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.OrganisationConfigRepository;
-import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.OrganisationConfig;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.ConceptProjection;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.ReactAdminUtil;
 import org.avni.server.web.request.OrganisationConfigRequest;
-import org.avni.server.domain.SubjectTypeSetting;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -24,43 +20,47 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 
-import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
 public class OrganisationConfigService implements NonScopeAwareService {
+
     public static final String EMPTY_STRING = "";
     public static final String INDIVIDUAL = "individual";
     public static final String UUID = "uuid";
+
+    private static final Logger logger = LoggerFactory.getLogger(OrganisationConfigService.class);
+
     private final OrganisationConfigRepository organisationConfigRepository;
     private final ProjectionFactory projectionFactory;
     private final ConceptRepository conceptRepository;
+    private final boolean avniReportingMetabaseSelfServiceEnabled;
     private final LocationHierarchyService locationHierarchyService;
-    private final FormMappingRepository formMappingRepository;
     private final ObjectMapper objectMapper;
-    private final Logger logger;
 
     @Autowired
     public OrganisationConfigService(OrganisationConfigRepository organisationConfigRepository,
                                      ProjectionFactory projectionFactory,
                                      ConceptRepository conceptRepository,
-                                     FormMappingRepository formMappingRepository,
+                                     @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled,
                                      @Lazy LocationHierarchyService locationHierarchyService) {
         this.organisationConfigRepository = organisationConfigRepository;
         this.projectionFactory = projectionFactory;
         this.conceptRepository = conceptRepository;
+        this.avniReportingMetabaseSelfServiceEnabled = avniReportingMetabaseSelfServiceEnabled;
         this.locationHierarchyService = locationHierarchyService;
-        this.formMappingRepository = formMappingRepository;
-        objectMapper = ObjectMapperSingleton.getObjectMapper();
-        logger = LoggerFactory.getLogger(this.getClass());
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     @Transactional
@@ -363,6 +363,14 @@ public class OrganisationConfigService implements NonScopeAwareService {
     public boolean isMetabaseSetupEnabled(Organisation organisation) {
         OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
         return config.isMetabaseSetupEnabled();
+    }
+
+    public boolean checkIfReportingMetabaseSelfServiceIsEnabled(boolean ifNotEnabledThrowException) {
+        if (ifNotEnabledThrowException && !avniReportingMetabaseSelfServiceEnabled) {
+            logger.debug("Avni Reporting Metabase Self-service reporting is disabled.");
+            throw new HttpClientErrorException(HttpStatus.FAILED_DEPENDENCY);
+        }
+        return avniReportingMetabaseSelfServiceEnabled;
     }
 
 }

@@ -5,6 +5,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class UserSettings {
     private final JsonObject jsonObject;
@@ -19,7 +20,7 @@ public class UserSettings {
     public static final List<String> DATE_PICKER_MODE_OPTIONS = Arrays.asList(DEFAULT_DATE_PICKER_MODE, SPINNER_DATE_PICKER_MODE);
 
     public UserSettings(JsonObject jsonObject) {
-        this.jsonObject = jsonObject;
+        this.jsonObject = (Objects.isNull(jsonObject)) ? new JsonObject() : jsonObject;
     }
 
     public static String createDatePickerMode(String datePickerMode) {
@@ -67,6 +68,6 @@ public class UserSettings {
     }
 
     public boolean isAllowedToInvokeTokenGenerationAPI() {
-        return jsonObject.getBoolean(IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API);
+        return jsonObject.containsKey(IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API) && jsonObject.getBoolean(IS_ALLOWED_TO_INVOKE_TOKEN_GENERATION_API);
     }
 }

@@ -24,12 +24,12 @@ public class MetabaseUserData {
     private final boolean isActive;
 
     @JsonProperty("is_superuser")
-    private final String isSuperuser;
+    private final boolean isSuperuser;
 
     @JsonProperty("group_ids")
     private final List<Integer> groupIds;
 
-    public MetabaseUserData(Integer id, String firstName, String lastName, String email, boolean isActive, String isSuperuser, List<Integer> groupIds) {
+    public MetabaseUserData(Integer id, String firstName, String lastName, String email, boolean isActive, boolean isSuperuser, List<Integer> groupIds) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -59,7 +59,7 @@ public class MetabaseUserData {
         return isActive;
     }
 
-    public String getIsSuperuser() {
+    public boolean getIsSuperuser() {
         return isSuperuser;
     }
 

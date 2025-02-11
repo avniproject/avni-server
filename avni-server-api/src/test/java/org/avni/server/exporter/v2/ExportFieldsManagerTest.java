@@ -86,7 +86,7 @@ public class ExportFieldsManagerTest {
     @Test
     public void shouldAddQuestionGroupFormElementForSubject() {
         LinkedHashMap<String, FormElement> formElements = givenQuestionGroupFormElement();
-        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withUuid("st1").withFields(Collections.singletonList(UUID)).build();
+        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withUuid("st1").withFields(Arrays.asList(UUID, "f1", "f2")).build();
         when(formMappingService.getAllFormElementsAndDecisionMap(eq(exportEntityType.getUuid()), eq(null), eq(null), eq(FormType.IndividualProfile))).thenReturn(formElements);
         exportFieldsManager.visitSubject(exportEntityType);
         verifyMainFields(exportEntityType);
@@ -95,7 +95,7 @@ public class ExportFieldsManagerTest {
     @Test
     public void shouldAddQuestionGroupFormElementForEncounter() {
         LinkedHashMap<String, FormElement> formElements = givenQuestionGroupFormElement();
-        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withUuid("et1").withFields(Collections.singletonList(UUID)).build();
+        ExportEntityType exportEntityType = new ExportEntityTypeBuilder().withUuid("et1").withFields(Arrays.asList(UUID, "f1", "f2")).build();
         ExportEntityType subjectExportEntityType = new ExportEntityTypeBuilder().withUuid("st1").build();
         when(formMappingService.getAllFormElementsAndDecisionMap(eq(subjectExportEntityType.getUuid()), eq(null), eq(exportEntityType.getUuid()), eq(FormType.Encounter))).thenReturn(formElements);
         exportFieldsManager.visitEncounter(exportEntityType, subjectExportEntityType);

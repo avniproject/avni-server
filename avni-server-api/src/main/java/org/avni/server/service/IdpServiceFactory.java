@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import com.amazonaws.services.cognitoidp.model.UserNotFoundException;
 import com.auth0.jwk.SigningKeyNotFoundException;
 import org.avni.server.config.IdpType;
 import org.avni.server.dao.OrganisationRepository;
@@ -121,7 +122,7 @@ public class IdpServiceFactory {
         public String generateTokenForUser(String username, String password) {
             try {
                 return cognitoAuthService.generateTokenForUser(username, password);
-            } catch (Exception e) {
+            } catch (UserNotFoundException e) {
                 return keycloakAuthService.generateTokenForUser(username, password);
             }
         }

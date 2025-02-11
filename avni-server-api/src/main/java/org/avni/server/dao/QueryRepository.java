@@ -1,8 +1,8 @@
 package org.avni.server.dao;
 
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import org.avni.server.domain.CustomQuery;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.web.request.CustomQueryRequest;
 import org.avni.server.web.response.CustomQueryResponse;
 import org.avni.server.web.util.ErrorBodyBuilder;
@@ -15,11 +15,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Component
 public class QueryRepository extends RoleSwitchableRepository {
+    public static final String ORG_ID = "org_id";
+    public static final String ORG_DB_USER = "org_db_user";
+    public static final String ORG_SCHEMA_NAME = "org_schema_name";
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final CustomQueryRepository customQueryRepository;
     private final ErrorBodyBuilder errorBodyBuilder;
@@ -44,8 +48,7 @@ public class QueryRepository extends RoleSwitchableRepository {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Query not found with name %s", customQueryRequest.getName()));
         }
         try {
-            this.setRoleToNone();
-            List<Map<String, Object>> queryResult = namedParameterJdbcTemplate.queryForList(customQuery.getQuery(), customQueryRequest.getQueryParams());
+            List<Map<String, Object>> queryResult = namedParameterJdbcTemplate.queryForList(customQuery.getQuery(), getCustomQueryParamsWithOrgContext(customQueryRequest));
             return ResponseEntity.ok(new CustomQueryResponse(queryResult));
         } catch (DataAccessException e) {
             String errorMessage = ExceptionUtils.getRootCause(e).getMessage();
@@ -55,8 +58,14 @@ public class QueryRepository extends RoleSwitchableRepository {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(String.format("Error while executing the query message : \"%s\"", errorMessage)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorBodyBuilder.getErrorBody(String.format("Encountered some error while executing the query message %s", e.getMessage())));
-        } finally {
-            this.setRoleBackToUserSafe();
         }
+    }
+
+    private Map<String, Object> getCustomQueryParamsWithOrgContext(CustomQueryRequest customQueryRequest) {
+        Map<String, Object> customQueryParamsWithOrgContext = new HashMap<>(customQueryRequest.getQueryParams());
+        customQueryParamsWithOrgContext.put(ORG_ID, UserContextHolder.getOrganisation().getId());
+        customQueryParamsWithOrgContext.put(ORG_DB_USER, UserContextHolder.getOrganisation().getDbUser());
+        customQueryParamsWithOrgContext.put(ORG_SCHEMA_NAME, UserContextHolder.getOrganisation().getSchemaName());
+        return customQueryParamsWithOrgContext;
     }
 }

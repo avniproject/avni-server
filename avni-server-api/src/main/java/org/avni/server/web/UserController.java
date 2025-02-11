@@ -24,7 +24,6 @@ import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
 import org.avni.server.util.WebResponseUtil;
 import org.avni.server.web.request.ChangePasswordRequest;
-import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
@@ -61,8 +60,7 @@ public class UserController {
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
     private final MetabaseUserRepository metabaseUserRepository;
-    private final GroupRepository groupRepository;
-    private  final DatabaseService databaseService;
+    private final DatabaseService databaseService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -75,7 +73,8 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService , MetabaseUserRepository metabaseUserRepository , GroupRepository groupRepository , DatabaseService databaseService) {
+                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService,
+                          MetabaseUserRepository metabaseUserRepository, DatabaseService databaseService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -89,7 +88,6 @@ public class UserController {
         this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
         this.metabaseUserRepository = metabaseUserRepository;
-        this.groupRepository = groupRepository;
         this.databaseService = databaseService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
@@ -121,7 +119,7 @@ public class UserController {
             User savedUser = userService.save(user);
 
             if (savedUser.getOrganisationId() != null) {
-                idpServiceFactory.getIdpService(UserContextHolder.getOrganisation()).createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
+                idpServiceFactory.getIdpService(organisationRepository.findOne(savedUser.getOrganisationId())).createUserWithPassword(savedUser, userContract.getPassword(), organisationConfigService.getOrganisationConfigByOrgId(savedUser.getOrganisationId()));
             } else {
                 idpServiceFactory.getIdpService().createSuperAdmin(savedUser, userContract.getPassword());
             }
@@ -169,47 +167,43 @@ public class UserController {
             idpServiceFactory.getIdpService(user, userService.isAdmin(user)).updateUser(user);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
-            userService.associateUserToGroups(user, userContract.getGroupIds());
-
-            List<GroupContract> groupContracts = groupRepository.findByIdInAndIsVoidedFalse(userContract.getGroupIds().toArray(new Long[0]))
-                    .stream()
-                    .map(GroupContract::fromEntity)
-                    .toList();
-
-            List<String> groupNames = groupContracts.stream()
-                    .map(GroupContract::getName)
-                    .toList();
-
-            if(groupNames.contains("Metabase Users")){
-
-                if(!metabaseUserRepository.emailExists(userContract.getEmail())){
-                    String[] nameParts = userContract.getName().split(" ", 2);
-                    String firstName = nameParts[0];
-                    String lastName = (nameParts.length > 1) ? nameParts[1] : null;
-                    metabaseUserRepository.save(new CreateUserRequest(firstName,lastName, userContract.getEmail(),metabaseUserRepository.getUserGroupMemberships(),"password" ));
-                }
-                else{
-                    if(!metabaseUserRepository.activeUserExists(userContract.getEmail())){
-                        metabaseUserRepository.reactivateMetabaseUser(userContract.getEmail());
-                    }
-                    if(!metabaseUserRepository.userExistsInCurrentOrgGroup((userContract.getEmail()))){
-                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(userContract.getEmail()).getId(),databaseService.getGlobalMetabaseGroup().getId()));
-                    }
-                }
-
+            List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
+            if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+                performMetabaseUserUpsert(userContract, associatedUserGroups);
             }
-            else{
-                if(metabaseUserRepository.activeUserExists(userContract.getEmail())){
-                    metabaseUserRepository.deactivateMetabaseUser(userContract.getEmail());
-                }
-            }
-
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (ValidationException ex) {
             return WebResponseUtil.createBadRequestResponse(ex, logger);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
+        }
+    }
+
+    private void performMetabaseUserUpsert(UserContract userContract, List<UserGroup> associatedUserGroups) {
+        boolean isPartOfMetabaseUsersGrp = associatedUserGroups.stream()
+                .filter(ug -> !ug.isVoided() && ug.getGroupName().contains(Group.METABASE_USERS))
+                .findAny().isPresent();
+
+        if (isPartOfMetabaseUsersGrp) {
+            if (!metabaseUserRepository.emailExists(userContract.getEmail())) {
+                String[] nameParts = userContract.getName().split(" ", 2);
+                String firstName = nameParts[0];
+                String lastName = (nameParts.length > 1) ? nameParts[1] : null;
+                metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, userContract.getEmail(), metabaseUserRepository.getUserGroupMemberships()));
+            } else {
+                if (!metabaseUserRepository.activeUserExists(userContract.getEmail())) {
+                    metabaseUserRepository.reactivateMetabaseUser(userContract.getEmail());
+                }
+                if (!metabaseUserRepository.userExistsInCurrentOrgGroup((userContract.getEmail()))) {
+                    metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(userContract.getEmail()).getId(), databaseService.getGlobalMetabaseGroup().getId()));
+                }
+            }
+        } else {
+            if (metabaseUserRepository.activeUserExists(userContract.getEmail(), true)) {
+                metabaseUserRepository.deactivateMetabaseUser(userContract.getEmail());
+            }
         }
     }
 

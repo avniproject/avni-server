@@ -1,8 +1,8 @@
 package org.avni.server.web;
 
 import org.avni.server.dao.OrganisationConfigRepository;
+import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
-import org.avni.server.domain.OrganisationConfig;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.SyncStatus;
 import org.avni.server.framework.security.UserContextHolder;
@@ -14,7 +14,10 @@ import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.request.GroupContract;
 import org.avni.server.web.response.metabase.CreateQuestionsResponse;
 import org.avni.server.web.response.metabase.SetupStatusResponse;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/metabase")
@@ -35,42 +38,54 @@ public class MetabaseController {
         this.organisationConfigRepository = organisationConfigRepository;
     }
 
-    @PostMapping("/setup")
-    public void setupMetabase() {
-        accessControlService.checkPrivilege(PrivilegeType.EditOrganisationConfiguration);
-        metabaseService.setupMetabase();
-    }
-
     @GetMapping("/sync-status")
     public SyncStatus getSyncStatus() {
-        return databaseService.getInitialSyncStatus();
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        if (organisationConfigService.isMetabaseSetupEnabled(organisation)) {
+            return databaseService.getInitialSyncStatus();
+        } else {
+            return SyncStatus.NOT_STARTED;
+        }
     }
 
-    @PostMapping("/setup-toggle")
-    public void toggleSetupMetabase() {
+    @PostMapping("/setup")
+    public void setupMetabase() {
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        OrganisationConfig organisationConfig = organisationConfigService.getOrganisationConfig(organisation);
-        organisationConfig.setMetabaseSetupEnabled(true);
-        organisationConfigRepository.save(organisationConfig);
-
-        GroupContract groupContract = new GroupContract();
-        groupContract.setName("Metabase Users");
-        groupsService.saveGroup(groupContract, organisation);
-
+        if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
+            organisationConfigService.setMetabaseSetupEnabled(organisation, true);
+        }
+        createMetabaseUsersGroupInAvni(organisation);
         metabaseService.setupMetabase();
         databaseService.addCollectionItems();
+    }
 
+    private void createMetabaseUsersGroupInAvni(Organisation organisation) {
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        GroupContract groupContract = new GroupContract();
+        groupContract.setName(Group.METABASE_USERS);
+        groupsService.saveGroup(groupContract, organisation);
     }
 
     @GetMapping("/setup-status")
     public SetupStatusResponse getSetupStatus() {
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        boolean isEnabled = organisationConfigService.isMetabaseSetupEnabled(organisation);
-        return new SetupStatusResponse(isEnabled);
+        return new SetupStatusResponse(organisationConfigService.isMetabaseSetupEnabled(organisation));
     }
 
     @PostMapping("/create-questions")
     public CreateQuestionsResponse createQuestions() {
+        accessControlService.checkPrivilege(PrivilegeType.Analytics);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
+            return new CreateQuestionsResponse(false, "Metabase Setup is not enabled. Cannot create questions.");
+        }
         try {
             databaseService.addCollectionItems();
             databaseService.updateGlobalDashboardWithCustomQuestions();
@@ -79,5 +94,4 @@ public class MetabaseController {
             return new CreateQuestionsResponse(false, "Database sync is not complete. Cannot create questions.");
         }
     }
-
 }

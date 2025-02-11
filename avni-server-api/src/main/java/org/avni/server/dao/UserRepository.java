@@ -29,6 +29,9 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
     User findByUsername(String username);
 
     @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
+    User findByUsernameIgnoreCaseAndIsVoidedFalse(String username);
+
+    @QueryHints({@QueryHint(name = org.hibernate.jpa.QueryHints.HINT_CACHEABLE, value = "true")})
     User findByUuid(String uuid);
 
     Optional<User> findById(Long id);

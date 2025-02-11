@@ -135,6 +135,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
         Boolean active = row.getBool(ACTIVE);
+        boolean isActive = BooleanUtil.getBoolean(active);
+
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByNameIgnoreCase(language);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
@@ -168,16 +170,17 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         user.setOrganisationId(organisation.getId());
         user.setAuditInfo(currentUser);
+        user.setDisabledInCognito(!isActive);
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
         IdpService idpService = idpServiceFactory.getIdpService(organisation);
-        if (isNewUser && BooleanUtil.getBoolean(active)) {
+        if (isNewUser && isActive) {
             idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (isNewUser && !BooleanUtil.getBoolean(active)) {
+        } else if (isNewUser && !isActive) {
             idpService.createInActiveUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (!isNewUser && BooleanUtil.getBoolean(active)) {
+        } else if (!isNewUser && isActive) {
             idpService.enableUser(user);
-        } else if (!isNewUser && !BooleanUtil.getBoolean(active)) {
+        } else if (!isNewUser && !isActive) {
             idpService.disableUser(user);
         }
     }

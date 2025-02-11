@@ -2,7 +2,10 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.avni.server.domain.metabase.*;
+import org.avni.server.domain.metabase.CollectionInfoResponse;
+import org.avni.server.domain.metabase.CollectionItem;
+import org.avni.server.domain.metabase.CollectionResponse;
+import org.avni.server.domain.metabase.CreateCollectionRequest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
@@ -43,7 +46,7 @@ public class CollectionRepository extends MetabaseConnector {
         }
     }
 
-    public CollectionInfoResponse getCollectionByName(Database database) {
+    public CollectionInfoResponse getCollectionByName(String databaseName) {
         String url = metabaseApiUrl + "/collection";
         try {
             String jsonResponse = getForObject(url, String.class);
@@ -53,7 +56,7 @@ public class CollectionRepository extends MetabaseConnector {
             );
 
             return collections.stream()
-                    .filter(collection -> collection.getName().equals(database.getName()))
+                    .filter(collection -> collection.getName().equals(databaseName))
                     .findFirst()
                     .orElse(null);
         } catch (Exception e) {

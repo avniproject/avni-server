@@ -1,5 +1,6 @@
 package org.avni.server.web.api;
 
+import com.amazonaws.services.cognitoidp.model.NotAuthorizedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.OrganisationConfigRepository;
@@ -14,6 +15,7 @@ import org.avni.server.service.IDPException;
 import org.avni.server.service.IdpService;
 import org.avni.server.service.IdpServiceFactory;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.util.BadRequestError;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.web.request.auth.EnableUserRequest;
@@ -27,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -51,15 +54,22 @@ public class UserApiController {
     }
 
     @RequestMapping(value = "/api/user/generateToken", method = RequestMethod.POST)
-    public ResponseEntity<GenerateTokenResult> generateTokenForUser(@RequestBody GenerateTokenRequest request) throws EntityNotFoundException {
-        User user = userRepository.findByUsername(request.getUsername());
+    public ResponseEntity<GenerateTokenResult> generateTokenForUser(@RequestBody GenerateTokenRequest request)
+            throws BadRequestError, EntityNotFoundException, AvniAccessException, NotAuthorizedException {
+        if (request == null || !StringUtils.hasText(request.getUsername())) {
+            throw new BadRequestError("User has invalid/empty username");
+        }
+        if (request == null || !StringUtils.hasText(request.getPassword())) {
+            throw new BadRequestError("User has invalid/empty password");
+        }
+        User user = userRepository.findByUsernameIgnoreCaseAndIsVoidedFalse(request.getUsername());
         if (user == null) {
-            throw new EntityNotFoundException("User not found with username: " + request.getUsername());
+            throw new EntityNotFoundException("User not-found / is-voided with username: " + request.getUsername());
         }
         if (!user.getUserSettings().isAllowedToInvokeTokenGenerationAPI()) {
             throw AvniAccessException.createForUserNotAllowedTokenGeneration(user);
         }
-        return ResponseEntity.ok(new GenerateTokenResult(authService.generateTokenForUser(request.getUsername(), request.getPassword())));
+        return ResponseEntity.ok(new GenerateTokenResult(authService.generateTokenForUser(user.getUsername(), request.getPassword())));
     }
 
     @RequestMapping(value = "/api/user", method = RequestMethod.POST)
@@ -87,7 +97,7 @@ public class UserApiController {
         if (createUserRequest.isEnabled()) {
             idpService.createUser(savedUser, organisationConfig);
         } else {
-            idpService.createInActiveUser(user, organisationConfig);
+        idpService.createInActiveUser(user, organisationConfig);
         }
         return ResponseEntity.ok(savedUser.getUuid());
     }
@@ -106,6 +116,8 @@ public class UserApiController {
                 return new ResponseEntity<>(activateUserResponse, HttpStatus.BAD_REQUEST);
             }
             IdpService idpService = idpServiceFactory.getIdpService(UserContextHolder.getOrganisation());
+            user.setDisabledInCognito(false);
+            userRepository.save(user);
             idpService.enableUser(user);
             activateUserResponse.setSuccess(true);
             return new ResponseEntity<>(activateUserResponse, HttpStatus.OK);

@@ -2,7 +2,8 @@ package org.avni.server.domain.metabase;
 
 public enum SyncStatus {
     COMPLETE("complete"),
-    INCOMPLETE("incomplete");
+    INCOMPLETE("incomplete"),
+    NOT_STARTED("not_started");
 
     private final String status;
 
