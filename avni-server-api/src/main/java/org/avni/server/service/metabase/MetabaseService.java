@@ -57,7 +57,7 @@ public class MetabaseService {
     }
 
     private void setupGlobalDatabase() {
-        globalDatabase = databaseRepository.getDatabaseByName(organisationName);
+        globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
         if (globalDatabase == null) {
             Database newDatabase = new Database(organisationName, DB_ENGINE, new DatabaseDetails(avniDatabase, organisationDbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
             globalDatabase = databaseRepository.save(newDatabase);
@@ -116,7 +116,7 @@ public class MetabaseService {
 
     public Database getGlobalDatabase() {
         if (globalDatabase == null) {
-            globalDatabase = databaseRepository.getDatabaseByName(organisationName);
+            globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
             if (globalDatabase == null) {
                 throw new RuntimeException("Global database not found.");
             }
@@ -128,7 +128,7 @@ public class MetabaseService {
         if (globalCollection == null) {
             globalCollection = collectionRepository.getCollectionByName(organisationName);
             if (globalCollection == null) {
-                throw new RuntimeException("Global database not found.");
+                throw new RuntimeException("Global collection not found.");
             }
         }
         return globalCollection;

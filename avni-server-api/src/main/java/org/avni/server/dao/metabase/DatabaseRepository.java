@@ -26,7 +26,7 @@ public class DatabaseRepository extends MetabaseConnector {
         return database;
     }
 
-    public Database getDatabaseByName(String databaseName) {
+    public Database getDatabase(String organisationName, String organisationDbUser) {
         String url = metabaseApiUrl + "/database";
 
         String jsonResponse = getForObject(url, String.class);
@@ -37,7 +37,7 @@ public class DatabaseRepository extends MetabaseConnector {
 
             for (JsonNode dbNode : dataArray) {
                 Database db = ObjectMapperSingleton.getObjectMapper().treeToValue(dbNode, Database.class);
-                if (db.getName().equals(databaseName)) {
+                if (db.getName().equals(organisationName) && db.getDetails().getUser().equals(organisationDbUser)) {
                     return db;
                 }
             }
