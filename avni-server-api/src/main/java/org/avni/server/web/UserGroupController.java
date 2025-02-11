@@ -91,7 +91,6 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     public ResponseEntity addUsersToGroup(@RequestBody List<UserGroupContract> request) {
         accessControlService.checkPrivilege(PrivilegeType.EditUserGroup);
         List<UserGroup> usersToBeAdded = new ArrayList<>();
-        UserGroupContract firstUserGroupContract = request.get(0);
 
         for (UserGroupContract userGroupContract : request) {
             User user = userRepository.findOne(userGroupContract.getUserId());
@@ -106,7 +105,6 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             usersToBeAdded.add(userGroup);
         }
         if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                firstUserGroupContract.getGroupName().contains(Group.METABASE_USERS) &&
                 organisationConfigService.checkIfSelfServiceIsEnabled(false)) {
             upsertUsersOnMetabase(usersToBeAdded);
         }
@@ -117,7 +115,8 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         if (groupPermissionsRepository.getCurrentOrganisationGroup() != null) {
             List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.getUserGroupMemberships();
             for (UserGroup value : usersToBeAdded) {
-                if (!metabaseUserRepository.emailExists(value.getUser().getEmail())) {
+                if (value.getGroupName().contains(Group.METABASE_USERS)
+                        && !metabaseUserRepository.emailExists(value.getUser().getEmail())) {
                     String[] nameParts = value.getUser().getName().split(" ", 2);
                     String firstName = nameParts[0];
                     String lastName = (nameParts.length > 1) ? nameParts[1] : null;
