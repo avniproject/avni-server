@@ -53,7 +53,6 @@ public class GroupPrivilegeContract {
         groupPrivilegeContract.setAllow(groupPrivilege.isAllow());
         groupPrivilegeContract.setUuid(groupPrivilege.getUuid());
         return groupPrivilegeContract;
-
     }
 
     public Long getSubjectTypeId() {
@@ -64,32 +63,32 @@ public class GroupPrivilegeContract {
         this.subjectTypeId = subjectTypeId;
     }
 
-    public Optional<Long> getProgramId() {
-        return programId;
+    public Long getProgramId() {
+        return programId == null ? null : programId.orElse(null);
     }
 
     public void setProgramId(Optional<Long> programId) {
         this.programId = programId;
     }
 
-    public Optional<Long> getProgramEncounterTypeId() {
-        return programEncounterTypeId;
+    public Long getProgramEncounterTypeId() {
+        return programEncounterTypeId == null ? null : programEncounterTypeId.orElse(null);
     }
 
     public void setProgramEncounterTypeId(Optional<Long> programEncounterTypeId) {
         this.programEncounterTypeId = programEncounterTypeId;
     }
 
-    public Optional<Long> getEncounterTypeId() {
-        return encounterTypeId;
+    public Long getEncounterTypeId() {
+        return encounterTypeId == null ? null : encounterTypeId.orElse(null);
     }
 
     public void setEncounterTypeId(Optional<Long> encounterTypeId) {
         this.encounterTypeId = encounterTypeId;
     }
 
-    public Optional<Long> getChecklistDetailId() {
-        return checklistDetailId;
+    public Long getChecklistDetailId() {
+        return checklistDetailId == null ? null : checklistDetailId.orElse(null);
     }
 
     public void setChecklistDetailId(Optional<Long> checklistDetailId) {
@@ -152,32 +151,32 @@ public class GroupPrivilegeContract {
         this.subjectTypeName = subjectTypeName;
     }
 
-    public Optional<String> getProgramName() {
-        return programName;
+    public String getProgramName() {
+        return programName == null ? null : programName.orElse(null);
     }
 
     public void setProgramName(String programName) {
         this.programName = Optional.ofNullable(programName);
     }
 
-    public Optional<String> getProgramEncounterTypeName() {
-        return programEncounterTypeName;
+    public String getProgramEncounterTypeName() {
+        return programEncounterTypeName == null ? null : programEncounterTypeName.orElse(null);
     }
 
     public void setProgramEncounterTypeName(String programEncounterTypeName) {
         this.programEncounterTypeName = Optional.ofNullable(programEncounterTypeName);
     }
 
-    public Optional<String> getEncounterTypeName() {
-        return encounterTypeName;
+    public String getEncounterTypeName() {
+        return encounterTypeName == null ? null : encounterTypeName.orElse(null);
     }
 
     public void setEncounterTypeName(String encounterTypeName) {
         this.encounterTypeName = Optional.ofNullable(encounterTypeName);
     }
 
-    public Optional<String> getChecklistDetailName() {
-        return checklistDetailName;
+    public String getChecklistDetailName() {
+        return checklistDetailName == null ? null : checklistDetailName.orElse(null);
     }
 
     public void setChecklistDetailName(String checklistDetailName) {
