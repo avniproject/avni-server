@@ -116,13 +116,12 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     private void upsertUsersOnMetabase(List<UserGroup> usersToBeAdded) {
         if (groupPermissionsRepository.getCurrentOrganisationGroup() != null) {
             List<UserGroupMemberships> userGroupMemberships = metabaseUserRepository.getUserGroupMemberships();
-
             for (UserGroup value : usersToBeAdded) {
                 if (!metabaseUserRepository.emailExists(value.getUser().getEmail())) {
                     String[] nameParts = value.getUser().getName().split(" ", 2);
                     String firstName = nameParts[0];
                     String lastName = (nameParts.length > 1) ? nameParts[1] : null;
-                    metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, value.getUser().getEmail(), userGroupMemberships, "password"));
+                    metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, value.getUser().getEmail(), userGroupMemberships));
                 } else {
                     if (!metabaseUserRepository.activeUserExists(value.getUser().getEmail())) {
                         metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());

@@ -195,7 +195,7 @@ public class UserController {
                 String[] nameParts = userContract.getName().split(" ", 2);
                 String firstName = nameParts[0];
                 String lastName = (nameParts.length > 1) ? nameParts[1] : null;
-                metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, userContract.getEmail(), metabaseUserRepository.getUserGroupMemberships(), "password"));
+                metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, userContract.getEmail(), metabaseUserRepository.getUserGroupMemberships()));
             } else {
                 if (!metabaseUserRepository.activeUserExists(userContract.getEmail())) {
                     metabaseUserRepository.reactivateMetabaseUser(userContract.getEmail());

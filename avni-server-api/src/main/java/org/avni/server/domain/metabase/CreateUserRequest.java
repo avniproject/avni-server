@@ -18,15 +18,11 @@ public class CreateUserRequest {
     @JsonProperty("user_group_memberships")
     private final List<UserGroupMemberships> userGroupMemberships;
 
-    @JsonProperty("password")
-    private final String password;
-
-    public CreateUserRequest(String firstName, String lastName, String email, List<UserGroupMemberships> userGroupMemberships, String password) {
+    public CreateUserRequest(String firstName, String lastName, String email, List<UserGroupMemberships> userGroupMemberships) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.userGroupMemberships = userGroupMemberships;
-        this.password = password;
     }
 
     public String getFirstName() {
@@ -43,9 +39,5 @@ public class CreateUserRequest {
 
     public List<UserGroupMemberships> getUserGroupMemberships() {
         return userGroupMemberships;
-    }
-
-    public String getPassword() {
-        return password;
     }
 }
