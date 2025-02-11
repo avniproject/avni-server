@@ -19,7 +19,6 @@ import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.metabase.DatabaseService;
-import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.request.UserGroupContract;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,12 +44,13 @@ public class UserGroupController extends AbstractController<UserGroup> implement
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final DatabaseService databaseService;
     private final OrganisationConfigService organisationConfigService;
-    private final MetabaseService metabaseService;
 
 
     @Autowired
     public UserGroupController(UserGroupRepository userGroupRepository, UserRepository userRepository, GroupRepository groupRepository,
-                               AccessControlService accessControlService, MetabaseUserRepository metabaseUserRepository, GroupPermissionsRepository groupPermissionsRepository, DatabaseService databaseService, OrganisationConfigService organisationConfigService, MetabaseService metabaseService) {
+                               AccessControlService accessControlService, MetabaseUserRepository metabaseUserRepository,
+                               GroupPermissionsRepository groupPermissionsRepository, DatabaseService databaseService,
+                               OrganisationConfigService organisationConfigService) {
         this.userGroupRepository = userGroupRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
@@ -59,7 +59,6 @@ public class UserGroupController extends AbstractController<UserGroup> implement
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.databaseService = databaseService;
         this.organisationConfigService = organisationConfigService;
-        this.metabaseService = metabaseService;
     }
 
     @RequestMapping(value = "/myGroups/search/lastModified", method = RequestMethod.GET)
@@ -104,8 +103,8 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             }
             usersToBeAdded.add(userGroup);
         }
-        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                organisationConfigService.checkIfSelfServiceIsEnabled(false)) {
+        if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+                organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
             upsertUsersOnMetabase(usersToBeAdded);
         }
         return ResponseEntity.ok(userGroupRepository.saveAll(usersToBeAdded));
@@ -143,9 +142,9 @@ public class UserGroupController extends AbstractController<UserGroup> implement
 
         userGroup.setVoided(true);
         userGroupRepository.save(userGroup);
-        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
-                userGroup.getGroupName().contains(Group.METABASE_USERS) &&
-                organisationConfigService.checkIfSelfServiceIsEnabled(false)) {
+        if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+                organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+                userGroup.getGroupName().contains(Group.METABASE_USERS)) {
             deactivateUserOnMetabase(userGroup);
         }
         return new ResponseEntity<>(UserGroupContract.fromEntity(userGroup), HttpStatus.OK);

@@ -39,15 +39,22 @@ public class MetabaseController {
 
     @GetMapping("/sync-status")
     public SyncStatus getSyncStatus() {
-        organisationConfigService.checkIfSelfServiceIsEnabled(true);
-        return databaseService.getInitialSyncStatus();
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        if (organisationConfigService.isMetabaseSetupEnabled(organisation)) {
+            return databaseService.getInitialSyncStatus();
+        } else {
+            return SyncStatus.NOT_STARTED;
+        }
     }
 
     @PostMapping("/setup")
     public void setupMetabase() {
-        organisationConfigService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        organisationConfigService.setMetabaseSetupEnabled(organisation, true);
+        if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
+            organisationConfigService.setMetabaseSetupEnabled(organisation, true);
+        }
         createMetabaseUsersGroupInAvni(organisation);
         metabaseService.setupMetabase();
         databaseService.addCollectionItems();
@@ -61,15 +68,18 @@ public class MetabaseController {
 
     @GetMapping("/setup-status")
     public SetupStatusResponse getSetupStatus() {
-        organisationConfigService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
-        boolean isEnabled = organisationConfigService.isMetabaseSetupEnabled(organisation);
-        return new SetupStatusResponse(isEnabled);
+        return new SetupStatusResponse(organisationConfigService.isMetabaseSetupEnabled(organisation));
     }
 
     @PostMapping("/create-questions")
     public CreateQuestionsResponse createQuestions() {
-        organisationConfigService.checkIfSelfServiceIsEnabled(true);
+        organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(true);
+        Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
+        if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
+            return new CreateQuestionsResponse(false, "Metabase Setup is not enabled. Cannot create questions.");
+        }
         try {
             databaseService.addCollectionItems();
             databaseService.updateGlobalDashboardWithCustomQuestions();
