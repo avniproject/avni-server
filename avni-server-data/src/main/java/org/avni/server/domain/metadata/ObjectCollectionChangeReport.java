@@ -1,9 +1,12 @@
 package org.avni.server.domain.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectCollectionChangeReport {
+    @JsonProperty("changeReports")
     private final List<ObjectChangeReport> objectChangeReports = new ArrayList<>();
 
     public void addObjectReport(ObjectChangeReport entityChangeReport) {

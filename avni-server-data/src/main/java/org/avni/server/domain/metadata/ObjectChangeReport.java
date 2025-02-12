@@ -45,4 +45,12 @@ public class ObjectChangeReport {
     public String getUuid() {
         return uuid;
     }
+
+    public Object getNewValue() {
+        return newValue;
+    }
+
+    public Object getOldValue() {
+        return oldValue;
+    }
 }
