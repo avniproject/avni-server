@@ -88,7 +88,6 @@ public class MetabaseController {
         }
         try {
             databaseService.addCollectionItems();
-            databaseService.updateGlobalDashboardWithCustomQuestions();
             return new CreateQuestionsResponse(true, "Questions created successfully.");
         } catch (RuntimeException e) {
             return new CreateQuestionsResponse(false, "Database sync is not complete. Cannot create questions.");

@@ -52,6 +52,8 @@ public class DatabaseService implements IQuestionCreationService {
 
     public static final List<String> PROG_ENROLMENT_TABLE_FIELDS = List.of(ID, UUID, ENROLMENT_DATE_TIME, CREATED_DATE_TIME, LAST_MODIFIED_DATE_TIME);
     public static final List<String> INDIVIDUAL_TABLE_FIELDS = List.of(ID, UUID, SUBJECT_TYPE_ID, FIRST_NAME, MIDDLE_NAME, LAST_NAME, DATE_OF_BIRTH, ADDRESS_ID, REGISTRATION_DATE, CREATED_DATE_TIME, LAST_MODIFIED_DATE_TIME);
+    public static final int SECOND_CARD_COL_IDX = 12;
+    private static final int FIRST_CARD_COL_IDX = 0;
 
     private final DatabaseRepository databaseRepository;
     private final MetabaseService metabaseService;
@@ -248,25 +250,20 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createIndividualTypeGenderAddress(Database database, String displayName) {
-        TableDetails primaryTableDetails = new TableDetails(INDIVIDUAL_TABLE);
+        TableDetails primaryTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(INDIVIDUAL_TABLE));
         TableDetails subjectTypeTableDetails = new TableDetails(SUBJECT_TYPE_TABLE);
         TableDetails genderTableDetails = new TableDetails(GENDER_TABLE);
         TableDetails addressTableDetails = new TableDetails(ADDRESS_TABLE, database.getName());
-        TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, primaryTableDetails);
-        fetchedEntityTableDetails.setDisplayName(displayName);
-        fetchedEntityTableDetails.setDescription(displayName);
+        primaryTableDetails.setDisplayName(displayName);
+        primaryTableDetails.setDescription(displayName);
 
+        List<FieldDetails> primaryTableFieldsDetails = getPrimaryTableFields(database, INDIVIDUAL_TABLE_FIELDS, primaryTableDetails);
         List<FieldDetails> subjectTypeTableFieldsDetails = getSubjectTypeFields(database, subjectTypeTableDetails);
-
         List<FieldDetails> genderTableFieldsDetails = getGenderFields(database, genderTableDetails);
-
         List<FieldDetails> addressTableFieldsDetails = getAddressFields(database, addressTableDetails);
 
         List<JoinTableConfig> joinTableConfigs = getISGAJoinTableConfigs(database, subjectTypeTableFieldsDetails, genderTableFieldsDetails, addressTableFieldsDetails);
-
-        List<FieldDetails> primaryTableFieldsDetails = getPrimaryTableFields(database, INDIVIDUAL_TABLE_FIELDS, primaryTableDetails);
-
-        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs, primaryTableFieldsDetails);
+        questionRepository.createQuestionForTableWithMultipleJoins(database, primaryTableDetails, joinTableConfigs, primaryTableFieldsDetails);
     }
 
     private List<JoinTableConfig> getISGAJoinTableConfigs(Database database, List<FieldDetails> subjectTypeTableFieldsDetails, List<FieldDetails> genderTableFieldsDetails, List<FieldDetails> addressTableFieldsDetails) {
@@ -307,14 +304,13 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createEnrolmentTypeIndividualAddress(Database database, String displayName) {
-        TableDetails primaryTableDetails = new TableDetails(ENROLMENT_TABLE);
+        TableDetails primaryTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ENROLMENT_TABLE));
         TableDetails programTableDetails = new TableDetails(PROGRAM_TABLE);
         TableDetails individualTableDetails = new TableDetails(INDIVIDUAL_TABLE);
         TableDetails addressTableDetails = new TableDetails(ADDRESS_TABLE, database.getName());
 
-        TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, primaryTableDetails);
-        fetchedEntityTableDetails.setDisplayName(displayName);
-        fetchedEntityTableDetails.setDescription(displayName);
+        primaryTableDetails.setDisplayName(displayName);
+        primaryTableDetails.setDescription(displayName);
 
         List<FieldDetails> programTableFieldsDetails = getProgramFields(database, programTableDetails);
         List<FieldDetails> individualTableFieldsDetails = getIndividualFields(database, individualTableDetails);
@@ -322,8 +318,7 @@ public class DatabaseService implements IQuestionCreationService {
         List<JoinTableConfig> joinTableConfigs = getPEIAJoinTableConfigs(database, programTableFieldsDetails, individualTableFieldsDetails, addressTableFieldsDetails);
 
         List<FieldDetails> primaryTableFieldsDetails = getPrimaryTableFields(database, PROG_ENROLMENT_TABLE_FIELDS, primaryTableDetails);
-
-        questionRepository.createQuestionForTableWithMultipleJoins(database, fetchedEntityTableDetails, joinTableConfigs, primaryTableFieldsDetails);
+        questionRepository.createQuestionForTableWithMultipleJoins(database, primaryTableDetails, joinTableConfigs, primaryTableFieldsDetails);
     }
 
     private List<FieldDetails> getPrimaryTableFields(Database database, List<String> primaryTableFields, TableDetails primaryTableDetails) {
@@ -386,21 +381,19 @@ public class DatabaseService implements IQuestionCreationService {
 
     public void updateGlobalDashboardWithCustomQuestions() {
         List<Dashcard> dashcards = new ArrayList<>();
-        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), null, 0, 0, 12, 8));
-        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), null, 0, 12, 12, 8));
+        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), null, 0, FIRST_CARD_COL_IDX, 12, 8,Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
+        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), null, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
 
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards));
-        addFilterToDashboard();
-
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards,createParametersForDashboard()));
     }
 
-    private void addFilterToDashboard() {
-        List<Dashcard> updateDashcards = new ArrayList<>();
-        updateDashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), null, 0, 0, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
-        updateDashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), null, 0, 12, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(updateDashcards, createParametersForDashboard()));
-
-    }
+    //todo add this to new tab in cannedReports dashboard
+    //public void updateGlobalDashboardWithCustomQuestions() {
+    //    List<Dashcard> dashcards = new ArrayList<>();
+    //    dashcards.add(new Dashcard(-1, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), null, 0, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
+    //    dashcards.add(new Dashcard(-2, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), null, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
+    //    metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards, createParametersForDashboard()));
+    //}
 
     private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard(){
         List<ParameterMapping> firstDashcardParameterMapping = new ArrayList<>();
