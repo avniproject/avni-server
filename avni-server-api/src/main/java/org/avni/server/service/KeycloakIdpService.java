@@ -211,7 +211,7 @@ public class KeycloakIdpService extends IdpServiceImpl {
 
     @Override
     public void enableUser(User user) {
-        throw new UnsupportedOperationException("Not implemented");
+        enableOrDisableUser(user, true);
     }
 
     @Override
