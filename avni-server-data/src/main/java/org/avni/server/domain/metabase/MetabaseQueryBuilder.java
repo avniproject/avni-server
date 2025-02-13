@@ -27,25 +27,13 @@ public class MetabaseQueryBuilder {
 
     public MetabaseQueryBuilder forTable(TableDetails tableDetails, List<FieldDetails> primaryTableFields) {
         queryNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), tableDetails.getId());
-        if(primaryTableFields != null && !primaryTableFields.isEmpty()) {
-            ArrayNode selectedFields = objectMapper.createArrayNode();
-            primaryTableFields.forEach(field -> {
-                ArrayNode selectedField = objectMapper.createArrayNode();
-                selectedField.add(FieldAttribute.FIELD.getAttributeName());
-                selectedField.add(field.getId());
-                selectedField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()));
-                selectedFields.add(selectedField);
-            });
-            queryNode.set(FieldAttribute.FIELDS.getAttributeName(), selectedFields);
-        } else {
-            queryNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
-        }
+        selectedFieldsToDisplay(primaryTableFields, queryNode, null);
         return this;
     }
 
-    public MetabaseQueryBuilder joinWith(TableDetails joinTargetTable, FieldDetails joinField1, FieldDetails joinField2) {
+    public MetabaseQueryBuilder joinWith(TableDetails joinTargetTable, FieldDetails joinField1, FieldDetails joinField2, List<FieldDetails> fieldsToShow) {
         ObjectNode joinNode = objectMapper.createObjectNode();
-        joinNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
+        selectedFieldsToDisplay(fieldsToShow, joinNode, joinTargetTable);
         joinNode.put(FieldAttribute.ALIAS.getAttributeName(), joinTargetTable.getName());
 
         ArrayNode conditionArray = objectMapper.createArrayNode();
@@ -54,13 +42,14 @@ public class MetabaseQueryBuilder {
         ArrayNode leftField = objectMapper.createArrayNode();
         leftField.add(FieldAttribute.FIELD.getAttributeName());
         leftField.add(joinField2.getId());
-        leftField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()));
+        leftField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), joinField2.getBaseType()));
         conditionArray.add(leftField);
 
         ArrayNode rightField = objectMapper.createArrayNode();
         rightField.add(FieldAttribute.FIELD.getAttributeName());
         rightField.add(joinField1.getId());
-        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()).put(FieldAttribute.JOIN_ALIAS.getAttributeName(), joinTargetTable.getName()));
+        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(),joinField2.getBaseType())
+                .put(FieldAttribute.JOIN_ALIAS.getAttributeName(), joinTargetTable.getName()));
         conditionArray.add(rightField);
 
         joinNode.set(FieldAttribute.CONDITION.getAttributeName(), conditionArray);
@@ -69,6 +58,28 @@ public class MetabaseQueryBuilder {
         queryNode.set(FieldAttribute.JOINS.getAttributeName(), joinsArray);
 
         return this;
+    }
+
+    private void selectedFieldsToDisplay(List<FieldDetails> fieldsToShow, ObjectNode joinNode, TableDetails joinTargetTable) {
+        if(fieldsToShow != null && !fieldsToShow.isEmpty()) {
+            ArrayNode selectedFields = objectMapper.createArrayNode();
+            fieldsToShow.forEach(field -> {
+                ArrayNode selectedField = objectMapper.createArrayNode();
+                selectedField.add(FieldAttribute.FIELD.getAttributeName());
+                selectedField.add(field.getId());
+                ObjectNode joinAliasNode = objectMapper.createObjectNode()
+                        .put(FieldAttribute.BASE_TYPE.getAttributeName(), field.getBaseType());
+                if(joinTargetTable != null) {
+                    joinAliasNode
+                            .put(FieldAttribute.JOIN_ALIAS.getAttributeName(), joinTargetTable.getName());
+                }
+                selectedField.add(joinAliasNode);
+                selectedFields.add(selectedField);
+            });
+            joinNode.set(FieldAttribute.FIELDS.getAttributeName(), selectedFields);
+        } else{
+            joinNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
+        }
     }
 
     public MetabaseQueryBuilder addAggregation(AggregationType aggregationType) {

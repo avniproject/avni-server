@@ -58,15 +58,15 @@ public class QuestionRepository extends MetabaseConnector {
         databaseRepository.postForObject(metabaseApiUrl + "/card", requestBody.toJson(), ObjectNode.class);
     }
 
-    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails originField, FieldDetails destinationField) {
+    public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails originField, FieldDetails destinationField, List<FieldDetails> fieldsToShow) {
         FieldDetails joinField1 = databaseRepository.getFieldDetailsByName(database, addressTableDetails, originField);
         FieldDetails joinField2 = databaseRepository.getFieldDetailsByName(database, tableDetails, destinationField);
 
         ArrayNode joinsArray = ObjectMapperSingleton.getObjectMapper().createArrayNode();
         MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray)
-                .forTable(tableDetails)
-                .joinWith(addressTableDetails, joinField1, joinField2)
-                .build();
+                    .forTable(tableDetails)
+                    .joinWith(addressTableDetails, joinField1, joinField2, fieldsToShow)
+                    .build();
 
         MetabaseRequestBody requestBody = new MetabaseRequestBody(
                 tableDetails.getDisplayName(),
@@ -122,7 +122,7 @@ public class QuestionRepository extends MetabaseConnector {
             FieldDetails joinField1 = databaseRepository.getFieldDetailsByName(database, joinTableConfig.getJoinTargetTable(), joinTableConfig.getOriginField());
             FieldDetails joinField2 = databaseRepository.getFieldDetailsByName(database, Objects.isNull(joinTableConfig.getAlternateJoinSourceTable()) ?
                     tableDetails : joinTableConfig.getAlternateJoinSourceTable(), joinTableConfig.getDestinationField());
-            metabaseQueryBuilder.joinWith(joinTableConfig.getJoinTargetTable(), joinField1, joinField2);
+            metabaseQueryBuilder.joinWith(joinTableConfig.getJoinTargetTable(), joinField1, joinField2, joinTableConfig.getFieldsToShow());
         }
 
         MetabaseQuery query = metabaseQueryBuilder.build();
