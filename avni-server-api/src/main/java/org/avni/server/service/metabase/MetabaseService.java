@@ -95,6 +95,7 @@ public class MetabaseService {
     }
 
     public void setupMetabase() {
+        //todos remove sleep and use status check APIs to determine completion of previous step
         setupGlobalDatabase();
         sleepAwhile(10);
         setupGlobalCollection();

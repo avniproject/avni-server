@@ -1,5 +1,6 @@
 package org.avni.server.service.metabase;
 
+import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.metabase.CollectionRepository;
 import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.dao.metabase.MetabaseDashboardRepository;
@@ -57,14 +58,16 @@ public class DatabaseService implements IQuestionCreationService {
     private final CollectionRepository collectionRepository;
     private final QuestionRepository questionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
+    private final AddressLevelTypeRepository addressLevelTypeRepository;
 
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository) {
+    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository) {
         this.databaseRepository = databaseRepository;
         this.metabaseService = metabaseService;
         this.collectionRepository = collectionRepository;
         this.questionRepository = questionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
+        this.addressLevelTypeRepository = addressLevelTypeRepository;
     }
 
     private Database getGlobalDatabase() {
@@ -276,7 +279,9 @@ public class DatabaseService implements IQuestionCreationService {
 
     private List<FieldDetails> getAddressFields(Database database, TableDetails addressTableDetails) {
         List<FieldDetails> addressTableFieldsDetails = new ArrayList<>();
-        List<String> addressTableFields = List.of(ID,BLOCK,UUID, VILLAGE_HAMLET, PROJECT_BLOCK);
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        List<String> addressTableFields = new ArrayList<>(List.of(ID, UUID));
+        addressTableFields.addAll(addressLevelTypeNames);
         for(String addressTableField : addressTableFields) {
             addressTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, addressTableDetails, new FieldDetails(addressTableField)));
         }
@@ -416,6 +421,7 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     public void addCollectionItems() {
+        //todo add field details and table details to request scope
         createQuestionsForSubjectTypes();
         createQuestionsForProgramsAndEncounters();
         createQuestionsForMiscSingleTables();
