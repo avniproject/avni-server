@@ -13,6 +13,8 @@ public class Parameters {
     private final String type;
     @JsonProperty("sectionId")
     private final String sectionId;
+    @JsonProperty("values_query_type")
+    private String valueQueryType;
 
     public Parameters(String name, String slug, String id, String type, String sectionId) {
         this.name = name;
@@ -20,6 +22,15 @@ public class Parameters {
         this.id = id;
         this.type = type;
         this.sectionId = sectionId;
+    }
+
+    public Parameters(String name, String slug, String id, String type, String sectionId, String valueQueryType) {
+        this.name = name;
+        this.slug = slug;
+        this.id = id;
+        this.type = type;
+        this.sectionId = sectionId;
+        this.valueQueryType = valueQueryType;
     }
 
     public String getName() {
@@ -41,4 +52,8 @@ public class Parameters {
     public String getSectionId() {
         return sectionId;
     }
+
+    public String getValueQueryType() {return valueQueryType;}
+
+    public void setValueQueryType(String valueQueryType) {this.valueQueryType = valueQueryType;}
 }

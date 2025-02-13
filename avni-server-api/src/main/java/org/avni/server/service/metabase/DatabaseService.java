@@ -381,19 +381,18 @@ public class DatabaseService implements IQuestionCreationService {
 
     public void updateGlobalDashboardWithCustomQuestions() {
         List<Dashcard> dashcards = new ArrayList<>();
-        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), null, 0, FIRST_CARD_COL_IDX, 12, 8,Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
-        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), null, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
+        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), -1, 0, FIRST_CARD_COL_IDX, 12, 8,Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
+        dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), -1, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
 
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards,createParametersForDashboard()));
+        dashcards.add(new Dashcard(-3, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), -2, 0, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForThirdDashcard()));
+        dashcards.add(new Dashcard(-4, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), -2, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFourthDashcard()));
+
+        List<Tabs> tabs = new ArrayList<>();
+        tabs.add(new Tabs(-1,"Activity"));
+        tabs.add(new Tabs(-2,"Data"));
+        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards,createParametersForDashboard(),tabs));
+
     }
-
-    //todo add this to new tab in cannedReports dashboard
-    //public void updateGlobalDashboardWithCustomQuestions() {
-    //    List<Dashcard> dashcards = new ArrayList<>();
-    //    dashcards.add(new Dashcard(-1, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), null, 0, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
-    //    dashcards.add(new Dashcard(-2, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), null, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
-    //    metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards, createParametersForDashboard()));
-    //}
 
     private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard(){
         List<ParameterMapping> firstDashcardParameterMapping = new ArrayList<>();
@@ -407,9 +406,33 @@ public class DatabaseService implements IQuestionCreationService {
         return secondDashcardParameterMapping;
     }
 
-    private List<Parameters> createParametersForDashboard(){
+    private List<ParameterMapping> createDashcardParameterMappingForThirdDashcard(){
+        List<ParameterMapping> thirdDashcardParameterMapping = new ArrayList<>();
+        thirdDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.INDIVIDUAL.getName()), new FieldDetails(FieldName.REGISTRATION_DATE.getName())), FieldType.DATE.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            thirdDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE,getGlobalDatabase().getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(),ADDRESS_TABLE))));
+        }
+        return thirdDashcardParameterMapping;
+    }
+
+    private List<ParameterMapping> createDashcardParameterMappingForFourthDashcard(){
+        List<ParameterMapping> fourthDashcardParameterMapping = new ArrayList<>();
+        fourthDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.PROGRAM_ENROLMENT.getName()), new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            fourthDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE,getGlobalDatabase().getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(),ADDRESS_TABLE))));
+        }
+        return fourthDashcardParameterMapping;
+    }
+
+    private List<Parameters> createParametersForDashboard() {
         List<Parameters> parameters = new ArrayList<>();
-        parameters.add(new Parameters("Date Range","all_options","dateTimeId","date/all-options","date"));
+        parameters.add(new Parameters("Date Range", "all_options", "dateTimeId", "date/all-options", "date"));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            parameters.add(new Parameters(addressLevelTypeName, addressLevelTypeName, addressLevelTypeName, "string/starts-with", "string", "search"));
+        }
         return parameters;
     }
 
