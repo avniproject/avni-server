@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-@Component
 public class CollectionPermissionsGraphResponse {
     private int revision;
     private Map<String, Map<String, String>> groups;

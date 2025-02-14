@@ -32,7 +32,6 @@ public class DatabaseService implements IQuestionCreationService {
     private static final String ID = "id";
     private static final String NAME = "name";
     private static final String UUID = "uuid";
-    private static final String BLOCK = "Block";
     private static final String SUBJECT_TYPE_ID = "subject_type_id";
     public static final String FIRST_NAME = "first_name";
     public static final String MIDDLE_NAME = "middle_name";
@@ -47,8 +46,6 @@ public class DatabaseService implements IQuestionCreationService {
     public static final String PROGRAM_ID = "program_id";
     public static final String INDIVIDUAL_ID = "individual_id";
     public static final String PROGRAM_EXIT_DATE_TIME = "program_exit_date_time";
-    public static final String VILLAGE_HAMLET = "Village/Hamlet";
-    public static final String PROJECT_BLOCK = "Project/Block";
 
     public static final List<String> PROG_ENROLMENT_TABLE_FIELDS = List.of(ID, UUID, ENROLMENT_DATE_TIME, CREATED_DATE_TIME, LAST_MODIFIED_DATE_TIME);
     public static final List<String> INDIVIDUAL_TABLE_FIELDS = List.of(ID, UUID, SUBJECT_TYPE_ID, FIRST_NAME, MIDDLE_NAME, LAST_NAME, DATE_OF_BIRTH, ADDRESS_ID, REGISTRATION_DATE, CREATED_DATE_TIME, LAST_MODIFIED_DATE_TIME);

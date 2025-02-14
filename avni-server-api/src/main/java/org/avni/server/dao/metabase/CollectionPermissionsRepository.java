@@ -1,28 +1,37 @@
 package org.avni.server.dao.metabase;
 
-import org.avni.server.domain.metabase.CollectionPermissionsService;
-import org.avni.server.domain.metabase.CollectionPermissionsGraphResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.avni.server.domain.metabase.CollectionInfoResponse;
+import org.avni.server.domain.metabase.Group;
+import org.avni.server.domain.metabase.MetabaseRequestFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
 
 @Repository
 public class CollectionPermissionsRepository extends MetabaseConnector {
-
     public CollectionPermissionsRepository(RestTemplateBuilder restTemplateBuilder) {
         super(restTemplateBuilder);
     }
 
-    public CollectionPermissionsGraphResponse getCollectionPermissionsGraph() {
-        String url = metabaseApiUrl + "/collection/graph";
-        return getForObject(url, CollectionPermissionsGraphResponse.class);
+    private Map<String, Object> getCollectionPermissionsGraph() {
+        try {
+            String url = metabaseApiUrl + "/collection/graph";
+            String string = getForObject(url, String.class);
+            return getObjectMapper().readValue(string, new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void updateCollectionPermissions(CollectionPermissionsService collectionPermissionsService, int groupId, int collectionId) {
-        collectionPermissionsService.updatePermissions(groupId, collectionId);
+    public void updateCollectionPermissions(Group group, CollectionInfoResponse collection) {
+        Map<String, Object> collectionPermissionsGraph = this.getCollectionPermissionsGraph();
+        Map<String, Object> request = MetabaseRequestFactory.derviceRequestToUpdateCollectionPermissions(collectionPermissionsGraph, group.getId(), collection.getIdAsInt());
         String url = metabaseApiUrl + "/collection/graph";
-        sendPutRequest(url, collectionPermissionsService.getUpdatedPermissionsGraph());
+        sendPutRequest(url, request);
     }
 }

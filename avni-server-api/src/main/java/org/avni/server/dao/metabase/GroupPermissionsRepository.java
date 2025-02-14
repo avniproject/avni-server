@@ -1,68 +1,74 @@
 package org.avni.server.dao.metabase;
 
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.metabase.*;
-import org.avni.server.service.OrganisationService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.avni.server.domain.metabase.Database;
+import org.avni.server.domain.metabase.Group;
+import org.avni.server.domain.metabase.MetabaseRequestFactory;
+import org.avni.server.util.MapUtil;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Repository;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
 
 @Repository
 public class GroupPermissionsRepository extends MetabaseConnector {
-    private final OrganisationService organisationService;
-
-    public GroupPermissionsRepository(RestTemplateBuilder restTemplateBuilder, OrganisationService organisationService) {
+    public GroupPermissionsRepository(RestTemplateBuilder restTemplateBuilder) {
         super(restTemplateBuilder);
-        this.organisationService = organisationService;
     }
 
-    public Group save(Group permissionsGroup) {
-        String url = metabaseApiUrl + "/permissions/group";
-        GroupPermissionsBody body = new GroupPermissionsBody(permissionsGroup.getName());
-        HttpEntity<Map<String, Object>> entity = createJsonEntity(body);
-        return restTemplate.postForObject(url, entity, Group.class);
+    private Map<String, Object> getGroupPermission(int groupId) {
+        String url = metabaseApiUrl + "/permissions/graph/group/" + groupId;
+        return getMapResponse(url);
     }
 
-    public List<GroupPermissionResponse> getAllGroups() {
-        String url = metabaseApiUrl + "/permissions/group";
-        GroupPermissionResponse[] response = getForObject(url, GroupPermissionResponse[].class);
-        return Arrays.asList(response);
-    }
-
-    public void updateGroupPermissions(int groupId, int databaseId) {
-        Map<String, Object> requestForDatabasePermissionToGroup = MetabasePermissionsFactory.createRequestForDatabasePermissionToGroup(groupId, databaseId);
+    public void restrictGroupAccessToItsOwnDatabaseOnly(int groupId, int databaseId) {
+        Map<String, Object> groupPermission = this.getGroupPermission(groupId);
+        Map<String, Object> requestForDatabasePermissionToGroup = MetabaseRequestFactory.deriveRequestToRestrictPermissionToOrgDatabase(groupPermission, groupId, databaseId);
         String url = metabaseApiUrl + "/permissions/graph";
         sendPutRequest(url, requestForDatabasePermissionToGroup);
-    }
-
-    public Group getCurrentOrganisationGroup() {
-        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-        return findGroup(currentOrganisation.getName());
-    }
-
-    public Group findGroup(String name) {
-        List<GroupPermissionResponse> existingGroups = getAllGroups();
-
-        for (GroupPermissionResponse group : existingGroups) {
-            if (group.getName().equals(name)) {
-                return new Group(group.getName(), group.getId());
-            }
-        }
-        return null;
-    }
-
-    public Group createGroup(String name, int databaseId) {
-        Group newGroup = save(new Group(name));
-        updateGroupPermissions(newGroup.getId(), databaseId);
-        return newGroup;
     }
 
     public void delete(Group group) {
         String url = metabaseApiUrl + "/permissions/group/" + group.getId();
         deleteForObject(url, Void.class);
+    }
+
+    public void removeAllUsersPermissionToOrgDatabase(Database database) {
+        Map<String, Object> allUsersPermission = this.getAllUsersPermission();
+        String url = metabaseApiUrl + "/permissions/graph";
+        Map<String, Object> request = MetabaseRequestFactory.createRequestToRemoveDatabaseAccessForAllUsers(allUsersPermission, database.getId());
+        sendPutRequest(url, request);
+    }
+
+    private Map<String, Object> getAllUsersPermission() {
+        String url = metabaseApiUrl + "/permissions/graph/group/1";
+        return getMapResponse(url);
+    }
+
+    public void removeOrgDatabaseAccessForAllOtherGroups(Database database, Group group) {
+        String url = metabaseApiUrl + "/permissions/graph/db/" + database.getId();
+        Map<String, Object> dbPermissions = getMapResponse(url);
+        Map<String, Object> groups = (Map<String, Object>) dbPermissions.get("groups");
+        List<String> skip = Arrays.asList("1", "2", String.valueOf(group.getId()));
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("revision", dbPermissions.get("revision"));
+        HashMap<Object, Object> groupsRequest = new HashMap<>();
+        request.put("groups", groupsRequest);
+        for (String groupId : groups.keySet()) {
+            if (!skip.contains(groupId)) {
+                HashMap<Object, Object> groupRequest = new HashMap<>();
+                HashMap<Object, Object> databaseRequest = new HashMap<>();
+                databaseRequest.put("create-queries", "no");
+                databaseRequest.put("view-data", "unrestricted");
+                databaseRequest.put("download", Map.of("schemas", "full"));
+                groupRequest.put(String.valueOf(database.getId()), databaseRequest);
+                groupsRequest.put(groupId, groupRequest);
+            }
+        }
+        sendPutRequest(metabaseApiUrl + "/permissions/graph", request);
     }
 }

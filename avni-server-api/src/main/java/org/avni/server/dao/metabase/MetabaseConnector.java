@@ -1,5 +1,7 @@
 package org.avni.server.dao.metabase;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.avni.server.domain.metabase.GroupPermissionsBody;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
+
+import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
 
 @Repository
 public class MetabaseConnector {
@@ -71,4 +75,12 @@ public class MetabaseConnector {
         return new HttpEntity<>(body.getBody(), headers);
     }
 
+    protected Map<String, Object> getMapResponse(String url) {
+        try {
+            String string = getForObject(url, String.class);
+            return getObjectMapper().readValue(string, new TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
