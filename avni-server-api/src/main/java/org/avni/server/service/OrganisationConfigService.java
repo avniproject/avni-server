@@ -365,8 +365,8 @@ public class OrganisationConfigService implements NonScopeAwareService {
         return config.isMetabaseSetupEnabled();
     }
 
-    public boolean checkIfReportingMetabaseSelfServiceIsEnabled(boolean ifNotEnabledThrowException) {
-        if (ifNotEnabledThrowException && !avniReportingMetabaseSelfServiceEnabled) {
+    public boolean assertReportingMetabaseSelfServiceEnableStatus(boolean enabled) {
+        if (enabled && !avniReportingMetabaseSelfServiceEnabled) {
             logger.debug("Avni Reporting Metabase Self-service reporting is disabled.");
             throw new HttpClientErrorException(HttpStatus.FAILED_DEPENDENCY);
         }

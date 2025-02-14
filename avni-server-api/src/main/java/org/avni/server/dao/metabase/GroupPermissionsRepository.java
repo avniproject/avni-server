@@ -27,17 +27,6 @@ public class GroupPermissionsRepository extends MetabaseConnector {
         return restTemplate.postForObject(url, entity, Group.class);
     }
 
-    public GroupPermissionsGraphResponse getPermissionsGraph() {
-        String url = metabaseApiUrl + "/permissions/graph";
-        return getForObject(url, GroupPermissionsGraphResponse.class);
-    }
-
-    public void updatePermissionsGraph(GroupPermissionsService permissions) {
-        String url = metabaseApiUrl + "/permissions/graph";
-        Map<String, Object> requestBody = permissions.getUpdatedPermissionsGraph();
-        sendPutRequest(url, requestBody);
-    }
-
     public List<GroupPermissionResponse> getAllGroups() {
         String url = metabaseApiUrl + "/permissions/group";
         GroupPermissionResponse[] response = getForObject(url, GroupPermissionResponse[].class);
@@ -45,17 +34,17 @@ public class GroupPermissionsRepository extends MetabaseConnector {
     }
 
     public void updateGroupPermissions(int groupId, int databaseId) {
-        GroupPermissionsService groupPermissions = new GroupPermissionsService(getPermissionsGraph());
-        groupPermissions.updatePermissions(groupId, databaseId);
-        updatePermissionsGraph(groupPermissions);
+        Map<String, Object> requestForDatabasePermissionToGroup = MetabasePermissionsFactory.createRequestForDatabasePermissionToGroup(groupId, databaseId);
+        String url = metabaseApiUrl + "/permissions/graph";
+        sendPutRequest(url, requestForDatabasePermissionToGroup);
     }
 
-    public Group getCurrentOrganisationGroup(){
+    public Group getCurrentOrganisationGroup() {
         Organisation currentOrganisation = organisationService.getCurrentOrganisation();
         return findGroup(currentOrganisation.getName());
     }
 
-    public Group findGroup(String name){
+    public Group findGroup(String name) {
         List<GroupPermissionResponse> existingGroups = getAllGroups();
 
         for (GroupPermissionResponse group : existingGroups) {
@@ -70,5 +59,10 @@ public class GroupPermissionsRepository extends MetabaseConnector {
         Group newGroup = save(new Group(name));
         updateGroupPermissions(newGroup.getId(), databaseId);
         return newGroup;
+    }
+
+    public void delete(Group group) {
+        String url = metabaseApiUrl + "/permissions/group/" + group.getId();
+        deleteForObject(url, Void.class);
     }
 }

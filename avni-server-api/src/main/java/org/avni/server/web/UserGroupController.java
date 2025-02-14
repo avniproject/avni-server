@@ -103,7 +103,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             }
             usersToBeAdded.add(userGroup);
         }
-        if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+        if (organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(false) &&
                 organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
             upsertUsersOnMetabase(usersToBeAdded);
         }
@@ -142,7 +142,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
 
         userGroup.setVoided(true);
         userGroupRepository.save(userGroup);
-        if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+        if (organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(false) &&
                 organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 userGroup.getGroupName().contains(Group.METABASE_USERS)) {
             deactivateUserOnMetabase(userGroup);

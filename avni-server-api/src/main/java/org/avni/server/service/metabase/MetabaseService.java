@@ -64,6 +64,12 @@ public class MetabaseService {
         }
     }
 
+    private void tearDownDatabase() {
+        Database database = databaseRepository.getDatabase(organisationName, organisationDbUser);
+        if (database != null)
+            databaseRepository.delete(database);
+    }
+
     private void setupGlobalCollection() {
         globalCollection = collectionRepository.getCollectionByName(organisationName);
         if (globalCollection == null) {
@@ -72,11 +78,23 @@ public class MetabaseService {
         }
     }
 
+    private void tearDownMetabaseCollection() {
+        CollectionInfoResponse collection = collectionRepository.getCollectionByName(organisationName);
+        if (collection != null)
+            collectionRepository.delete(collection);
+    }
+
     private void setupGlobalMetabaseGroup() {
         globalMetabaseGroup = groupPermissionsRepository.findGroup(organisationName);
         if (globalMetabaseGroup == null) {
             globalMetabaseGroup = groupPermissionsRepository.createGroup(organisationName, getGlobalDatabase().getId());
         }
+    }
+
+    private void tearDownMetabaseGroup() {
+        Group group = groupPermissionsRepository.findGroup(organisationName);
+        if (group != null)
+            groupPermissionsRepository.delete(group);
     }
 
     private void setupCollectionPermissions() {
@@ -97,22 +115,16 @@ public class MetabaseService {
     public void setupMetabase() {
         //todos remove sleep and use status check APIs to determine completion of previous step
         setupGlobalDatabase();
-        sleepAwhile(10);
         setupGlobalCollection();
-        sleepAwhile(10);
         setupGlobalMetabaseGroup();
-        sleepAwhile(10);
         setupCollectionPermissions();
-        sleepAwhile(10);
         setupGlobalDashboard();
     }
 
-    public void sleepAwhile(long secondsToSleep) {
-        try {
-            Thread.sleep(Duration.ofSeconds(secondsToSleep));
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
+    public void tearDownMetabase() {
+        tearDownMetabaseGroup();
+        tearDownMetabaseCollection();
+        tearDownDatabase();
     }
 
     public Database getGlobalDatabase() {

@@ -168,7 +168,7 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
-            if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+            if (organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(false) &&
                     organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
                 performMetabaseUserUpsert(userContract, associatedUserGroups);
             }
