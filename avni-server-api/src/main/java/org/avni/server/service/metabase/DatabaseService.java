@@ -413,6 +413,8 @@ public class DatabaseService implements IQuestionCreationService {
         for (String addressLevelTypeName : addressLevelTypeNames) {
             thirdDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE,getGlobalDatabase().getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(),ADDRESS_TABLE))));
         }
+        thirdDashcardParameterMapping.add(new ParameterMapping("subjectTypeName", getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(SUBJECT_TYPE_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(),SUBJECT_TYPE_TABLE))));
+
         return thirdDashcardParameterMapping;
     }
 
@@ -423,6 +425,8 @@ public class DatabaseService implements IQuestionCreationService {
         for (String addressLevelTypeName : addressLevelTypeNames) {
             fourthDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE,getGlobalDatabase().getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(),ADDRESS_TABLE))));
         }
+        fourthDashcardParameterMapping.add(new ParameterMapping("programName", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(PROGRAM_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(),PROGRAM_TABLE))));
+        fourthDashcardParameterMapping.add(new ParameterMapping("subjectTypeName", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(SUBJECT_TYPE_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(),getFieldId(new TableDetails(INDIVIDUAL_TABLE),new FieldDetails(SUBJECT_TYPE_ID))))));
         return fourthDashcardParameterMapping;
     }
 
@@ -433,6 +437,8 @@ public class DatabaseService implements IQuestionCreationService {
         for (String addressLevelTypeName : addressLevelTypeNames) {
             parameters.add(new Parameters(addressLevelTypeName, addressLevelTypeName, addressLevelTypeName, "string/starts-with", "string", "search"));
         }
+        parameters.add(new Parameters("Program Name", "programName", "programName", "string/starts-with", "string", "search",false));
+        parameters.add(new Parameters("Subject Type Name", "subjectTypeName", "subjectTypeName", "string/starts-with", "string", "search",false));
         return parameters;
     }
 

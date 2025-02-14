@@ -15,6 +15,8 @@ public class Parameters {
     private final String sectionId;
     @JsonProperty("values_query_type")
     private String valueQueryType;
+    @JsonProperty("isMultiSelect")
+    private boolean isMultiSelect;
 
     public Parameters(String name, String slug, String id, String type, String sectionId) {
         this.name = name;
@@ -31,6 +33,16 @@ public class Parameters {
         this.type = type;
         this.sectionId = sectionId;
         this.valueQueryType = valueQueryType;
+    }
+
+    public Parameters(String name, String slug, String id, String type, String sectionId, String valueQueryType, boolean isMultiSelect) {
+        this.name = name;
+        this.slug = slug;
+        this.id = id;
+        this.type = type;
+        this.sectionId = sectionId;
+        this.valueQueryType = valueQueryType;
+        this.isMultiSelect = isMultiSelect;
     }
 
     public String getName() {
