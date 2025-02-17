@@ -2,6 +2,7 @@ package org.avni.server.domain.metabase;
 
 import org.avni.server.util.MapUtil;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,10 +28,22 @@ public class MetabaseRequestFactory {
         return permissionsForAllUsers;
     }
 
-    public static Map<String, Object> derviceRequestToUpdateCollectionPermissions(Map<String, Object> permissions, int groupId, int collectionId) {
-        Map<String, Object> group = MapUtil.getValueFromPath(permissions, new String[]{"groups", String.valueOf(groupId)});
-        group.put(String.valueOf(collectionId), "write");
-        group.put("2", "none");
-        return permissions;
+    public static Map<String, Object> deriveRequestToUpdateCollectionPermissions(Map<String, Object> permissions, int collectionId, Group group) {
+        Map<String, Object> allUsersGroup = MapUtil.getValueFromPath(permissions, new String[]{"groups", "1"});
+        Map<String, Object> orgUserGroup = MapUtil.getValueFromPath(permissions, new String[]{"groups", String.valueOf(group.getId())});
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("revision", permissions.get("revision"));
+
+        HashMap<Object, Object> allUserGroupRequest = new HashMap<>();
+        MapUtil.setValueAtPath(request, new String[]{"groups", "1"}, allUserGroupRequest);
+        allUserGroupRequest.putAll(allUsersGroup);
+        allUserGroupRequest.put(String.valueOf(collectionId), "none");
+
+        HashMap<Object, Object> orgUserGroupRequest = new HashMap<>();
+        MapUtil.setValueAtPath(request, new String[]{"groups", String.valueOf(group.getId())}, orgUserGroupRequest);
+        orgUserGroupRequest.putAll(orgUserGroup);
+        orgUserGroupRequest.put(String.valueOf(collectionId), "write");
+        return request;
     }
 }

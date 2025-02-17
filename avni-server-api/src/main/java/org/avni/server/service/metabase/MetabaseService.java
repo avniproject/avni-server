@@ -65,7 +65,7 @@ public class MetabaseService {
         this.organisationDbUser = currentOrganisation.getDbUser();
     }
 
-    private void setupGlobalDatabase() {
+    private void setupDatabase() {
         globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
         if (globalDatabase == null) {
             Database newDatabase = new Database(organisationName, DB_ENGINE, new DatabaseDetails(avniDatabase, organisationDbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
@@ -79,7 +79,7 @@ public class MetabaseService {
             databaseRepository.delete(database);
     }
 
-    private void setupGlobalCollection() {
+    private void setupCollection() {
         globalCollection = collectionRepository.getCollectionByName(organisationName);
         if (globalCollection == null) {
             CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(organisationName, organisationName + " collection"));
@@ -93,7 +93,7 @@ public class MetabaseService {
             collectionRepository.delete(collection);
     }
 
-    private void setupGlobalMetabaseGroup() {
+    private void setupMetabaseGroup() {
         globalMetabaseGroup = metabaseGroupRepository.findGroup(organisationName);
         if (globalMetabaseGroup == null) {
             globalMetabaseGroup = metabaseGroupRepository.createGroup(organisationName);
@@ -115,7 +115,7 @@ public class MetabaseService {
         collectionPermissionsRepository.updateCollectionPermissions(globalMetabaseGroup, globalCollection);
     }
 
-    private void setupGlobalDashboard() {
+    private void setupDashboard() {
         globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
         if (globalDashboard == null) {
             Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(null, getGlobalCollection().getIdAsInt()));
@@ -125,11 +125,11 @@ public class MetabaseService {
 
     public void setupMetabase() {
         //todos remove sleep and use status check APIs to determine completion of previous step
-        setupGlobalDatabase();
-        setupGlobalCollection();
-        setupGlobalMetabaseGroup();
+        setupDatabase();
+        setupCollection();
+        setupMetabaseGroup();
         setupCollectionPermissions();
-        setupGlobalDashboard();
+        setupDashboard();
     }
 
     public void tearDownMetabase() {
