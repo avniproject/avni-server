@@ -28,9 +28,13 @@ endef
 
 SU ?= $(shell id -un)
 su:=$(SU)
-DB=openchs
-dbServer=localhost
-dbPort=5432
+DB:=openchs
+dbServer:=localhost
+dbPort:=5432
+REM_DBSERVER:=localhost
+REM_DBPORT:=5433
+REM_DBUSER:=openchs
+
 
 # <postgres>
 clean_db_server: _clean_db_server _clean_test_server _drop_roles
@@ -126,26 +130,32 @@ start_server_perf_test_mode: build_server
 start_server_keycloak: build_server
 	OPENCHS_MODE=on-premise OPENCHS_DATABASE=$(DB) AVNI_IDP_TYPE=keycloak java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
+check_db_user:
+ifndef REM_DBUSER
+	@echo "Provde the REM_DBUSER variable"
+	exit 1
+endif
+
 check_db_server:
-ifndef DBSERVER
-	@echo "Provde the DBSERVER variable"
+ifndef REM_DBSERVER
+	@echo "Provde the REM_DBSERVER variable"
 	exit 1
 endif
 
 check_db_port:
-ifndef DBPORT
-	@echo "Provde the DBPORT variable"
+ifndef REM_DBPORT
+	@echo "Provde the REM_DBPORT variable"
 	exit 1
 endif
 
 start_server_remote_db: check_db_server check_db_port build_server
-	AVNI_IDP_TYPE=none OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):$(DBPORT)/openchs?currentSchema=public java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+	AVNI_IDP_TYPE=none OPENCHS_DATABASE_HOST=$(REM_DBSERVER) OPENCHS_DATABASE_PORT=$(REM_DBPORT) java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 debug_server: build_server
 	AVNI_IDP_TYPE=none OPENCHS_DATABASE=$(DB) java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
-debug_server_remote_db: build_server
-	AVNI_IDP_TYPE=none OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):$(DBPORT)/openchs?currentSchema=public java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
+debug_server_remote_db: check_db_server check_db_port build_server
+	AVNI_IDP_TYPE=none OPENCHS_DATABASE_HOST=$(REM_DBSERVER) OPENCHS_DATABASE_PORT=$(REM_DBPORT) java -Xmx2048m -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 build_server: ## Builds the jar file
 	./gradlew clean build -x test
@@ -161,13 +171,13 @@ test-server: test_server
 test_server_quick_without_clean_rebuild:  ## Run tests
 	MAVEN_OPTS="-Xmx3200m" ./gradlew test
 
-test_server_with_remote_db_quick_with_rebuild:
-	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER) dbPort=$(DBPORT)
-	OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):$(DBPORT)/openchs_test GRADLE_OPTS="-Xmx3200m" ./gradlew clean build test
+test_server_with_remote_db_quick_with_rebuild: check_db_user check_db_server check_db_port
+	#make rebuild_testdb su=$(REM_DBUSER) dbServer=$(REM_DBSERVER) dbPort=$(REM_DBPORT)
+	OPENCHS_DATABASE_HOST=$(REM_DBSERVER) OPENCHS_DATABASE_PORT=$(REM_DBPORT) OPENCHS_DATABASE=openchs_test GRADLE_OPTS="-Xmx3200m" ./gradlew clean build test
 
-test_server_with_remote_db:
-	make rebuild_testdb su=$(DBUSER) dbServer=$(DBSERVER)
-	OPENCHS_DATABASE_URL=jdbc:postgresql://$(DBSERVER):5432/openchs_test GRADLE_OPTS="-Xmx256m" ./gradlew clean test
+test_server_with_remote_db: check_db_user check_db_server check_db_port
+	make rebuild_testdb su=$(REM_DBUSER) dbServer=$(REM_DBSERVER) dbPort=$(REM_DBPORT)
+	OPENCHS_DATABASE_HOST=$(REM_DBSERVER) OPENCHS_DATABASE_PORT=$(REM_DBPORT) OPENCHS_DATABASE=openchs_test GRADLE_OPTS="-Xmx256m" ./gradlew clean test
 
 test_external:
 	./gradlew externalTest
