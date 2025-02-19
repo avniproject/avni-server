@@ -54,7 +54,6 @@ public class MetabaseController {
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         createMetabaseUsersGroupInAvni(organisation);
         metabaseService.setupMetabase();
-        databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
             organisationConfigService.setMetabaseSetupEnabled(organisation, true);
         }
