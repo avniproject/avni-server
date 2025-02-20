@@ -171,13 +171,14 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
         IdpService idpService = idpServiceFactory.getIdpService(organisation);
-        if (isNewUser && BooleanUtil.getBoolean(active)) {
+        boolean inferredActiveValue = BooleanUtil.getBoolean(active, true);
+        if (isNewUser && inferredActiveValue) {
             idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (isNewUser && !BooleanUtil.getBoolean(active)) {
+        } else if (isNewUser && !inferredActiveValue) {
             idpService.createInActiveUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (!isNewUser && BooleanUtil.getBoolean(active)) {
+        } else if (!isNewUser && inferredActiveValue) {
             idpService.enableUser(user);
-        } else if (!isNewUser && !BooleanUtil.getBoolean(active)) {
+        } else if (!isNewUser && !inferredActiveValue) {
             idpService.disableUser(user);
         }
     }
