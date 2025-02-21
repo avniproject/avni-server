@@ -67,6 +67,7 @@ public class BundleService {
             organisationService.addTranslations(orgId, zos);
             organisationService.addOldRuleDependency(orgId, zos);
             organisationService.addOldRules(orgId, zos);
+            organisationService.addCustomQueries(orgId,zos);
         }
         return baos;
     }

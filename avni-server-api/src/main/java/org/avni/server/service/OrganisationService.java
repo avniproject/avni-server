@@ -983,4 +983,11 @@ public class OrganisationService {
         return organisationRepository.findOne(organisationId);
     }
 
+    public void addCustomQueries(Long orgId, ZipOutputStream zos) throws IOException {
+        List<CustomQuery> customQueryList = customQueryRepository.findByOrganisationId(orgId);
+        if (customQueryList.isEmpty()) {
+            return;
+        }
+        addFileToZip(zos, "customQueries.json", customQueryList);
+    }
 }
