@@ -379,8 +379,9 @@ CREATE OR REPLACE VIEW lock_monitor AS(
                                       FROM pg_catalog.pg_locks blockedl
                                                JOIN pg_stat_activity blockeda ON blockedl.pid = blockeda.pid
                                                JOIN pg_catalog.pg_locks blockingl ON(
-                                              ( (blockingl.transactionid=blockedl.transactionid) OR
-                                                (blockingl.relation=blockedl.relation AND blockingl.locktype=blockedl.locktype)
+                                              ((blockingl.transactionid = blockedl.transactionid) OR
+                                               (blockingl.relation = blockedl.relation AND
+                                                blockingl.locktype = blockedl.locktype)
                                                   ) AND blockedl.pid != blockingl.pid)
                                                JOIN pg_stat_activity blockinga ON blockingl.pid = blockinga.pid
                                           AND blockinga.datid = blockeda.datid
@@ -389,24 +390,32 @@ CREATE OR REPLACE VIEW lock_monitor AS(
                                           );
 
 -- To show locks and blocking PIDs
-SELECT * from lock_monitor;
+SELECT *
+from lock_monitor;
+
+-- To show locks and blocking PIDs with only id columns
+SELECT blocked_pid, blocked_mode, blocking_pid
+from lock_monitor
+order by blocking_pid asc;
 
 -- Show process details for blocking pid
-select * from pg_stat_activity where pid = '#<blocking_pid>#';
+select *
+from pg_stat_activity
+where pid = '#<blocking_pid>#';
 
 -- Terminate a process
 select pg_terminate_backend('#<blocking_pid>#');
 
 -- Show process details for pid
-select * from pg_stat_activity;
+select *
+from pg_stat_activity;
 
 -- See number of DB Connections
 
-select max_conn,used,res_for_super,max_conn-used-res_for_super res_for_normal
-from
-    (select count(*) used from pg_stat_activity) t1,
-    (select setting::int res_for_super from pg_settings where name=$$superuser_reserved_connections$$) t2,
-    (select setting::int max_conn from pg_settings where name=$$max_connections$$) t3;
+select max_conn, used, res_for_super, max_conn - used - res_for_super res_for_normal
+from (select count(*) used from pg_stat_activity) t1,
+     (select setting::int res_for_super from pg_settings where name = $$superuser_reserved_connections$$) t2,
+     (select setting::int max_conn from pg_settings where name = $$max_connections$$) t3;
 
 -- Group open db connections by backend name
 SELECT datname, numbackends FROM pg_stat_database;
