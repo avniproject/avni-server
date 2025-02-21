@@ -1,5 +1,7 @@
 package org.avni.server.domain.metadata;
 
+import org.avni.server.domain.CHSBaseEntity;
+
 public class FieldChangeReport {
     private String fieldName;
     private ChangeType changeType;
@@ -14,24 +16,35 @@ public class FieldChangeReport {
         return fieldChangeReport;
     }
 
-    public static FieldChangeReport removed(String fieldName) {
+    public static FieldChangeReport missing(String fieldName) {
         FieldChangeReport fieldChangeReport = new FieldChangeReport();
-        fieldChangeReport.changeType = ChangeType.Removed;
+        fieldChangeReport.changeType = ChangeType.Missing;
         fieldChangeReport.fieldName = fieldName;
         return fieldChangeReport;
     }
 
     public static FieldChangeReport modified(String fieldName, Object oldValue, Object newValue) {
         FieldChangeReport fieldChangeReport = new FieldChangeReport();
-        fieldChangeReport.changeType = ChangeType.Modified;
+        fieldChangeReport.changeType = getModificationType(fieldName, oldValue, newValue);
         fieldChangeReport.fieldName = fieldName;
         fieldChangeReport.primitiveValueChange = new PrimitiveValueChange(oldValue, newValue);
         return fieldChangeReport;
     }
 
+    public static ChangeType getModificationType(String fieldName, Object oldValue, Object newValue) {
+        return fieldName.equals("is_voided") && (oldValue == null || oldValue.equals(Boolean.FALSE)) && newValue.equals(Boolean.TRUE) ? ChangeType.Voided : ChangeType.Modified;
+    }
     public static FieldChangeReport objectModified(String fieldName, ObjectChangeReport objectChangeReport) {
         FieldChangeReport fieldChangeReport = new FieldChangeReport();
         fieldChangeReport.changeType = ChangeType.Modified;
+
+        if (objectChangeReport.getOldValue() instanceof CHSBaseEntity oldValue) {
+            CHSBaseEntity newValue = (CHSBaseEntity) objectChangeReport.getNewValue();
+            if (!oldValue.isVoided() && newValue.isVoided()) {
+                fieldChangeReport.changeType = ChangeType.Voided;
+            }
+        }
+
         fieldChangeReport.fieldName = fieldName;
         fieldChangeReport.objectChangeReport = objectChangeReport;
         return fieldChangeReport;

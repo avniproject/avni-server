@@ -59,8 +59,8 @@ public class MetadataDiffServiceTest {
         return changes.getNumberOfModifications() == 0;
     }
 
-    private MetadataChangeReport compareJsons(String incumbentJson, String json2) throws IOException {
-        MultipartFile zipFile1 = createMultipartFile(incumbentJson);
+    private MetadataChangeReport compareJsons(String candidateJson, String json2) throws IOException {
+        MultipartFile zipFile1 = createMultipartFile(candidateJson);
         currentJson(json2);
         return metadataDiffService.findChangesInBundle(zipFile1);
     }

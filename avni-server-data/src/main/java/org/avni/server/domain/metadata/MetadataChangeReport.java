@@ -4,7 +4,7 @@ import java.util.*;
 
 public class MetadataChangeReport {
     private final Map<String, ObjectCollectionChangeReport> fileChangeReports = new HashMap<>();
-    private List<String> missingFilesTypeInNew;
+    private List<String> missingFilesInNew;
     private List<String> missingFilesInExisting;
     private Map<String, Object> errors;
 
@@ -31,7 +31,7 @@ public class MetadataChangeReport {
     }
 
     public void setMissingInNew(Set<String> missing) {
-        missingFilesTypeInNew = new ArrayList<>(missing);
+        missingFilesInNew = new ArrayList<>(missing);
     }
 
     public void setError(Map<String, Object> errorResult) {
@@ -42,8 +42,8 @@ public class MetadataChangeReport {
         return fileChangeReports;
     }
 
-    public List<String> getMissingFilesTypeInNew() {
-        return missingFilesTypeInNew;
+    public List<String> getMissingFilesInNew() {
+        return missingFilesInNew;
     }
 
     public List<String> getMissingFilesInExisting() {

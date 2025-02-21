@@ -25,10 +25,10 @@ public class ObjectChangeReport {
         return entityChangeReport;
     }
 
-    public static ObjectChangeReport removed(String uuid, Object oldValue) {
+    public static ObjectChangeReport missing(String uuid, Object oldValue) {
         ObjectChangeReport entityChangeReport = new ObjectChangeReport();
         entityChangeReport.uuid = uuid;
-        entityChangeReport.changeType = ChangeType.Removed;
+        entityChangeReport.changeType = ChangeType.Missing;
         entityChangeReport.oldValue = oldValue;
         return entityChangeReport;
     }
