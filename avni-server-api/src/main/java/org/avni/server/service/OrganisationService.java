@@ -168,6 +168,7 @@ public class OrganisationService {
     private final JdbcTemplate jdbcTemplate;
     private final DashboardMapper dashboardMapper;
     private final GroupDashboardService groupDashboardService;
+    private final CustomQueryService customQueryService;
 
     @Autowired
     public OrganisationService(FormRepository formRepository,
@@ -264,7 +265,7 @@ public class OrganisationService {
                                JdbcTemplate jdbcTemplate,
                                ReportCardMapper reportCardMapper,
                                DashboardMapper dashboardMapper,
-                               GroupDashboardService groupDashboardService) {
+                               GroupDashboardService groupDashboardService, CustomQueryService customQueryService) {
         this.formRepository = formRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationRepository = locationRepository;
@@ -362,6 +363,7 @@ public class OrganisationService {
         this.userRepository = userRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.dashboardService = dashboardService;
+        this.customQueryService = customQueryService;
         logger = LoggerFactory.getLogger(this.getClass());
         this.groupDashboardService = groupDashboardService;
     }
@@ -985,9 +987,10 @@ public class OrganisationService {
 
     public void addCustomQueries(Long orgId, ZipOutputStream zos) throws IOException {
         List<CustomQuery> customQueryList = customQueryRepository.findByOrganisationId(orgId);
+        List<CustomQueryContract> customQueryContractList = customQueryList.stream().map(customQueryService::EntityToDto).collect(Collectors.toList());
         if (customQueryList.isEmpty()) {
             return;
         }
-        addFileToZip(zos, "customQueries.json", customQueryList);
+        addFileToZip(zos, "customQueries.json", customQueryContractList);
     }
 }
