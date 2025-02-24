@@ -1,11 +1,13 @@
 package org.avni.server.importer.batch.zip;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.PostConstruct;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
 import org.avni.server.builder.FormBuilderException;
 import org.avni.server.dao.CardRepository;
+import org.avni.server.dao.CustomQueryRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
@@ -86,6 +88,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     private final TranslationService translationService;
     private final RuleService ruleService;
     private final GroupDashboardService groupDashboardService;
+    private final CustomQueryService customQueryService;
 
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -134,6 +137,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         add(BundleFolder.OLD_RULES.getFolderName());
         add(BundleFolder.SUBJECT_TYPE_ICONS.getFolderName());
         add(BundleFolder.REPORT_CARD_ICONS.getFolderName());
+        add("customQueries.json");
     }};
 
 
@@ -168,7 +172,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                                  MessagingService messagingService,
                                  RuleDependencyService ruleDependencyService,
                                  TranslationService translationService,
-                                 RuleService ruleService, GroupDashboardService groupDashboardService) {
+                                 RuleService ruleService, GroupDashboardService groupDashboardService, CustomQueryRepository customQueryRepository, CustomQueryService customQueryService) {
         this.authService = authService;
         this.conceptService = conceptService;
         this.formService = formService;
@@ -202,6 +206,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         this.translationService = translationService;
         this.ruleService = ruleService;
         this.groupDashboardService = groupDashboardService;
+        this.customQueryService = customQueryService;
         objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
@@ -375,6 +380,10 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
                 RuleDependencyRequest ruleDependencyRequest = convertString(fileData, RuleDependencyRequest.class);
                 ruleDependencyService.uploadRuleDependency(ruleDependencyRequest, organisation);
                 break;
+            case "customQueries.json":
+                List<CustomQueryContract> customQueries = convertString(fileData, new TypeReference<List<CustomQueryContract>>() {});
+                customQueryService.processCustomQueries(customQueries);
+                break;
         }
     }
 
@@ -425,6 +434,9 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
     }
 
     private <T> T convertString(String data, Class<T> convertTo) throws IOException {
+        return objectMapper.readValue(data, convertTo);
+    }
+    private <T> T convertString(String data, TypeReference<T> convertTo) throws IOException {
         return objectMapper.readValue(data, convertTo);
     }
 }
