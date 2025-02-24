@@ -9,15 +9,16 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
-import org.avni.server.domain.Account;
-import org.avni.server.domain.OperatingIndividualScope;
-import org.avni.server.domain.Organisation;
-import org.avni.server.domain.User;
+import org.avni.server.dao.metabase.MetabaseUserRepository;
+import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
+import org.avni.server.domain.metabase.CreateUserRequest;
+import org.avni.server.domain.metabase.UpdateUserGroupRequest;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.projection.UserWebProjection;
 import org.avni.server.service.*;
 import org.avni.server.service.accessControl.AccessControlService;
+import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.ValidationUtil;
@@ -58,6 +59,8 @@ public class UserController {
     private final SubjectTypeRepository subjectTypeRepository;
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
+    private final MetabaseUserRepository metabaseUserRepository;
+    private final DatabaseService databaseService;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -70,7 +73,8 @@ public class UserController {
                           AccountAdminService accountAdminService, AccountRepository accountRepository,
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
-                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService) {
+                          AccessControlService accessControlService, OrganisationConfigService organisationConfigService,
+                          MetabaseUserRepository metabaseUserRepository, DatabaseService databaseService) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -83,6 +87,8 @@ public class UserController {
         this.subjectTypeRepository = subjectTypeRepository;
         this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
+        this.metabaseUserRepository = metabaseUserRepository;
+        this.databaseService = databaseService;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -161,13 +167,43 @@ public class UserController {
             idpServiceFactory.getIdpService(user, userService.isAdmin(user)).updateUser(user);
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
-            userService.associateUserToGroups(user, userContract.getGroupIds());
+            List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
+            if (organisationConfigService.checkIfReportingMetabaseSelfServiceIsEnabled(false) &&
+                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+                performMetabaseUserUpsert(userContract, associatedUserGroups);
+            }
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
             return new ResponseEntity<>(user, HttpStatus.CREATED);
         } catch (ValidationException ex) {
             return WebResponseUtil.createBadRequestResponse(ex, logger);
         } catch (AWSCognitoIdentityProviderException ex) {
             return WebResponseUtil.createInternalServerErrorResponse(ex, logger);
+        }
+    }
+
+    private void performMetabaseUserUpsert(UserContract userContract, List<UserGroup> associatedUserGroups) {
+        boolean isPartOfMetabaseUsersGrp = associatedUserGroups.stream()
+                .filter(ug -> !ug.isVoided() && ug.getGroupName().contains(Group.METABASE_USERS))
+                .findAny().isPresent();
+
+        if (isPartOfMetabaseUsersGrp) {
+            if (!metabaseUserRepository.emailExists(userContract.getEmail())) {
+                String[] nameParts = userContract.getName().split(" ", 2);
+                String firstName = nameParts[0];
+                String lastName = (nameParts.length > 1) ? nameParts[1] : null;
+                metabaseUserRepository.save(new CreateUserRequest(firstName, lastName, userContract.getEmail(), metabaseUserRepository.getUserGroupMemberships()));
+            } else {
+                if (!metabaseUserRepository.activeUserExists(userContract.getEmail())) {
+                    metabaseUserRepository.reactivateMetabaseUser(userContract.getEmail());
+                }
+                if (!metabaseUserRepository.userExistsInCurrentOrgGroup((userContract.getEmail()))) {
+                    metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(userContract.getEmail()).getId(), databaseService.getGlobalMetabaseGroup().getId()));
+                }
+            }
+        } else {
+            if (metabaseUserRepository.activeUserExists(userContract.getEmail(), true)) {
+                metabaseUserRepository.deactivateMetabaseUser(userContract.getEmail());
+            }
         }
     }
 

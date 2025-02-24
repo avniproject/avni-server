@@ -6,7 +6,6 @@ import org.avni.server.dao.*;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.exception.GroupNotFoundException;
-import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.WebResponseUtil;
@@ -94,9 +93,9 @@ public class UserService implements NonScopeAwareService {
     }
 
     @Transactional
-    public void associateUserToGroups(User user, List<Long> associatedGroupIds) {
-        if(associatedGroupIds == null) {
-            return;
+    public List<UserGroup> associateUserToGroups(User user, List<Long> associatedGroupIds) {
+        if (associatedGroupIds == null) {
+            return null;
         }
         List<UserGroup> userGroupsToBeSaved = new ArrayList<>();
         Group everyoneGroup = groupRepository.findByNameAndOrganisationId(Group.Everyone, user.getOrganisationId());
@@ -120,7 +119,7 @@ public class UserService implements NonScopeAwareService {
             userGroupsToBeSaved.add(userGroup);
         });
 
-        this.userGroupRepository.saveAll(userGroupsToBeSaved);
+        return this.userGroupRepository.saveAll(userGroupsToBeSaved);
     }
 
     @Override

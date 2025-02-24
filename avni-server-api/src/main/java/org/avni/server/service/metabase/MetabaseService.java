@@ -7,13 +7,18 @@ import org.avni.server.service.OrganisationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.annotation.RequestScope;
+
+import java.time.Duration;
 
 @Service
+@RequestScope
 public class MetabaseService {
+    private static final String DB_ENGINE = "postgres";
 
     @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
-    public static final String DB_ENGINE = "postgres";
+
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
@@ -21,10 +26,15 @@ public class MetabaseService {
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
+    private final Organisation currentOrganisation;
+    private final String organisationName;
+    private final String organisationDbUser;
+
+    // Following attributes are to be used within "Request" scope only
     private Database globalDatabase;
     private CollectionInfoResponse globalCollection;
     private CollectionItem globalDashboard;
-    private Group metabaseGroup;
+    private Group globalMetabaseGroup;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
@@ -41,46 +51,72 @@ public class MetabaseService {
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
+        this.currentOrganisation = organisationService.getCurrentOrganisation();
+        this.organisationName = currentOrganisation.getName();
+        this.organisationDbUser = currentOrganisation.getDbUser();
     }
 
-    public void setupMetabase() {
-        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-        String name = currentOrganisation.getName();
-        String dbUser = currentOrganisation.getDbUser();
-
-        globalDatabase = databaseRepository.getDatabaseByName(new Database(name));
+    private void setupGlobalDatabase() {
+        globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
         if (globalDatabase == null) {
-            Database newDatabase = new Database(name, DB_ENGINE, new DatabaseDetails(avniDatabase, dbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
+            Database newDatabase = new Database(organisationName, DB_ENGINE, new DatabaseDetails(avniDatabase, organisationDbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
             globalDatabase = databaseRepository.save(newDatabase);
         }
+    }
 
-        globalCollection = collectionRepository.getCollectionByName(globalDatabase);
+    private void setupGlobalCollection() {
+        globalCollection = collectionRepository.getCollectionByName(organisationName);
         if (globalCollection == null) {
-            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(name, name + " collection"));
+            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(organisationName, organisationName + " collection"));
             globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
         }
+    }
 
-        metabaseGroup = groupPermissionsRepository.findGroup(name);
-        if(metabaseGroup==null){
-            metabaseGroup= groupPermissionsRepository.createGroup(name, globalDatabase.getId());
+    private void setupGlobalMetabaseGroup() {
+        globalMetabaseGroup = groupPermissionsRepository.findGroup(organisationName);
+        if (globalMetabaseGroup == null) {
+            globalMetabaseGroup = groupPermissionsRepository.createGroup(organisationName, getGlobalDatabase().getId());
         }
+    }
 
+    private void setupCollectionPermissions() {
         CollectionPermissionsService collectionPermissions = new CollectionPermissionsService(
                 collectionPermissionsRepository.getCollectionPermissionsGraph()
         );
-        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, metabaseGroup.getId(), globalCollection.getIdAsInt());
+        collectionPermissions.updateAndSavePermissions(collectionPermissionsRepository, getGlobalMetabaseGroup().getId(), getGlobalCollection().getIdAsInt());
+    }
 
-        globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
-        if(globalDashboard == null){
-            Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(null,getGlobalCollection().getIdAsInt()));
-            globalDashboard = new CollectionItem(metabaseDashboard.getName(),metabaseDashboard.getId());
+    private void setupGlobalDashboard() {
+        globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
+        if (globalDashboard == null) {
+            Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(null, getGlobalCollection().getIdAsInt()));
+            globalDashboard = new CollectionItem(metabaseDashboard.getName(), metabaseDashboard.getId());
+        }
+    }
+
+    public void setupMetabase() {
+        setupGlobalDatabase();
+        sleepAwhile(10);
+        setupGlobalCollection();
+        sleepAwhile(10);
+        setupGlobalMetabaseGroup();
+        sleepAwhile(10);
+        setupCollectionPermissions();
+        sleepAwhile(10);
+        setupGlobalDashboard();
+    }
+
+    public void sleepAwhile(long secondsToSleep) {
+        try {
+            Thread.sleep(Duration.ofSeconds(secondsToSleep));
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
     }
 
     public Database getGlobalDatabase() {
         if (globalDatabase == null) {
-            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalDatabase = databaseRepository.getDatabaseByName(new Database(currentOrganisation.getName()));
+            globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
             if (globalDatabase == null) {
                 throw new RuntimeException("Global database not found.");
             }
@@ -88,13 +124,11 @@ public class MetabaseService {
         return globalDatabase;
     }
 
-
     public CollectionInfoResponse getGlobalCollection() {
         if (globalCollection == null) {
-            Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-            globalCollection = collectionRepository.getCollectionByName(new Database(currentOrganisation.getName()));
+            globalCollection = collectionRepository.getCollectionByName(organisationName);
             if (globalCollection == null) {
-                throw new RuntimeException("Global database not found.");
+                throw new RuntimeException("Global collection not found.");
             }
         }
         return globalCollection;
@@ -102,11 +136,21 @@ public class MetabaseService {
 
     public CollectionItem getGlobalDashboard() {
         if (globalDashboard == null) {
-            globalDashboard = metabaseDashboardRepository.getDashboardByName(globalCollection);
+            globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
             if (globalDashboard == null) {
                 throw new RuntimeException("Global dashboard not found.");
             }
         }
         return globalDashboard;
+    }
+
+    public Group getGlobalMetabaseGroup() {
+        if (globalMetabaseGroup == null) {
+            globalMetabaseGroup = groupPermissionsRepository.findGroup(organisationName);
+            if (globalMetabaseGroup == null) {
+                throw new RuntimeException("Global group not found.");
+            }
+        }
+        return globalMetabaseGroup;
     }
 }

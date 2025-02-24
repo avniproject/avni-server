@@ -6,17 +6,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class DatabaseDetails {
     private String host;
     private String port;
-    private String db;
+    private String dbname;
     private String user;
     private String password;
 
     public DatabaseDetails() {
     }
 
-    public DatabaseDetails(String host, String port, String db, String user, String password) {
+    public DatabaseDetails(String host, String port, String dbname, String user, String password) {
         this.host = host;
         this.port = port;
-        this.db = db;
+        this.dbname = dbname;
         this.user = user;
         this.password = password;
     }
@@ -33,8 +33,8 @@ public class DatabaseDetails {
         return port;
     }
 
-    public String getDb() {
-        return db;
+    public String getDbname() {
+        return dbname;
     }
 
     public String getUser() {

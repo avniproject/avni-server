@@ -3,6 +3,8 @@ package org.avni.server.domain.metabase;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MetabaseUserData {
 
@@ -22,15 +24,19 @@ public class MetabaseUserData {
     private final boolean isActive;
 
     @JsonProperty("is_superuser")
-    private final String isSuperuser;
+    private final boolean isSuperuser;
 
-    public MetabaseUserData(Integer id, String firstName, String lastName, String email, boolean isActive, String isSuperuser) {
+    @JsonProperty("group_ids")
+    private final List<Integer> groupIds;
+
+    public MetabaseUserData(Integer id, String firstName, String lastName, String email, boolean isActive, boolean isSuperuser, List<Integer> groupIds) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.isActive = isActive;
         this.isSuperuser = isSuperuser;
+        this.groupIds = groupIds;
     }
 
     public Integer getId() {
@@ -53,7 +59,11 @@ public class MetabaseUserData {
         return isActive;
     }
 
-    public String isSuperuser() {
+    public boolean getIsSuperuser() {
         return isSuperuser;
+    }
+
+    public List<Integer> getGroupIds() {
+        return groupIds;
     }
 }

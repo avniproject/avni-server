@@ -135,6 +135,8 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
         Boolean active = row.getBool(ACTIVE);
+        boolean isActive = BooleanUtil.getBoolean(active);
+
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByNameIgnoreCase(language);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
@@ -168,9 +170,11 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         user.setOrganisationId(organisation.getId());
         user.setAuditInfo(currentUser);
+        user.setDisabledInCognito(!isActive);
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
         IdpService idpService = idpServiceFactory.getIdpService(organisation);
+
         boolean inferredActiveValue = BooleanUtil.getBoolean(active, true);
         if (isNewUser && inferredActiveValue) {
             idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
