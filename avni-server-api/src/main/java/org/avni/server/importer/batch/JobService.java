@@ -34,17 +34,19 @@ public class JobService {
     private final JobRepository jobRepository;
     private final Job importJob;
     private final Job importZipJob;
+    private final Job cannedAnalyticsJob;
     private final JobLauncher bgJobLauncher;
     private final AvniJobRepository avniJobRepository;
 
     @Autowired
-    public JobService(JobExplorer jobExplorer, JobRepository jobRepository, Job importJob, Job importZipJob, JobLauncher bgJobLauncher, AvniJobRepository avniJobRepository) {
+    public JobService(JobExplorer jobExplorer, JobRepository jobRepository, Job importJob, Job importZipJob, JobLauncher bgJobLauncher, AvniJobRepository avniJobRepository, Job cannedAnalyticsJob) {
         this.jobExplorer = jobExplorer;
         this.jobRepository = jobRepository;
         this.importJob = importJob;
         this.importZipJob = importZipJob;
         this.bgJobLauncher = bgJobLauncher;
         this.avniJobRepository = avniJobRepository;
+        this.cannedAnalyticsJob = cannedAnalyticsJob;
     }
 
     public void retryJobsFailedInLast2Hours() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException {
@@ -86,6 +88,17 @@ public class JobService {
         logger.info(format("Bulk upload initiated! Job{type='%s',uuid='%s',fileName='%s'}", type, uuid, fileName));
 
         return type.equals("metadataZip") ? bgJobLauncher.run(importZipJob, jobParameters) : bgJobLauncher.run(importJob, jobParameters);
+    }
+
+    public void createCannedAnalyticsSetupJob(String uuid, Long userId, String organisationUUID) throws JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
+        JobParametersBuilder jobParametersBuilder = new JobParametersBuilder()
+                .addString("organisationUUID", organisationUUID)
+                .addString("uuid", uuid)
+                .addLong("userId", userId, false);
+        JobParameters jobParameters = jobParametersBuilder.toJobParameters();
+        logger.info(format("Canned analytics job initiated! {uuid='%s'}", uuid));
+
+        bgJobLauncher.run(cannedAnalyticsJob, jobParameters);
     }
 
     @Transactional
