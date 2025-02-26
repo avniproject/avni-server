@@ -95,13 +95,6 @@ public class DatabaseService implements IQuestionCreationService {
         return databaseRepository.getFieldDetailsByName(getGlobalDatabase(), tableDetails, fieldDetails).getId();
     }
 
-    private void ensureSyncComplete() {
-        SyncStatus syncStatus = getInitialSyncStatus();
-        if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
-        }
-    }
-
     private List<String> filterOutExistingQuestions(List<String> entityNames) {
         Set<String> existingItemNames = collectionRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
                 .map(item -> item.getName().trim().toLowerCase().replace(" ", "_"))
@@ -188,7 +181,6 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
-        ensureSyncComplete();
         Database database = getGlobalDatabase();
         TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, database.getName()));
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
@@ -214,7 +206,6 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForMiscSingleTables() {
-        ensureSyncComplete();
         List<String> miscSingleTableNames = Arrays.asList(ADDRESS_TABLE, MEDIA_TABLE, SYNC_TELEMETRY_TABLE);
         List<String> filteredTables = filterOutExistingQuestions(miscSingleTableNames);
 
@@ -224,7 +215,6 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForMiscJoinedTables() {
-        ensureSyncComplete();
         Database database = getGlobalDatabase();
         List<String> miscJoinedTables = Arrays.asList(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE, ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE);
         List<String> filteredTables = filterOutExistingQuestions(miscJoinedTables);
@@ -362,7 +352,6 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createCustomQuestions() {
-        ensureSyncComplete();
         Database database = getGlobalDatabase();
         if (isQuestionMissing(QuestionName.NonVoidedIndividual.getQuestionName())) {
             questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonVoidedIndividual, VisualizationType.PIE, Collections.EMPTY_LIST);
@@ -388,7 +377,6 @@ public class DatabaseService implements IQuestionCreationService {
         tabs.add(new Tabs(-1,"Activity"));
         tabs.add(new Tabs(-2,"Data"));
         metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards,createParametersForDashboard(),tabs));
-
     }
 
     private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard(){
@@ -439,7 +427,19 @@ public class DatabaseService implements IQuestionCreationService {
         return parameters;
     }
 
-    public void addCollectionItems() {
+    public void addCollectionItems() throws InterruptedException {
+        long MAX_WAIT_TIME_IN_SECONDS = 300;
+        long EACH_SLEEP_DURATION = 3;
+        long startTime = System.currentTimeMillis();
+        while ((System.currentTimeMillis() - startTime) < (MAX_WAIT_TIME_IN_SECONDS * 1000)) {
+            SyncStatus syncStatus = this.getInitialSyncStatus();
+            if (syncStatus != SyncStatus.COMPLETE) {
+                Thread.sleep(EACH_SLEEP_DURATION * 1000);
+            } else {
+                break;
+            }
+        }
+
         //todo add field details and table details to request scope
         createQuestionsForSubjectTypes();
         createQuestionsForProgramsAndEncounters();

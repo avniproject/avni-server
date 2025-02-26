@@ -1,7 +1,7 @@
 package org.avni.server.dao;
 
-import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.User;
+import org.avni.server.domain.batch.BatchJobStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -72,20 +72,24 @@ public class AvniJobRepository {
         return new PageImpl<>(jobStatuses, pageable, count);
     }
 
-    public String getLastJobStatusForSubjectType(SubjectType subjectType) {
-        String baseQuery = "select status\n" +
-                "from batch_job_instance i\n" +
-                "         left join batch_job_execution bje on i.job_instance_id = bje.job_instance_id\n" +
-                "         left join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id\n" +
-                "where i.job_name = 'syncAttributesJob'\n" +
-                "  and bjep.parameter_name = 'subjectTypeId'\n" +
-                "  and bjep.parameter_value = :subjectTypeId::text\n" +
-                "  and start_time is not null\n" +
-                "order by start_time desc\n" +
-                "limit 1;";
+    public BatchJobStatus getJobStatus(String jobName, String parameterName, String parameterValue) {
+        String baseQuery = """
+                                select bje.status, bje.create_time createDateTime, bje.end_time endDateTime, bje.exit_message exitMessage  
+                                    from batch_job_instance i
+                                         left join batch_job_execution bje on i.job_instance_id = bje.job_instance_id
+                                         left join batch_job_execution_params bjep on bje.job_execution_id = bjep.job_execution_id
+                                where i.job_name = :jobName
+                                  and start_time is not null
+                                  and bjep.parameter_name = :parameterName and bjep.parameter_value = :parameterValue
+                                order by start_time desc
+                                limit 1;
+                """;
         Map<String, Object> params = new HashMap<>();
-        params.put("subjectTypeId", subjectType.getId());
-        List<String> statuses = jdbcTemplate.query(baseQuery, params, (rs, rowNum) -> rs.getString(1));
+        params.put("jobName", jobName);
+        params.put("parameterName", parameterName);
+        params.put("parameterValue", parameterValue);
+        List<BatchJobStatus> statuses = jdbcTemplate.query(baseQuery, params, (rs, rowNum) ->
+                new BatchJobStatus(rs.getString(1), rs.getTimestamp(2), rs.getTimestamp(3), rs.getString(4)));
         if (statuses.isEmpty()) {
             return null;
         }

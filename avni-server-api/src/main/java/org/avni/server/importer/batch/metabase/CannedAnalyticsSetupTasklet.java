@@ -12,17 +12,19 @@ import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.request.GroupContract;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.JobScope;
-import org.springframework.batch.item.Chunk;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 @JobScope
-public class CannedAnalyticsRunner implements ItemWriter<Void> {
-    private static final Logger logger = LoggerFactory.getLogger(CannedAnalyticsRunner.class);
+public class CannedAnalyticsSetupTasklet implements Tasklet {
+    private static final Logger logger = LoggerFactory.getLogger(CannedAnalyticsSetupTasklet.class);
 
     private final AuthService authService;
     private final OrganisationRepository organisationRepository;
@@ -34,11 +36,9 @@ public class CannedAnalyticsRunner implements ItemWriter<Void> {
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
-    @Value("#{jobParameters['actionType']}")
-    private String actionType;
 
     @Autowired
-    public CannedAnalyticsRunner(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, GroupsService groupsService, MetabaseService metabaseService, DatabaseService databaseService) {
+    public CannedAnalyticsSetupTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, GroupsService groupsService, MetabaseService metabaseService, DatabaseService databaseService) {
         this.authService = authService;
         this.organisationConfigService = organisationConfigService;
         this.organisationRepository = organisationRepository;
@@ -52,41 +52,31 @@ public class CannedAnalyticsRunner implements ItemWriter<Void> {
         authService.authenticateByUserId(userId, organisationUUID);
     }
 
-    @Override
-    public void write(Chunk<? extends Void> chunk) throws Exception {
-        synchronized (String.format("%s-CANNED-ANALYTICS-JOB", organisationUUID).intern()) {
-            Organisation organisation = organisationRepository.findByUuid(organisationUUID);
-            if (CannedAnalyticsBatchActionType.Setup.name().equals(actionType)) {
-                setup(organisation);
-            } else if (CannedAnalyticsBatchActionType.Teardown.name().equals(actionType)) {
-                tearDown(organisation);
-            } else if (CannedAnalyticsBatchActionType.CreateQuestionOnly.name().equals(actionType)) {
-                createQuestionsOnly();
-            } else {
-                logger.error("Invalid action type: {}", actionType);
-            }
-        }
-    }
-
-    private void createQuestionsOnly() {
-        databaseService.addCollectionItems();
-    }
-
-    private void tearDown(Organisation organisation) {
-        metabaseService.tearDownMetabase();
-        if (organisationConfigService.isMetabaseSetupEnabled(organisation)) {
-            organisationConfigService.setMetabaseSetupEnabled(organisation, false);
-        }
-    }
-
-    private void setup(Organisation organisation) {
+    private void setup(Organisation organisation) throws InterruptedException {
         GroupContract groupContract = new GroupContract();
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
-        createQuestionsOnly();
+        databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
             organisationConfigService.setMetabaseSetupEnabled(organisation, true);
         }
+    }
+
+    @Override
+    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        Organisation organisation = organisationRepository.findByUuid(organisationUUID);
+        logger.info("Setting up canned analytics for organisation {}", organisation.getName());
+        try {
+            CannedAnalyticsLockProvider.acquireLock(organisation);
+            logger.info("Setup job acquired Lock for organisation {}", organisation.getName());
+            setup(organisation);
+            logger.info("Setup job completed for organisation {}", organisation.getName());
+        } catch (Exception e) {
+            logger.error("Error setting up canned analytics for organisation {}", organisation.getName(), e);
+        } finally {
+            CannedAnalyticsLockProvider.releaseLock(organisation);
+        }
+        return RepeatStatus.FINISHED;
     }
 }
