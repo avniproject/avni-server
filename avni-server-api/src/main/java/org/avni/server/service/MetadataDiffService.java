@@ -66,14 +66,14 @@ public class MetadataDiffService {
                 }
             }
 
-            Set<String> filesMissingInCandidate = findMissingFiles(candidateJsonFiles, existingJsonFiles);
-            if (!filesMissingInCandidate.isEmpty()) {
-                metadataChangeReport.setMissingInNew(filesMissingInCandidate);
-            }
-
-            Set<String> filesMissingInExisting = findMissingFiles(existingJsonFiles, candidateJsonFiles);
+            Set<String> filesMissingInExisting = findMissingFiles(candidateJsonFiles, existingJsonFiles);
             if (!filesMissingInExisting.isEmpty()) {
                 metadataChangeReport.setMissingInExisting(filesMissingInExisting);
+            }
+
+            Set<String> filesMissingInCandidate = findMissingFiles(existingJsonFiles, candidateJsonFiles);
+            if (!filesMissingInCandidate.isEmpty()) {
+                metadataChangeReport.setMissingInNew(filesMissingInCandidate);
             }
         } catch (IOException e) {
             logger.error("Error comparing metadata ZIPs: " + e.getMessage(), e);

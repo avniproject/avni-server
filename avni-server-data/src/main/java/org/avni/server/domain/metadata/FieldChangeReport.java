@@ -32,7 +32,7 @@ public class FieldChangeReport {
     }
 
     public static ChangeType getModificationType(String fieldName, Object oldValue, Object newValue) {
-        return fieldName.equals("is_voided") && (oldValue == null || oldValue.equals(Boolean.FALSE)) && newValue.equals(Boolean.TRUE) ? ChangeType.Voided : ChangeType.Modified;
+        return fieldName.equals("voided") && (oldValue == null || oldValue.equals(Boolean.FALSE)) && newValue.equals(Boolean.TRUE) ? ChangeType.Voided : ChangeType.Modified;
     }
     public static FieldChangeReport objectModified(String fieldName, ObjectChangeReport objectChangeReport) {
         FieldChangeReport fieldChangeReport = new FieldChangeReport();

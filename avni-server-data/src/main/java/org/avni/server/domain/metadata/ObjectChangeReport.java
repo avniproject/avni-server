@@ -1,5 +1,7 @@
 package org.avni.server.domain.metadata;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,7 @@ public class ObjectChangeReport {
     private ChangeType changeType;
     private Object newValue;
     private Object oldValue;
+    @JsonProperty("fieldChanges")
     private final List<FieldChangeReport> fieldChanges = new ArrayList<>();
 
     public static ObjectChangeReport noChange(String uuid) {
