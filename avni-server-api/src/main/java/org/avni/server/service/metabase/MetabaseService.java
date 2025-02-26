@@ -6,39 +6,29 @@ import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.List;
 
 @Service
-@RequestScope
 public class MetabaseService {
     private static final String DB_ENGINE = "postgres";
 
     @Value("${avni.default.org.user.db.password}")
     private String AVNI_DEFAULT_ORG_USER_DB_PASSWORD;
 
+    private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
     private final DatabaseRepository databaseRepository;
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
-    private final Organisation currentOrganisation;
     private final MetabaseGroupRepository metabaseGroupRepository;
     private final MetabaseUserRepository metabaseUserRepository;
-    private final DatabaseService databaseService;
-    private final String organisationName;
-    private final String organisationDbUser;
-
-    // Following attributes are to be used within "Request" scope only
-    private Database globalDatabase;
-    private CollectionInfoResponse globalCollection;
-    private CollectionItem globalDashboard;
-    private Group globalMetabaseGroup;
 
     @Autowired
     public MetabaseService(OrganisationService organisationService,
@@ -49,77 +39,79 @@ public class MetabaseService {
                            CollectionRepository collectionRepository,
                            MetabaseDashboardRepository metabaseDashboardRepository,
                            MetabaseGroupRepository metabaseGroupRepository,
-                           MetabaseUserRepository metabaseUserRepository,
-                           DatabaseService databaseService) {
+                           MetabaseUserRepository metabaseUserRepository) {
+        this.organisationService = organisationService;
         this.avniDatabase = avniDatabase;
         this.databaseRepository = databaseRepository;
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.collectionPermissionsRepository = collectionPermissionsRepository;
         this.collectionRepository = collectionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
-        this.currentOrganisation = organisationService.getCurrentOrganisation();
         this.metabaseGroupRepository = metabaseGroupRepository;
         this.metabaseUserRepository = metabaseUserRepository;
-        this.databaseService = databaseService;
-        this.organisationName = currentOrganisation.getName();
-        this.organisationDbUser = currentOrganisation.getDbUser();
     }
 
     private void setupDatabase() {
-        globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        Database globalDatabase = databaseRepository.getDatabase(currentOrganisation);
         if (globalDatabase == null) {
-            Database newDatabase = new Database(organisationName, DB_ENGINE, new DatabaseDetails(avniDatabase, organisationDbUser, AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
-            globalDatabase = databaseRepository.save(newDatabase);
+            Database newDatabase = new Database(currentOrganisation.getName(), DB_ENGINE, new DatabaseDetails(avniDatabase, currentOrganisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
+            databaseRepository.save(newDatabase);
         }
     }
 
     private void tearDownDatabase() {
-        Database database = databaseRepository.getDatabase(organisationName, organisationDbUser);
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         if (database != null)
             databaseRepository.delete(database);
     }
 
     private void setupCollection() {
-        globalCollection = collectionRepository.getCollectionByName(organisationName);
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        CollectionInfoResponse globalCollection = collectionRepository.getCollection(currentOrganisation);
         if (globalCollection == null) {
-            CollectionResponse metabaseCollection = collectionRepository.save(new CreateCollectionRequest(organisationName, organisationName + " collection"));
-            globalCollection = new CollectionInfoResponse(null, metabaseCollection.getId(), false);
+            collectionRepository.save(new CreateCollectionRequest(currentOrganisation.getName(), currentOrganisation.getName() + " collection"));
         }
     }
 
     private void tearDownMetabaseCollection() {
-        CollectionInfoResponse collection = collectionRepository.getCollectionByName(organisationName);
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        CollectionInfoResponse collection = collectionRepository.getCollection(currentOrganisation);
         if (collection != null)
             collectionRepository.delete(collection);
     }
 
     private void setupMetabaseGroup() {
-        globalMetabaseGroup = metabaseGroupRepository.findGroup(organisationName);
-        if (globalMetabaseGroup == null) {
-            globalMetabaseGroup = metabaseGroupRepository.createGroup(organisationName);
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        Group metabaseGroup = metabaseGroupRepository.findGroup(currentOrganisation);
+        if (metabaseGroup == null) {
+            metabaseGroup = metabaseGroupRepository.createGroup(currentOrganisation);
         }
+        Database database = databaseRepository.getDatabase(currentOrganisation);
         // Data tab, Groups sub tab
-        groupPermissionsRepository.restrictGroupAccessToItsOwnDatabaseOnly(globalMetabaseGroup.getId(), globalDatabase.getId());
-        groupPermissionsRepository.removeAllUsersPermissionToOrgDatabase(globalDatabase);
+        groupPermissionsRepository.restrictGroupAccessToItsOwnDatabaseOnly(metabaseGroup.getId(), database.getId());
+        groupPermissionsRepository.removeAllUsersPermissionToOrgDatabase(database);
         // Data tab, Databases sub tab
-        groupPermissionsRepository.removeOrgDatabaseAccessForAllOtherGroups(globalDatabase, globalMetabaseGroup);
+        groupPermissionsRepository.removeOrgDatabaseAccessForAllOtherGroups(database, metabaseGroup);
     }
 
     private void tearDownMetabaseGroup() {
-        Group group = metabaseGroupRepository.findGroup(organisationName);
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        Group group = metabaseGroupRepository.findGroup(currentOrganisation);
         if (group != null)
             groupPermissionsRepository.delete(group);
     }
 
     private void setupCollectionPermissions() {
-        collectionPermissionsRepository.updateCollectionPermissions(globalMetabaseGroup, globalCollection);
+        Group group = metabaseGroupRepository.findGroup(organisationService.getCurrentOrganisation());
+        CollectionInfoResponse globalcollection = collectionRepository.getCollection(organisationService.getCurrentOrganisation());
+        collectionPermissionsRepository.updateCollectionPermissions(group, globalcollection);
     }
 
     private void setupDashboard() {
-        globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
-        if (globalDashboard == null) {
-            Dashboard metabaseDashboard = metabaseDashboardRepository.save(new CreateDashboardRequest(null, getGlobalCollection().getIdAsInt()));
-            globalDashboard = new CollectionItem(metabaseDashboard.getName(), metabaseDashboard.getId());
+        CollectionItem dashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
+        if (dashboard == null) {
+            metabaseDashboardRepository.save(new CreateDashboardRequest(null, getGlobalCollection().getIdAsInt()));
         }
     }
 
@@ -137,44 +129,9 @@ public class MetabaseService {
         tearDownDatabase();
     }
 
-    public Database getGlobalDatabase() {
-        if (globalDatabase == null) {
-            globalDatabase = databaseRepository.getDatabase(organisationName, organisationDbUser);
-            if (globalDatabase == null) {
-                throw new RuntimeException("Global database not found.");
-            }
-        }
-        return globalDatabase;
-    }
-
     public CollectionInfoResponse getGlobalCollection() {
-        if (globalCollection == null) {
-            globalCollection = collectionRepository.getCollectionByName(organisationName);
-            if (globalCollection == null) {
-                throw new RuntimeException("Global collection not found.");
-            }
-        }
-        return globalCollection;
-    }
-
-    public CollectionItem getGlobalDashboard() {
-        if (globalDashboard == null) {
-            globalDashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
-            if (globalDashboard == null) {
-                throw new RuntimeException("Global dashboard not found.");
-            }
-        }
-        return globalDashboard;
-    }
-
-    public Group getGlobalMetabaseGroup() {
-        if (globalMetabaseGroup == null) {
-            globalMetabaseGroup = metabaseGroupRepository.findGroup(organisationName);
-            if (globalMetabaseGroup == null) {
-                throw new RuntimeException("Global group not found.");
-            }
-        }
-        return globalMetabaseGroup;
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        return collectionRepository.getCollection(organisation);
     }
 
     public void upsertUsersOnMetabase(List<UserGroup> usersToBeAdded) {
@@ -193,7 +150,7 @@ public class MetabaseService {
                         metabaseUserRepository.reactivateMetabaseUser(value.getUser().getEmail());
                     }
                     if (!metabaseUserRepository.userExistsInCurrentOrgGroup((value.getUser().getEmail()))) {
-                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(value.getUser().getEmail()).getId(), databaseService.getGlobalMetabaseGroup().getId()));
+                        metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(value.getUser().getEmail()).getId(), group.getId()));
                     }
                 }
             }

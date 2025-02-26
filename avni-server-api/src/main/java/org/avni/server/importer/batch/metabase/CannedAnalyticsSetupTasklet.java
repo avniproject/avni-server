@@ -74,6 +74,7 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
             logger.info("Setup job completed for organisation {}", organisation.getName());
         } catch (Exception e) {
             logger.error("Error setting up canned analytics for organisation {}", organisation.getName(), e);
+            throw e;
         } finally {
             CannedAnalyticsLockProvider.releaseLock(organisation);
         }

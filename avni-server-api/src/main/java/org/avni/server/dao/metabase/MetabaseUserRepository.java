@@ -14,13 +14,11 @@ import java.util.List;
 
 @Repository
 public class MetabaseUserRepository extends MetabaseConnector {
-    private final GroupPermissionsRepository groupPermissionsRepository;
     private final DatabaseService databaseService;
     private final MetabaseGroupRepository metabaseGroupRepository;
 
-    public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, GroupPermissionsRepository groupPermissionsRepository, DatabaseService databaseService, MetabaseGroupRepository metabaseGroupRepository) {
+    public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, DatabaseService databaseService, MetabaseGroupRepository metabaseGroupRepository) {
         super(restTemplateBuilder);
-        this.groupPermissionsRepository = groupPermissionsRepository;
         this.databaseService = databaseService;
         this.metabaseGroupRepository = metabaseGroupRepository;
     }
@@ -63,8 +61,9 @@ public class MetabaseUserRepository extends MetabaseConnector {
 
     public boolean userExistsInCurrentOrgGroup(String email) {
         MetabaseAllUsersResponse response = getAllUsers();
+        Group group = metabaseGroupRepository.findGroup(UserContextHolder.getOrganisation().getName());
         return response.getData().stream()
-                .anyMatch(user -> user.getEmail().equalsIgnoreCase(email) && user.getGroupIds().contains(databaseService.getGlobalMetabaseGroup().getId()));
+                .anyMatch(user -> user.getEmail().equalsIgnoreCase(email) && user.getGroupIds().contains(group.getId()));
     }
 
     public DeactivateMetabaseUserResponse deactivateMetabaseUser(String email) {

@@ -2,6 +2,7 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
@@ -47,8 +48,12 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
+    public Database getDatabase(Organisation organisation) {
+        return getDatabase(organisation.getName(), organisation.getDbUser());
+    }
+
     protected CollectionInfoResponse getCollectionForDatabase(Database database) {
-        CollectionInfoResponse collectionByName = collectionRepository.getCollectionByName(database.getName());
+        CollectionInfoResponse collectionByName = collectionRepository.getCollection(database.getName());
         if (Objects.isNull(collectionByName)) {
             throw new RuntimeException(String.format("Failed to fetch collection for database %s", database.getName()));
         }
