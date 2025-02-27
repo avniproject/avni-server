@@ -1,7 +1,9 @@
 package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.avni.server.dao.GroupRepository;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -14,11 +16,13 @@ import java.util.List;
 public class MetabaseUserRepository extends MetabaseConnector {
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final DatabaseService databaseService;
+    private final MetabaseGroupRepository metabaseGroupRepository;
 
-    public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, GroupPermissionsRepository groupPermissionsRepository, DatabaseService databaseService) {
+    public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, GroupPermissionsRepository groupPermissionsRepository, DatabaseService databaseService, MetabaseGroupRepository metabaseGroupRepository) {
         super(restTemplateBuilder);
         this.groupPermissionsRepository = groupPermissionsRepository;
         this.databaseService = databaseService;
+        this.metabaseGroupRepository = metabaseGroupRepository;
     }
 
     public MetabaseUserResponse save(CreateUserRequest createUserRequest) {
@@ -77,8 +81,9 @@ public class MetabaseUserRepository extends MetabaseConnector {
         List<UserGroupMemberships> userGroupMemberships = new ArrayList<>();
         UserGroupMemberships defaultAllUsers = new UserGroupMemberships(1, false);
         userGroupMemberships.add(defaultAllUsers);
-        if (groupPermissionsRepository.getCurrentOrganisationGroup() != null) {
-            UserGroupMemberships currentOrganisationGroup = new UserGroupMemberships(groupPermissionsRepository.getCurrentOrganisationGroup().getId(), false);
+        Group group = metabaseGroupRepository.getGroup();
+        if (group != null) {
+            UserGroupMemberships currentOrganisationGroup = new UserGroupMemberships(group.getId(), false);
             userGroupMemberships.add(currentOrganisationGroup);
         }
         return userGroupMemberships;

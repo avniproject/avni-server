@@ -2,12 +2,11 @@ package org.avni.server.domain.metabase;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Collections;
 import java.util.List;
 
 public class Dashcard {
     @JsonProperty("id")
-    private int dashboardId;
+    private int id;
 
     @JsonProperty("card_id")
     private int cardId;
@@ -30,20 +29,8 @@ public class Dashcard {
     @JsonProperty("parameter_mappings")
     private List<ParameterMapping> parameterMappings;
 
-    public Dashcard(int dashboardId, int cardId, Integer dashboardTabId, int row, int col, int sizeX, int sizeY) {
-        this.dashboardId = dashboardId;
-        this.cardId = cardId;
-        this.dashboardTabId = dashboardTabId;
-        this.row = row;
-        this.col = col;
-        this.sizeX = sizeX;
-        this.sizeY = sizeY;
-        this.visualizationSettings = Collections.emptyMap();
-        this.parameterMappings = Collections.emptyList();
-    }
-
-    public Dashcard(int dashboardId, int cardId, Integer dashboardTabId, int row, int col, int sizeX, int sizeY, Object visualizationSettings, List<ParameterMapping> parameterMappings) {
-        this.dashboardId = dashboardId;
+    public Dashcard(int id, int cardId, Integer dashboardTabId, int row, int col, int sizeX, int sizeY, Object visualizationSettings, List<ParameterMapping> parameterMappings) {
+        this.id = id;
         this.cardId = cardId;
         this.dashboardTabId = dashboardTabId;
         this.row = row;
@@ -54,8 +41,8 @@ public class Dashcard {
         this.parameterMappings = parameterMappings;
     }
 
-    public int getDashboardId() {
-        return dashboardId;
+    public int getId() {
+        return id;
     }
 
     public int getCardId() {
@@ -85,7 +72,7 @@ public class Dashcard {
     @Override
     public String toString() {
         return "{" +
-                "dashboardId=" + dashboardId +
+                "id=" + id +
                 ", cardId=" + cardId +
                 ", dashboardTabId=" + dashboardTabId +
                 ", row=" + row +

@@ -93,7 +93,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
         return errors;
     }
 
-    private void success(String[] headers, String[] cells, boolean catchmentCreated, boolean userCreated) throws IDPException {
+    private User success(String[] headers, String[] cells, boolean catchmentCreated, boolean userCreated) throws IDPException {
         long numberOfUsers = userRepository.count();
         long numberOfCatchments = catchmentRepository.count();
         userAndCatchmentWriter.write(Chunk.of(new Row(headers, cells)));
@@ -105,6 +105,7 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
             assertEquals(userRepository.count(), numberOfUsers + 1);
         else
             assertEquals(userRepository.count(), numberOfUsers);
+        return userRepository.getLatestUser();
     }
 
     private void failure(String[] headers, String[] cells, String[] errorMessages) throws IDPException {
@@ -190,11 +191,12 @@ public class UserAndCatchmentWriterIntegrationTest extends BaseCSVImportTest {
                 catchmentCreated(true),
                 userCreatedDetails(true));
         // existing catchment new user
-        success(
+        User user = success(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),
                 dataRow("Bihar, District1, Block11", "Catchment 1", "username2@example", "User 2", "username2@example.com", "9455509147", "English", "true", "spinner", "false", "", "User Group 1", "Answer 1"),
                 catchmentCreated(false),
                 userCreatedDetails(true));
+        assertFalse(user.isDisabledInCognito());
         // new catchment existing user
         success(
                 header("Location with full hierarchy", "Catchment Name", "Username", "Full Name of User", "Email Address", "Mobile Number", "Preferred Language", "Track Location", "Date picker mode", "Enable Beneficiary mode", "Identifier Prefix", "User Groups", "SubjectTypeWithSyncAttributeBasedSync->Sync Concept"),

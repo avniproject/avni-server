@@ -1,5 +1,6 @@
 package org.avni.server.dao.metabase;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.avni.server.domain.metabase.CollectionInfoResponse;
@@ -10,6 +11,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
@@ -48,19 +50,23 @@ public class CollectionRepository extends MetabaseConnector {
 
     public CollectionInfoResponse getCollectionByName(String databaseName) {
         String url = metabaseApiUrl + "/collection";
-        try {
-            String jsonResponse = getForObject(url, String.class);
-            List<CollectionInfoResponse> collections = getObjectMapper().readValue(
-                    jsonResponse, new TypeReference<List<CollectionInfoResponse>>() {
-                    }
-            );
 
+        String jsonResponse = getForObject(url, String.class);
+        try {
+            List<CollectionInfoResponse> collections = getObjectMapper().readValue(jsonResponse, new TypeReference<>() {});
             return collections.stream()
                     .filter(collection -> collection.getName().equals(databaseName))
                     .findFirst()
                     .orElse(null);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve collection", e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    public void delete(CollectionInfoResponse collection) {
+        String url = metabaseApiUrl + "/collection/" + collection.getIdAsInt();
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("archived", true);
+        sendPutRequest(url, map);
     }
 }

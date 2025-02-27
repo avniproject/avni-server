@@ -90,8 +90,6 @@ tunnel-metabase-db:
 	make tunnel-db host=reporting-metabase dbServer=reportingdb.cnwnxgm8rsnb.ap-south-1.rds.amazonaws.com
 tunnel-prod-db:
 	make tunnel-db host=avni-prod dbServer=serverdb.openchs.org
-tunnel-lfe-prod-db:
-	make tunnel-db host=avni-lfe-prod dbServer=prod-db2.cdsbgtdqfjhs.ap-south-1.rds.amazonaws.com
 tunnel-staging-db:
 	make tunnel-db host=avni-staging dbServer=stagingdb.openchs.org
 tunnel-rwb-prod:
@@ -103,6 +101,8 @@ dump-org-data-prerelease-with-copy:
 	make dump-org-data-with-copy dbRole=$(dbRole) prefix=prerelease
 dump-org-data-prod:
 	make dump-org-data dbRole=$(dbRole) prefix=prod
+dump-multiple-schemas:
+	make dump-org-data prefix=prod
 dump-org-data-prod-with-copy:
 	make dump-org-data-with-copy dbRole=$(dbRole) prefix=prod
 dump-org-data-staging:
@@ -124,7 +124,7 @@ endif
 		--exclude-table-data='rule_failure_log' \
 		--exclude-table-data='scheduled_job_run' \
 		--exclude-table-data='qrtz_*' \
-		--exclude-table-data='batch_*' \
+		--exclude-table-data='batch_*'
 
 dump-org-data:
 ifndef dbRole
@@ -136,7 +136,23 @@ endif
 		--username=openchs \
 		--role=$(dbRole) \
 		--file=$(HOME)/projects/avni/avni-db-dumps/$(prefix)-$(dbRole).sql \
-		--enable-row-security --verbose --schema=public --host=localhost \
+		--enable-row-security --verbose --host=localhost \
+		--exclude-table-data=audit \
+		--exclude-table-data='public.sync_telemetry' \
+		--exclude-table-data='rule_failure_log' \
+		--exclude-table-data='batch_*'
+
+dump-multiple-schemas:
+ifndef hosting
+	@echo "Provde the hosting variable"
+	exit 1
+endif
+	pg_dump -h localhost -p 5433 \
+		--dbname=openchs \
+		--username=openchs \
+		--schema=public --schema=rwb \
+		--file=$(HOME)/projects/avni/avni-db-dumps/$(hosting).sql \
+		--verbose --schema=public --host=localhost \
 		--exclude-table-data=audit \
 		--exclude-table-data='public.sync_telemetry' \
 		--exclude-table-data='rule_failure_log' \

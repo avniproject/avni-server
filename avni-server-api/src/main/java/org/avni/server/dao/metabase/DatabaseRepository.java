@@ -126,4 +126,9 @@ public class DatabaseRepository extends MetabaseConnector {
     private DatasetRequestBody createRequestBodyForDataset(Database database, TableDetails table) {
         return new DatasetRequestBody(database, table);
     }
+
+    public void delete(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId();
+        deleteForObject(url, Void.class);
+    }
 }

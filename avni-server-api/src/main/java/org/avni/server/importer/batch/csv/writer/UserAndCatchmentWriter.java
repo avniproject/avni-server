@@ -135,7 +135,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
         Boolean active = row.getBool(ACTIVE);
-        boolean isActive = BooleanUtil.getBoolean(active);
+        boolean isActive = BooleanUtil.getBoolean(active, true);
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByNameIgnoreCase(language);
@@ -174,13 +174,15 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
         IdpService idpService = idpServiceFactory.getIdpService(organisation);
-        if (isNewUser && isActive) {
+
+        boolean inferredActiveValue = BooleanUtil.getBoolean(active, true);
+        if (isNewUser && inferredActiveValue) {
             idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (isNewUser && !isActive) {
+        } else if (isNewUser && !inferredActiveValue) {
             idpService.createInActiveUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (!isNewUser && isActive) {
+        } else if (!isNewUser && inferredActiveValue) {
             idpService.enableUser(user);
-        } else if (!isNewUser && !isActive) {
+        } else if (!isNewUser && !inferredActiveValue) {
             idpService.disableUser(user);
         }
     }

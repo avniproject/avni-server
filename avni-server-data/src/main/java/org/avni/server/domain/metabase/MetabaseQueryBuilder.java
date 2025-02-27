@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.avni.server.util.ObjectMapperSingleton;
 
+import java.util.List;
+
 public class MetabaseQueryBuilder {
     private final Database database;
     private final ArrayNode joinsArray;
@@ -23,10 +25,16 @@ public class MetabaseQueryBuilder {
         return this;
     }
 
-    public MetabaseQueryBuilder joinWith(TableDetails addressTable, FieldDetails joinField1, FieldDetails joinField2) {
+    public MetabaseQueryBuilder forTable(TableDetails tableDetails, List<FieldDetails> primaryTableFields) {
+        queryNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), tableDetails.getId());
+        selectedFieldsToDisplay(primaryTableFields, queryNode, null);
+        return this;
+    }
+
+    public MetabaseQueryBuilder joinWith(TableDetails joinTargetTable, FieldDetails joinField1, FieldDetails joinField2, List<FieldDetails> fieldsToShow) {
         ObjectNode joinNode = objectMapper.createObjectNode();
-        joinNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
-        joinNode.put(FieldAttribute.ALIAS.getAttributeName(), addressTable.getName());
+        selectedFieldsToDisplay(fieldsToShow, joinNode, joinTargetTable);
+        joinNode.put(FieldAttribute.ALIAS.getAttributeName(), joinTargetTable.getName());
 
         ArrayNode conditionArray = objectMapper.createArrayNode();
         conditionArray.add(ConditionType.EQUAL.getOperator());
@@ -34,21 +42,44 @@ public class MetabaseQueryBuilder {
         ArrayNode leftField = objectMapper.createArrayNode();
         leftField.add(FieldAttribute.FIELD.getAttributeName());
         leftField.add(joinField2.getId());
-        leftField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()));
+        leftField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), joinField2.getBaseType()));
         conditionArray.add(leftField);
 
         ArrayNode rightField = objectMapper.createArrayNode();
         rightField.add(FieldAttribute.FIELD.getAttributeName());
         rightField.add(joinField1.getId());
-        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(), FieldType.INTEGER.getTypeName()).put(FieldAttribute.JOIN_ALIAS.getAttributeName(), addressTable.getName()));
+        rightField.add(objectMapper.createObjectNode().put(FieldAttribute.BASE_TYPE.getAttributeName(),joinField2.getBaseType())
+                .put(FieldAttribute.JOIN_ALIAS.getAttributeName(), joinTargetTable.getName()));
         conditionArray.add(rightField);
 
         joinNode.set(FieldAttribute.CONDITION.getAttributeName(), conditionArray);
-        joinNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), addressTable.getId());
+        joinNode.put(FieldAttribute.SOURCE_TABLE.getAttributeName(), joinTargetTable.getId());
         joinsArray.add(joinNode);
         queryNode.set(FieldAttribute.JOINS.getAttributeName(), joinsArray);
 
         return this;
+    }
+
+    private void selectedFieldsToDisplay(List<FieldDetails> fieldsToShow, ObjectNode joinNode, TableDetails joinTargetTable) {
+        if(fieldsToShow != null && !fieldsToShow.isEmpty()) {
+            ArrayNode selectedFields = objectMapper.createArrayNode();
+            fieldsToShow.forEach(field -> {
+                ArrayNode selectedField = objectMapper.createArrayNode();
+                selectedField.add(FieldAttribute.FIELD.getAttributeName());
+                selectedField.add(field.getId());
+                ObjectNode joinAliasNode = objectMapper.createObjectNode()
+                        .put(FieldAttribute.BASE_TYPE.getAttributeName(), field.getBaseType());
+                if(joinTargetTable != null) {
+                    joinAliasNode
+                            .put(FieldAttribute.JOIN_ALIAS.getAttributeName(), joinTargetTable.getName());
+                }
+                selectedField.add(joinAliasNode);
+                selectedFields.add(selectedField);
+            });
+            joinNode.set(FieldAttribute.FIELDS.getAttributeName(), selectedFields);
+        } else{
+            joinNode.put(FieldAttribute.FIELDS.getAttributeName(), FieldAttribute.ALL.getAttributeName());
+        }
     }
 
     public MetabaseQueryBuilder addAggregation(AggregationType aggregationType) {

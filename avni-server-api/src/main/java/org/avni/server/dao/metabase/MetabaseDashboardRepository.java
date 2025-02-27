@@ -35,4 +35,8 @@ public class MetabaseDashboardRepository extends MetabaseConnector {
         String url = metabaseApiUrl + "/dashboard/" + dashboardId;
         sendPutRequest(url, request);
     }
+
+    public void delete(CollectionItem collectionItem) {
+
+    }
 }
