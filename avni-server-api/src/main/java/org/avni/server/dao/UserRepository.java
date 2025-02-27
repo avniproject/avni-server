@@ -144,4 +144,10 @@ public interface UserRepository extends AvniJpaRepository<User, Long>, JpaSpecif
 
     @Query(value = "select * from users where lower(users.settings->>'idPrefix') = lower(:prefix)", nativeQuery = true)
     List<User> getAllUsersWithSameIdPrefix(String prefix);
+
+    User findTopByOrderByIdDesc();
+
+    default User getLatestUser() {
+        return this.findTopByOrderByIdDesc();
+    }
 }
