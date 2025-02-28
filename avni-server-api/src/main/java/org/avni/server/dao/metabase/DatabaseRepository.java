@@ -15,6 +15,7 @@ import java.util.Objects;
 @Repository
 public class DatabaseRepository extends MetabaseConnector {
     private final CollectionRepository collectionRepository;
+
     public DatabaseRepository(RestTemplateBuilder restTemplateBuilder , CollectionRepository collectionRepository) {
         super(restTemplateBuilder);
         this.collectionRepository = collectionRepository;
@@ -87,7 +88,8 @@ public class DatabaseRepository extends MetabaseConnector {
         String jsonResponse = getForObject(url, String.class);
 
         try {
-            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, new TypeReference<List<FieldDetails>>() {});
+            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, new TypeReference<>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse fields", e);
         }

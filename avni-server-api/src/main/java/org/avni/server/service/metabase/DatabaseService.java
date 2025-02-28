@@ -9,6 +9,8 @@ import org.avni.server.domain.JoinTableConfig;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.service.OrganisationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -61,6 +63,8 @@ public class DatabaseService implements IQuestionCreationService {
     private final MetabaseDashboardRepository metabaseDashboardRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationService organisationService;
+
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
     @Autowired
     public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService) {
@@ -434,22 +438,33 @@ public class DatabaseService implements IQuestionCreationService {
         long MAX_WAIT_TIME_IN_SECONDS = 300;
         long EACH_SLEEP_DURATION = 3;
         long startTime = System.currentTimeMillis();
-        while ((System.currentTimeMillis() - startTime) < (MAX_WAIT_TIME_IN_SECONDS * 1000)) {
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        logger.info("Waiting for metabase database sync {}", organisation.getName());
+        while (true) {
+            long timeSpent = System.currentTimeMillis() - startTime;
+            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
+            if (!(timeLeft < 0)) break;
             SyncStatus syncStatus = this.getInitialSyncStatus();
             if (syncStatus != SyncStatus.COMPLETE) {
-                Thread.sleep(EACH_SLEEP_DURATION * 1000);
+                Thread.sleep(EACH_SLEEP_DURATION * 2000);
+                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent/1000, organisation.getName());
             } else {
                 break;
             }
         }
 
         //todo add field details and table details to request scope
+        logger.info("Adding questions for subject types {}", organisation.getName());
         createQuestionsForSubjectTypes();
+        logger.info("Adding questions for programs and encounters {}", organisation.getName());
         createQuestionsForProgramsAndEncounters();
+        logger.info("Adding questions for misc single tables {}", organisation.getName());
         createQuestionsForMiscSingleTables();
 
+        logger.info("Adding questions for misc joined tables {}", organisation.getName());
         createQuestionsForMiscJoinedTables();
 
+        logger.info("Adding custom questions {}", organisation.getName());
         createCustomQuestions();
     }
 }

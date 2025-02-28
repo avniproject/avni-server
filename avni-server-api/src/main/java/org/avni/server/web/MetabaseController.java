@@ -1,5 +1,6 @@
 package org.avni.server.web;
 
+import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.CannedAnalyticsStatus;
@@ -22,14 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/web/metabase")
 public class MetabaseController {
     private final AccessControlService accessControlService;
-    private final OrganisationConfigService organisationConfigService;
     private final CannedAnalyticsStatusService cannedAnalyticsStatusService;
     private final CannedAnalyticsBatchJobService cannedAnalyticsBatchJobService;
 
     @Autowired
-    public MetabaseController(AccessControlService accessControlService, OrganisationConfigService organisationConfigService, CannedAnalyticsStatusService cannedAnalyticsStatusService, CannedAnalyticsBatchJobService cannedAnalyticsBatchJobService) {
+    public MetabaseController(AccessControlService accessControlService, CannedAnalyticsStatusService cannedAnalyticsStatusService, CannedAnalyticsBatchJobService cannedAnalyticsBatchJobService) {
         this.accessControlService = accessControlService;
-        this.organisationConfigService = organisationConfigService;
         this.cannedAnalyticsStatusService = cannedAnalyticsStatusService;
         this.cannedAnalyticsBatchJobService = cannedAnalyticsBatchJobService;
     }
@@ -37,7 +36,6 @@ public class MetabaseController {
     @GetMapping("/status")
     public CannedAnalyticsStatus getStatus() {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
-        organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         return cannedAnalyticsStatusService.getStatus(organisation);
     }
@@ -45,7 +43,6 @@ public class MetabaseController {
     @PostMapping("/teardown")
     public void tearDownMetabase() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
-        organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         cannedAnalyticsBatchJobService.createTearDownJob(organisation, UserContextHolder.getUserContext().getUser());
     }
@@ -53,7 +50,6 @@ public class MetabaseController {
     @PostMapping("/update-questions")
     public CannedAnalyticsStatus createQuestions() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
-        organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(true);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         CannedAnalyticsStatus cannedAnalyticsStatus = cannedAnalyticsStatusService.getStatus(organisation);
         if (cannedAnalyticsStatus.isCreateQuestionAllowed()) {
@@ -65,7 +61,6 @@ public class MetabaseController {
     @PostMapping("/setup")
     public void startSetupJob() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
-        organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(true);
         cannedAnalyticsBatchJobService.createSetupJob(UserContextHolder.getOrganisation(), UserContextHolder.getUserContext().getUser());
     }
 }

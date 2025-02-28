@@ -6,7 +6,8 @@ import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
-import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,8 @@ public class MetabaseService {
     private final MetabaseGroupRepository metabaseGroupRepository;
     private final MetabaseUserRepository metabaseUserRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(MetabaseService.class);
+
     @Autowired
     public MetabaseService(OrganisationService organisationService,
                            AvniDatabase avniDatabase,
@@ -52,16 +55,17 @@ public class MetabaseService {
     }
 
     private void setupDatabase() {
-        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
-        Database globalDatabase = databaseRepository.getDatabase(currentOrganisation);
-        if (globalDatabase == null) {
-            Database newDatabase = new Database(currentOrganisation.getName(), DB_ENGINE, new DatabaseDetails(avniDatabase, currentOrganisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
-            databaseRepository.save(newDatabase);
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        Database database = databaseRepository.getDatabase(organisation);
+        if (database == null) {
+            database = new Database(organisation.getName(), DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
+            databaseRepository.save(database);
         }
     }
 
     private void tearDownDatabase() {
-        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
+        Organisation currentOrganisation = organisationService.getCurrentOrganisation();
+        Database database = databaseRepository.getDatabase(currentOrganisation);
         if (database != null)
             databaseRepository.delete(database);
     }
@@ -116,10 +120,16 @@ public class MetabaseService {
     }
 
     public void setupMetabase() {
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        logger.info("[{}] Setting up database", organisation.getName());
         setupDatabase();
+        logger.info("[{}] Setting up collection", organisation.getName());
         setupCollection();
+        logger.info("[{}] Setting up group", organisation.getName());
         setupMetabaseGroup();
+        logger.info("[{}] Setting up collection permissions", organisation.getName());
         setupCollectionPermissions();
+        logger.info("[{}] Setting up dashboard", organisation.getName());
         setupDashboard();
     }
 

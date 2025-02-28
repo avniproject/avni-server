@@ -1,25 +1,21 @@
 package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.avni.server.dao.GroupRepository;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Repository
+@Component
 public class MetabaseUserRepository extends MetabaseConnector {
-    private final DatabaseService databaseService;
     private final MetabaseGroupRepository metabaseGroupRepository;
 
-    public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, DatabaseService databaseService, MetabaseGroupRepository metabaseGroupRepository) {
+    public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, MetabaseGroupRepository metabaseGroupRepository) {
         super(restTemplateBuilder);
-        this.databaseService = databaseService;
         this.metabaseGroupRepository = metabaseGroupRepository;
     }
 
