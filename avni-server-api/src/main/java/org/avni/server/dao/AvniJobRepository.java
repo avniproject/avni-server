@@ -91,7 +91,7 @@ public class AvniJobRepository {
         List<BatchJobStatus> statuses = jdbcTemplate.query(baseQuery, params, (rs, rowNum) ->
                 new BatchJobStatus(rs.getString(1), rs.getTimestamp(2), rs.getTimestamp(3), rs.getString(4)));
         if (statuses.isEmpty()) {
-            return null;
+            return new BatchJobStatus("NOT_FOUND", null, null, null);
         }
         return statuses.get(0);
     }

@@ -1,11 +1,9 @@
 package org.avni.server.web;
 
-import org.avni.server.dao.ImplementationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.accessControl.PrivilegeType;
 import org.avni.server.domain.metabase.CannedAnalyticsStatus;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.service.metabase.CannedAnalyticsBatchJobService;
 import org.avni.server.service.metabase.CannedAnalyticsStatusService;
@@ -41,10 +39,11 @@ public class MetabaseController {
     }
 
     @PostMapping("/teardown")
-    public void tearDownMetabase() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public CannedAnalyticsStatus tearDownMetabase() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         cannedAnalyticsBatchJobService.createTearDownJob(organisation, UserContextHolder.getUserContext().getUser());
+        return this.getStatus();
     }
 
     @PostMapping("/update-questions")
@@ -59,8 +58,9 @@ public class MetabaseController {
     }
 
     @PostMapping("/setup")
-    public void startSetupJob() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public CannedAnalyticsStatus startSetupJob() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         cannedAnalyticsBatchJobService.createSetupJob(UserContextHolder.getOrganisation(), UserContextHolder.getUserContext().getUser());
+        return this.getStatus();
     }
 }

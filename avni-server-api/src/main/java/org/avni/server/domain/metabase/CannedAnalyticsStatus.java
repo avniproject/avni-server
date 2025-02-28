@@ -11,11 +11,8 @@ public final class CannedAnalyticsStatus {
     private final CannedAnalyticsLastCompletionStatus status;
     private Map<String, BatchJobStatus> jobStatuses = new HashMap<>();
 
-    public CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus status) {
+    public CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus status, Map<String, BatchJobStatus> jobStatuses) {
         this.status = status;
-    }
-
-    public void setJobStatuses(Map<String, BatchJobStatus> jobStatuses) {
         this.jobStatuses = jobStatuses;
     }
 

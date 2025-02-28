@@ -28,18 +28,17 @@ public class CannedAnalyticsStatusService {
 
     public CannedAnalyticsStatus getStatus(Organisation organisation) {
         boolean hasETLRun = implementationRepository.hasETLRun(organisation);
-        if (!hasETLRun)
-            return new CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus.EtlNotRunSchema);
-        if (!avniReportingMetabaseSelfServiceEnabled)
-            return new CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus.NotSetup);
-        CannedAnalyticsStatus cannedAnalyticsStatus;
-        if (organisationConfigService.isMetabaseSetupEnabled(organisation)) {
-            cannedAnalyticsStatus = new CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus.Setup);
-        } else {
-            cannedAnalyticsStatus = new CannedAnalyticsStatus(CannedAnalyticsLastCompletionStatus.NotSetup);
-        }
         Map<String, BatchJobStatus> cannedAnalyticsJobStatus = batchJobService.getCannedAnalyticsJobStatus(organisation);
-        cannedAnalyticsStatus.setJobStatuses(cannedAnalyticsJobStatus);
-        return cannedAnalyticsStatus;
+        CannedAnalyticsLastCompletionStatus cannedAnalyticsLastCompletionStatus;
+        if (!hasETLRun)
+            cannedAnalyticsLastCompletionStatus = CannedAnalyticsLastCompletionStatus.EtlNotRun;
+        else if (!avniReportingMetabaseSelfServiceEnabled)
+            cannedAnalyticsLastCompletionStatus = CannedAnalyticsLastCompletionStatus.NotSetup;
+        else if (organisationConfigService.isMetabaseSetupEnabled(organisation))
+            cannedAnalyticsLastCompletionStatus = CannedAnalyticsLastCompletionStatus.Setup;
+        else
+            cannedAnalyticsLastCompletionStatus = CannedAnalyticsLastCompletionStatus.NotSetup;
+
+        return new CannedAnalyticsStatus(cannedAnalyticsLastCompletionStatus, cannedAnalyticsJobStatus);
     }
 }
