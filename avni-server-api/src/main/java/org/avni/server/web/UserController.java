@@ -237,7 +237,7 @@ public class UserController {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
-
+        user.setDisabledInCognito(userContract.isDisabledInCognito());
         userService.setPhoneNumber(userContract.getPhoneNumber(), user, userRegion);
 
         if (isUserNameInvalid(userContract.getUsername())) {
