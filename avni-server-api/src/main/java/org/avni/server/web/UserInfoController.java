@@ -165,6 +165,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
             user.setSettings(userContract.getSettings());
             userService.setPhoneNumber(userContract.getPhoneNumber(), user, RegionUtil.getCurrentUserRegion());
             user.setEmail(userContract.getEmail());
+            user.setDisabledInCognito(false);
             user.setAuditInfo(userService.getCurrentUser());
             User savedUser = userService.save(user);
             if (newUser) userService.addToDefaultUserGroup(savedUser);

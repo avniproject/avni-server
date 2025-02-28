@@ -18,8 +18,8 @@ import org.avni.server.service.accessControl.AccessControlService;
 import org.avni.server.util.BadRequestError;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
-import org.avni.server.web.request.auth.EnableUserRequest;
 import org.avni.server.web.request.auth.CreateUserRequest;
+import org.avni.server.web.request.auth.EnableUserRequest;
 import org.avni.server.web.request.auth.GenerateTokenRequest;
 import org.avni.server.web.request.auth.GenerateTokenResult;
 import org.avni.server.web.response.auth.EnableUserResponse;
@@ -88,6 +88,7 @@ public class UserApiController {
         user.setLastModifiedBy(UserContextHolder.getUser());
         user.setCreatedDateTime(new DateTime());
         user.setLastModifiedDateTime(new DateTime());
+        user.setDisabledInCognito(!createUserRequest.isEnabled());
         user.setOperatingIndividualScope(OperatingIndividualScope.None);
         user.setSettings(new JsonObject());
         User savedUser = userRepository.save(user);

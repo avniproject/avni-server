@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -28,6 +29,7 @@ public class UserContract extends ReferenceDataContract {
     private String createdBy;
     private String lastModifiedBy;
     private DateTime lastModifiedDateTime;
+    private DateTime lastActivatedDateTime;
     private DateTime createdDateTime;
     private List<Long> groupIds;
     private List<String> userGroupNames;
@@ -48,6 +50,9 @@ public class UserContract extends ReferenceDataContract {
         userContract.setCreatedDateTime(user.getCreatedDateTime().toDateTime());
         userContract.setLastModifiedBy(user.getLastModifiedByUserName());
         userContract.setLastModifiedDateTime(user.getLastModifiedDateTime().toDateTime());
+        if (!user.isDisabledInCognito() && Objects.nonNull(user.getLastActivatedDateTime())) {
+            userContract.setLastActivatedDateTime(user.getLastActivatedDateTime().toDateTime());
+        }
         userContract.setGroupIds(user.getUserGroups().stream()
                 .map(userGroup -> userGroup.getGroupId()).collect(Collectors.toList()));
         userContract.setUserGroupNames(user.getUserGroups().stream()
@@ -181,6 +186,14 @@ public class UserContract extends ReferenceDataContract {
 
     public void setLastModifiedDateTime(DateTime lastModifiedDateTime) {
         this.lastModifiedDateTime = lastModifiedDateTime;
+    }
+
+    public DateTime getLastActivatedDateTime() {
+        return lastActivatedDateTime;
+    }
+
+    public void setLastActivatedDateTime(DateTime lastActivatedDateTime) {
+        this.lastActivatedDateTime = lastActivatedDateTime;
     }
 
     public DateTime getCreatedDateTime() {

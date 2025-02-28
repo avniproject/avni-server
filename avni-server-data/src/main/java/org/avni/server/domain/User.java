@@ -69,6 +69,9 @@ public class User implements IdHolder {
     @Convert(converter = JodaDateTimeConverter.class)
     private DateTime lastModifiedDateTime;
 
+    @Convert(converter = JodaDateTimeConverter.class)
+    private DateTime lastActivatedDateTime;
+
     @Column
     private boolean isVoided;
 
@@ -172,6 +175,9 @@ public class User implements IdHolder {
 
     public void setDisabledInCognito(boolean disabledInCognito) {
         this.disabledInCognito = disabledInCognito;
+        if (!disabledInCognito) {
+            setLastActivatedDateTime(new DateTime());
+        }
     }
 
     public Long getId() {
@@ -282,6 +288,14 @@ public class User implements IdHolder {
 
     public DateTime getLastModifiedDateTime() {
         return lastModifiedDateTime;
+    }
+
+    public DateTime getLastActivatedDateTime() {
+        return lastActivatedDateTime;
+    }
+
+    public void setLastActivatedDateTime(DateTime lastActivatedDateTime) {
+        this.lastActivatedDateTime = lastActivatedDateTime;
     }
 
     public JsonObject getSyncSettings() {

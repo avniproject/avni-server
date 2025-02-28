@@ -135,7 +135,7 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
         String idPrefix = row.get(IDENTIFIER_PREFIX);
         String groupsSpecified = row.get(USER_GROUPS);
         Boolean active = row.getBool(ACTIVE);
-        boolean isActive = BooleanUtil.getBoolean(active, true);
+        boolean inferredActiveValue = BooleanUtil.getBoolean(active, true);
 
         AddressLevel location = locationRepository.findByTitleLineageIgnoreCase(fullAddress).orElse(null);
         Locale locale = S.isEmpty(language) ? Locale.en : Locale.valueByNameIgnoreCase(language);
@@ -170,19 +170,22 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
 
         user.setOrganisationId(organisation.getId());
         user.setAuditInfo(currentUser);
-        user.setDisabledInCognito(!isActive);
+        user.setDisabledInCognito(!inferredActiveValue);
         userService.save(user);
         userService.addToGroups(user, groupsSpecified);
         IdpService idpService = idpServiceFactory.getIdpService(organisation);
 
-        boolean inferredActiveValue = BooleanUtil.getBoolean(active, true);
-        if (isNewUser && inferredActiveValue) {
+        boolean newActiveUser = isNewUser && inferredActiveValue;
+        boolean newInactiveUser = isNewUser && !inferredActiveValue;
+        boolean oldActiveUser = !isNewUser && inferredActiveValue;
+        boolean oldInactiveUser = !isNewUser && !inferredActiveValue;
+        if (newActiveUser) {
             idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (isNewUser && !inferredActiveValue) {
+        } else if (newInactiveUser) {
             idpService.createInActiveUser(user, organisationConfigService.getOrganisationConfig(organisation));
-        } else if (!isNewUser && inferredActiveValue) {
+        } else if (oldActiveUser) {
             idpService.enableUser(user);
-        } else if (!isNewUser && !inferredActiveValue) {
+        } else if (oldInactiveUser) {
             idpService.disableUser(user);
         }
     }
