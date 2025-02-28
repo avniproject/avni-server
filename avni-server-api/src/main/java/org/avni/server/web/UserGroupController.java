@@ -5,21 +5,15 @@ import jakarta.transaction.Transactional;
 import org.avni.server.dao.GroupRepository;
 import org.avni.server.dao.UserGroupRepository;
 import org.avni.server.dao.UserRepository;
-import org.avni.server.dao.metabase.GroupPermissionsRepository;
-import org.avni.server.dao.metabase.MetabaseGroupRepository;
 import org.avni.server.dao.metabase.MetabaseUserRepository;
 import org.avni.server.domain.CHSEntity;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserGroup;
 import org.avni.server.domain.accessControl.PrivilegeType;
-import org.avni.server.domain.metabase.CreateUserRequest;
-import org.avni.server.domain.metabase.UpdateUserGroupRequest;
-import org.avni.server.domain.metabase.UserGroupMemberships;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.accessControl.AccessControlService;
-import org.avni.server.service.metabase.DatabaseService;
 import org.avni.server.service.metabase.MetabaseService;
 import org.avni.server.web.request.UserGroupContract;
 import org.joda.time.DateTime;
@@ -101,8 +95,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
             }
             usersToBeAdded.add(userGroup);
         }
-        if (organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(false) &&
-                organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
             metabaseService.upsertUsersOnMetabase(usersToBeAdded);
         }
         return ResponseEntity.ok(userGroupRepository.saveAll(usersToBeAdded));
@@ -118,8 +111,7 @@ public class UserGroupController extends AbstractController<UserGroup> implement
 
         userGroup.setVoided(true);
         userGroupRepository.save(userGroup);
-        if (organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(false) &&
-                organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
+        if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation()) &&
                 userGroup.getGroupName().contains(Group.METABASE_USERS)) {
             deactivateUserOnMetabase(userGroup);
         }

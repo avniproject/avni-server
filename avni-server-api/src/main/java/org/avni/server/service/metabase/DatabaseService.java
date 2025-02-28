@@ -6,7 +6,11 @@ import org.avni.server.dao.metabase.DatabaseRepository;
 import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.QuestionRepository;
 import org.avni.server.domain.JoinTableConfig;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.service.OrganisationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +44,7 @@ public class DatabaseService implements IQuestionCreationService {
     public static final String ADDRESS_ID = "address_id";
     public static final String REGISTRATION_DATE = "registration_date";
     public static final String CREATED_DATE_TIME = "created_date_time";
-    public static final String ENROLMENT_DATE_TIME ="enrolment_date_time";
+    public static final String ENROLMENT_DATE_TIME = "enrolment_date_time";
     public static final String LAST_MODIFIED_DATE_TIME = "last_modified_date_time";
     public static final String GENDER_ID = "gender_id";
     public static final String PROGRAM_ID = "program_id";
@@ -58,48 +62,37 @@ public class DatabaseService implements IQuestionCreationService {
     private final QuestionRepository questionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final OrganisationService organisationService;
+
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository) {
+    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService) {
         this.databaseRepository = databaseRepository;
         this.metabaseService = metabaseService;
         this.collectionRepository = collectionRepository;
         this.questionRepository = questionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
-    }
-
-    private Database getGlobalDatabase() {
-        return metabaseService.getGlobalDatabase();
+        this.organisationService = organisationService;
     }
 
     private CollectionInfoResponse getGlobalCollection() {
         return metabaseService.getGlobalCollection();
     }
 
-    private CollectionItem getGlobalDashboard() {
-        return metabaseService.getGlobalDashboard();
-    }
-
-    public Group getGlobalMetabaseGroup() {
-        return metabaseService.getGlobalMetabaseGroup();
-    }
-
     public SyncStatus getInitialSyncStatus() {
-        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(getGlobalDatabase());
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        Database database = databaseRepository.getDatabase(organisation);
+        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(database);
         String status = databaseSyncStatus.getInitialSyncStatus();
         return SyncStatus.fromString(status);
     }
 
     private int getFieldId(TableDetails tableDetails, FieldDetails fieldDetails) {
-        return databaseRepository.getFieldDetailsByName(getGlobalDatabase(), tableDetails, fieldDetails).getId();
-    }
-
-    private void ensureSyncComplete() {
-        SyncStatus syncStatus = getInitialSyncStatus();
-        if (syncStatus != SyncStatus.COMPLETE) {
-            throw new RuntimeException("Database sync is not complete. Cannot create questions.");
-        }
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        Database database = databaseRepository.getDatabase(organisation);
+        return databaseRepository.getFieldDetailsByName(database, tableDetails, fieldDetails).getId();
     }
 
     private List<String> filterOutExistingQuestions(List<String> entityNames) {
@@ -133,25 +126,26 @@ public class DatabaseService implements IQuestionCreationService {
 
     @Override
     public void createQuestionForTable(TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails addressFieldDetails, FieldDetails tableFieldDetails) {
-        Database database = getGlobalDatabase();
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         questionRepository.createQuestionForTable(database, tableDetails, addressTableDetails, addressFieldDetails, tableFieldDetails, Collections.emptyList());
     }
 
     @Override
     public void createQuestionForTable(String tableName) {
-        Database database = getGlobalDatabase();
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(tableName, database.getName()));
         questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 
     private List<String> getSubjectTypeNames() {
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         List<List<String>> rows = getTableMetadataRows();
         List<String> subjectTypeNames = new ArrayList<>();
 
         for (List<String> row : rows) {
             String type = row.get(DatasetColumn.TYPE.getIndex());
             String schemaName = row.get(DatasetColumn.SCHEMA_NAME.getIndex());
-            if (schemaName.equalsIgnoreCase(getGlobalDatabase().getName()) &&
+            if (schemaName.equalsIgnoreCase(database.getName()) &&
                     (type.equalsIgnoreCase(TableType.INDIVIDUAL.getTypeName()) ||
                             type.equalsIgnoreCase(TableType.HOUSEHOLD.getTypeName()) ||
                             type.equalsIgnoreCase(TableType.GROUP.getTypeName()) ||
@@ -166,11 +160,12 @@ public class DatabaseService implements IQuestionCreationService {
     private List<String> getProgramAndEncounterNames() {
         List<List<String>> rows = getTableMetadataRows();
         List<String> programAndEncounterNames = new ArrayList<>();
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
 
         for (List<String> row : rows) {
             String type = row.get(DatasetColumn.TYPE.getIndex());
             String schemaName = row.get(DatasetColumn.SCHEMA_NAME.getIndex());
-            if (schemaName.equalsIgnoreCase(getGlobalDatabase().getName()) &&
+            if (schemaName.equalsIgnoreCase(database.getName()) &&
                     (type.equalsIgnoreCase(TableType.PROGRAM_ENCOUNTER.getTypeName()) ||
                             type.equalsIgnoreCase(TableType.ENCOUNTER.getTypeName()) ||
                             type.equalsIgnoreCase(TableType.PROGRAM_ENROLMENT.getTypeName()))) {
@@ -182,14 +177,14 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private List<List<String>> getTableMetadataRows() {
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(getGlobalDatabase(), new TableDetails(TABLE_METADATA));
-        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, getGlobalDatabase());
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
+        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(database, new TableDetails(TABLE_METADATA));
+        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, database);
         return datasetResponse.getData().getRows();
     }
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
-        ensureSyncComplete();
-        Database database = getGlobalDatabase();
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, database.getName()));
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
 
@@ -214,7 +209,6 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForMiscSingleTables() {
-        ensureSyncComplete();
         List<String> miscSingleTableNames = Arrays.asList(ADDRESS_TABLE, MEDIA_TABLE, SYNC_TELEMETRY_TABLE);
         List<String> filteredTables = filterOutExistingQuestions(miscSingleTableNames);
 
@@ -224,8 +218,7 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForMiscJoinedTables() {
-        ensureSyncComplete();
-        Database database = getGlobalDatabase();
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         List<String> miscJoinedTables = Arrays.asList(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE, ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE);
         List<String> filteredTables = filterOutExistingQuestions(miscJoinedTables);
         for (String tableName : filteredTables) {
@@ -276,7 +269,7 @@ public class DatabaseService implements IQuestionCreationService {
         List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
         List<String> addressTableFields = new ArrayList<>(List.of(ID, UUID));
         addressTableFields.addAll(addressLevelTypeNames);
-        for(String addressTableField : addressTableFields) {
+        for (String addressTableField : addressTableFields) {
             addressTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, addressTableDetails, new FieldDetails(addressTableField)));
         }
         return addressTableFieldsDetails;
@@ -284,8 +277,8 @@ public class DatabaseService implements IQuestionCreationService {
 
     private List<FieldDetails> getGenderFields(Database database, TableDetails genderTableDetails) {
         List<FieldDetails> genderTableFieldsDetails = new ArrayList<>();
-        List<String> genderTableFields = List.of(ID,NAME);
-        for(String genderTableField : genderTableFields) {
+        List<String> genderTableFields = List.of(ID, NAME);
+        for (String genderTableField : genderTableFields) {
             genderTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, genderTableDetails, new FieldDetails(genderTableField)));
         }
         return genderTableFieldsDetails;
@@ -293,8 +286,8 @@ public class DatabaseService implements IQuestionCreationService {
 
     private List<FieldDetails> getSubjectTypeFields(Database database, TableDetails subjectTypeTableDetails) {
         List<FieldDetails> subjectTypeTableFieldsDetails = new ArrayList<>();
-        List<String> subjectTypeTableFields = List.of(ID,NAME,UUID);
-        for(String subjectTypeTableField : subjectTypeTableFields) {
+        List<String> subjectTypeTableFields = List.of(ID, NAME, UUID);
+        for (String subjectTypeTableField : subjectTypeTableFields) {
             subjectTypeTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, subjectTypeTableDetails, new FieldDetails(subjectTypeTableField)));
         }
         return subjectTypeTableFieldsDetails;
@@ -320,7 +313,7 @@ public class DatabaseService implements IQuestionCreationService {
 
     private List<FieldDetails> getPrimaryTableFields(Database database, List<String> primaryTableFields, TableDetails primaryTableDetails) {
         List<FieldDetails> primaryTableFieldsDetails = new ArrayList<>();
-        for(String primaryTableField : primaryTableFields) {
+        for (String primaryTableField : primaryTableFields) {
             primaryTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, primaryTableDetails, new FieldDetails(primaryTableField)));
         }
         return primaryTableFieldsDetails;
@@ -336,8 +329,8 @@ public class DatabaseService implements IQuestionCreationService {
 
     private List<FieldDetails> getIndividualFields(Database database, TableDetails individualTableDetails) {
         List<FieldDetails> individualTableFieldsDetails = new ArrayList<>();
-        List<String> individualTableFields = List.of(FIRST_NAME,LAST_NAME);
-        for(String individualTableField : individualTableFields) {
+        List<String> individualTableFields = List.of(FIRST_NAME, LAST_NAME);
+        for (String individualTableField : individualTableFields) {
             individualTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, individualTableDetails, new FieldDetails(individualTableField)));
         }
         return individualTableFieldsDetails;
@@ -346,7 +339,7 @@ public class DatabaseService implements IQuestionCreationService {
     private List<FieldDetails> getProgramFields(Database database, TableDetails programTableDetails) {
         List<FieldDetails> programTableFieldsDetails = new ArrayList<>();
         List<String> programTableFields = List.of(NAME);
-        for(String programTableField : programTableFields) {
+        for (String programTableField : programTableFields) {
             programTableFieldsDetails.add(databaseRepository.getFieldDetailsByName(database, programTableDetails, new FieldDetails(programTableField)));
         }
         return programTableFieldsDetails;
@@ -362,8 +355,7 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createCustomQuestions() {
-        ensureSyncComplete();
-        Database database = getGlobalDatabase();
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         if (isQuestionMissing(QuestionName.NonVoidedIndividual.getQuestionName())) {
             questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonVoidedIndividual, VisualizationType.PIE, Collections.EMPTY_LIST);
         }
@@ -378,52 +370,55 @@ public class DatabaseService implements IQuestionCreationService {
 
     public void updateGlobalDashboardWithCustomQuestions() {
         List<Dashcard> dashcards = new ArrayList<>();
-        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), -1, 0, FIRST_CARD_COL_IDX, 12, 8,Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
+        dashcards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), -1, 0, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFirstDashcard()));
         dashcards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), -1, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForSecondDashcard()));
 
         dashcards.add(new Dashcard(-3, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), -2, 0, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForThirdDashcard()));
         dashcards.add(new Dashcard(-4, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), -2, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashcardParameterMappingForFourthDashcard()));
 
         List<Tabs> tabs = new ArrayList<>();
-        tabs.add(new Tabs(-1,"Activity"));
-        tabs.add(new Tabs(-2,"Data"));
-        metabaseDashboardRepository.updateDashboard(getGlobalDashboard().getId(), new DashboardUpdateRequest(dashcards,createParametersForDashboard(),tabs));
+        tabs.add(new Tabs(-1, "Activity"));
+        tabs.add(new Tabs(-2, "Data"));
 
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
+        metabaseDashboardRepository.updateDashboard(database.getId(), new DashboardUpdateRequest(dashcards, createParametersForDashboard(), tabs));
     }
 
-    private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard(){
+    private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard() {
         List<ParameterMapping> firstDashcardParameterMapping = new ArrayList<>();
         firstDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.INDIVIDUAL.getName()), new FieldDetails(FieldName.REGISTRATION_DATE.getName())), FieldType.DATE.getTypeName()))));
         return firstDashcardParameterMapping;
     }
 
-    private List<ParameterMapping> createDashcardParameterMappingForSecondDashcard(){
+    private List<ParameterMapping> createDashcardParameterMappingForSecondDashcard() {
         List<ParameterMapping> secondDashcardParameterMapping = new ArrayList<>();
         secondDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.PROGRAM_ENROLMENT.getName()), new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashcardParameterMapping;
     }
 
-    private List<ParameterMapping> createDashcardParameterMappingForThirdDashcard(){
+    private List<ParameterMapping> createDashcardParameterMappingForThirdDashcard() {
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         List<ParameterMapping> thirdDashcardParameterMapping = new ArrayList<>();
         thirdDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.INDIVIDUAL.getName()), new FieldDetails(FieldName.REGISTRATION_DATE.getName())), FieldType.DATE.getTypeName()))));
         List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
         for (String addressLevelTypeName : addressLevelTypeNames) {
-            thirdDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE,getGlobalDatabase().getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(),ADDRESS_TABLE))));
+            thirdDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE, database.getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(), ADDRESS_TABLE))));
         }
-        thirdDashcardParameterMapping.add(new ParameterMapping("subjectTypeName", getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(SUBJECT_TYPE_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(),SUBJECT_TYPE_TABLE))));
+        thirdDashcardParameterMapping.add(new ParameterMapping("subjectTypeName", getCardIdByQuestionName(INDIVIDUAL_TYPE_GENDER_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(SUBJECT_TYPE_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(), SUBJECT_TYPE_TABLE))));
 
         return thirdDashcardParameterMapping;
     }
 
-    private List<ParameterMapping> createDashcardParameterMappingForFourthDashcard(){
+    private List<ParameterMapping> createDashcardParameterMappingForFourthDashcard() {
+        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         List<ParameterMapping> fourthDashcardParameterMapping = new ArrayList<>();
         fourthDashcardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(TableName.PROGRAM_ENROLMENT.getName()), new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
         for (String addressLevelTypeName : addressLevelTypeNames) {
-            fourthDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE,getGlobalDatabase().getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(),ADDRESS_TABLE))));
+            fourthDashcardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(ADDRESS_TABLE, database.getName()), new FieldDetails(addressLevelTypeName)), FieldType.TEXT.getTypeName(), ADDRESS_TABLE))));
         }
-        fourthDashcardParameterMapping.add(new ParameterMapping("programName", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(PROGRAM_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(),PROGRAM_TABLE))));
-        fourthDashcardParameterMapping.add(new ParameterMapping("subjectTypeName", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(SUBJECT_TYPE_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(),getFieldId(new TableDetails(INDIVIDUAL_TABLE),new FieldDetails(SUBJECT_TYPE_ID))))));
+        fourthDashcardParameterMapping.add(new ParameterMapping("programName", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(PROGRAM_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(), PROGRAM_TABLE))));
+        fourthDashcardParameterMapping.add(new ParameterMapping("subjectTypeName", getCardIdByQuestionName(ENROLMENT_TYPE_INDIVIDUAL_ADDRESS_TABLE), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(SUBJECT_TYPE_TABLE), new FieldDetails(NAME)), FieldType.TEXT.getTypeName(), getFieldId(new TableDetails(INDIVIDUAL_TABLE), new FieldDetails(SUBJECT_TYPE_ID))))));
         return fourthDashcardParameterMapping;
     }
 
@@ -434,19 +429,42 @@ public class DatabaseService implements IQuestionCreationService {
         for (String addressLevelTypeName : addressLevelTypeNames) {
             parameters.add(new Parameters(addressLevelTypeName, addressLevelTypeName, addressLevelTypeName, "string/starts-with", "string", "search"));
         }
-        parameters.add(new Parameters("Program Name", "programName", "programName", "string/starts-with", "string", "search",false));
-        parameters.add(new Parameters("Subject Type Name", "subjectTypeName", "subjectTypeName", "string/starts-with", "string", "search",false));
+        parameters.add(new Parameters("Program Name", "programName", "programName", "string/starts-with", "string", "search", false));
+        parameters.add(new Parameters("Subject Type Name", "subjectTypeName", "subjectTypeName", "string/starts-with", "string", "search", false));
         return parameters;
     }
 
-    public void addCollectionItems() {
+    public void addCollectionItems() throws InterruptedException {
+        long MAX_WAIT_TIME_IN_SECONDS = 300;
+        long EACH_SLEEP_DURATION = 3;
+        long startTime = System.currentTimeMillis();
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        logger.info("Waiting for metabase database sync {}", organisation.getName());
+        while (true) {
+            long timeSpent = System.currentTimeMillis() - startTime;
+            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
+            if (!(timeLeft < 0)) break;
+            SyncStatus syncStatus = this.getInitialSyncStatus();
+            if (syncStatus != SyncStatus.COMPLETE) {
+                Thread.sleep(EACH_SLEEP_DURATION * 2000);
+                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent/1000, organisation.getName());
+            } else {
+                break;
+            }
+        }
+
         //todo add field details and table details to request scope
+        logger.info("Adding questions for subject types {}", organisation.getName());
         createQuestionsForSubjectTypes();
+        logger.info("Adding questions for programs and encounters {}", organisation.getName());
         createQuestionsForProgramsAndEncounters();
+        logger.info("Adding questions for misc single tables {}", organisation.getName());
         createQuestionsForMiscSingleTables();
 
+        logger.info("Adding questions for misc joined tables {}", organisation.getName());
         createQuestionsForMiscJoinedTables();
 
+        logger.info("Adding custom questions {}", organisation.getName());
         createCustomQuestions();
     }
 }

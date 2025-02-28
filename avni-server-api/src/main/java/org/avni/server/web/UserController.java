@@ -9,6 +9,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.avni.server.dao.*;
+import org.avni.server.dao.metabase.MetabaseGroupRepository;
 import org.avni.server.dao.metabase.MetabaseUserRepository;
 import org.avni.server.domain.*;
 import org.avni.server.domain.accessControl.PrivilegeType;
@@ -60,7 +61,7 @@ public class UserController {
     private final AccessControlService accessControlService;
     private final OrganisationConfigService organisationConfigService;
     private final MetabaseUserRepository metabaseUserRepository;
-    private final DatabaseService databaseService;
+    private final MetabaseGroupRepository metabaseGroupRepository;
 
     private final Pattern NAME_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"].*$");
 
@@ -74,7 +75,8 @@ public class UserController {
                           AccountAdminRepository accountAdminRepository, ResetSyncService resetSyncService,
                           SubjectTypeRepository subjectTypeRepository,
                           AccessControlService accessControlService, OrganisationConfigService organisationConfigService,
-                          MetabaseUserRepository metabaseUserRepository, DatabaseService databaseService) {
+                          MetabaseUserRepository metabaseUserRepository,
+                          MetabaseGroupRepository metabaseGroupRepository) {
         this.catchmentRepository = catchmentRepository;
         this.userRepository = userRepository;
         this.organisationRepository = organisationRepository;
@@ -88,7 +90,7 @@ public class UserController {
         this.accessControlService = accessControlService;
         this.organisationConfigService = organisationConfigService;
         this.metabaseUserRepository = metabaseUserRepository;
-        this.databaseService = databaseService;
+        this.metabaseGroupRepository = metabaseGroupRepository;
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
@@ -168,8 +170,7 @@ public class UserController {
             userService.save(user);
             accountAdminService.createAccountAdmins(user, userContract.getAccountIds());
             List<UserGroup> associatedUserGroups = userService.associateUserToGroups(user, userContract.getGroupIds());
-            if (organisationConfigService.assertReportingMetabaseSelfServiceEnableStatus(false) &&
-                    organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
+            if (organisationConfigService.isMetabaseSetupEnabled(UserContextHolder.getOrganisation())) {
                 performMetabaseUserUpsert(userContract, associatedUserGroups);
             }
             logger.info(String.format("Saved user '%s', UUID '%s'", userContract.getUsername(), user.getUuid()));
@@ -197,7 +198,7 @@ public class UserController {
                     metabaseUserRepository.reactivateMetabaseUser(userContract.getEmail());
                 }
                 if (!metabaseUserRepository.userExistsInCurrentOrgGroup((userContract.getEmail()))) {
-                    metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(userContract.getEmail()).getId(), databaseService.getGlobalMetabaseGroup().getId()));
+                    metabaseUserRepository.updateGroupPermissions(new UpdateUserGroupRequest(metabaseUserRepository.getUserFromEmail(userContract.getEmail()).getId(), metabaseGroupRepository.getGroup().getId()));
                 }
             }
         } else {

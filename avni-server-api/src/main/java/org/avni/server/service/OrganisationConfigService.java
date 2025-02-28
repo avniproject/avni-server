@@ -35,9 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrganisationConfigService implements NonScopeAwareService {
-
     public static final String EMPTY_STRING = "";
-    public static final String INDIVIDUAL = "individual";
     public static final String UUID = "uuid";
 
     private static final Logger logger = LoggerFactory.getLogger(OrganisationConfigService.class);
@@ -45,7 +43,6 @@ public class OrganisationConfigService implements NonScopeAwareService {
     private final OrganisationConfigRepository organisationConfigRepository;
     private final ProjectionFactory projectionFactory;
     private final ConceptRepository conceptRepository;
-    private final boolean avniReportingMetabaseSelfServiceEnabled;
     private final LocationHierarchyService locationHierarchyService;
     private final ObjectMapper objectMapper;
 
@@ -53,12 +50,10 @@ public class OrganisationConfigService implements NonScopeAwareService {
     public OrganisationConfigService(OrganisationConfigRepository organisationConfigRepository,
                                      ProjectionFactory projectionFactory,
                                      ConceptRepository conceptRepository,
-                                     @Value("${avni.reporting.metabase.self.service.enabled}") boolean avniReportingMetabaseSelfServiceEnabled,
                                      @Lazy LocationHierarchyService locationHierarchyService) {
         this.organisationConfigRepository = organisationConfigRepository;
         this.projectionFactory = projectionFactory;
         this.conceptRepository = conceptRepository;
-        this.avniReportingMetabaseSelfServiceEnabled = avniReportingMetabaseSelfServiceEnabled;
         this.locationHierarchyService = locationHierarchyService;
         this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
@@ -364,13 +359,4 @@ public class OrganisationConfigService implements NonScopeAwareService {
         OrganisationConfig config = organisationConfigRepository.findByOrganisationId(organisation.getId());
         return config.isMetabaseSetupEnabled();
     }
-
-    public boolean assertReportingMetabaseSelfServiceEnableStatus(boolean enabled) {
-        if (enabled && !avniReportingMetabaseSelfServiceEnabled) {
-            logger.debug("Avni Reporting Metabase Self-service reporting is disabled.");
-            throw new HttpClientErrorException(HttpStatus.FAILED_DEPENDENCY);
-        }
-        return avniReportingMetabaseSelfServiceEnabled;
-    }
-
 }
