@@ -31,22 +31,22 @@ public class CannedAnalyticsBatchConfiguration {
     }
 
     @Bean
-    public Job cannedAnalyticsTearDownJob(Step cannedAnalyticsSetupStep, CannedAnalyticsNotificationListener cannedAnalyticsNotificationListener) {
-        return CannedAnalyticsBatchFactory.createCannedAnalyticsJob("cannedAnalyticsTearDownJob", jobRepository, cannedAnalyticsNotificationListener, cannedAnalyticsSetupStep);
+    public Job cannedAnalyticsTearDownJob(Step cannedAnalyticsTearDownStep, CannedAnalyticsNotificationListener cannedAnalyticsNotificationListener) {
+        return CannedAnalyticsBatchFactory.createCannedAnalyticsJob("cannedAnalyticsTearDownJob", jobRepository, cannedAnalyticsNotificationListener, cannedAnalyticsTearDownStep);
     }
 
     @Bean
-    public Step cannedAnalyticsTearDownStep(CannedAnalyticsSetupTasklet cannedAnalyticsRunner, PlatformTransactionManager platformTransactionManager) {
+    public Step cannedAnalyticsTearDownStep(CannedAnalyticsTearDownTasklet cannedAnalyticsRunner, PlatformTransactionManager platformTransactionManager) {
         return CannedAnalyticsBatchFactory.createCannedAnalyticsStep("cannedAnalyticsTearDownStep", jobRepository, cannedAnalyticsRunner, platformTransactionManager);
     }
 
     @Bean
-    public Job cannedAnalyticsCreateQuestionOnlyJob(Step cannedAnalyticsSetupStep, CannedAnalyticsNotificationListener cannedAnalyticsNotificationListener) {
-        return CannedAnalyticsBatchFactory.createCannedAnalyticsJob("cannedAnalyticsCreateQuestionOnlyJob", jobRepository, cannedAnalyticsNotificationListener, cannedAnalyticsSetupStep);
+    public Job cannedAnalyticsCreateQuestionOnlyJob(Step cannedAnalyticsCreateQuestionOnlyStep, CannedAnalyticsNotificationListener cannedAnalyticsNotificationListener) {
+        return CannedAnalyticsBatchFactory.createCannedAnalyticsJob("cannedAnalyticsCreateQuestionOnlyJob", jobRepository, cannedAnalyticsNotificationListener, cannedAnalyticsCreateQuestionOnlyStep);
     }
 
     @Bean
-    public Step cannedAnalyticsCreateQuestionOnlyStep(CannedAnalyticsSetupTasklet cannedAnalyticsRunner, PlatformTransactionManager platformTransactionManager) {
+    public Step cannedAnalyticsCreateQuestionOnlyStep(CannedAnalyticsCreateQuestionsOnlyTasklet cannedAnalyticsRunner, PlatformTransactionManager platformTransactionManager) {
         return CannedAnalyticsBatchFactory.createCannedAnalyticsStep("cannedAnalyticsCreateQuestionOnlyStep", jobRepository, cannedAnalyticsRunner, platformTransactionManager);
     }
 }

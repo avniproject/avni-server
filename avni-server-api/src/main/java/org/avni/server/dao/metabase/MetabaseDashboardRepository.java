@@ -6,7 +6,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-
 @Repository
 public class MetabaseDashboardRepository extends MetabaseConnector {
     private final CollectionRepository collectionRepository;
@@ -21,9 +20,8 @@ public class MetabaseDashboardRepository extends MetabaseConnector {
         return postForObject(url, createDashboardRequest, Dashboard.class);
     }
 
-
-    public CollectionItem getDashboardByName(CollectionInfoResponse globalCollection) {
-        List<CollectionItem> items = collectionRepository.getExistingCollectionItems(globalCollection.getIdAsInt());
+    public CollectionItem getDashboard(CollectionInfoResponse collection) {
+        List<CollectionItem> items = collectionRepository.getExistingCollectionItems(collection.getIdAsInt());
 
         return items.stream()
                 .filter(item -> item.getName().equals(DashboardName.CANNED_REPORTS.getName()))
@@ -34,9 +32,5 @@ public class MetabaseDashboardRepository extends MetabaseConnector {
     public void updateDashboard(int dashboardId, DashboardUpdateRequest request) {
         String url = metabaseApiUrl + "/dashboard/" + dashboardId;
         sendPutRequest(url, request);
-    }
-
-    public void delete(CollectionItem collectionItem) {
-
     }
 }

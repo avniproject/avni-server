@@ -113,7 +113,7 @@ public class MetabaseService {
     }
 
     private void setupDashboard() {
-        CollectionItem dashboard = metabaseDashboardRepository.getDashboardByName(getGlobalCollection());
+        CollectionItem dashboard = metabaseDashboardRepository.getDashboard(getGlobalCollection());
         if (dashboard == null) {
             metabaseDashboardRepository.save(new CreateDashboardRequest(null, getGlobalCollection().getIdAsInt()));
         }

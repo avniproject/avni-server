@@ -39,28 +39,25 @@ public class MetabaseController {
     }
 
     @PostMapping("/teardown")
-    public CannedAnalyticsStatus tearDownMetabase() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public void tearDownMetabase() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         cannedAnalyticsBatchJobService.createTearDownJob(organisation, UserContextHolder.getUserContext().getUser());
-        return this.getStatus();
     }
 
     @PostMapping("/update-questions")
-    public CannedAnalyticsStatus createQuestions() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public void createQuestions() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         CannedAnalyticsStatus cannedAnalyticsStatus = cannedAnalyticsStatusService.getStatus(organisation);
         if (cannedAnalyticsStatus.isCreateQuestionAllowed()) {
             cannedAnalyticsBatchJobService.createCreateQuestionOnlyJob(organisation, UserContextHolder.getUserContext().getUser());
         }
-        return cannedAnalyticsStatus;
     }
 
     @PostMapping("/setup")
-    public CannedAnalyticsStatus startSetupJob() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+    public void startSetupJob() throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
         accessControlService.checkPrivilege(PrivilegeType.Analytics);
         cannedAnalyticsBatchJobService.createSetupJob(UserContextHolder.getOrganisation(), UserContextHolder.getUserContext().getUser());
-        return this.getStatus();
     }
 }

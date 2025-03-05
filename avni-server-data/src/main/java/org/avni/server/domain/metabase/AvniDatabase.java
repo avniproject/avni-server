@@ -14,6 +14,9 @@ public class AvniDatabase {
     @Value("${avni.database}")
     private String avniDatabaseName;
 
+    @Value("${avni.database.server.supportsSSL}")
+    private boolean supportsSSL;
+
     public AvniDatabase() {
     }
 
@@ -27,5 +30,9 @@ public class AvniDatabase {
 
     public String getAvniDatabaseName() {
         return avniDatabaseName;
+    }
+
+    public boolean supportsSSL() {
+        return supportsSSL;
     }
 }

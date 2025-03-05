@@ -77,7 +77,7 @@ public class DatabaseService implements IQuestionCreationService {
         this.organisationService = organisationService;
     }
 
-    private CollectionInfoResponse getGlobalCollection() {
+    private CollectionInfoResponse getOrgCollection() {
         return metabaseService.getGlobalCollection();
     }
 
@@ -96,7 +96,7 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private List<String> filterOutExistingQuestions(List<String> entityNames) {
-        Set<String> existingItemNames = collectionRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
+        Set<String> existingItemNames = collectionRepository.getExistingCollectionItems(getOrgCollection().getIdAsInt()).stream()
                 .map(item -> item.getName().trim().toLowerCase().replace(" ", "_"))
                 .collect(Collectors.toSet());
 
@@ -107,7 +107,7 @@ public class DatabaseService implements IQuestionCreationService {
 
     private boolean isQuestionMissing(String questionName) {
         Set<String> existingItemNames = collectionRepository
-                .getExistingCollectionItems(getGlobalCollection().getIdAsInt())
+                .getExistingCollectionItems(getOrgCollection().getIdAsInt())
                 .stream()
                 .map(item -> item.getName().trim().toLowerCase().replace(" ", "_"))
                 .collect(Collectors.toSet());
@@ -116,7 +116,7 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private int getCardIdByQuestionName(String questionName) {
-        return collectionRepository.getExistingCollectionItems(getGlobalCollection().getIdAsInt()).stream()
+        return collectionRepository.getExistingCollectionItems(getOrgCollection().getIdAsInt()).stream()
                 .filter(item -> item.getName().trim().equalsIgnoreCase(questionName.trim()))
                 .map(CollectionItem::getId)
                 .findFirst()
@@ -381,7 +381,8 @@ public class DatabaseService implements IQuestionCreationService {
         tabs.add(new Tabs(-2, "Data"));
 
         Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
-        metabaseDashboardRepository.updateDashboard(database.getId(), new DashboardUpdateRequest(dashcards, createParametersForDashboard(), tabs));
+        CollectionItem dashboard = metabaseDashboardRepository.getDashboard(getOrgCollection());
+        metabaseDashboardRepository.updateDashboard(dashboard.getId(), new DashboardUpdateRequest(dashcards, createParametersForDashboard(), tabs));
     }
 
     private List<ParameterMapping> createDashcardParameterMappingForFirstDashcard() {
