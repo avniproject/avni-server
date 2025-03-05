@@ -87,16 +87,11 @@ public class MetabaseQueryBuilder {
         return this;
     }
 
-    public MetabaseQueryBuilder addBreakout(int fieldId, String baseType, int sourceFieldId) {
+    public MetabaseQueryBuilder addBreakout(int fieldId) {
         ArrayNode breakoutArray = objectMapper.createArrayNode();
         breakoutArray.add(FieldAttribute.FIELD.getAttributeName());
         breakoutArray.add(fieldId);
 
-        ObjectNode fieldDetails = objectMapper.createObjectNode();
-        fieldDetails.put(FieldAttribute.BASE_TYPE.getAttributeName(), baseType);
-        fieldDetails.put(FieldAttribute.SOURCE_FIELD.getAttributeName(), sourceFieldId);
-
-        breakoutArray.add(fieldDetails);
         queryNode.withArray(QueryAttribute.BREAKOUT.getValue()).add(breakoutArray);
         return this;
     }

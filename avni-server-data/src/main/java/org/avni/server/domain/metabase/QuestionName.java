@@ -1,27 +1,19 @@
 package org.avni.server.domain.metabase;
 
 public enum QuestionName {
-    NonVoidedIndividual("Registrations", "individual",
-            "subject_type",
-            "subject_type_id",
-            "name"),
-    NonExitedNonVoidedProgram("Program Enrolments", "program_enrolment",
-            "program",
-            "program_id",
-            "name");
+    NonVoidedIndividual("Registrations", "subject_view",
+            "subject_type"),
+    NonExitedNonVoidedProgram("Program Enrolments", "enrolment_view",
+            "program_name");
 
     private final String questionName;
-    private final String primaryTableName;
-    private final String secondaryTableName;
-    private final String primaryField;
+    private final String viewName;
     private final String breakoutField;
 
 
-    QuestionName(String questionName, String primaryTableName, String secondaryTableName, String primaryField, String breakoutField) {
+    QuestionName(String questionName, String primaryTableName, String breakoutField) {
         this.questionName = questionName;
-        this.primaryTableName = primaryTableName;
-        this.secondaryTableName = secondaryTableName;
-        this.primaryField = primaryField;
+        this.viewName = primaryTableName;
         this.breakoutField = breakoutField;
     }
 
@@ -29,16 +21,8 @@ public enum QuestionName {
         return questionName;
     }
 
-    public String getPrimaryTableName() {
-        return primaryTableName;
-    }
-
-    public String getSecondaryTableName() {
-        return secondaryTableName;
-    }
-
-    public String getPrimaryField() {
-        return primaryField;
+    public String getViewName() {
+        return viewName;
     }
 
     public String getBreakoutField() {
