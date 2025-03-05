@@ -1,6 +1,8 @@
 package org.avni.server.domain.metadata;
 
 import org.avni.server.domain.CHSBaseEntity;
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
+
 
 public class FieldChangeReport {
     private String fieldName;
@@ -25,7 +27,9 @@ public class FieldChangeReport {
 
     public static FieldChangeReport modified(String fieldName, Object oldValue, Object newValue) {
         FieldChangeReport fieldChangeReport = new FieldChangeReport();
-        fieldChangeReport.changeType = getModificationType(fieldName, oldValue, newValue);
+        if (!nullSafeEquals(fieldChangeReport.changeType, ChangeType.Voided)) {
+            fieldChangeReport.changeType = getModificationType(fieldName, oldValue, newValue);
+        }
         fieldChangeReport.fieldName = fieldName;
         fieldChangeReport.primitiveValueChange = new PrimitiveValueChange(oldValue, newValue);
         return fieldChangeReport;

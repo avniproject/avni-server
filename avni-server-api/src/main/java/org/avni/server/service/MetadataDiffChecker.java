@@ -20,7 +20,9 @@ public class MetadataDiffChecker {
                 collectionChangeReport.addObjectReport(ObjectChangeReport.added(uuid, candidateEntity));
             } else {
                 ObjectChangeReport diff = findObjectDifference(uuid, candidateEntity, (Map<String, Object>) existingEntity);
-                collectionChangeReport.addObjectReport(diff);
+                if (!diff.getChangeType().equals(ChangeType.NoChange)) {
+                    collectionChangeReport.addObjectReport(diff);
+                }
             }
         }
 
@@ -49,21 +51,21 @@ public class MetadataDiffChecker {
             } else if (existingFieldValue == null && candidateFieldValue != null) {
                 objectChangeReport.addFieldReport(FieldChangeReport.added(candidateFieldName));
             } else if (existingFieldValue != null && candidateFieldValue == null) {
-                objectChangeReport.addFieldReport(FieldChangeReport.missing(candidateFieldName));
+                objectChangeReport.addFieldReport(FieldChangeReport.missing(candidateFieldName), existingObject);
             } else {
                 if (candidateFieldValue instanceof Map && existingFieldValue instanceof Map) {
                     ObjectChangeReport subObjectReport = findObjectDifference(parentObjectUuid, (Map<String, Object>) candidateFieldValue,
                             (Map<String, Object>) existingFieldValue);
                     if (!subObjectReport.getChangeType().equals(ChangeType.NoChange)) {
-                        objectChangeReport.addFieldReport(FieldChangeReport.objectModified(candidateFieldName, subObjectReport));
+                        objectChangeReport.addFieldReport(FieldChangeReport.objectModified(candidateFieldName, subObjectReport), existingObject);
                     }
                 } else if (candidateFieldValue instanceof List && existingFieldValue instanceof List) {
                     ObjectCollectionChangeReport collectionChangeReport = findArrayDifferences((List<Object>) candidateFieldValue, (List<Object>) existingFieldValue);
                     if (!collectionChangeReport.hasNoChange()) {
-                        objectChangeReport.addFieldReport(FieldChangeReport.collectionModified(candidateFieldName, collectionChangeReport));
+                        objectChangeReport.addFieldReport(FieldChangeReport.collectionModified(candidateFieldName, collectionChangeReport), existingObject);
                     }
                 } else if (!Objects.equals(candidateFieldValue, existingFieldValue)) {
-                    objectChangeReport.addFieldReport(FieldChangeReport.modified(candidateFieldName, existingFieldValue, candidateFieldValue));
+                    objectChangeReport.addFieldReport(FieldChangeReport.modified(candidateFieldName, existingFieldValue, candidateFieldValue), existingObject);
                 }
             }
         }
@@ -71,7 +73,7 @@ public class MetadataDiffChecker {
         for (Map.Entry<String, Object> existingFieldEntry : existingObject.entrySet()) {
             String existingFieldName = existingFieldEntry.getKey();
             if (!candidateObject.containsKey(existingFieldName)) {
-                objectChangeReport.addFieldReport(FieldChangeReport.missing(existingFieldName));
+                objectChangeReport.addFieldReport(FieldChangeReport.missing(existingFieldName), existingObject);
             }
         }
 

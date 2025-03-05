@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
+
 public class ObjectChangeReport {
     private String uuid;
     private ChangeType changeType;
@@ -38,7 +40,14 @@ public class ObjectChangeReport {
 
     public void addFieldReport(FieldChangeReport fieldChangeReport) {
         fieldChanges.add(fieldChangeReport);
-        this.changeType = ChangeType.Modified;
+        if (!nullSafeEquals(this.changeType, ChangeType.Voided)) {
+            this.changeType = fieldChangeReport.getChangeType().equals(ChangeType.Voided) ? ChangeType.Voided : ChangeType.Modified;
+        }
+    }
+
+    public void addFieldReport(FieldChangeReport fieldChangeReport, Object oldValue) {
+        addFieldReport(fieldChangeReport);
+        this.oldValue = oldValue;
     }
 
     public ChangeType getChangeType() {
