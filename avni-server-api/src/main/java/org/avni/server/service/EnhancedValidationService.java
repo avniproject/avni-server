@@ -244,7 +244,7 @@ public class EnhancedValidationService {
                     return formatErrorMessage(question, value);
                 }
                 return null;
-            case Image:
+            case Image, ImageV2:
                 try {
                     URL dummyUrl = s3Service.generateMediaUploadUrl("dummy.jpg", HttpMethod.PUT);
                     URL imageUrl = new URL(value.toString());
