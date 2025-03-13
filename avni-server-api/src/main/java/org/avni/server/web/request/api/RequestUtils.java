@@ -23,7 +23,23 @@ public class RequestUtils {
         for (Map.Entry<String, Object> entry : observationsRequest.entrySet()) {
             putObservation(conceptRepository, observations, entry);
         }
+        observations.entrySet().removeIf(entry->isObservationRequestValueEmpty(entry.getValue()));
     }
+
+    private static boolean isObservationRequestValueEmpty(Object value){
+        if(value == null){
+            return true;
+        }
+        else if(value instanceof Map<?,?>map){
+            map.entrySet().removeIf(entry->isObservationRequestValueEmpty(entry.getValue()));
+            return map.isEmpty();
+        } else if (value instanceof Collection<?>collection) {
+            collection.removeIf(RequestUtils::isObservationRequestValueEmpty);
+            return collection.isEmpty();
+        }
+        return false;
+    }
+
 
     private static void putObservation(ConceptRepository conceptRepository, Map<String, Object> observations, Map.Entry<String, Object> entry) {
         String conceptName = entry.getKey();
