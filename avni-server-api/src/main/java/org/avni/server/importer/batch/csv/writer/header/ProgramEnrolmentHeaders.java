@@ -1,6 +1,8 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
+import org.avni.server.application.FormMapping;
 import org.avni.server.domain.Program;
+import org.avni.server.domain.SubjectType;
 
 public class ProgramEnrolmentHeaders implements Headers {
     public final static  String id = "Id";
@@ -19,5 +21,10 @@ public class ProgramEnrolmentHeaders implements Headers {
     @Override
     public String[] getAllHeaders() {
         return new String[]{id, subjectId, programHeader, enrolmentDate, exitDate, enrolmentLocation, exitLocation};
+    }
+
+    @Override
+    public String[] getAllHeaders(SubjectType subjectType, FormMapping formMapping) {
+        return getAllHeaders();
     }
 }

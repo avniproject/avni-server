@@ -36,6 +36,20 @@ public interface AddressLevelTypeRepository extends ReferenceDataRepository<Addr
 
     List<AddressLevelType> findByIsVoidedFalseAndNameIgnoreCaseContains(String name);
 
+    @Query(value = "WITH RECURSIVE parent_hierarchy AS (" +
+            "    SELECT id, parent_id, name " +
+            "    FROM address_level_type " +
+            "    WHERE name = :name AND is_voided = false " +
+            "    UNION ALL " +
+            "    SELECT alt.id, alt.parent_id, alt.name " +
+            "    FROM address_level_type alt " +
+            "    INNER JOIN parent_hierarchy ph ON alt.id = ph.parent_id " +
+            "    WHERE alt.is_voided = false" +
+            ") " +
+            "SELECT name FROM parent_hierarchy",
+            nativeQuery = true)
+    List<String> getAllParentNames(@Param("name") String name);
+
     default AddressLevelTypes getAllAddressLevelTypes() {
         return new AddressLevelTypes(this.findAllByIsVoidedFalse());
     }

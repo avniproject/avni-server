@@ -1,8 +1,6 @@
 package org.avni.server.service;
 
-import org.avni.server.application.FormElement;
-import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
+import org.avni.server.application.*;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Locale;
@@ -42,9 +40,10 @@ public class ImportService implements ImportLocationsConstants {
     private final SubjectTypeService subjectTypeService;
     private final FormService formService;
     private final ConceptService conceptService;
+    private final SubjectImportService subjectImportService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService,SubjectImportService subjectImportService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
@@ -55,6 +54,7 @@ public class ImportService implements ImportLocationsConstants {
         this.subjectTypeService = subjectTypeService;
         this.formService = formService;
         this.conceptService = conceptService;
+        this.subjectImportService = subjectImportService;
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
@@ -144,28 +144,25 @@ public class ImportService implements ImportLocationsConstants {
             return getUsersAndCatchmentsSampleFile();
         }
 
-        if (uploadSpec[STARTING_INDEX].equals("Subject")) {
-            SubjectType subjectType = subjectTypeRepository.findByName(uploadSpec[1]);
-            return getSubjectSampleFile(uploadSpec, response, subjectType);
-        }
-
-        if (uploadSpec[STARTING_INDEX].equals("ProgramEnrolment")) {
-            Program program = programRepository.findByName(uploadSpec[1]);
-            return getProgramEnrolmentSampleFile(uploadSpec, response, program);
-        }
-
-        if (uploadSpec[STARTING_INDEX].equals("ProgramEncounter")) {
-            EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
-            return getProgramEncounterSampleFile(uploadSpec, response, encounterType);
-        }
-
-        if (uploadSpec[STARTING_INDEX].equals("Encounter")) {
-            EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
-            return getEncounterSampleFile(uploadSpec, response, encounterType);
-        }
-
-        if (uploadSpec[STARTING_INDEX].equals("GroupMembers")) {
-            return getGroupMembersSampleFile(uploadSpec, response, getSubjectType(uploadSpec[1]));
+        switch (uploadSpec[STARTING_INDEX]) {
+            case "Subject" -> {
+                return subjectImportService.generateSampleFile(uploadSpec);
+            }
+            case "ProgramEnrolment" -> {
+                Program program = programRepository.findByName(uploadSpec[1]);
+                return getProgramEnrolmentSampleFile(uploadSpec, response, program);
+            }
+            case "ProgramEncounter" -> {
+                EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
+                return getProgramEncounterSampleFile(uploadSpec, response, encounterType);
+            }
+            case "Encounter" -> {
+                EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
+                return getEncounterSampleFile(uploadSpec, response, encounterType);
+            }
+            case "GroupMembers" -> {
+                return getGroupMembersSampleFile(uploadSpec, response, getSubjectType(uploadSpec[1]));
+            }
         }
 
         throw new UnsupportedOperationException(String.format("Sample file format for %s not supported", uploadType));
@@ -277,7 +274,7 @@ public class ImportService implements ImportLocationsConstants {
     private void appendDescriptionForUsersAndCatchments(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
         String descriptionRow = csvReader.readLine();
         List<String> allowedValuesForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeAllowedValuesForSubjectTypes();
-        String syncAttributesSampleValues = String.join(",", allowedValuesForSubjectTypesWithSyncAttributes);
+        String syncAttributesSampleValues = String.join(STRING_CONSTANT_SEPARATOR, allowedValuesForSubjectTypesWithSyncAttributes);
 
         descriptionRow = descriptionRow.replace("#supported_languages#", getSupportedLanguages().stream()
                 .map(language -> Locale.valueOf(language).getName())
@@ -314,14 +311,14 @@ public class ImportService implements ImportLocationsConstants {
     public String constructSampleSyncAttributeConceptValues(int size) {
         String[] sampleSyncConceptValues = {"\"value1\"", "\"value2\"", "\"value1,value2\""};
         List<String> sampleValuesForSyncAttributeConcepts = Collections.nCopies(size, sampleSyncConceptValues[RANDOM.nextInt(sampleSyncConceptValues.length)]);
-        return String.join(",", sampleValuesForSyncAttributeConcepts);
+        return String.join(STRING_CONSTANT_SEPARATOR, sampleValuesForSyncAttributeConcepts);
     }
 
     private List<String> appendHeaderRowForUsersAndCatchments(StringBuilder sampleFileBuilder, BufferedReader csvReader) throws IOException {
         String headerRow = csvReader.readLine();
         List<String> headersForSubjectTypesWithSyncAttributes = subjectTypeService.constructSyncAttributeHeadersForSubjectTypes();
-        String syncAttributesHeader = String.join(",", headersForSubjectTypesWithSyncAttributes);
-        headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + "," + syncAttributesHeader;
+        String syncAttributesHeader = String.join(STRING_CONSTANT_SEPARATOR, headersForSubjectTypesWithSyncAttributes);
+        headerRow = headersForSubjectTypesWithSyncAttributes.isEmpty() ? headerRow : headerRow + STRING_CONSTANT_SEPARATOR + syncAttributesHeader;
         sampleFileBuilder.append(headerRow);
         return headersForSubjectTypesWithSyncAttributes;
     }
@@ -329,14 +326,6 @@ public class ImportService implements ImportLocationsConstants {
     private String getEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
         response = addToResponse(response, Arrays.asList(new EncounterHeaders(encounterType).getAllHeaders()));
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[2]).getUuid(), null, getEncounterType(uploadSpec[1]).getUuid(), FormType.Encounter);
-        return addToResponse(response, formMapping);
-    }
-
-    private String getSubjectSampleFile(String[] uploadSpec, String response, SubjectType subjectType) {
-        SubjectHeaders subjectHeaders = new SubjectHeaders(subjectType);
-        response = addToResponse(response, Arrays.asList(subjectHeaders.getAllHeaders()));
-        response = addToResponse(response, addressLevelTypeRepository.getAllNames());
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[1]).getUuid(), null, null, FormType.IndividualProfile);
         return addToResponse(response, formMapping);
     }
 
@@ -375,13 +364,13 @@ public class ImportService implements ImportLocationsConstants {
         return program;
     }
 
-    private SubjectType getSubjectType(String subjectTypeName) {
+    SubjectType getSubjectType(String subjectTypeName) {
         SubjectType subjectType = subjectTypeRepository.findByName(subjectTypeName);
         assertNotNull(subjectType, subjectTypeName);
         return subjectType;
     }
 
-    private void assertNotNull(Object obj, String descriptor) {
+    void assertNotNull(Object obj, String descriptor) {
         if (obj == null) {
             String errorMessage = String.format("%s not found", descriptor);
             logger.error(errorMessage);
@@ -389,7 +378,7 @@ public class ImportService implements ImportLocationsConstants {
         }
     }
 
-    private String addToResponse(String str, FormMapping formMapping) {
+    String addToResponse(String str, FormMapping formMapping) {
         assertNotNull(formMapping, "Form mapping");
         String concatenatedString = addCommaIfNecessary(str);
         List<String> conceptNames = formMapping
@@ -399,11 +388,11 @@ public class ImportService implements ImportLocationsConstants {
                 .filter(formElement -> !ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType()))
                 .map(this::getHeaderName)
                 .collect(Collectors.toList());
-        concatenatedString = concatenatedString.concat(String.join(",", conceptNames));
+        concatenatedString = concatenatedString.concat(String.join(STRING_CONSTANT_SEPARATOR, conceptNames));
         return concatenatedString;
     }
 
-    private String getHeaderName(FormElement formElement) {
+    String getHeaderName(FormElement formElement) {
         String conceptName = formElement.getConcept().getName();
         if (formElement.getGroup() != null) {
             FormElement parentFormElement = formElement.getGroup();
@@ -415,12 +404,12 @@ public class ImportService implements ImportLocationsConstants {
 
     private String addToResponse(String inputString, List<String> headers) {
         String outputString = addCommaIfNecessary(inputString);
-        return outputString.concat(String.join(",", headers));
+        return outputString.concat(String.join(STRING_CONSTANT_SEPARATOR, headers));
     }
 
     private String addCommaIfNecessary(String str) {
         if (!str.isEmpty()) {
-            return str.concat(",");
+            return str.concat(STRING_CONSTANT_SEPARATOR);
         }
         return str;
     }

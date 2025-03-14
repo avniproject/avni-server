@@ -1,5 +1,8 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
+import org.avni.server.application.FormMapping;
+import org.avni.server.domain.SubjectType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,5 +32,10 @@ public class UsersAndCatchmentsHeaders implements Headers {
 
     public String[] getMandatoryHeaders() {
         return Arrays.stream(this.getAllHeaders()).filter(header -> !OPTIONAL_HEADERS.contains(header)).toArray(String[]::new);
+    }
+
+    @Override
+    public String[] getAllHeaders(SubjectType subjectType, FormMapping formMapping) {
+        return getAllHeaders();
     }
 }

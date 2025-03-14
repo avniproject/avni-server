@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
+import org.avni.server.application.FormMapping;
 import org.avni.server.domain.SubjectType;
 
 public class HouseholdMemberHeaders extends GroupMemberHeaders implements Headers {
@@ -14,5 +15,10 @@ public class HouseholdMemberHeaders extends GroupMemberHeaders implements Header
     @Override
     public String[] getAllHeaders() {
         return new String[]{groupId, memberId, isHeadOfHousehold, relationshipWithHeadOfHousehold, membershipStartDate, membershipEndDate};
+    }
+
+    @Override
+    public String[] getAllHeaders(SubjectType subjectType, FormMapping formMapping) {
+        return getAllHeaders();
     }
 }

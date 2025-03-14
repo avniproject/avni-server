@@ -42,6 +42,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final AddressLevelCreator addressLevelCreator;
     private final SubjectMigrationService subjectMigrationService;
     private final SubjectTypeService subjectTypeService;
+    private final SubjectHeaders subjectHeaders;
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
@@ -57,7 +58,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                          ObservationCreator observationCreator, IndividualService individualService, EntityApprovalStatusWriter entityApprovalStatusWriter,
                          S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
-                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService) {
+                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeaders subjectHeaders) {
         super(organisationConfigService);
         this.individualRepository = individualRepository;
         this.genderRepository = genderRepository;
@@ -74,6 +75,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.subjectMigrationService = subjectMigrationService;
         this.subjectTypeService = subjectTypeService;
         this.s3Service = s3Service;
+        this.subjectHeaders = subjectHeaders;
     }
 
     @Override
@@ -114,7 +116,6 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             }
             Individual savedIndividual;
             if (skipRuleExecution()) {
-                SubjectHeaders subjectHeaders = new SubjectHeaders(subjectType);
                 individual.setObservations(observationCreator.getObservations(row, subjectHeaders, allErrorMsgs, FormType.IndividualProfile, individual.getObservations()));
                 savedIndividual = individualService.save(individual);
             } else {

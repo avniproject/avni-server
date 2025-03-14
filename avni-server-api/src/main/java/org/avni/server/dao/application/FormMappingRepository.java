@@ -11,6 +11,7 @@ import org.avni.server.domain.SubjectType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.stereotype.Repository;
 
@@ -225,6 +226,11 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "  and entity_id notnull \n" +
             "  and observations_type_entity_id notnull", nativeQuery = true)
     List<FormMapping> findByProgramNotNullAndEncounterTypeNotNullAndIsVoidedFalse();
+
+    @Query("select st from SubjectType st " +
+            "left join FormMapping fm on st.id = fm.subjectType.id " +
+            "where fm.form.uuid = :formUUID ")
+    List<SubjectType> getSubjectTypesMappedToAForm(@Param("formUUID") String formUUID);
 
     @Override
     default <S extends FormMapping> List<S> saveAll(Iterable<S> entities) {
