@@ -4,8 +4,6 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeaders;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import static org.avni.server.service.ImportLocationsConstants.STRING_CONSTANT_SEPARATOR;
