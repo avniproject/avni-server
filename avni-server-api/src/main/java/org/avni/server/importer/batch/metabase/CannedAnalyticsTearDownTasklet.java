@@ -1,6 +1,8 @@
 package org.avni.server.importer.batch.metabase;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.framework.security.AuthService;
@@ -25,6 +27,7 @@ public class CannedAnalyticsTearDownTasklet implements Tasklet {
     private final AuthService authService;
     private final OrganisationRepository organisationRepository;
     private final MetabaseService metabaseService;
+    private final EntityManager entityManager;
     private final OrganisationConfigService organisationConfigService;
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -32,16 +35,18 @@ public class CannedAnalyticsTearDownTasklet implements Tasklet {
     private String organisationUUID;
 
     @Autowired
-    public CannedAnalyticsTearDownTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, MetabaseService metabaseService) {
+    public CannedAnalyticsTearDownTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, MetabaseService metabaseService, EntityManager entityManager) {
         this.authService = authService;
         this.organisationConfigService = organisationConfigService;
         this.organisationRepository = organisationRepository;
         this.metabaseService = metabaseService;
+        this.entityManager = entityManager;
     }
 
     @PostConstruct
     public void authenticateUser() {
         authService.authenticateByUserId(userId, organisationUUID);
+        DbRoleRepository.setDbRoleFromContext(entityManager);
     }
 
     @Override

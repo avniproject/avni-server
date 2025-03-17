@@ -23,7 +23,7 @@ public class MetabaseService {
 
     private final OrganisationService organisationService;
     private final AvniDatabase avniDatabase;
-    private final DatabaseRepository databaseRepository;
+    private final MetabaseDatabaseRepository databaseRepository;
     private final GroupPermissionsRepository groupPermissionsRepository;
     private final CollectionPermissionsRepository collectionPermissionsRepository;
     private final CollectionRepository collectionRepository;
@@ -36,7 +36,7 @@ public class MetabaseService {
     @Autowired
     public MetabaseService(OrganisationService organisationService,
                            AvniDatabase avniDatabase,
-                           DatabaseRepository databaseRepository,
+                           MetabaseDatabaseRepository databaseRepository,
                            GroupPermissionsRepository groupPermissionsRepository,
                            CollectionPermissionsRepository collectionPermissionsRepository,
                            CollectionRepository collectionRepository,

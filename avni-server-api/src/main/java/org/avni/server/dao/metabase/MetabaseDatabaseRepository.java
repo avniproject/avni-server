@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.Objects;
 
 @Repository
-public class DatabaseRepository extends MetabaseConnector {
+public class MetabaseDatabaseRepository extends MetabaseConnector {
     private final CollectionRepository collectionRepository;
 
-    public DatabaseRepository(RestTemplateBuilder restTemplateBuilder , CollectionRepository collectionRepository) {
+    public MetabaseDatabaseRepository(RestTemplateBuilder restTemplateBuilder , CollectionRepository collectionRepository) {
         super(restTemplateBuilder);
         this.collectionRepository = collectionRepository;
     }
@@ -137,5 +137,15 @@ public class DatabaseRepository extends MetabaseConnector {
     public void delete(Database database) {
         String url = metabaseApiUrl + "/database/" + database.getId();
         deleteForObject(url, Void.class);
+    }
+
+    public void reSyncSchema(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId() + "/sync_schema";
+        this.postForObject(url, "", String.class);
+    }
+
+    public void rescanFieldValues(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId() + "/rescan_values";
+        this.postForObject(url, "", String.class);
     }
 }
