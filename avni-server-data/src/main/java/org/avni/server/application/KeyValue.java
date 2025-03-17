@@ -45,4 +45,11 @@ public class KeyValue implements Serializable {
         return value != null ? value.equals(keyValue.value) : keyValue.value == null;
     }
 
+    @Override
+    public String toString() {
+        return "KeyValue{" +
+                "key='" + key + '\'' +
+                ", value=" + value +
+                '}';
+    }
 }

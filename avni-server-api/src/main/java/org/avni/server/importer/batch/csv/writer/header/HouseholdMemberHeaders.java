@@ -18,7 +18,7 @@ public class HouseholdMemberHeaders extends GroupMemberHeaders implements Header
     }
 
     @Override
-    public String[] getAllHeaders(SubjectType subjectType, FormMapping formMapping) {
+    public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
     }
 }

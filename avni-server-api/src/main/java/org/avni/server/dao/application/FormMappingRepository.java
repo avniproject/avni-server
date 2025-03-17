@@ -232,6 +232,10 @@ public interface FormMappingRepository extends ReferenceDataRepository<FormMappi
             "where fm.form.uuid = :formUUID ")
     List<SubjectType> getSubjectTypesMappedToAForm(@Param("formUUID") String formUUID);
 
+    @Query("SELECT p.name FROM Program p " +
+            "WHERE p.id IN (SELECT fm.program.id FROM FormMapping fm WHERE fm.form.uuid = :formUUID)")
+    List<String> getProgramsMappedToAForm(@Param("formUUID") String formUUID);
+
     @Override
     default <S extends FormMapping> List<S> saveAll(Iterable<S> entities) {
         throw new RuntimeException("Not supported");

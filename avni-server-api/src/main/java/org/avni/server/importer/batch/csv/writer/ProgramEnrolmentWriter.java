@@ -40,6 +40,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     private final ObservationCreator observationCreator;
     private final ProgramEnrolmentService programEnrolmentService;
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
+    private final ProgramEnrolmentHeaders programEnrolmentHeaders;
 
     @Autowired
     public ProgramEnrolmentWriter(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -53,7 +54,8 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
                                   ObservationCreator observationCreator,
                                   ProgramEnrolmentService programEnrolmentService,
                                   EntityApprovalStatusWriter entityApprovalStatusWriter,
-                                  OrganisationConfigService organisationConfigService) {
+                                  OrganisationConfigService organisationConfigService,
+                                  ProgramEnrolmentHeaders programEnrolmentHeaders) {
         super(organisationConfigService);
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.subjectCreator = subjectCreator;
@@ -67,6 +69,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         this.programEnrolmentService = programEnrolmentService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.dateCreator = new DateCreator();
+        this.programEnrolmentHeaders = programEnrolmentHeaders;
     }
 
     @Override
@@ -104,7 +107,6 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         }
         ProgramEnrolment savedEnrolment;
         if (skipRuleExecution()) {
-            ProgramEnrolmentHeaders programEnrolmentHeaders = new ProgramEnrolmentHeaders(program);
             programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeaders, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations()));
             savedEnrolment = programEnrolmentService.save(programEnrolment);
         } else {

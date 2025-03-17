@@ -21,7 +21,7 @@ public class GroupMemberHeaders implements Headers {
     }
 
     @Override
-    public String[] getAllHeaders(SubjectType subjectType, FormMapping formMapping) {
+    public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
     }
 }

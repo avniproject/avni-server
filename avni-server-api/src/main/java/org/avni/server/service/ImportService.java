@@ -41,9 +41,10 @@ public class ImportService implements ImportLocationsConstants {
     private final FormService formService;
     private final ConceptService conceptService;
     private final SubjectImportService subjectImportService;
+    private final ProgramImportService programImportService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService,SubjectImportService subjectImportService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService, SubjectImportService subjectImportService, ProgramImportService programImportService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
         this.programRepository = programRepository;
@@ -55,6 +56,7 @@ public class ImportService implements ImportLocationsConstants {
         this.formService = formService;
         this.conceptService = conceptService;
         this.subjectImportService = subjectImportService;
+        this.programImportService = programImportService;
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
@@ -149,8 +151,7 @@ public class ImportService implements ImportLocationsConstants {
                 return subjectImportService.generateSampleFile(uploadSpec);
             }
             case "ProgramEnrolment" -> {
-                Program program = programRepository.findByName(uploadSpec[1]);
-                return getProgramEnrolmentSampleFile(uploadSpec, response, program);
+                return programImportService.generateSampleFile(uploadSpec);
             }
             case "ProgramEncounter" -> {
                 EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
@@ -326,12 +327,6 @@ public class ImportService implements ImportLocationsConstants {
     private String getEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
         response = addToResponse(response, Arrays.asList(new EncounterHeaders(encounterType).getAllHeaders()));
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[2]).getUuid(), null, getEncounterType(uploadSpec[1]).getUuid(), FormType.Encounter);
-        return addToResponse(response, formMapping);
-    }
-
-    private String getProgramEnrolmentSampleFile(String[] uploadSpec, String response, Program program) {
-        response = addToResponse(response, Arrays.asList(new ProgramEnrolmentHeaders(program).getAllHeaders()));
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[2]).getUuid(), getProgram(uploadSpec[1]).getUuid(), null, FormType.ProgramEnrolment);
         return addToResponse(response, formMapping);
     }
 

@@ -39,10 +39,13 @@ public class ImportServiceTest {
 
     private ImportService importService;
 
+    @Mock
+    private ProgramImportService programImportService;
+
     @Before
     public void before() {
         initMocks(this);
-        importService = new ImportService(subjectTypeRepository,formMappingRepository, programRepository, encounterTypeRepository,addressLevelTypeRepository, organisationConfigRepository, groupRepository, subjectTypeService, formService, conceptService, subjectImportService);
+        importService = new ImportService(subjectTypeRepository,formMappingRepository, programRepository, encounterTypeRepository,addressLevelTypeRepository, organisationConfigRepository, groupRepository, subjectTypeService, formService, conceptService, subjectImportService, programImportService);
     }
 
     @Test

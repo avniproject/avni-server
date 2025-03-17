@@ -17,11 +17,13 @@ public class ImportHelperService {
     private static final Logger logger = LoggerFactory.getLogger(ImportHelperService.class);
 
     private final SubjectTypeRepository subjectTypeRepository;
+    private final ProgramRepository programRepository;
 
     @Autowired
     public ImportHelperService(
-            SubjectTypeRepository subjectTypeRepository) {
+            SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
+        this.programRepository = programRepository;
     }
 
     public SubjectType getSubjectType(String subjectTypeName) {
@@ -67,5 +69,11 @@ public class ImportHelperService {
             return str.concat(",");
         }
         return str;
+    }
+
+    Program getProgram(String programName) {
+        Program program = programRepository.findByName(programName);
+        assertNotNull(program, programName);
+        return program;
     }
 }
