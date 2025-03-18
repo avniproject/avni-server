@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 public class DatabaseService implements IQuestionCreationService {
 
     private static final String ADDRESS_TABLE = "address";
-    private static final String TABLE_METADATA = "table_metadata";
     private static final String MEDIA_TABLE = "media";
     private static final String SYNC_TELEMETRY_TABLE = "sync_telemetry";
 
@@ -152,13 +151,6 @@ public class DatabaseService implements IQuestionCreationService {
         }
 
         return programAndEncounterNames;
-    }
-
-    private List<List<String>> getTableMetadataRows() {
-        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
-        TableDetails fetchedMetadataTable = databaseRepository.findTableDetailsByName(database, new TableDetails(TABLE_METADATA));
-        DatasetResponse datasetResponse = databaseRepository.findAll(fetchedMetadataTable, database);
-        return datasetResponse.getData().getRows();
     }
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
