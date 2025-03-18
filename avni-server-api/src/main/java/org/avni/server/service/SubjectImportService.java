@@ -3,46 +3,32 @@ package org.avni.server.service;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.importer.batch.csv.writer.header.SubjectHeaders;
+import org.avni.server.importer.batch.csv.writer.header.Headers;
+import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.springframework.stereotype.Service;
 
-import static org.avni.server.service.ImportLocationsConstants.STRING_CONSTANT_SEPARATOR;
-
 @Service
-public class SubjectImportService implements SampleFileExport {
+public class SubjectImportService extends AbstractSampleFileExportService {
 
-    private final ImportHelperService importHelperService;
-    private final FormMappingRepository formMappingRepository;
-    private final SubjectHeaders subjectHeaders;
+    private final SubjectHeadersCreator subjectHeadersCreator;
 
     public SubjectImportService(
             ImportHelperService importHelperService,
             FormMappingRepository formMappingRepository,
-            SubjectHeaders subjectHeaders) {
-        this.importHelperService = importHelperService;
-        this.formMappingRepository = formMappingRepository;
-        this.subjectHeaders = subjectHeaders;
+            SubjectHeadersCreator subjectHeadersCreator) {
+        super(importHelperService, formMappingRepository);
+        this.subjectHeadersCreator = subjectHeadersCreator;
     }
 
     @Override
-    public String generateSampleFile(String[] uploadSpec) {
-        try {
-            FormMapping formMapping = getFormMapping(uploadSpec);
-
-            StringBuilder sampleFileBuilder = new StringBuilder();
-            sampleFileBuilder.append(String.join(STRING_CONSTANT_SEPARATOR, subjectHeaders.getAllHeaders(formMapping))).append("\n");
-            sampleFileBuilder.append(String.join(STRING_CONSTANT_SEPARATOR, subjectHeaders.getAllDescriptions(formMapping))).append("\n");
-            return sampleFileBuilder.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generating sample CSV", e);
-        }
+    protected Headers getHeaders() {
+        return subjectHeadersCreator;
     }
 
     public FormMapping getFormMapping(String[] uploadSpec) {
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(
                 importHelperService.getSubjectType(uploadSpec[1]).getUuid(),
                 null, null, FormType.IndividualProfile);
-        importHelperService.assertNotNull(formMapping, "Form mapping");
         return formMapping;
     }
 }

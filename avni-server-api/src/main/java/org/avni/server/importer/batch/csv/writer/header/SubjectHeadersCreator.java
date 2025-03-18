@@ -7,6 +7,7 @@ import org.avni.server.application.KeyType;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.service.ImportHelperService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.stereotype.Component;
@@ -14,10 +15,11 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class SubjectHeaders extends AbstractHeaders{
+public class SubjectHeadersCreator extends AbstractHeaders{
     public final static String id = "Id from previous system";
     public final static String subjectTypeHeader = "Subject Type";
     public final static String registrationDate = "Date Of Registration";
@@ -37,10 +39,12 @@ public class SubjectHeaders extends AbstractHeaders{
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final FormMappingRepository formMappingRepository;
 
-    public SubjectHeaders(
+    public SubjectHeadersCreator(
+            ImportHelperService importHelperService,
             OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository,
             FormMappingRepository formMappingRepository) {
+        super(importHelperService);
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.formMappingRepository = formMappingRepository;
@@ -105,18 +109,19 @@ public class SubjectHeaders extends AbstractHeaders{
                         JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
                         List<String> locationTypeUUIDs = mapper.convertValue(locationTypeUUIDsNode,
                                 mapper.getTypeFactory().constructCollectionType(List.class, String.class));
-                        headers.addAll(locationTypeUUIDs.stream()
+                        Set<String> uniqueHeaders = locationTypeUUIDs.stream()
                                 .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
-                                .toList());
+                                .collect(Collectors.toSet());
+                        headers.addAll(uniqueHeaders);
                         hasCustomLocations = true;
                         break;
                     }
                 }
                 if (!hasCustomLocations) {
-                    headers.addAll(addressLevelTypeRepository.getAllNames());
+                    return defaultConfig(addressLevelTypeRepository);
                 }
             } catch (Exception e) {
-                headers.addAll(addressLevelTypeRepository.getAllNames());
+                return defaultConfig(addressLevelTypeRepository);
             }
             return new AddressConfig(headers, headers.size());
         }

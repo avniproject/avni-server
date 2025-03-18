@@ -36,6 +36,6 @@ public class HeaderField {
     }
 
     protected boolean isSpecialHeader() {
-        return header.equals(SubjectHeaders.subjectTypeHeader) || header.equals(ProgramEnrolmentHeaders.programHeader);
+        return header.equals(SubjectHeadersCreator.subjectTypeHeader) || header.equals(ProgramEnrolmentHeadersCreator.programHeader);
     }
 }

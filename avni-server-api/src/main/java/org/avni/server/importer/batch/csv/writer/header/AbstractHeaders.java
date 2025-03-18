@@ -6,7 +6,6 @@ import org.avni.server.application.KeyType;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportHelperService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,9 +13,12 @@ import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements Headers {
-
-    @Autowired
     protected ImportHelperService importHelperService;
+
+    AbstractHeaders(ImportHelperService importHelperService){
+        this.importHelperService = importHelperService;
+
+    }
 
     @Override
     public String[] getAllHeaders() {

@@ -2,13 +2,14 @@ package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.service.ImportHelperService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class ProgramEnrolmentHeaders extends AbstractHeaders{
+public class ProgramEnrolmentHeadersCreator extends AbstractHeaders{
     public final static String id = "Id from previous system";
     public final static String subjectId = "Subject Id";
     public final static String programHeader = "Program";
@@ -19,8 +20,10 @@ public class ProgramEnrolmentHeaders extends AbstractHeaders{
 
     private final FormMappingRepository formMappingRepository;
 
-    public ProgramEnrolmentHeaders(
+    public ProgramEnrolmentHeadersCreator(
+            ImportHelperService importHelperService,
             FormMappingRepository formMappingRepository) {
+        super(importHelperService);
         this.formMappingRepository = formMappingRepository;
     }
 

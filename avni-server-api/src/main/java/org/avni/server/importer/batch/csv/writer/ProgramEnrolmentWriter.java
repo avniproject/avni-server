@@ -10,7 +10,7 @@ import org.avni.server.domain.Program;
 import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
-import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeaders;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
@@ -40,7 +40,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     private final ObservationCreator observationCreator;
     private final ProgramEnrolmentService programEnrolmentService;
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
-    private final ProgramEnrolmentHeaders programEnrolmentHeaders;
+    private final ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
 
     @Autowired
     public ProgramEnrolmentWriter(ProgramEnrolmentRepository programEnrolmentRepository,
@@ -55,7 +55,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
                                   ProgramEnrolmentService programEnrolmentService,
                                   EntityApprovalStatusWriter entityApprovalStatusWriter,
                                   OrganisationConfigService organisationConfigService,
-                                  ProgramEnrolmentHeaders programEnrolmentHeaders) {
+                                  ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator) {
         super(organisationConfigService);
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.subjectCreator = subjectCreator;
@@ -69,7 +69,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         this.programEnrolmentService = programEnrolmentService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.dateCreator = new DateCreator();
-        this.programEnrolmentHeaders = programEnrolmentHeaders;
+        this.programEnrolmentHeadersCreator = programEnrolmentHeadersCreator;
     }
 
     @Override
@@ -81,25 +81,25 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         ProgramEnrolment programEnrolment = getOrCreateProgramEnrolment(row);
 
         List<String> allErrorMsgs = new ArrayList<>();
-        Individual individual = subjectCreator.getSubject(row.get(ProgramEnrolmentHeaders.subjectId), allErrorMsgs, ProgramEnrolmentHeaders.subjectId);
+        Individual individual = subjectCreator.getSubject(row.get(ProgramEnrolmentHeadersCreator.subjectId), allErrorMsgs, ProgramEnrolmentHeadersCreator.subjectId);
         programEnrolment.setIndividual(individual);
-        Program program = programCreator.getProgram(row.get(ProgramEnrolmentHeaders.programHeader), ProgramEnrolmentHeaders.programHeader);
+        Program program = programCreator.getProgram(row.get(ProgramEnrolmentHeadersCreator.programHeader), ProgramEnrolmentHeadersCreator.programHeader);
         LocalDate enrolmentDate = dateCreator.getDate(
                 row,
-                ProgramEnrolmentHeaders.enrolmentDate,
-                allErrorMsgs, String.format("%s is mandatory", ProgramEnrolmentHeaders.enrolmentDate)
+                ProgramEnrolmentHeadersCreator.enrolmentDate,
+                allErrorMsgs, String.format("%s is mandatory", ProgramEnrolmentHeadersCreator.enrolmentDate)
         );
         if (enrolmentDate != null) programEnrolment.setEnrolmentDateTime(enrolmentDate.toDateTimeAtStartOfDay());
         LocalDate exitDate = dateCreator.getDate(
                 row,
-                ProgramEnrolmentHeaders.exitDate,
+                ProgramEnrolmentHeadersCreator.exitDate,
                 allErrorMsgs, null
         );
         if (exitDate != null) programEnrolment.setProgramExitDateTime(exitDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();
-        programEnrolment.setEnrolmentLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeaders.enrolmentLocation, allErrorMsgs));
-        programEnrolment.setExitLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeaders.exitLocation, allErrorMsgs));
+        programEnrolment.setEnrolmentLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeadersCreator.enrolmentLocation, allErrorMsgs));
+        programEnrolment.setExitLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeadersCreator.exitLocation, allErrorMsgs));
         programEnrolment.setProgram(program);
         FormMapping formMapping = formMappingRepository.getRequiredFormMapping(individual.getSubjectType().getUuid(), program.getUuid(), null, FormType.ProgramEnrolment);
         if (formMapping == null) {
@@ -107,7 +107,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         }
         ProgramEnrolment savedEnrolment;
         if (skipRuleExecution()) {
-            programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeaders, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations()));
+            programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations()));
             savedEnrolment = programEnrolmentService.save(programEnrolment);
         } else {
             UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEnrolment, allErrorMsgs);
@@ -120,7 +120,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     }
 
     private ProgramEnrolment getOrCreateProgramEnrolment(Row row) {
-        String id = row.get(ProgramEnrolmentHeaders.id);
+        String id = row.get(ProgramEnrolmentHeadersCreator.id);
         ProgramEnrolment existingEnrolment = null;
         if (id != null && !id.isEmpty()) {
             existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);

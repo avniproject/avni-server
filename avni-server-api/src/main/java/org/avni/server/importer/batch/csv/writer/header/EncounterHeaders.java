@@ -19,4 +19,9 @@ public class EncounterHeaders extends CommonEncounterHeaders implements Headers 
     public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
     }
+
+    @Override
+    public String[] getAllDescriptions(FormMapping formMapping) {
+        return new String[0];
+    }
 }

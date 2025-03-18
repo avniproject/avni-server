@@ -1,0 +1,35 @@
+package org.avni.server.service;
+
+import org.avni.server.application.FormMapping;
+import org.avni.server.dao.application.FormMappingRepository;
+import org.avni.server.importer.batch.csv.writer.header.Headers;
+
+import static org.avni.server.service.ImportLocationsConstants.STRING_CONSTANT_SEPARATOR;
+
+public abstract class AbstractSampleFileExportService implements SampleFileExport {
+    protected final ImportHelperService importHelperService;
+    protected final FormMappingRepository formMappingRepository;
+
+    public AbstractSampleFileExportService(
+            ImportHelperService importHelperService,
+            FormMappingRepository formMappingRepository) {
+        this.importHelperService = importHelperService;
+        this.formMappingRepository = formMappingRepository;
+    }
+
+    @Override
+    public String generateSampleFile(String[] uploadSpec) {
+        FormMapping formMapping = getFormMapping(uploadSpec);
+
+        StringBuilder sampleFileBuilder = new StringBuilder();
+        Headers headers = getHeaders();
+        sampleFileBuilder.append(String.join(STRING_CONSTANT_SEPARATOR, headers.getAllHeaders(formMapping))).append("\n");
+        sampleFileBuilder.append(String.join(STRING_CONSTANT_SEPARATOR, headers.getAllDescriptions(formMapping))).append("\n");
+        return sampleFileBuilder.toString();
+    }
+
+    protected abstract Headers getHeaders();
+
+    public abstract FormMapping getFormMapping(String[] uploadSpec);
+
+}

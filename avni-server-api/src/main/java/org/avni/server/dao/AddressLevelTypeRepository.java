@@ -9,8 +9,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "addressLevelType", path = "addressLevelType")
@@ -36,19 +35,23 @@ public interface AddressLevelTypeRepository extends ReferenceDataRepository<Addr
 
     List<AddressLevelType> findByIsVoidedFalseAndNameIgnoreCaseContains(String name);
 
-    @Query(value = "WITH RECURSIVE parent_hierarchy AS (" +
-            "    SELECT id, parent_id, name " +
-            "    FROM address_level_type " +
-            "    WHERE name = :name AND is_voided = false " +
-            "    UNION ALL " +
-            "    SELECT alt.id, alt.parent_id, alt.name " +
-            "    FROM address_level_type alt " +
-            "    INNER JOIN parent_hierarchy ph ON alt.id = ph.parent_id " +
-            "    WHERE alt.is_voided = false" +
-            ") " +
-            "SELECT name FROM parent_hierarchy",
-            nativeQuery = true)
-    List<String> getAllParentNames(@Param("name") String name);
+    default List<String> getAllParentNames(String uuid) {
+        List<AddressLevelType> allAddressLevelTypes = getAllAddressLevelTypes();
+        List<String> parentNames = new ArrayList<>();
+        AddressLevelType current = allAddressLevelTypes.stream()
+                .filter(alt -> alt.getUuid().equals(uuid))
+                .findFirst()
+                .orElse(null);
+
+        parentNames.add(current.getName());
+        while (current != null && current.getParent() != null) {
+            current = current.getParent();
+            if (current != null) {
+                parentNames.add(current.getName());
+            }
+        }
+        return parentNames;
+    }
 
     default AddressLevelTypes getAllAddressLevelTypes() {
         return new AddressLevelTypes(this.findAllByIsVoidedFalse());

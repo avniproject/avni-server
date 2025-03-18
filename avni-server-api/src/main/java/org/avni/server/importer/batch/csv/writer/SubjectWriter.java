@@ -9,7 +9,7 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
-import org.avni.server.importer.batch.csv.writer.header.SubjectHeaders;
+import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
 import org.joda.time.LocalDate;
@@ -42,7 +42,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final AddressLevelCreator addressLevelCreator;
     private final SubjectMigrationService subjectMigrationService;
     private final SubjectTypeService subjectTypeService;
-    private final SubjectHeaders subjectHeaders;
+    private final SubjectHeadersCreator subjectHeadersCreator;
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectWriter.class);
 
@@ -58,7 +58,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                          ObservationCreator observationCreator, IndividualService individualService, EntityApprovalStatusWriter entityApprovalStatusWriter,
                          S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
-                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeaders subjectHeaders) {
+                         AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeadersCreator subjectHeadersCreator) {
         super(organisationConfigService);
         this.individualRepository = individualRepository;
         this.genderRepository = genderRepository;
@@ -75,7 +75,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.subjectMigrationService = subjectMigrationService;
         this.subjectTypeService = subjectTypeService;
         this.s3Service = s3Service;
-        this.subjectHeaders = subjectHeaders;
+        this.subjectHeadersCreator = subjectHeadersCreator;
     }
 
     @Override
@@ -90,19 +90,19 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             ObservationCollection oldObservations = individual.getObservations();
             List<String> allErrorMsgs = new ArrayList<>();
 
-            SubjectType subjectType = subjectTypeCreator.getSubjectType(row.get(SubjectHeaders.subjectTypeHeader), SubjectHeaders.subjectTypeHeader);
+            SubjectType subjectType = subjectTypeCreator.getSubjectType(row.get(SubjectHeadersCreator.subjectTypeHeader), SubjectHeadersCreator.subjectTypeHeader);
             individual.setSubjectType(subjectType);
-            individual.setFirstName(row.get(SubjectHeaders.firstName));
+            individual.setFirstName(row.get(SubjectHeadersCreator.firstName));
             if (subjectType.isAllowMiddleName())
-                individual.setMiddleName(row.get(SubjectHeaders.middleName));
-            individual.setLastName(row.get(SubjectHeaders.lastName));
+                individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
+            individual.setLastName(row.get(SubjectHeadersCreator.lastName));
             setProfilePicture(subjectType, individual, row, allErrorMsgs);
             setDateOfBirth(individual, row, allErrorMsgs);
-            Boolean dobVerified = row.getBool(SubjectHeaders.dobVerified);
+            Boolean dobVerified = row.getBool(SubjectHeadersCreator.dobVerified);
             individual.setDateOfBirthVerified(dobVerified != null ? dobVerified : false);
             setRegistrationDate(individual, row, allErrorMsgs);
             LocationCreator locationCreator = new LocationCreator();
-            individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeaders.registrationLocation, allErrorMsgs));
+            individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
 
             AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
             individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
@@ -116,7 +116,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             }
             Individual savedIndividual;
             if (skipRuleExecution()) {
-                individual.setObservations(observationCreator.getObservations(row, subjectHeaders, allErrorMsgs, FormType.IndividualProfile, individual.getObservations()));
+                individual.setObservations(observationCreator.getObservations(row, subjectHeadersCreator, allErrorMsgs, FormType.IndividualProfile, individual.getObservations()));
                 savedIndividual = individualService.save(individual);
             } else {
                 UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), individual, allErrorMsgs);
@@ -137,20 +137,20 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
 
     private void setProfilePicture(SubjectType subjectType, Individual individual, Row row, List<String> errorMsgs) {
         try {
-            String profilePicUrl = row.get(SubjectHeaders.profilePicture);
+            String profilePicUrl = row.get(SubjectHeadersCreator.profilePicture);
             if(!StringUtils.isEmpty(profilePicUrl) && subjectType.isAllowProfilePicture()) {
                 individual.setProfilePicture(s3Service
                         .uploadProfilePic(profilePicUrl, null));
             } else if(!StringUtils.isEmpty(profilePicUrl)) {
-                errorMsgs.add(String.format("Not allowed to set '%s'", SubjectHeaders.profilePicture));
+                errorMsgs.add(String.format("Not allowed to set '%s'", SubjectHeadersCreator.profilePicture));
             }
         } catch (Exception e) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeaders.profilePicture));
+            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.profilePicture));
         }
     }
 
     private Individual getOrCreateIndividual(Row row) {
-        String id = row.get(SubjectHeaders.id);
+        String id = row.get(SubjectHeadersCreator.id);
         Individual existingIndividual = null;
         if (!(id == null || id.isEmpty())) {
             existingIndividual = individualRepository.findByLegacyIdOrUuid(id);
@@ -166,33 +166,33 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
 
     private void setDateOfBirth(Individual individual, Row row, List<String> errorMsgs) {
         try {
-            String dob = row.get(SubjectHeaders.dateOfBirth);
+            String dob = row.get(SubjectHeadersCreator.dateOfBirth);
             if (dob != null && !dob.trim().isEmpty())
                 individual.setDateOfBirth(LocalDate.parse(dob));
         } catch (Exception ex) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeaders.dateOfBirth));
+            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));
         }
     }
 
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {
         try {
-            String registrationDate = row.get(SubjectHeaders.registrationDate);
+            String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
             individual.setRegistrationDate(registrationDate != null && !registrationDate.trim().isEmpty() ? LocalDate.parse(registrationDate) : LocalDate.now());
         } catch (Exception ex) {
-            errorMsgs.add(String.format("Invalid '%s'", SubjectHeaders.registrationDate));
+            errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.registrationDate));
         }
     }
 
     private void setGender(Individual individual, Row row) throws Exception {
         try {
-            String genderName = row.get(SubjectHeaders.gender);
+            String genderName = row.get(SubjectHeadersCreator.gender);
             Gender gender = genderRepository.findByNameIgnoreCase(genderName);
             if (gender == null) {
-                throw new Exception(String.format("Invalid '%s' - '%s'", SubjectHeaders.gender, genderName));
+                throw new Exception(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
             }
             individual.setGender(gender);
         } catch (Exception ex) {
-            throw new Exception(String.format("Invalid '%s'", SubjectHeaders.gender));
+            throw new Exception(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
         }
     }
 }
