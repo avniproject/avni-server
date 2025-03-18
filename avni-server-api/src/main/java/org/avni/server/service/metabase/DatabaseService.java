@@ -2,7 +2,7 @@ package org.avni.server.service.metabase;
 
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.metabase.CollectionRepository;
-import org.avni.server.dao.metabase.DatabaseRepository;
+import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.QuestionRepository;
 import org.avni.server.domain.Organisation;
@@ -31,7 +31,7 @@ public class DatabaseService implements IQuestionCreationService {
     private static final int SECOND_CARD_COL_IDX = 12;
     private static final int FIRST_CARD_COL_IDX = 0;
 
-    private final DatabaseRepository databaseRepository;
+    private final MetabaseDatabaseRepository databaseRepository;
     private final MetabaseService metabaseService;
     private final CollectionRepository collectionRepository;
     private final QuestionRepository questionRepository;
@@ -41,8 +41,11 @@ public class DatabaseService implements IQuestionCreationService {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
+    private static final long MAX_WAIT_TIME_IN_SECONDS = 300;
+    private static final long EACH_SLEEP_DURATION = 3;
+
     @Autowired
-    public DatabaseService(DatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService) {
+    public DatabaseService(MetabaseDatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService) {
         this.databaseRepository = databaseRepository;
         this.metabaseService = metabaseService;
         this.collectionRepository = collectionRepository;
@@ -193,7 +196,7 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForViews() {
-        List<String> viewNames = Arrays.stream(QuestionName.values()).map(qn -> qn.getViewName()).collect(Collectors.toList());
+        List<String> viewNames = Arrays.stream(QuestionName.values()).map(QuestionName::getViewName).collect(Collectors.toList());
         List<String> filteredViews = filterOutExistingQuestions(viewNames);
 
         for (String viewName : filteredViews) {
@@ -253,10 +256,24 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     public void addCollectionItems() throws InterruptedException {
-        long MAX_WAIT_TIME_IN_SECONDS = 300;
-        long EACH_SLEEP_DURATION = 3;
-        long startTime = System.currentTimeMillis();
         Organisation organisation = organisationService.getCurrentOrganisation();
+        waitForSyncToComplete(organisation);
+
+        //todo add field details and table details to request scope
+        logger.info("Adding questions for subject types {}", organisation.getName());
+        createQuestionsForSubjectTypes();
+        logger.info("Adding questions for programs and encounters {}", organisation.getName());
+        createQuestionsForProgramsAndEncounters();
+        logger.info("Adding questions for misc single tables {}", organisation.getName());
+        createQuestionsForMiscSingleTables();
+        logger.info("Adding questions for views {}", organisation.getName());
+        createQuestionsForViews();
+        logger.info("Adding custom questions {}", organisation.getName());
+        createCustomQuestions();
+    }
+
+    private void waitForSyncToComplete(Organisation organisation) throws InterruptedException {
+        long startTime = System.currentTimeMillis();
         logger.info("Waiting for metabase database sync {}", organisation.getName());
         while (true) {
             long timeSpent = System.currentTimeMillis() - startTime;
@@ -270,17 +287,13 @@ public class DatabaseService implements IQuestionCreationService {
                 break;
             }
         }
+    }
 
-        //todo add field details and table details to request scope
-        logger.info("Adding questions for subject types {}", organisation.getName());
-        createQuestionsForSubjectTypes();
-        logger.info("Adding questions for programs and encounters {}", organisation.getName());
-        createQuestionsForProgramsAndEncounters();
-        logger.info("Adding questions for misc single tables {}", organisation.getName());
-        createQuestionsForMiscSingleTables();
-        logger.info("Adding questions for views {}", organisation.getName());
-        createQuestionsForViews();
-        logger.info("Adding custom questions {}", organisation.getName());
-        createCustomQuestions();
+    public void syncDatabase() throws InterruptedException {
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        Database database = databaseRepository.getDatabase(organisation);
+        databaseRepository.reSyncSchema(database);
+        databaseRepository.rescanFieldValues(database);
+        this.waitForSyncToComplete(organisation);
     }
 }

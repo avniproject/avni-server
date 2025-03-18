@@ -15,9 +15,9 @@ import java.util.List;
 public class QuestionRepository extends MetabaseConnector {
     public static final String IS_VOIDED = "is_voided";
 
-    private final DatabaseRepository databaseRepository;
+    private final MetabaseDatabaseRepository databaseRepository;
 
-    public QuestionRepository(RestTemplateBuilder restTemplateBuilder, DatabaseRepository databaseRepository) {
+    public QuestionRepository(RestTemplateBuilder restTemplateBuilder, MetabaseDatabaseRepository databaseRepository) {
         super(restTemplateBuilder);
         this.databaseRepository = databaseRepository;
     }

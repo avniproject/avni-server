@@ -101,8 +101,6 @@ dump-org-data-prerelease-with-copy:
 	make dump-org-data-with-copy dbRole=$(dbRole) prefix=prerelease
 dump-org-data-prod:
 	make dump-org-data dbRole=$(dbRole) prefix=prod
-dump-multiple-schemas:
-	make dump-org-data prefix=prod
 dump-org-data-prod-with-copy:
 	make dump-org-data-with-copy dbRole=$(dbRole) prefix=prod
 dump-org-data-staging:

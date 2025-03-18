@@ -1,6 +1,8 @@
 package org.avni.server.importer.batch.metabase;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
@@ -31,6 +33,7 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
     private final GroupsService groupsService;
     private final MetabaseService metabaseService;
     private final DatabaseService databaseService;
+    private final EntityManager entityManager;
     private final OrganisationConfigService organisationConfigService;
     @Value("#{jobParameters['userId']}")
     private Long userId;
@@ -38,18 +41,20 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
     private String organisationUUID;
 
     @Autowired
-    public CannedAnalyticsSetupTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, GroupsService groupsService, MetabaseService metabaseService, DatabaseService databaseService) {
+    public CannedAnalyticsSetupTasklet(AuthService authService, OrganisationConfigService organisationConfigService, OrganisationRepository organisationRepository, GroupsService groupsService, MetabaseService metabaseService, DatabaseService databaseService, EntityManager entityManager) {
         this.authService = authService;
         this.organisationConfigService = organisationConfigService;
         this.organisationRepository = organisationRepository;
         this.groupsService = groupsService;
         this.metabaseService = metabaseService;
         this.databaseService = databaseService;
+        this.entityManager = entityManager;
     }
 
     @PostConstruct
     public void authenticateUser() {
         authService.authenticateByUserId(userId, organisationUUID);
+        DbRoleRepository.setDbRoleFromContext(entityManager);
     }
 
     private void setup(Organisation organisation) throws InterruptedException {
