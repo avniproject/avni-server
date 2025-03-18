@@ -141,44 +141,55 @@ create function delete_etl_table_metadata(in_impl_schema text, in_db_owner text,
 as
 $$
 BEGIN
-    execute 'set role ' || in_db_owner || ';';
-    execute 'delete from entity_sync_status where table_metadata_id = (select id from table_metadata where name = ''' || in_table_name || ''' and schema_name = ''' || in_impl_schema || ''');';
-    execute 'delete from index_metadata where table_metadata_id = (select id from table_metadata where name = ''' || in_table_name || ''' and schema_name = ''' || in_impl_schema || ''');';
-    execute 'delete from column_metadata where table_id = (select id from table_metadata where name = ''' || in_table_name || ''' and schema_name = ''' || in_impl_schema || ''');';
-    execute 'delete from table_metadata where name = ''' || in_table_name || ''' and schema_name = ''' || in_impl_schema || ''';';
+    execute 'set role "' || in_db_owner || '";';
+    execute 'delete from entity_sync_status where table_metadata_id = (select id from table_metadata where name = ''' ||
+            in_table_name || ''' and schema_name = ''' || in_impl_schema || ''');';
+    execute 'delete from index_metadata where table_metadata_id = (select id from table_metadata where name = ''' ||
+            in_table_name || ''' and schema_name = ''' || in_impl_schema || ''');';
+    execute 'delete from column_metadata where table_id = (select id from table_metadata where name = ''' ||
+            in_table_name || ''' and schema_name = ''' || in_impl_schema || ''');';
+    execute 'delete from table_metadata where name = ''' || in_table_name || ''' and schema_name = ''' ||
+            in_impl_schema || ''';';
     execute 'drop table if exists "' || in_impl_schema || '"."' || in_table_name || '"';
     return true;
 END
 $$;
 
 -- Create or replace function to delete etl metadata for an org
-drop function if exists delete_etl_metadata_for_schema;
+DROP FUNCTION IF EXISTS delete_etl_metadata_for_schema;
 create function delete_etl_metadata_for_schema(in_impl_schema text, in_db_user text, in_db_owner text) returns bool
     language plpgsql
 as
 $$
 BEGIN
-    execute 'set role ' || in_db_owner || ';';
-    execute 'drop schema if exists ' || in_impl_schema || ' cascade;';
+    execute 'set role "' || in_db_owner || '";';
+    execute 'drop schema if exists "' || in_impl_schema || '" cascade;';
+    execute 'delete from entity_sync_status where db_user = ''' || in_db_user || ''';';
     execute 'delete from entity_sync_status where schema_name = ''' || in_impl_schema || ''';';
-    execute 'delete from index_metadata where table_metadata_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
-    execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
+    execute 'delete from index_metadata where table_metadata_id in (select id from table_metadata where schema_name = ''' ||
+            in_impl_schema || ''');';
+    execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' ||
+            in_impl_schema || ''');';
     execute 'delete from table_metadata where schema_name = ''' || in_impl_schema || ''';';
     return true;
 END
 $$;
 
--- Create or replace function to delete etl metadata for org-group
-create or replace function delete_etl_metadata_for_org(in_impl_schema text, in_db_user text) returns bool
+-- Create function to delete etl metadata for org-group
+DROP FUNCTION IF EXISTS delete_etl_metadata_for_org;
+create function delete_etl_metadata_for_org(in_impl_schema text, in_db_user text) returns bool
     language plpgsql
 as
 $$
 BEGIN
     EXECUTE 'set role openchs;';
-    execute 'drop schema ' || in_impl_schema || ' cascade;';
+    execute 'drop schema "' || in_impl_schema || '" cascade;';
+    execute 'delete from entity_sync_status where db_user = ''' || in_db_user || ''';';
     execute 'delete from entity_sync_status where schema_name = ''' || in_impl_schema || ''';';
-    execute 'delete from index_metadata where table_metadata_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
-    execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' || in_impl_schema || ''');';
+    execute 'delete from index_metadata where table_metadata_id in (select id from table_metadata where schema_name = ''' ||
+            in_impl_schema || ''');';
+    execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' ||
+            in_impl_schema || ''');';
     execute 'delete from table_metadata where schema_name = ''' || in_impl_schema || ''';';
     return true;
 END

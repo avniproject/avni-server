@@ -13,8 +13,7 @@ import java.io.IOException;
  * interceptor to log incoming requests
  */
 public class CustomClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(CustomClientHttpRequestInterceptor.class);
+    private static final Logger logger = LoggerFactory.getLogger(CustomClientHttpRequestInterceptor.class);
 
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
@@ -25,8 +24,6 @@ public class CustomClientHttpRequestInterceptor implements ClientHttpRequestInte
     }
 
     private void logRequestDetails(HttpRequest request) {
-        LOGGER.info("Request Headers: {}", request.getHeaders());
-        LOGGER.info("Request Method: {}", request.getMethod());
-        LOGGER.info("Request URI: {}", request.getURI());
+        logger.debug("Request details {}, {}, {}", request.getURI(), request.getMethod(), request.getHeaders());
     }
 }
