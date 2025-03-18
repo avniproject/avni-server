@@ -3,7 +3,11 @@ package org.avni.server.dao.metabase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.avni.server.domain.metabase.GroupPermissionsBody;
+import org.avni.server.service.metabase.DatabaseService;
+import org.avni.server.util.LogUtil;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -11,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -20,6 +25,7 @@ import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
 @Repository
 public class MetabaseConnector {
     protected final RestTemplate restTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(MetabaseConnector.class);
 
     @Value("${metabase.api.url}")
     protected String metabaseApiUrl;
@@ -44,18 +50,25 @@ public class MetabaseConnector {
     }
 
     protected void sendPutRequest(String url, Object requestBody) {
+        String jsonBody = null;
         try {
-            String jsonBody = ObjectMapperSingleton.getObjectMapper().writeValueAsString(requestBody);
+            jsonBody = ObjectMapperSingleton.getObjectMapper().writeValueAsString(requestBody);
             HttpEntity<String> entity = createHttpEntity(jsonBody);
             restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
         } catch (Exception e) {
+            logger.error(jsonBody);
             throw new RuntimeException("Error serializing request body to JSON", e);
         }
     }
 
     public <T> T postForObject(String url, Object request, Class<T> responseType) {
-        HttpEntity<Object> entity = createHttpEntity(request);
-        return restTemplate.postForObject(url, entity, responseType);
+        try {
+            HttpEntity<Object> entity = createHttpEntity(request);
+            return restTemplate.postForObject(url, entity, responseType);
+        } catch (RuntimeException e) {
+            LogUtil.safeLogError(logger, request);
+            throw e;
+        }
     }
 
     protected <T> T getForObject(String url, Class<T> responseType) {

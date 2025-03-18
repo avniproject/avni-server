@@ -1,5 +1,6 @@
 package org.avni.server.dao.metabase;
 
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.Group;
 import org.avni.server.domain.metabase.GroupPermissionResponse;
 import org.avni.server.domain.metabase.GroupPermissionsBody;
@@ -17,11 +18,16 @@ public class MetabaseGroupRepository extends MetabaseConnector {
     public MetabaseGroupRepository(RestTemplateBuilder restTemplateBuilder) {
         super(restTemplateBuilder);
     }
+
     public Group createGroup(String name) {
         String url = metabaseApiUrl + "/permissions/group";
         GroupPermissionsBody body = new GroupPermissionsBody(new Group(name).getName());
         HttpEntity<Map<String, Object>> entity = createJsonEntity(body);
         return restTemplate.postForObject(url, entity, Group.class);
+    }
+
+    public Group createGroup(Organisation organisation) {
+        return createGroup(organisation.getName());
     }
 
     public Group findGroup(String name) {
@@ -33,6 +39,10 @@ public class MetabaseGroupRepository extends MetabaseConnector {
             }
         }
         return null;
+    }
+
+    public Group findGroup(Organisation organisation) {
+        return findGroup(organisation.getName());
     }
 
     public List<GroupPermissionResponse> getAllGroups() {

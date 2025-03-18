@@ -7,7 +7,6 @@ public class QuestionConfig {
     private AggregationType aggregationType;
     private String breakoutField;
     private FilterCondition[] filters;
-    private String primaryField;
     private VisualizationType visualizationType;
     private VisualizationAttributes[] visualizationAttributes;
 
@@ -16,9 +15,8 @@ public class QuestionConfig {
         return this;
     }
 
-    public QuestionConfig withBreakout(String breakoutField, String primaryField) {
+    public QuestionConfig withBreakout(String breakoutField) {
         this.breakoutField = breakoutField;
-        this.primaryField = primaryField;
         return this;
     }
 
@@ -64,7 +62,4 @@ public class QuestionConfig {
         return visualizationAttributes;
     }
 
-    public String getPrimaryField() {
-        return primaryField;
-    }
 }

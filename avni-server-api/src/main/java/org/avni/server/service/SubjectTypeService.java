@@ -10,6 +10,7 @@ import org.avni.server.dao.OperationalSubjectTypeRepository;
 import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
+import org.avni.server.service.batch.BatchJobService;
 import org.avni.server.web.request.OperationalSubjectTypeContract;
 import org.avni.server.web.request.OperationalSubjectTypesContract;
 import org.avni.server.web.request.SubjectTypeContract;
@@ -49,6 +50,7 @@ public class SubjectTypeService implements NonScopeAwareService {
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final UserService userService;
     private final LocationHierarchyService locationHierarchyService;
+    private final BatchJobService batchJobService;
 
     @Autowired
     public SubjectTypeService(SubjectTypeRepository subjectTypeRepository,
@@ -59,7 +61,8 @@ public class SubjectTypeService implements NonScopeAwareService {
                               JobLauncher userSubjectTypeCreateJobLauncher,
                               AvniJobRepository avniJobRepository,
                               ConceptService conceptService, OrganisationConfigService organisationConfigService,
-                              AddressLevelTypeRepository addressLevelTypeRepository, UserService userService, LocationHierarchyService locationHierarchyService) {
+                              AddressLevelTypeRepository addressLevelTypeRepository, UserService userService, LocationHierarchyService locationHierarchyService,
+                              BatchJobService batchJobService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.operationalSubjectTypeRepository = operationalSubjectTypeRepository;
         this.syncAttributesJob = syncAttributesJob;
@@ -71,6 +74,7 @@ public class SubjectTypeService implements NonScopeAwareService {
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.locationHierarchyService = locationHierarchyService;
+        this.batchJobService = batchJobService;
         logger = LoggerFactory.getLogger(this.getClass());
         this.userService = userService;
     }
@@ -176,8 +180,8 @@ public class SubjectTypeService implements NonScopeAwareService {
         Boolean isSyncAttribute1Usable = subjectType.isSyncRegistrationConcept1Usable();
         Boolean isSyncAttribute2Usable = subjectType.isSyncRegistrationConcept2Usable();
         boolean isSyncAttributeChanged = (isSyncAttribute1Usable != null && !isSyncAttribute1Usable) || (isSyncAttribute2Usable != null && !isSyncAttribute2Usable);
-        String lastJobStatus = avniJobRepository.getLastJobStatusForSubjectType(subjectType);
-        if (isSyncAttributeChanged || (lastJobStatus != null && avniJobRepository.getLastJobStatusForSubjectType(subjectType).equals("FAILED"))) {
+        String lastJobStatus = batchJobService.getLastSyncAttributesJobStatus(subjectType);
+        if (isSyncAttributeChanged || (lastJobStatus != null && lastJobStatus.equals("FAILED"))) {
             UserContext userContext = UserContextHolder.getUserContext();
             User user = userContext.getUser();
             Organisation organisation = userContext.getOrganisation();

@@ -2,6 +2,7 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.avni.server.util.S;
@@ -12,9 +13,10 @@ import java.util.List;
 import java.util.Objects;
 
 @Repository
-public class DatabaseRepository extends MetabaseConnector {
+public class MetabaseDatabaseRepository extends MetabaseConnector {
     private final CollectionRepository collectionRepository;
-    public DatabaseRepository(RestTemplateBuilder restTemplateBuilder , CollectionRepository collectionRepository) {
+
+    public MetabaseDatabaseRepository(RestTemplateBuilder restTemplateBuilder , CollectionRepository collectionRepository) {
         super(restTemplateBuilder);
         this.collectionRepository = collectionRepository;
     }
@@ -47,8 +49,12 @@ public class DatabaseRepository extends MetabaseConnector {
         }
     }
 
+    public Database getDatabase(Organisation organisation) {
+        return getDatabase(organisation.getName(), organisation.getDbUser());
+    }
+
     protected CollectionInfoResponse getCollectionForDatabase(Database database) {
-        CollectionInfoResponse collectionByName = collectionRepository.getCollectionByName(database.getName());
+        CollectionInfoResponse collectionByName = collectionRepository.getCollection(database.getName());
         if (Objects.isNull(collectionByName)) {
             throw new RuntimeException(String.format("Failed to fetch collection for database %s", database.getName()));
         }
@@ -82,7 +88,8 @@ public class DatabaseRepository extends MetabaseConnector {
         String jsonResponse = getForObject(url, String.class);
 
         try {
-            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, new TypeReference<List<FieldDetails>>() {});
+            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, new TypeReference<>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse fields", e);
         }
@@ -130,5 +137,15 @@ public class DatabaseRepository extends MetabaseConnector {
     public void delete(Database database) {
         String url = metabaseApiUrl + "/database/" + database.getId();
         deleteForObject(url, Void.class);
+    }
+
+    public void reSyncSchema(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId() + "/sync_schema";
+        this.postForObject(url, "", String.class);
+    }
+
+    public void rescanFieldValues(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId() + "/rescan_values";
+        this.postForObject(url, "", String.class);
     }
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 
 import java.util.Date;
 
+// this should be renamed to the job for which this status is being tracked
 @Entity
 public class JobStatus {
     @Id

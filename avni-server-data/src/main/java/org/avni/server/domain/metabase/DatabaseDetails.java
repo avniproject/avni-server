@@ -24,20 +24,16 @@ public class DatabaseDetails {
     public DatabaseDetails() {
     }
 
-    public DatabaseDetails(String host, int port, String dbname, String user, String password) {
-        this.host = host;
-        this.port = port;
-        this.dbname = dbname;
-        this.user = user;
-        this.password = password;
-        this.ssl = true;
+    public DatabaseDetails(AvniDatabase avniDatabase, String dbUser, String dbUserPassword) {
+        this.host = avniDatabase.getAvniDatabaseServer();
+        this.port = Integer.parseInt(avniDatabase.getAvniDatabasePort());
+        this.dbname = avniDatabase.getAvniDatabaseName();
+        this.user = dbUser;
+        this.password = dbUserPassword;
+        this.ssl = avniDatabase.supportsSSL();
         this.sslMode = "require";
         this.sslUseClientAuth = false;
         this.tunnelEnabled = false;
-    }
-
-    public DatabaseDetails(AvniDatabase avniDatabase, String dbUser, String dbUserPassword) {
-        this(avniDatabase.getAvniDatabaseServer(), Integer.parseInt(avniDatabase.getAvniDatabasePort()), avniDatabase.getAvniDatabaseName(), dbUser, dbUserPassword);
     }
 
     public String getHost() {

@@ -241,6 +241,7 @@ public class ObservationCreator {
             case DateTime:
                 return (answerValue.trim().equals("")) ? null : toISODateFormat(answerValue);
             case Image:
+            case ImageV2:
             case Video:
                 if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
                     String[] providedURLs = S.splitMultiSelectAnswer(answerValue);

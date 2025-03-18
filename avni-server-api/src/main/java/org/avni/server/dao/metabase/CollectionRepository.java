@@ -3,6 +3,7 @@ package org.avni.server.dao.metabase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.CollectionInfoResponse;
 import org.avni.server.domain.metabase.CollectionItem;
 import org.avni.server.domain.metabase.CollectionResponse;
@@ -48,7 +49,7 @@ public class CollectionRepository extends MetabaseConnector {
         }
     }
 
-    public CollectionInfoResponse getCollectionByName(String databaseName) {
+    public CollectionInfoResponse getCollection(String databaseName) {
         String url = metabaseApiUrl + "/collection";
 
         String jsonResponse = getForObject(url, String.class);
@@ -61,6 +62,10 @@ public class CollectionRepository extends MetabaseConnector {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public CollectionInfoResponse getCollection(Organisation organisation) {
+        return getCollection(organisation.getName());
     }
 
     public void delete(CollectionInfoResponse collection) {

@@ -29,4 +29,11 @@ public interface ImplementationRepository extends AvniCrudRepository<Organisatio
      * and findByName is required by customPrint API where org name is passed by the cookie
      */
     Organisation findByName(String name);
+
+    @Query(value = "select count(*) from scheduled_job_run where success = true and job_name = :jobName", nativeQuery = true)
+    int countSuccessfulRuns(String jobName);
+
+    default boolean hasETLRun(Organisation organisation) {
+        return countSuccessfulRuns(organisation.getUuid()) > 0;
+    }
 }
