@@ -6,6 +6,7 @@ public class StartFlowForContactRequest {
     private String receiverId;
     private ReceiverType receiverType;
     private String flowId;
+    private String[] parameters;
 
     public String getReceiverId() {
         return receiverId;
@@ -29,5 +30,13 @@ public class StartFlowForContactRequest {
 
     public void setReceiverType(ReceiverType receiverType) {
         this.receiverType = receiverType;
+    }
+
+    public String[] getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(String[] parameters) {
+        this.parameters = parameters;
     }
 }
