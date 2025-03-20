@@ -3,7 +3,9 @@ package org.avni.messaging.service;
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.contract.ManualMessageContract;
 import org.avni.messaging.contract.MessageRuleContract;
+import org.avni.messaging.contract.StartFlowForContactRequest;
 import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificGroupMessageFailureException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.ManualMessageRepository;
@@ -196,7 +198,7 @@ public class MessagingService {
             groupMessagingService.sendManualMessage(messageRequest);
         else
             individualMessagingService.sendManualMessage(messageRequest);
-        }
+    }
 
     public void saveRules(MessageRuleContract[] messageRuleContracts) {
         for (MessageRuleContract messageRuleContract : messageRuleContracts) {
@@ -204,5 +206,13 @@ public class MessagingService {
             messageRule = MessageRuleContract.toModel(messageRuleContract, messageRule, entityTypeRetrieverService);
             this.saveRule(messageRule);
         }
+    }
+
+    @Transactional
+    public void sendStartFlowForContactSynchronously(StartFlowForContactRequest startFlowForContactRequest)
+            throws GlificNotConfiguredException, PhoneNumberNotAvailableOrIncorrectException, GlificException {
+        MessageReceiver messageReceiver = messageReceiverService.saveReceiverIfRequired(startFlowForContactRequest.getReceiverType(),
+                Long.parseLong(startFlowForContactRequest.getReceiverId()));
+        individualMessagingService.invokeStartFlowForContact(messageReceiver, startFlowForContactRequest.getFlowId());
     }
 }
