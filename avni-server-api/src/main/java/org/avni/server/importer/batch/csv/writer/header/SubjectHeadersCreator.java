@@ -89,46 +89,44 @@ public class SubjectHeadersCreator extends AbstractHeaders{
 
     private List<HeaderField> generateAddressFields(FormMapping formMapping) {
         List<String> headers = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()).equals(Collections.emptyList())
-                ? AddressConfig.fromCustomLocations(formMapping, organisationConfigService, addressLevelTypeRepository).headers()
+                ? fromCustomLocations(formMapping).getHeaders()
                 : addressLevelTypeRepository.getAllNames();
         return headers.stream()
                 .map(header -> new HeaderField(header, "", false, null, null, null))
                 .collect(Collectors.toList());
     }
 
-    private record AddressConfig(List<String> headers, int count) {
-        static AddressConfig fromCustomLocations(FormMapping formMapping, OrganisationConfigService organisationConfigService, AddressLevelTypeRepository addressLevelTypeRepository) {
-            List<String> headers = new ArrayList<>();
-            ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-            try {
-                JsonNode customRegistrationLocations = mapper.valueToTree(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()));
-                boolean hasCustomLocations = false;
-                for (JsonNode location : customRegistrationLocations) {
-                    String subjectTypeUUID = location.get("subjectTypeUUID").asText();
-                    if (formMapping.getSubjectType().getUuid().equals(subjectTypeUUID)) {
-                        JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
-                        List<String> locationTypeUUIDs = mapper.convertValue(locationTypeUUIDsNode,
-                                mapper.getTypeFactory().constructCollectionType(List.class, String.class));
-                        Set<String> uniqueHeaders = locationTypeUUIDs.stream()
-                                .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
-                                .collect(Collectors.toSet());
-                        headers.addAll(uniqueHeaders);
-                        hasCustomLocations = true;
-                        break;
-                    }
+    private AddressConfig fromCustomLocations(FormMapping formMapping) {
+        List<String> headers = new ArrayList<>();
+        ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
+        try {
+            JsonNode customRegistrationLocations = mapper.valueToTree(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()));
+            boolean hasCustomLocations = false;
+            for (JsonNode location : customRegistrationLocations) {
+                String subjectTypeUUID = location.get("subjectTypeUUID").asText();
+                if (formMapping.getSubjectType().getUuid().equals(subjectTypeUUID)) {
+                    JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
+                    List<String> locationTypeUUIDs = mapper.convertValue(locationTypeUUIDsNode,
+                            mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                    Set<String> uniqueHeaders = locationTypeUUIDs.stream()
+                            .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
+                            .collect(Collectors.toSet());
+                    headers.addAll(uniqueHeaders);
+                    hasCustomLocations = true;
+                    break;
                 }
-                if (!hasCustomLocations) {
-                    return defaultConfig(addressLevelTypeRepository);
-                }
-            } catch (Exception e) {
-                return defaultConfig(addressLevelTypeRepository);
             }
-            return new AddressConfig(headers, headers.size());
+            if (!hasCustomLocations) {
+                return defaultConfig();
+            }
+        } catch (Exception e) {
+            return defaultConfig();
         }
+        return new AddressConfig(headers, headers.size());
+    }
 
-        static AddressConfig defaultConfig(AddressLevelTypeRepository addressLevelTypeRepository) {
-            List<String> headers = addressLevelTypeRepository.getAllNames();
-            return new AddressConfig(headers, headers.size());
-        }
+    private AddressConfig defaultConfig() {
+        List<String> headers = addressLevelTypeRepository.getAllNames();
+        return new AddressConfig(headers, headers.size());
     }
 }
