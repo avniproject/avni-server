@@ -5,6 +5,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.avni.server.dao.AccountAdminRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.UserRepository;
+import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.User;
 import org.avni.server.domain.UserContext;
@@ -118,12 +119,14 @@ public class AuthService {
             throw new AvniNoUserSessionException("No user, or not logged in");
         }
         SecurityContextHolder.getContext().setAuthentication(attemptAuthentication(user, organisationUUID));
+        MetabaseDatabaseRepository.clearThreadLocalContext();
         return UserContextHolder.getUserContext();
     }
 
     private void becomeSuperUser() {
         UserContextHolder.clear();
         SecurityContextHolder.getContext().setAuthentication(createTempAuth(ALL_AUTHORITIES));
+        MetabaseDatabaseRepository.clearThreadLocalContext();
     }
 
     private Authentication createTempAuth(List<SimpleGrantedAuthority> authorities) {

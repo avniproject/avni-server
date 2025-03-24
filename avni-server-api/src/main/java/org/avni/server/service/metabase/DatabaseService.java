@@ -1,12 +1,14 @@
 package org.avni.server.service.metabase;
 
 import org.avni.server.dao.AddressLevelTypeRepository;
+import org.avni.server.dao.etl.TableMetaDataRepository;
 import org.avni.server.dao.metabase.CollectionRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.dao.metabase.MetabaseDashboardRepository;
 import org.avni.server.dao.metabase.QuestionRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.service.OrganisationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ public class DatabaseService implements IQuestionCreationService {
     private final MetabaseDashboardRepository metabaseDashboardRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationService organisationService;
+    private final TableMetaDataRepository tableMetaDataRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
@@ -44,7 +47,7 @@ public class DatabaseService implements IQuestionCreationService {
     private static final long EACH_SLEEP_DURATION = 3;
 
     @Autowired
-    public DatabaseService(MetabaseDatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService) {
+    public DatabaseService(MetabaseDatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService, TableMetaDataRepository tableMetaDataRepository) {
         this.databaseRepository = databaseRepository;
         this.metabaseService = metabaseService;
         this.collectionRepository = collectionRepository;
@@ -52,6 +55,7 @@ public class DatabaseService implements IQuestionCreationService {
         this.metabaseDashboardRepository = metabaseDashboardRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationService = organisationService;
+        this.tableMetaDataRepository = tableMetaDataRepository;
     }
 
     private CollectionInfoResponse getOrgCollection() {
@@ -64,12 +68,6 @@ public class DatabaseService implements IQuestionCreationService {
         DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(database);
         String status = databaseSyncStatus.getInitialSyncStatus();
         return SyncStatus.fromString(status);
-    }
-
-    private int getFieldId(TableDetails tableDetails, FieldDetails fieldDetails) {
-        Organisation organisation = organisationService.getCurrentOrganisation();
-        Database database = databaseRepository.getDatabase(organisation);
-        return databaseRepository.getFieldDetailsByName(database, tableDetails, fieldDetails).getId();
     }
 
     private List<String> filterOutExistingQuestions(List<String> entityNames) {
@@ -114,45 +112,6 @@ public class DatabaseService implements IQuestionCreationService {
         questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 
-    private List<String> getSubjectTypeNames() {
-        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
-        List<List<String>> rows = getTableMetadataRows();
-        List<String> subjectTypeNames = new ArrayList<>();
-
-        for (List<String> row : rows) {
-            String type = row.get(DatasetColumn.TYPE.getIndex());
-            String schemaName = row.get(DatasetColumn.SCHEMA_NAME.getIndex());
-            if (schemaName.equalsIgnoreCase(database.getName()) &&
-                    (type.equalsIgnoreCase(TableType.INDIVIDUAL.getTypeName()) ||
-                            type.equalsIgnoreCase(TableType.HOUSEHOLD.getTypeName()) ||
-                            type.equalsIgnoreCase(TableType.GROUP.getTypeName()) ||
-                            type.equalsIgnoreCase(TableType.PERSON.getTypeName()))) {
-                subjectTypeNames.add(row.get(DatasetColumn.NAME.getIndex()));
-            }
-        }
-
-        return subjectTypeNames;
-    }
-
-    private List<String> getProgramAndEncounterNames() {
-        List<List<String>> rows = getTableMetadataRows();
-        List<String> programAndEncounterNames = new ArrayList<>();
-        Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
-
-        for (List<String> row : rows) {
-            String type = row.get(DatasetColumn.TYPE.getIndex());
-            String schemaName = row.get(DatasetColumn.SCHEMA_NAME.getIndex());
-            if (schemaName.equalsIgnoreCase(database.getName()) &&
-                    (type.equalsIgnoreCase(TableType.PROGRAM_ENCOUNTER.getTypeName()) ||
-                            type.equalsIgnoreCase(TableType.ENCOUNTER.getTypeName()) ||
-                            type.equalsIgnoreCase(TableType.PROGRAM_ENROLMENT.getTypeName()))) {
-                programAndEncounterNames.add(row.get(DatasetColumn.NAME.getIndex()));
-            }
-        }
-
-        return programAndEncounterNames;
-    }
-
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
         Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, database.getName()));
@@ -165,14 +124,14 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private void createQuestionsForSubjectTypes() {
-        List<String> subjectTypeNames = getSubjectTypeNames();
+        List<String> subjectTypeNames = tableMetaDataRepository.getSubjectTypeNames();
         FieldDetails addressFieldDetails = new FieldDetails(ID);
         FieldDetails subjectFieldDetails = new FieldDetails(ADDRESS_ID);
         createQuestionsForEntities(subjectTypeNames, addressFieldDetails, subjectFieldDetails);
     }
 
     private void createQuestionsForProgramsAndEncounters() {
-        List<String> programAndEncounterNames = getProgramAndEncounterNames();
+        List<String> programAndEncounterNames = tableMetaDataRepository.getProgramAndEncounterNames();
         FieldDetails addressFieldDetails = new FieldDetails(ID);
         FieldDetails programOrEncounterFieldDetails = new FieldDetails(ADDRESS_ID);
         createQuestionsForEntities(programAndEncounterNames, addressFieldDetails, programOrEncounterFieldDetails);
@@ -202,9 +161,9 @@ public class DatabaseService implements IQuestionCreationService {
             questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonVoidedIndividual, VisualizationType.PIE, Collections.EMPTY_LIST);
         }
         if (isQuestionMissing(QuestionName.NonExitedNonVoidedProgram.getQuestionName())) {
+            FieldDetails field = databaseRepository.getOrgSchemaField(database, QuestionName.NonExitedNonVoidedProgram.getViewName(), PROGRAM_EXIT_DATE_TIME);
             FilterCondition additionalFilterCondition = new FilterCondition(ConditionType.IS_NULL,
-                    databaseRepository.getFieldDetailsByName(database, new TableDetails(QuestionName.NonExitedNonVoidedProgram.getViewName(), database.getName()),
-                            new FieldDetails(PROGRAM_EXIT_DATE_TIME)).getId(), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName(), null);
+                    field.getId(), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName(), null);
             questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonExitedNonVoidedProgram, VisualizationType.PIE, Arrays.asList(additionalFilterCondition));
         }
         updateGlobalDashboardWithCustomQuestions();
@@ -225,14 +184,22 @@ public class DatabaseService implements IQuestionCreationService {
 
     private List<ParameterMapping> createDashCardParameterMappingForFirstDashCard(Database database) {
         List<ParameterMapping> firstDashCardParameterMapping = new ArrayList<>();
-        firstDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.NonVoidedIndividual.getViewName(), database.getName()), new FieldDetails(FieldName.REGISTRATION_DATE.getName())), FieldType.DATE.getTypeName()))));
+        int fieldId = getFieldId(database, UserContextHolder.getOrganisation().getSchemaName(), QuestionName.NonVoidedIndividual.getViewName(), FieldName.REGISTRATION_DATE.getName());
+        firstDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE.getTypeName()))));
         return firstDashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForSecondDashCard(Database database) {
         List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.NonExitedNonVoidedProgram.getViewName(), database.getName()), new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        String schemaName = UserContextHolder.getOrganisation().getSchemaName();
+        int fieldId = getFieldId(database, schemaName, QuestionName.NonExitedNonVoidedProgram.getViewName(), FieldName.ENROLMENT_DATE_TIME.getName());
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashCardParameterMapping;
+    }
+
+    private int getFieldId(Database database, String schemaName, String viewName, String fieldName) {
+        FieldDetails field = databaseRepository.getField(database, schemaName, viewName, fieldName);
+        return field.getId();
     }
 
     private List<Parameters> createParametersForDashboard() {
@@ -274,7 +241,7 @@ public class DatabaseService implements IQuestionCreationService {
             SyncStatus syncStatus = this.getInitialSyncStatus();
             if (syncStatus != SyncStatus.COMPLETE) {
                 Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent/1000, organisation.getName());
+                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent / 1000, organisation.getName());
             } else {
                 break;
             }
