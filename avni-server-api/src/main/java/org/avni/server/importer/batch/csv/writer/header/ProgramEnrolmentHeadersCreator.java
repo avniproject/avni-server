@@ -22,8 +22,9 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders{
 
     public ProgramEnrolmentHeadersCreator(
             ImportHelperService importHelperService,
-            FormMappingRepository formMappingRepository) {
-        super(importHelperService);
+            FormMappingRepository formMappingRepository,
+            List<FieldDescriptorStrategy> strategyList) {
+        super(importHelperService,strategyList);
         this.formMappingRepository = formMappingRepository;
     }
 
@@ -34,7 +35,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders{
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         fields.add(new HeaderField(subjectId, "UUID of the subject to be enrolled. Can be identified from address bar in Data Entry App or Longitudinal export file", true, null, null, null));
         if(formMappingRepository.getProgramsMappedToAForm(formMapping.getForm().getUuid()).size() > 1) {
-            fields.add(new HeaderField(programHeader, formMapping.getProgram().getName() , false, null, null, null));
+            fields.add(new HeaderField(programHeader, formMapping.getProgram().getName() , true, null, null, null,false));
         }
         fields.add(new HeaderField(enrolmentDate, "", false, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(exitDate, "", false, null, "Format: DD-MM-YYYY", null));

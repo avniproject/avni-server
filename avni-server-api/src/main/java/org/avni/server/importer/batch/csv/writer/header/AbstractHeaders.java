@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
+import jakarta.annotation.PostConstruct;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
@@ -8,16 +9,40 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportHelperService;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements Headers {
     protected ImportHelperService importHelperService;
+    private final Map<String, FieldDescriptorStrategy> strategies = new HashMap<>();
+    private final List<FieldDescriptorStrategy> strategyList;
 
-    AbstractHeaders(ImportHelperService importHelperService){
+    public AbstractHeaders(ImportHelperService importHelperService,
+                           List<FieldDescriptorStrategy> strategyList) {
         this.importHelperService = importHelperService;
+        this.strategyList = strategyList;
+    }
 
+    @PostConstruct
+    public void initStrategies() {
+        for (FieldDescriptorStrategy strategy : strategyList) {
+            if (strategy instanceof CodedFieldDescriptor) {
+                strategies.put(ConceptDataType.Coded.name(), strategy);
+            } else if (strategy instanceof DateFieldDescriptor) {
+                strategies.put(ConceptDataType.Date.name(), strategy);
+            } else if (strategy instanceof TextFieldDescriptor) {
+                strategies.put(ConceptDataType.Text.name(), strategy);
+                strategies.put(ConceptDataType.Notes.name(), strategy);
+            } else if (strategy instanceof NumericFieldDescriptor) {
+                strategies.put(ConceptDataType.Numeric.name(), strategy);
+            } else {
+                strategies.put("default", strategy);
+            }
+        }
+        System.out.println("Strategies: " + strategies);
     }
 
     @Override
@@ -50,28 +75,21 @@ public abstract class AbstractHeaders implements Headers {
     protected HeaderField mapFormElementToField(FormElement fe) {
         Concept concept = fe.getConcept();
         String header = importHelperService.getHeaderName(fe);
-        String allowedValues = null;
-        String format = null;
+        FieldDescriptorStrategy strategy = strategies.getOrDefault(
+                concept.getDataType(),
+                strategies.get("default")
+        );
+
+        String allowedValues = strategy.getAllowedValues(fe);
+        String format = strategy.getFormat(fe);
         String editable = null;
 
-        if (ConceptDataType.matches(ConceptDataType.Coded, concept.getDataType())) {
-            allowedValues = "Allowed values: {" + concept.getConceptAnswers().stream()
-                    .map(ca -> ca.getAnswerConcept().getName())
-                    .collect(Collectors.joining(", ")) + "}";
-        } else if (ConceptDataType.matches(ConceptDataType.Date, concept.getDataType())) {
-            format = "Format: DD-MM-YYYY";
-        } else if (ConceptDataType.matches(ConceptDataType.Text, concept.getDataType()) || ConceptDataType.matches(ConceptDataType.Notes, concept.getDataType())) {
-            format = "Any Text";
-        } else if (ConceptDataType.matches(ConceptDataType.Numeric, concept.getDataType())) {
-            allowedValues = "Allowed values: Any number";
-            if (concept.getHighAbsolute() != null) allowedValues = "Max value allowed: " + concept.getHighAbsolute();
-            if (concept.getLowAbsolute() != null) allowedValues = "Min value allowed: " + concept.getLowAbsolute();
+        if (fe.getKeyValues() != null &&
+                fe.getKeyValues().getKeyValue(KeyType.editable) != null &&
+                fe.getKeyValues().getKeyValue(KeyType.editable).getValue().equals(false)) {
+            editable = "The value can be auto-calculated if not entered";
         }
 
-        if (fe.getKeyValues() !=null && fe.getKeyValues().getKeyValue(KeyType.editable) !=null && fe.getKeyValues().getKeyValue(KeyType.editable).getValue().equals(false)) {
-            editable = " | The value can be auto-calculated if not entered";
-        }
-
-        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, editable);
+        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, editable, false);
     }
 }

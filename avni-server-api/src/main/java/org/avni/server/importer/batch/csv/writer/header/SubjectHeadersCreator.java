@@ -43,8 +43,9 @@ public class SubjectHeadersCreator extends AbstractHeaders{
             ImportHelperService importHelperService,
             OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository,
-            FormMappingRepository formMappingRepository) {
-        super(importHelperService);
+            FormMappingRepository formMappingRepository,
+            List<FieldDescriptorStrategy> strategyList) {
+        super(importHelperService,strategyList);
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.formMappingRepository = formMappingRepository;
@@ -57,7 +58,7 @@ public class SubjectHeadersCreator extends AbstractHeaders{
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         if (formMappingRepository.getSubjectTypesMappedToAForm(formMapping.getFormUuid()).size() > 1) {
-            fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null));
+            fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null,false));
         }
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
@@ -92,7 +93,7 @@ public class SubjectHeadersCreator extends AbstractHeaders{
                 ? fromCustomLocations(formMapping).getHeaders()
                 : addressLevelTypeRepository.getAllNames();
         return headers.stream()
-                .map(header -> new HeaderField(header, "", false, null, null, null))
+                .map(header -> new HeaderField(header, "", false, null, null, null,false))
                 .collect(Collectors.toList());
     }
 
