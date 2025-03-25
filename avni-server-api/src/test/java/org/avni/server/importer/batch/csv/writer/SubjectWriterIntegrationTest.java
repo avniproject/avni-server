@@ -1,12 +1,12 @@
 package org.avni.server.importer.batch.csv.writer;
 
-import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptDataType;
+import org.avni.server.application.Form;
+import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
+import org.avni.server.importer.batch.csv.creator.RuleServerInvoker;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
@@ -14,12 +14,16 @@ import org.avni.server.service.builder.TestLocationService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
 import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -36,7 +40,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private SubjectWriter subjectWriter;
 
     @Override
-    public void setUp() {
+    public void setUp() throws Exception {
+        RuleServerInvoker ruleServerInvoker = Mockito.mock(RuleServerInvoker.class);
+        subjectWriter.setRuleServerInvoker(ruleServerInvoker);
+        when(ruleServerInvoker.getRuleServerResult(any(), any(), (Individual) any(), any())).thenReturn(UploadRuleServerResponseContract.nullObject());
         testDataSetupService.setupOrganisation("example", "User Group 1");
         AddressLevelType district = new AddressLevelTypeBuilder().name("District").level(3d).withUuid(UUID.randomUUID()).build();
         AddressLevelType state = new AddressLevelTypeBuilder().name("State").level(4d).withUuid(UUID.randomUUID()).build();

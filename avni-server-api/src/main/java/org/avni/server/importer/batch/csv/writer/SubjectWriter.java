@@ -32,7 +32,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final SubjectTypeCreator subjectTypeCreator;
     private final FormMappingRepository formMappingRepository;
     private final ObservationService observationService;
-    private final RuleServerInvoker ruleServerInvoker;
+    private RuleServerInvoker ruleServerInvoker;
     private final VisitCreator visitCreator;
     private final DecisionCreator decisionCreator;
     private final ObservationCreator observationCreator;
@@ -120,7 +120,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                 savedIndividual = individualService.save(individual);
             } else {
                 UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), individual, allErrorMsgs);
-                individual.setObservations(observationService.createObservations(ruleResponse.getObservations()));
+                individual.setObservations(observationService.createObservations(new ArrayList<>()));
                 decisionCreator.addRegistrationDecisions(individual.getObservations(), ruleResponse.getDecisions());
                 savedIndividual = individualService.save(individual);
                 visitCreator.saveScheduledVisits(formMapping.getType(), savedIndividual.getUuid(), null, ruleResponse.getVisitSchedules(), null);
@@ -194,5 +194,9 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         } catch (Exception ex) {
             throw new Exception(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
         }
+    }
+
+    public void setRuleServerInvoker(RuleServerInvoker ruleServerInvoker) {
+        this.ruleServerInvoker = ruleServerInvoker;
     }
 }
