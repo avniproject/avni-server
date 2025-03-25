@@ -326,7 +326,7 @@ VALUES ('74a37894-0cca-4104-811b-34d84ce8f06e', (select id from address_level wh
         (select id from subject_type where name = 'Individual'), '{"7c39cb04-4f02-4c49-8f94-a5b697d40365": "9282738493"}'::jsonb, 1, 1, now(), now());
 
 INSERT INTO form (NAME, form_type, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES ('encounter_form', 'Encounter', '2c32a184-6d27-4c51-841d-551ca94594a5', 1, 1, 1, now(), now());
+VALUES ('encounter_form', 'ProgramEncounter', '2c32a184-6d27-4c51-841d-551ca94594a5', 1, 1, 1, now(), now());
 
 
 INSERT INTO audit (created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -359,8 +359,8 @@ INSERT INTO form_element (name, display_order, is_mandatory, concept_id, form_el
 VALUES
 ('Paracheck', 3, TRUE, 19, 1, 'b6edbb87-22d8-4265-9231-aad499475d0c', 1, 1, 1, now(), now());
 
-INSERT INTO form_mapping (form_id, entity_id, uuid, version, subject_type_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES (1, 1, '741cbb1f-f1bf-42f2-87f7-f5258aa91647', 0, 1, 1, 1, now(), now());
+INSERT INTO form_mapping (form_id, entity_id, uuid, version, subject_type_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, observations_type_entity_id)
+VALUES (1, 1, '741cbb1f-f1bf-42f2-87f7-f5258aa91647', 0, 1, 1, 1, now(), now(), 1);
 
 INSERT INTO external_system_config (organisation_id, version, created_by_id, last_modified_by_id, created_date_time,
                                     last_modified_date_time, system_name, config)

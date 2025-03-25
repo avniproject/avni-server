@@ -1,15 +1,10 @@
 package org.avni.server.web;
 
-import jakarta.transaction.Transactional;
-import org.avni.server.common.AbstractControllerIntegrationTest;
-import org.hibernate.Hibernate;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormElementGroup;
 import org.avni.server.application.FormMapping;
+import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementGroupRepository;
 import org.avni.server.dao.application.FormElementRepository;
@@ -20,6 +15,10 @@ import org.avni.server.domain.ConceptAnswer;
 import org.avni.server.framework.security.AuthenticationFilter;
 import org.avni.server.web.request.ConceptContract;
 import org.avni.server.web.request.application.FormContract;
+import org.hibernate.Hibernate;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,10 +36,8 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,7 +82,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
     public void getForms() {
         ResponseEntity<String> response = template.getForEntity("/forms/program/1", String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).startsWith("[{\"name\":\"encounter_form\",\"uuid\":\"2c32a184-6d27-4c51-841d-551ca94594a5\",\"formType\":\"Encounter\",\"programName\":\"Diabetes\"");
+        assertThat(response.getBody()).startsWith("[{\"name\":\"encounter_form\",\"uuid\":\"2c32a184-6d27-4c51-841d-551ca94594a5\",\"formType\":\"ProgramEncounter\",\"programName\":\"Diabetes\"");
         assertThat(response.getBody()).contains("\"links\":[{\"rel\":\"self\"");
         assertThat(response.getBody()).contains("{\"rel\":\"form\"");
         assertThat(response.getBody()).contains("{\"rel\":\"formElementGroups\"");
