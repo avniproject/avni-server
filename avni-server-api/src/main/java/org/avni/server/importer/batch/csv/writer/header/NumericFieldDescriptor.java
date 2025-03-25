@@ -9,14 +9,18 @@ public class NumericFieldDescriptor implements FieldDescriptorStrategy {
     @Override
     public String getAllowedValues(FormElement fe) {
         Concept concept = fe.getConcept();
-        String allowedValues = "Allowed values: Any number";
-        if (concept.getHighAbsolute() != null) {
-            allowedValues = "Max value allowed: " + concept.getHighAbsolute();
+        Double low = concept.getLowAbsolute();
+        Double high = concept.getHighAbsolute();
+
+        if (low != null && high != null) {
+            return "Min value allowed: " + low + " Max value allowed: " + high;
+        } else if (low != null) {
+            return "Min value allowed: " + low;
+        } else if (high != null) {
+            return "Max value allowed: " + high;
+        } else {
+            return "Allowed values: Any number";
         }
-        if (concept.getLowAbsolute() != null) {
-            allowedValues = "Min value allowed: " + concept.getLowAbsolute();
-        }
-        return allowedValues;
     }
 
     @Override

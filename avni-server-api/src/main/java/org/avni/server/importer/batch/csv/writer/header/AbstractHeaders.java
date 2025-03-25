@@ -42,7 +42,6 @@ public abstract class AbstractHeaders implements Headers {
                 strategies.put("default", strategy);
             }
         }
-        System.out.println("Strategies: " + strategies);
     }
 
     @Override

@@ -39,6 +39,11 @@ public class TestFormElementBuilder {
     	return this;
     }
 
+    public TestFormElementBuilder withReadOnly(boolean isEditable) {
+        formElement.getKeyValues().add(new KeyValue(KeyType.editable, isEditable));
+        return this;
+    }
+
     public TestFormElementBuilder withType(FormElementType type) {
         formElement.setType(type.name());
     	return this;

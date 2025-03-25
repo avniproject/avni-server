@@ -64,7 +64,20 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         when(formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(subjectType, FormType.IndividualProfile))
                 .thenReturn(Collections.singletonList(formMapping));
 
-        subjectHeadersCreator = new SubjectHeadersCreator(importHelperService, organisationConfigService, addressLevelTypeRepository, formMappingRepository);
+        List<FieldDescriptorStrategy> strategyList = Arrays.asList(
+                new CodedFieldDescriptor(),
+                new DateFieldDescriptor(),
+                new TextFieldDescriptor(),
+                new NumericFieldDescriptor()
+        );
+
+        subjectHeadersCreator = new SubjectHeadersCreator(
+                importHelperService,
+                organisationConfigService,
+                addressLevelTypeRepository,
+                formMappingRepository,
+                strategyList
+        );
     }
 
     private FormMapping createFormMapping(SubjectType subjectType) {
