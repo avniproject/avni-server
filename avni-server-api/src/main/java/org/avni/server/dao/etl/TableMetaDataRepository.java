@@ -22,6 +22,6 @@ public class TableMetaDataRepository {
     }
 
     public List getSubjectTypeNames() {
-        return entityManager.createNativeQuery("select name from table_metadata where type in ('Individual', 'Group', 'Household')").getResultList();
+        return entityManager.createNativeQuery("select name from table_metadata where type in ('Individual', 'Group', 'Household', 'Person')").getResultList();
     }
 }
