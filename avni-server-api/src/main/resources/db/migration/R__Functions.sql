@@ -351,6 +351,8 @@ declare
 begin
     if exists (select * from public.form f where (
             (
+                (f.form_type = 'IndividualProfile' and (entityId is not null or observationsTypeEntityId is not null))
+                    or
                 (f.form_type = 'ProgramEnrolment' and (entityId is null or observationsTypeEntityId is not null))
                 or
                 (f.form_type = 'ProgramExit' and (entityId is null or observationsTypeEntityId is not null))
