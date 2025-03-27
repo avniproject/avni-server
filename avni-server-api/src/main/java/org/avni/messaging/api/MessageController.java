@@ -2,11 +2,13 @@ package org.avni.messaging.api;
 
 import org.avni.messaging.contract.ManualMessageContract;
 import org.avni.messaging.contract.SendMessageResponse;
+import org.avni.messaging.contract.StartFlowForContactRequest;
 import org.avni.messaging.contract.glific.GlificMessageTemplate;
 import org.avni.messaging.contract.web.MessageRequestResponse;
 import org.avni.messaging.domain.MessageDeliveryStatus;
 import org.avni.messaging.domain.MessageRequest;
 import org.avni.messaging.domain.ReceiverType;
+import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.service.MessageRequestService;
 import org.avni.messaging.service.MessageTemplateService;
@@ -80,6 +82,26 @@ public class MessageController {
         } catch (PhoneNumberNotAvailableOrIncorrectException e) {
             return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
         } catch (GlificNotConfiguredException e) {
+            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new SendMessageResponse(MessageDeliveryStatus.Failed, e.getMessage()));
+        }
+        return ResponseEntity.ok(new SendMessageResponse(MessageDeliveryStatus.Sent, "Success"));
+    }
+
+    @RequestMapping(value = MessageEndpoint + "/startFlowForContact", method = RequestMethod.POST)
+    @PreAuthorize(value = "hasAnyAuthority('user')")
+    @Transactional
+    public ResponseEntity<SendMessageResponse> startFlowForContact(@RequestBody StartFlowForContactRequest startFlowForContactRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.Messaging);
+        accessControlService.checkPrivilege(PrivilegeType.EditUserConfiguration);
+        try {
+            messagingService.sendStartFlowForContactSynchronously(startFlowForContactRequest);
+        } catch (PhoneNumberNotAvailableOrIncorrectException e) {
+            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSentNoPhoneNumberInAvni, e.getMessage()));
+        } catch (GlificNotConfiguredException e) {
+            return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
+        } catch (GlificException e) {
             return ResponseEntity.badRequest().body(new SendMessageResponse(MessageDeliveryStatus.NotSent, e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(new SendMessageResponse(MessageDeliveryStatus.Failed, e.getMessage()));

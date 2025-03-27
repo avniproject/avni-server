@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
+import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.OrganisationConfigService;
@@ -62,6 +63,7 @@ public class CannedAnalyticsTearDownTasklet implements Tasklet {
             }
             logger.info("Tear down completed for canned analytics for organisation {}", organisation.getName());
         } finally {
+            MetabaseDatabaseRepository.clearThreadLocalContext();
             CannedAnalyticsLockProvider.releaseLock(organisation);
         }
         return RepeatStatus.FINISHED;

@@ -96,4 +96,14 @@ public class MetabaseConnector {
             throw new RuntimeException(e);
         }
     }
+
+    protected Object getObject(String url, TypeReference clazz) {
+        try {
+            String jsonResponse = getForObject(url, String.class);
+            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, clazz);
+        } catch (Exception e) {
+            logger.error("Get schemas failed for: {}", url);
+            throw new RuntimeException(e);
+        }
+    }
 }

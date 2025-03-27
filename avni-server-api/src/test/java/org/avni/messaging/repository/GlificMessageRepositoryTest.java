@@ -13,4 +13,10 @@ public class GlificMessageRepositoryTest {
         GlificRestClient glificRestClient = mock(GlificRestClient.class);
         new GlificMessageRepository(glificRestClient).sendMessageToContact("templateId", "1233", new String[]{"1", "2"});
     }
+
+    @Test
+    public void startFlowForContact() throws GlificNotConfiguredException {
+        GlificRestClient glificRestClient = mock(GlificRestClient.class);
+        new GlificMessageRepository(glificRestClient).startFlowForContact("flowId", "1233");
+    }
 }

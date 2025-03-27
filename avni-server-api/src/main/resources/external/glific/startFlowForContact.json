@@ -1,0 +1,8 @@
+{
+  "query": "mutation startContactFlow($flowId: ID!, $contactId: ID! $defaultResults: Json!) { startContactFlow(flowId: $flowId, contactId: $contactId, defaultResults: $defaultResults) { success errors { key message }}}",
+  "variables": {
+    "flowId": "${flowId}",
+    "contactId": "${contactId}",
+    "defaultResults": "{\"status\": \"success\"}"
+  }
+}
