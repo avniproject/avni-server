@@ -2,6 +2,7 @@ package org.avni.messaging.service;
 
 import com.bugsnag.Bugsnag;
 import org.avni.messaging.domain.*;
+import org.avni.messaging.domain.exception.GlificException;
 import org.avni.messaging.domain.exception.GlificNotConfiguredException;
 import org.avni.messaging.repository.GlificMessageRepository;
 import org.avni.server.domain.Individual;
@@ -44,12 +45,17 @@ public class IndividualMessagingService {
         glificMessageRepository.sendMessageToContact(templateId, messageReceiver.getExternalId(), parameters);
     }
 
+    private void ensureExternalIdPresenceAndStartFlow(MessageReceiver messageReceiver, String flowId) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException {
+        messageReceiverService.ensureExternalIdPresent(messageReceiver);
+        glificMessageRepository.startFlowForContact(flowId, messageReceiver.getExternalId());
+    }
+
     public void sendAutomatedMessage(MessageRequest messageRequest) throws PhoneNumberNotAvailableOrIncorrectException, RuleExecutionException, GlificNotConfiguredException {
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         MessageRule messageRule = messageRequest.getMessageRule();
         String entityType = messageRule.getEntityType().name();
         MessageRuleResponseEntity messageRuleResponseEntity = null;
-        if(EntityType.isCHSEntityType(messageRule.getEntityType())) {
+        if (EntityType.isCHSEntityType(messageRule.getEntityType())) {
             messageRuleResponseEntity = ruleService.executeMessageRule(entityType, messageRequest.getEntityId(), messageRule.getMessageRule());
         } else {
             messageRuleResponseEntity = ruleService.executeMessageRuleForEntityTypeUser(messageRequest.getEntityId(), messageRule.getMessageRule());
@@ -62,17 +68,24 @@ public class IndividualMessagingService {
         String[] parameters = manualMessage.getParameters();
         MessageReceiver messageReceiver = messageRequest.getMessageReceiver();
         int[] indicesOfNonStaticParameters = A.findIndicesOf(parameters, NON_STATIC_NAME_PARAMETER);
-        if(indicesOfNonStaticParameters.length > 0)
-            getUpdatedParameters(messageReceiver, parameters, indicesOfNonStaticParameters );
+        if (indicesOfNonStaticParameters.length > 0)
+            getUpdatedParameters(messageReceiver, parameters, indicesOfNonStaticParameters);
         ensureExternalIdPresenceAndSendMessage(messageReceiver, manualMessage.getMessageTemplateId(), manualMessage.getParameters());
     }
 
+    public void invokeStartFlowForContact(MessageReceiver messageReceiver, String flowId) throws PhoneNumberNotAvailableOrIncorrectException, GlificNotConfiguredException, GlificException {
+        if (messageReceiver.getReceiverType().equals(ReceiverType.Group)) {
+            throw new GlificException("Invocation of Start Flow not allowed for Group");
+        }
+        ensureExternalIdPresenceAndStartFlow(messageReceiver, flowId);
+    }
+
+
     private void getUpdatedParameters(MessageReceiver messageReceiver, String[] parameters, int[] indicesOfNonStaticParameters) {
-        if(messageReceiver.getReceiverType() == ReceiverType.Subject) {
+        if (messageReceiver.getReceiverType() == ReceiverType.Subject) {
             Individual individual = individualService.findById(messageReceiver.getReceiverId());
             A.replaceEntriesAtIndicesWith(parameters, indicesOfNonStaticParameters, individual.getFullName());
-        }
-        else if (messageReceiver.getReceiverType() == ReceiverType.User) {
+        } else if (messageReceiver.getReceiverType() == ReceiverType.User) {
             Optional<User> user = userService.findById(messageReceiver.getReceiverId());
             A.replaceEntriesAtIndicesWith(parameters, indicesOfNonStaticParameters, user.get().getName());
         }
