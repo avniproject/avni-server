@@ -22,12 +22,15 @@ public class QuestionRepository extends MetabaseConnector {
         this.databaseRepository = databaseRepository;
     }
 
-    public void createCustomQuestionOfVisualization(Database database, QuestionName question, VisualizationType visualizationType, List<FilterCondition> additionalFilterConditions) {
+    public void createCustomQuestionOfVisualization(Database database, QuestionName question, VisualizationType visualizationType, List<FilterCondition> additionalFilterConditions, boolean withoutFilters) {
         QuestionConfig config = new QuestionConfig()
                 .withAggregation(AggregationType.COUNT)
                 .withBreakout(question.getBreakoutField())
-                .withFilters(getFilterConditions(additionalFilterConditions, database, question).toArray(FilterCondition[]::new))
                 .withVisualization(visualizationType);
+        if(!withoutFilters){
+            config.withFilters(getFilterConditions(additionalFilterConditions, database, question).toArray(FilterCondition[]::new));
+        }
+
         MetabaseQuery query = createAdvancedQuery(question.getViewName(), config, database);
         postQuestion(
                 question.getQuestionName(),
@@ -98,12 +101,21 @@ public class QuestionRepository extends MetabaseConnector {
         TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName, database.getName()));
         FieldDetails breakoutField = databaseRepository.getFieldDetailsByName(database, primaryTable, new FieldDetails(config.getBreakoutField()));
 
+        if(config.getFilters()!=null && config.getFilters().length!=0 ){
+            return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())
+                    .forTable(primaryTable)
+                    .addAggregation(config.getAggregationType())
+                    .addBreakout(breakoutField.getId())
+                    .addFilter(config.getFilters())
+                    .build();
+        }
         return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())
                 .forTable(primaryTable)
                 .addAggregation(config.getAggregationType())
                 .addBreakout(breakoutField.getId())
-                .addFilter(config.getFilters())
                 .build();
+
+
     }
 
 }

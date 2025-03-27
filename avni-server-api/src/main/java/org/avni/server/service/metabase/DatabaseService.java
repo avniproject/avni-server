@@ -207,13 +207,22 @@ public class DatabaseService implements IQuestionCreationService {
     private void createCustomQuestions() {
         Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
         if (isQuestionMissing(QuestionName.NonVoidedIndividual.getQuestionName())) {
-            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonVoidedIndividual, VisualizationType.PIE, Collections.EMPTY_LIST);
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonVoidedIndividual, VisualizationType.PIE, Collections.EMPTY_LIST, false);
         }
         if (isQuestionMissing(QuestionName.NonExitedNonVoidedProgram.getQuestionName())) {
             FilterCondition additionalFilterCondition = new FilterCondition(ConditionType.IS_NULL,
                     databaseRepository.getFieldDetailsByName(database, new TableDetails(QuestionName.NonExitedNonVoidedProgram.getViewName(), database.getName()),
                             new FieldDetails(PROGRAM_EXIT_DATE_TIME)).getId(), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName(), null);
-            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonExitedNonVoidedProgram, VisualizationType.PIE, Arrays.asList(additionalFilterCondition));
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.NonExitedNonVoidedProgram, VisualizationType.PIE, Arrays.asList(additionalFilterCondition), false);
+        }
+        if (isQuestionMissing(QuestionName.DueVisits.getQuestionName())) {
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.DueVisits, VisualizationType.PIE, Collections.EMPTY_LIST, true);
+        }
+        if (isQuestionMissing(QuestionName.CompletedVisits.getQuestionName())) {
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.CompletedVisits, VisualizationType.PIE, Collections.EMPTY_LIST, true);
+        }
+        if (isQuestionMissing(QuestionName.OverDueVisits.getQuestionName())) {
+            questionRepository.createCustomQuestionOfVisualization(database, QuestionName.OverDueVisits, VisualizationType.PIE, Collections.EMPTY_LIST, true);
         }
         updateGlobalDashboardWithCustomQuestions();
     }
@@ -223,6 +232,9 @@ public class DatabaseService implements IQuestionCreationService {
         List<Dashcard> dashCards = new ArrayList<>();
         dashCards.add(new Dashcard(-1, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), -1, 0, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashCardParameterMappingForFirstDashCard(database)));
         dashCards.add(new Dashcard(-2, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), -1, 0, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashCardParameterMappingForSecondDashCard(database)));
+        dashCards.add(new Dashcard(-3, getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), -1, 1, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashCardParameterMappingForThirdDashCard(database)));
+        dashCards.add(new Dashcard(-4, getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), -1, 1, SECOND_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashCardParameterMappingForFourthDashCard(database)));
+        dashCards.add(new Dashcard(-5, getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), -1, 2, FIRST_CARD_COL_IDX, 12, 8, Collections.emptyMap(), createDashCardParameterMappingForFifthDashCard(database)));
 
         List<Tabs> tabs = new ArrayList<>();
         tabs.add(new Tabs(-1, "Activity"));
@@ -240,6 +252,24 @@ public class DatabaseService implements IQuestionCreationService {
     private List<ParameterMapping> createDashCardParameterMappingForSecondDashCard(Database database) {
         List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
         secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.NonExitedNonVoidedProgram.getViewName(), database.getName()), new FieldDetails(FieldName.ENROLMENT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        return secondDashCardParameterMapping;
+    }
+
+    private List<ParameterMapping> createDashCardParameterMappingForThirdDashCard(Database database) {
+        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.DueVisits.getViewName(), database.getName()), new FieldDetails(FieldName.EARLIEST_VISIT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        return secondDashCardParameterMapping;
+    }
+
+    private List<ParameterMapping> createDashCardParameterMappingForFourthDashCard(Database database) {
+        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.CompletedVisits.getViewName(), database.getName()), new FieldDetails(FieldName.ENCOUNTER_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        return secondDashCardParameterMapping;
+    }
+
+    private List<ParameterMapping> createDashCardParameterMappingForFifthDashCard(Database database) {
+        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.OverDueVisits.getViewName(), database.getName()), new FieldDetails(FieldName.EARLIEST_VISIT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashCardParameterMapping;
     }
 
