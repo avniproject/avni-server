@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
+import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Group;
 import org.avni.server.domain.Organisation;
 import org.avni.server.framework.security.AuthService;
@@ -81,6 +82,7 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
             logger.error("Error setting up canned analytics for organisation {}", organisation.getName(), e);
             throw e;
         } finally {
+            MetabaseDatabaseRepository.clearThreadLocalContext();
             CannedAnalyticsLockProvider.releaseLock(organisation);
         }
         return RepeatStatus.FINISHED;

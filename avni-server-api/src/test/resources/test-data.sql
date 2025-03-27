@@ -320,13 +320,19 @@ INSERT INTO individual (address_id, date_of_birth, date_of_birth_verified, first
 VALUES (2, '1955-01-05', FALSE, 'Ram', 'Kumari', 1, 'bb312ece-5e2e-490f-ae1d-2896089da81e', 1,
         (select id from subject_type where name = 'Individual'), 1, 1, now(), now());
 
-INSERT INTO individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name, gender_id, organisation_id,
-                        subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES ('74a37894-0cca-4104-811b-34d84ce8f06e', (select id from address_level where title = 'GP1.Parent1'), 1, current_timestamp, FALSE, 'Subject6', 'Subject6', 2, 2,
-        (select id from subject_type where name = 'Individual'), '{"7c39cb04-4f02-4c49-8f94-a5b697d40365": "9282738493"}'::jsonb, 1, 1, now(), now());
+INSERT INTO individual (uuid, address_id, version, date_of_birth, date_of_birth_verified, first_name, last_name,
+                        gender_id, organisation_id,
+                        subject_type_id, observations, created_by_id, last_modified_by_id, created_date_time,
+                        last_modified_date_time)
+VALUES ('74a37894-0cca-4104-811b-34d84ce8f06e', (select id from address_level where title = 'GP1.Parent1'), 1,
+        current_timestamp, FALSE, 'Subject6', 'Subject6', 2, 2,
+        (select id from subject_type where name = 'Individual'), '{
+    "7c39cb04-4f02-4c49-8f94-a5b697d40365": "9282738493"
+  }'::jsonb, 1, 1, now(), now());
 
-INSERT INTO form (NAME, form_type, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES ('encounter_form', 'Encounter', '2c32a184-6d27-4c51-841d-551ca94594a5', 1, 1, 1, now(), now());
+INSERT INTO form (NAME, form_type, uuid, version, created_by_id, last_modified_by_id, created_date_time,
+                  last_modified_date_time)
+VALUES ('encounter_form', 'ProgramEncounter', '2c32a184-6d27-4c51-841d-551ca94594a5', 1, 1, 1, now(), now());
 
 
 INSERT INTO audit (created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -335,7 +341,8 @@ VALUES (1, 1, now(), now());
 UPDATE form
 SET audit_id = (SELECT currval('audit_id_seq'));
 
-INSERT INTO form_element_group (NAME, form_id, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+INSERT INTO form_element_group (NAME, form_id, uuid, version, created_by_id, last_modified_by_id, created_date_time,
+                                last_modified_date_time)
 VALUES ('default_group', 1, '4b317705-4372-4405-a628-6c8bb8da8671', 1, 1, 1, now(), now());
 
 INSERT INTO audit (id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
@@ -348,29 +355,39 @@ INSERT INTO audit (id, created_by_id, last_modified_by_id, created_date_time, la
 VALUES (1003, 1, 1, now() - INTERVAL '1 year', now() - INTERVAL '1 year');
 
 INSERT INTO form_element (name, display_order, is_mandatory, concept_id, form_element_group_id, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES
-('Complaint', 2, TRUE, 2, 1, '2f256e95-3011-4f42-8ebe-1c1af5e6b8d2', 1, 1, 1, now(), now());
+VALUES ('Complaint', 2, TRUE, 2, 1, '2f256e95-3011-4f42-8ebe-1c1af5e6b8d2', 1, 1, 1, now(), now());
 
-INSERT INTO form_element (name, display_order, is_mandatory, concept_id, form_element_group_id, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES
-('Temperature', 1, TRUE, 1, 1, '2b2e9964-d942-4f83-a296-1096db2c2f0b', 1, 1, 1, now(), now());
+INSERT INTO form_element (name, display_order, is_mandatory, concept_id, form_element_group_id, uuid, version,
+                          created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES ('Temperature', 1, TRUE, 1, 1, '2b2e9964-d942-4f83-a296-1096db2c2f0b', 1, 1, 1, now(), now());
 
-INSERT INTO form_element (name, display_order, is_mandatory, concept_id, form_element_group_id, uuid, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES
-('Paracheck', 3, TRUE, 19, 1, 'b6edbb87-22d8-4265-9231-aad499475d0c', 1, 1, 1, now(), now());
+INSERT INTO form_element (name, display_order, is_mandatory, concept_id, form_element_group_id, uuid, version,
+                          created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
+VALUES ('Paracheck', 3, TRUE, 19, 1, 'b6edbb87-22d8-4265-9231-aad499475d0c', 1, 1, 1, now(), now());
 
-INSERT INTO form_mapping (form_id, entity_id, uuid, version, subject_type_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time)
-VALUES (1, 1, '741cbb1f-f1bf-42f2-87f7-f5258aa91647', 0, 1, 1, 1, now(), now());
+INSERT INTO form_mapping (form_id, entity_id, uuid, version, subject_type_id, created_by_id, last_modified_by_id,
+                          created_date_time, last_modified_date_time, observations_type_entity_id)
+VALUES (1, 1, '741cbb1f-f1bf-42f2-87f7-f5258aa91647', 0, 1, 1, 1, now(), now(), 1);
 
 INSERT INTO external_system_config (organisation_id, version, created_by_id, last_modified_by_id, created_date_time,
                                     last_modified_date_time, system_name, config)
-values (3, 0, 3, 3, now(), now(), 'Glific', '{"baseUrl": "http://localhost:9191", "phone": "919693847573", "password": "seecretpass"}');
+values (3, 0, 3, 3, now(), now(), 'Glific', '{
+  "baseUrl": "http://localhost:9191",
+  "phone": "919693847573",
+  "password": "seecretpass"
+}');
 
-insert into message_rule (id, uuid, name, message_rule, schedule_rule, entity_type, entity_type_id, message_template_id, version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, organisation_id)
-values (1, '15e766d8-3d8b-4777-8f55-1b171ac9872d', 'Individual message rule', null, '() => ([1, 2, 3])', 'Subject', (select id from subject_type where name = 'Individual'), 1, 0, 1, 2, now(), now(), 1);
+insert into message_rule (id, uuid, name, message_rule, schedule_rule, entity_type, entity_type_id, message_template_id,
+                          version, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time,
+                          organisation_id)
+values (1, '15e766d8-3d8b-4777-8f55-1b171ac9872d', 'Individual message rule', null, '() => ([1, 2, 3])', 'Subject',
+        (select id from subject_type where name = 'Individual'), 1, 0, 1, 2, now(), now(), 1);
 
-insert into message_receiver(id, uuid, receiver_type, receiver_id, organisation_id, is_voided, external_id, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, version)
-values (1, 'c48d7ae7-d0a9-4f79-aede-19297db736f9', 'Subject', (select id from individual where uuid = '4378dce3-247e-4393-8dd5-032c6eb0a655'), 1, false, '1', 1, 1, now(), now(), 1);
+insert into message_receiver(id, uuid, receiver_type, receiver_id, organisation_id, is_voided, external_id,
+                             created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, version)
+values (1, 'c48d7ae7-d0a9-4f79-aede-19297db736f9', 'Subject',
+        (select id from individual where uuid = '4378dce3-247e-4393-8dd5-032c6eb0a655'), 1, false, '1', 1, 1, now(),
+        now(), 1);
 
 insert into message_request_queue(uuid, organisation_id, message_rule_id, message_receiver_id, scheduled_date_time, delivered_date_time, delivery_status, created_by_id, last_modified_by_id, created_date_time, last_modified_date_time, version, entity_id)
 values ('75925823-109f-41a5-89e3-9c719c88155d', 1, 1, 1, now(), null, 'NotSent', 1, 1, now(), now(), 0, (select id from individual where uuid = '4378dce3-247e-4393-8dd5-032c6eb0a655'));

@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
+import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.metabase.DatabaseService;
@@ -58,6 +59,7 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());
         } finally {
+            MetabaseDatabaseRepository.clearThreadLocalContext();
             CannedAnalyticsLockProvider.releaseLock(organisation);
         }
         return RepeatStatus.FINISHED;

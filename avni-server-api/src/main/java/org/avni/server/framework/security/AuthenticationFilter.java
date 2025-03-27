@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.avni.server.config.IdpType;
+import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.UserContext;
 import org.avni.server.domain.accessControl.AvniAccessException;
 import org.avni.server.domain.accessControl.AvniNoUserSessionException;
@@ -89,6 +90,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
             this.logException(request, exception);
             throw exception;
         } finally {
+            MetabaseDatabaseRepository.clearThreadLocalContext();
             UserContextHolder.clear();
         }
     }

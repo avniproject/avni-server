@@ -928,3 +928,26 @@ GRANT ALL PRIVILEGES ON DATABASE "postgres" to openchs;
 ALTER USER openchs WITH SUPERUSER;
 
 -- END // To gain admin role option for openchs user, useful when newly creating openchs / avni_org DB
+
+-- START //  To identify form mappings with wrong values
+select f.id              form_id,
+       f.form_type       form_type,
+       f.name            form_name,
+       f.is_voided       form_voided,
+       fm.observations_type_entity_id,
+       fm.entity_id,
+       fm.id             form_mapping_id,
+       fm.is_voided      form_mapping_voided,
+       organisation.name organisation
+from form_mapping fm
+         join form f on fm.form_id = f.id
+         join organisation on f.organisation_id = organisation.id
+where (f.form_type = 'IndividualProfile' and (entity_Id is not null or fm.observations_type_entity_id is not null))
+   or (f.form_type = 'ProgramEnrolment' and (entity_Id is null or observations_type_entity_id is not null))
+   or (f.form_type = 'ProgramExit' and (entity_Id is null or observations_type_entity_id is not null))
+   or (f.form_type = 'ProgramEncounter' and (entity_Id is null or observations_type_entity_id is null))
+   or (f.form_type = 'ProgramEncounterCancellation' and (entity_Id is null or observations_type_entity_id is null))
+   or (f.form_type = 'Encounter' and (entity_Id is not null or observations_type_entity_id is null))
+   or (f.form_type = 'IndividualEncounterCancellation' and
+       (entity_Id is not null or observations_type_entity_id is null));
+-- END //  To identify form mappings with wrong values

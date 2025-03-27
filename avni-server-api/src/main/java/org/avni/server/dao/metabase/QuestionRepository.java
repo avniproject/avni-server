@@ -41,8 +41,9 @@ public class QuestionRepository extends MetabaseConnector {
     }
 
     private List<FilterCondition> getFilterConditions(List<FilterCondition> additionalFilterConditions, Database database, QuestionName question) {
+        FieldDetails field = databaseRepository.getOrgSchemaField(database, question.getViewName(), IS_VOIDED);
         return ImmutableList.<FilterCondition>builder()
-                .addAll(List.of(new FilterCondition(ConditionType.EQUAL, databaseRepository.getFieldDetailsByName(database, new TableDetails(question.getViewName(), database.getName()), new FieldDetails(IS_VOIDED)).getId(), FieldType.BOOLEAN.getTypeName(), false)))
+                .addAll(List.of(new FilterCondition(ConditionType.EQUAL, field.getId(), FieldType.BOOLEAN.getTypeName(), false)))
                 .addAll(additionalFilterConditions).build();
     }
 
@@ -59,14 +60,14 @@ public class QuestionRepository extends MetabaseConnector {
     }
 
     public void createQuestionForTable(Database database, TableDetails tableDetails, TableDetails addressTableDetails, FieldDetails originField, FieldDetails destinationField, List<FieldDetails> fieldsToShow) {
-        FieldDetails joinField1 = databaseRepository.getFieldDetailsByName(database, addressTableDetails, originField);
-        FieldDetails joinField2 = databaseRepository.getFieldDetailsByName(database, tableDetails, destinationField);
+        FieldDetails joinField1 = databaseRepository.getOrgSchemaField(database, addressTableDetails.getName(), originField);
+        FieldDetails joinField2 = databaseRepository.getOrgSchemaField(database, tableDetails.getName(), destinationField);
 
         ArrayNode joinsArray = ObjectMapperSingleton.getObjectMapper().createArrayNode();
         MetabaseQuery query = new MetabaseQueryBuilder(database, joinsArray)
-                    .forTable(tableDetails)
-                    .joinWith(addressTableDetails, joinField1, joinField2, fieldsToShow)
-                    .build();
+                .forTable(tableDetails)
+                .joinWith(addressTableDetails, joinField1, joinField2, fieldsToShow)
+                .build();
 
         MetabaseRequestBody requestBody = new MetabaseRequestBody(
                 tableDetails.getDisplayName(),
@@ -99,7 +100,7 @@ public class QuestionRepository extends MetabaseConnector {
 
     private MetabaseQuery createAdvancedQuery(String primaryTableName, QuestionConfig config, Database database) {
         TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName, database.getName()));
-        FieldDetails breakoutField = databaseRepository.getFieldDetailsByName(database, primaryTable, new FieldDetails(config.getBreakoutField()));
+        FieldDetails breakoutField = databaseRepository.getOrgSchemaField(database, primaryTable.getName(), new FieldDetails(config.getBreakoutField()));
 
         if(config.getFilters()!=null && config.getFilters().length!=0 ){
             return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())

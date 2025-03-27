@@ -130,6 +130,7 @@ ifndef dbRole
 	exit 1
 endif
 	pg_dump -h localhost -p 5433 \
+		--schema=public \
 		--dbname=openchs \
 		--username=openchs \
 		--role=$(dbRole) \

@@ -35,12 +35,6 @@ public class FieldDetails {
     @JsonProperty("semantic_type")
     private String semanticType;
 
-    @JsonProperty("table_name")
-    private String tableName;
-
-    @JsonProperty("schema")
-    private String schema;
-
     public int getId() {
         return id;
     }
@@ -60,14 +54,4 @@ public class FieldDetails {
     public String getSemanticType() {
         return semanticType;
     }
-
-    public String getTableName() {
-        return tableName;
-    }
-
-
-    public String getSchema() {
-        return schema;
-    }
-
 }

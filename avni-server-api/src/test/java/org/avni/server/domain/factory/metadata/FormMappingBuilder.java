@@ -2,6 +2,7 @@ package org.avni.server.domain.factory.metadata;
 
 import org.avni.server.application.Form;
 import org.avni.server.application.FormMapping;
+import org.avni.server.domain.EncounterType;
 import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
 
@@ -19,6 +20,11 @@ public class FormMappingBuilder {
         return this;
     }
 
+    public FormMappingBuilder withEncounterType(EncounterType encounterType) {
+        entity.setEncounterType(encounterType);
+        return this;
+    }
+
     public FormMappingBuilder withUuid(String uuid) {
         entity.setUuid(uuid);
         return this;
@@ -26,7 +32,7 @@ public class FormMappingBuilder {
 
     public FormMappingBuilder withForm(Form form) {
         entity.setForm(form);
-    	return this;
+        return this;
     }
 
     public FormMappingBuilder withSubjectType(SubjectType subjectType) {
