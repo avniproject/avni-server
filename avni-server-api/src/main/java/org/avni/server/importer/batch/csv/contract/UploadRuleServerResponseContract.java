@@ -4,6 +4,7 @@ import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decisions;
 import org.avni.server.web.request.rules.RulesContractWrapper.VisitSchedule;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class UploadRuleServerResponseContract {
@@ -11,6 +12,15 @@ public class UploadRuleServerResponseContract {
     private List<String> errors;
     private Decisions decisions;
     private List<VisitSchedule> visitSchedules;
+
+    public static UploadRuleServerResponseContract nullObject() {
+        UploadRuleServerResponseContract uploadRuleServerResponseContract = new UploadRuleServerResponseContract();
+        uploadRuleServerResponseContract.errors = new ArrayList<>();
+        uploadRuleServerResponseContract.decisions = Decisions.nullObject();
+        uploadRuleServerResponseContract.visitSchedules = new ArrayList<>();
+        uploadRuleServerResponseContract.observations = new ArrayList<>();
+        return uploadRuleServerResponseContract;
+    }
 
     public List<String> getErrors() {
         return errors;

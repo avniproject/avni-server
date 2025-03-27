@@ -1,6 +1,7 @@
 package org.avni.server.web.request.rules.RulesContractWrapper;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Decisions {
@@ -9,6 +10,14 @@ public class Decisions {
     private List<Decision> registrationDecisions;
     private boolean exit;
     private boolean cancel;
+
+    public static Decisions nullObject() {
+        Decisions decisions = new Decisions();
+        decisions.setEnrolmentDecisions(new ArrayList<>());
+        decisions.setEncounterDecisions(new ArrayList<>());
+        decisions.setRegistrationDecisions(new ArrayList<>());
+        return decisions;
+    }
 
     public List<Decision> getEnrolmentDecisions() {
         return enrolmentDecisions;
