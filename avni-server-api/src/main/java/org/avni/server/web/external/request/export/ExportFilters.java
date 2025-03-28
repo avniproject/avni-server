@@ -3,6 +3,7 @@ package org.avni.server.web.external.request.export;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.joda.time.DateTime;
 
+import java.util.Collections;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -12,7 +13,7 @@ public class ExportFilters {
     private boolean includeVoided = false;
 
     public List<Long> getAddressLevelIds() {
-        return addressLevelIds;
+        return addressLevelIds != null ? addressLevelIds : Collections.emptyList();
     }
 
     public void setAddressLevelIds(List<Long> addressLevelIds) {
