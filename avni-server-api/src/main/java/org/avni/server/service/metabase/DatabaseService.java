@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class DatabaseService implements IQuestionCreationService {
-
     private static final String ADDRESS_TABLE = "address";
     private static final String MEDIA_TABLE = "media";
     private static final String SYNC_TELEMETRY_TABLE = "sync_telemetry";
@@ -194,36 +193,39 @@ public class DatabaseService implements IQuestionCreationService {
         metabaseDashboardRepository.updateDashboard(dashboard.getId(), new DashboardUpdateRequest(dashCards, createParametersForDashboard(), tabs));
     }
 
+    private String getSchemaName() {
+        Organisation organisation = UserContextHolder.getOrganisation();
+        return organisation.getSchemaName();
+    }
     private List<ParameterMapping> createDashCardParameterMappingForFirstDashCard(Database database) {
         List<ParameterMapping> firstDashCardParameterMapping = new ArrayList<>();
-        int fieldId = getFieldId(database, UserContextHolder.getOrganisation().getSchemaName(), QuestionName.NonVoidedIndividual.getViewName(), FieldName.REGISTRATION_DATE.getName());
+        int fieldId = getFieldId(database, getSchemaName(), QuestionName.NonVoidedIndividual.getViewName(), FieldName.REGISTRATION_DATE.getName());
         firstDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE.getTypeName()))));
         return firstDashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForSecondDashCard(Database database) {
         List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        String schemaName = UserContextHolder.getOrganisation().getSchemaName();
-        int fieldId = getFieldId(database, schemaName, QuestionName.NonExitedNonVoidedProgram.getViewName(), FieldName.ENROLMENT_DATE_TIME.getName());
+        int fieldId = getFieldId(database, getSchemaName(), QuestionName.NonExitedNonVoidedProgram.getViewName(), FieldName.ENROLMENT_DATE_TIME.getName());
         secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForThirdDashCard(Database database) {
         List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.DueVisits.getViewName(), database.getName()), new FieldDetails(FieldName.EARLIEST_VISIT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.DueVisits.getViewName(),FieldName.EARLIEST_VISIT_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForFourthDashCard(Database database) {
         List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.CompletedVisits.getViewName(), database.getName()), new FieldDetails(FieldName.ENCOUNTER_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.CompletedVisits.getViewName(),FieldName.ENCOUNTER_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForFifthDashCard(Database database) {
         List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(new TableDetails(QuestionName.OverDueVisits.getViewName(), database.getName()), new FieldDetails(FieldName.EARLIEST_VISIT_DATE_TIME.getName())), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.OverDueVisits.getViewName(), FieldName.EARLIEST_VISIT_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
         return secondDashCardParameterMapping;
     }
 
