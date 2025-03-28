@@ -53,7 +53,7 @@ public class ResetSyncService {
     }
 
     public void recordSyncAttributeChange(SubjectType savedSubjectType, SubjectTypeContractWeb request) {
-        if (individualRepository.existsBySubjectTypeUuid(savedSubjectType.getUuid()) &&
+        if (individualRepository.existsBySubjectTypeId(savedSubjectType.getId()) &&
                 anySyncAttributeChanged(savedSubjectType, request)) {
             ResetSync resetSync = buildNewResetSync();
             resetSync.setSubjectType(savedSubjectType);

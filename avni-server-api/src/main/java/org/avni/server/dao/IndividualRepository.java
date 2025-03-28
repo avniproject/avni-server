@@ -193,6 +193,7 @@ public interface IndividualRepository extends TransactionalDataRepository<Indivi
         return addressIds.isEmpty() ? false : existsByAddressLevelIdIn(addressIds);
     }
     boolean existsBySubjectTypeUuid(String subjectTypeUUID);
+    boolean existsBySubjectTypeId(Long subjectTypeId);
 
     default Individual getSubject(String uuid, String legacyId) {
         Individual individual = null;
