@@ -7,7 +7,6 @@ import org.avni.server.dao.GenderRepository;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
-import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
@@ -31,14 +30,9 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private final GenderRepository genderRepository;
     private final SubjectTypeCreator subjectTypeCreator;
     private final FormMappingRepository formMappingRepository;
-    private final ObservationService observationService;
-    private RuleServerInvoker ruleServerInvoker;
-    private final VisitCreator visitCreator;
-    private final DecisionCreator decisionCreator;
     private final ObservationCreator observationCreator;
     private final IndividualService individualService;
     private final S3Service s3Service;
-    private final EntityApprovalStatusWriter entityApprovalStatusWriter;
     private final AddressLevelCreator addressLevelCreator;
     private final SubjectMigrationService subjectMigrationService;
     private final SubjectTypeService subjectTypeService;
@@ -51,11 +45,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                          GenderRepository genderRepository,
                          SubjectTypeCreator subjectTypeCreator,
                          FormMappingRepository formMappingRepository,
-                         ObservationService observationService,
-                         RuleServerInvoker ruleServerInvoker,
-                         VisitCreator visitCreator,
-                         DecisionCreator decisionCreator,
-                         ObservationCreator observationCreator, IndividualService individualService, EntityApprovalStatusWriter entityApprovalStatusWriter,
+                         ObservationCreator observationCreator, IndividualService individualService,
                          S3Service s3Service,
                          OrganisationConfigService organisationConfigService,
                          AddressLevelCreator addressLevelCreator, SubjectMigrationService subjectMigrationService, SubjectTypeService subjectTypeService, SubjectHeadersCreator subjectHeadersCreator) {
@@ -64,13 +54,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         this.genderRepository = genderRepository;
         this.subjectTypeCreator = subjectTypeCreator;
         this.formMappingRepository = formMappingRepository;
-        this.observationService = observationService;
-        this.ruleServerInvoker = ruleServerInvoker;
-        this.visitCreator = visitCreator;
-        this.decisionCreator = decisionCreator;
         this.observationCreator = observationCreator;
         this.individualService = individualService;
-        this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.addressLevelCreator = addressLevelCreator;
         this.subjectMigrationService = subjectMigrationService;
         this.subjectTypeService = subjectTypeService;
@@ -84,64 +69,50 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     private void write(Row row) throws Exception {
-        try {
-            Individual individual = getOrCreateIndividual(row);
-            AddressLevel oldAddressLevel = individual.getAddressLevel();
-            ObservationCollection oldObservations = individual.getObservations();
-            List<String> allErrorMsgs = new ArrayList<>();
+        Individual individual = getOrCreateIndividual(row);
+        AddressLevel oldAddressLevel = individual.getAddressLevel();
+        ObservationCollection oldObservations = individual.getObservations();
+        List<String> allErrorMsgs = new ArrayList<>();
 
-            SubjectType subjectType = subjectTypeCreator.getSubjectType(row.get(SubjectHeadersCreator.subjectTypeHeader), SubjectHeadersCreator.subjectTypeHeader);
-            individual.setSubjectType(subjectType);
-            individual.setFirstName(row.get(SubjectHeadersCreator.firstName));
-            if (subjectType.isAllowMiddleName())
-                individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
-            individual.setLastName(row.get(SubjectHeadersCreator.lastName));
-            setProfilePicture(subjectType, individual, row, allErrorMsgs);
-            setDateOfBirth(individual, row, allErrorMsgs);
-            Boolean dobVerified = row.getBool(SubjectHeadersCreator.dobVerified);
-            individual.setDateOfBirthVerified(dobVerified != null ? dobVerified : false);
-            setRegistrationDate(individual, row, allErrorMsgs);
-            LocationCreator locationCreator = new LocationCreator();
-            individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
+        SubjectType subjectType = subjectTypeCreator.getSubjectType(row.get(SubjectHeadersCreator.subjectTypeHeader), SubjectHeadersCreator.subjectTypeHeader);
+        individual.setSubjectType(subjectType);
+        individual.setFirstName(row.get(SubjectHeadersCreator.firstName));
+        if (subjectType.isAllowMiddleName())
+            individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
+        individual.setLastName(row.get(SubjectHeadersCreator.lastName));
+        setProfilePicture(subjectType, individual, row, allErrorMsgs);
+        setDateOfBirth(individual, row, allErrorMsgs);
+        Boolean dobVerified = row.getBool(SubjectHeadersCreator.dobVerified);
+        individual.setDateOfBirthVerified(dobVerified != null ? dobVerified : false);
+        setRegistrationDate(individual, row, allErrorMsgs);
+        LocationCreator locationCreator = new LocationCreator();
+        individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
 
-            AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
-            individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
+        AddressLevelTypes registrationLocationTypes = subjectTypeService.getRegistrableLocationTypes(subjectType);
+        individual.setAddressLevel(addressLevelCreator.findAddressLevel(row, registrationLocationTypes));
 
-            if (individual.getSubjectType().getType().equals(Subject.Person)) setGender(individual, row);
-            FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
-            individual.setVoided(false);
-            individual.assignUUIDIfRequired();
-            if (formMapping == null) {
-                throw new Exception(String.format("No form found for the subject type %s", subjectType.getName()));
-            }
-            Individual savedIndividual;
-            if (skipRuleExecution()) {
-                individual.setObservations(observationCreator.getObservations(row, subjectHeadersCreator, allErrorMsgs, FormType.IndividualProfile, individual.getObservations()));
-                savedIndividual = individualService.save(individual);
-            } else {
-                UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), individual, allErrorMsgs);
-                individual.setObservations(observationService.createObservations(new ArrayList<>()));
-                decisionCreator.addRegistrationDecisions(individual.getObservations(), ruleResponse.getDecisions());
-                savedIndividual = individualService.save(individual);
-                visitCreator.saveScheduledVisits(formMapping.getType(), savedIndividual.getUuid(), null, ruleResponse.getVisitSchedules(), null);
-            }
-            if (oldAddressLevel != null) { // existing subject is being updated
-                subjectMigrationService.markSubjectMigrationIfRequired(savedIndividual.getUuid(), oldAddressLevel, savedIndividual.getAddressLevel(), oldObservations, savedIndividual.getObservations(), false);
-            }
-            entityApprovalStatusWriter.saveStatus(formMapping, savedIndividual.getId(), EntityApprovalStatus.EntityType.Subject, savedIndividual.getSubjectType().getUuid());
-        } catch (Exception e) {
-            logger.warn("Error in writing row", e);
-            throw e;
+        if (individual.getSubjectType().getType().equals(Subject.Person)) setGender(individual, row);
+        FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectType);
+        individual.setVoided(false);
+        individual.assignUUIDIfRequired();
+        if (formMapping == null) {
+            throw new RuntimeException(String.format("No form found for the subject type %s", subjectType.getName()));
+        }
+        ObservationCollection observations = observationCreator.getObservations(row, subjectHeadersCreator, allErrorMsgs, FormType.IndividualProfile, individual.getObservations(), formMapping);
+        individual.setObservations(observations);
+        Individual savedIndividual = individualService.save(individual);
+        if (oldAddressLevel != null) {
+            subjectMigrationService.markSubjectMigrationIfRequired(savedIndividual.getUuid(), oldAddressLevel, savedIndividual.getAddressLevel(), oldObservations, savedIndividual.getObservations(), false);
         }
     }
 
     private void setProfilePicture(SubjectType subjectType, Individual individual, Row row, List<String> errorMsgs) {
         try {
             String profilePicUrl = row.get(SubjectHeadersCreator.profilePicture);
-            if(!StringUtils.isEmpty(profilePicUrl) && subjectType.isAllowProfilePicture()) {
+            if (!StringUtils.isEmpty(profilePicUrl) && subjectType.isAllowProfilePicture()) {
                 individual.setProfilePicture(s3Service
                         .uploadProfilePic(profilePicUrl, null));
-            } else if(!StringUtils.isEmpty(profilePicUrl)) {
+            } else if (!StringUtils.isEmpty(profilePicUrl)) {
                 errorMsgs.add(String.format("Not allowed to set '%s'", SubjectHeadersCreator.profilePicture));
             }
         } catch (Exception e) {
@@ -169,7 +140,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
             String dob = row.get(SubjectHeadersCreator.dateOfBirth);
             if (dob != null && !dob.trim().isEmpty())
                 individual.setDateOfBirth(LocalDate.parse(dob));
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));
         }
     }
@@ -178,7 +149,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         try {
             String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
             individual.setRegistrationDate(registrationDate != null && !registrationDate.trim().isEmpty() ? LocalDate.parse(registrationDate) : LocalDate.now());
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.registrationDate));
         }
     }
@@ -191,12 +162,8 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
                 throw new Exception(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
             }
             individual.setGender(gender);
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             throw new Exception(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
         }
-    }
-
-    public void setRuleServerInvoker(RuleServerInvoker ruleServerInvoker) {
-        this.ruleServerInvoker = ruleServerInvoker;
     }
 }

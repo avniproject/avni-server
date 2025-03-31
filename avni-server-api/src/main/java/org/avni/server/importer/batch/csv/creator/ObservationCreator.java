@@ -1,9 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
-import org.avni.server.application.Form;
-import org.avni.server.application.FormElement;
-import org.avni.server.application.FormElementType;
-import org.avni.server.application.FormType;
+import org.avni.server.application.*;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementRepository;
@@ -71,15 +68,15 @@ public class ObservationCreator {
         this.formElementRepository = formElementRepository;
     }
 
-    public Set<Concept> getConceptHeaders(Headers fixedHeaders, String[] fileHeaders) {
+    public Set<Concept> getConceptsInHeader(Headers headers, String[] fileHeaders, FormMapping formMapping) {
         List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAll();
         locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
 
         Set<String> nonConceptHeaders = Stream.concat(
                 locationTypes.stream().map(AddressLevelType::getName),
-                Stream.of(fixedHeaders.getAllHeaders())).collect(Collectors.toSet());
+                Stream.of(headers.getAllHeaders(formMapping))).collect(Collectors.toSet());
 
-        return getConceptHeaders(fileHeaders, nonConceptHeaders)
+        return getConceptsInHeader(fileHeaders, nonConceptHeaders)
                 .stream()
                 .map(name -> this.findConcept(name, false))
                 .filter(Objects::nonNull)
@@ -98,8 +95,8 @@ public class ObservationCreator {
 
     public ObservationCollection getObservations(Row row,
                                                  Headers headers,
-                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) {
-        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations);
+                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
+        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping);
         if (!errorMsgs.isEmpty()) {
             throw new RuntimeException(String.join(", ", errorMsgs));
         }
@@ -131,9 +128,9 @@ public class ObservationCreator {
         return row.get(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations) {
+    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        for (Concept concept : getConceptHeaders(headers, row.getHeaders())) {
+        for (Concept concept : getConceptsInHeader(headers, row.getHeaders(), formMapping)) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);
             if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
@@ -143,7 +140,7 @@ public class ObservationCreator {
             observationRequest.setConceptUUID(concept.getUuid());
             try {
                 observationRequest.setValue(getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations));
-            } catch (Exception ex) {
+            } catch (RuntimeException ex) {
                 logger.error(String.format("Error processing observation %s in row %s", rowValue, row), ex);
                 errorMsgs.add(String.format("Invalid answer '%s' for '%s'", rowValue, concept.getName()));
             }
@@ -222,7 +219,7 @@ public class ObservationCreator {
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
 
-    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, Headers headers, ObservationCollection oldObservations) throws Exception {
+    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, Headers headers, ObservationCollection oldObservations) {
         Concept concept = formElement.getConcept();
         Object oldValue = oldObservations == null ? null : oldObservations.getOrDefault(concept.getUuid(), null);
         switch (ConceptDataType.valueOf(concept.getDataType())) {
@@ -302,7 +299,7 @@ public class ObservationCreator {
         return dt.format(outputFmt);
     }
 
-    private Set<String> getConceptHeaders(String[] allHeaders, Set<String> nonConceptHeaders) {
+    private Set<String> getConceptsInHeader(String[] allHeaders, Set<String> nonConceptHeaders) {
         return Arrays
                 .stream(allHeaders)
                 .filter(header -> !nonConceptHeaders.contains(header))

@@ -31,7 +31,7 @@ public class BulkLocationCreatorTest {
         LocationRepository locationRepository = mock(LocationRepository.class);
         LocationService locationService = mock(LocationService.class);
         importService = mock(ImportService.class);
-        bulkLocationCreator = new BulkLocationCreator(locationService, locationRepository, addressLevelTypeRepository, mock(ObservationCreator.class), importService, mock(FormService.class));
+        bulkLocationCreator = new BulkLocationCreator(locationService, locationRepository, addressLevelTypeRepository, mock(ObservationCreator.class), importService, mock(FormService.class), null);
         when(locationService.save(any())).thenReturn(new AddressLevel());
         dummyHierarchy = "1.2";
     }

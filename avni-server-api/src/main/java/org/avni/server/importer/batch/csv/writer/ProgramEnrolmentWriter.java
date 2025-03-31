@@ -107,7 +107,7 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         }
         ProgramEnrolment savedEnrolment;
         if (skipRuleExecution()) {
-            programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations()));
+            programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations(), formMapping));
             savedEnrolment = programEnrolmentService.save(programEnrolment);
         } else {
             UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEnrolment, allErrorMsgs);

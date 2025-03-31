@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
-public class SubjectHeadersCreator extends AbstractHeaders{
+public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String id = "Id from previous system";
     public final static String subjectTypeHeader = "Subject Type";
     public final static String registrationDate = "Date Of Registration";
@@ -30,7 +30,7 @@ public class SubjectHeadersCreator extends AbstractHeaders{
 
     public final static String lastName = "Last Name";
     public final static String profilePicture = "Profile Picture";
-    public  final static String totalMembers = "Total Members";
+    public final static String totalMembers = "Total Members";
     public final static String dateOfBirth = "Date Of Birth";
     public final static String dobVerified = "Date Of Birth Verified";
     public final static String gender = "Gender";
@@ -43,9 +43,8 @@ public class SubjectHeadersCreator extends AbstractHeaders{
             ImportHelperService importHelperService,
             OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository,
-            FormMappingRepository formMappingRepository,
-            List<FieldDescriptorStrategy> strategyList) {
-        super(importHelperService,strategyList);
+            FormMappingRepository formMappingRepository) {
+        super(importHelperService);
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.formMappingRepository = formMappingRepository;
@@ -58,7 +57,7 @@ public class SubjectHeadersCreator extends AbstractHeaders{
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         if (formMappingRepository.getSubjectTypesMappedToAForm(formMapping.getFormUuid()).size() > 1) {
-            fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null,false));
+            fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
         }
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
@@ -93,7 +92,7 @@ public class SubjectHeadersCreator extends AbstractHeaders{
                 ? fromCustomLocations(formMapping).getHeaders()
                 : addressLevelTypeRepository.getAllNames();
         return headers.stream()
-                .map(header -> new HeaderField(header, "", false, null, null, null,false))
+                .map(header -> new HeaderField(header, "", false, null, null, null, false))
                 .collect(Collectors.toList());
     }
 

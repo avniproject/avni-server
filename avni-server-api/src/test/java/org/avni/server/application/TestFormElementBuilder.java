@@ -74,6 +74,12 @@ public class TestFormElementBuilder {
         return this;
     }
 
+    public TestFormElementBuilder withFormElementGroup(FormElementGroup formElementGroup) {
+        formElement.setFormElementGroup(formElementGroup);
+        formElementGroup.addFormElement(formElement);
+        return this;
+    }
+
     public FormElement build() {
         return formElement;
     }

@@ -22,9 +22,8 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders{
 
     public ProgramEnrolmentHeadersCreator(
             ImportHelperService importHelperService,
-            FormMappingRepository formMappingRepository,
-            List<FieldDescriptorStrategy> strategyList) {
-        super(importHelperService,strategyList);
+            FormMappingRepository formMappingRepository) {
+        super(importHelperService);
         this.formMappingRepository = formMappingRepository;
     }
 

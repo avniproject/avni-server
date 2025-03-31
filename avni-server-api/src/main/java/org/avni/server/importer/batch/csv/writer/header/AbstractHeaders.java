@@ -1,6 +1,5 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
-import jakarta.annotation.PostConstruct;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
@@ -9,44 +8,34 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportHelperService;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements Headers {
     protected ImportHelperService importHelperService;
-    private final Map<String, FieldDescriptorStrategy> strategies = new HashMap<>();
-    private final List<FieldDescriptorStrategy> strategyList;
 
-    public AbstractHeaders(ImportHelperService importHelperService,
-                           List<FieldDescriptorStrategy> strategyList) {
+    public AbstractHeaders(ImportHelperService importHelperService) {
         this.importHelperService = importHelperService;
-        this.strategyList = strategyList;
     }
 
-    @PostConstruct
-    public void initStrategies() {
-        for (FieldDescriptorStrategy strategy : strategyList) {
-            if (strategy instanceof CodedFieldDescriptor) {
-                strategies.put(ConceptDataType.Coded.name(), strategy);
-            } else if (strategy instanceof DateFieldDescriptor) {
-                strategies.put(ConceptDataType.Date.name(), strategy);
-            } else if (strategy instanceof TextFieldDescriptor) {
-                strategies.put(ConceptDataType.Text.name(), strategy);
-                strategies.put(ConceptDataType.Notes.name(), strategy);
-            } else if (strategy instanceof NumericFieldDescriptor) {
-                strategies.put(ConceptDataType.Numeric.name(), strategy);
-            } else {
-                strategies.put("default", strategy);
-            }
+    private FieldDescriptorStrategy getStrategy(String dataType) {
+        if (dataType.equals(ConceptDataType.Coded.name())) {
+            return new CodedFieldDescriptor();
+        } else if (dataType.equals(ConceptDataType.Date.name())) {
+            return new DateFieldDescriptor();
+        } else if (dataType.equals(ConceptDataType.Text.name())) {
+            return new TextFieldDescriptor();
+        } else if (dataType.equals(ConceptDataType.Numeric.name())) {
+            return new NumericFieldDescriptor();
+        } else {
+            return new DefaultFieldDescriptor();
         }
     }
 
     @Override
     public String[] getAllHeaders() {
-        throw new UnsupportedOperationException("Use getAllHeaders(SubjectType, FormMapping) with runtime data instead");
+        throw new UnsupportedOperationException("Use getAllHeaders(FormMapping) with runtime data instead");
     }
 
     @Override
@@ -74,10 +63,7 @@ public abstract class AbstractHeaders implements Headers {
     protected HeaderField mapFormElementToField(FormElement fe) {
         Concept concept = fe.getConcept();
         String header = importHelperService.getHeaderName(fe);
-        FieldDescriptorStrategy strategy = strategies.getOrDefault(
-                concept.getDataType(),
-                strategies.get("default")
-        );
+        FieldDescriptorStrategy strategy = getStrategy(concept.getDataType());
 
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);

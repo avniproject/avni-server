@@ -88,7 +88,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
 
         if (skipRuleExecution()) {
             EncounterHeaders encounterHeaders = new EncounterHeaders(encounter.getEncounterType());
-            encounter.setObservations(observationCreator.getObservations(row, encounterHeaders, allErrorMsgs, FormType.Encounter, encounter.getObservations()));
+            encounter.setObservations(observationCreator.getObservations(row, encounterHeaders, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
             savedEncounter = encounterService.save(encounter);
         } else {
             UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), encounter, allErrorMsgs);

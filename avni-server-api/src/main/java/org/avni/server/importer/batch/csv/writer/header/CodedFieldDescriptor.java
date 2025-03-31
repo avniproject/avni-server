@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
-@Component
 public class CodedFieldDescriptor implements FieldDescriptorStrategy {
     @Override
     public String getAllowedValues(FormElement fe) {

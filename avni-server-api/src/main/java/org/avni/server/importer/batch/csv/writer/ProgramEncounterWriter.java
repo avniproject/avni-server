@@ -90,7 +90,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
         ProgramEncounter savedEncounter;
         if (skipRuleExecution()) {
             ProgramEncounterHeaders programEncounterHeaders = new ProgramEncounterHeaders(programEncounter.getEncounterType());
-            programEncounter.setObservations(observationCreator.getObservations(row, programEncounterHeaders, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations()));
+            programEncounter.setObservations(observationCreator.getObservations(row, programEncounterHeaders, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations(), formMapping));
             savedEncounter = programEncounterService.save(programEncounter);
         } else {
             UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEncounter, allErrorMsgs);

@@ -61,8 +61,7 @@ public class ProgramEnrolmentHeadersCreatorUnitTest extends AbstractControllerIn
                 new DefaultFieldDescriptor()
         );
 
-        headersCreator = new ProgramEnrolmentHeadersCreator(importHelperService, formMappingRepository, strategyList);
-        headersCreator.initStrategies();
+        headersCreator = new ProgramEnrolmentHeadersCreator(importHelperService, formMappingRepository);
 
         when(formMapping.getForm()).thenReturn(form);
         when(formMapping.getProgram()).thenReturn(program);

@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
+import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
@@ -38,8 +39,8 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public static final String NoLocationProvided = "No location provided";
 
     @Autowired
-    public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService) {
-        super(locationRepository, observationCreator);
+    public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService, FormMappingRepository formMappingRepository) {
+        super(locationRepository, observationCreator, formMappingRepository);
         this.locationService = locationService;
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
