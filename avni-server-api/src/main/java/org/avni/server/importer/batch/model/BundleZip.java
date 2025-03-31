@@ -16,12 +16,12 @@ public class BundleZip extends HashMap<String, byte[]> {
         super(m);
     }
 
-    private static boolean fileNameHasPatterns(String fileName) {
+    public static boolean fileNameHasExclusionPatterns(String fileName) {
         return INVALID_FILE_NAME_PATTERNS.stream().anyMatch(fileName::contains);
     }
 
     public byte[] getFile(String fileName) {
-        String matchingKey = this.keySet().stream().filter(x -> x.endsWith(fileName) && !fileNameHasPatterns(x)).findAny().orElse(null);
+        String matchingKey = this.keySet().stream().filter(x -> x.endsWith(fileName) && !fileNameHasExclusionPatterns(x)).findAny().orElse(null);
         return this.get(matchingKey);
     }
 
@@ -34,7 +34,7 @@ public class BundleZip extends HashMap<String, byte[]> {
     }
 
     public List<String> getExtensionNames() {
-        return this.keySet().stream().filter(bytes -> bytes.contains(String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR)))
+        return this.keySet().stream().filter(bytes -> bytes.contains(String.format("%s/", OrganisationConfig.Extension.EXTENSION_DIR)) && !fileNameHasExclusionPatterns(bytes))
                 .map(key -> key.substring(key.indexOf(OrganisationConfig.Extension.EXTENSION_DIR))).collect(Collectors.toList());
     }
 }

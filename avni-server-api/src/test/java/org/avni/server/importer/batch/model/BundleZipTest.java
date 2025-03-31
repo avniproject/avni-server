@@ -15,6 +15,7 @@ public class BundleZipTest {
         bundleEntries.put("someParentFolder/programs.json", new byte[1]);
         bundleEntries.put("encounterTypes.json", new byte[1]);
         bundleEntries.put("__MACOSX/JSSCP/._reportCard.json", new byte[1]);
+        bundleEntries.put("extensions/__MACOSX/._ssCard.html", new byte[1]);
         BundleZip bundleZip = new BundleZip(bundleEntries);
         assertNotNull(bundleZip.getFile("programs.json"));
         assertNotNull(bundleZip.getFile("encounterTypes.json"));
@@ -40,6 +41,7 @@ public class BundleZipTest {
         HashMap<String, byte[]> bundleEntries = new HashMap<>();
         bundleEntries.put("someParentFolder/extensions/foo.html", new byte[1]);
         bundleEntries.put("extensions/bar.html", new byte[1]);
+        bundleEntries.put("extensions/__MACOSX/._ssCard.html", new byte[1]);
         BundleZip bundleZip = new BundleZip(bundleEntries);
         List<String> extensionNames = bundleZip.getExtensionNames();
         assertEquals(2, extensionNames.size());
