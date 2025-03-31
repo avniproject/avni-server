@@ -1,7 +1,7 @@
 package org.avni.server.importer.batch.zip;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.avni.messaging.contract.MessageRuleContract;
 import org.avni.messaging.service.MessagingService;
@@ -222,14 +222,14 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         for (String filename : fileSequence) {
             Optional<BundleFolder> fromFileName = BundleFolder.getFromFileName(filename);
             if (fromFileName.isPresent()) {
-                deployFolder(fromFileName.get(), bundleFiles, bundleZip);
+                deployFolder(fromFileName.get(), bundleZip);
             } else {
-                deployFileIfDataExists(bundleFiles, bundleZip, filename);
+                deployFileIfDataExists(filename, bundleZip);
             }
         }
         List<String> extensions = bundleZip.getExtensionNames();
         for (String fileName : extensions) {
-            deployFile(fileName, bundleZip.getFile(fileName));
+            deployExtensionFiles(fileName, bundleZip.getFile(fileName));
         }
     }
 
@@ -242,21 +242,21 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         return s3Service.uploadByteArray(entityUUID, extension, folderName, iconFileData);
     }
 
-    private void deployFileIfDataExists(List<? extends BundleFile> bundleFiles, BundleZip bundleZip, String filename) throws IOException, FormBuilderException, ValidationException {
+    private void deployFileIfDataExists(String filename, BundleZip bundleZip) throws IOException {
         byte[] fileData = bundleZip.getFile(filename);
         if (fileData != null) {
-            deployFile(filename, new String(fileData, StandardCharsets.UTF_8), bundleFiles);
+            deployFile(filename, new String(fileData, StandardCharsets.UTF_8));
         }
     }
 
-    private void deployFolder(BundleFolder bundleFolder, List<? extends BundleFile> bundleFiles, BundleZip bundleZip) throws IOException, FormBuilderException {
+    private void deployFolder(BundleFolder bundleFolder, BundleZip bundleZip) throws IOException, FormBuilderException {
         Map<String, byte[]> files = bundleZip.getFileNameAndDataInFolder(bundleFolder.getFolderName());
         for (Map.Entry fileEntry : files.entrySet()) {
-            deployFile(bundleFolder, fileEntry, bundleFiles);
+            deployFolder(bundleFolder, fileEntry);
         }
     }
 
-    private void deployFile(String fileName, String fileData, List<? extends BundleFile> bundleFiles) throws IOException {
+    private void deployFile(String fileName, String fileData) throws IOException {
         logger.info("processing file {}", fileName);
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (fileName) {
@@ -387,7 +387,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    private void deployFile(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData, List<? extends BundleFile> bundleFiles) throws IOException, FormBuilderException {
+    private void deployFolder(BundleFolder bundleFolder, Map.Entry<String, byte[]> fileData) throws IOException, FormBuilderException {
         logger.info("processing folder {} file {}", bundleFolder.getModifiedFileName(), fileData.getKey());
         Organisation organisation = UserContextHolder.getUserContext().getOrganisation();
         switch (bundleFolder) {
@@ -424,7 +424,7 @@ public class BundleZipFileImporter implements ItemWriter<BundleFile> {
         }
     }
 
-    public void deployFile(String filePath, byte[] contents) throws IOException {
+    public void deployExtensionFiles(String filePath, byte[] contents) throws IOException {
         if (filePath.contains(OrganisationConfig.Extension.EXTENSION_DIR))
             s3Service.uploadInOrganisation(filePath, contents);
     }
