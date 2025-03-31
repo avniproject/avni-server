@@ -2,6 +2,8 @@ package org.avni.server.importer.batch.metabase;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
+
+import org.springframework.http.*;
 import org.avni.server.dao.DbRoleRepository;
 import org.avni.server.dao.OrganisationRepository;
 import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
@@ -23,6 +25,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Component
 @JobScope
@@ -78,6 +81,12 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
             logger.info("Setup job acquired Lock for organisation {}", organisation.getName());
             setup(organisation);
             logger.info("Setup job completed for organisation {}", organisation.getName());
+        }  catch (HttpServerErrorException e) {
+            if (e.getStatusCode() == HttpStatus.BAD_GATEWAY || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+                logger.error("502 Bad Gateway Error: ", e);
+                throw new RuntimeException("Metabase is too busy. Please try later.", e);
+            }
+            throw e;
         } catch (Exception e) {
             logger.error("Error setting up canned analytics for organisation {}", organisation.getName(), e);
             throw e;

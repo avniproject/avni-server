@@ -17,6 +17,8 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -58,6 +60,15 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
             logger.info("Synced database for organisation {}", organisation.getName());
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());
+        } catch (HttpServerErrorException e) {
+            if (e.getStatusCode() == HttpStatus.BAD_GATEWAY || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+                logger.error("502 Bad Gateway Error: ", e);
+                throw new RuntimeException("Metabase is too busy. Please try later.", e);
+            }
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error creating questions for canned analytics for organisation {}", organisation.getName(), e);
+            throw e;
         } finally {
             MetabaseDatabaseRepository.clearThreadLocalContext();
             CannedAnalyticsLockProvider.releaseLock(organisation);

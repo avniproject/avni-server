@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,7 @@ import java.util.List;
 @Component
 public class MetabaseUserRepository extends MetabaseConnector {
     private final MetabaseGroupRepository metabaseGroupRepository;
+    private static final Logger logger = LoggerFactory.getLogger(MetabaseUserRepository.class);
 
     public MetabaseUserRepository(RestTemplateBuilder restTemplateBuilder, MetabaseGroupRepository metabaseGroupRepository) {
         super(restTemplateBuilder);
@@ -86,12 +89,15 @@ public class MetabaseUserRepository extends MetabaseConnector {
 
     public List<UpdateUserGroupResponse> updateGroupPermissions(UpdateUserGroupRequest updateUserGroupRequest) {
         String url = metabaseApiUrl + "/permissions" + "/membership";
-        String jsonResponse = postForObject(url, updateUserGroupRequest, String.class);
         try {
-            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, new TypeReference<>() {
-            });
+            String jsonResponse = postForObject(url, updateUserGroupRequest, String.class);
+            return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, new TypeReference<>() {});
+        } catch (RuntimeException e) {
+            logger.error("Update group permissions failed for: {}", url);
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Error parsing response: " + e.getMessage(), e);
+            logger.error("Update group permissions failed for: {}", url);
+            throw new RuntimeException(e);
         }
     }
 }

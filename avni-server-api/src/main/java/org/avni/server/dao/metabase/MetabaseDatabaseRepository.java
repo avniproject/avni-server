@@ -50,6 +50,9 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
                 }
             }
             return null;
+        } catch (RuntimeException e) {
+            logger.error("Get database failed for: {}", url);
+            throw e;
         } catch (Exception e) {
             logger.error("Get database failed for: {}", url);
             throw new RuntimeException(e);
@@ -69,11 +72,15 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
     }
 
     private MetabaseDatabaseInfo getDatabaseDetails(Database database) {
+        String url = metabaseApiUrl + "/database/" + database.getId() + "?include=tables";
         try {
-            String url = metabaseApiUrl + "/database/" + database.getId() + "?include=tables";
             String jsonResponse = getForObject(url, String.class);
             return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, MetabaseDatabaseInfo.class);
+        } catch (RuntimeException e) {
+            logger.error("Get database details failed for: {}", database.getId(), e);
+            throw e;
         } catch (Exception e) {
+            logger.error("Get database details failed for: {}", database.getId(), e);
             throw new RuntimeException(e);
         }
     }
@@ -96,13 +103,6 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         return tablesThreadLocalContext.get().get(schema);
     }
 
-    private TableDetails getTable(Database database, String schema, String tableName) {
-        return getTables(database, schema).stream()
-                .filter(table -> table.getName().equalsIgnoreCase(tableName))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Table with name " + tableName + " not found."));
-    }
-
     public TableDetails findTableDetailsByName(Database database, TableDetails targetTable) {
         MetabaseDatabaseInfo databaseInfo = getDatabaseDetails(database);
         return databaseInfo.getTables().stream()
@@ -117,9 +117,12 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         try {
             String jsonResponse = getForObject(url, String.class);
             return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, DatabaseSyncStatus.class);
+        } catch (RuntimeException e) {
+            logger.error("Get initial sync status failed for: {}", url);
+            throw e;
         } catch (Exception e) {
             logger.error("Get initial sync status failed for: {}", url);
-            throw new RuntimeException("Failed to parse sync status", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -129,6 +132,9 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
             String jsonRequestBody = requestBody.toJson().toString();
             String jsonResponse = postForObject(url, jsonRequestBody, String.class);
             return ObjectMapperSingleton.getObjectMapper().readValue(jsonResponse, DatasetResponse.class);
+        } catch (RuntimeException e) {
+            logger.error("Get dataset failed for: {}", requestBody);
+            throw e;
         } catch (Exception e) {
             logger.error("Get dataset failed for: {}", requestBody);
             throw new RuntimeException(e);
