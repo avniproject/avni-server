@@ -27,7 +27,7 @@ public class BundleZip extends HashMap<String, byte[]> {
 
     public Map<String, byte[]> getFileNameAndDataInFolder(String folder) {
         Map<String, byte[]> map = new HashMap<>();
-        this.entrySet().stream().filter(x -> x.getKey().contains(folder + STRING_FOLDER_PATH_SEPARATOR))
+        this.entrySet().stream().filter(x -> x.getKey().contains(folder + STRING_FOLDER_PATH_SEPARATOR) && !fileNameHasExclusionPatterns(x.getKey()))
                 .forEach(x -> map.put(x.getKey().substring(x.getKey().lastIndexOf(STRING_FOLDER_PATH_SEPARATOR) + 1),
                         x.getValue()));
         return map;
