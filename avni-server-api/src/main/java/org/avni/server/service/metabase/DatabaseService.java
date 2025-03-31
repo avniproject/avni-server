@@ -123,15 +123,15 @@ public class DatabaseService implements IQuestionCreationService {
         }
     }
 
-    private void createQuestionsForSubjectTypes() {
-        List<String> subjectTypeNames = tableMetaDataRepository.getSubjectTypeNames();
+    private void createQuestionsForSubjectTypes(Organisation organisation) {
+        List<String> subjectTypeNames = tableMetaDataRepository.getSubjectTypeNames(organisation);
         FieldDetails addressFieldDetails = new FieldDetails(ID);
         FieldDetails subjectFieldDetails = new FieldDetails(ADDRESS_ID);
         createQuestionsForEntities(subjectTypeNames, addressFieldDetails, subjectFieldDetails);
     }
 
-    private void createQuestionsForProgramsAndEncounters() {
-        List<String> programAndEncounterNames = tableMetaDataRepository.getProgramAndEncounterNames();
+    private void createQuestionsForProgramsAndEncounters(Organisation organisation) {
+        List<String> programAndEncounterNames = tableMetaDataRepository.getProgramAndEncounterNames(organisation);
         FieldDetails addressFieldDetails = new FieldDetails(ID);
         FieldDetails programOrEncounterFieldDetails = new FieldDetails(ADDRESS_ID);
         createQuestionsForEntities(programAndEncounterNames, addressFieldDetails, programOrEncounterFieldDetails);
@@ -220,9 +220,9 @@ public class DatabaseService implements IQuestionCreationService {
 
         //todo add field details and table details to request scope
         logger.info("Adding questions for subject types {}", organisation.getName());
-        createQuestionsForSubjectTypes();
+        createQuestionsForSubjectTypes(organisation);
         logger.info("Adding questions for programs and encounters {}", organisation.getName());
-        createQuestionsForProgramsAndEncounters();
+        createQuestionsForProgramsAndEncounters(organisation);
         logger.info("Adding questions for misc single tables {}", organisation.getName());
         createQuestionsForMiscSingleTables();
         logger.info("Adding questions for views {}", organisation.getName());
