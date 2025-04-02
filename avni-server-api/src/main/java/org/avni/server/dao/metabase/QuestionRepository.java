@@ -102,21 +102,14 @@ public class QuestionRepository extends MetabaseConnector {
         TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName, database.getName()));
         FieldDetails breakoutField = databaseRepository.getOrgSchemaField(database, primaryTable.getName(), new FieldDetails(config.getBreakoutField()));
 
-        if(config.getFilters()!=null && config.getFilters().length!=0 ){
-            return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())
-                    .forTable(primaryTable)
-                    .addAggregation(config.getAggregationType())
-                    .addBreakout(breakoutField.getId())
-                    .addFilter(config.getFilters())
-                    .build();
-        }
-        return new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())
+        MetabaseQueryBuilder builder = new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())
                 .forTable(primaryTable)
                 .addAggregation(config.getAggregationType())
-                .addBreakout(breakoutField.getId())
-                .build();
-
-
+                .addBreakout(breakoutField.getId());
+        if(config.getFilters()!=null && config.getFilters().length!=0 ){
+            builder.addFilter(config.getFilters());
+        }
+        return builder.build();
     }
 
 }
