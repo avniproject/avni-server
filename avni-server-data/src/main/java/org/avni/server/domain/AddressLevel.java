@@ -48,7 +48,7 @@ public class AddressLevel extends OrganisationAwareEntity {
     @Type(value = LTreeType.class)
     private String lineage;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "location")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "location")
     private Set<ParentLocationMapping> parentLocationMappings = new HashSet<>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})

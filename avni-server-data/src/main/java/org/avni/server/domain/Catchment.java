@@ -19,7 +19,7 @@ public class Catchment extends OrganisationAwareEntity {
     @NotNull
     private String name;
 
-    @ManyToMany(mappedBy = "catchments", fetch = FetchType.EAGER)
+    @ManyToMany(mappedBy = "catchments", fetch = FetchType.LAZY)
     private Set<AddressLevel> addressLevels = new HashSet<>();
 
     public String getName() {
