@@ -94,9 +94,8 @@ public class MetabaseService {
         Database database = databaseRepository.getDatabase(currentOrganisation);
         // Data tab, Groups sub tab
         groupPermissionsRepository.restrictGroupAccessToItsOwnDatabaseOnly(metabaseGroup.getId(), database.getId());
-        groupPermissionsRepository.removeAllUsersPermissionToOrgDatabase(database);
         // Data tab, Databases sub tab
-        groupPermissionsRepository.removeOrgDatabaseAccessForAllOtherGroups(database, metabaseGroup);
+        groupPermissionsRepository.grantOrgDatabaseAccessForOrgGroup(database, metabaseGroup);
     }
 
     private void tearDownMetabaseGroup() {
