@@ -17,8 +17,14 @@ import java.util.List;
 
 import static org.avni.server.util.ObjectMapperSingleton.getObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 @Repository
 public class CollectionRepository extends MetabaseConnector {
+    private static final Logger logger = LoggerFactory.getLogger(CollectionRepository.class);
+
     public CollectionRepository(RestTemplateBuilder restTemplateBuilder) {
         super(restTemplateBuilder);
     }
@@ -44,8 +50,12 @@ public class CollectionRepository extends MetabaseConnector {
                 items.add(item);
             }
             return items;
+        } catch (RuntimeException e) {
+            logger.error("Get collection items failed for: {}", collectionId, e);
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch collection items", e);
+            logger.error("Get collection items failed for: {}", collectionId, e);
+            throw new RuntimeException(e);
         }
     }
 
