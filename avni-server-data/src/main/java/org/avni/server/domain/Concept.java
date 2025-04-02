@@ -2,13 +2,12 @@ package org.avni.server.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import org.avni.server.application.KeyValues;
 import org.avni.server.framework.hibernate.KeyValuesUserType;
-import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,7 +35,7 @@ public class Concept extends OrganisationAwareEntity {
 
     private Boolean active;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "concept")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept")
     @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Set<ConceptAnswer> conceptAnswers = new HashSet<>();
 

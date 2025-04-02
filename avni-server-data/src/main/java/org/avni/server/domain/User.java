@@ -79,7 +79,7 @@ public class User implements IdHolder {
     private boolean isOrgAdmin;
 
     @JsonIgnore
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "user")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "user")
     private Set<AccountAdmin> accountAdmin = new HashSet<>();
 
     @Transient
