@@ -7,6 +7,8 @@ import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.projection.ConceptProjection;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.springframework.data.rest.core.config.Projection;
 
 import java.util.Objects;
@@ -18,13 +20,15 @@ import java.util.Objects;
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ConceptAnswer extends OrganisationAwareEntity {
     @JsonIgnore
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "concept_id")
+    @Fetch(FetchMode.JOIN)
     private Concept concept;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "answer_concept_id")
+    @Fetch(FetchMode.JOIN)
     private Concept answerConcept;
 
     @NotNull
