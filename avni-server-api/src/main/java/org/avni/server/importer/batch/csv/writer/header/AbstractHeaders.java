@@ -19,7 +19,7 @@ public abstract class AbstractHeaders implements Headers {
         this.importHelperService = importHelperService;
     }
 
-    private FieldDescriptorStrategy getStrategy(String dataType) {
+    private FieldDescriptorStrategy getStrategy(String conceptName,String dataType) {
         if (dataType.equals(ConceptDataType.Coded.name())) {
             return new CodedFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Date.name())) {
@@ -28,6 +28,10 @@ public abstract class AbstractHeaders implements Headers {
             return new TextFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Numeric.name())) {
             return new NumericFieldDescriptor();
+        } else if (dataType.equals(ConceptDataType.PhoneNumber.name())){
+            return new PhoneNumberDescriptor();
+        } else if (dataType.equals(ConceptDataType.Subject.name())){
+            return new SubjectConceptDescriptor(conceptName);
         } else {
             return new DefaultFieldDescriptor();
         }
@@ -63,7 +67,7 @@ public abstract class AbstractHeaders implements Headers {
     protected HeaderField mapFormElementToField(FormElement fe) {
         Concept concept = fe.getConcept();
         String header = importHelperService.getHeaderName(fe);
-        FieldDescriptorStrategy strategy = getStrategy(concept.getDataType());
+        FieldDescriptorStrategy strategy = getStrategy(concept.getName(),concept.getDataType());
 
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
