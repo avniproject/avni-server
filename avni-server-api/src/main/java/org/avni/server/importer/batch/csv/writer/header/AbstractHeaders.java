@@ -8,11 +8,12 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportHelperService;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public abstract class AbstractHeaders implements Headers {
+public abstract class AbstractHeaders implements HeaderCreator {
     protected ImportHelperService importHelperService;
 
     public AbstractHeaders(ImportHelperService importHelperService) {
@@ -45,6 +46,15 @@ public abstract class AbstractHeaders implements Headers {
     @Override
     public String[] getAllHeaders(FormMapping formMapping) {
         return buildFields(formMapping).stream()
+                .map(HeaderField::getHeader)
+                .toArray(String[]::new);
+    }
+
+    @Override
+    public String[] getConceptHeaders(FormMapping formMapping) {
+        List<HeaderField> fields = new ArrayList<>();
+        fields.addAll(generateConceptFields(formMapping));
+        return fields.stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
     }

@@ -3,7 +3,7 @@ package org.avni.server.importer.batch.csv.writer.header;
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.SubjectType;
 
-public class GroupMemberHeaders implements Headers {
+public class GroupMemberHeaders implements HeaderCreator {
     private final SubjectType memberSubjectType;
     public String groupId = "Group Id"; //default dummy value. Is set to the group name + Id in the sample.
     public final static String memberId = "Member Id";
@@ -23,6 +23,11 @@ public class GroupMemberHeaders implements Headers {
     @Override
     public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
+    }
+
+    @Override
+    public String[] getConceptHeaders(FormMapping formMapping) {
+        return new String[0];
     }
 
     @Override

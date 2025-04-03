@@ -2,7 +2,7 @@ package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.application.FormMapping;
 
-public class LocationHeaders implements Headers {
+public class LocationHeaders implements HeaderCreator {
     public final static String gpsCoordinates = "GPS coordinates";
 
     @Override
@@ -13,6 +13,11 @@ public class LocationHeaders implements Headers {
     @Override
     public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
+    }
+
+    @Override
+    public String[] getConceptHeaders(FormMapping formMapping) {
+        return new String[0];
     }
 
     @Override

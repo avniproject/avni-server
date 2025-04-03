@@ -13,6 +13,7 @@ public class FormMappingBuilder {
 
     public FormMappingBuilder() {
         withUuid(UUID.randomUUID().toString());
+        entity.ensureVersion();
     }
 
     public FormMappingBuilder withProgram(Program program) {

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class UsersAndCatchmentsHeaders implements Headers {
+public class UsersAndCatchmentsHeaders implements HeaderCreator {
     public static final String LOCATION_WITH_FULL_HIERARCHY = "Location with full hierarchy";
     public static final String CATCHMENT_NAME = "Catchment Name";
     public static final String FULL_NAME_OF_USER = "Full Name of User";
@@ -36,6 +36,11 @@ public class UsersAndCatchmentsHeaders implements Headers {
     @Override
     public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
+    }
+
+    @Override
+    public String[] getConceptHeaders(FormMapping formMapping) {
+        return new String[0];
     }
 
     @Override

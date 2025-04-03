@@ -9,7 +9,7 @@ import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
-import org.avni.server.importer.batch.csv.writer.header.Headers;
+import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.IndividualService;
 import org.avni.server.service.LocationService;
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Array;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,7 +40,7 @@ import static java.lang.String.format;
 
 @Component
 public class ObservationCreator {
-    private static Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
+    private static final Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final ConceptRepository conceptRepository;
     private final FormRepository formRepository;
@@ -68,17 +69,10 @@ public class ObservationCreator {
         this.formElementRepository = formElementRepository;
     }
 
-    public Set<Concept> getConceptsInHeader(Headers headers, String[] fileHeaders, FormMapping formMapping) {
-        List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAll();
-        locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
-
-        Set<String> nonConceptHeaders = Stream.concat(
-                locationTypes.stream().map(AddressLevelType::getName),
-                Stream.of(headers.getAllHeaders(formMapping))).collect(Collectors.toSet());
-
-        return getConceptsInHeader(fileHeaders, nonConceptHeaders)
-                .stream()
-                .map(name -> this.findConcept(name, false))
+    public Set<Concept> getConceptsInHeader(HeaderCreator headers, FormMapping formMapping) {
+        String[] conceptHeaders = headers.getConceptHeaders(formMapping);
+        return Arrays.stream(conceptHeaders)
+                .map(name -> this.findConcept(S.unDoubleQuote(name), false))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
@@ -94,7 +88,7 @@ public class ObservationCreator {
     }
 
     public ObservationCollection getObservations(Row row,
-                                                 Headers headers,
+                                                 HeaderCreator headers,
                                                  List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping);
         if (!errorMsgs.isEmpty()) {
@@ -125,12 +119,13 @@ public class ObservationCreator {
             String headerName = questionGroupIndex == null ? parentChildName : String.format("%s|%d", parentChildName, questionGroupIndex);
             return row.get(headerName);
         }
-        return row.get(concept.getName());
+        return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        for (Concept concept : getConceptsInHeader(headers, row.getHeaders(), formMapping)) {
+        Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping);
+        for (Concept concept : conceptsInHeader) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);
             if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
@@ -139,7 +134,8 @@ public class ObservationCreator {
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
             try {
-                observationRequest.setValue(getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations));
+                Object observationValue = getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations);
+                observationRequest.setValue(observationValue);
             } catch (RuntimeException ex) {
                 logger.error(String.format("Error processing observation %s in row %s", rowValue, row), ex);
                 errorMsgs.add(String.format("Invalid answer '%s' for '%s'", rowValue, concept.getName()));
@@ -150,7 +146,7 @@ public class ObservationCreator {
     }
 
     // For the repeatable question group columns should be "Question group concept"|"Child concept"|"order(1,2,3...)"
-    private Object constructChildObservations(Row row, Headers headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations) {
+    private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations) {
         List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(parentFormElement.getId());
         if (parentFormElement.isRepeatable()) {
             Pattern repeatableQuestionGroupPattern = Pattern.compile(String.format("%s\\|.*\\|\\d", parentFormElement.getConcept().getName()));
@@ -172,7 +168,7 @@ public class ObservationCreator {
         return getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, null);
     }
 
-    private ObservationCollection getQuestionGroupObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex) {
+    private ObservationCollection getQuestionGroupObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         for (FormElement formElement : allChildQuestions) {
             Concept concept = formElement.getConcept();
@@ -219,7 +215,7 @@ public class ObservationCreator {
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
 
-    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, Headers headers, ObservationCollection oldObservations) {
+    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, HeaderCreator headers, ObservationCollection oldObservations) {
         Concept concept = formElement.getConcept();
         Object oldValue = oldObservations == null ? null : oldObservations.getOrDefault(concept.getUuid(), null);
         switch (ConceptDataType.valueOf(concept.getDataType())) {

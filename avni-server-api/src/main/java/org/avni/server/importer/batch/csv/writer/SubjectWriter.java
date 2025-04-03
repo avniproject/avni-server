@@ -18,6 +18,7 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -65,7 +66,13 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
 
     @Override
     public void write(Chunk<? extends Row> chunk) throws Exception {
-        for (Row row : chunk.getItems()) write(row);
+        List<? extends Row> rows = chunk.getItems();
+        if (!CollectionUtils.isEmpty(rows)) {
+            String subjectType = rows.get(0).get(SubjectHeadersCreator.subjectTypeHeader);
+            FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectTypeCreator.getSubjectType(subjectType, SubjectHeadersCreator.subjectTypeHeader));
+            TxnDataHeaderValidator.validateHeaders(rows.get(0).getHeaders(), formMapping, subjectHeadersCreator);
+            for (Row row : rows) write(row);
+        }
     }
 
     private void write(Row row) throws Exception {

@@ -3,7 +3,7 @@ package org.avni.server.service;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.importer.batch.csv.writer.header.Headers;
+import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +22,7 @@ public class ProgramImportService extends AbstractSampleFileExportService {
     }
 
     @Override
-    protected Headers getHeaders() {
+    protected HeaderCreator getHeaders() {
         return programEnrolmentHeadersCreator;
     }
 

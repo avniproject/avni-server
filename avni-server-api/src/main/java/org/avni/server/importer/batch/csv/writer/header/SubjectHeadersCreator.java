@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
 import org.avni.server.dao.AddressLevelTypeRepository;
-import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.ImportHelperService;
 import org.avni.server.service.OrganisationConfigService;
@@ -37,17 +36,14 @@ public class SubjectHeadersCreator extends AbstractHeaders {
 
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
-    private final FormMappingRepository formMappingRepository;
 
     public SubjectHeadersCreator(
             ImportHelperService importHelperService,
             OrganisationConfigService organisationConfigService,
-            AddressLevelTypeRepository addressLevelTypeRepository,
-            FormMappingRepository formMappingRepository) {
+            AddressLevelTypeRepository addressLevelTypeRepository) {
         super(importHelperService);
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
-        this.formMappingRepository = formMappingRepository;
     }
 
     @Override
@@ -56,9 +52,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
-        if (formMappingRepository.getSubjectTypesMappedToAForm(formMapping.getFormUuid()).size() > 1) {
-            fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
-        }
+        fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
         fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
 
@@ -68,7 +62,8 @@ public class SubjectHeadersCreator extends AbstractHeaders {
                 fields.add(new HeaderField(middleName, "", false, null, null, null));
             }
             fields.add(new HeaderField(lastName, "", true, null, null, null));
-            fields.add(new HeaderField(profilePicture, "", false, null, null, null));
+            if (subjectType.isAllowProfilePicture())
+                fields.add(new HeaderField(profilePicture, "", false, null, null, null));
             fields.add(new HeaderField(dateOfBirth, "", false, null, "Format: DD-MM-YYYY", null));
             fields.add(new HeaderField(dobVerified, "Default value: false", false, "Allowed values: {true, false}", null, null));
             fields.add(new HeaderField(gender, "", true, "Allowed values: {Female, Male, Other}", null, null));

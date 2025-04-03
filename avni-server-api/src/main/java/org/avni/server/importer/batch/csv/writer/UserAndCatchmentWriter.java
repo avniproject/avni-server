@@ -31,7 +31,7 @@ import static org.avni.server.domain.UserSettings.DATE_PICKER_MODE_OPTIONS;
 import static org.avni.server.importer.batch.csv.writer.header.UsersAndCatchmentsHeaders.*;
 
 @Component
-public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
+public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, CommonWriterError {
     private final UserService userService;
     private final CatchmentService catchmentService;
     private final LocationRepository locationRepository;
@@ -51,8 +51,6 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable {
     private static final String ERR_MSG_INVALID_TRACK_LOCATION = "Provided value '%s' for track location is invalid.";
     private static final String ERR_MSG_INVALID_ACTIVE_VALUE = "Provided value '%s' for Active is invalid.";
     private static final String ERR_MSG_INVALID_ENABLE_BENEFICIARY_MODE = "Provided value '%s' for enable beneficiary mode is invalid.";
-    private static final String ERR_MSG_UNKNOWN_HEADERS = "Unknown headers - %s included in file. Please refer to sample file for valid list of headers.";
-    private static final String ERR_MSG_MISSING_MANDATORY_FIELDS = "Mandatory columns are missing from uploaded file - %s. Please refer to sample file for the list of mandatory headers.";
     private static final String ERR_MSG_INVALID_CONCEPT_ANSWER = "'%s' is not a valid value for the concept '%s'. " +
             "To input this value, add this as an answer to the coded concept '%s'.";
     public static final String METADATA_ROW_START_STRING = "Mandatory field";

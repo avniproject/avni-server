@@ -74,8 +74,7 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         subjectHeadersCreator = new SubjectHeadersCreator(
                 importHelperService,
                 organisationConfigService,
-                addressLevelTypeRepository,
-                formMappingRepository
+                addressLevelTypeRepository
         );
     }
 
