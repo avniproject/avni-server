@@ -198,35 +198,55 @@ public class DatabaseService implements IQuestionCreationService {
         return organisation.getSchemaName();
     }
     private List<ParameterMapping> createDashCardParameterMappingForFirstDashCard(Database database) {
-        List<ParameterMapping> firstDashCardParameterMapping = new ArrayList<>();
+        List<ParameterMapping> dashCardParameterMapping = new ArrayList<>();
         int fieldId = getFieldId(database, getSchemaName(), QuestionName.NonVoidedIndividual.getViewName(), FieldName.REGISTRATION_DATE.getName());
-        firstDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE.getTypeName()))));
-        return firstDashCardParameterMapping;
+        dashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            dashCardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(QuestionName.NonVoidedIndividual.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.NonVoidedIndividual.getViewName(),addressLevelTypeName), FieldType.TEXT.getTypeName()))));
+        }
+        return dashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForSecondDashCard(Database database) {
-        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
+        List<ParameterMapping> dashCardParameterMapping = new ArrayList<>();
         int fieldId = getFieldId(database, getSchemaName(), QuestionName.NonExitedNonVoidedProgram.getViewName(), FieldName.ENROLMENT_DATE_TIME.getName());
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
-        return secondDashCardParameterMapping;
+        dashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(fieldId, FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            dashCardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(QuestionName.NonExitedNonVoidedProgram.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.NonExitedNonVoidedProgram.getViewName(),addressLevelTypeName), FieldType.TEXT.getTypeName()))));
+        }
+        return dashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForThirdDashCard(Database database) {
-        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.DueVisits.getViewName(),FieldName.EARLIEST_VISIT_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
-        return secondDashCardParameterMapping;
+        List<ParameterMapping> dashCardParameterMapping = new ArrayList<>();
+        dashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.DueVisits.getViewName(),FieldName.EARLIEST_VISIT_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            dashCardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(QuestionName.DueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.DueVisits.getViewName(),addressLevelTypeName), FieldType.TEXT.getTypeName()))));
+        }
+        return dashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForFourthDashCard(Database database) {
-        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.CompletedVisits.getViewName(),FieldName.ENCOUNTER_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
-        return secondDashCardParameterMapping;
+        List<ParameterMapping> dashCardParameterMapping = new ArrayList<>();
+        dashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.CompletedVisits.getViewName(),FieldName.ENCOUNTER_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            dashCardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(QuestionName.CompletedVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.CompletedVisits.getViewName(),addressLevelTypeName), FieldType.TEXT.getTypeName()))));
+        }
+        return dashCardParameterMapping;
     }
 
     private List<ParameterMapping> createDashCardParameterMappingForFifthDashCard(Database database) {
-        List<ParameterMapping> secondDashCardParameterMapping = new ArrayList<>();
-        secondDashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.OverDueVisits.getViewName(), FieldName.EARLIEST_VISIT_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
-        return secondDashCardParameterMapping;
+        List<ParameterMapping> dashCardParameterMapping = new ArrayList<>();
+        dashCardParameterMapping.add(new ParameterMapping("dateTimeId", getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.OverDueVisits.getViewName(), FieldName.EARLIEST_VISIT_DATE_TIME.getName()), FieldType.DATE_TIME_WITH_LOCAL_TZ.getTypeName()))));
+        List<String> addressLevelTypeNames = addressLevelTypeRepository.getAllNames();
+        for (String addressLevelTypeName : addressLevelTypeNames) {
+            dashCardParameterMapping.add(new ParameterMapping(addressLevelTypeName, getCardIdByQuestionName(QuestionName.OverDueVisits.getQuestionName()), new Target(MetabaseTargetType.DIMENSION, new FieldTarget(getFieldId(database, getSchemaName(),QuestionName.OverDueVisits.getViewName(),addressLevelTypeName), FieldType.TEXT.getTypeName()))));
+        }
+        return dashCardParameterMapping;
     }
 
     private int getFieldId(Database database, String schemaName, String viewName, String fieldName) {
@@ -241,8 +261,6 @@ public class DatabaseService implements IQuestionCreationService {
         for (String addressLevelTypeName : addressLevelTypeNames) {
             parameters.add(new Parameters(addressLevelTypeName, addressLevelTypeName, addressLevelTypeName, "string/starts-with", "string", "search"));
         }
-        parameters.add(new Parameters("Program Name", "programName", "programName", "string/starts-with", "string", "search", false));
-        parameters.add(new Parameters("Subject Type Name", "subjectTypeName", "subjectTypeName", "string/starts-with", "string", "search", false));
         return parameters;
     }
 
