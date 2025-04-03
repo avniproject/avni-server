@@ -208,28 +208,28 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 error("Invalid 'GPS coordinates'"));
 
         //attributes
-        success(header("State", "District", "Block", "GPS coordinates", "Coded Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", "\"Coded Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 1", "23.45,43.86", "Answer 1"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 1"), "Coded Concept");
         //attributes with space in header
-        success(header("State", "District", "Block", "GPS coordinates", " Coded Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", " \"Coded Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 2", "23.45,43.86", " Answer 1"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 2"), "Coded Concept");
 
         //attributes with text concept type
-        success(header("State", "District", "Block", "GPS coordinates", "Text Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", "\"Text Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 3", "23.45,43.86", "any text"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 3"), "Text Concept");
 
-        failure(header("State", "District", "Block", "GPS coordinates", "Coded Concept "),
+        failure(header("State", "District", "Block", "GPS coordinates", "\"Coded Concept\" "),
                 dataRow("Bihar", "Vaishali", "Block 4", "23.45,43.86", "not an answer to this concept"),
                 error("Invalid answer 'not an answer to this concept' for 'Coded Concept'"));
 
         // multiple attributes
-        success(header("State", "District", "Block", "GPS coordinates", " Coded Concept", "Text Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", " \"Coded Concept\"", "\"Text Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 5", "23.45,43.86", " Answer 1", "any text"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 5"), "Coded Concept");

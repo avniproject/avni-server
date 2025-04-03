@@ -107,6 +107,7 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         SubjectType personType = new SubjectTypeBuilder()
                 .setName("TestPerson")
                 .setType(Subject.Person)
+                .setAllowProfilePicture(true)
                 .setUuid(UUID.randomUUID().toString())
                 .build();
         FormMapping personMapping = createFormMapping(personType);

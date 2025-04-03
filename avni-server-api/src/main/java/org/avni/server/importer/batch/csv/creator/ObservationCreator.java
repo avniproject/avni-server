@@ -69,8 +69,8 @@ public class ObservationCreator {
         this.formElementRepository = formElementRepository;
     }
 
-    public Set<Concept> getConceptsInHeader(HeaderCreator headers, FormMapping formMapping) {
-        String[] conceptHeaders = headers.getConceptHeaders(formMapping);
+    public Set<Concept> getConceptsInHeader(HeaderCreator headers, FormMapping formMapping, String[] fileHeaders) {
+        String[] conceptHeaders = headers.getConceptHeaders(formMapping, fileHeaders);
         return Arrays.stream(conceptHeaders)
                 .map(name -> this.findConcept(S.unDoubleQuote(name), false))
                 .filter(Objects::nonNull)
@@ -90,7 +90,7 @@ public class ObservationCreator {
     public ObservationCollection getObservations(Row row,
                                                  HeaderCreator headers,
                                                  List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
-        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping);
+        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping, row.getHeaders());
         if (!errorMsgs.isEmpty()) {
             throw new RuntimeException(String.join(", ", errorMsgs));
         }
@@ -122,9 +122,9 @@ public class ObservationCreator {
         return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping);
+        Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);

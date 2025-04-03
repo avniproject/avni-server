@@ -5,11 +5,10 @@ import jakarta.transaction.Transactional;
 import org.avni.server.builder.BuilderException;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
-import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
+import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.FormService;
 import org.avni.server.service.ImportLocationsConstants;
@@ -39,8 +38,8 @@ public class BulkLocationCreator extends BulkLocationModifier {
     public static final String NoLocationProvided = "No location provided";
 
     @Autowired
-    public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService, FormMappingRepository formMappingRepository) {
-        super(locationRepository, observationCreator, formMappingRepository);
+    public BulkLocationCreator(LocationService locationService, LocationRepository locationRepository, AddressLevelTypeRepository addressLevelTypeRepository, ObservationCreator observationCreator, ImportService importService, FormService formService, LocationHeaderCreator locationHeaderCreator) {
+        super(locationRepository, observationCreator, locationHeaderCreator);
         this.locationService = locationService;
         this.locationRepository = locationRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
@@ -98,8 +97,8 @@ public class BulkLocationCreator extends BulkLocationModifier {
         if (!additionalHeaders.isEmpty()) {
             List<String> locationPropertyNames = formService.getFormElementNamesForLocationTypeForms()
                     .stream().map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList());
-            locationPropertyNames.add(LocationHeaders.gpsCoordinates);
-            if ((!locationPropertyNames.containsAll(additionalHeaders))) {
+            locationPropertyNames.add(LocationHeaderCreator.gpsCoordinates);
+            if ((!locationPropertyNames.containsAll(additionalHeaders.stream().map(S::unDoubleQuote).toList()))) {
                 allErrorMsgs.add(UnknownHeadersErrorMessage);
                 throw new RuntimeException(String.join(", ", allErrorMsgs));
             }

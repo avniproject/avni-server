@@ -1,6 +1,6 @@
 package org.avni.server.service;
 
-import org.avni.server.importer.batch.csv.writer.header.LocationHeaders;
+import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
 
 
 public interface ImportLocationsConstants {
@@ -11,7 +11,7 @@ public interface ImportLocationsConstants {
     String EXAMPLE = "Example: ";
     String ALLOWED_VALUES = "Allowed values: ";
     String OPTIONAL = "| Optional |";
-    String COLUMN_NAME_GPS_COORDINATES = LocationHeaders.gpsCoordinates;
+    String COLUMN_NAME_GPS_COORDINATES = LocationHeaderCreator.gpsCoordinates;
     String COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY = "Location with full hierarchy";
     String COLUMN_NAME_NEW_LOCATION_NAME = "New location name";
     String COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY = "Parent location with full hierarchy";

@@ -51,7 +51,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getConceptHeaders(FormMapping formMapping) {
+    public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         List<HeaderField> fields = new ArrayList<>();
         fields.addAll(generateConceptFields(formMapping));
         return fields.stream()

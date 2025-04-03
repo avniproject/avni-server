@@ -2,10 +2,10 @@ package org.avni.server.importer.batch.csv.writer;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
+import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ImportLocationsConstants;
 import org.avni.server.service.LocationService;
@@ -26,8 +26,8 @@ public class BulkLocationEditor extends BulkLocationModifier {
     private final LocationService locationService;
 
     @Autowired
-    public BulkLocationEditor(LocationRepository locationRepository, ObservationCreator observationCreator, LocationService locationService, FormMappingRepository formMappingRepository) {
-        super(locationRepository, observationCreator, formMappingRepository);
+    public BulkLocationEditor(LocationRepository locationRepository, ObservationCreator observationCreator, LocationService locationService, LocationHeaderCreator locationHeaderCreator) {
+        super(locationRepository, observationCreator, locationHeaderCreator);
         this.locationService = locationService;
     }
 

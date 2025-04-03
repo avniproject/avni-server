@@ -39,7 +39,7 @@ public class UsersAndCatchmentsHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getConceptHeaders(FormMapping formMapping) {
+    public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         return new String[0];
     }
 
