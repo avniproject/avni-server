@@ -65,7 +65,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws Exception {
+    public void write(Chunk<? extends Row> chunk) throws ValidationException {
         List<? extends Row> rows = chunk.getItems();
         if (!CollectionUtils.isEmpty(rows)) {
             String subjectType = rows.get(0).get(SubjectHeadersCreator.subjectTypeHeader);
@@ -75,7 +75,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         }
     }
 
-    private void write(Row row) throws Exception {
+    private void write(Row row) throws ValidationException {
         Individual individual = getOrCreateIndividual(row);
         AddressLevel oldAddressLevel = individual.getAddressLevel();
         ObservationCollection oldObservations = individual.getObservations();
@@ -161,16 +161,16 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         }
     }
 
-    private void setGender(Individual individual, Row row) throws Exception {
+    private void setGender(Individual individual, Row row) {
         try {
             String genderName = row.get(SubjectHeadersCreator.gender);
             Gender gender = genderRepository.findByNameIgnoreCase(genderName);
             if (gender == null) {
-                throw new Exception(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
+                throw new RuntimeException(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
             }
             individual.setGender(gender);
         } catch (RuntimeException ex) {
-            throw new Exception(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
+            throw new RuntimeException(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
         }
     }
 }

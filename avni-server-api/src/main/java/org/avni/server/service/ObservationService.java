@@ -20,6 +20,7 @@ import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
 import org.avni.server.web.request.rules.constant.WorkFlowTypeEnum;
 import org.avni.server.web.request.rules.response.KeyValueResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -38,13 +39,16 @@ public class ObservationService {
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final EnhancedValidationService enhancedValidationService;
 
+    @Value("${avni.enhancedValidation.enabled}")
+    private boolean enhancedValidationEnabled;
+
     @Autowired
-    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, Optional<EnhancedValidationService> enhancedValidationService) {
+    public ObservationService(ConceptRepository conceptRepository, IndividualRepository individualRepository, LocationRepository locationRepository, NamedParameterJdbcTemplate jdbcTemplate, EnhancedValidationService enhancedValidationService) {
         this.conceptRepository = conceptRepository;
         this.individualRepository = individualRepository;
         this.locationRepository = locationRepository;
         this.jdbcTemplate = jdbcTemplate;
-        this.enhancedValidationService = enhancedValidationService.orElse(null);
+        this.enhancedValidationService = enhancedValidationService;
     }
 
     public ObservationCollection createObservations(List<ObservationRequest> observationRequests) {
@@ -73,11 +77,10 @@ public class ObservationService {
         return new ObservationCollection(completedObservationRequests);
     }
 
-    public ValidationResult validateObservationsAndDecisions(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) {
-        if (enhancedValidationService != null) {
-            return enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
+    public void validateObservationsAndDecisions(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) throws ValidationException {
+        if (enhancedValidationEnabled) {
+            enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
         }
-        return ValidationResult.Success;
     }
 
     public ObservationCollection createObservationsFromDecisions(List<Decision> decisions) {

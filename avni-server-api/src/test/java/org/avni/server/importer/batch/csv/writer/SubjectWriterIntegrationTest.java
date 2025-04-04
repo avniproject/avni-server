@@ -13,6 +13,7 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.*;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.test.context.jdbc.Sql;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -90,7 +92,31 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void allowHeaderWithSpaces() throws Exception {
+    public void headerWithWrongFields() {
+        failure(header("Id from previou system",
+                        "Subject Type",
+                        "Date Of Registratio",
+                        "Registration Location",
+                        "First Name",
+                        "Last Name",
+                        "Date Of Birt",
+                        "Date Of Birth Verified",
+                        "Gender",
+                        "Profile Picture",
+                        "State",
+                        "Distric",
+                        "\"Singl Select Coded\"",
+                        "\"Multi Select Coded\"",
+                        "\"Date Concept\"",
+                        "\"Text Concept\"",
+                        "\"Numeric Concept\"",
+                        "\"Notes Concept\""),
+                validDataRow(),
+                "Mandatory columns are missing from uploaded file - Single Select Coded, Date Of Birth, Date Of Registration, District, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Date Of Birt, Singl Select Coded, Id from previou system, Date Of Registratio, Distric included in file. Please refer to sample file for valid list of headers.");
+    }
+
+    @Test
+    public void allowHeaderWithSpaces() throws ValidationException {
         String[] headers = header(" Id from previous system ",
                 "Subject Type",
                 "Date Of Registration ",
@@ -172,5 +198,17 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(6, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
+    }
+
+    private void failure(String[] headers, String[] cells, String errorMessage) {
+        long before = individualRepository.count();
+        try {
+            subjectWriter.write(Chunk.of(new Row(headers, cells)));
+            fail();
+        } catch (Exception e) {
+            Assert.assertEquals(errorMessage, e.getMessage());
+        }
+        long after = individualRepository.count();
+        Assert.assertEquals(before, after);
     }
 }

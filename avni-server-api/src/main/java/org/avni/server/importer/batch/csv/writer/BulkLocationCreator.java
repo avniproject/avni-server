@@ -7,6 +7,7 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
 import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
 import org.avni.server.importer.batch.model.Row;
@@ -53,7 +54,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
         return locationTypes.stream().map(AddressLevelType::getName).collect(Collectors.toList());
     }
 
-    public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) {
+    public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) throws ValidationException {
         AddressLevel parent = null;
         AddressLevel location = null;
         for (String columnHeader : row.getHeaders()) {
@@ -139,7 +140,7 @@ public class BulkLocationCreator extends BulkLocationModifier {
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void write(List<? extends Row> rows, String idBasedLocationHierarchy) {
+    public void write(List<? extends Row> rows, String idBasedLocationHierarchy) throws ValidationException {
         List<String> allErrorMsgs = new ArrayList<>();
         List<String> hierarchicalLocationTypeNames = validateHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
         for (Row row : rows) {

@@ -1,20 +1,17 @@
 package org.avni.server.importer.batch.csv.creator;
 
 import org.avni.server.application.*;
-import org.avni.server.dao.AddressLevelTypeRepository;
+import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.IndividualService;
-import org.avni.server.service.LocationService;
-import org.avni.server.service.ObservationService;
-import org.avni.server.service.S3Service;
+import org.avni.server.service.*;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
@@ -24,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Array;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,7 +37,6 @@ import static java.lang.String.format;
 @Component
 public class ObservationCreator {
     private static final Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
-    private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final ConceptRepository conceptRepository;
     private final FormRepository formRepository;
     private final ObservationService observationService;
@@ -49,17 +44,17 @@ public class ObservationCreator {
     private final IndividualService individualService;
     private final LocationService locationService;
     private final FormElementRepository formElementRepository;
+    private final EnhancedValidationService enhancedValidationService;
 
     @Autowired
-    public ObservationCreator(AddressLevelTypeRepository addressLevelTypeRepository,
-                              ConceptRepository conceptRepository,
+    public ObservationCreator(ConceptRepository conceptRepository,
                               FormRepository formRepository,
                               ObservationService observationService,
                               S3Service s3Service,
                               IndividualService individualService,
                               LocationService locationService,
-                              FormElementRepository formElementRepository) {
-        this.addressLevelTypeRepository = addressLevelTypeRepository;
+                              FormElementRepository formElementRepository,
+                              EnhancedValidationService enhancedValidationService) {
         this.conceptRepository = conceptRepository;
         this.formRepository = formRepository;
         this.observationService = observationService;
@@ -67,6 +62,7 @@ public class ObservationCreator {
         this.individualService = individualService;
         this.locationService = locationService;
         this.formElementRepository = formElementRepository;
+        this.enhancedValidationService = enhancedValidationService;
     }
 
     public Set<Concept> getConceptsInHeader(HeaderCreator headers, FormMapping formMapping, String[] fileHeaders) {
@@ -89,7 +85,7 @@ public class ObservationCreator {
 
     public ObservationCollection getObservations(Row row,
                                                  HeaderCreator headers,
-                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
+                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) throws ValidationException {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping, row.getHeaders());
         if (!errorMsgs.isEmpty()) {
             throw new RuntimeException(String.join(", ", errorMsgs));
@@ -122,7 +118,7 @@ public class ObservationCreator {
         return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders) {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders) throws ValidationException {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
@@ -142,6 +138,7 @@ public class ObservationCreator {
             }
             observationRequests.add(observationRequest);
         }
+        this.enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, new ArrayList<>(), formMapping);
         return observationService.createObservations(observationRequests);
     }
 

@@ -1,5 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.model.Row;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.Chunk;
@@ -25,7 +26,7 @@ public class LocationWriter implements ItemWriter<Row> {
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws Exception {
+    public void write(Chunk<? extends Row> chunk) throws ValidationException {
         if (LocationUploadMode.isCreateMode(locationUploadMode)) {
             this.bulkLocationCreator.write(chunk.getItems(), locationHierarchy);
         } else {

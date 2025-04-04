@@ -4,6 +4,7 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.ObservationCollection;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.geo.Point;
 import org.avni.server.importer.batch.csv.creator.LocationCreator;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
@@ -24,7 +25,7 @@ public abstract class BulkLocationModifier {
         this.headerCreator = headerCreator;
     }
 
-    protected void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) {
+    protected void updateLocationProperties(Row row, List<String> allErrorMsgs, AddressLevel location) throws ValidationException {
         LocationCreator locationCreator = new LocationCreator();
         Point gpsCoordinates = locationCreator.getGeoLocation(row, LocationHeaderCreator.gpsCoordinates, allErrorMsgs);
         if (gpsCoordinates != null) location.setGpsCoordinates(gpsCoordinates);

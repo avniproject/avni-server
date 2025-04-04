@@ -79,37 +79,10 @@ public class EnhancedValidationServiceTest {
         firstDecisionConcept = new ConceptBuilder().withDataType(ConceptDataType.Text).withName("firstDecisionConcept").withUuid("0d294d33-1695-4965-8798-cc97e0407994").build();
         firstNonCodedConceptFormElement = new TestFormElementBuilder().withUuid("fe-uuid-1").withConcept(firstNonCodedConcept).build();
         firstDecisionConceptFormElement = new TestFormElementBuilder().withUuid("fe-uuid-2").withConcept(firstDecisionConcept).build();
-
-    }
-
-
-
-    @Test(expected = ValidationException.class)
-    public void shouldThrowValidationExceptionForInvalidDataIfFailOnValidationIsEnabled() {
-        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
-        String errorMessage = "Dummy Error Message";
-        enhancedValidationService.handleValidationFailure(errorMessage);
-    }
-
-    @Test
-    public void shouldReturnValidationFailureForInvalidDataIfFailOnValidationIsDisabled() {
-        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(false);
-        String errorMessage = "Dummy Error Message";
-        ValidationResult validationResult = enhancedValidationService.handleValidationFailure(errorMessage);
-        assertTrue(validationResult.isFailure());
-    }
-
-    @Test
-    public void shouldReturnValidationSuccessForEmptyDataIfFailOnValidationIsEnabled() {
-        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
-        when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
-
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForInValidDataIfFailOnValidationIsEnabled() {
+    public void shouldReturnValidationFailureForInValidDataIfFailOnValidationIsEnabled() throws org.avni.server.domain.ValidationException {
         when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
@@ -132,7 +105,7 @@ public class EnhancedValidationServiceTest {
     }
 
     @Test
-    public void shouldReturnValidationSuccessForValidSingleNonCodedConceptAndDecisionIfFailOnValidationIsEnabled() {
+    public void shouldReturnValidationSuccessForValidSingleNonCodedConceptAndDecisionIfFailOnValidationIsEnabled() throws org.avni.server.domain.ValidationException {
         when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
@@ -156,8 +129,6 @@ public class EnhancedValidationServiceTest {
         decision.setValue("DummyDecision");
         decisions = Arrays.asList(decision);
 
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
-
 }

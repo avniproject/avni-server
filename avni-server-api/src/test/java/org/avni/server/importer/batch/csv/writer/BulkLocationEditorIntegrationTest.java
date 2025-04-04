@@ -4,10 +4,7 @@ import jakarta.transaction.Transactional;
 import org.avni.server.application.*;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
@@ -105,14 +102,14 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         return strings;
     }
 
-    private void treatAsDescriptor(String[] headers, String... descriptorCells) {
+    private void treatAsDescriptor(String[] headers, String... descriptorCells) throws ValidationException {
         long before = locationRepository.count();
         bulkLocationEditor.write(Collections.singletonList(new Row(headers, descriptorCells)));
         long after = locationRepository.count();
         assertEquals(before, after);
     }
 
-    private void success(String[] headers, String[] dataRow, String[] exists, String[] ... notExists) {
+    private void success(String[] headers, String[] dataRow, String[] exists, String[] ... notExists) throws ValidationException {
         bulkLocationEditor.editLocation(new Row(headers, dataRow), new ArrayList<>());
         lineageExists(exists);
         for (String[] notExist : notExists) {
@@ -137,7 +134,7 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
         try {
             bulkLocationEditor.write(Collections.singletonList(new Row(headers, new String[0])));
             fail();
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | ValidationException e) {
             String message = e.getMessage();
             if (message == null) {
                 e.printStackTrace();
@@ -154,7 +151,7 @@ public class BulkLocationEditorIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldEdit() {
+    public void shouldEdit() throws ValidationException {
         // no change
         success(header("Location with full hierarchy", "New location name", "Parent location with full hierarchy", "GPS coordinates"),
                 dataRow("Bihar, District1, Block11", "Block11", "Bihar, District1", "23.45,43.85"),

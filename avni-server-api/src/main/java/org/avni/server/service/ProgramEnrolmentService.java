@@ -126,7 +126,7 @@ public class ProgramEnrolmentService implements ScopeAwareService<ProgramEnrolme
     }
 
     @Messageable(EntityType.ProgramEnrolment)
-    public ProgramEnrolment programEnrolmentSave(ProgramEnrolmentRequest request) {
+    public ProgramEnrolment programEnrolmentSave(ProgramEnrolmentRequest request) throws ValidationException {
         logger.info(String.format("Saving programEnrolment with uuid %s", request.getUuid()));
         Program program;
         if (request.getProgramUUID() == null) {

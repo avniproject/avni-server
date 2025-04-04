@@ -45,7 +45,7 @@ public class ObservationServiceTest {
     @Before
     public void setup() {
         initMocks(this);
-        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, Optional.of(enhancedValidationService));
+        observationService = new ObservationService(conceptRepository, individualRepository, locationRepository, namedParameterJdbcTemplate, enhancedValidationService);
     }
 
     @Test

@@ -139,7 +139,7 @@ public class ProgramEncounterService implements ScopeAwareService<ProgramEncount
     }
 
     @Messageable(EntityType.ProgramEncounter)
-    public ProgramEncounter saveProgramEncounter(ProgramEncounterRequest request) {
+    public ProgramEncounter saveProgramEncounter(ProgramEncounterRequest request) throws ValidationException {
         logger.info(String.format("Saving programEncounter with uuid %s", request.getUuid()));
         checkForSchedulingCompleteConstraintViolation(request);
         EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterTypeUUID(), request.getEncounterType());

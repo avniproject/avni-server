@@ -103,7 +103,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     @RequestMapping(value = "/encounters", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void save(@RequestBody EncounterRequest request) {
+    public void save(@RequestBody EncounterRequest request) throws ValidationException {
         logger.info(String.format("Saving encounter with uuid %s", request.getUuid()));
 
         createEncounter(request);
@@ -114,7 +114,7 @@ public class EncounterController extends AbstractController<Encounter> implement
     @RequestMapping(value = "/web/encounters", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public AvniEntityResponse saveForWeb(@RequestBody EncounterRequest request) {
+    public AvniEntityResponse saveForWeb(@RequestBody EncounterRequest request) throws ValidationException {
         try {
             logger.info("Saving encounter with uuid {}}", request.getUuid());
             Encounter encounter = createEncounter(request);
@@ -134,7 +134,7 @@ public class EncounterController extends AbstractController<Encounter> implement
         entityApprovalStatusService.createStatus(EntityApprovalStatus.EntityType.Encounter, encounter.getId(), ApprovalStatus.Status.Pending, encounter.getEncounterType().getUuid(), formMapping);
     }
 
-    private Encounter createEncounter(EncounterRequest request) {
+    private Encounter createEncounter(EncounterRequest request) throws ValidationException {
         checkForSchedulingCompleteConstraintViolation(request);
 
         EncounterType encounterType = encounterTypeRepository.findByUuidOrName(request.getEncounterTypeUUID(), request.getEncounterType());
