@@ -53,7 +53,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         fields.add(new HeaderField(subjectTypeHeader, subjectType.getName(), true, null, null, null, false));
-        fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY", null));
+        fields.add(new HeaderField(registrationDate, "", true, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
         fields.add(new HeaderField(registrationLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
 
         if (subjectType.isPerson()) {
@@ -64,7 +64,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
             fields.add(new HeaderField(lastName, "", true, null, null, null));
             if (subjectType.isAllowProfilePicture())
                 fields.add(new HeaderField(profilePicture, "", false, null, null, null));
-            fields.add(new HeaderField(dateOfBirth, "", false, null, "Format: DD-MM-YYYY", null));
+            fields.add(new HeaderField(dateOfBirth, "", false, null, "Format: DD-MM-YYYY or YYYY-MM-DD", null));
             fields.add(new HeaderField(dobVerified, "Default value: false", false, "Allowed values: {true, false}", null, null));
             fields.add(new HeaderField(gender, "", true, "Allowed values: {Female, Male, Other}", null, null));
         } else if (subjectType.isHousehold()) {

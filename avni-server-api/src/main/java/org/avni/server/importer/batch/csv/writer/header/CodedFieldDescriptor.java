@@ -12,6 +12,7 @@ public class CodedFieldDescriptor implements FieldDescriptorStrategy {
         Concept concept = fe.getConcept();
         String values = "Allowed values: {" + concept.getConceptAnswers().stream()
                 .map(ca -> ca.getAnswerConcept().getName())
+                .sorted()
                 .collect(Collectors.joining(", ")) + "}";
         return fe.isSingleSelect() ? values + " Only single value allowed."
                 : values + " Format: Separate multiple values by a comma.";

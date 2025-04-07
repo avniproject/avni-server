@@ -63,7 +63,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
 
     private String[] validHeader() {
         return header("Id from previous system",
-                "Subject Id",
+                "Subject Id from previous system",
                 "Program",
                 "Enrolment Date",
                 "Exit Date",
@@ -96,7 +96,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void headerWithWrongFields() {
         failure(header("Id from previus system",
-                "Subject Id",
+                "Subject Id from previous system",
                 "Program",
                 "Enrolent Date",
                 "Exit Date",

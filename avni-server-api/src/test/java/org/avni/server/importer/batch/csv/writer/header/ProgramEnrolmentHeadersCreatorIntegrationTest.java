@@ -80,20 +80,10 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
         String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping);
         String[] description = programEnrolmentHeadersCreator.getAllDescriptions(formMapping);
 
-        assertNotNull(headers);
-        assertThat(headers.length, greaterThan(0));
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.id));
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.subjectId));
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.enrolmentDate));
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.exitDate));
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.enrolmentLocation));
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.exitLocation));
-
-        assertThat(description, hasItemInArray("\"| Optional | Can be used to later identify the entry |\""));
-        assertThat(description, hasItemInArray("\"| Mandatory | UUID of the subject to be enrolled. Can be identified from address bar in Data Entry App or Longitudinal export file |\""));
-        assertThat(description, hasItemInArray("\"| Optional | Format: DD-MM-YYYY |\""));
-        assertThat(description, hasItemInArray("\"| Optional | Format: (21.5135243,85.6731848) |\""));
-
+        Arrays.sort(headers);
+        Arrays.sort(description);
+        assertEquals("Enrolment Date,Enrolment Location,Exit Date,Exit Location,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
+        assertEquals("\"| Mandatory | Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file) |\",\"| Optional | Can be used to later identify the entry |\",\"| Optional | Format: DD-MM-YYYY or YYYY-MM-DD |\",\"| Optional | Optional | Format: (21.5135243,85.6731848) |\",\"| Optional | Optional | Format: (21.5135243,85.6731848) |\",\"| Optional | Optional | Format: DD-MM-YYYY or YYYY-MM-DD |\",\"| TestProgram |\"", String.join(",", description));
     }
 
     @Test
@@ -156,28 +146,11 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
 
         String[] headers = programEnrolmentHeadersCreator.getAllHeaders(newFormMapping);
         String[] description = programEnrolmentHeadersCreator.getAllDescriptions(newFormMapping);
-
-        assertThat(headers, hasItemInArray("\"Text,Concept\""));
-        assertThat(headers, hasItemInArray("\"Notes Concept\""));
-        assertThat(headers, hasItemInArray("\"Numeric Concept\""));
-        assertThat(headers, hasItemInArray("\"Date Concept\""));
-        assertThat(headers, hasItemInArray("\"Coded Concept Single Select\""));
-        assertThat(headers, hasItemInArray("\"Coded Concept Multi Select\""));
-
-        assertThat(description, hasItemInArray("\"| Optional | Any Text |\""));
-        assertThat(description, hasItemInArray("\"| Optional | Format: DD-MM-YYYY |\""));
-        assertThat(description, hasItemInArray("\"| Optional | Format: (21.5135243,85.6731848) |\""));
-
-        assertThat(Arrays.asList(description), hasItem(anyOf(
-                equalTo("\"| Optional | Allowed values: {Ans 2, Ans 1} Format: Separate multiple values by a comma. |\""),
-                equalTo("\"| Optional | Allowed values: {Ans 1, Ans 2} Format: Separate multiple values by a comma. |\"")
-        )));
-        assertThat(Arrays.asList(description), hasItem(anyOf(
-                equalTo("\"| Optional | Allowed values: {Answer 1, Answer 2} Only single value allowed. |\""),
-                equalTo("\"| Optional | Allowed values: {Answer 2, Answer 1} Only single value allowed. |\"")
-        )));
-        assertThat(description, hasItemInArray("\"| Optional | Min value allowed: 2.0 Max value allowed: 5.0 |\""));
-        assertThat(description, hasItemInArray("\"| Optional | Any Text | The value can be auto-calculated if not entered |\""));
+        // sort headers
+        Arrays.sort(headers);
+        Arrays.sort(description);
+        assertEquals("\"Coded Concept Multi Select\",\"Coded Concept Single Select\",\"Date Concept\",\"Notes Concept\",\"Numeric Concept\",\"Text Concept (This should remain a single cell , not a different cell)\",\"Text,Concept\",Enrolment Date,Enrolment Location,Exit Date,Exit Location,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
+        assertEquals("\"| Mandatory | Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file) |\",\"| Optional | Allowed values: {Ans 1, Ans 2} Format: Separate multiple values by a comma. |\",\"| Optional | Allowed values: {Answer 1, Answer 2} Only single value allowed. |\",\"| Optional | Any Text | The value can be auto-calculated if not entered |\",\"| Optional | Any Text |\",\"| Optional | Can be used to later identify the entry |\",\"| Optional | Format: DD-MM-YYYY or YYYY-MM-DD |\",\"| Optional | Format: DD-MM-YYYY |\",\"| Optional | Min value allowed: 2.0 Max value allowed: 5.0 |\",\"| Optional | Optional | Format: (21.5135243,85.6731848) |\",\"| Optional | Optional | Format: (21.5135243,85.6731848) |\",\"| Optional | Optional | Format: DD-MM-YYYY or YYYY-MM-DD |\",\"| Optional |\",\"| TestProgram |\"", String.join(",", description));
     }
 
     @Test
