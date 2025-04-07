@@ -15,6 +15,7 @@ import org.avni.server.service.*;
 import org.avni.server.util.PhoneNumberUtil;
 import org.avni.server.util.RegionUtil;
 import org.avni.server.util.S;
+import org.avni.server.util.ValidationUtil;
 import org.avni.server.web.request.ObservationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,10 +89,7 @@ public class ObservationCreator {
                                                  HeaderCreator headers,
                                                  List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) throws ValidationException {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping, row.getHeaders());
-        if (!errorMsgs.isEmpty()) {
-            errorMsgs = errorMsgs.stream().distinct().sorted().collect(Collectors.toList()); // sorted for predictability in tests
-            throw new RuntimeException(String.join(", ", errorMsgs));
-        }
+        ValidationUtil.handleErrors(errorMsgs);
         return observationCollection;
     }
 

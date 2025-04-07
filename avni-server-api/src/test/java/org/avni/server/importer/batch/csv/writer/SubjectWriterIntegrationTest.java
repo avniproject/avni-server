@@ -47,7 +47,6 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private SubjectHeadersCreator subjectHeadersCreator;
     @Autowired
     private IndividualRepository individualRepository;
-    private FormMapping registrationFormMapping;
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -92,10 +91,32 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "some notes");
     }
 
+    private String[] validDataRowWithoutLegacyId() {
+        return dataRow("",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "123",
+                "1",
+                "some notes");
+    }
+
     private String[] dataRowWithWrongValues() {
         return dataRow("ABCD",
                 "SubjectType1",
-                "2020-01-01",
+                "2090-01-01",
                 "21.5135243,85.6731848",
                 "John",
                 "Doe",
@@ -110,6 +131,28 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "shouldHaveBeenADate",
                 "text",
                 "shouldHaveBeenANumber",
+                "some notes");
+    }
+
+    private String[] dataRowWithCodedAnswersInDifferentCase() {
+        return dataRow("ABCD",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "ssc answer 1",
+                "\"msc answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "123",
+                "1",
                 "some notes");
     }
 
@@ -194,7 +237,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         operationalSubjectTypeRepository
                 .save(OperationalSubjectType.fromSubjectType(subjectType, UUID.randomUUID().toString()));
 
-        registrationFormMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
+        FormMapping registrationFormMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
                 FormType.IndividualProfile,
                 singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
                 multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()));
@@ -217,13 +260,39 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(6, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
+
+        // allow edit
+        subjectWriter.write(Chunk.of(new Row(header, dataRow)));
+        subject = individualRepository.findByLegacyId("ABCD");
+        assertEquals(6, subject.getObservations().size());
+        assertEquals("John", subject.getFirstName());
+    }
+
+    private void success(String[] headers, String[] values) {
+        try {
+            long previousCount = individualRepository.count();
+            subjectWriter.write(Chunk.of(new Row(headers, values)));
+            assertEquals(previousCount + 1, individualRepository.count());
+        } catch (ValidationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void allowWithoutLegacyId() {
+        success(validHeader(), validDataRowWithoutLegacyId());
+    }
+
+    @Test
+    public void allowCodedAnswersInDifferentCase() {
+        success(validHeader(), dataRowWithCodedAnswersInDifferentCase());
     }
 
     @Test
     public void shouldFailValidationIfObservationValuesAreWrong() {
         failure(validHeader(),
                 dataRowWithWrongValues(),
-                "Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
+                "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {
