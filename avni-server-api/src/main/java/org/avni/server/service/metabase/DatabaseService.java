@@ -197,6 +197,7 @@ public class DatabaseService implements IQuestionCreationService {
         Organisation organisation = UserContextHolder.getOrganisation();
         return organisation.getSchemaName();
     }
+    // Any card added to a dashboard in metabase is called a dashcard and the dashboard level filters are linked via parameter mappings
     private List<ParameterMapping> createDashCardParameterMappingForFirstDashCard(Database database) {
         List<ParameterMapping> dashCardParameterMapping = new ArrayList<>();
         int fieldId = getFieldId(database, getSchemaName(), QuestionName.NonVoidedIndividual.getViewName(), FieldName.REGISTRATION_DATE.getName());
