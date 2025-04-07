@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import org.avni.server.application.*;
 import org.avni.server.builder.FormBuilder;
 import org.avni.server.builder.FormBuilderException;
-import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
@@ -12,6 +11,7 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
@@ -19,7 +19,6 @@ import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
-import org.avni.server.web.validation.ValidationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -29,7 +28,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -128,9 +126,8 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         entityConceptMapForQG2.put(groupConcept2Concept1.getUuid(), formElement2_1);
     }
 
-
     @Test
-    public void shouldReturnValidationSuccessForValidQuestionGroupObservations() {
+    public void shouldReturnValidationSuccessForValidQuestionGroupObservations() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
@@ -145,12 +142,11 @@ public class EnhancedValidationServiceQuestionGroupsTest {
 
         observationRequests = Arrays.asList(observationRequestRepeatableQG, observationRequestNonRepeatableQG);
 
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForInValidConceptsForFormWithinRepeatableQuestionGroupConcept() {
+    public void shouldReturnValidationFailureForInValidConceptsForFormWithinRepeatableQuestionGroupConcept() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
@@ -158,15 +154,13 @@ public class EnhancedValidationServiceQuestionGroupsTest {
                 ImmutableMap.of(groupConcept1Concept1.getUuid(), "def456"));
         observationRequestRepeatableQG.setValue(immutableMaps);
 
-
         observationRequests = Arrays.asList(observationRequestRepeatableQG);
 
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForInValidConceptsForFormWithinNonRepeatableQuestionGroupConcept() {
+    public void shouldReturnValidationFailureForInValidConceptsForFormWithinNonRepeatableQuestionGroupConcept() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept2.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept2.getName());
@@ -175,12 +169,11 @@ public class EnhancedValidationServiceQuestionGroupsTest {
 
         observationRequests = Arrays.asList(observationRequestRepeatableQG);
 
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinRepeatableQuestionGroupConcept() {
+    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinRepeatableQuestionGroupConcept() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
         observationRequestRepeatableQG.setConceptUUID(groupConcept1.getUuid());
         observationRequestRepeatableQG.setConceptName(groupConcept1.getName());
@@ -190,13 +183,11 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         observationRequestRepeatableQG.setValue(immutableMaps);
 
         observationRequests = Arrays.asList(observationRequestRepeatableQG);
-
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinNonRepeatableQuestionGroupConcept() {
+    public void shouldFailForValidConceptsForFormButInvalidWithinNonRepeatableQuestionGroupConcept() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestNonRepeatableQG = new ObservationRequest();
         observationRequestNonRepeatableQG.setConceptUUID(groupConcept2.getUuid());
         observationRequestNonRepeatableQG.setConceptName(groupConcept2.getName());
@@ -206,8 +197,6 @@ public class EnhancedValidationServiceQuestionGroupsTest {
 
         observationRequests = Arrays.asList(observationRequestNonRepeatableQG);
 
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
-
 }

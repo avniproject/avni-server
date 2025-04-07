@@ -32,10 +32,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.avni.server.importer.batch.csv.writer.UserAndCatchmentWriter.METADATA_ROW_START_STRING;
 import static org.avni.server.service.ImportLocationsConstants.EXAMPLE;
+import static org.avni.server.service.ImportLocationsConstants.OPTIONAL;
 
 @Configuration
 //@EnableBatchProcessing
@@ -48,7 +50,7 @@ public class BatchConfiguration {
     @Autowired
     public BatchConfiguration(JobRepository jobRepository,
                               PlatformTransactionManager platformTransactionManager,
-                              @Qualifier("BatchS3Service")  S3Service s3Service) {
+                              @Qualifier("BatchS3Service") S3Service s3Service) {
         this.jobRepository = jobRepository;
         this.platformTransactionManager = platformTransactionManager;
         this.s3Service = s3Service;
@@ -129,7 +131,7 @@ public class BatchConfiguration {
 
     private int getNumberOfLinesToSkip(Reader reader) throws IOException {
         int linesToSkip = 1;
-        try(BufferedReader csvReader = new BufferedReader(reader)) {
+        try (BufferedReader csvReader = new BufferedReader(reader)) {
             csvReader.readLine(); //Retain always to move from Header line to descriptor line
             String possibleDescriptorLine = csvReader.readLine();
 
@@ -138,9 +140,12 @@ public class BatchConfiguration {
                 descriptors.addAll(doTokenize(possibleDescriptorLine));
             }};
 
-            if (CollectionUtil.anyStartsWith(descriptors, EXAMPLE)
-                    || CollectionUtil.anyStartsWith(descriptors, METADATA_ROW_START_STRING)) {
-                linesToSkip++;
+            List<String> prefixesToCheck = Arrays.asList(EXAMPLE, METADATA_ROW_START_STRING, OPTIONAL);
+            for (String prefix : prefixesToCheck) {
+                if (CollectionUtil.anyStartsWith(descriptors, prefix)) {
+                    linesToSkip++;
+                    break;
+                }
             }
         }
         return linesToSkip;

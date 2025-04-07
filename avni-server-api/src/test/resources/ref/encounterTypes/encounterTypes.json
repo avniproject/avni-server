@@ -1,6 +1,7 @@
 [
   {
     "name": "NA EncounterType",
-    "uuid": "c11c579e-eadf-448c-831c-c73c205aaaca"
+    "uuid": "c11c579e-eadf-448c-831c-c73c205aaaca",
+    "immutable": false
   }
 ]

@@ -4,10 +4,7 @@ import org.avni.server.application.*;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.LocationRepository;
 import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.AddressLevel;
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.Concept;
-import org.avni.server.domain.ConceptDataType;
+import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.importer.batch.model.Row;
@@ -93,14 +90,14 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         assertNotNull(address.getLocationProperties().get(concept.getUuid()));
     }
 
-    private void treatAsDescriptor(String[] headers, String... additionalHeaders) {
+    private void treatAsDescriptor(String[] headers, String... additionalHeaders) throws ValidationException {
         long before = addressLevelRepository.count();
         bulkLocationCreator.write(Collections.singletonList(new Row(headers, additionalHeaders)), hierarchy);
         long after = addressLevelRepository.count();
         assertEquals(before, after);
     }
 
-    private void success(String[] headers, String[] cells, int numberOfNewLocations, String[]... lineages) {
+    private void success(String[] headers, String[] cells, int numberOfNewLocations, String[]... lineages) throws ValidationException {
         long before = addressLevelRepository.count();
         bulkLocationCreator.write(Collections.singletonList(new Row(headers, cells)), hierarchy);
         long after = addressLevelRepository.count();
@@ -124,7 +121,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
         try {
             bulkLocationCreator.write(Collections.singletonList(new Row(headers, new String[0])), hierarchy);
             fail();
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | ValidationException e) {
             String message = e.getMessage();
             if (message == null) {
                 e.printStackTrace();
@@ -145,7 +142,7 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldCreate() {
+    public void shouldCreate() throws ValidationException {
         // three locations, full lineage created
         success(header("State", "District", "Block", "GPS coordinates"),
                 dataRow("Bihar", "Vaishali", "Mahua", "23.45,43.85"),
@@ -208,28 +205,28 @@ public class BulkLocationCreatorIntegrationTest extends BaseCSVImportTest {
                 error("Invalid 'GPS coordinates'"));
 
         //attributes
-        success(header("State", "District", "Block", "GPS coordinates", "Coded Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", "\"Coded Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 1", "23.45,43.86", "Answer 1"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 1"), "Coded Concept");
         //attributes with space in header
-        success(header("State", "District", "Block", "GPS coordinates", " Coded Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", " \"Coded Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 2", "23.45,43.86", " Answer 1"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 2"), "Coded Concept");
 
         //attributes with text concept type
-        success(header("State", "District", "Block", "GPS coordinates", "Text Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", "\"Text Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 3", "23.45,43.86", "any text"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 3"), "Text Concept");
 
-        failure(header("State", "District", "Block", "GPS coordinates", "Coded Concept "),
+        failure(header("State", "District", "Block", "GPS coordinates", "\"Coded Concept\" "),
                 dataRow("Bihar", "Vaishali", "Block 4", "23.45,43.86", "not an answer to this concept"),
                 error("Invalid answer 'not an answer to this concept' for 'Coded Concept'"));
 
         // multiple attributes
-        success(header("State", "District", "Block", "GPS coordinates", " Coded Concept", "Text Concept"),
+        success(header("State", "District", "Block", "GPS coordinates", " \"Coded Concept\"", "\"Text Concept\""),
                 dataRow("Bihar", "Vaishali", "Block 5", "23.45,43.86", " Answer 1", "any text"),
                 newLocationsCreated(1));
         locationHasAttribute(lineage("Bihar", "Vaishali", "Block 5"), "Coded Concept");

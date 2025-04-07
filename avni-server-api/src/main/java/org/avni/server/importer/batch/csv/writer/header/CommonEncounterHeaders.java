@@ -3,7 +3,7 @@ package org.avni.server.importer.batch.csv.writer.header;
 import org.avni.server.application.FormMapping;
 import org.avni.server.domain.EncounterType;
 
-public class CommonEncounterHeaders implements Headers {
+public class CommonEncounterHeaders implements HeaderCreator {
     public final static String id = "Id";
     public final static String encounterTypeHeaderName = "Encounter Type";
     public final static String visitDate = "Visit Date";
@@ -25,6 +25,11 @@ public class CommonEncounterHeaders implements Headers {
     @Override
     public String[] getAllHeaders(FormMapping formMapping) {
         return getAllHeaders();
+    }
+
+    @Override
+    public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
+        return new String[0];
     }
 
     @Override

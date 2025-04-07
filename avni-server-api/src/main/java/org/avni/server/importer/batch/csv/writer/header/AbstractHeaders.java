@@ -8,18 +8,19 @@ import org.avni.server.domain.ConceptDataType;
 import org.avni.server.service.ImportHelperService;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public abstract class AbstractHeaders implements Headers {
+public abstract class AbstractHeaders implements HeaderCreator {
     protected ImportHelperService importHelperService;
 
     public AbstractHeaders(ImportHelperService importHelperService) {
         this.importHelperService = importHelperService;
     }
 
-    private FieldDescriptorStrategy getStrategy(String dataType) {
+    private FieldDescriptorStrategy getStrategy(String conceptName,String dataType) {
         if (dataType.equals(ConceptDataType.Coded.name())) {
             return new CodedFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Date.name())) {
@@ -28,6 +29,10 @@ public abstract class AbstractHeaders implements Headers {
             return new TextFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Numeric.name())) {
             return new NumericFieldDescriptor();
+        } else if (dataType.equals(ConceptDataType.PhoneNumber.name())){
+            return new PhoneNumberDescriptor();
+        } else if (dataType.equals(ConceptDataType.Subject.name())){
+            return new SubjectConceptDescriptor(conceptName);
         } else {
             return new DefaultFieldDescriptor();
         }
@@ -41,6 +46,15 @@ public abstract class AbstractHeaders implements Headers {
     @Override
     public String[] getAllHeaders(FormMapping formMapping) {
         return buildFields(formMapping).stream()
+                .map(HeaderField::getHeader)
+                .toArray(String[]::new);
+    }
+
+    @Override
+    public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
+        List<HeaderField> fields = new ArrayList<>();
+        fields.addAll(generateConceptFields(formMapping));
+        return fields.stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
     }
@@ -63,7 +77,7 @@ public abstract class AbstractHeaders implements Headers {
     protected HeaderField mapFormElementToField(FormElement fe) {
         Concept concept = fe.getConcept();
         String header = importHelperService.getHeaderName(fe);
-        FieldDescriptorStrategy strategy = getStrategy(concept.getDataType());
+        FieldDescriptorStrategy strategy = getStrategy(concept.getName(),concept.getDataType());
 
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);

@@ -5,11 +5,8 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
+import org.avni.server.domain.*;
 import org.avni.server.domain.sync.SyncEntityName;
-import org.avni.server.domain.ApprovalStatus;
-import org.avni.server.domain.EntityApprovalStatus;
-import org.avni.server.domain.Program;
-import org.avni.server.domain.ProgramEnrolment;
 import org.avni.server.projection.ProgramEnrolmentProjection;
 import org.avni.server.service.*;
 import org.avni.server.web.request.EnrolmentContract;
@@ -67,7 +64,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @RequestMapping(value = "/programEnrolments", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public AvniEntityResponse save(@RequestBody ProgramEnrolmentRequest request) {
+    public AvniEntityResponse save(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
         ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
         return new AvniEntityResponse(programEnrolment);
     }
@@ -75,7 +72,7 @@ public class ProgramEnrolmentController extends AbstractController<ProgramEnrolm
     @RequestMapping(value = "/web/programEnrolments", method = RequestMethod.POST)
     @PreAuthorize(value = "hasAnyAuthority('user')")
     @Transactional
-    public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) {
+    public AvniEntityResponse saveForWeb(@RequestBody ProgramEnrolmentRequest request) throws ValidationException {
         try {
             ProgramEnrolment programEnrolment = programEnrolmentService.programEnrolmentSave(request);
             txDataControllerHelper.checkSubjectAccess(programEnrolment.getIndividual());

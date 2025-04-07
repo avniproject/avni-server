@@ -113,7 +113,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @RequestMapping(value = "/individuals", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public AvniEntityResponse save(@RequestBody IndividualRequest individualRequest) {
+    public AvniEntityResponse save(@RequestBody IndividualRequest individualRequest) throws ValidationException {
         logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
 
         Individual individual = createIndividual(individualRequest);
@@ -348,7 +348,7 @@ public class IndividualController extends AbstractController<Individual> impleme
     @RequestMapping(value = "/web/individuals", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) {
+    public AvniEntityResponse saveForWeb(@RequestBody IndividualRequest individualRequest) throws ValidationException {
         accessControlService.checkHasAnyOfSpecificSubjectPrivileges(Arrays.asList(PrivilegeType.EditSubject, PrivilegeType.RegisterSubject), individualRequest.getSubjectTypeUUID());
         try {
             logger.info(String.format("Saving individual with UUID %s", individualRequest.getUuid()));
@@ -371,7 +371,7 @@ public class IndividualController extends AbstractController<Individual> impleme
         }
     }
 
-    private Individual createIndividual(IndividualRequest individualRequest) {
+    private Individual createIndividual(IndividualRequest individualRequest) throws ValidationException {
         Decisions decisions = individualRequest.getDecisions();
         observationService.validateObservationsAndDecisions(individualRequest.getObservations(), decisions != null ? decisions.getRegistrationDecisions() : null, formMappingService.findForSubject(individualRequest.getSubjectTypeUUID()));
         ObservationCollection observations = observationService.createObservations(individualRequest.getObservations());

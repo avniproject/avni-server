@@ -107,6 +107,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
                 .setMandatoryFieldsForNewEntity()
                 .setName("TestPerson")
                 .setType(Subject.Person)
+                .setAllowProfilePicture(true)
                 .build();
         testSubjectTypeService.createWithDefaults(personType);
 

@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.Calendar;
@@ -48,4 +49,12 @@ public class DateTimeUtil {
         return java.time.Duration.between(start, end).toMillis();
     }
 
+    public static LocalDate parseFlexibleDate(String date) {
+        // parse date in DD-MM-YYYY format
+        try {
+            return LocalDate.parse(date, DateTimeFormat.forPattern("dd-MM-yyyy"));
+        } catch (IllegalArgumentException ignored) {
+        }
+        return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+    }
 }

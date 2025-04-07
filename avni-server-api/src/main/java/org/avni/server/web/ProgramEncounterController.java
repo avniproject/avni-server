@@ -75,7 +75,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @RequestMapping(value = "/programEncounters", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public void save(@RequestBody ProgramEncounterRequest request) {
+    public void save(@RequestBody ProgramEncounterRequest request) throws ValidationException {
         programEncounterService.saveProgramEncounter(request);
         if (request.getVisitSchedules() != null && !request.getVisitSchedules().isEmpty()) {
             programEncounterService.saveVisitSchedules(request.getProgramEnrolmentUUID(), request.getVisitSchedules(), request.getUuid());
@@ -85,7 +85,7 @@ public class ProgramEncounterController implements RestControllerResourceProcess
     @RequestMapping(value = "/web/programEncounters", method = RequestMethod.POST)
     @Transactional
     @PreAuthorize(value = "hasAnyAuthority('user')")
-    public AvniEntityResponse saveForWeb(@RequestBody ProgramEncounterRequest request) {
+    public AvniEntityResponse saveForWeb(@RequestBody ProgramEncounterRequest request) throws ValidationException {
         try {
             ProgramEncounter programEncounter = programEncounterService.saveProgramEncounter(request);
             txDataControllerHelper.checkSubjectAccess(programEncounter.getProgramEnrolment().getIndividual());

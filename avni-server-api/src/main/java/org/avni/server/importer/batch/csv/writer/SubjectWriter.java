@@ -11,6 +11,8 @@ import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.util.DateTimeUtil;
+import org.avni.server.util.ValidationUtil;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,7 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -64,18 +67,25 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     }
 
     @Override
-    public void write(Chunk<? extends Row> chunk) throws Exception {
-        for (Row row : chunk.getItems()) write(row);
+    public void write(Chunk<? extends Row> chunk) throws ValidationException {
+        List<? extends Row> rows = chunk.getItems();
+        if (!CollectionUtils.isEmpty(rows)) {
+            String subjectType = rows.get(0).get(SubjectHeadersCreator.subjectTypeHeader);
+            FormMapping formMapping = formMappingRepository.getRegistrationFormMapping(subjectTypeCreator.getSubjectType(subjectType, SubjectHeadersCreator.subjectTypeHeader));
+            TxnDataHeaderValidator.validateHeaders(rows.get(0).getHeaders(), formMapping, subjectHeadersCreator);
+            for (Row row : rows) write(row);
+        }
     }
 
-    private void write(Row row) throws Exception {
+    private void write(Row row) throws ValidationException {
         Individual individual = getOrCreateIndividual(row);
         AddressLevel oldAddressLevel = individual.getAddressLevel();
         ObservationCollection oldObservations = individual.getObservations();
         List<String> allErrorMsgs = new ArrayList<>();
 
-        SubjectType subjectType = subjectTypeCreator.getSubjectType(row.get(SubjectHeadersCreator.subjectTypeHeader), SubjectHeadersCreator.subjectTypeHeader);
-        individual.setSubjectType(subjectType);
+        SubjectType subjectType = setSubjectType(row, individual, allErrorMsgs);
+        ValidationUtil.handleErrors(allErrorMsgs);
+
         individual.setFirstName(row.get(SubjectHeadersCreator.firstName));
         if (subjectType.isAllowMiddleName())
             individual.setMiddleName(row.get(SubjectHeadersCreator.middleName));
@@ -85,6 +95,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         Boolean dobVerified = row.getBool(SubjectHeadersCreator.dobVerified);
         individual.setDateOfBirthVerified(dobVerified != null ? dobVerified : false);
         setRegistrationDate(individual, row, allErrorMsgs);
+
         LocationCreator locationCreator = new LocationCreator();
         individual.setRegistrationLocation(locationCreator.getGeoLocation(row, SubjectHeadersCreator.registrationLocation, allErrorMsgs));
 
@@ -104,6 +115,17 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         if (oldAddressLevel != null) {
             subjectMigrationService.markSubjectMigrationIfRequired(savedIndividual.getUuid(), oldAddressLevel, savedIndividual.getAddressLevel(), oldObservations, savedIndividual.getObservations(), false);
         }
+    }
+
+    private SubjectType setSubjectType(Row row, Individual individual, List<String> allErrorMsgs) {
+        String subjectTypeValue = row.get(SubjectHeadersCreator.subjectTypeHeader);
+        SubjectType subjectType = subjectTypeCreator.getSubjectType(subjectTypeValue, SubjectHeadersCreator.subjectTypeHeader);
+        if (subjectType == null) {
+            allErrorMsgs.add(String.format("Invalid '%s' %s", SubjectHeadersCreator.subjectTypeHeader, subjectTypeValue));
+            return null;
+        }
+        individual.setSubjectType(subjectType);
+        return subjectType;
     }
 
     private void setProfilePicture(SubjectType subjectType, Individual individual, Row row, List<String> errorMsgs) {
@@ -139,7 +161,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         try {
             String dob = row.get(SubjectHeadersCreator.dateOfBirth);
             if (dob != null && !dob.trim().isEmpty())
-                individual.setDateOfBirth(LocalDate.parse(dob));
+                individual.setDateOfBirth(DateTimeUtil.parseFlexibleDate(dob));
         } catch (RuntimeException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));
         }
@@ -148,22 +170,27 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {
         try {
             String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
-            individual.setRegistrationDate(registrationDate != null && !registrationDate.trim().isEmpty() ? LocalDate.parse(registrationDate) : LocalDate.now());
-        } catch (RuntimeException ex) {
+            LocalDate providedDate = registrationDate != null && !registrationDate.trim().isEmpty() ? DateTimeUtil.parseFlexibleDate(registrationDate) : LocalDate.now();
+            if (providedDate.isAfter(LocalDate.now())) {
+                errorMsgs.add(String.format("'%s' %s is in future", SubjectHeadersCreator.registrationDate, registrationDate));
+                return;
+            }
+            individual.setRegistrationDate(providedDate);
+        } catch (IllegalArgumentException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.registrationDate));
         }
     }
 
-    private void setGender(Individual individual, Row row) throws Exception {
+    private void setGender(Individual individual, Row row) {
         try {
             String genderName = row.get(SubjectHeadersCreator.gender);
             Gender gender = genderRepository.findByNameIgnoreCase(genderName);
             if (gender == null) {
-                throw new Exception(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
+                throw new RuntimeException(String.format("Invalid '%s' - '%s'", SubjectHeadersCreator.gender, genderName));
             }
             individual.setGender(gender);
         } catch (RuntimeException ex) {
-            throw new Exception(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
+            throw new RuntimeException(String.format("Invalid '%s'", SubjectHeadersCreator.gender));
         }
     }
 }

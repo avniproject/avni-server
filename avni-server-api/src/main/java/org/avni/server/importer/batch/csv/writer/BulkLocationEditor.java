@@ -2,10 +2,11 @@ package org.avni.server.importer.batch.csv.writer;
 
 import jakarta.transaction.Transactional;
 import org.avni.server.dao.LocationRepository;
-import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.AddressLevel;
 import org.avni.server.domain.AddressLevelType;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.creator.ObservationCreator;
+import org.avni.server.importer.batch.csv.writer.header.LocationHeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ImportLocationsConstants;
 import org.avni.server.service.LocationService;
@@ -26,12 +27,12 @@ public class BulkLocationEditor extends BulkLocationModifier {
     private final LocationService locationService;
 
     @Autowired
-    public BulkLocationEditor(LocationRepository locationRepository, ObservationCreator observationCreator, LocationService locationService, FormMappingRepository formMappingRepository) {
-        super(locationRepository, observationCreator, formMappingRepository);
+    public BulkLocationEditor(LocationRepository locationRepository, ObservationCreator observationCreator, LocationService locationService, LocationHeaderCreator locationHeaderCreator) {
+        super(locationRepository, observationCreator, locationHeaderCreator);
         this.locationService = locationService;
     }
 
-    public void editLocation(Row row, List<String> allErrorMsgs) {
+    public void editLocation(Row row, List<String> allErrorMsgs) throws ValidationException {
         String existingLocationTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY);
         String newLocationParentTitleLineage = row.get(ImportLocationsConstants.COLUMN_NAME_PARENT_LOCATION_WITH_FULL_HIERARCHY);
 
@@ -77,7 +78,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
         }
     }
 
-    private void updateExistingLocation(AddressLevel location, AddressLevel newParent, Row row, List<String> allErrorMsgs) {
+    private void updateExistingLocation(AddressLevel location, AddressLevel newParent, Row row, List<String> allErrorMsgs) throws ValidationException {
         String newTitle = row.get(ImportLocationsConstants.COLUMN_NAME_NEW_LOCATION_NAME);
         if (!StringUtils.isEmpty(newTitle)) location.setTitle(newTitle);
         if (newParent != null) {
@@ -87,7 +88,7 @@ public class BulkLocationEditor extends BulkLocationModifier {
     }
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void write(List<? extends Row> rows) {
+    public void write(List<? extends Row> rows) throws ValidationException {
         List<String> allErrorMsgs = new ArrayList<>();
         validateEditModeHeaders(rows.get(0).getHeaders(), allErrorMsgs);
         for (Row row : rows) {

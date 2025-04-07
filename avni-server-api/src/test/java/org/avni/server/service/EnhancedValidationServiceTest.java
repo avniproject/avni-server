@@ -3,7 +3,6 @@ package org.avni.server.service;
 import org.avni.server.application.*;
 import org.avni.server.builder.FormBuilder;
 import org.avni.server.builder.FormBuilderException;
-import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.IndividualRepository;
@@ -11,13 +10,13 @@ import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.domain.factory.metadata.ConceptBuilder;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.util.BugsnagReporter;
 import org.avni.server.web.request.ObservationRequest;
 import org.avni.server.web.request.rules.RulesContractWrapper.Decision;
-import org.avni.server.web.validation.ValidationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,7 +26,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -79,44 +77,22 @@ public class EnhancedValidationServiceTest {
         firstDecisionConcept = new ConceptBuilder().withDataType(ConceptDataType.Text).withName("firstDecisionConcept").withUuid("0d294d33-1695-4965-8798-cc97e0407994").build();
         firstNonCodedConceptFormElement = new TestFormElementBuilder().withUuid("fe-uuid-1").withConcept(firstNonCodedConcept).build();
         firstDecisionConceptFormElement = new TestFormElementBuilder().withUuid("fe-uuid-2").withConcept(firstDecisionConcept).build();
-
-    }
-
-
-
-    @Test(expected = ValidationException.class)
-    public void shouldThrowValidationExceptionForInvalidDataIfFailOnValidationIsEnabled() {
-        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
-        String errorMessage = "Dummy Error Message";
-        enhancedValidationService.handleValidationFailure(errorMessage);
-    }
-
-    @Test
-    public void shouldReturnValidationFailureForInvalidDataIfFailOnValidationIsDisabled() {
-        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(false);
-        String errorMessage = "Dummy Error Message";
-        ValidationResult validationResult = enhancedValidationService.handleValidationFailure(errorMessage);
-        assertTrue(validationResult.isFailure());
-    }
-
-    @Test
-    public void shouldReturnValidationSuccessForEmptyDataIfFailOnValidationIsEnabled() {
-        when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
-        when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
-
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForInValidDataIfFailOnValidationIsEnabled() {
+    public void shouldReturnValidationFailureForInValidData() throws org.avni.server.domain.ValidationException {
+        entityConceptMap.put(firstNonCodedConcept.getUuid(), firstNonCodedConceptFormElement);
+
         when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
         when(formMappingService.findForSubject(any())).thenReturn(new FormMappingBuilder().withForm(new Form()).build());
         when(formMappingService.getEntityConceptMap(any(), eq(true))).thenReturn(entityConceptMap);
+
         when(conceptRepository.findByName(firstNonCodedConcept.getName())).thenReturn(firstNonCodedConcept);
         when(conceptRepository.findByName(firstDecisionConcept.getName())).thenReturn(firstDecisionConcept);
+        when(conceptRepository.findByUuid(firstNonCodedConcept.getUuid())).thenReturn(firstNonCodedConcept);
+        when(conceptRepository.findByUuid(firstDecisionConcept.getUuid())).thenReturn(firstDecisionConcept);
 
         ObservationRequest observationRequest = new ObservationRequest();
         observationRequest.setConceptUUID(firstNonCodedConcept.getUuid());
@@ -127,12 +103,15 @@ public class EnhancedValidationServiceTest {
         decision.setName(firstDecisionConcept.getName());
         decision.setValue("DummyDecision");
         decisions.add(decision);
-        entityConceptMap = new LinkedHashMap<>();
+
         enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
 
     @Test
-    public void shouldReturnValidationSuccessForValidSingleNonCodedConceptAndDecisionIfFailOnValidationIsEnabled() {
+    public void shouldReturnValidationSuccessForValidSingleNonCodedConceptAndDecisionIfFailOnValidationIsEnabled() throws org.avni.server.domain.ValidationException {
+        entityConceptMap.put(firstNonCodedConcept.getUuid(), firstNonCodedConceptFormElement);
+        entityConceptMap.put(firstDecisionConcept.getUuid(), firstDecisionConceptFormElement);
+
         when(organisationConfigService.isFailOnValidationErrorEnabled()).thenReturn(true);
         when(subjectTypeRepository.findByUuid(any())).thenReturn(subjectType);
         when(formMappingService.getAllFormElementsAndDecisionMap("st1", null, null, FormType.IndividualProfile)).thenReturn(new LinkedHashMap<>());
@@ -142,9 +121,6 @@ public class EnhancedValidationServiceTest {
         when(conceptRepository.findByName(firstDecisionConcept.getName())).thenReturn(firstDecisionConcept);
         when(conceptRepository.findByUuid(firstNonCodedConcept.getUuid())).thenReturn(firstNonCodedConcept);
         when(conceptRepository.findByUuid(firstDecisionConcept.getUuid())).thenReturn(firstDecisionConcept);
-
-        entityConceptMap.put(firstNonCodedConcept.getUuid(), firstNonCodedConceptFormElement);
-        entityConceptMap.put(firstDecisionConcept.getUuid(), firstDecisionConceptFormElement);
 
         ObservationRequest observationRequest = new ObservationRequest();
         observationRequest.setConceptUUID(firstNonCodedConcept.getUuid());
@@ -156,8 +132,6 @@ public class EnhancedValidationServiceTest {
         decision.setValue("DummyDecision");
         decisions = Arrays.asList(decision);
 
-        ValidationResult validationResult = enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
-        assertTrue(validationResult.isSuccess());
+        enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
-
 }

@@ -1,7 +1,9 @@
 package org.avni.server.util;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ValidationUtil {
     public static final Pattern COMMON_INVALID_CHARS_PATTERN = Pattern.compile("^.*[<>=\"'].*$");
@@ -28,5 +30,12 @@ public class ValidationUtil {
 
     public static boolean checkNullOrEmptyOrContainsDisallowedCharacters(String checkString, Pattern pattern) {
         return (checkNullOrEmpty(checkString) || containsDisallowedPattern(checkString, pattern));
+    }
+
+    public static void handleErrors(List<String> errorMsgs) {
+        if (!errorMsgs.isEmpty()) {
+            errorMsgs = errorMsgs.stream().distinct().sorted().collect(Collectors.toList()); // sorted for predictability in tests
+            throw new RuntimeException(String.join(", ", errorMsgs));
+        }
     }
 }

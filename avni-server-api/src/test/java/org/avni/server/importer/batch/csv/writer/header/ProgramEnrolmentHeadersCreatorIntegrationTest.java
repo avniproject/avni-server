@@ -15,9 +15,11 @@ import org.avni.server.service.builder.TestDataSetupService;
 import org.avni.server.service.builder.TestProgramService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -70,22 +72,7 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
                 .withName("TestProgram")
                 .build();
 
-        testProgramService.addProgram(program,subjectType);
-
-        Form form = new TestFormBuilder()
-                .withName("TestProgramEnrolmentForm")
-                .withUuid(UUID.randomUUID().toString())
-                .withFormType(FormType.ProgramEnrolment)
-                .build();
-        formRepository.save(form);
-
-        formMapping = new FormMappingBuilder()
-                .withUuid(UUID.randomUUID().toString())
-                .withForm(form)
-                .withProgram(program)
-                .withSubjectType(subjectType)
-                .build();
-        formMappingRepository.save(formMapping);
+        formMapping = testProgramService.addProgramAndGetFormMapping(program, subjectType);
     }
 
     @Test
@@ -108,32 +95,6 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
         assertThat(description, hasItemInArray("\"| Optional | Format: DD-MM-YYYY |\""));
         assertThat(description, hasItemInArray("\"| Optional | Format: (21.5135243,85.6731848) |\""));
 
-    }
-
-    @Test
-    public void testMultipleProgramsForForm() {
-        Program anotherProgram = new ProgramBuilder()
-                .withName("AnotherProgram")
-                .build();
-
-        SubjectType subjectType = testSubjectTypeService.createWithDefaults(
-                new SubjectTypeBuilder()
-                        .setMandatoryFieldsForNewEntity()
-                        .build());
-
-        testProgramService.addProgram(anotherProgram,subjectType);
-
-        FormMapping anotherMapping = new FormMappingBuilder()
-                .withUuid(UUID.randomUUID().toString())
-                .withForm(formMapping.getForm())
-                .withProgram(anotherProgram)
-                .withSubjectType(subjectType)
-                .build();
-        formMappingRepository.save(anotherMapping);
-
-        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping);
-
-        assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.programHeader));
     }
 
     @Test

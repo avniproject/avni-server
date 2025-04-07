@@ -2,7 +2,7 @@ package org.avni.server.common;
 
 public class ValidationResult {
     private String message;
-    private ValidationResultType validationResultType;
+    private final ValidationResultType validationResultType;
 
     public static ValidationResult Success = new ValidationResult(ValidationResultType.Success);
 

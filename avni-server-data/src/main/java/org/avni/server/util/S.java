@@ -29,24 +29,23 @@ public class S {
                 .toArray(String[]::new);
     }
 
-    public static String toSnakeCase(String input) {
-        if (input == null) {
-            return null;
+    public static String unDoubleQuote(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
         }
-        return input.trim().replaceAll(" +", "_").toLowerCase();
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 
-    public static String formatName(String rawName) {
-        String[] parts = rawName.split("_");
-        StringBuilder formattedName = new StringBuilder();
-
-        for (String part : parts) {
-            formattedName.append(part.substring(0, 1).toUpperCase())
-                    .append(part.substring(1))
-                    .append(" ");
+    public static String doubleQuote(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
         }
-
-        return formattedName.toString().trim();
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+            return str;
+        }
+        return "\"" + str + "\"";
     }
-
 }

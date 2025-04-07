@@ -1,23 +1,18 @@
 package org.avni.server.importer.batch.csv.creator;
 
 import org.avni.server.application.*;
-import org.avni.server.dao.AddressLevelTypeRepository;
+import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
-import org.avni.server.domain.AddressLevelType;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
 import org.avni.server.domain.ObservationCollection;
-import org.avni.server.importer.batch.csv.writer.header.Headers;
+import org.avni.server.domain.ValidationException;
+import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.IndividualService;
-import org.avni.server.service.LocationService;
-import org.avni.server.service.ObservationService;
-import org.avni.server.service.S3Service;
-import org.avni.server.util.PhoneNumberUtil;
-import org.avni.server.util.RegionUtil;
-import org.avni.server.util.S;
+import org.avni.server.service.*;
+import org.avni.server.util.*;
 import org.avni.server.web.request.ObservationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +23,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
@@ -39,8 +35,7 @@ import static java.lang.String.format;
 
 @Component
 public class ObservationCreator {
-    private static Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
-    private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private static final Logger logger = LoggerFactory.getLogger(ObservationCreator.class);
     private final ConceptRepository conceptRepository;
     private final FormRepository formRepository;
     private final ObservationService observationService;
@@ -48,17 +43,17 @@ public class ObservationCreator {
     private final IndividualService individualService;
     private final LocationService locationService;
     private final FormElementRepository formElementRepository;
+    private final EnhancedValidationService enhancedValidationService;
 
     @Autowired
-    public ObservationCreator(AddressLevelTypeRepository addressLevelTypeRepository,
-                              ConceptRepository conceptRepository,
+    public ObservationCreator(ConceptRepository conceptRepository,
                               FormRepository formRepository,
                               ObservationService observationService,
                               S3Service s3Service,
                               IndividualService individualService,
                               LocationService locationService,
-                              FormElementRepository formElementRepository) {
-        this.addressLevelTypeRepository = addressLevelTypeRepository;
+                              FormElementRepository formElementRepository,
+                              EnhancedValidationService enhancedValidationService) {
         this.conceptRepository = conceptRepository;
         this.formRepository = formRepository;
         this.observationService = observationService;
@@ -66,19 +61,13 @@ public class ObservationCreator {
         this.individualService = individualService;
         this.locationService = locationService;
         this.formElementRepository = formElementRepository;
+        this.enhancedValidationService = enhancedValidationService;
     }
 
-    public Set<Concept> getConceptsInHeader(Headers headers, String[] fileHeaders, FormMapping formMapping) {
-        List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAll();
-        locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
-
-        Set<String> nonConceptHeaders = Stream.concat(
-                locationTypes.stream().map(AddressLevelType::getName),
-                Stream.of(headers.getAllHeaders(formMapping))).collect(Collectors.toSet());
-
-        return getConceptsInHeader(fileHeaders, nonConceptHeaders)
-                .stream()
-                .map(name -> this.findConcept(name, false))
+    public Set<Concept> getConceptsInHeader(HeaderCreator headers, FormMapping formMapping, String[] fileHeaders) {
+        String[] conceptHeaders = headers.getConceptHeaders(formMapping, fileHeaders);
+        return Arrays.stream(conceptHeaders)
+                .map(name -> this.findConcept(S.unDoubleQuote(name), false))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
@@ -94,12 +83,10 @@ public class ObservationCreator {
     }
 
     public ObservationCollection getObservations(Row row,
-                                                 Headers headers,
-                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
-        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping);
-        if (!errorMsgs.isEmpty()) {
-            throw new RuntimeException(String.join(", ", errorMsgs));
-        }
+                                                 HeaderCreator headers,
+                                                 List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) throws ValidationException {
+        ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping, row.getHeaders());
+        ValidationUtil.handleErrors(errorMsgs);
         return observationCollection;
     }
 
@@ -125,12 +112,13 @@ public class ObservationCreator {
             String headerName = questionGroupIndex == null ? parentChildName : String.format("%s|%d", parentChildName, questionGroupIndex);
             return row.get(headerName);
         }
-        return row.get(concept.getName());
+        return row.getObservation(concept.getName());
     }
 
-    private ObservationCollection constructObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) {
+    private ObservationCollection constructObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping, String[] fileHeaders) throws ValidationException {
         List<ObservationRequest> observationRequests = new ArrayList<>();
-        for (Concept concept : getConceptsInHeader(headers, row.getHeaders(), formMapping)) {
+        Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
+        for (Concept concept : conceptsInHeader) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);
             if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
@@ -139,7 +127,8 @@ public class ObservationCreator {
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
             try {
-                observationRequest.setValue(getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations));
+                Object observationValue = getObservationValue(formElement, rowValue, formType, errorMsgs, row, headers, oldObservations);
+                observationRequest.setValue(observationValue);
             } catch (RuntimeException ex) {
                 logger.error(String.format("Error processing observation %s in row %s", rowValue, row), ex);
                 errorMsgs.add(String.format("Invalid answer '%s' for '%s'", rowValue, concept.getName()));
@@ -150,7 +139,7 @@ public class ObservationCreator {
     }
 
     // For the repeatable question group columns should be "Question group concept"|"Child concept"|"order(1,2,3...)"
-    private Object constructChildObservations(Row row, Headers headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations) {
+    private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations) {
         List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(parentFormElement.getId());
         if (parentFormElement.isRepeatable()) {
             Pattern repeatableQuestionGroupPattern = Pattern.compile(String.format("%s\\|.*\\|\\d", parentFormElement.getConcept().getName()));
@@ -172,7 +161,7 @@ public class ObservationCreator {
         return getQuestionGroupObservations(row, headers, errorMsgs, formType, oldObservations, allChildQuestions, null);
     }
 
-    private ObservationCollection getQuestionGroupObservations(Row row, Headers headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex) {
+    private ObservationCollection getQuestionGroupObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, List<FormElement> allChildQuestions, Integer questionGroupIndex) {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         for (FormElement formElement : allChildQuestions) {
             Concept concept = formElement.getConcept();
@@ -219,7 +208,7 @@ public class ObservationCreator {
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }
 
-    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, Headers headers, ObservationCollection oldObservations) {
+    private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, HeaderCreator headers, ObservationCollection oldObservations) {
         Concept concept = formElement.getConcept();
         Object oldValue = oldObservations == null ? null : oldObservations.getOrDefault(concept.getUuid(), null);
         switch (ConceptDataType.valueOf(concept.getDataType())) {
@@ -227,16 +216,45 @@ public class ObservationCreator {
                 if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
                     String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
                     return Stream.of(providedAnswers)
-                            .map(answer -> concept.findAnswerConcept(answer).getUuid())
+                            .map(answer -> {
+                                Concept answerConcept = concept.findAnswerConcept(answer);
+                                if (answerConcept == null) {
+                                    errorMsgs.add(format("Invalid answer '%s' for '%s'", answer, concept.getName()));
+                                    return null;
+                                }
+                                return answerConcept.getUuid();
+                            })
                             .collect(Collectors.toList());
                 } else {
-                    return concept.findAnswerConcept(answerValue).getUuid();
+                    Concept answerConcept = concept.findAnswerConcept(answerValue);
+                    if (answerConcept == null) {
+                        errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                        return null;
+                    }
+                    return answerConcept.getUuid();
                 }
             case Numeric:
-                return Double.parseDouble(answerValue);
+                try {
+                    return Double.parseDouble(answerValue);
+                } catch (NumberFormatException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
             case Date:
+                try {
+                    String trimmed = answerValue.trim();
+                    return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed);
+                } catch (IllegalArgumentException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
             case DateTime:
-                return (answerValue.trim().equals("")) ? null : toISODateFormat(answerValue);
+                try {
+                    return (answerValue.trim().isEmpty()) ? null : toISODateFormat(answerValue);
+                } catch (DateTimeParseException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
             case Image:
             case ImageV2:
             case Video:
@@ -289,20 +307,12 @@ public class ObservationCreator {
                 .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
                 .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
                 .toFormatter();
-        TemporalAccessor parsed = parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from);
         ZonedDateTime dt = null;
-        if (parsed instanceof ZonedDateTime) {
-            dt = (ZonedDateTime) parsed;
-        } else if (parsed instanceof java.time.LocalDate) {
-            dt = ((java.time.LocalDate) parsed).atStartOfDay(ZoneId.systemDefault());
+        if (parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from) instanceof ZonedDateTime) {
+            dt = (ZonedDateTime) parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from);
+        } else if (parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from) instanceof java.time.LocalDate) {
+            dt = ((java.time.LocalDate) parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from)).atStartOfDay(ZoneId.systemDefault());
         }
         return dt.format(outputFmt);
-    }
-
-    private Set<String> getConceptsInHeader(String[] allHeaders, Set<String> nonConceptHeaders) {
-        return Arrays
-                .stream(allHeaders)
-                .filter(header -> !nonConceptHeaders.contains(header))
-                .collect(Collectors.toSet());
     }
 }

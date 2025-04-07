@@ -1,5 +1,7 @@
 package org.avni.server.importer.batch.model;
 
+import org.avni.server.util.S;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +44,12 @@ public class Row extends HashMap<String, String> {
     public String get(Object key) {
         String k = nullSafeTrim((String) key);
         String s = super.get(k);
+        return this.nullSafeTrim(s);
+    }
+
+    public String getObservation(Object key) {
+        String k = nullSafeTrim((String) key);
+        String s = super.get(S.doubleQuote(k));
         return this.nullSafeTrim(s);
     }
 

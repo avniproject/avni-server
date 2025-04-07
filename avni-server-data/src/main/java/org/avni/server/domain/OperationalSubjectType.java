@@ -19,6 +19,14 @@ public class OperationalSubjectType extends OrganisationAwareEntity {
     @Column
     private String name;
 
+    public static OperationalSubjectType fromSubjectType(SubjectType subjectType, String uuid) {
+        OperationalSubjectType operationalSubjectType = new OperationalSubjectType();
+        operationalSubjectType.setSubjectType(subjectType);
+        operationalSubjectType.setName(subjectType.getName());
+        operationalSubjectType.setUuid(uuid);
+        return operationalSubjectType;
+    }
+
     public SubjectType getSubjectType() {
         return subjectType;
     }
