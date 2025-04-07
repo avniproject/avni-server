@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.OperationalSubjectTypeRepository;
@@ -10,7 +9,7 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
-import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.*;
 import org.junit.Assert;
@@ -44,9 +43,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Autowired
     private TestFormService testFormService;
     @Autowired
-    private SubjectHeadersCreator subjectHeadersCreator;
-    @Autowired
     private IndividualRepository individualRepository;
+    @Autowired
+    private ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
 
     private String[] validHeader() {
         return header("Id from previous system",
@@ -238,7 +237,6 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 .save(OperationalSubjectType.fromSubjectType(subjectType, UUID.randomUUID().toString()));
 
         FormMapping registrationFormMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
-                FormType.IndividualProfile,
                 singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
                 multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()));
 

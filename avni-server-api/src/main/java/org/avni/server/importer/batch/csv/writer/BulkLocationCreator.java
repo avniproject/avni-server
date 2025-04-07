@@ -20,6 +20,7 @@ import org.avni.server.util.S;
 import org.avni.server.web.request.LocationContract;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -46,12 +47,6 @@ public class BulkLocationCreator extends BulkLocationModifier {
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.importService = importService;
         this.formService = formService;
-    }
-
-    public List<String> getLocationTypeNames() {
-        List<AddressLevelType> locationTypes = addressLevelTypeRepository.findAllByIsVoidedFalse();
-        locationTypes.sort(Comparator.comparingDouble(AddressLevelType::getLevel).reversed());
-        return locationTypes.stream().map(AddressLevelType::getName).collect(Collectors.toList());
     }
 
     public void createLocation(Row row, List<String> allErrorMsgs, List<String> locationTypeNames) throws ValidationException {
@@ -141,14 +136,19 @@ public class BulkLocationCreator extends BulkLocationModifier {
 
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     public void write(List<? extends Row> rows, String idBasedLocationHierarchy) throws ValidationException {
-        List<String> allErrorMsgs = new ArrayList<>();
-        List<String> hierarchicalLocationTypeNames = validateHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
-        for (Row row : rows) {
-            if (skipRow(row, hierarchicalLocationTypeNames)) {
-                continue;
+        try {
+            List<String> allErrorMsgs = new ArrayList<>();
+            List<String> hierarchicalLocationTypeNames = validateHeaders(rows.get(0).getHeaders(), allErrorMsgs, idBasedLocationHierarchy);
+            for (Row row : rows) {
+                if (skipRow(row, hierarchicalLocationTypeNames)) {
+                    continue;
+                }
+                validateRow(row, hierarchicalLocationTypeNames, allErrorMsgs);
+                createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames);
             }
-            validateRow(row, hierarchicalLocationTypeNames, allErrorMsgs);
-            createLocation(row, allErrorMsgs, hierarchicalLocationTypeNames);
+        } catch (ValidationException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            throw e;
         }
     }
 

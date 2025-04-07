@@ -88,7 +88,6 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
         assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.exitDate));
         assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.enrolmentLocation));
         assertThat(headers, hasItemInArray(ProgramEnrolmentHeadersCreator.exitLocation));
-        assertThat(headers, not(hasItemInArray(ProgramEnrolmentHeadersCreator.programHeader)));
 
         assertThat(description, hasItemInArray("\"| Optional | Can be used to later identify the entry |\""));
         assertThat(description, hasItemInArray("\"| Mandatory | UUID of the subject to be enrolled. Can be identified from address bar in Data Entry App or Longitudinal export file |\""));

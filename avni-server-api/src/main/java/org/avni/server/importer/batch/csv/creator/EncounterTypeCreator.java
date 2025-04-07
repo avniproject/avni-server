@@ -14,13 +14,13 @@ public class EncounterTypeCreator {
         this.encounterTypeRepository = encounterTypeRepository;
     }
 
-    public EncounterType getEncounterType(String name, String identifierForErrorMessage) throws Exception {
+    public EncounterType getEncounterType(String name, String identifierForErrorMessage) {
         if (name == null || name.isEmpty()) {
-            throw new Exception(String.format("'%s' is required", identifierForErrorMessage));
+            throw new RuntimeException(String.format("'%s' is required", identifierForErrorMessage));
         }
         EncounterType encounterType = encounterTypeRepository.findByName(name);
         if (encounterType == null) {
-            throw new Exception(String.format("'%s' '%s' is required", identifierForErrorMessage, name));
+            throw new RuntimeException(String.format("'%s' '%s' is required", identifierForErrorMessage, name));
         }
         return encounterType;
     }

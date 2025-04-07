@@ -2,24 +2,27 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
+import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.EntityApprovalStatus;
-import org.avni.server.domain.ProgramEncounter;
-import org.avni.server.domain.ProgramEnrolment;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEncounterHeaders;
+import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.ProgramEncounterService;
+import org.avni.server.util.ValidationUtil;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -29,6 +32,9 @@ import java.util.List;
 @Component
 public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final ProgramEncounterRepository programEncounterRepository;
+    private final ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
+    private final IndividualRepository individualRepository;
+    private final ProgramRepository programRepository;
     private ProgramEnrolmentCreator programEnrolmentCreator;
     private BasicEncounterCreator basicEncounterCreator;
     private FormMappingRepository formMappingRepository;
@@ -54,7 +60,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
                                   ObservationCreator observationCreator,
                                   ProgramEncounterService programEncounterService,
                                   EntityApprovalStatusWriter entityApprovalStatusWriter,
-                                  OrganisationConfigService organisationConfigService) {
+                                  OrganisationConfigService organisationConfigService, ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator, IndividualRepository individualRepository, ProgramRepository programRepository) {
         super(organisationConfigService);
         this.programEncounterRepository = programEncounterRepository;
         this.programEnrolmentCreator = programEnrolmentCreator;
@@ -68,6 +74,9 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
         this.observationCreator = observationCreator;
         this.programEncounterService = programEncounterService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
+        this.programEnrolmentHeadersCreator = programEnrolmentHeadersCreator;
+        this.individualRepository = individualRepository;
+        this.programRepository = programRepository;
     }
 
     @Override

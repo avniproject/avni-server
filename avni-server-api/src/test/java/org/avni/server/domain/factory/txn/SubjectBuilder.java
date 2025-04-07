@@ -72,4 +72,9 @@ public class SubjectBuilder {
         individual.setSyncConcept1Value(value.toString());
         return this;
     }
+
+    public SubjectBuilder withLegacyId(String legacyId) {
+        individual.setLegacyId(legacyId);
+        return this;
+    }
 }

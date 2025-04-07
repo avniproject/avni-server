@@ -20,6 +20,14 @@ public class OperationalProgram extends OrganisationAwareEntity {
     @Column
     private String programSubjectLabel;
 
+    public static OperationalProgram fromProgram(Program program) {
+        OperationalProgram operationalProgram = new OperationalProgram();
+        operationalProgram.setProgram(program);
+        operationalProgram.setName(program.getName());
+        operationalProgram.setUuid(program.getUuid());
+        return operationalProgram;
+    }
+
     public Program getProgram() {
         return program;
     }
@@ -59,7 +67,6 @@ public class OperationalProgram extends OrganisationAwareEntity {
         Auditable lastModified = getLastModified(getProgram());
         return lastModified.equals(this)?super.getLastModifiedBy(): lastModified.getLastModifiedBy();
     }
-
 
     public void setProgramSubjectLabel(String programSubjectLabel) {
         this.programSubjectLabel = programSubjectLabel;

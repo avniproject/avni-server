@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class ProgramEnrolmentHeadersCreator extends AbstractHeaders{
+public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
     public final static String id = "Id from previous system";
     public final static String subjectId = "Subject Id";
     public final static String programHeader = "Program";
@@ -33,9 +33,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders{
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));
         fields.add(new HeaderField(subjectId, "UUID of the subject to be enrolled. Can be identified from address bar in Data Entry App or Longitudinal export file", true, null, null, null));
-        if(formMappingRepository.getProgramsMappedToAForm(formMapping.getForm().getUuid()).size() > 1) {
-            fields.add(new HeaderField(programHeader, formMapping.getProgram().getName() , true, null, null, null,false));
-        }
+        fields.add(new HeaderField(programHeader, formMapping.getProgram().getName(), true, null, null, null, false));
         fields.add(new HeaderField(enrolmentDate, "", false, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(exitDate, "", false, null, "Format: DD-MM-YYYY", null));
         fields.add(new HeaderField(enrolmentLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));

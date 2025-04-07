@@ -7,18 +7,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ProgramCreator {
-
-    private ProgramRepository programRepository;
+    private final ProgramRepository programRepository;
 
     @Autowired
     public ProgramCreator(ProgramRepository programRepository) {
         this.programRepository = programRepository;
     }
 
-    public Program getProgram(String name, String header) throws Exception {
+    public Program getProgram(String name, String header) {
         Program program = programRepository.findByName(name);
         if (program == null) {
-            throw new Exception(String.format("'%s' '%s' not found", header, name));
+            throw new RuntimeException(String.format("'%s' '%s' not found", header, name));
         }
         return program;
     }

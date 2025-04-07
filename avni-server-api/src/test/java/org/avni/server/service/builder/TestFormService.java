@@ -8,6 +8,7 @@ import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.application.FormRepository;
 import org.avni.server.domain.Concept;
+import org.avni.server.domain.Program;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
@@ -25,7 +26,19 @@ public class TestFormService {
         this.formRepository = formRepository;
     }
 
-    public FormMapping createRegistrationForm(SubjectType subjectType, String formName, FormType formType, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames) {
+    public FormMapping createEnrolmentForm(SubjectType subjectType, Program program, String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.ProgramEnrolment);
+        FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withProgram(program).withUuid(UUID.randomUUID().toString()).withForm(form).build();
+        return formMappingRepository.save(formMapping);
+    }
+
+    public FormMapping createRegistrationForm(SubjectType subjectType, String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames) {
+        Form form = createForm(formName, singleSelectedConceptNames, multiSelectedConceptNames, FormType.IndividualProfile);
+        FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withUuid(UUID.randomUUID().toString()).withForm(form).build();
+        return formMappingRepository.save(formMapping);
+    }
+
+    private Form createForm(String formName, List<String> singleSelectedConceptNames, List<String> multiSelectedConceptNames, FormType formType) {
         Form form = new TestFormBuilder().withName(formName).withFormType(formType).withUuid(UUID.randomUUID().toString()).build();
         form = formRepository.save(form);
 
@@ -57,8 +70,6 @@ public class TestFormService {
                     .build();
         }
         formRepository.save(form);
-
-        FormMapping formMapping = new FormMappingBuilder().withSubjectType(subjectType).withUuid(UUID.randomUUID().toString()).withForm(form).build();
-        return formMappingRepository.save(formMapping);
+        return form;
     }
 }

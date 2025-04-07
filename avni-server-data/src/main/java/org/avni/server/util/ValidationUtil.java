@@ -1,5 +1,7 @@
 package org.avni.server.util;
 
+import org.avni.server.domain.ValidationException;
+
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,10 +34,14 @@ public class ValidationUtil {
         return (checkNullOrEmpty(checkString) || containsDisallowedPattern(checkString, pattern));
     }
 
-    public static void handleErrors(List<String> errorMsgs) {
+    public static void handleErrors(List<String> errorMsgs) throws ValidationException {
         if (!errorMsgs.isEmpty()) {
             errorMsgs = errorMsgs.stream().distinct().sorted().collect(Collectors.toList()); // sorted for predictability in tests
-            throw new RuntimeException(String.join(", ", errorMsgs));
+            throw new ValidationException(String.join(", ", errorMsgs));
         }
+    }
+
+    public static void fieldMissing(String fieldName, String value, List<String> errorMessages) {
+        errorMessages.add(String.format("%s '%s' not found", fieldName, value == null ? "" : value));
     }
 }

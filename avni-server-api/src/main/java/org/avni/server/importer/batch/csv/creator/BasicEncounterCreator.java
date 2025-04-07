@@ -25,7 +25,7 @@ public class BasicEncounterCreator {
         this.locationCreator = new LocationCreator();
     }
 
-    public AbstractEncounter updateEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs) throws Exception {
+    public AbstractEncounter updateEncounter(Row row, AbstractEncounter basicEncounter, List<String> allErrorMsgs) {
         DateCreator dateCreator = new DateCreator();
         LocalDate earliestVisitDate = dateCreator.getDate(
                 row,

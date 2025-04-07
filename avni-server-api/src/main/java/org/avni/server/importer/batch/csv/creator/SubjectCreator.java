@@ -9,9 +9,7 @@ import java.util.List;
 
 @Component
 public class SubjectCreator {
-
-    private IndividualRepository individualRepository;
-
+    private final IndividualRepository individualRepository;
 
     @Autowired
     public SubjectCreator(IndividualRepository individualRepository) {
