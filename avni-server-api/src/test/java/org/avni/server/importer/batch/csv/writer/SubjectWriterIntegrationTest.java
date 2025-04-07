@@ -22,6 +22,7 @@ import org.springframework.test.context.jdbc.Sql;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -88,6 +89,27 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "text",
                 "123",
                 "1",
+                "some notes");
+    }
+
+    private String[] dataRowWithWrongValues() {
+        return dataRow("ABCD",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1 Invalid",
+                "\"MSC Answer 1\", \"MSC Answer 2 Invalid\"",
+                "shouldHaveBeenADate",
+                "text",
+                "shouldHaveBeenANumber",
                 "some notes");
     }
 
@@ -186,10 +208,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     }
 
     @Test
-    public void shouldCreateUpdate() throws Exception {
-        System.out.println(Arrays.toString(subjectHeadersCreator.getAllHeaders(registrationFormMapping)));
-        System.out.println(Arrays.toString(subjectHeadersCreator.getAllDescriptions(registrationFormMapping)));
-
+    public void shouldCreateUpdate() throws ValidationException {
         // new subject
         String[] header = validHeader();
         String[] dataRow = validDataRow();
@@ -198,6 +217,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         Individual subject = individualRepository.findByLegacyId("ABCD");
         assertEquals(6, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
+    }
+
+    @Test
+    public void shouldFailValidationIfObservationValuesAreWrong() {
+        failure(validHeader(),
+                dataRowWithWrongValues(),
+                "Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {

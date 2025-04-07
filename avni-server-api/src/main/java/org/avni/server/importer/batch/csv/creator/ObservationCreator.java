@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
@@ -88,6 +89,7 @@ public class ObservationCreator {
                                                  List<String> errorMsgs, FormType formType, ObservationCollection oldObservations, FormMapping formMapping) throws ValidationException {
         ObservationCollection observationCollection = constructObservations(row, headers, errorMsgs, formType, oldObservations, formMapping, row.getHeaders());
         if (!errorMsgs.isEmpty()) {
+            errorMsgs = errorMsgs.stream().distinct().sorted().collect(Collectors.toList()); // sorted for predictability in tests
             throw new RuntimeException(String.join(", ", errorMsgs));
         }
         return observationCollection;
@@ -138,8 +140,6 @@ public class ObservationCreator {
             }
             observationRequests.add(observationRequest);
         }
-        if (formMapping != null) // we don't yet have form mapping for location
-            this.enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, new ArrayList<>(), formMapping);
         return observationService.createObservations(observationRequests);
     }
 
@@ -221,16 +221,38 @@ public class ObservationCreator {
                 if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
                     String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
                     return Stream.of(providedAnswers)
-                            .map(answer -> concept.findAnswerConcept(answer).getUuid())
+                            .map(answer -> {
+                                Concept answerConcept = concept.findAnswerConcept(answer);
+                                if (answerConcept == null) {
+                                    errorMsgs.add(format("Invalid answer '%s' for '%s'", answer, concept.getName()));
+                                    return null;
+                                }
+                                return answerConcept.getUuid();
+                            })
                             .collect(Collectors.toList());
                 } else {
-                    return concept.findAnswerConcept(answerValue).getUuid();
+                    Concept answerConcept = concept.findAnswerConcept(answerValue);
+                    if (answerConcept == null) {
+                        errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                        return null;
+                    }
+                    return answerConcept.getUuid();
                 }
             case Numeric:
-                return Double.parseDouble(answerValue);
+                try {
+                    return Double.parseDouble(answerValue);
+                } catch (NumberFormatException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
             case Date:
             case DateTime:
-                return (answerValue.trim().equals("")) ? null : toISODateFormat(answerValue);
+                try {
+                    return (answerValue.trim().equals("")) ? null : toISODateFormat(answerValue);
+                } catch (DateTimeParseException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
             case Image:
             case ImageV2:
             case Video:
@@ -283,20 +305,12 @@ public class ObservationCreator {
                 .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
                 .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
                 .toFormatter();
-        TemporalAccessor parsed = parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from);
         ZonedDateTime dt = null;
-        if (parsed instanceof ZonedDateTime) {
-            dt = (ZonedDateTime) parsed;
-        } else if (parsed instanceof java.time.LocalDate) {
-            dt = ((java.time.LocalDate) parsed).atStartOfDay(ZoneId.systemDefault());
+        if (parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from) instanceof ZonedDateTime) {
+            dt = (ZonedDateTime) parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from);
+        } else if (parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from) instanceof java.time.LocalDate) {
+            dt = ((java.time.LocalDate) parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from)).atStartOfDay(ZoneId.systemDefault());
         }
         return dt.format(outputFmt);
-    }
-
-    private Set<String> getConceptsInHeader(String[] allHeaders, Set<String> nonConceptHeaders) {
-        return Arrays
-                .stream(allHeaders)
-                .filter(header -> !nonConceptHeaders.contains(header))
-                .collect(Collectors.toSet());
     }
 }
