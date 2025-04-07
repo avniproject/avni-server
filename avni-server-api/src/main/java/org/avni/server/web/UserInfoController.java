@@ -154,6 +154,7 @@ public class UserInfoController implements RestControllerResourceProcessor<UserI
                 user = new User();
                 user.setUuid(userContract.getUuid() == null ? UUID.randomUUID().toString() : userContract.getUuid());
                 user.setUsername(userContract.getName());
+                user.setLastActivatedDateTime(new DateTime());
                 newUser = true;
             }
             Catchment catchment = userContract.getCatchmentUUID() == null ? catchmentRepository.findOne(userContract.getCatchmentId()) : catchmentRepository.findByUuid(userContract.getCatchmentUUID());
