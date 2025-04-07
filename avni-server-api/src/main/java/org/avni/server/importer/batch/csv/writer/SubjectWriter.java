@@ -11,6 +11,7 @@ import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
+import org.avni.server.util.DateTimeUtil;
 import org.avni.server.util.ValidationUtil;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
@@ -160,7 +161,7 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
         try {
             String dob = row.get(SubjectHeadersCreator.dateOfBirth);
             if (dob != null && !dob.trim().isEmpty())
-                individual.setDateOfBirth(LocalDate.parse(dob));
+                individual.setDateOfBirth(DateTimeUtil.parseFlexibleDate(dob));
         } catch (RuntimeException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.dateOfBirth));
         }
@@ -169,13 +170,13 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
     private void setRegistrationDate(Individual individual, Row row, List<String> errorMsgs) {
         try {
             String registrationDate = row.get(SubjectHeadersCreator.registrationDate);
-            LocalDate providedDate = registrationDate != null && !registrationDate.trim().isEmpty() ? LocalDate.parse(registrationDate) : LocalDate.now();
+            LocalDate providedDate = registrationDate != null && !registrationDate.trim().isEmpty() ? DateTimeUtil.parseFlexibleDate(registrationDate) : LocalDate.now();
             if (providedDate.isAfter(LocalDate.now())) {
                 errorMsgs.add(String.format("'%s' %s is in future", SubjectHeadersCreator.registrationDate, registrationDate));
                 return;
             }
             individual.setRegistrationDate(providedDate);
-        } catch (RuntimeException ex) {
+        } catch (IllegalArgumentException ex) {
             errorMsgs.add(String.format("Invalid '%s'", SubjectHeadersCreator.registrationDate));
         }
     }

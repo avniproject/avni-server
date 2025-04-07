@@ -12,10 +12,7 @@ import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
-import org.avni.server.util.PhoneNumberUtil;
-import org.avni.server.util.RegionUtil;
-import org.avni.server.util.S;
-import org.avni.server.util.ValidationUtil;
+import org.avni.server.util.*;
 import org.avni.server.web.request.ObservationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -244,9 +241,16 @@ public class ObservationCreator {
                     return null;
                 }
             case Date:
+                try {
+                    String trimmed = answerValue.trim();
+                    return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed);
+                } catch (IllegalArgumentException e) {
+                    errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
+                    return null;
+                }
             case DateTime:
                 try {
-                    return (answerValue.trim().equals("")) ? null : toISODateFormat(answerValue);
+                    return (answerValue.trim().isEmpty()) ? null : toISODateFormat(answerValue);
                 } catch (DateTimeParseException e) {
                     errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
                     return null;
