@@ -138,7 +138,8 @@ public class ObservationCreator {
             }
             observationRequests.add(observationRequest);
         }
-        this.enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, new ArrayList<>(), formMapping);
+        if (formMapping != null) // we don't yet have form mapping for location
+            this.enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, new ArrayList<>(), formMapping);
         return observationService.createObservations(observationRequests);
     }
 

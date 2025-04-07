@@ -56,20 +56,20 @@ public class EnhancedValidationService {
 
     public void validateObservationsAndDecisionsAgainstFormMapping(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping) throws ValidationException {
         List<String> errorMessages = new ArrayList<>();
-        LinkedHashMap<String, FormElement> entityConceptMap = formMappingService.getEntityConceptMap(formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
+        LinkedHashMap<String, FormElement> formElements = formMappingService.getEntityConceptMap(formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
 
-        checkForInvalidConceptUUIDAndNames(observationRequests, decisions, formMapping, entityConceptMap, errorMessages);
-        validateConceptValuesAreOfRequiredType(observationRequests, entityConceptMap, formMapping, errorMessages);
+        checkForInvalidConceptUUIDAndNames(observationRequests, decisions, formMapping, formElements, errorMessages);
+        validateConceptValuesAreOfRequiredType(observationRequests, formElements, formMapping, errorMessages);
         handleValidationFailure(errorMessages);
     }
 
-    private void checkForInvalidConceptUUIDAndNames(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping, LinkedHashMap<String, FormElement> entityConceptMap, List<String> errorMessages) {
+    private void checkForInvalidConceptUUIDAndNames(List<ObservationRequest> observationRequests, List<Decision> decisions, FormMapping formMapping, LinkedHashMap<String, FormElement> formElements, List<String> errorMessages) {
         List<String> conceptUuids = getObservationConceptUuidsFromRequest(observationRequests);
         conceptUuids.addAll(getDecisionConceptUuidsFromRequest(decisions));
 
         List<String> nonMatchingConceptUuids = conceptUuids
                 .stream()
-                .filter(conceptUuid -> !entityConceptMap.containsKey(conceptUuid))
+                .filter(conceptUuid -> !formElements.containsKey(conceptUuid))
                 .collect(Collectors.toList());
 
         if (!nonMatchingConceptUuids.isEmpty()) {
@@ -77,10 +77,11 @@ public class EnhancedValidationService {
         }
     }
 
-    private void validateConceptValuesAreOfRequiredType(List<ObservationRequest> observationRequests, LinkedHashMap<String, FormElement> entityConceptMap, FormMapping formMapping, List<String> errorMessages) {
+    private void validateConceptValuesAreOfRequiredType(List<ObservationRequest> observationRequests, LinkedHashMap<String, FormElement> formElements, FormMapping formMapping, List<String> errorMessages) {
         observationRequests.stream()
                 .map(observationRequest -> new EnhancedValidationDTO(conceptRepository.findByUuid(observationRequest.getConceptUUID()),
-                        entityConceptMap.get(observationRequest.getConceptUUID()), observationRequest.getValue()))
+                        formElements.get(observationRequest.getConceptUUID()),
+                        observationRequest.getValue()))
                 .forEach(enhancedValidationDTO -> validate(enhancedValidationDTO, formMapping, errorMessages));
     }
 
@@ -266,19 +267,20 @@ public class EnhancedValidationService {
     }
 
     private void validateChildObservation(FormElement questionGroupFormElement, Map<String, Object> qGroupValueInstance, FormMapping formMapping, List<String> errorMessages) {
-        LinkedHashMap<String, FormElement> entityConceptMap = formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(questionGroupFormElement, formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
+        LinkedHashMap<String, FormElement> formElements = formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(questionGroupFormElement, formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
         List<ObservationRequest> observationRequests = qGroupValueInstance.entrySet().stream().map(this::createObservationRequest).collect(Collectors.toList());
         List<String> nonMatchingConceptUuids = getObservationConceptUuidsFromRequest(observationRequests)
                 .stream()
-                .filter(conceptUuid -> !entityConceptMap.containsKey(conceptUuid))
+                .filter(conceptUuid -> !formElements.containsKey(conceptUuid))
                 .collect(Collectors.toList());
 
         if (!nonMatchingConceptUuids.isEmpty()) {
             errorMessages.add(String.format("Invalid concept uuids/names %s found for questionGroupConcept uuid/name: %s/%s", String.join(", ", nonMatchingConceptUuids),
                     questionGroupFormElement.getConcept().getUuid(), questionGroupFormElement.getName()));
+            return;
         }
 
-        validateConceptValuesAreOfRequiredType(observationRequests, entityConceptMap, formMapping, errorMessages);
+        validateConceptValuesAreOfRequiredType(observationRequests, formElements, formMapping, errorMessages);
     }
 
     private ObservationRequest createObservationRequest(Map.Entry<String, Object> stringObjectEntry) {

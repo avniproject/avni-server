@@ -126,7 +126,6 @@ public class EnhancedValidationServiceQuestionGroupsTest {
         entityConceptMapForQG2.put(groupConcept2Concept1.getUuid(), formElement2_1);
     }
 
-
     @Test
     public void shouldReturnValidationSuccessForValidQuestionGroupObservations() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestRepeatableQG = new ObservationRequest();
@@ -188,7 +187,7 @@ public class EnhancedValidationServiceQuestionGroupsTest {
     }
 
     @Test(expected = ValidationException.class)
-    public void shouldReturnValidationFailureForValidConceptsForFormButInvalidWithinNonRepeatableQuestionGroupConcept() throws org.avni.server.domain.ValidationException {
+    public void shouldFailForValidConceptsForFormButInvalidWithinNonRepeatableQuestionGroupConcept() throws org.avni.server.domain.ValidationException {
         ObservationRequest observationRequestNonRepeatableQG = new ObservationRequest();
         observationRequestNonRepeatableQG.setConceptUUID(groupConcept2.getUuid());
         observationRequestNonRepeatableQG.setConceptName(groupConcept2.getName());
@@ -200,5 +199,4 @@ public class EnhancedValidationServiceQuestionGroupsTest {
 
         enhancedValidationService.validateObservationsAndDecisionsAgainstFormMapping(observationRequests, decisions, formMapping);
     }
-
 }
