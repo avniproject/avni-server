@@ -1,6 +1,7 @@
 [
   {
     "name": "<alert>abc</alert>",
-    "uuid": "5f6fb89b-01a7-46f8-8a00-25acaac62618"
+    "uuid": "5f6fb89b-01a7-46f8-8a00-25acaac62618",
+    "immutable": false
   }
 ]
