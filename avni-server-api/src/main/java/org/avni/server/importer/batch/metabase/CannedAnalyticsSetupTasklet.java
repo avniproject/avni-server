@@ -57,6 +57,7 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
 
     @PostConstruct
     public void authenticateUser() {
+        DbRoleRepository.setDbRoleNone(entityManager);
         authService.authenticateByUserId(userId, organisationUUID);
         DbRoleRepository.setDbRoleFromContext(entityManager);
     }
