@@ -2,15 +2,23 @@ package org.avni.server.dao.metabase;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.avni.server.dao.ProgramRepository;
+import org.avni.server.dao.metabase.db.MetabaseDbConnectionFactory;
 import org.avni.server.domain.Organisation;
 import org.avni.server.domain.metabase.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,14 +27,17 @@ import java.util.Objects;
 @Repository
 public class MetabaseDatabaseRepository extends MetabaseConnector {
     private final CollectionRepository collectionRepository;
+    private final MetabaseDbConnectionFactory metabaseDbConnectionFactory;
     private static final Logger logger = LoggerFactory.getLogger(MetabaseDatabaseRepository.class);
 
     private static ThreadLocal<Map<String, List<TableDetails>>> tablesThreadLocalContext = new ThreadLocal<>();
     private static ThreadLocal<Map<Integer, List<FieldDetails>>> fieldsThreadLocalContext = new ThreadLocal<>();
 
-    public MetabaseDatabaseRepository(RestTemplateBuilder restTemplateBuilder, CollectionRepository collectionRepository) {
+    @Autowired
+    public MetabaseDatabaseRepository(RestTemplateBuilder restTemplateBuilder, CollectionRepository collectionRepository, MetabaseDbConnectionFactory metabaseDbConnectionFactory) {
         super(restTemplateBuilder);
         this.collectionRepository = collectionRepository;
+        this.metabaseDbConnectionFactory = metabaseDbConnectionFactory;
     }
 
     public Database save(Database database) {
@@ -196,5 +207,45 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
     public static void clearThreadLocalContext() {
         tablesThreadLocalContext.remove();
         fieldsThreadLocalContext.remove();
+    }
+
+    public void moveDatabaseScanningToFarFuture(Database database) {
+        Connection connection = null;
+        PreparedStatement psCronTriggers = null;
+        PreparedStatement psMetabaseDatabase = null;
+        String cron = "0 0 0 1 1 ? 2090";
+        try {
+            connection = this.metabaseDbConnectionFactory.getConnection();
+            String triggerName = "metabase.task.sync-and-analyze.trigger." + database.getId();
+            psCronTriggers = connection.prepareStatement("""
+                        update qrtz_cron_triggers
+                        set cron_expression = ?
+                        where trigger_name = ?;
+                    """);
+            psCronTriggers.setString(1, cron);
+            psCronTriggers.setString(2, triggerName);
+            psCronTriggers.executeUpdate();
+
+            psMetabaseDatabase = connection.prepareStatement("""
+                    update metabase_database set metadata_sync_schedule = ?, cache_field_values_schedule = ? where id = ?""");
+            psMetabaseDatabase.setString(1, cron);
+            psMetabaseDatabase.setString(2, cron);
+            psMetabaseDatabase.setLong(3, database.getId());
+            psMetabaseDatabase.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            safeClose(psMetabaseDatabase);
+            safeClose(psCronTriggers);
+            safeClose(connection);
+        }
+    }
+
+    private void safeClose(AutoCloseable autoCloseable) {
+        try {
+            if (autoCloseable != null)
+                autoCloseable.close();
+        } catch (Exception ignored) {
+        }
     }
 }

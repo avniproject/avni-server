@@ -32,7 +32,6 @@ public class DatabaseService implements IQuestionCreationService {
     private static final int FIRST_CARD_COL_IDX = 0;
 
     private final MetabaseDatabaseRepository databaseRepository;
-    private final MetabaseService metabaseService;
     private final CollectionRepository collectionRepository;
     private final QuestionRepository questionRepository;
     private final MetabaseDashboardRepository metabaseDashboardRepository;
@@ -48,7 +47,6 @@ public class DatabaseService implements IQuestionCreationService {
     @Autowired
     public DatabaseService(MetabaseDatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService, TableMetaDataRepository tableMetaDataRepository) {
         this.databaseRepository = databaseRepository;
-        this.metabaseService = metabaseService;
         this.collectionRepository = collectionRepository;
         this.questionRepository = questionRepository;
         this.metabaseDashboardRepository = metabaseDashboardRepository;
@@ -58,7 +56,8 @@ public class DatabaseService implements IQuestionCreationService {
     }
 
     private CollectionInfoResponse getOrgCollection() {
-        return metabaseService.getGlobalCollection();
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        return collectionRepository.getCollection(organisation);
     }
 
     public SyncStatus getInitialSyncStatus() {
@@ -265,9 +264,8 @@ public class DatabaseService implements IQuestionCreationService {
         return parameters;
     }
 
-    public void addCollectionItems() throws InterruptedException {
+    public void addCollectionItems() {
         Organisation organisation = organisationService.getCurrentOrganisation();
-        waitForSyncToComplete(organisation);
 
         //todo add field details and table details to request scope
         logger.info("Adding questions for subject types {}", organisation.getName());
@@ -282,7 +280,7 @@ public class DatabaseService implements IQuestionCreationService {
         createCustomQuestions();
     }
 
-    private void waitForSyncToComplete(Organisation organisation) throws InterruptedException {
+    public void waitForSyncToComplete(Organisation organisation) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for metabase database sync {}", organisation.getName());
         while (true) {
@@ -301,6 +299,7 @@ public class DatabaseService implements IQuestionCreationService {
 
     public void syncDatabase() throws InterruptedException {
         Organisation organisation = organisationService.getCurrentOrganisation();
+        this.waitForSyncToComplete(organisation);
         Database database = databaseRepository.getDatabase(organisation);
         databaseRepository.reSyncSchema(database);
         databaseRepository.rescanFieldValues(database);

@@ -58,7 +58,8 @@ public class MetabaseService {
         Organisation organisation = organisationService.getCurrentOrganisation();
         Database database = databaseRepository.getDatabase(organisation);
         if (database == null) {
-            database = new Database(organisation.getName(), DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
+            database = Database.forDatabasePayload(organisation.getName(),
+                    DB_ENGINE, new DatabaseDetails(avniDatabase, organisation.getDbUser(), AVNI_DEFAULT_ORG_USER_DB_PASSWORD));
             databaseRepository.save(database);
         }
     }
@@ -138,7 +139,7 @@ public class MetabaseService {
         tearDownDatabase();
     }
 
-    public CollectionInfoResponse getGlobalCollection() {
+    private CollectionInfoResponse getGlobalCollection() {
         Organisation organisation = organisationService.getCurrentOrganisation();
         return collectionRepository.getCollection(organisation);
     }
@@ -164,5 +165,11 @@ public class MetabaseService {
                 }
             }
         }
+    }
+
+    public void fixDatabaseSyncSchedule() {
+        Organisation organisation = organisationService.getCurrentOrganisation();
+        Database database = databaseRepository.getDatabase(organisation);
+        databaseRepository.moveDatabaseScanningToFarFuture(database);
     }
 }

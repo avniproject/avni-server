@@ -10,20 +10,22 @@ public class Database {
     private DatabaseDetails details;
 
     public Database() {
-
     }
 
     public Database(String name) {
         this.name = name;
     }
 
-    public Database(String name, String engine, DatabaseDetails details) {
-        this(null,name,engine,details);
+    public static Database forDatabasePayload(String name, String engine, DatabaseDetails details) {
+        Database database = new Database();
+        database.setName(name);
+        database.setEngine(engine);
+        database.setDetails(details);
+        return database;
     }
 
-
     public Database(Integer id, String name, String engine, DatabaseDetails details) {
-        this.id=id;
+        this.id = id;
         this.name = name;
         this.engine = engine;
         this.details = details;
