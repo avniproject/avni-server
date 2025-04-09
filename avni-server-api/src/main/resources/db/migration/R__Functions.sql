@@ -171,6 +171,7 @@ BEGIN
     execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' ||
             in_impl_schema || ''');';
     execute 'delete from table_metadata where schema_name = ''' || in_impl_schema || ''';';
+    execute 'delete from post_etl_sync_status where db_user = ''' || in_db_user || ''';';
     return true;
 END
 $$;
@@ -191,6 +192,7 @@ BEGIN
     execute 'delete from column_metadata where table_id in (select id from table_metadata where schema_name = ''' ||
             in_impl_schema || ''');';
     execute 'delete from table_metadata where schema_name = ''' || in_impl_schema || ''';';
+    execute 'delete from post_etl_sync_status where db_user = ''' || in_db_user || ''';';
     return true;
 END
 $$;
