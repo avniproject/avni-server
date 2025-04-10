@@ -1,17 +1,11 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
-import org.avni.server.application.FormElement;
+import org.avni.server.domain.Concept;
 import org.springframework.stereotype.Component;
 
-@Component
-public class DateFieldDescriptor implements FieldDescriptorStrategy {
+public class DateFieldDescriptor extends FieldDescriptor {
     @Override
-    public String getAllowedValues(FormElement fe) {
-        return null;
-    }
-
-    @Override
-    public String getFormat(FormElement fe) {
+    public String getFormat(Concept concept) {
         return "Format: DD-MM-YYYY";
     }
 }

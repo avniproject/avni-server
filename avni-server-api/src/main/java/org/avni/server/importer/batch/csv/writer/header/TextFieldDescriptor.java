@@ -1,17 +1,10 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
-import org.avni.server.application.FormElement;
-import org.springframework.stereotype.Component;
+import org.avni.server.domain.Concept;
 
-@Component
-public class TextFieldDescriptor implements FieldDescriptorStrategy {
+public class TextFieldDescriptor extends FieldDescriptor {
     @Override
-    public String getAllowedValues(FormElement fe) {
-        return null;
-    }
-
-    @Override
-    public String getFormat(FormElement fe) {
+    public String getFormat(Concept concept) {
         return "Any Text";
     }
 }

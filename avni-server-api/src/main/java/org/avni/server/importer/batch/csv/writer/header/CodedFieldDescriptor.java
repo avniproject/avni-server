@@ -2,11 +2,10 @@ package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.application.FormElement;
 import org.avni.server.domain.Concept;
-import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
-public class CodedFieldDescriptor implements FieldDescriptorStrategy {
+public class CodedFieldDescriptor extends FieldDescriptor {
     @Override
     public String getAllowedValues(FormElement fe) {
         Concept concept = fe.getConcept();
@@ -19,7 +18,11 @@ public class CodedFieldDescriptor implements FieldDescriptorStrategy {
     }
 
     @Override
-    public String getFormat(FormElement fe) {
-        return null;
+    public String getAllowedValues(Concept concept) {
+        String values = "Allowed values: {" + concept.getConceptAnswers().stream()
+                .map(ca -> ca.getAnswerConcept().getName())
+                .sorted()
+                .collect(Collectors.joining(", ")) + "}";
+        return values + " Format: May allow single value or multiple values separated a comma. Please check with developer.";
     }
 }

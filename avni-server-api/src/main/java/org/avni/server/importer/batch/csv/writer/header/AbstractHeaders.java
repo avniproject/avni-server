@@ -1,11 +1,11 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
+import org.avni.server.application.Form;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.KeyType;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptDataType;
-import org.avni.server.service.ImportHelperService;
+import org.avni.server.service.ImportService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,13 +14,7 @@ import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements HeaderCreator {
-    protected ImportHelperService importHelperService;
-
-    public AbstractHeaders(ImportHelperService importHelperService) {
-        this.importHelperService = importHelperService;
-    }
-
-    private FieldDescriptorStrategy getStrategy(String conceptName,String dataType) {
+    private FieldDescriptor getStrategy(String dataType) {
         if (dataType.equals(ConceptDataType.Coded.name())) {
             return new CodedFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Date.name())) {
@@ -29,10 +23,10 @@ public abstract class AbstractHeaders implements HeaderCreator {
             return new TextFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Numeric.name())) {
             return new NumericFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.PhoneNumber.name())){
+        } else if (dataType.equals(ConceptDataType.PhoneNumber.name())) {
             return new PhoneNumberDescriptor();
-        } else if (dataType.equals(ConceptDataType.Subject.name())){
-            return new SubjectConceptDescriptor(conceptName);
+        } else if (dataType.equals(ConceptDataType.Subject.name())) {
+            return new SubjectConceptDescriptor();
         } else {
             return new DefaultFieldDescriptor();
         }
@@ -54,6 +48,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
     public String[] getConceptHeaders(FormMapping formMapping, String[] fileHeaders) {
         List<HeaderField> fields = new ArrayList<>();
         fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
         return fields.stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
@@ -74,21 +69,24 @@ public abstract class AbstractHeaders implements HeaderCreator {
                 .collect(Collectors.toList());
     }
 
-    protected HeaderField mapFormElementToField(FormElement fe) {
+    protected List<HeaderField> generateDecisionConceptFields(Form form) {
+        return form.getDecisionConcepts().stream().map(this::mapDecisionConceptToField).toList();
+    }
+
+    private HeaderField mapDecisionConceptToField(Concept concept) {
+        FieldDescriptor strategy = getStrategy(concept.getDataType());
+        String format = strategy.getFormat(concept);
+        return new HeaderField("\"" + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);
+    }
+
+    private HeaderField mapFormElementToField(FormElement fe) {
         Concept concept = fe.getConcept();
-        String header = importHelperService.getHeaderName(fe);
-        FieldDescriptorStrategy strategy = getStrategy(concept.getName(),concept.getDataType());
+        String header = ImportService.getHeaderName(fe);
+        FieldDescriptor strategy = getStrategy(concept.getDataType());
 
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
-        String editable = null;
 
-        if (fe.getKeyValues() != null &&
-                fe.getKeyValues().getKeyValue(KeyType.editable) != null &&
-                fe.getKeyValues().getKeyValue(KeyType.editable).getValue().equals(false)) {
-            editable = "The value can be auto-calculated if not entered";
-        }
-
-        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, editable, false);
+        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, false);
     }
 }

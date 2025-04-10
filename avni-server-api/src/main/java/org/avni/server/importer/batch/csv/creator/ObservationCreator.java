@@ -203,7 +203,7 @@ public class ObservationCreator {
                     return formElements;
                 })
                 .flatMap(List::stream)
-                .filter(fel -> fel.getConcept().equals(concept))
+                .filter(formElement -> formElement.getConcept().equals(concept))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No form element linked to concept found"));
     }

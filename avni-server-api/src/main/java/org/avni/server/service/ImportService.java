@@ -26,12 +26,11 @@ import java.util.stream.Stream;
 
 @Service
 public class ImportService implements ImportLocationsConstants {
-
+    private static final Logger logger = LoggerFactory.getLogger(ImportService.class);
     private static final Random RANDOM = new Random();
 
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
-    private static final Logger logger = LoggerFactory.getLogger(ProgramEnrolmentWriter.class);
     private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
@@ -381,13 +380,13 @@ public class ImportService implements ImportLocationsConstants {
                 .getApplicableFormElements()
                 .stream()
                 .filter(formElement -> !ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType()))
-                .map(this::getHeaderName)
+                .map(ImportService::getHeaderName)
                 .collect(Collectors.toList());
         concatenatedString = concatenatedString.concat(String.join(STRING_CONSTANT_SEPARATOR, conceptNames));
         return concatenatedString;
     }
 
-    String getHeaderName(FormElement formElement) {
+    public static String getHeaderName(FormElement formElement) {
         String conceptName = formElement.getConcept().getName();
         if (formElement.getGroup() != null) {
             FormElement parentFormElement = formElement.getGroup();

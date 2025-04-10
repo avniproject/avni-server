@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.application.FormMapping;
-import org.avni.server.service.ImportHelperService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -17,11 +16,6 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
     public final static String enrolmentLocation = "Enrolment Location";
     public final static String exitLocation = "Exit Location";
 
-    public ProgramEnrolmentHeadersCreator(
-            ImportHelperService importHelperService) {
-        super(importHelperService);
-    }
-
     @Override
     protected List<HeaderField> buildFields(FormMapping formMapping) {
         List<HeaderField> fields = new ArrayList<>();
@@ -35,6 +29,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
         fields.add(new HeaderField(exitLocation, "", false, null, "Format: (21.5135243,85.6731848)", null));
 
         fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
 
         return fields;
     }

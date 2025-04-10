@@ -1,5 +1,6 @@
 package org.avni.server.service.builder;
 
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.List;
 
@@ -71,5 +72,11 @@ public class TestFormService {
         }
         formRepository.save(form);
         return form;
+    }
+
+    public void addDecisionConcepts(Long formId, Concept ... concepts) {
+        Form form = formRepository.findEntity(formId);
+        Arrays.stream(concepts).forEach(form::addDecisionConcept);
+        formRepository.save(form);
     }
 }

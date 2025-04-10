@@ -15,7 +15,7 @@ import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.framework.security.UserContextHolder;
-import org.avni.server.service.ImportHelperService;
+import org.avni.server.service.ImportService;
 import org.avni.server.service.OrganisationConfigService;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,9 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegrationTest {
-
     @Mock
-    private ImportHelperService importHelperService;
+    private ImportService importService;
 
     @Mock
     private OrganisationConfigService organisationConfigService;
@@ -64,7 +63,7 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         when(formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(subjectType, FormType.IndividualProfile))
                 .thenReturn(Collections.singletonList(formMapping));
 
-        List<FieldDescriptorStrategy> strategyList = Arrays.asList(
+        List<FieldDescriptor> strategyList = Arrays.asList(
                 new CodedFieldDescriptor(),
                 new DateFieldDescriptor(),
                 new TextFieldDescriptor(),
@@ -72,7 +71,6 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         );
 
         subjectHeadersCreator = new SubjectHeadersCreator(
-                importHelperService,
                 organisationConfigService,
                 addressLevelTypeRepository
         );

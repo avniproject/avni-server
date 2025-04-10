@@ -2,6 +2,7 @@ package org.avni.server.service;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
+import org.avni.server.dao.SubjectTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
@@ -9,15 +10,16 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SubjectImportService extends AbstractSampleFileExportService {
-
     private final SubjectHeadersCreator subjectHeadersCreator;
+    private final SubjectTypeRepository subjectTypeRepository;
 
     public SubjectImportService(
-            ImportHelperService importHelperService,
             FormMappingRepository formMappingRepository,
-            SubjectHeadersCreator subjectHeadersCreator) {
-        super(importHelperService, formMappingRepository);
+            SubjectHeadersCreator subjectHeadersCreator,
+            SubjectTypeRepository subjectTypeRepository) {
+        super(formMappingRepository);
         this.subjectHeadersCreator = subjectHeadersCreator;
+        this.subjectTypeRepository = subjectTypeRepository;
     }
 
     @Override
@@ -26,9 +28,8 @@ public class SubjectImportService extends AbstractSampleFileExportService {
     }
 
     public FormMapping getFormMapping(String[] uploadSpec) {
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(
-                importHelperService.getSubjectType(uploadSpec[1]).getUuid(),
+        return formMappingRepository.getRequiredFormMapping(
+                subjectTypeRepository.findByUuid(uploadSpec[1]).getUuid(),
                 null, null, FormType.IndividualProfile);
-        return formMapping;
     }
 }

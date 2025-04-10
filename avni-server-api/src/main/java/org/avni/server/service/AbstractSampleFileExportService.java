@@ -7,13 +7,10 @@ import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import static org.avni.server.service.ImportLocationsConstants.STRING_CONSTANT_SEPARATOR;
 
 public abstract class AbstractSampleFileExportService implements SampleFileExport {
-    protected final ImportHelperService importHelperService;
     protected final FormMappingRepository formMappingRepository;
 
     public AbstractSampleFileExportService(
-            ImportHelperService importHelperService,
             FormMappingRepository formMappingRepository) {
-        this.importHelperService = importHelperService;
         this.formMappingRepository = formMappingRepository;
     }
 
@@ -31,5 +28,4 @@ public abstract class AbstractSampleFileExportService implements SampleFileExpor
     protected abstract HeaderCreator getHeaders();
 
     public abstract FormMapping getFormMapping(String[] uploadSpec);
-
 }

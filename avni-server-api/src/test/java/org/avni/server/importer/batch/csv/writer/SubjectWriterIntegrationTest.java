@@ -65,7 +65,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Date Concept\"",
                 "\"Text Concept\"",
                 "\"Numeric Concept\"",
-                "\"Notes Concept\"");
+                "\"Notes Concept\"",
+                "\"Multi Select Decision Coded\"");
     }
 
     private String[] validDataRow() {
@@ -86,8 +87,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "2020-01-01",
                 "text",
                 "123",
-                "1",
-                "some notes");
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"");
     }
 
     private String[] validDataRowWithoutLegacyId() {
@@ -108,8 +109,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "2020-01-01",
                 "text",
                 "123",
-                "1",
-                "some notes");
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"");
     }
 
     private String[] dataRowWithWrongValues() {
@@ -130,7 +131,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "shouldHaveBeenADate",
                 "text",
                 "shouldHaveBeenANumber",
-                "some notes");
+                "some notes",
+                "\"MSDC Aswer 1\", \"MSDC Answer 2\"");
     }
 
     private String[] dataRowWithCodedAnswersInDifferentCase() {
@@ -151,8 +153,8 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "2020-01-01",
                 "text",
                 "123",
-                "1",
-                "some notes");
+                "some notes",
+                "\"MSDC Answer 1\", \"msdc answer 2\"");
     }
 
     @Test
@@ -174,9 +176,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "\"Date Concept\"",
                         "\"Text Concept\"",
                         "\"Numeric Concept\"",
-                        "\"Notes Concept\""),
+                        "\"Notes Concept\"",
+                        "\"Multi Selec Decision Coded\""),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - Single Select Coded, Date Of Birth, Date Of Registration, District, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Date Of Birt, Singl Select Coded, Id from previou system, Date Of Registratio, Distric included in file. Please refer to sample file for valid list of headers.");
+                "Mandatory columns are missing from uploaded file - Single Select Coded, Date Of Birth, Date Of Registration, Multi Select Decision Coded, District, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Date Of Birt, Singl Select Coded, Id from previou system, Date Of Registratio, Distric, Multi Selec Decision Coded included in file. Please refer to sample file for valid list of headers.");
     }
 
     @Test
@@ -198,12 +201,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Date Concept\"",
                 "\"Text Concept\"",
                 "\"Numeric Concept\"",
-                "\"Notes Concept\"");
+                "\"Notes Concept\"",
+                " \"Multi Select Decision Coded\"");
         String[] dataRow = validDataRow();
         subjectWriter.write(Chunk.of(new Row(headers, dataRow)));
         Individual subject = individualRepository.findByLegacyId("ABCD");
         ObservationCollection observations = subject.getObservations();
-        assertEquals(6, observations.size());
+        assertEquals(7, observations.size());
         assertEquals("John", subject.getFirstName());
     }
 
@@ -222,6 +226,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         singleSelectConcepts.add(singleSelectCoded);
         Concept multiSelectCoded = testConceptService.createCodedConcept("Multi Select Coded", "MSC Answer 1",
                 "MSC Answer 2", "MSC Answer 3", "MSC Answer 4");
+        Concept multiSelectDecisionCoded = testConceptService.createCodedConcept("Multi Select Decision Coded", "MSDC Answer 1", "MSDC Answer 2", "MSDC Answer 3", "MSDC Answer 4");
         multiSelectConcepts.add(multiSelectCoded);
         singleSelectConcepts.add(testConceptService.createConcept("Date Concept", ConceptDataType.Date));
         singleSelectConcepts.add(testConceptService.createConcept("Text Concept", ConceptDataType.Text));
@@ -239,6 +244,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         FormMapping registrationFormMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
                 singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
                 multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()));
+        testFormService.addDecisionConcepts(registrationFormMapping.getForm().getId(), multiSelectDecisionCoded);
 
         AddressLevel bihar = testLocationService
                 .save(new AddressLevelBuilder().withDefaultValuesForNewEntity().title("Bihar").type(state).build());
@@ -256,13 +262,13 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
 
         subjectWriter.write(Chunk.of(new Row(header, dataRow)));
         Individual subject = individualRepository.findByLegacyId("ABCD");
-        assertEquals(6, subject.getObservations().size());
+        assertEquals(7, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
 
         // allow edit
         subjectWriter.write(Chunk.of(new Row(header, dataRow)));
         subject = individualRepository.findByLegacyId("ABCD");
-        assertEquals(6, subject.getObservations().size());
+        assertEquals(7, subject.getObservations().size());
         assertEquals("John", subject.getFirstName());
     }
 
@@ -290,7 +296,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     public void shouldFailValidationIfObservationValuesAreWrong() {
         failure(validHeader(),
                 dataRowWithWrongValues(),
-                "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
+                "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {

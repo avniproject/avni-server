@@ -8,13 +8,12 @@ import org.avni.server.common.AbstractControllerIntegrationTest;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.dao.OrganisationConfigRepository;
-import org.avni.server.domain.AddressLevelType;
-import org.avni.server.domain.JsonObject;
-import org.avni.server.domain.OrganisationConfig;
-import org.avni.server.domain.SubjectType;
+import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
+import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
+import org.avni.server.service.builder.TestFormService;
 import org.avni.server.service.builder.TestSubjectTypeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +31,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 @Transactional
 public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerIntegrationTest {
-
     @Autowired
     private SubjectHeadersCreator subjectHeadersCreator;
 
@@ -51,6 +49,12 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
     @Autowired
     private TestDataSetupService testDataSetupService;
 
+    @Autowired
+    private TestFormService testFormService;
+
+    @Autowired
+    private TestConceptService testConceptService;
+
     private FormMapping formMapping;
     private SubjectType subjectType;
     private long organisationId;
@@ -68,7 +72,9 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
                 .build();
         testSubjectTypeService.createWithDefaults(subjectType);
 
+        Concept multiSelectDecisionCoded = testConceptService.createCodedConcept("Multi Select Decision Coded", "MSDC Answer 1", "MSDC Answer 2", "MSDC Answer 3", "MSDC Answer 4");
         formMapping = formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(subjectType, FormType.IndividualProfile).getFirst();
+        testFormService.addDecisionConcepts(formMapping.getForm().getId(), multiSelectDecisionCoded);
 
         AddressLevelType district = new AddressLevelTypeBuilder()
                 .name("District")
@@ -84,7 +90,6 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
                 .parent(district)
                 .build();
         addressLevelTypeRepository.save(village);
-
     }
 
     @Test
@@ -99,6 +104,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         assertTrue(containsHeader(headers, SubjectHeadersCreator.registrationLocation));
         assertTrue(containsHeader(headers, "Village"), "Should include the address level type");
         assertTrue(containsHeader(headers, "District"), "Should include the address level type");
+        assertTrue(containsHeader(headers, "\"Multi Select Decision Coded\""));
     }
 
     @Test

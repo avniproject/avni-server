@@ -6,7 +6,6 @@ import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.SubjectType;
-import org.avni.server.service.ImportHelperService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.stereotype.Component;
@@ -38,10 +37,8 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     private final AddressLevelTypeRepository addressLevelTypeRepository;
 
     public SubjectHeadersCreator(
-            ImportHelperService importHelperService,
             OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository) {
-        super(importHelperService);
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
     }
@@ -78,6 +75,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
 
         fields.addAll(generateAddressFields(formMapping));
         fields.addAll(generateConceptFields(formMapping));
+        fields.addAll(generateDecisionConceptFields(formMapping.getForm()));
 
         return fields;
     }
