@@ -14,8 +14,8 @@ public class CodedFieldDescriptor implements FieldDescriptorStrategy {
                 .map(ca -> ca.getAnswerConcept().getName())
                 .sorted()
                 .collect(Collectors.joining(", ")) + "}";
-        return fe.isSingleSelect() ? values + " Only single value allowed."
-                : values + " Format: Separate multiple values by a comma.";
+        return fe.isSingleSelect() ? values + " Only single value allowed"
+                : values + " Format: Separate multiple values by a comma";
     }
 
     @Override
