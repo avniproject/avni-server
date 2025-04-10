@@ -5,12 +5,13 @@ import org.avni.server.application.FormType;
 import org.avni.server.dao.ProgramEnrolmentRepository;
 import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.*;
-import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
+import org.avni.server.domain.Individual;
+import org.avni.server.domain.Program;
+import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.ValidationException;
 import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.ProgramEnrolmentService;
 import org.avni.server.util.ValidationUtil;
@@ -30,7 +31,6 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     private final ProgramEnrolmentRepository programEnrolmentRepository;
     private final SubjectCreator subjectCreator;
     private final DateCreator dateCreator;
-    private final ProgramCreator programCreator;
     private final FormMappingRepository formMappingRepository;
     private final ObservationCreator observationCreator;
     private final ProgramEnrolmentService programEnrolmentService;
@@ -40,21 +40,14 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
     @Autowired
     public ProgramEnrolmentWriter(ProgramEnrolmentRepository programEnrolmentRepository,
                                   SubjectCreator subjectCreator,
-                                  ProgramCreator programCreator,
                                   FormMappingRepository formMappingRepository,
-                                  ObservationService observationService,
-                                  RuleServerInvoker ruleServerInvoker,
-                                  VisitCreator visitCreator,
-                                  DecisionCreator decisionCreator,
                                   ObservationCreator observationCreator,
                                   ProgramEnrolmentService programEnrolmentService,
-                                  EntityApprovalStatusWriter entityApprovalStatusWriter,
                                   OrganisationConfigService organisationConfigService,
                                   ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator, ProgramRepository programRepository) {
         super(organisationConfigService);
         this.programEnrolmentRepository = programEnrolmentRepository;
         this.subjectCreator = subjectCreator;
-        this.programCreator = programCreator;
         this.formMappingRepository = formMappingRepository;
         this.observationCreator = observationCreator;
         this.programEnrolmentService = programEnrolmentService;
@@ -93,16 +86,9 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
                 allErrorMsgs, String.format("%s is mandatory", ProgramEnrolmentHeadersCreator.enrolmentDate)
         );
         if (enrolmentDate != null) programEnrolment.setEnrolmentDateTime(enrolmentDate.toDateTimeAtStartOfDay());
-        LocalDate exitDate = dateCreator.getDate(
-                row,
-                ProgramEnrolmentHeadersCreator.exitDate,
-                allErrorMsgs, null
-        );
-        if (exitDate != null) programEnrolment.setProgramExitDateTime(exitDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();
         programEnrolment.setEnrolmentLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeadersCreator.enrolmentLocation, allErrorMsgs));
-        programEnrolment.setExitLocation(locationCreator.getGeoLocation(row, ProgramEnrolmentHeadersCreator.exitLocation, allErrorMsgs));
         programEnrolment.setProgram(program);
 
         programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations(), formMapping));

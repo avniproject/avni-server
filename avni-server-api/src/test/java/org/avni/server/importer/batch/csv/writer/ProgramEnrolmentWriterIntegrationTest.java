@@ -66,9 +66,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "Subject Id from previous system",
                 "Program",
                 "Enrolment Date",
-                "Exit Date",
                 "Enrolment Location",
-                "Exit Location",
                 "\"Single Select Coded\"");
     }
 
@@ -77,9 +75,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "ABCD",
                 "Program1",
                 "2020-01-01",
-                "",
                 "21.5135243,85.6731848",
-                "",
                 "SSC Answer 1");
     }
 
@@ -88,9 +84,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "ABCD",
                 "Program1",
                 "2020-01-01",
-                "",
                 "21.5135243,85.6731848",
-                "",
                 "SSC Answer 1");    }
 
     @Test
@@ -99,12 +93,10 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                 "Subject Id from previous system",
                 "Program",
                 "Enrolent Date",
-                "Exit Date",
                 "Enrolment Location",
-                "Exit llocation",
                 "\"Single SSSelect Coded\""),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - Single Select Coded, Exit Location, Enrolment Date, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Exit llocation, Enrolent Date, Id from previus system, Single SSSelect Coded included in file. Please refer to sample file for valid list of headers.");
+                "Mandatory columns are missing from uploaded file - Single Select Coded, Enrolment Date, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Enrolent Date, Id from previus system, Single SSSelect Coded included in file. Please refer to sample file for valid list of headers.");
     }
 
     @Override
