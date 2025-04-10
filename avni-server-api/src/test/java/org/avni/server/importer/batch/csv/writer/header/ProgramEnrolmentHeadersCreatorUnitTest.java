@@ -80,7 +80,7 @@ public class ProgramEnrolmentHeadersCreatorUnitTest extends AbstractControllerIn
         Arrays.sort(headers);
         Arrays.sort(description);
         assertEquals("Enrolment Date,Enrolment Location,Exit Date,Exit Location,Id from previous system,Program,Subject Id from previous system", String.join(",", headers));
-        assertEquals("\"| Mandatory | Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file) |\",\"| Optional | Can be used to later identify the entry |\",\"| Optional | Format: DD-MM-YYYY or YYYY-MM-DD |\",\"| Optional | Optional | Format: (21.5135243,85.6731848) |\",\"| Optional | Optional | Format: (21.5135243,85.6731848) |\",\"| Optional | Optional | Format: DD-MM-YYYY or YYYY-MM-DD |\",\"| TestProgram |\"", String.join(",", description));
+        assertEquals("\"Mandatory. Subject id used in subject upload or UUID of subject (can be identified from address bar in Data Entry App or Longitudinal export file)\",\"Optional. Can be used to later identify the entry\",\"Optional. Format: DD-MM-YYYY or YYYY-MM-DD\",\"Optional. Format: (21.5135243,85.6731848)\",\"Optional. Format: (21.5135243,85.6731848)\",\"Optional. Format: DD-MM-YYYY or YYYY-MM-DD\",\"TestProgram\"", String.join(",", description));
     }
 
     @Test
@@ -185,7 +185,7 @@ public class ProgramEnrolmentHeadersCreatorUnitTest extends AbstractControllerIn
         assertThat(headers, hasItemInArray("\"CodedConcept\""));
         assertThat(headers, hasItemInArray("\"ReadOnlyConcept\""));
 
-        assertThat(descriptions, hasItemInArray("\"| Optional | Any Text |\""));
+        assertThat(descriptions, hasItemInArray("\"Optional. Any Text\""));
         assertThat(descriptions, hasItemInArray("\"| Optional | Min value allowed: 2.0 Max value allowed: 5.0 |\""));
         assertThat(descriptions, hasItemInArray("\"| Optional | Format: DD-MM-YYYY |\""));
         assertThat(Arrays.asList(descriptions), hasItem(anyOf(
