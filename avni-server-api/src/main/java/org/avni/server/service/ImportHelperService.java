@@ -15,12 +15,14 @@ public class ImportHelperService {
 
     private final SubjectTypeRepository subjectTypeRepository;
     private final ProgramRepository programRepository;
+    private final EncounterTypeRepository encounterTypeRepository;
 
     @Autowired
     public ImportHelperService(
-            SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository) {
+            SubjectTypeRepository subjectTypeRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.programRepository = programRepository;
+        this.encounterTypeRepository = encounterTypeRepository;
     }
 
     public SubjectType getSubjectType(String subjectTypeName) {
@@ -39,7 +41,11 @@ public class ImportHelperService {
     }
 
     Program getProgram(String programName) {
-        Program program = programRepository.findByName(programName);
-        return program;
+        return programRepository.findByName(programName);
+    }
+
+    EncounterType getEncounterType(String encounterTypeName) {
+        return encounterTypeRepository.findByName(encounterTypeName);
     }
 }
+//Request processing failed: java.lang.NullPointerException: Cannot invoke "org.avni.server.domain.Program.getUuid()" because the return value of "org.avni.server.service.ImportHelperService.getProgram(String)" is null

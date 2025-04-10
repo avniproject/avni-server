@@ -30,6 +30,22 @@ public class HeaderField {
         return header;
     }
 
+    private String formatForCsv(String input) {
+        if (input == null) {
+            return "";
+        }
+
+        String cleaned = input.trim();
+        if (cleaned.startsWith("\"") && cleaned.endsWith("\"")) {
+            cleaned = cleaned.substring(1, cleaned.length() - 1);
+        }
+
+        if (cleaned.contains(",") || cleaned.contains("\"") || cleaned.contains("\n")) {
+            return "\"" + cleaned.replace("\"", "\"\"") + "\"";
+        }
+        return cleaned;
+    }
+
     public String getDescription() {
         List<String> parts = new ArrayList<>();
 
@@ -52,8 +68,13 @@ public class HeaderField {
             parts.add(editable);
         }
 
-        String result = parts.isEmpty() ? "" : "| " + String.join(" | ", parts) + " |";
-        return "\"" + result.replace("\"", "\"\"") + "\"";
+        if (parts.isEmpty()) {
+            return "";
+        } else if (parts.size() == 1) {
+            return formatForCsv(parts.getFirst());
+        } else {
+            return formatForCsv(String.join(". ", parts) + ".");
+        }
     }
 
 }
