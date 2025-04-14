@@ -282,7 +282,7 @@ public class DatabaseService implements IQuestionCreationService {
         createCustomQuestions();
     }
 
-    public void waitForSyncToComplete(Organisation organisation) throws InterruptedException {
+    private void waitForSyncToComplete(Organisation organisation) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         logger.info("Waiting for metabase database sync {}", organisation.getName());
         while (true) {

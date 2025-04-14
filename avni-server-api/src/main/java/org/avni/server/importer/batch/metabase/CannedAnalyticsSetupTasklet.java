@@ -67,7 +67,7 @@ public class CannedAnalyticsSetupTasklet implements Tasklet {
         groupContract.setName(Group.METABASE_USERS);
         groupsService.saveGroup(groupContract, organisation);
         metabaseService.setupMetabase();
-        databaseService.waitForSyncToComplete(organisation);
+        databaseService.syncDatabase();
         metabaseService.fixDatabaseSyncSchedule();
         databaseService.addCollectionItems();
         if (!organisationConfigService.isMetabaseSetupEnabled(organisation)) {
