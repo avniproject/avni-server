@@ -29,6 +29,7 @@ import org.avni.server.web.request.ResetPasswordRequest;
 import org.avni.server.web.request.UserContract;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
 import org.avni.server.web.validation.ValidationException;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -238,6 +239,9 @@ public class UserController {
         if (!emailIsValid(userContract.getEmail()))
             throw new ValidationException(String.format("Invalid email address %s", userContract.getEmail()));
         user.setEmail(userContract.getEmail());
+        if(user.isDisabledInCognito() && !userContract.isDisabledInCognito()){
+            user.setLastActivatedDateTime(new DateTime());
+        }
         user.setDisabledInCognito(userContract.isDisabledInCognito());
         userService.setPhoneNumber(userContract.getPhoneNumber(), user, userRegion);
 
@@ -293,6 +297,7 @@ public class UserController {
             } else {
                 if (user.isDisabledInCognito()) {
                     idpServiceFactory.getIdpService(user, isAdmin).enableUser(user);
+                    user.setLastActivatedDateTime(new DateTime());
                     user.setDisabledInCognito(false);
                     userRepository.save(user);
                     logger.info(String.format("Enabled previously disabled user '%s', UUID '%s'", user.getUsername(), user.getUuid()));

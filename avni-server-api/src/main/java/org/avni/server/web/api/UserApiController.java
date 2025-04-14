@@ -118,6 +118,7 @@ public class UserApiController {
             }
             IdpService idpService = idpServiceFactory.getIdpService(UserContextHolder.getOrganisation());
             user.setDisabledInCognito(false);
+            user.setLastActivatedDateTime(new DateTime());
             user.setAuditInfo(UserContextHolder.getUser());
             userRepository.save(user);
             idpService.enableUser(user);

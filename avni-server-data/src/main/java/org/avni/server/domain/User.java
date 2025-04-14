@@ -175,9 +175,6 @@ public class User implements IdHolder {
 
     public void setDisabledInCognito(boolean disabledInCognito) {
         this.disabledInCognito = disabledInCognito;
-        if (!disabledInCognito) {
-            setLastActivatedDateTime(new DateTime());
-        }
     }
 
     public Long getId() {

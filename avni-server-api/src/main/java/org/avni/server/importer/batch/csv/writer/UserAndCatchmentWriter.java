@@ -12,6 +12,7 @@ import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
 import org.avni.server.util.*;
 import org.avni.server.web.request.syncAttribute.UserSyncSettings;
+import org.joda.time.DateTime;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,17 +167,22 @@ public class UserAndCatchmentWriter implements ItemWriter<Row>, Serializable, Co
                 .with(UserSettings.ENABLE_BENEFICIARY_MODE, UserSettings.createEnableBeneficiaryMode(beneficiaryMode))
                 .withEmptyCheckAndTrim(UserSettings.ID_PREFIX, idPrefix));
 
-        user.setOrganisationId(organisation.getId());
-        user.setAuditInfo(currentUser);
-        user.setDisabledInCognito(!inferredActiveValue);
-        userService.save(user);
-        userService.addToGroups(user, groupsSpecified);
-        IdpService idpService = idpServiceFactory.getIdpService(organisation);
-
         boolean newActiveUser = isNewUser && inferredActiveValue;
         boolean newInactiveUser = isNewUser && !inferredActiveValue;
         boolean oldActiveUser = !isNewUser && inferredActiveValue;
         boolean oldInactiveUser = !isNewUser && !inferredActiveValue;
+
+
+        user.setOrganisationId(organisation.getId());
+        user.setAuditInfo(currentUser);
+        user.setDisabledInCognito(!inferredActiveValue);
+        if(newActiveUser){
+            user.setLastActivatedDateTime(new DateTime());
+        }
+        userService.save(user);
+        userService.addToGroups(user, groupsSpecified);
+        IdpService idpService = idpServiceFactory.getIdpService(organisation);
+
         if (newActiveUser) {
             idpService.createUser(user, organisationConfigService.getOrganisationConfig(organisation));
         } else if (newInactiveUser) {
