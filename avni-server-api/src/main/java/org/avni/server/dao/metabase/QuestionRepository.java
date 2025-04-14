@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import org.avni.server.domain.metabase.*;
+import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.util.ObjectMapperSingleton;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
@@ -99,7 +100,8 @@ public class QuestionRepository extends MetabaseConnector {
     }
 
     private MetabaseQuery createAdvancedQuery(String primaryTableName, QuestionConfig config, Database database) {
-        TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName, database.getName()));
+        String schemaName = UserContextHolder.getOrganisation().getSchemaName();
+        TableDetails primaryTable = databaseRepository.findTableDetailsByName(database, new TableDetails(primaryTableName, schemaName));
         FieldDetails breakoutField = databaseRepository.getOrgSchemaField(database, primaryTable.getName(), new FieldDetails(config.getBreakoutField()));
 
         MetabaseQueryBuilder builder = new MetabaseQueryBuilder(database, ObjectMapperSingleton.getObjectMapper().createArrayNode())

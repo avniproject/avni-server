@@ -106,17 +106,19 @@ public class DatabaseService implements IQuestionCreationService {
     @Override
     public void createQuestionForTable(String tableName) {
         Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
-        TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(tableName, database.getName()));
+        String schemaName = UserContextHolder.getOrganisation().getSchemaName();
+        TableDetails fetchedTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(tableName, schemaName));
         questionRepository.createQuestionForASingleTable(database, fetchedTableDetails);
     }
 
     private void createQuestionsForEntities(List<String> entityNames, FieldDetails addressFieldDetails, FieldDetails entityFieldDetails) {
+        String schemaName = UserContextHolder.getOrganisation().getSchemaName();
         Database database = databaseRepository.getDatabase(organisationService.getCurrentOrganisation());
-        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, database.getName()));
+        TableDetails fetchedAddressTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(ADDRESS_TABLE, schemaName));
         List<String> filteredEntities = filterOutExistingQuestions(entityNames);
 
         for (String entityName : filteredEntities) {
-            TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(entityName, database.getName()));
+            TableDetails fetchedEntityTableDetails = databaseRepository.findTableDetailsByName(database, new TableDetails(entityName, schemaName));
             createQuestionForTable(fetchedEntityTableDetails, fetchedAddressTableDetails, addressFieldDetails, entityFieldDetails);
         }
     }

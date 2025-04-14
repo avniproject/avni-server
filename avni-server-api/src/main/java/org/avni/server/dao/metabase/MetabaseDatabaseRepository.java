@@ -120,7 +120,7 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
                 .filter(tableDetail -> tableDetail.getName().equalsIgnoreCase(targetTable.getName())
                         && (tableDetail.getSchema().equalsIgnoreCase(database.getName()) == targetTable.getSchema().equalsIgnoreCase(database.getName())))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Table with name " + targetTable.getName() + " not found."));
+                .orElseThrow(() -> new RuntimeException("Table with name " + targetTable.getName() + " and schema: " + targetTable.getSchema() + " not found."));
     }
 
     public DatabaseSyncStatus getInitialSyncStatus(Database database) {

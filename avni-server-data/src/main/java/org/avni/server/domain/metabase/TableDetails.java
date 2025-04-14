@@ -5,14 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TableDetails {
-
-    public static final String DEFAULT_PUBLIC_SCHEMA = "public";
-
     public TableDetails() {
-    }
-
-    public TableDetails(String name) {
-        this(name, DEFAULT_PUBLIC_SCHEMA);
     }
 
     public TableDetails(String name, String schema) {
@@ -97,5 +90,14 @@ public class TableDetails {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("name='").append(name).append('\'');
+        sb.append(", schema='").append(schema).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }
