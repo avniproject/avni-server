@@ -29,7 +29,7 @@ public class SubjectImportService extends AbstractSampleFileExportService {
 
     public FormMapping getFormMapping(String[] uploadSpec) {
         return formMappingRepository.getRequiredFormMapping(
-                subjectTypeRepository.findByUuid(uploadSpec[1]).getUuid(),
+                subjectTypeRepository.findByName(uploadSpec[1]).getUuid(),
                 null, null, FormType.IndividualProfile);
     }
 }
