@@ -94,7 +94,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testBasicHeaderGeneration() {
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertNotNull(headers);
         assertTrue(headers.length > 0);
@@ -119,7 +119,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
         FormMapping personMapping = formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(personType, FormType.IndividualProfile).getFirst();
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(personMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(personMapping, null);
 
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.lastName));
@@ -141,7 +141,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
         FormMapping householdMapping = formMappingRepository.findBySubjectTypeAndFormFormTypeAndIsVoidedFalse(householdType, FormType.IndividualProfile).getFirst();
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(householdMapping);;
+        String[] headers = subjectHeadersCreator.getAllHeaders(householdMapping, null);;
 
         assertTrue(containsHeader(headers, SubjectHeadersCreator.firstName));
         assertTrue(containsHeader(headers, SubjectHeadersCreator.profilePicture));
@@ -164,7 +164,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
         formMappingRepository.save(anotherMapping);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, SubjectHeadersCreator.subjectTypeHeader));
     }
@@ -184,7 +184,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         )));
         organisationConfigRepository.save(config);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "Village"), "Should include Village as custom location");
         assertTrue(containsHeader(headers, "District"), "Should include District as it’s parent of Village");
@@ -205,7 +205,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         )));
         organisationConfigRepository.save(config);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "District"), "Should include District as custom location");
         assertFalse(containsHeader(headers, "Village"), "Should exclude Village as it’s child of District");
@@ -226,7 +226,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
         )));
         organisationConfigRepository.save(config);
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "Village"), "Should include default address level types subjectTypeUUID doesn’t match");
         assertTrue(containsHeader(headers, "District"), "Should include default address level types subjectTypeUUID doesn’t match");
@@ -234,7 +234,7 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testAddressFieldsWithoutCustomRegistrationLocations() {
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping);
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
 
         assertTrue(containsHeader(headers, "Village"), "Should include address level types");
         assertTrue(containsHeader(headers, "District"), "Should include address level types");
@@ -242,10 +242,10 @@ public class SubjectHeadersCreatorIntegrationTest extends AbstractControllerInte
 
     @Test
     public void testDescriptionsGeneration() {
-        String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping);
+        String[] descriptions = subjectHeadersCreator.getAllDescriptions(formMapping, null);
 
         assertNotNull(descriptions);
-        assertEquals(subjectHeadersCreator.getAllHeaders(formMapping).length, descriptions.length,
+        assertEquals(subjectHeadersCreator.getAllHeaders(formMapping, null).length, descriptions.length,
                 "Descriptions array should match headers array length");
     }
 

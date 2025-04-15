@@ -139,7 +139,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         testLocationService.save(new AddressLevelBuilder().withDefaultValuesForNewEntity()
                 .title("District1").parent(bihar).type(district).build());
 
-        String[] allHeaders = programEnrolmentHeadersCreator.getAllHeaders(enrolmentFormMapping);
+        String[] allHeaders = programEnrolmentHeadersCreator.getAllHeaders(enrolmentFormMapping,null);
         System.out.println(String.join(",", allHeaders));
     }
 

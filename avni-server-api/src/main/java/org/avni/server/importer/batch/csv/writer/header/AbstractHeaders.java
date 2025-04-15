@@ -34,7 +34,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
 
     @Override
     public String[] getAllHeaders() {
-        throw new UnsupportedOperationException("Use getAllHeaders(FormMapping) with runtime data instead");
+        throw new UnsupportedOperationException("Use getAllHeaders(formMapping, Mode) with runtime data instead");
     }
 
     @Override

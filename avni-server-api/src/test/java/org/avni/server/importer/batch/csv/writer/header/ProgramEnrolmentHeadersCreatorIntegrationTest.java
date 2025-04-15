@@ -77,8 +77,8 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
 
     @Test
     public void testBasicHeaderGeneration() {
-        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping);
-        String[] description = programEnrolmentHeadersCreator.getAllDescriptions(formMapping);
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(formMapping, null);
+        String[] description = programEnrolmentHeadersCreator.getAllDescriptions(formMapping, null);
 
         Arrays.sort(headers);
         Arrays.sort(description);
@@ -144,8 +144,8 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
 
         formRepository.save(testForm);
 
-        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(newFormMapping);
-        String[] description = programEnrolmentHeadersCreator.getAllDescriptions(newFormMapping);
+        String[] headers = programEnrolmentHeadersCreator.getAllHeaders(newFormMapping, null);
+        String[] description = programEnrolmentHeadersCreator.getAllDescriptions(newFormMapping, null);
         // sort headers
         Arrays.sort(headers);
         Arrays.sort(description);
@@ -155,10 +155,10 @@ public class ProgramEnrolmentHeadersCreatorIntegrationTest extends AbstractContr
 
     @Test
     public void testDescriptionsGeneration() {
-        String[] descriptions = programEnrolmentHeadersCreator.getAllDescriptions(formMapping);
+        String[] descriptions = programEnrolmentHeadersCreator.getAllDescriptions(formMapping, null);
 
         assertNotNull(descriptions);
-        assertEquals(programEnrolmentHeadersCreator.getAllHeaders(formMapping).length, descriptions.length,
+        assertEquals(programEnrolmentHeadersCreator.getAllHeaders(formMapping, null).length, descriptions.length,
                 "Descriptions array should match headers array length");
     }
 
