@@ -34,7 +34,7 @@ public class UsersAndCatchmentsHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping) {
+    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
         return getAllHeaders();
     }
 
@@ -44,7 +44,7 @@ public class UsersAndCatchmentsHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllDescriptions(FormMapping formMapping) {
+    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
         return new String[0];
     }
 }

@@ -15,7 +15,7 @@ public class ProgramEnrolmentHeadersCreator extends AbstractHeaders {
     public final static String enrolmentLocation = "Enrolment Location";
 
     @Override
-    protected List<HeaderField> buildFields(FormMapping formMapping) {
+    protected List<HeaderField> buildFields(FormMapping formMapping, Mode mode) {
         List<HeaderField> fields = new ArrayList<>();
 
         fields.add(new HeaderField(id, "Can be used to later identify the entry", false, null, null, null));

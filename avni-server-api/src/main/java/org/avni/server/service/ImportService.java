@@ -1,5 +1,6 @@
 package org.avni.server.service;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.avni.server.application.*;
 import org.avni.server.dao.*;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -7,11 +8,12 @@ import org.avni.server.domain.Locale;
 import org.avni.server.domain.*;
 import org.avni.server.framework.security.UserContextHolder;
 import org.avni.server.importer.batch.csv.writer.LocationWriter;
-import org.avni.server.importer.batch.csv.writer.ProgramEnrolmentWriter;
 import org.avni.server.importer.batch.csv.writer.header.*;
+import org.avni.server.util.BadRequestError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -31,7 +33,6 @@ public class ImportService implements ImportLocationsConstants {
 
     private final SubjectTypeRepository subjectTypeRepository;
     private final FormMappingRepository formMappingRepository;
-    private final ProgramRepository programRepository;
     private final EncounterTypeRepository encounterTypeRepository;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
     private final OrganisationConfigRepository organisationConfigRepository;
@@ -41,12 +42,12 @@ public class ImportService implements ImportLocationsConstants {
     private final ConceptService conceptService;
     private final SubjectImportService subjectImportService;
     private final ProgramImportService programImportService;
+    private final EncounterImportService encounterImportService;
 
     @Autowired
-    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, ProgramRepository programRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService, SubjectImportService subjectImportService, ProgramImportService programImportService) {
+    public ImportService(SubjectTypeRepository subjectTypeRepository, FormMappingRepository formMappingRepository, EncounterTypeRepository encounterTypeRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationConfigRepository organisationConfigRepository, GroupRepository groupRepository, SubjectTypeService subjectTypeService, FormService formService, ConceptService conceptService, SubjectImportService subjectImportService, ProgramImportService programImportService, EncounterImportService encounterImportService) {
         this.subjectTypeRepository = subjectTypeRepository;
         this.formMappingRepository = formMappingRepository;
-        this.programRepository = programRepository;
         this.encounterTypeRepository = encounterTypeRepository;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
         this.organisationConfigRepository = organisationConfigRepository;
@@ -56,6 +57,7 @@ public class ImportService implements ImportLocationsConstants {
         this.conceptService = conceptService;
         this.subjectImportService = subjectImportService;
         this.programImportService = programImportService;
+        this.encounterImportService = encounterImportService;
     }
 
     public HashMap<String, FormMappingInfo> getImportTypes() {
@@ -147,18 +149,10 @@ public class ImportService implements ImportLocationsConstants {
 
         switch (uploadSpec[STARTING_INDEX]) {
             case "Subject" -> {
-                return subjectImportService.generateSampleFile(uploadSpec);
+                return subjectImportService.generateSampleFile(uploadSpec, null);
             }
             case "ProgramEnrolment" -> {
-                return programImportService.generateSampleFile(uploadSpec);
-            }
-            case "ProgramEncounter" -> {
-                EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
-                return getProgramEncounterSampleFile(uploadSpec, response, encounterType);
-            }
-            case "Encounter" -> {
-                EncounterType encounterType = encounterTypeRepository.findByName(uploadSpec[1]);
-                return getEncounterSampleFile(uploadSpec, response, encounterType);
+                return programImportService.generateSampleFile(uploadSpec, null);
             }
             case "GroupMembers" -> {
                 return getGroupMembersSampleFile(uploadSpec, response, getSubjectType(uploadSpec[1]));
@@ -166,6 +160,33 @@ public class ImportService implements ImportLocationsConstants {
         }
 
         throw new UnsupportedOperationException(String.format("Sample file format for %s not supported", uploadType));
+    }
+
+    public void getSampleImportFile(String uploadType,
+                                    String locationHierarchy,
+                                    LocationWriter.LocationUploadMode locationUploadMode,
+                                    String encounterUploadMode,
+                                    HttpServletResponse response) throws IOException {
+        response.setContentType("text/csv");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + uploadType + ".csv\"");
+
+        if (uploadType.equals("locations")) {
+            if (!StringUtils.hasText(locationHierarchy)) {
+                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": " + locationHierarchy);
+            }
+            if (locationUploadMode == null) {
+                throw new BadRequestError("Missing value for request param \"locationUploadMode\"");
+            }
+            response.getWriter().write(getLocationsSampleFile(locationUploadMode, locationHierarchy));
+        } else if (uploadType.startsWith("Encounter---") || uploadType.startsWith("ProgramEncounter---")) {
+
+            EncounterUploadMode mode = EncounterUploadMode.fromString(encounterUploadMode);
+            String[] uploadSpec = uploadType.split("---");
+            response.getWriter().write(encounterImportService.generateSampleFile(uploadSpec, mode));
+
+        } else {
+            response.getWriter().write(getSampleFile(uploadType));
+        }
     }
 
     public String getLocationsSampleFile(LocationWriter.LocationUploadMode locationUploadMode, String locationHierarchy) {
@@ -193,7 +214,7 @@ public class ImportService implements ImportLocationsConstants {
             throw new RuntimeException(String.format("Invalid value specified for locationHierarchy: %s", locationHierarchy));
         }
         List<Long> selectedLocationHierarchy = Arrays.stream(locationHierarchy.split("\\."))
-                .map(Long::parseLong).collect(Collectors.toList());
+                .map(Long::parseLong).toList();
         return addressLevelTypeRepository.findAllByIsVoidedFalse().stream()
                 .sorted(Comparator.comparingDouble(AddressLevelType::getLevel).reversed())
                 .filter(alt -> selectedLocationHierarchy.contains(alt.getId()))
@@ -210,7 +231,7 @@ public class ImportService implements ImportLocationsConstants {
                                               List<FormElement> formElementNamesForLocationTypeFormElements) {
         List<String> headers = new ArrayList<>();
         if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
-            headers.addAll(addressLevelTypes.stream().map(AddressLevelType::getName).collect(Collectors.toList()));
+            headers.addAll(addressLevelTypes.stream().map(AddressLevelType::getName).toList());
         } else {
             headers.add(COLUMN_NAME_LOCATION_WITH_FULL_HIERARCHY);
             headers.add(COLUMN_NAME_NEW_LOCATION_NAME);
@@ -218,7 +239,7 @@ public class ImportService implements ImportLocationsConstants {
         }
         headers.add(COLUMN_NAME_GPS_COORDINATES);
         headers.addAll(formElementNamesForLocationTypeFormElements.stream()
-                .map(formElement -> formElement.getConcept().getName()).collect(Collectors.toList()));
+                .map(formElement -> formElement.getConcept().getName()).toList());
         return listAsSeparatedString(headers);
     }
 
@@ -227,7 +248,7 @@ public class ImportService implements ImportLocationsConstants {
         List<String> descriptions = new ArrayList<>();
         if (LocationWriter.LocationUploadMode.isCreateMode(locationUploadMode)) {
             descriptions.addAll(addressLevelTypes.stream()
-                            .map(alt -> EXAMPLE + alt.getName() + STRING_CONSTANT_ONE).collect(Collectors.toList()));
+                            .map(alt -> EXAMPLE + alt.getName() + STRING_CONSTANT_ONE).toList());
             descriptions.set(STARTING_INDEX, descriptions.get(STARTING_INDEX).concat(PARENT_LOCATION_REQUIRED));
         } else {
             descriptions.add(LOCATION_WITH_FULL_HIERARCHY_DESCRIPTION);
@@ -236,7 +257,7 @@ public class ImportService implements ImportLocationsConstants {
         }
         descriptions.add(GPS_COORDINATES_EXAMPLE);
         descriptions.addAll(formElementNamesForLocationTypeFormElements.stream()
-                .map(fe -> ALLOWED_VALUES + conceptService.getAllowedValuesForSyncConcept(fe.getConcept())).collect(Collectors.toList()));
+                .map(fe -> ALLOWED_VALUES + conceptService.getAllowedValuesForSyncConcept(fe.getConcept())).toList());
         return  listAsSeparatedString(descriptions);
     }
 
@@ -323,18 +344,6 @@ public class ImportService implements ImportLocationsConstants {
         return headersForSubjectTypesWithSyncAttributes;
     }
 
-    private String getEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
-        response = addToResponse(response, Arrays.asList(new EncounterHeaders(encounterType).getAllHeaders()));
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[2]).getUuid(), null, getEncounterType(uploadSpec[1]).getUuid(), FormType.Encounter);
-        return addToResponse(response, formMapping);
-    }
-
-    private String getProgramEncounterSampleFile(String[] uploadSpec, String response, EncounterType encounterType) {
-        response = addToResponse(response, Arrays.asList(new ProgramEncounterHeaders(encounterType).getAllHeaders()));
-        FormMapping formMapping = formMappingRepository.getRequiredFormMapping(getSubjectType(uploadSpec[2]).getUuid(), null, getEncounterType(uploadSpec[1]).getUuid(), FormType.ProgramEncounter);
-        return addToResponse(response, formMapping);
-    }
-
     private String getGroupMembersSampleFile(String[] uploadSpec, String response, SubjectType subjectType) {
         if (subjectType.isHousehold()) {
             response = addToResponse(response, Arrays.asList(new HouseholdMemberHeaders(subjectType).getAllHeaders()));
@@ -346,16 +355,10 @@ public class ImportService implements ImportLocationsConstants {
         return response;
     }
 
-    private EncounterType getEncounterType(String encounterTypeName) {
+     EncounterType getEncounterType(String encounterTypeName) {
         EncounterType encounterType = encounterTypeRepository.findByName(encounterTypeName);
         assertNotNull(encounterType, encounterTypeName);
         return encounterType;
-    }
-
-    private Program getProgram(String programName) {
-        Program program = programRepository.findByName(programName);
-        assertNotNull(program, programName);
-        return program;
     }
 
     SubjectType getSubjectType(String subjectTypeName) {
@@ -370,20 +373,6 @@ public class ImportService implements ImportLocationsConstants {
             logger.error(errorMessage);
             throw new UnsupportedOperationException(errorMessage);
         }
-    }
-
-    String addToResponse(String str, FormMapping formMapping) {
-        assertNotNull(formMapping, "Form mapping");
-        String concatenatedString = addCommaIfNecessary(str);
-        List<String> conceptNames = formMapping
-                .getForm()
-                .getApplicableFormElements()
-                .stream()
-                .filter(formElement -> !ConceptDataType.isQuestionGroup(formElement.getConcept().getDataType()))
-                .map(ImportService::getHeaderName)
-                .collect(Collectors.toList());
-        concatenatedString = concatenatedString.concat(String.join(STRING_CONSTANT_SEPARATOR, conceptNames));
-        return concatenatedString;
     }
 
     public static String getHeaderName(FormElement formElement) {

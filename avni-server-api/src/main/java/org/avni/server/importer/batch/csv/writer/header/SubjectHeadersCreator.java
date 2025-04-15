@@ -44,7 +44,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     }
 
     @Override
-    protected List<HeaderField> buildFields(FormMapping formMapping) {
+    protected List<HeaderField> buildFields(FormMapping formMapping, Mode mode) {
         SubjectType subjectType = formMapping.getSubjectType();
         List<HeaderField> fields = new ArrayList<>();
 

@@ -16,7 +16,7 @@ public class TxnDataHeaderValidator {
         List<String> headerList = new ArrayList<>(Arrays.asList(headers));
         List<String> allErrorMsgs = new ArrayList<>();
         List<String> providedIntendedHeaders = headerList.stream().map(S::unDoubleQuote).toList();
-        String[] expectedHeaders = headerCreator.getAllHeaders(formMapping);
+        String[] expectedHeaders = headerCreator.getAllHeaders(formMapping,null);
         String[] expectedIntendedHeaders = Arrays.stream(expectedHeaders).map(S::unDoubleQuote).toArray(String[]::new);
         checkForMissingHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));
         checkForUnknownHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));

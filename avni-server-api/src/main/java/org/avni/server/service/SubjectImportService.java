@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SubjectImportService extends AbstractSampleFileExportService {
+    private final FormMappingRepository formMappingRepository;
     private final SubjectHeadersCreator subjectHeadersCreator;
     private final SubjectTypeRepository subjectTypeRepository;
 
@@ -17,7 +18,7 @@ public class SubjectImportService extends AbstractSampleFileExportService {
             FormMappingRepository formMappingRepository,
             SubjectHeadersCreator subjectHeadersCreator,
             SubjectTypeRepository subjectTypeRepository) {
-        super(formMappingRepository);
+        this.formMappingRepository = formMappingRepository;
         this.subjectHeadersCreator = subjectHeadersCreator;
         this.subjectTypeRepository = subjectTypeRepository;
     }

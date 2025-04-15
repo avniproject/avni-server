@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements HeaderCreator {
-    private FieldDescriptor getStrategy(String dataType) {
+    private static FieldDescriptor getStrategy(String dataType) {
         if (dataType.equals(ConceptDataType.Coded.name())) {
             return new CodedFieldDescriptor();
         } else if (dataType.equals(ConceptDataType.Date.name())) {
@@ -38,8 +38,8 @@ public abstract class AbstractHeaders implements HeaderCreator {
     }
 
     @Override
-    public String[] getAllHeaders(FormMapping formMapping) {
-        return buildFields(formMapping).stream()
+    public String[] getAllHeaders(FormMapping formMapping, Mode mode) {
+        return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getHeader)
                 .toArray(String[]::new);
     }
@@ -54,18 +54,19 @@ public abstract class AbstractHeaders implements HeaderCreator {
                 .toArray(String[]::new);
     }
 
-    public String[] getAllDescriptions(FormMapping formMapping) {
-        return buildFields(formMapping).stream()
+    @Override
+    public String[] getAllDescriptions(FormMapping formMapping, Mode mode) {
+        return buildFields(formMapping, mode).stream()
                 .map(HeaderField::getDescription)
                 .toArray(String[]::new);
     }
 
-    protected abstract List<HeaderField> buildFields(FormMapping formMapping);
+    protected abstract List<HeaderField> buildFields(FormMapping formMapping, Mode mode);
 
-    protected List<HeaderField> generateConceptFields(FormMapping formMapping) {
+    protected static List<HeaderField> generateConceptFields(FormMapping formMapping) {
         return formMapping.getForm().getApplicableFormElements().stream()
                 .filter(fe -> !ConceptDataType.isQuestionGroup(fe.getConcept().getDataType()))
-                .map(this::mapFormElementToField)
+                .map(AbstractHeaders::mapFormElementToField)
                 .collect(Collectors.toList());
     }
 
@@ -79,7 +80,7 @@ public abstract class AbstractHeaders implements HeaderCreator {
         return new HeaderField("\"" + concept.getName() + "\"", "", false, strategy.getAllowedValues(concept), format, null, false);
     }
 
-    private HeaderField mapFormElementToField(FormElement fe) {
+    private static HeaderField mapFormElementToField(FormElement fe) {
         Concept concept = fe.getConcept();
         String header = ImportService.getHeaderName(fe);
         FieldDescriptor strategy = getStrategy(concept.getDataType());

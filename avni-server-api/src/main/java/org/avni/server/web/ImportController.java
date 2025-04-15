@@ -84,21 +84,12 @@ public class ImportController {
     public void getSampleImportFile(@RequestParam String uploadType,
                                     @RequestParam(value = "locationHierarchy", required = false) String locationHierarchy,
                                     @RequestParam(value = "locationUploadMode", required = false) LocationWriter.LocationUploadMode locationUploadMode,
+                                    @RequestParam(value = "encounterUploadMode", required = false) String encounterUploadMode,
                                     HttpServletResponse response) throws IOException {
         response.setContentType("text/csv");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
             "attachment; filename=\"" + uploadType + ".csv\"");
-        if (uploadType.equals("locations")) {
-            if (!StringUtils.hasText(locationHierarchy)) {
-                throw new BadRequestError("Invalid value specified for request param \"locationHierarchy\": " + locationHierarchy);
-            }
-            if (locationUploadMode == null) {
-                throw new BadRequestError("Missing value for request param \"locationUploadMode\"");
-            }
-            response.getWriter().write(importService.getLocationsSampleFile(locationUploadMode, locationHierarchy));
-        } else {
-            response.getWriter().write(importService.getSampleFile(uploadType));
-        }
+        importService.getSampleImportFile(uploadType, locationHierarchy, locationUploadMode, encounterUploadMode, response);
     }
 
     @RequestMapping(value = "/web/importTypes", method = RequestMethod.GET)

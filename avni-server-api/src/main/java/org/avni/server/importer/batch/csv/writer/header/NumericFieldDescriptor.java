@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer.header;
 
 import org.avni.server.domain.Concept;
-import org.springframework.stereotype.Component;
 
 public class NumericFieldDescriptor extends FieldDescriptor {
     @Override

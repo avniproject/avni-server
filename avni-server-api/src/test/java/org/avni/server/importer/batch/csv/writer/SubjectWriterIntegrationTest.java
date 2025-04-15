@@ -9,7 +9,6 @@ import org.avni.server.domain.*;
 import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
-import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.*;
 import org.junit.Assert;
@@ -21,7 +20,6 @@ import org.springframework.test.context.jdbc.Sql;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -44,8 +42,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     private TestFormService testFormService;
     @Autowired
     private IndividualRepository individualRepository;
-    @Autowired
-    private ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
+
 
     private String[] validHeader() {
         return header("Id from previous system",

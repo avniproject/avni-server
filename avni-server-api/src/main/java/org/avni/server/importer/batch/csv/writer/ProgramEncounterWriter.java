@@ -10,19 +10,16 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.*;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
-import org.avni.server.importer.batch.csv.writer.header.ProgramEncounterHeaders;
-import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
-import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
+import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.service.ProgramEncounterService;
-import org.avni.server.util.ValidationUtil;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,9 +29,6 @@ import java.util.List;
 @Component
 public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<Row>, Serializable {
     private final ProgramEncounterRepository programEncounterRepository;
-    private final ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator;
-    private final IndividualRepository individualRepository;
-    private final ProgramRepository programRepository;
     private ProgramEnrolmentCreator programEnrolmentCreator;
     private BasicEncounterCreator basicEncounterCreator;
     private FormMappingRepository formMappingRepository;
@@ -46,6 +40,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
     private ObservationCreator observationCreator;
     private ProgramEncounterService programEncounterService;
     private EntityApprovalStatusWriter entityApprovalStatusWriter;
+    private EncounterHeaderStrategyFactory strategyFactory;
 
     @Autowired
     public ProgramEncounterWriter(ProgramEncounterRepository programEncounterRepository,
@@ -60,7 +55,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
                                   ObservationCreator observationCreator,
                                   ProgramEncounterService programEncounterService,
                                   EntityApprovalStatusWriter entityApprovalStatusWriter,
-                                  OrganisationConfigService organisationConfigService, ProgramEnrolmentHeadersCreator programEnrolmentHeadersCreator, IndividualRepository individualRepository, ProgramRepository programRepository) {
+                                  OrganisationConfigService organisationConfigService, EncounterHeaderStrategyFactory strategyFactory) {
         super(organisationConfigService);
         this.programEncounterRepository = programEncounterRepository;
         this.programEnrolmentCreator = programEnrolmentCreator;
@@ -74,9 +69,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
         this.observationCreator = observationCreator;
         this.programEncounterService = programEncounterService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
-        this.programEnrolmentHeadersCreator = programEnrolmentHeadersCreator;
-        this.individualRepository = individualRepository;
-        this.programRepository = programRepository;
+        this.strategyFactory = strategyFactory;
     }
 
     @Override
@@ -87,7 +80,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
     private void write(Row row) throws Exception {
         ProgramEncounter programEncounter = getOrCreateProgramEncounter(row);
         List<String> allErrorMsgs = new ArrayList<>();
-        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(row.get(ProgramEncounterHeaders.enrolmentId), ProgramEncounterHeaders.enrolmentId);
+        ProgramEnrolment programEnrolment = programEnrolmentCreator.getProgramEnrolment(row.get(EncounterHeadersCreator.PROGRAM_ENROLMENT_ID), EncounterHeadersCreator.PROGRAM_ENROLMENT_ID);
         SubjectType subjectType = programEnrolment.getIndividual().getSubjectType();
         programEncounter.setProgramEnrolment(programEnrolment);
         basicEncounterCreator.updateEncounter(row, programEncounter, allErrorMsgs);
@@ -98,8 +91,8 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
         }
         ProgramEncounter savedEncounter;
         if (skipRuleExecution()) {
-            ProgramEncounterHeaders programEncounterHeaders = new ProgramEncounterHeaders(programEncounter.getEncounterType());
-            programEncounter.setObservations(observationCreator.getObservations(row, programEncounterHeaders, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations(), formMapping));
+            EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
+            programEncounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.ProgramEncounter, programEncounter.getObservations(), formMapping));
             savedEncounter = programEncounterService.save(programEncounter);
         } else {
             UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), programEncounter, allErrorMsgs);
@@ -114,7 +107,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
     }
 
     private ProgramEncounter getOrCreateProgramEncounter(Row row) {
-        String id = row.get(ProgramEncounterHeaders.id);
+        String id = row.get(EncounterHeadersCreator.ID);
         ProgramEncounter existingEncounter = null;
         if (id != null && !id.isEmpty()) {
             existingEncounter = programEncounterRepository.findByLegacyIdOrUuid(id);
