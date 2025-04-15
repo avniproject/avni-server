@@ -8,6 +8,7 @@ import org.avni.server.dao.metabase.MetabaseDatabaseRepository;
 import org.avni.server.domain.Organisation;
 import org.avni.server.framework.security.AuthService;
 import org.avni.server.service.metabase.DatabaseService;
+import org.avni.server.service.metabase.MetabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
@@ -30,17 +31,19 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
     private final OrganisationRepository organisationRepository;
     private final DatabaseService databaseService;
     private final EntityManager entityManager;
+    private final MetabaseService metabaseService;
     @Value("#{jobParameters['userId']}")
     private Long userId;
     @Value("#{jobParameters['organisationUUID']}")
     private String organisationUUID;
 
     @Autowired
-    public CannedAnalyticsCreateQuestionsOnlyTasklet(AuthService authService, OrganisationRepository organisationRepository, DatabaseService databaseService, EntityManager entityManager) {
+    public CannedAnalyticsCreateQuestionsOnlyTasklet(AuthService authService, OrganisationRepository organisationRepository, DatabaseService databaseService, EntityManager entityManager, MetabaseService metabaseService) {
         this.authService = authService;
         this.organisationRepository = organisationRepository;
         this.databaseService = databaseService;
         this.entityManager = entityManager;
+        this.metabaseService = metabaseService;
     }
 
     @PostConstruct
@@ -56,7 +59,8 @@ public class CannedAnalyticsCreateQuestionsOnlyTasklet implements Tasklet {
         try {
             CannedAnalyticsLockProvider.acquireLock(organisation);
             logger.info("Create questions job acquired Lock for organisation {}", organisation.getName());
-            databaseService.syncDatabase();
+            metabaseService.syncDatabase();
+            metabaseService.waitForManualSchemaSyncToComplete(organisation);
             logger.info("Synced database for organisation {}", organisation.getName());
             databaseService.addCollectionItems();
             logger.info("Created questions for canned analytics for organisation {}", organisation.getName());

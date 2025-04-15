@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,6 +168,7 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         this.postForObject(url, "", String.class);
     }
 
+    // schema sync runs the field sync as well that is why this method is unused
     public void rescanFieldValues(Database database) {
         String url = metabaseApiUrl + "/database/" + database.getId() + "/rescan_values";
         this.postForObject(url, "", String.class);
@@ -235,16 +233,36 @@ public class MetabaseDatabaseRepository extends MetabaseConnector {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
-            safeClose(psMetabaseDatabase);
-            safeClose(psCronTriggers);
-            safeClose(connection);
+            safeClose(psMetabaseDatabase, psCronTriggers, connection);
         }
     }
 
-    private void safeClose(AutoCloseable autoCloseable) {
+    public boolean isSyncRunning(Database database) {
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet resultSet = null;
         try {
-            if (autoCloseable != null)
-                autoCloseable.close();
+            connection = this.metabaseDbConnectionFactory.getConnection();
+            ps = connection.prepareStatement("""
+                    select count(*) from task_history where db_id = ? and task in ('sync-fields', 'sync-tables') and started_at >= current_timestamp - interval '10 minutes' and ended_at is null
+                    """);
+            ps.setLong(1, database.getId());
+            resultSet = ps.executeQuery();
+            resultSet.next();
+            int count = resultSet.getInt(1);
+            return count > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            safeClose(resultSet, ps, connection);
+        }
+    }
+
+    private void safeClose(AutoCloseable ... autoCloseables) {
+        try {
+            for (AutoCloseable autoCloseable : autoCloseables)
+                if (autoCloseable != null)
+                    autoCloseable.close();
         } catch (Exception ignored) {
         }
     }

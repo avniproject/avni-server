@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Deprecated // All the public methods should be moved to MetabaseService, MetabaseService is the overall service then having a DatabaseService for metabase doesn't make sense.......this makes it difficult to decide where to put a method......as all methods belong to MetabaseService
 public class DatabaseService implements IQuestionCreationService {
     private static final String ADDRESS_TABLE = "address";
     private static final String MEDIA_TABLE = "media";
@@ -41,9 +42,6 @@ public class DatabaseService implements IQuestionCreationService {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
-    private static final long MAX_WAIT_TIME_IN_SECONDS = 300;
-    private static final long EACH_SLEEP_DURATION = 3;
-
     @Autowired
     public DatabaseService(MetabaseDatabaseRepository databaseRepository, MetabaseService metabaseService, CollectionRepository collectionRepository, QuestionRepository questionRepository, MetabaseDashboardRepository metabaseDashboardRepository, AddressLevelTypeRepository addressLevelTypeRepository, OrganisationService organisationService, TableMetaDataRepository tableMetaDataRepository) {
         this.databaseRepository = databaseRepository;
@@ -58,14 +56,6 @@ public class DatabaseService implements IQuestionCreationService {
     private CollectionInfoResponse getOrgCollection() {
         Organisation organisation = organisationService.getCurrentOrganisation();
         return collectionRepository.getCollection(organisation);
-    }
-
-    public SyncStatus getInitialSyncStatus() {
-        Organisation organisation = organisationService.getCurrentOrganisation();
-        Database database = databaseRepository.getDatabase(organisation);
-        DatabaseSyncStatus databaseSyncStatus = databaseRepository.getInitialSyncStatus(database);
-        String status = databaseSyncStatus.getInitialSyncStatus();
-        return SyncStatus.fromString(status);
     }
 
     private List<String> filterOutExistingQuestions(List<String> entityNames) {
@@ -280,31 +270,5 @@ public class DatabaseService implements IQuestionCreationService {
         createQuestionsForViews();
         logger.info("Adding custom questions {}", organisation.getName());
         createCustomQuestions();
-    }
-
-    private void waitForSyncToComplete(Organisation organisation) throws InterruptedException {
-        long startTime = System.currentTimeMillis();
-        logger.info("Waiting for metabase database sync {}", organisation.getName());
-        while (true) {
-            long timeSpent = System.currentTimeMillis() - startTime;
-            long timeLeft = timeSpent - (MAX_WAIT_TIME_IN_SECONDS * 1000);
-            if (!(timeLeft < 0)) break;
-            SyncStatus syncStatus = this.getInitialSyncStatus();
-            if (syncStatus != SyncStatus.COMPLETE) {
-                Thread.sleep(EACH_SLEEP_DURATION * 2000);
-                logger.info("Sync not complete after {} seconds, waiting for metabase database sync {}", timeSpent / 1000, organisation.getName());
-            } else {
-                break;
-            }
-        }
-    }
-
-    public void syncDatabase() throws InterruptedException {
-        Organisation organisation = organisationService.getCurrentOrganisation();
-        this.waitForSyncToComplete(organisation);
-        Database database = databaseRepository.getDatabase(organisation);
-        databaseRepository.reSyncSchema(database);
-        databaseRepository.rescanFieldValues(database);
-        this.waitForSyncToComplete(organisation);
     }
 }
