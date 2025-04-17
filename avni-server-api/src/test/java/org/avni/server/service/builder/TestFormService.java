@@ -1,9 +1,5 @@
 package org.avni.server.service.builder;
 
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.List;
-
 import org.avni.server.application.*;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormMappingRepository;
@@ -14,6 +10,10 @@ import org.avni.server.domain.SubjectType;
 import org.avni.server.domain.factory.metadata.FormMappingBuilder;
 import org.avni.server.domain.factory.metadata.TestFormBuilder;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class TestFormService {
@@ -57,6 +57,7 @@ public class TestFormService {
                     .withType(FormElementType.SingleSelect)
                     .withDisplayOrder(i++)
                     .withFormElementGroup(formElementGroup)
+                    .withMandatory(true)
                     .build();
         }
         for (String conceptName : multiSelectedConceptNames) {

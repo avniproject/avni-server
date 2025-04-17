@@ -132,6 +132,49 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"MSDC Aswer 1\", \"MSDC Answer 2\"");
     }
 
+    private String[] dataRowWithNumericValuesOutsideValidRange() {
+        return dataRow("",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "500",
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"");
+    }
+    private String[] dataRowWithMissingMandatoryValues() {
+        return dataRow("",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "",
+                "",
+                "",
+                "",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"");
+    }
+
     private String[] dataRowWithCodedAnswersInDifferentCase() {
         return dataRow("ABCD",
                 "SubjectType1",
@@ -227,7 +270,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         multiSelectConcepts.add(multiSelectCoded);
         singleSelectConcepts.add(testConceptService.createConcept("Date Concept", ConceptDataType.Date));
         singleSelectConcepts.add(testConceptService.createConcept("Text Concept", ConceptDataType.Text));
-        singleSelectConcepts.add(testConceptService.createConcept("Numeric Concept", ConceptDataType.Numeric));
+        singleSelectConcepts.add(testConceptService.createNumericConceptWithAbsolutes("Numeric Concept", 1.0, 200.0));
         singleSelectConcepts.add(testConceptService.createConcept("Notes Concept", ConceptDataType.Notes));
 
         SubjectType subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
@@ -295,6 +338,16 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         failure(validHeader(),
                 dataRowWithWrongValues(),
                 "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
+    }
+
+    @Test
+    public void shouldFailValidationIfMandatoryFieldsAreNotProvided() {
+        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'Text Concept'");
+    }
+
+    @Test
+    public void shouldFailValidationIfNumericValueIsOutsideValidRange() {
+        failure(validHeader(), dataRowWithNumericValuesOutsideValidRange(), "Invalid answer '500' for 'Numeric Concept'");
     }
 
     private void failure(String[] headers, String[] cells, String errorMessage) {

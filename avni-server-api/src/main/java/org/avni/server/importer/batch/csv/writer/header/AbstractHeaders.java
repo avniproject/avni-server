@@ -88,6 +88,6 @@ public abstract class AbstractHeaders implements HeaderCreator {
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
 
-        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, false);
+        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, true);
     }
 }

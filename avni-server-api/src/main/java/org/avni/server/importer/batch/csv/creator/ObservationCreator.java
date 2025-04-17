@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
 import org.avni.server.application.*;
-import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
@@ -18,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -25,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -121,6 +120,10 @@ public class ObservationCreator {
         for (Concept concept : conceptsInHeader) {
             FormElement formElement = getFormElementForObservationConcept(concept, formType);
             String rowValue = getRowValue(formElement, row, null);
+
+            if (formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
+                errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
+            }
             if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
                 continue;
             ObservationRequest observationRequest = new ObservationRequest();
@@ -235,7 +238,26 @@ public class ObservationCreator {
                 }
             case Numeric:
                 try {
-                    return Double.parseDouble(answerValue);
+                    double v = Double.parseDouble(answerValue);
+                    Double lowAbsolute = concept.getLowAbsolute();
+                    Double highAbsolute = concept.getHighAbsolute();
+                    if (lowAbsolute != null && highAbsolute != null) {
+                        if (v < lowAbsolute || v > highAbsolute) {
+                            errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                            return null;
+                        }
+                    } else if (lowAbsolute != null) {
+                        if (v < lowAbsolute) {
+                            errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                            return null;
+                        }
+                    } else if (highAbsolute != null) {
+                        if (v > highAbsolute) {
+                            errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                            return null;
+                        }
+                    }
+                    return v;
                 } catch (NumberFormatException e) {
                     errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
                     return null;

@@ -33,4 +33,11 @@ public class TestConceptService {
         Concept concept = new ConceptBuilder().withName(conceptName).withDataType(conceptDataType).build();
         return conceptRepository.save(concept);
     }
+
+    public Concept createNumericConceptWithAbsolutes(String conceptName, Double lowAbsolute, Double highAbsolute) {
+        Concept concept = new ConceptBuilder().withName(conceptName).withDataType(ConceptDataType.Numeric).build();
+        concept.setLowAbsolute(lowAbsolute);
+        concept.setHighAbsolute(highAbsolute);
+        return conceptRepository.save(concept);
+    }
 }
