@@ -20,6 +20,7 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -106,7 +107,9 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
 
     private ProgramEnrolment createNewEnrolment(String externalId) {
         ProgramEnrolment programEnrolment = new ProgramEnrolment();
-        programEnrolment.setLegacyId(externalId);
+        if (StringUtils.hasText(externalId)) {
+            programEnrolment.setLegacyId(externalId);
+        }
         programEnrolment.setVoided(false);
         programEnrolment.assignUUIDIfRequired();
         return programEnrolment;

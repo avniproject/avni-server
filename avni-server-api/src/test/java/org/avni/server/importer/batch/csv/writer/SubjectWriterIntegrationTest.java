@@ -282,6 +282,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void allowWithoutLegacyId() {
         success(validHeader(), validDataRowWithoutLegacyId());
+        success(validHeader(), validDataRowWithoutLegacyId());
     }
 
     @Test

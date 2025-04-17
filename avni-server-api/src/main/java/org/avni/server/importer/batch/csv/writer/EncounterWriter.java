@@ -18,6 +18,7 @@ import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -108,7 +109,9 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
 
     private Encounter createNewEncounter(String externalId) {
         Encounter encounter = new Encounter();
-        encounter.setLegacyId(externalId);
+        if (StringUtils.hasText(externalId)) {
+            encounter.setLegacyId(externalId);
+        }
         return encounter;
     }
 }
