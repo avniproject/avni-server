@@ -49,7 +49,7 @@ public class Row extends HashMap<String, String> {
 
     public String getObservation(Object key) {
         String k = nullSafeTrim((String) key);
-        String s = super.get(S.doubleQuote(k));
+        String s = super.getOrDefault(S.doubleQuote(k), super.get(k));
         return this.nullSafeTrim(s);
     }
 
