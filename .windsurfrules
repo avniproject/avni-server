@@ -120,7 +120,7 @@ controller.principles = Keep controllers thin, Delegate business logic to servic
 domain.principles = Use rich domain models, Encapsulate business rules within domain objects, Validate domain invariants, Use value objects for immutable concepts, Consider using domain events for cross-aggregate communication
 
 # Refactoring Guidelines
-refactoring.principles = Make incremental, targeted changes rather than large rewrites, Refactor one component or method at a time, Maintain backward compatibility during refactoring, Add tests before refactoring to ensure behavior is preserved, Document the purpose and approach of each refactoring
+modularity.principles = Create small, focused methods with a single responsibility, Limit method size to improve readability and testability, Extract complex logic into separate utility classes, Use immutable objects wherever possible, Avoid deep nesting of methods and control structures, Prefer self-documenting code over comments
 
 #----------------------------------------------
 # TESTING
