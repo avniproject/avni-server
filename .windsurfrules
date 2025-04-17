@@ -84,7 +84,7 @@ database.migrations.tool = flyway
 database.migrations.location = avni-server-api/src/main/resources/db/migration/
 
 # Security
-security.authentication = keycloak
+security.authentication = keycloak Or cognito
 security.authorization = role-based
 
 # Logging
@@ -121,7 +121,7 @@ api.rest.model-processors = true
 api.rest.base-path = /api
 
 # API Security
-api.security.provider = keycloak
+api.security.provider = keycloak or cognito 
 api.security.jwt = true
 api.security.role-based = true
 
