@@ -199,7 +199,7 @@ deployment.cpu = 1
 documentation.principles = Avoid JavaDocs in favor of self-documenting code, Use clear method and variable names that explain their purpose, Only add inline comments for complex logic that cannot be made clear through refactoring, Do not document what the code does (it should be obvious), Document why certain decisions were made when not obvious
 
 # Refactoring Guidelines
-refactoring.documentation = Avoid JavaDocs, rely on self-documenting code and clear naming instead
+refactoring.documentation = Avoid JavaDocs, coding style preferred is single-line format, rely on self-documenting code and clear naming instead
 
 # Library Usage Guidelines
 library.datetime = Use Joda Time (org.joda.time) instead of java.time for all date and time handling, Maintain consistent date formatting patterns across the codebase
