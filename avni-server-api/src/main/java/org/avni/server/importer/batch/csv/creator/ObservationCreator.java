@@ -92,7 +92,7 @@ public class ObservationCreator {
                 String parentChildName = concept.getName() + "|" + fe.getConcept().getName();
                 String headerName = formElement.isRepeatable() ? String.format("%s|1", parentChildName) : parentChildName;
                 String rowValue = row.get(headerName);
-                return !(rowValue == null || rowValue.trim().equals(""));
+                return fe.isMandatory() && !StringUtils.hasText(rowValue);
             });
         }
         return false;
@@ -164,8 +164,12 @@ public class ObservationCreator {
         for (FormElement formElement : allChildQuestions) {
             Concept concept = formElement.getConcept();
             String rowValue = getRowValue(formElement, row, questionGroupIndex);
-            if (rowValue == null || rowValue.trim().equals(""))
+            if (!StringUtils.hasText(rowValue)) {
+                if (formElement.isMandatory()) {
+                    errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
+                }
                 continue;
+            }
             ObservationRequest observationRequest = new ObservationRequest();
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
