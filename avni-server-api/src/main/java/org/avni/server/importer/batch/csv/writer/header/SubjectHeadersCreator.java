@@ -163,26 +163,17 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     }
 
     private List<String> extractLocationHeaders(Optional<JsonNode> locationOpt) {
-        if (!locationOpt.isPresent()) {
-            logger.warn("No matching location found for the subject type");
-            return getDefaultAddressHeaders();
-        }
-
-        JsonNode location = locationOpt.get();
-        if (!location.has("locationTypeUUIDs")) {
-            logger.warn("Location missing locationTypeUUIDs field");
-            return getDefaultAddressHeaders();
-        }
-
-        JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
-        if (locationTypeUUIDsNode == null || locationTypeUUIDsNode.isEmpty()) {
+        if (!locationOpt.isPresent()
+                || !locationOpt.get().has("locationTypeUUIDs")
+                || locationOpt.get().get("locationTypeUUIDs") == null
+                || locationOpt.get().get("locationTypeUUIDs").isEmpty()) {
             logger.warn("Empty locationTypeUUIDs");
             return getDefaultAddressHeaders();
         }
 
         try {
             List<String> locationTypeUUIDs = objectMapper.convertValue(
-                    locationTypeUUIDsNode,
+                    locationOpt.get().get("locationTypeUUIDs"),
                     objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)
             );
 
