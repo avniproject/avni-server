@@ -170,6 +170,9 @@ public class EncounterController extends AbstractController<Encounter> implement
         encounter.setCancelDateTime(request.getCancelDateTime());
         encounter.setCancelObservations(observationService.createObservations(request.getCancelObservations()));
         encounter.setVoided(request.isVoided());
+        encounter.setCreatedBy(userService.getCurrentUser());
+        encounter.setLastModifiedBy(userService.getCurrentUser());
+        encounter.setFilledBy(userService.getCurrentUser());
         PointRequest encounterLocation = request.getEncounterLocation();
         if (encounterLocation != null)
             encounter.setEncounterLocation(new Point(encounterLocation.getX(), encounterLocation.getY()));
@@ -280,6 +283,8 @@ public class EncounterController extends AbstractController<Encounter> implement
         resource.add(Link.of(encounter.getIndividual().getUuid(), "individualUUID"));
         addAuditFields(encounter, resource);
         addUserFields(encounter.getFilledBy(), resource, "filledBy");
+        addUserFields(encounter.getCreatedBy(), resource, "createdBy");
+        addUserFields(encounter.getLastModifiedBy(), resource, "lastModifiedBy");
         return resource;
     }
 }
