@@ -43,7 +43,7 @@ public class Row extends HashMap<String, String> {
     @Override
     public String get(Object key) {
         String k = nullSafeTrim((String) key);
-        String s = super.get(k);
+        String s = super.getOrDefault(S.doubleQuote(k), super.get(k));
         return this.nullSafeTrim(s);
     }
 
