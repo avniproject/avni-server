@@ -33,8 +33,25 @@ public class TxnDataHeaderValidator {
         workingHeaderList.removeIf(StringUtils::isEmpty);
         HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
         Sets.SetView<String> unknownHeaders = Sets.difference(new HashSet<>(headerList), expectedHeaders);
-        if (!unknownHeaders.isEmpty()) {
-            allErrorMsgs.add(String.format(CommonWriterError.ERR_MSG_UNKNOWN_HEADERS, String.join(", ", unknownHeaders)));
+        Set<String> filteredUnknownHeaders = unknownHeaders.stream()
+            .filter(header -> {
+                if (header.chars().filter(ch -> ch == '|').count() != 2) {
+                    return true;
+                }
+                String[] parts = header.split("\\|");
+                if (parts.length != 3) {
+                    return true;
+                }
+                try {
+                    Integer.parseInt(parts[2].trim());
+                    return false;
+                } catch (NumberFormatException e) {
+                    return true;
+                }
+            })
+            .collect(Collectors.toSet());
+        if (!filteredUnknownHeaders.isEmpty()) {
+            allErrorMsgs.add(String.format(CommonWriterError.ERR_MSG_UNKNOWN_HEADERS, String.join(", ", filteredUnknownHeaders)));
         }
     }
 
