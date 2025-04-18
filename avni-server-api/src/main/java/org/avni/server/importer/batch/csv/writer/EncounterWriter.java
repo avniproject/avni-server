@@ -14,6 +14,10 @@ import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.ObservationService;
 import org.avni.server.service.OrganisationConfigService;
+import org.avni.server.service.UserService;
+import org.avni.server.util.DateTimeUtil;
+import org.avni.server.util.ValidationUtil;
+import org.joda.time.LocalDate;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     private final EncounterService encounterService;
     private final EntityApprovalStatusWriter entityApprovalStatusWriter;
     private final EncounterHeaderStrategyFactory strategyFactory;
+    private final UserService userService;
 
     @Autowired
     public EncounterWriter(EncounterRepository encounterRepository,
@@ -50,7 +55,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
                            ObservationCreator observationCreator,
                            EncounterService encounterService,
                            EntityApprovalStatusWriter entityApprovalStatusWriter,
-                           OrganisationConfigService organisationConfigService, EncounterHeaderStrategyFactory strategyFactory) {
+                           OrganisationConfigService organisationConfigService, EncounterHeaderStrategyFactory strategyFactory, UserService userService) {
         super(organisationConfigService);
         this.encounterRepository = encounterRepository;
         this.basicEncounterCreator = basicEncounterCreator;
@@ -63,6 +68,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         this.encounterService = encounterService;
         this.entityApprovalStatusWriter = entityApprovalStatusWriter;
         this.strategyFactory = strategyFactory;
+        this.userService = userService;
     }
 
     @Override
@@ -71,9 +77,15 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
     }
 
     private void write(Row row) throws Exception {
-        Encounter encounter = getOrCreateEncounter(row);
-
         List<String> allErrorMsgs = new ArrayList<>();
+        String legacyId = row.get(EncounterHeadersCreator.ID);
+        if (legacyId != null && !legacyId.trim().isEmpty()) {
+            Encounter existingEncounter = encounterRepository.findByLegacyIdOrUuid(legacyId);
+            if (existingEncounter != null) {
+                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", legacyId));
+            }
+        }
+        Encounter encounter = getOrCreateEncounter(row);
         basicEncounterCreator.updateEncounter(row, encounter, allErrorMsgs);
         encounter.setVoided(false);
         encounter.assignUUIDIfRequired();
@@ -81,10 +93,48 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         if (formMapping == null) {
             throw new Exception(String.format("No form found for the encounter type %s", encounter.getEncounterType().getName()));
         }
+
+        boolean isScheduledVisit = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE) != null;
+        LocalDate encounterDate;
+
+        if (isScheduledVisit) {
+            String earliestDateStr = row.get(EncounterHeadersCreator.EARLIEST_VISIT_DATE);
+            String maxDateStr = row.get(EncounterHeadersCreator.MAX_VISIT_DATE);
+            if (earliestDateStr == null || earliestDateStr.trim().isEmpty()) {
+                allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
+            }
+            if (maxDateStr == null || maxDateStr.trim().isEmpty()) {
+                allErrorMsgs.add(String.format("'%s' is mandatory for scheduled visits", EncounterHeadersCreator.MAX_VISIT_DATE));
+            }
+            LocalDate earliestDate = DateTimeUtil.parseFlexibleDate(earliestDateStr);
+            LocalDate maxDate = DateTimeUtil.parseFlexibleDate(maxDateStr);
+            if (earliestDate != null && earliestDate.isAfter(LocalDate.now())) {
+                allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.EARLIEST_VISIT_DATE));
+            }
+            if (maxDate != null && maxDate.isAfter(LocalDate.now())) {
+                allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.MAX_VISIT_DATE));
+            }
+            encounter.setEarliestVisitDateTime(earliestDate != null ? earliestDate.toDateTimeAtStartOfDay() : null);
+            encounter.setMaxVisitDateTime(maxDate != null ? maxDate.toDateTimeAtStartOfDay() : null);
+        } else {
+            String encounterDateStr = row.get(EncounterHeadersCreator.VISIT_DATE);
+            if (encounterDateStr == null || encounterDateStr.trim().isEmpty()) {
+                allErrorMsgs.add(String.format("'%s' is mandatory for uploaded visits", EncounterHeadersCreator.VISIT_DATE));
+            }
+            encounterDate = DateTimeUtil.parseFlexibleDate(encounterDateStr);
+            if (encounterDate.isAfter(LocalDate.now())) {
+                allErrorMsgs.add(String.format("'%s' cannot be in future", EncounterHeadersCreator.VISIT_DATE));
+            }
+            encounter.setEncounterDateTime(encounterDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
+        }
+
+        ValidationUtil.handleErrors(allErrorMsgs);
+
         Encounter savedEncounter;
 
         if (skipRuleExecution()) {
             EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
+            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator);
             encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
             savedEncounter = encounterService.save(encounter);
         } else {
@@ -100,11 +150,7 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
 
     private Encounter getOrCreateEncounter(Row row) {
         String id = row.get(EncounterHeadersCreator.ID);
-        Encounter existingEncounter = null;
-        if (id != null && !id.isEmpty()) {
-            existingEncounter = encounterRepository.findByLegacyIdOrUuid(id);
-        }
-        return existingEncounter == null ? createNewEncounter(id) : existingEncounter;
+        return createNewEncounter(id);
     }
 
     private Encounter createNewEncounter(String externalId) {

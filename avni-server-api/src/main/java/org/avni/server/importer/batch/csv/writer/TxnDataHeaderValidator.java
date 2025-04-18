@@ -11,11 +11,20 @@ import java.util.stream.Collectors;
 
 public class TxnDataHeaderValidator {
     public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) {
-        List<String> headerList = new ArrayList<>(Arrays.asList(headers));
+        List<String> headerList = Arrays.stream(headers)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .map(S::unDoubleQuote)
+                .toList();
         List<String> allErrorMsgs = new ArrayList<>();
-        List<String> providedIntendedHeaders = headerList.stream().map(S::unDoubleQuote).toList();
-        String[] expectedHeaders = headerCreator.getAllHeaders(formMapping,null);
-        String[] expectedIntendedHeaders = Arrays.stream(expectedHeaders).map(S::unDoubleQuote).toArray(String[]::new);
+        List<String> providedIntendedHeaders = new ArrayList<>(headerList);
+
+        String[] expectedHeaders = headerCreator.getAllHeaders(formMapping, null);
+        String[] expectedIntendedHeaders = Arrays.stream(expectedHeaders)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .map(S::unDoubleQuote)
+                .toArray(String[]::new);
         checkForMissingHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));
         checkForUnknownHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));
         checkForDuplicateHeaders(providedIntendedHeaders, allErrorMsgs);

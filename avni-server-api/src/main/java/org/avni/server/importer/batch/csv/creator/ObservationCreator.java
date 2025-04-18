@@ -214,7 +214,7 @@ public class ObservationCreator {
         Concept concept = formElement.getConcept();
         Object oldValue = oldObservations == null ? null : oldObservations.getOrDefault(concept.getUuid(), null);
         ConceptDataType dataType = ConceptDataType.valueOf(concept.getDataType());
-        
+
         switch (dataType) {
             case Coded:
                 return handleCodedValue(formElement, answerValue, errorMsgs, concept);
@@ -245,6 +245,7 @@ public class ObservationCreator {
         if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
             String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
             return Stream.of(providedAnswers)
+                    .map(String::trim)
                     .map(answer -> {
                         Concept answerConcept = concept.findAnswerConcept(answer);
                         if (answerConcept == null) {
@@ -255,9 +256,9 @@ public class ObservationCreator {
                     })
                     .collect(Collectors.toList());
         } else {
-            Concept answerConcept = concept.findAnswerConcept(answerValue);
+            Concept answerConcept = concept.findAnswerConcept(answerValue.trim());
             if (answerConcept == null) {
-                errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue.trim(), concept.getName()));
                 return null;
             }
             return answerConcept.getUuid();
@@ -269,7 +270,7 @@ public class ObservationCreator {
             double value = Double.parseDouble(answerValue);
             Double lowAbsolute = concept.getLowAbsolute();
             Double highAbsolute = concept.getHighAbsolute();
-            
+
             if (!isWithinRange(value, lowAbsolute, highAbsolute)) {
                 errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
                 return null;
@@ -280,7 +281,7 @@ public class ObservationCreator {
             return null;
         }
     }
-    
+
     private boolean isWithinRange(double value, Double lowAbsolute, Double highAbsolute) {
         if (lowAbsolute != null && highAbsolute != null) {
             return value >= lowAbsolute && value <= highAbsolute;
@@ -349,18 +350,18 @@ public class ObservationCreator {
 
     private String toISODateFormat(String dateStr) {
         DateTimeFormatter outputFmt = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        
+
         // Try each format in sequence
         DateTime dt = tryParseDateTime(dateStr);
         if (dt == null) {
             // If we couldn't parse it, throw a descriptive exception
-            throw new IllegalArgumentException("Unable to parse date: " + dateStr + 
-                ". Supported formats are: yyyy-MM-dd HH:mm:ss, dd-MM-yyyy, yyyy-MM-dd");
+            throw new IllegalArgumentException("Unable to parse date: " + dateStr +
+                    ". Supported formats are: yyyy-MM-dd HH:mm:ss, dd-MM-yyyy, yyyy-MM-dd");
         }
-        
+
         return dt.toString(outputFmt);
     }
-    
+
     private DateTime tryParseDateTime(String dateStr) {
         // Try parsing with time in ISO format
         try {
@@ -368,7 +369,7 @@ public class ObservationCreator {
         } catch (IllegalArgumentException ignored) {
             // Continue to next format
         }
-        
+
         // Try European date format (dd-MM-yyyy)
         try {
             return DateTime.parse(dateStr, DateTimeFormat.forPattern("dd-MM-yyyy"))
@@ -378,7 +379,7 @@ public class ObservationCreator {
         } catch (IllegalArgumentException ignored) {
             // Continue to next format
         }
-        
+
         // Try ISO date format (yyyy-MM-dd)
         try {
             return DateTime.parse(dateStr, DateTimeFormat.forPattern("yyyy-MM-dd"))
