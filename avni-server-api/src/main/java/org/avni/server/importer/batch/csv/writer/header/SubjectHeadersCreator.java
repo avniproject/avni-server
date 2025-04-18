@@ -8,6 +8,8 @@ import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.domain.SubjectType;
 import org.avni.server.service.OrganisationConfigService;
 import org.avni.server.util.ObjectMapperSingleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -33,14 +35,17 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     public final static String dobVerified = "Date Of Birth Verified";
     public final static String gender = "Gender";
 
+    private static final Logger logger = LoggerFactory.getLogger(SubjectHeadersCreator.class);
     private final OrganisationConfigService organisationConfigService;
     private final AddressLevelTypeRepository addressLevelTypeRepository;
+    private final ObjectMapper objectMapper;
 
     public SubjectHeadersCreator(
             OrganisationConfigService organisationConfigService,
             AddressLevelTypeRepository addressLevelTypeRepository) {
         this.organisationConfigService = organisationConfigService;
         this.addressLevelTypeRepository = addressLevelTypeRepository;
+        this.objectMapper = ObjectMapperSingleton.getObjectMapper();
     }
 
     @Override
@@ -81,45 +86,111 @@ public class SubjectHeadersCreator extends AbstractHeaders {
     }
 
     private List<HeaderField> generateAddressFields(FormMapping formMapping) {
-        List<String> headers = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()).equals(Collections.emptyList())
-                ? fromCustomLocations(formMapping).getHeaders()
-                : addressLevelTypeRepository.getAllNames();
-        return headers.stream()
-                .map(header -> new HeaderField(header, "", false, null, null, null, false))
+        List<String> addressHeaders;
+        try {
+            boolean hasCustomLocations = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())
+                    .equals(Collections.emptyList());
+
+            addressHeaders = hasCustomLocations
+                    ? getCustomLocationHeaders(formMapping)
+                    : getDefaultAddressHeaders();
+
+            if (addressHeaders.isEmpty()) {
+                logger.warn("No address headers found for subject type: {}", formMapping.getSubjectType().getName());
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            logger.error("Error retrieving address headers", e);
+            addressHeaders = getDefaultAddressHeaders();
+        }
+
+        if (addressHeaders.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Mark all address fields as mandatory since they form a hierarchical structure
+        // and if the lowest level is required, then the higher levels are implicitly required too
+        return addressHeaders.stream()
+                .map(header -> new HeaderField(header, "", true, null, null, null, false))
                 .collect(Collectors.toList());
     }
 
-    private AddressConfig fromCustomLocations(FormMapping formMapping) {
-        List<String> headers = new ArrayList<>();
-        ObjectMapper mapper = ObjectMapperSingleton.getObjectMapper();
-        try {
-            JsonNode customRegistrationLocations = mapper.valueToTree(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString()));
-            boolean hasCustomLocations = false;
-            for (JsonNode location : customRegistrationLocations) {
-                String subjectTypeUUID = location.get("subjectTypeUUID").asText();
-                if (formMapping.getSubjectType().getUuid().equals(subjectTypeUUID)) {
-                    JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
-                    List<String> locationTypeUUIDs = mapper.convertValue(locationTypeUUIDsNode,
-                            mapper.getTypeFactory().constructCollectionType(List.class, String.class));
-                    Set<String> uniqueHeaders = locationTypeUUIDs.stream()
-                            .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
-                            .collect(Collectors.toSet());
-                    headers.addAll(uniqueHeaders);
-                    hasCustomLocations = true;
-                    break;
-                }
-            }
-            if (!hasCustomLocations) {
-                return defaultConfig();
-            }
-        } catch (Exception e) {
-            return defaultConfig();
-        }
-        return new AddressConfig(headers, headers.size());
+    private List<String> getDefaultAddressHeaders() {
+        return addressLevelTypeRepository.getAllNames();
     }
 
-    private AddressConfig defaultConfig() {
-        List<String> headers = addressLevelTypeRepository.getAllNames();
-        return new AddressConfig(headers, headers.size());
+    private List<String> getCustomLocationHeaders(FormMapping formMapping) {
+        try {
+            return extractLocationHeaders(findMatchingLocationHeaders(formMapping));
+        } catch (Exception e) {
+            logger.error("Error processing custom registration locations", e);
+            return getDefaultAddressHeaders();
+        }
+    }
+
+    private JsonNode getCustomRegistrationLocations() {
+        try {
+            return objectMapper.valueToTree(
+                    organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())
+            );
+        } catch (Exception e) {
+            logger.error("Failed to retrieve custom registration locations", e);
+            return objectMapper.createArrayNode(); // Return empty array instead of null
+        }
+    }
+
+    private JsonNode findMatchingLocationHeaders(FormMapping formMapping) {
+        JsonNode customRegistrationLocations = getCustomRegistrationLocations();
+        if (customRegistrationLocations == null || customRegistrationLocations.isEmpty()) {
+            logger.warn("No custom registration locations configured");
+            return null;
+        }
+
+        String subjectTypeUuid = formMapping.getSubjectType().getUuid();
+
+        for (JsonNode location : customRegistrationLocations) {
+            if (location == null || !location.has("subjectTypeUUID")) {
+                continue;
+            }
+
+            String locationSubjectTypeUuid = location.get("subjectTypeUUID").asText();
+            if (subjectTypeUuid.equals(locationSubjectTypeUuid)) {
+                return location;
+            }
+        }
+
+        return null;
+    }
+
+    private List<String> extractLocationHeaders(JsonNode location) {
+        if (location == null) {
+            logger.warn("No matching location found for the subject type");
+            return getDefaultAddressHeaders();
+        }
+
+        if (!location.has("locationTypeUUIDs")) {
+            logger.warn("Location missing locationTypeUUIDs field");
+            return getDefaultAddressHeaders();
+        }
+
+        JsonNode locationTypeUUIDsNode = location.get("locationTypeUUIDs");
+        if (locationTypeUUIDsNode == null || locationTypeUUIDsNode.isEmpty()) {
+            logger.warn("Empty locationTypeUUIDs");
+            return getDefaultAddressHeaders();
+        }
+
+        try {
+            List<String> locationTypeUUIDs = objectMapper.convertValue(locationTypeUUIDsNode,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+
+            Set<String> uniqueHeaders = locationTypeUUIDs.stream()
+                    .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
+                    .collect(Collectors.toSet());
+
+            return new ArrayList<>(uniqueHeaders);
+        } catch (Exception e) {
+            logger.error("Error processing location type UUIDs", e);
+            return getDefaultAddressHeaders();
+        }
     }
 }
