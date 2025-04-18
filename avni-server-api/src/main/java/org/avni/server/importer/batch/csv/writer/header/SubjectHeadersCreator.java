@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -121,7 +121,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
 
     private List<String> getCustomLocationHeaders(FormMapping formMapping) {
         try {
-            return extractLocationHeaders(findMatchingLocationHeaders(formMapping));
+            return extractLocationHeaders(findMatchingLocation(formMapping));
         } catch (Exception e) {
             logger.error("Error processing custom registration locations", e);
             return getDefaultAddressHeaders();
@@ -139,11 +139,11 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         }
     }
 
-    private JsonNode findMatchingLocationHeaders(FormMapping formMapping) {
+    private Optional<JsonNode> findMatchingLocation(FormMapping formMapping) {
         JsonNode customRegistrationLocations = getCustomRegistrationLocations();
         if (customRegistrationLocations == null || customRegistrationLocations.isEmpty()) {
             logger.warn("No custom registration locations configured");
-            return null;
+            return Optional.empty();
         }
 
         String subjectTypeUuid = formMapping.getSubjectType().getUuid();
@@ -155,19 +155,20 @@ public class SubjectHeadersCreator extends AbstractHeaders {
 
             String locationSubjectTypeUuid = location.get("subjectTypeUUID").asText();
             if (subjectTypeUuid.equals(locationSubjectTypeUuid)) {
-                return location;
+                return Optional.of(location);
             }
         }
 
-        return null;
+        return Optional.empty();
     }
 
-    private List<String> extractLocationHeaders(JsonNode location) {
-        if (location == null) {
+    private List<String> extractLocationHeaders(Optional<JsonNode> locationOpt) {
+        if (!locationOpt.isPresent()) {
             logger.warn("No matching location found for the subject type");
             return getDefaultAddressHeaders();
         }
 
+        JsonNode location = locationOpt.get();
         if (!location.has("locationTypeUUIDs")) {
             logger.warn("Location missing locationTypeUUIDs field");
             return getDefaultAddressHeaders();
@@ -180,14 +181,14 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         }
 
         try {
-            List<String> locationTypeUUIDs = objectMapper.convertValue(locationTypeUUIDsNode,
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            List<String> locationTypeUUIDs = objectMapper.convertValue(
+                    locationTypeUUIDsNode,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)
+            );
 
-            Set<String> uniqueHeaders = locationTypeUUIDs.stream()
+            return locationTypeUUIDs.stream()
                     .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
-                    .collect(Collectors.toSet());
-
-            return new ArrayList<>(uniqueHeaders);
+                    .collect(Collectors.toCollection(ArrayList::new));
         } catch (Exception e) {
             logger.error("Error processing location type UUIDs", e);
             return getDefaultAddressHeaders();
