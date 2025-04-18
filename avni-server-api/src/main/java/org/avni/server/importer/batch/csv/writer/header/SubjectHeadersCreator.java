@@ -111,7 +111,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         // Mark all address fields as mandatory since they form a hierarchical structure
         // and if the lowest level is required, then the higher levels are implicitly required too
         return addressHeaders.stream()
-                .map(header -> new HeaderField(header, "", true, null, null, null, false))
+                .map(header -> new HeaderField(header, "", true, null, null, null, true))
                 .collect(Collectors.toList());
     }
 
