@@ -113,7 +113,7 @@ public class ObservationCreator {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
-            FormElement formElement = getFormElementForObservationConcept(concept, formType);
+            FormElement formElement = getFormElementForObservationConcept(concept, formType, formMapping);
             String rowValue = getRowValue(formElement, row, null);
 
             if (formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
@@ -193,8 +193,8 @@ public class ObservationCreator {
         }).collect(Collectors.toList());
     }
 
-    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType) {
-        List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(formType);
+    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType, FormMapping formMapping) {
+        List<Form> applicableForms = formMapping != null ? Collections.singletonList(formMapping.getForm()) : formRepository.findByFormTypeAndIsVoidedFalse(formType);
         if (applicableForms.isEmpty())
             throw new RuntimeException(String.format("No forms of type %s found", formType));
 
