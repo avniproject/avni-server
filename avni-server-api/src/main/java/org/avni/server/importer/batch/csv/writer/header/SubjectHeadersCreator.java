@@ -182,22 +182,12 @@ public class SubjectHeadersCreator extends AbstractHeaders {
                     .collect(Collectors.toList());
 
             // Remove any list that is a contiguous sublist of another
-            List<List<String>> filtered = new ArrayList<>();
-            for (int i = 0; i < listOfParentNameList.size(); i++) {
-                List<String> current = listOfParentNameList.get(i);
-                boolean isSublist = false;
-                for (int j = 0; j < listOfParentNameList.size(); j++) {
-                    if (i == j) continue;
-                    List<String> other = listOfParentNameList.get(j);
-                    if (other.size() > current.size() && Collections.indexOfSubList(other, current) >= 0) {
-                        isSublist = true;
-                        break;
-                    }
-                }
-                if (!isSublist) {
-                    filtered.add(current);
-                }
-            }
+            List<List<String>> filtered = listOfParentNameList.stream()
+                    .filter(current -> listOfParentNameList.stream()
+                            .filter(other -> !other.equals(current)) // Filter out comparison with self
+                            .noneMatch(other -> other.size() > current.size() &&
+                                    Collections.indexOfSubList(other, current) >= 0)) // Check if current is not a sublist of any other
+                    .collect(Collectors.toList());
 
             // To reverse the order, collect to a list and then reverse it
             List<String> flatList = filtered.stream()
