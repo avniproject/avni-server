@@ -6,10 +6,8 @@ import org.avni.server.importer.batch.csv.writer.header.HeaderCreator;
 import org.avni.server.util.S;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TxnDataHeaderValidator {
     public static void validateHeaders(String[] headers, FormMapping formMapping, HeaderCreator headerCreator) {
@@ -20,6 +18,7 @@ public class TxnDataHeaderValidator {
         String[] expectedIntendedHeaders = Arrays.stream(expectedHeaders).map(S::unDoubleQuote).toArray(String[]::new);
         checkForMissingHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));
         checkForUnknownHeaders(providedIntendedHeaders, allErrorMsgs, Arrays.asList(expectedIntendedHeaders));
+        checkForDuplicateHeaders(providedIntendedHeaders, allErrorMsgs);
         if (!allErrorMsgs.isEmpty()) {
             throw new RuntimeException(createMultiErrorMessage(allErrorMsgs));
         }
@@ -39,6 +38,12 @@ public class TxnDataHeaderValidator {
         }
     }
 
+    private static void checkForDuplicateHeaders(List<String> headerList, List<String> allErrorMsgs) {
+        Set<String> duplicateHeaders = headerList.stream().filter(header -> Collections.frequency(headerList, header) > 1).collect(Collectors.toSet());
+        if (!duplicateHeaders.isEmpty()) {
+            allErrorMsgs.add(String.format(CommonWriterError.ERR_MSG_DUPLICATE_HEADERS, String.join(", ", duplicateHeaders)));
+        }
+    }
     private static void checkForMissingHeaders(List<String> headerList, List<String> allErrorMsgs, List<String> expectedStandardHeaders) {
         HashSet<String> expectedHeaders = new HashSet<>(expectedStandardHeaders);
         HashSet<String> presentHeaders = new HashSet<>(headerList);

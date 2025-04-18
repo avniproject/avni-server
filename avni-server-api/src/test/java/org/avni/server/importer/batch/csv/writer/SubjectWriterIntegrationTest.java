@@ -69,6 +69,32 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 );
     }
 
+    private String[] headerWithDuplicates() {
+        return header("Id from previous system",
+                "Subject Type",
+                "Date Of Registration",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Gender",
+                "Profile Picture",
+                "State",
+                "District",
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Date Concept\"",
+                "\"Text Concept\"",
+                "\"Text Concept\"",
+                "\"Numeric Concept\"",
+                "\"Notes Concept\"",
+                "\"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\""
+        );
+    }
     private String[] validDataRow() {
         return dataRow("ABCD",
                 "SubjectType1",
@@ -406,6 +432,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         failure(validHeader(), dataRowWithNumericValuesOutsideValidRange(), "Invalid answer '500' for 'Numeric Concept'");
     }
 
+    @Test
+    public void shouldFailValidationIfDuplicateHeadersArePresent() {
+        failure(headerWithDuplicates(), validDataRow(), "Headers Text Concept, QuestionGroup Concept|QG Text Concept are repeated. Please update the name or remove the duplicates.");
+    }
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {
