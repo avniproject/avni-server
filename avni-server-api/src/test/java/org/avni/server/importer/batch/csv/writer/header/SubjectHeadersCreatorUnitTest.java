@@ -223,6 +223,42 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         assertEquals(subjectHeadersCreator.getAllHeaders(formMapping, null).length, descriptions.length);
     }
 
+    @Test
+    public void testAddressFieldsWithOverlappingParentNameLists_removesSublist() {
+        // UUIDs for two location types
+        String villageUuid = UUID.randomUUID().toString();
+        String districtUuid = UUID.randomUUID().toString();
+        String gaonUuid = UUID.randomUUID().toString();
+
+        // Mock config to return both UUIDs as custom registration locations
+        when(organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())).thenReturn(
+                Collections.singletonList(
+                        Map.of(
+                                "subjectTypeUUID", subjectType.getUuid(),
+                                "locationTypeUUIDs", List.of(villageUuid, districtUuid, gaonUuid)
+                        )
+                )
+        );
+        // Mock parent names: village is [Village, District], district is [District]
+        when(addressLevelTypeRepository.getAllParentNames(villageUuid)).thenReturn(List.of("Village", "District"));
+        when(addressLevelTypeRepository.getAllParentNames(districtUuid)).thenReturn(List.of("District"));
+        when(addressLevelTypeRepository.getAllParentNames(gaonUuid)).thenReturn(List.of("Gaon", "Zilla", "Shahar"));
+
+        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
+        // Should only include the largest list, i.e., both Village and District, but not a duplicate District
+        assertTrue(containsHeader(headers, "Village"), "Should include Village from the larger parent name list");
+        assertTrue(containsHeader(headers, "District"), "Should include District");
+        assertTrue(containsHeader(headers, "Gaon"), "Should include Gaon from the largest parent name list");
+
+        // Validate size - should match the number of unique address fields expected
+        Set<String> expectedHeaders = new HashSet<>(Arrays.asList("Village", "District", "Gaon", "Zilla", "Shahar"));
+        int uniqueHeaderCount = (int) Arrays.stream(headers).distinct().count();
+        assertEquals(uniqueHeaderCount, headers.length, "All header values should be unique");
+        assertTrue(headers.length >= 5, "There should be at least 5 headers for the address fields");
+        // check that all expected address fields are present (if the logic should include them)
+        expectedHeaders.forEach(h -> assertTrue(containsHeader(headers, h), "Should include " + h));
+    }
+
     private boolean containsHeader(String[] headers, String headerToFind) {
         for (String header : headers) {
             if (header.equals(headerToFind)) {

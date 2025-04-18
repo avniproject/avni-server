@@ -177,9 +177,34 @@ public class SubjectHeadersCreator extends AbstractHeaders {
                     objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)
             );
 
-            return locationTypeUUIDs.stream()
-                    .flatMap(uuid -> addressLevelTypeRepository.getAllParentNames(uuid).stream())
+            List<List<String>> listOfParentNameList = locationTypeUUIDs.stream()
+                    .map(addressLevelTypeRepository::getAllParentNames)
+                    .collect(Collectors.toList());
+
+            // Remove any list that is a contiguous sublist of another
+            List<List<String>> filtered = new ArrayList<>();
+            for (int i = 0; i < listOfParentNameList.size(); i++) {
+                List<String> current = listOfParentNameList.get(i);
+                boolean isSublist = false;
+                for (int j = 0; j < listOfParentNameList.size(); j++) {
+                    if (i == j) continue;
+                    List<String> other = listOfParentNameList.get(j);
+                    if (other.size() > current.size() && Collections.indexOfSubList(other, current) >= 0) {
+                        isSublist = true;
+                        break;
+                    }
+                }
+                if (!isSublist) {
+                    filtered.add(current);
+                }
+            }
+
+            // To reverse the order, collect to a list and then reverse it
+            List<String> flatList = filtered.stream()
+                    .flatMap(List::stream)
                     .collect(Collectors.toCollection(ArrayList::new));
+            Collections.reverse(flatList);
+            return flatList;
         } catch (Exception e) {
             logger.error("Error processing location type UUIDs", e);
             return getDefaultAddressHeaders();
