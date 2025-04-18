@@ -70,7 +70,18 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         if (program == null) {
             ValidationUtil.fieldMissing("Program", programNameProvided, allErrorMsgs);
         }
-        ValidationUtil.handleErrors(allErrorMsgs);
+        if (individual == null) {
+            ValidationUtil.fieldMissing("Subject ID", providedSubjectId, allErrorMsgs);
+            ValidationUtil.handleErrors(allErrorMsgs);
+        }
+
+        String id = row.get(ProgramEnrolmentHeadersCreator.id);
+        if (id != null && !id.trim().isEmpty()) {
+            ProgramEnrolment existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
+            if (existingEnrolment != null) {
+                allErrorMsgs.add(String.format("Entry with id from previous system, %s already present in Avni", id));
+            }
+        }
 
         FormMapping formMapping = formMappingRepository.getProgramEnrolmentFormMapping(individual.getSubjectType(), program);
         if (formMapping == null) {
@@ -85,6 +96,9 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
                 ProgramEnrolmentHeadersCreator.enrolmentDate,
                 allErrorMsgs, String.format("%s is mandatory", ProgramEnrolmentHeadersCreator.enrolmentDate)
         );
+        if (enrolmentDate != null && enrolmentDate.isAfter(LocalDate.now())) {
+            allErrorMsgs.add("Enrolment date cannot be in future");
+        }
         if (enrolmentDate != null) programEnrolment.setEnrolmentDateTime(enrolmentDate.toDateTimeAtStartOfDay());
 
         LocationCreator locationCreator = new LocationCreator();
@@ -92,16 +106,13 @@ public class ProgramEnrolmentWriter extends EntityWriter implements ItemWriter<R
         programEnrolment.setProgram(program);
 
         programEnrolment.setObservations(observationCreator.getObservations(row, programEnrolmentHeadersCreator, allErrorMsgs, FormType.ProgramEnrolment, programEnrolment.getObservations(), formMapping));
+        ValidationUtil.handleErrors(allErrorMsgs);
         programEnrolmentService.save(programEnrolment);
     }
 
     private ProgramEnrolment getOrCreateProgramEnrolment(Row row) {
         String id = row.get(ProgramEnrolmentHeadersCreator.id);
-        ProgramEnrolment existingEnrolment = null;
-        if (id != null && !id.isEmpty()) {
-            existingEnrolment = programEnrolmentRepository.findByLegacyIdOrUuid(id);
-        }
-        return existingEnrolment == null ? createNewEnrolment(id) : existingEnrolment;
+        return createNewEnrolment(id);
     }
 
     private ProgramEnrolment createNewEnrolment(String externalId) {

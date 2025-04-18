@@ -216,6 +216,7 @@ public class ObservationCreator {
                 if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
                     String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
                     return Stream.of(providedAnswers)
+                            .map(String::trim)
                             .map(answer -> {
                                 Concept answerConcept = concept.findAnswerConcept(answer);
                                 if (answerConcept == null) {
@@ -226,9 +227,9 @@ public class ObservationCreator {
                             })
                             .collect(Collectors.toList());
                 } else {
-                    Concept answerConcept = concept.findAnswerConcept(answerValue);
+                    Concept answerConcept = concept.findAnswerConcept(answerValue.trim());
                     if (answerConcept == null) {
-                        errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                        errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue.trim(), concept.getName()));
                         return null;
                     }
                     return answerConcept.getUuid();
