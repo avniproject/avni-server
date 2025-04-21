@@ -85,7 +85,7 @@ public class SubjectHeadersCreator extends AbstractHeaders {
         return fields;
     }
 
-    private List<HeaderField> generateAddressFields(FormMapping formMapping) {
+    public List<HeaderField> generateAddressFields(FormMapping formMapping) {
         List<String> addressHeaders;
         try {
             boolean hasCustomLocations = !organisationConfigService.getSettingsByKey(KeyType.customRegistrationLocations.toString())
