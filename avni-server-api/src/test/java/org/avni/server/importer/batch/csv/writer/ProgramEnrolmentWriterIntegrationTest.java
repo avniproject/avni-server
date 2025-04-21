@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
-import org.avni.server.application.FormType;
 import org.avni.server.application.Subject;
 import org.avni.server.dao.*;
 import org.avni.server.domain.*;
@@ -11,7 +10,6 @@ import org.avni.server.domain.factory.metadata.ProgramBuilder;
 import org.avni.server.domain.factory.txn.SubjectBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.csv.writer.header.ProgramEnrolmentHeadersCreator;
-import org.avni.server.importer.batch.csv.writer.header.SubjectHeadersCreator;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.builder.TestConceptService;
 import org.avni.server.service.builder.TestDataSetupService;
@@ -171,6 +169,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
 
     @Test
     public void allowWithoutLegacyId() {
+        success(validHeader(), validDataRowWithoutLegacyId());
         success(validHeader(), validDataRowWithoutLegacyId());
     }
 

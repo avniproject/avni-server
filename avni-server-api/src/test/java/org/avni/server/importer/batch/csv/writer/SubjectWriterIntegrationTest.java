@@ -63,9 +63,38 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Text Concept\"",
                 "\"Numeric Concept\"",
                 "\"Notes Concept\"",
-                "\"Multi Select Decision Coded\"");
+                "\"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\""
+                );
     }
 
+    private String[] headerWithDuplicates() {
+        return header("Id from previous system",
+                "Subject Type",
+                "Date Of Registration",
+                "Registration Location",
+                "First Name",
+                "Last Name",
+                "Date Of Birth",
+                "Date Of Birth Verified",
+                "Gender",
+                "Profile Picture",
+                "State",
+                "District",
+                "\"Single Select Coded\"",
+                "\"Multi Select Coded\"",
+                "\"Date Concept\"",
+                "\"Text Concept\"",
+                "\"Text Concept\"",
+                "\"Numeric Concept\"",
+                "\"Notes Concept\"",
+                "\"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\""
+        );
+    }
     private String[] validDataRow() {
         return dataRow("ABCD",
                 "SubjectType1",
@@ -85,7 +114,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "text",
                 "123",
                 "some notes",
-                "\"MSDC Answer 1\", \"MSDC Answer 2\"");
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456");
     }
 
     private String[] validDataRowWithoutLegacyId() {
@@ -107,7 +138,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "text",
                 "123",
                 "some notes",
-                "\"MSDC Answer 1\", \"MSDC Answer 2\"");
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456");
     }
 
     private String[] dataRowWithWrongValues() {
@@ -129,7 +162,80 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "text",
                 "shouldHaveBeenANumber",
                 "some notes",
-                "\"MSDC Aswer 1\", \"MSDC Answer 2\"");
+                "\"MSDC Aswer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "shouldHaveBeenANumber");
+    }
+
+    private String[] dataRowWithNumericValuesOutsideValidRange() {
+        return dataRow("",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "500",
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456");
+    }
+    private String[] dataRowWithMissingMandatoryValues() {
+        return dataRow("",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "",
+                "",
+                "",
+                "",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "qg text",
+                "456");
+    }
+
+    private String[] dataRowWithMissingMandatoryQGValues() {
+        return dataRow("",
+                "SubjectType1",
+                "2020-01-01",
+                "21.5135243,85.6731848",
+                "John",
+                "Doe",
+                "1990-01-01",
+                "true",
+                "Male",
+                "",
+                "Bihar",
+                "District1",
+                "SSC Answer 1",
+                "\"MSC Answer 1\", \"MSC Answer 2\"",
+                "2020-01-01",
+                "text",
+                "100",
+                "some notes",
+                "\"MSDC Answer 1\", \"MSDC Answer 2\"",
+                "",
+                "");
     }
 
     private String[] dataRowWithCodedAnswersInDifferentCase() {
@@ -151,7 +257,9 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "text",
                 "123",
                 "some notes",
-                "\"MSDC Answer 1\", \"msdc answer 2\"");
+                "\"MSDC Answer 1\", \"msdc answer 2\"",
+                "qg text",
+                "456");
     }
 
     @Test
@@ -174,7 +282,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "\"Text Concept\"",
                         "\"Numeric Concept\"",
                         "\"Notes Concept\"",
-                        "\"Multi Selec Decision Coded\""),
+                        "\"Multi Selec Decision Coded\"",
+                        "\"QuestionGroup Concept|QG Text Concept\"",
+                        "\"QuestionGroup Concept|QG Numeric Concept\""
+                ),
                 validDataRow(),
                 "Mandatory columns are missing from uploaded file - Single Select Coded, Date Of Birth, Date Of Registration, Multi Select Decision Coded, District, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Date Of Birt, Singl Select Coded, Id from previou system, Date Of Registratio, Distric, Multi Selec Decision Coded included in file. Please refer to sample file for valid list of headers.");
     }
@@ -199,7 +310,10 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "\"Text Concept\"",
                 "\"Numeric Concept\"",
                 "\"Notes Concept\"",
-                " \"Multi Select Decision Coded\"");
+                " \"Multi Select Decision Coded\"",
+                "\"QuestionGroup Concept|QG Text Concept\"",
+                "\"QuestionGroup Concept|QG Numeric Concept\""
+        );
         String[] dataRow = validDataRow();
         subjectWriter.write(Chunk.of(new Row(headers, dataRow)));
         Individual subject = individualRepository.findByLegacyId("ABCD");
@@ -227,7 +341,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         multiSelectConcepts.add(multiSelectCoded);
         singleSelectConcepts.add(testConceptService.createConcept("Date Concept", ConceptDataType.Date));
         singleSelectConcepts.add(testConceptService.createConcept("Text Concept", ConceptDataType.Text));
-        singleSelectConcepts.add(testConceptService.createConcept("Numeric Concept", ConceptDataType.Numeric));
+        singleSelectConcepts.add(testConceptService.createNumericConceptWithAbsolutes("Numeric Concept", 1.0, 200.0));
         singleSelectConcepts.add(testConceptService.createConcept("Notes Concept", ConceptDataType.Notes));
 
         SubjectType subjectType = subjectTypeRepository.save(new SubjectTypeBuilder()
@@ -238,9 +352,15 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
         operationalSubjectTypeRepository
                 .save(OperationalSubjectType.fromSubjectType(subjectType, UUID.randomUUID().toString()));
 
+        Concept questionGroupConcept = testConceptService.createConcept("QuestionGroup Concept", ConceptDataType.QuestionGroup);
+        List<Concept> childQGConcepts = new ArrayList<>();
+        childQGConcepts.add(testConceptService.createConcept("QG Numeric Concept", ConceptDataType.Numeric));
+        childQGConcepts.add(testConceptService.createConcept("QG Text Concept", ConceptDataType.Text));
         FormMapping registrationFormMapping = testFormService.createRegistrationForm(subjectType, "Registration Form",
                 singleSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
-                multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()));
+                multiSelectConcepts.stream().map(Concept::getName).collect(Collectors.toList()),
+                questionGroupConcept,
+                childQGConcepts);
         testFormService.addDecisionConcepts(registrationFormMapping.getForm().getId(), multiSelectDecisionCoded);
 
         AddressLevel bihar = testLocationService
@@ -282,6 +402,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void allowWithoutLegacyId() {
         success(validHeader(), validDataRowWithoutLegacyId());
+        success(validHeader(), validDataRowWithoutLegacyId());
     }
 
     @Test
@@ -296,6 +417,25 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                 "'Date Of Registration' 2090-01-01 is in future, Invalid answer 'MSC Answer 2 Invalid' for 'Multi Select Coded', Invalid answer 'MSDC Aswer 1' for 'Multi Select Decision Coded', Invalid answer 'SSC Answer 1 Invalid' for 'Single Select Coded', Invalid value 'shouldHaveBeenADate' for 'Date Concept', Invalid value 'shouldHaveBeenANumber' for 'Numeric Concept'");
     }
 
+    @Test
+    public void shouldFailValidationIfMandatoryFieldsAreNotProvided() {
+        failure(validHeader(), dataRowWithMissingMandatoryValues(), "Value required for mandatory field 'Date Concept', Value required for mandatory field 'Notes Concept', Value required for mandatory field 'Numeric Concept', Value required for mandatory field 'Text Concept'");
+    }
+
+    @Test
+    public void shouldFailValidationIfMandatoryQuestionGroupFieldsAreNotProvided() {
+        failure(validHeader(), dataRowWithMissingMandatoryQGValues(), "Value required for mandatory field 'QG Numeric Concept', Value required for mandatory field 'QG Text Concept'");
+    }
+
+    @Test
+    public void shouldFailValidationIfNumericValueIsOutsideValidRange() {
+        failure(validHeader(), dataRowWithNumericValuesOutsideValidRange(), "Invalid answer '500' for 'Numeric Concept'");
+    }
+
+    @Test
+    public void shouldFailValidationIfDuplicateHeadersArePresent() {
+        failure(headerWithDuplicates(), validDataRow(), "Headers Text Concept, QuestionGroup Concept|QG Text Concept are repeated. Please update the name or remove the duplicates.");
+    }
     private void failure(String[] headers, String[] cells, String errorMessage) {
         long before = individualRepository.count();
         try {

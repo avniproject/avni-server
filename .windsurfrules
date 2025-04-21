@@ -1,5 +1,7 @@
+# Avni Server Windsurf Rules
+version = 1.0.0
+
 # Tech Stack
-- my project is a Spring Boot application
 - it uses JPA, Spring Security, Spring Batch, and Spring Rest
 - it connects to a Postgres database
 - flyway is used for database migrations
@@ -25,3 +27,30 @@
 - the web response contract classes are called Response
 - Mapper should use Repository and not Service
 - Controller can use Service or Repository depending on the complexity of the operation
+
+#----------------------------------------------
+# CODE STYLE AND FORMATTING
+#----------------------------------------------
+# General Code Style
+codeStyle.indentation = spaces
+codeStyle.indentSize = 4
+codeStyle.lineLength = 120
+
+#----------------------------------------------
+# ARCHITECTURE AND DESIGN PATTERNS
+#----------------------------------------------
+# Code Patterns
+patterns.controllers = **/*Controller.java
+patterns.services = **/*Service.java
+patterns.repositories = **/*Repository.java
+patterns.entities = org/avni/server/domain/**/*.java
+
+## Architecture principles
+# Controller Layer Principles
+controller.principles = Keep controllers thin, Delegate business logic to services, Use DTOs for request/response objects, Implement proper error handling, Document APIs with OpenAPI/Swagger
+
+# Domain Model Guidelines
+domain.principles = Use rich domain models, Encapsulate business rules within domain objects, Validate domain invariants, Use value objects for immutable concepts, Consider using domain events for cross-aggregate communication
+
+# Refactoring Guidelines
+modularity.principles = Create small, focused methods with a single responsibility, Limit method size to improve readability and testability, Extract complex logic into separate utility classes, Use immutable objects wherever possible, Avoid deep nesting of methods and control structures, Prefer self-documenting code over comments

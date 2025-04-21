@@ -9,27 +9,27 @@ import org.avni.server.service.ImportService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Component
 public abstract class AbstractHeaders implements HeaderCreator {
+    private static final Map<String, Supplier<FieldDescriptor>> STRATEGY_MAP = new HashMap<>();
+
+    static {
+        STRATEGY_MAP.put(ConceptDataType.Coded.name(), CodedFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Date.name(), DateFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Text.name(), TextFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Numeric.name(), NumericFieldDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.PhoneNumber.name(), PhoneNumberDescriptor::new);
+        STRATEGY_MAP.put(ConceptDataType.Subject.name(), SubjectConceptDescriptor::new);
+    }
+
     private static FieldDescriptor getStrategy(String dataType) {
-        if (dataType.equals(ConceptDataType.Coded.name())) {
-            return new CodedFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.Date.name())) {
-            return new DateFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.Text.name())) {
-            return new TextFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.Numeric.name())) {
-            return new NumericFieldDescriptor();
-        } else if (dataType.equals(ConceptDataType.PhoneNumber.name())) {
-            return new PhoneNumberDescriptor();
-        } else if (dataType.equals(ConceptDataType.Subject.name())) {
-            return new SubjectConceptDescriptor();
-        } else {
-            return new DefaultFieldDescriptor();
-        }
+        return STRATEGY_MAP.getOrDefault(dataType, DefaultFieldDescriptor::new).get();
     }
 
     @Override
@@ -88,6 +88,6 @@ public abstract class AbstractHeaders implements HeaderCreator {
         String allowedValues = strategy.getAllowedValues(fe);
         String format = strategy.getFormat(fe);
 
-        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, false);
+        return new HeaderField(header, "", fe.isMandatory(), allowedValues, format, null, true);
     }
 }

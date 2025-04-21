@@ -153,7 +153,9 @@ public class SubjectWriter extends EntityWriter implements ItemWriter<Row>, Seri
 
     private Individual createNewIndividual(String externalId) {
         Individual individual = new Individual();
-        individual.setLegacyId(externalId);
+        if (StringUtils.hasText(externalId)) {
+            individual.setLegacyId(externalId);
+        }
         return individual;
     }
 

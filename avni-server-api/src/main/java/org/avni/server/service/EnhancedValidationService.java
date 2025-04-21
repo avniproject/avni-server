@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.avni.server.application.FormElement;
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.KeyType;
+import org.avni.server.application.KeyValue;
+import org.avni.server.application.KeyValues;
 import org.avni.server.common.EnhancedValidationDTO;
 import org.avni.server.dao.AddressLevelTypeRepository;
 import org.avni.server.dao.ConceptRepository;
@@ -20,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
@@ -144,108 +148,200 @@ public class EnhancedValidationService {
     }
 
     private void validateAnswer(Concept question, FormElement formElement, Object value, List<String> errorMessages) {
-        if (value == null || (value instanceof String && ((String) value).trim().equals(""))) return;
-        switch (ConceptDataType.valueOf(question.getDataType())) {
+        if (value == null || (value instanceof String && ((String) value).trim().isEmpty())) {
+            return;
+        }
+        
+        ConceptDataType dataType = ConceptDataType.valueOf(question.getDataType());
+        switch (dataType) {
             case Coded:
-                if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(value))) {
-                    errorMessages.add(String.format("Concept answer '%s' not found in Concept '%s'", value, question.getUuid()));
-                }
-                return;
+                validateCodedValue(question, value, errorMessages);
+                break;
             case Numeric:
-                try {
-                    Double.parseDouble(value.toString());
-                } catch (NumberFormatException numberFormatException) {
-                    errorMessages.add(formatErrorMessage(question, value));
-                }
-                return;
+                validateNumericValue(question, value, errorMessages);
+                break;
             case Text:
-                try {
-                    String text = (String) value;
-                    if (formElement.getValidFormat() != null) {
-                        if (!text.matches(formElement.getValidFormat().getRegex())) {
-                            errorMessages.add(formatErrorMessage(question, value));
-                            return;
-                        }
-                    }
-                } catch (ClassCastException classCastException) {
-                    errorMessages.add(formatErrorMessage(question, value));
-                }
-                return;
+                validateTextValue(question, formElement, value, errorMessages);
+                break;
             case Date:
             case DateTime:
-                try {
-                    DateTimeUtil.parseNullableDateTime(value.toString());
-                } catch (Exception e) {
-                    errorMessages.add(formatErrorMessage(question, value));
-                }
-                return;
+                validateDateTimeValue(question, value, errorMessages);
+                break;
             case Duration:
-                try {
-                    String duration = (String) value;
-                    if (!duration.matches(DURATION_PATTERN)) {
-                        errorMessages.add(formatErrorMessage(question, value));
-                    }
-                } catch (ClassCastException classCastException) {
-                    errorMessages.add(formatErrorMessage(question, value));
-                }
-                return;
+                validateDurationValue(question, value, errorMessages);
+                break;
             case Time:
-                try {
-                    LocalTime.parse(value.toString());
-                } catch (DateTimeParseException dateTimeParseException) {
+                validateTimeValue(question, value, errorMessages);
+                break;
+            case Subject:
+                validateSubjectValue(question, value, errorMessages);
+                break;
+            case Location:
+                validateLocationValue(question, value, errorMessages);
+                break;
+            case PhoneNumber:
+                validatePhoneNumberValue(question, value, errorMessages);
+                break;
+            case Image:
+            case ImageV2:
+                validateImageValue(question, value, errorMessages);
+                break;
+            default:
+                // No validation required for other data types
+        }
+    }
+
+    private void validateCodedValue(Concept question, Object value, List<String> errorMessages) {
+        if (question.getConceptAnswers().stream().noneMatch(ans -> ans.getAnswerConcept().getUuid().equals(value))) {
+            errorMessages.add(String.format("Concept answer '%s' not found in Concept '%s' (%s)", 
+                value, question.getName(), question.getUuid()));
+        }
+    }
+
+    private void validateNumericValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to parse numeric value: " + value, e);
+        }
+    }
+
+    private void validateTextValue(Concept question, FormElement formElement, Object value, List<String> errorMessages) {
+        try {
+            String text = (String) value;
+            if (formElement.getValidFormat() != null) {
+                if (!text.matches(formElement.getValidFormat().getRegex())) {
                     errorMessages.add(formatErrorMessage(question, value));
                 }
-                return;
-            case Subject:
-                SubjectType subjectType = subjectTypeRepository.findByUuid(question.getKeyValues().get(KeyType.subjectTypeUUID).getValue().toString());
-                if (individualRepository.findByLegacyIdOrUuidAndSubjectType((String) value, subjectType) == null)
+            }
+        } catch (ClassCastException e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to cast text value: " + value, e);
+        }
+    }
+
+    private void validateDateTimeValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            DateTimeUtil.parseNullableDateTime(value.toString());
+        } catch (Exception e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to parse date/time value: " + value, e);
+        }
+    }
+
+    private void validateDurationValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            String duration = (String) value;
+            if (!duration.matches(DURATION_PATTERN)) {
+                errorMessages.add(formatErrorMessage(question, value));
+            }
+        } catch (ClassCastException e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to cast duration value: " + value, e);
+        }
+    }
+
+    private void validateTimeValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            LocalTime.parse(value.toString());
+        } catch (DateTimeParseException e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to parse time value: " + value, e);
+        }
+    }
+
+    private void validateSubjectValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            KeyValues keyValues = question.getKeyValues();
+            if (keyValues != null && keyValues.containsKey(KeyType.subjectTypeUUID)) {
+                KeyValue keyValue = keyValues.get(KeyType.subjectTypeUUID);
+                String subjectTypeUuid = keyValue.getValue().toString();
+                
+                SubjectType subjectType = subjectTypeRepository.findByUuid(subjectTypeUuid);
+                
+                if (subjectType != null && individualRepository.findByLegacyIdOrUuidAndSubjectType((String) value, subjectType) == null) {
                     errorMessages.add(formatErrorMessage(question, value));
-                return;
-            case Location:
-                try {
-                    List<String> lowestLevelUuids = (List<String>) question.getKeyValues().get(KeyType.lowestAddressLevelTypeUUIDs).getValue();
+                }
+            } else {
+                errorMessages.add(String.format("Missing subject type for concept '%s'", question.getName()));
+            }
+        } catch (Exception e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to validate subject value: " + value, e);
+        }
+    }
+
+    private void validateLocationValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            KeyValues keyValues = question.getKeyValues();
+            if (keyValues != null && keyValues.containsKey(KeyType.lowestAddressLevelTypeUUIDs)) {
+                KeyValue keyValue = keyValues.get(KeyType.lowestAddressLevelTypeUUIDs);
+                Object keyValueObj = keyValue.getValue();
+                
+                if (keyValueObj instanceof List<?>) {
+                    // Safe cast with instanceof check
+                    @SuppressWarnings("unchecked")
+                    List<String> lowestLevelUuids = (List<String>) keyValueObj;
+                    
                     List<AddressLevelType> lowestLevels = lowestLevelUuids.stream()
                             .map(addressLevelTypeRepository::findByUuid)
+                            .filter(Objects::nonNull)
                             .toList();
-                    if (!lowestLevels
-                            .stream()
+                    
+                    boolean isValid = lowestLevels.stream()
                             .map(AddressLevelType::getAddressLevels)
                             .flatMap(Collection::stream)
                             .map(AddressLevel::getUuid)
                             .toList()
-                            .contains(value)) {
+                            .contains(value);
+                            
+                    if (!isValid) {
                         errorMessages.add(formatErrorMessage(question, value));
                     }
-                } catch (ClassCastException classCastException) {
-                    errorMessages.add(formatErrorMessage(question, value));
+                } else {
+                    errorMessages.add(String.format("Invalid lowest address level type for concept '%s'", 
+                        question.getName()));
                 }
-                return;
-            case PhoneNumber:
-                try {
-                    PhoneNumberObservationValue phoneNumber = objectMapper.convertValue(value, PhoneNumberObservationValue.class);
-                    if (PhoneNumberUtil.isValidPhoneNumber(phoneNumber.getPhoneNumber(), RegionUtil.getCurrentUserRegion())) {
-                        errorMessages.add(formatErrorMessage(question, value));
-                    }
-                } catch (ClassCastException | IllegalArgumentException e) {
-                    errorMessages.add(formatErrorMessage(question, value));
-                }
-                return;
-            case Image, ImageV2:
-                try {
-                    URL dummyUrl = s3Service.generateMediaUploadUrl("dummy.jpg", HttpMethod.PUT);
-                    URL imageUrl = new URL(value.toString());
-                    if (!Objects.equals(dummyUrl.getProtocol(), imageUrl.getProtocol()) || !Objects.equals(dummyUrl.getHost(), imageUrl.getHost())) {
-                        errorMessages.add(formatErrorMessage(question, value));
-                    }
-                } catch (MalformedURLException malformedURLException) {
-                    errorMessages.add(formatErrorMessage(question, value));
-                }
-                return;
-            default:
+            } else {
+                errorMessages.add(String.format("Missing lowest address level type for concept '%s'", 
+                    question.getName()));
+            }
+        } catch (Exception e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to validate location value: " + value, e);
         }
     }
 
-    public void validateQuestionGroupConcept(Concept question, FormElement formElement, Object qGroupValue, FormMapping formMapping, List<String> errorMessages) {
+    private void validatePhoneNumberValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            PhoneNumberObservationValue phoneNumber = objectMapper.convertValue(value, PhoneNumberObservationValue.class);
+            if (!PhoneNumberUtil.isValidPhoneNumber(phoneNumber.getPhoneNumber(), RegionUtil.getCurrentUserRegion())) {
+                errorMessages.add(formatErrorMessage(question, value));
+            }
+        } catch (Exception e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to validate phone number value: " + value, e);
+        }
+    }
+
+    private void validateImageValue(Concept question, Object value, List<String> errorMessages) {
+        try {
+            URL dummyUrl = s3Service.generateMediaUploadUrl("dummy.jpg", HttpMethod.PUT);
+            // Use non-deprecated constructor for URL
+            URL imageUrl = new URI(value.toString()).toURL();
+            
+            if (!Objects.equals(dummyUrl.getProtocol(), imageUrl.getProtocol()) || 
+                !Objects.equals(dummyUrl.getHost(), imageUrl.getHost())) {
+                errorMessages.add(formatErrorMessage(question, value));
+            }
+        } catch (MalformedURLException | URISyntaxException e) {
+            errorMessages.add(formatErrorMessage(question, value));
+            logger.debug("Failed to validate image URL: " + value, e);
+        }
+    }
+
+    private void validateQuestionGroupConcept(Concept question, FormElement formElement, Object qGroupValue, FormMapping formMapping, List<String> errorMessages) {
         if (qGroupValue == null) {
             errorMessages.add(String.format("Null value specified for question group concept name: %s, uuid:%s", question.getName(), question.getUuid()));
         } else if (formElement.isRepeatable() && !(qGroupValue instanceof Collection<?>)) {
@@ -257,15 +353,16 @@ public class EnhancedValidationService {
     }
 
     private void splitQuestionGroupValueIfRequiredAndThenValidate(FormElement formElement, Object qGroupValue, FormMapping formMapping, List<String> errorMessages) {
-        if (qGroupValue instanceof Collection<?>) {
-            ((Collection<Object>) qGroupValue).forEach(qGroupValueInstance -> {
-                validateChildObservation(formElement, (Map<String, Object>) qGroupValueInstance, formMapping, errorMessages);
-            });
+        if (qGroupValue instanceof Collection) {
+            Collection<?> collection = (Collection<?>) qGroupValue;
+            for (Object item : collection) {
+                validateCollectionItem(formElement, item, formMapping, errorMessages);
+            }
         } else {
-            validateChildObservation(formElement, (Map<String, Object>) qGroupValue, formMapping, errorMessages);
+            validateCollectionItem(formElement, qGroupValue, formMapping, errorMessages);
         }
     }
-
+    
     private void validateChildObservation(FormElement questionGroupFormElement, Map<String, Object> qGroupValueInstance, FormMapping formMapping, List<String> errorMessages) {
         LinkedHashMap<String, FormElement> formElements = formMappingService.getEntityConceptMapForSpecificQuestionGroupFormElement(questionGroupFormElement, formMapping, INCLUDE_VOIDED_FORM_ELEMENTS);
         List<ObservationRequest> observationRequests = qGroupValueInstance.entrySet().stream().map(this::createObservationRequest).collect(Collectors.toList());
@@ -281,6 +378,17 @@ public class EnhancedValidationService {
         }
 
         validateConceptValuesAreOfRequiredType(observationRequests, formElements, formMapping, errorMessages);
+    }
+    
+    private void validateCollectionItem(FormElement formElement, Object item, FormMapping formMapping, List<String> errorMessages) {
+        if (item instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> valueMap = (Map<String, Object>) item;
+            validateChildObservation(formElement, valueMap, formMapping, errorMessages);
+        } else {
+            errorMessages.add(String.format("Invalid question group value type for concept '%s'", 
+                formElement.getConcept().getName()));
+        }
     }
 
     private ObservationRequest createObservationRequest(Map.Entry<String, Object> stringObjectEntry) {

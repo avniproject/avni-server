@@ -1,7 +1,6 @@
 package org.avni.server.importer.batch.csv.creator;
 
 import org.avni.server.application.*;
-import org.avni.server.common.ValidationResult;
 import org.avni.server.dao.ConceptRepository;
 import org.avni.server.dao.application.FormElementRepository;
 import org.avni.server.dao.application.FormRepository;
@@ -14,18 +13,15 @@ import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.*;
 import org.avni.server.util.*;
 import org.avni.server.web.request.ObservationRequest;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,7 +39,6 @@ public class ObservationCreator {
     private final IndividualService individualService;
     private final LocationService locationService;
     private final FormElementRepository formElementRepository;
-    private final EnhancedValidationService enhancedValidationService;
 
     @Autowired
     public ObservationCreator(ConceptRepository conceptRepository,
@@ -61,7 +56,6 @@ public class ObservationCreator {
         this.individualService = individualService;
         this.locationService = locationService;
         this.formElementRepository = formElementRepository;
-        this.enhancedValidationService = enhancedValidationService;
     }
 
     public Set<Concept> getConceptsInHeader(HeaderCreator headers, FormMapping formMapping, String[] fileHeaders) {
@@ -98,7 +92,7 @@ public class ObservationCreator {
                 String parentChildName = concept.getName() + "|" + fe.getConcept().getName();
                 String headerName = formElement.isRepeatable() ? String.format("%s|1", parentChildName) : parentChildName;
                 String rowValue = row.get(headerName);
-                return !(rowValue == null || rowValue.trim().equals(""));
+                return fe.isMandatory() && !StringUtils.hasText(rowValue);
             });
         }
         return false;
@@ -119,8 +113,12 @@ public class ObservationCreator {
         List<ObservationRequest> observationRequests = new ArrayList<>();
         Set<Concept> conceptsInHeader = getConceptsInHeader(headers, formMapping, fileHeaders);
         for (Concept concept : conceptsInHeader) {
-            FormElement formElement = getFormElementForObservationConcept(concept, formType);
+            FormElement formElement = getFormElementForObservationConcept(concept, formType, formMapping);
             String rowValue = getRowValue(formElement, row, null);
+
+            if (formElement.isMandatory() && !StringUtils.hasText(rowValue)) {
+                errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
+            }
             if (!isNonEmptyQuestionGroup(formElement, row) && (rowValue == null || rowValue.trim().isEmpty()))
                 continue;
             ObservationRequest observationRequest = new ObservationRequest();
@@ -138,7 +136,7 @@ public class ObservationCreator {
         return observationService.createObservations(observationRequests);
     }
 
-    // For the repeatable question group columns should be "Question group concept"|"Child concept"|"order(1,2,3...)"
+
     private Object constructChildObservations(Row row, HeaderCreator headers, List<String> errorMsgs, FormElement parentFormElement, FormType formType, ObservationCollection oldObservations) {
         List<FormElement> allChildQuestions = formElementRepository.findAllByGroupId(parentFormElement.getId());
         if (parentFormElement.isRepeatable()) {
@@ -166,8 +164,12 @@ public class ObservationCreator {
         for (FormElement formElement : allChildQuestions) {
             Concept concept = formElement.getConcept();
             String rowValue = getRowValue(formElement, row, questionGroupIndex);
-            if (rowValue == null || rowValue.trim().equals(""))
+            if (!StringUtils.hasText(rowValue)) {
+                if (formElement.isMandatory()) {
+                    errorMsgs.add(String.format("Value required for mandatory field '%s'", concept.getName()));
+                }
                 continue;
+            }
             ObservationRequest observationRequest = new ObservationRequest();
             observationRequest.setConceptName(concept.getName());
             observationRequest.setConceptUUID(concept.getUuid());
@@ -191,8 +193,8 @@ public class ObservationCreator {
         }).collect(Collectors.toList());
     }
 
-    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType) {
-        List<Form> applicableForms = formRepository.findByFormTypeAndIsVoidedFalse(formType);
+    private FormElement getFormElementForObservationConcept(Concept concept, FormType formType, FormMapping formMapping) {
+        List<Form> applicableForms = formMapping != null ? Collections.singletonList(formMapping.getForm()) : formRepository.findByFormTypeAndIsVoidedFalse(formType);
         if (applicableForms.isEmpty())
             throw new RuntimeException(String.format("No forms of type %s found", formType));
 
@@ -211,8 +213,35 @@ public class ObservationCreator {
     private Object getObservationValue(FormElement formElement, String answerValue, FormType formType, List<String> errorMsgs, Row row, HeaderCreator headers, ObservationCollection oldObservations) {
         Concept concept = formElement.getConcept();
         Object oldValue = oldObservations == null ? null : oldObservations.getOrDefault(concept.getUuid(), null);
-        switch (ConceptDataType.valueOf(concept.getDataType())) {
+        ConceptDataType dataType = ConceptDataType.valueOf(concept.getDataType());
+        
+        switch (dataType) {
             case Coded:
+                return handleCodedValue(formElement, answerValue, errorMsgs, concept);
+            case Numeric:
+                return handleNumericValue(answerValue, errorMsgs, concept);
+            case Date:
+                return handleDateValue(answerValue, errorMsgs, concept);
+            case DateTime:
+                return handleDateTimeValue(answerValue, errorMsgs, concept);
+            case Image:
+            case ImageV2:
+            case Video:
+                return handleMediaValue(formElement, answerValue, errorMsgs, oldValue);
+            case Subject:
+                return individualService.getObservationValueForUpload(formElement, answerValue);
+            case Location:
+                return locationService.getObservationValueForUpload(formElement, answerValue);
+            case PhoneNumber:
+                return handlePhoneNumberValue(answerValue, errorMsgs, concept);
+            case QuestionGroup:
+                return this.constructChildObservations(row, headers, errorMsgs, formElement, formType, null);
+            default:
+                return answerValue;
+        }
+    }
+
+    private Object handleCodedValue(FormElement formElement, String answerValue, List<String> errorMsgs, Concept concept) {
                 if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
                     String[] providedAnswers = S.splitMultiSelectAnswer(answerValue);
                     return Stream.of(providedAnswers)
@@ -234,14 +263,37 @@ public class ObservationCreator {
                     }
                     return answerConcept.getUuid();
                 }
-            case Numeric:
+    }
+
+    private Object handleNumericValue(String answerValue, List<String> errorMsgs, Concept concept) {
                 try {
-                    return Double.parseDouble(answerValue);
+            double value = Double.parseDouble(answerValue);
+            Double lowAbsolute = concept.getLowAbsolute();
+            Double highAbsolute = concept.getHighAbsolute();
+            
+            if (!isWithinRange(value, lowAbsolute, highAbsolute)) {
+                errorMsgs.add(format("Invalid answer '%s' for '%s'", answerValue, concept.getName()));
+                return null;
+            }
+            return value;
                 } catch (NumberFormatException e) {
                     errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
                     return null;
                 }
-            case Date:
+    }
+    
+    private boolean isWithinRange(double value, Double lowAbsolute, Double highAbsolute) {
+        if (lowAbsolute != null && highAbsolute != null) {
+            return value >= lowAbsolute && value <= highAbsolute;
+        } else if (lowAbsolute != null) {
+            return value >= lowAbsolute;
+        } else if (highAbsolute != null) {
+            return value <= highAbsolute;
+        }
+        return true;
+    }
+
+    private Object handleDateValue(String answerValue, List<String> errorMsgs, Concept concept) {
                 try {
                     String trimmed = answerValue.trim();
                     return (trimmed.isEmpty()) ? null : DateTimeUtil.parseFlexibleDate(trimmed);
@@ -249,16 +301,18 @@ public class ObservationCreator {
                     errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
                     return null;
                 }
-            case DateTime:
+    }
+
+    private Object handleDateTimeValue(String answerValue, List<String> errorMsgs, Concept concept) {
                 try {
                     return (answerValue.trim().isEmpty()) ? null : toISODateFormat(answerValue);
-                } catch (DateTimeParseException e) {
+        } catch (IllegalArgumentException e) {
                     errorMsgs.add(format("Invalid value '%s' for '%s'", answerValue, concept.getName()));
                     return null;
                 }
-            case Image:
-            case ImageV2:
-            case Video:
+    }
+
+    private Object handleMediaValue(FormElement formElement, String answerValue, List<String> errorMsgs, Object oldValue) {
                 if (formElement.getType().equals(FormElementType.MultiSelect.name())) {
                     String[] providedURLs = S.splitMultiSelectAnswer(answerValue);
                     return Stream.of(providedURLs)
@@ -267,17 +321,11 @@ public class ObservationCreator {
                 } else {
                     return getMediaObservationValue(answerValue, errorMsgs, oldValue);
                 }
-            case Subject:
-                return individualService.getObservationValueForUpload(formElement, answerValue);
-            case Location:
-                return locationService.getObservationValueForUpload(formElement, answerValue);
-            case PhoneNumber:
-                return (answerValue.trim().equals("")) ? null : toPhoneNumberFormat(answerValue.trim(), errorMsgs, concept.getName());
-            case QuestionGroup:
-                return this.constructChildObservations(row, headers, errorMsgs, formElement, formType, null);
-            default:
-                return answerValue;
         }
+
+    private Object handlePhoneNumberValue(String answerValue, List<String> errorMsgs, Concept concept) {
+        String trimmedValue = answerValue.trim();
+        return (trimmedValue.isEmpty()) ? null : toPhoneNumberFormat(trimmedValue, errorMsgs, concept.getName());
     }
 
     private Object getMediaObservationValue(String answerValue, List<String> errorMsgs, Object oldValue) {
@@ -301,19 +349,46 @@ public class ObservationCreator {
     }
 
     private String toISODateFormat(String dateStr) {
-        DateTimeFormatter outputFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        DateTimeFormatter parseFmt = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd[ HH:mm:ss]")
-                .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                .toFormatter();
-        ZonedDateTime dt = null;
-        if (parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from) instanceof ZonedDateTime) {
-            dt = (ZonedDateTime) parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from);
-        } else if (parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from) instanceof java.time.LocalDate) {
-            dt = ((java.time.LocalDate) parseFmt.parseBest(dateStr, ZonedDateTime::from, java.time.LocalDate::from)).atStartOfDay(ZoneId.systemDefault());
+        DateTimeFormatter outputFmt = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        
+        // Try each format in sequence
+        DateTime dt = tryParseDateTime(dateStr);
+        if (dt == null) {
+            // If we couldn't parse it, throw a descriptive exception
+            throw new IllegalArgumentException("Unable to parse date: " + dateStr + 
+                ". Supported formats are: yyyy-MM-dd HH:mm:ss, dd-MM-yyyy, yyyy-MM-dd");
         }
-        return dt.format(outputFmt);
+        
+        return dt.toString(outputFmt);
+    }
+    
+    private DateTime tryParseDateTime(String dateStr) {
+        // Try parsing with time in ISO format
+        try {
+            return DateTime.parse(dateStr, DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (IllegalArgumentException ignored) {
+            // Continue to next format
+        }
+        
+        // Try European date format (dd-MM-yyyy)
+        try {
+            return DateTime.parse(dateStr, DateTimeFormat.forPattern("dd-MM-yyyy"))
+                    .withHourOfDay(0)
+                    .withMinuteOfHour(0)
+                    .withSecondOfMinute(0);
+        } catch (IllegalArgumentException ignored) {
+            // Continue to next format
+        }
+        
+        // Try ISO date format (yyyy-MM-dd)
+        try {
+            return DateTime.parse(dateStr, DateTimeFormat.forPattern("yyyy-MM-dd"))
+                    .withHourOfDay(0)
+                    .withMinuteOfHour(0)
+                    .withSecondOfMinute(0);
+        } catch (IllegalArgumentException ignored) {
+            // Failed all attempts
+            return null;
+        }
     }
 }
