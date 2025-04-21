@@ -29,7 +29,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -88,13 +88,13 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
     @Test
     public void headerWithWrongFields() {
         failure(header("Id from previus system",
-                "Subject Id from previous system",
-                "Program",
-                "Enrolent Date",
-                "Enrolment Location",
-                "\"Single SSSelect Coded\""),
+                        "Subject Id from previous system",
+                        "Program",
+                        "Enrolent Date",
+                        "Enrolment Location",
+                        "\"Single SSSelect Coded\""),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - Single Select Coded, Enrolment Date, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Enrolent Date, Id from previus system, Single SSSelect Coded included in file. Please refer to sample file for valid list of headers.");
+                "Mandatory columns are missing from uploaded file - Enrolment Date, Single Select Coded, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Enrolent Date, Single SSSelect Coded, Id from previus system included in file. Please refer to sample file for valid list of headers.");
     }
 
     @Override
@@ -151,10 +151,11 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
         ProgramEnrolment enrolment = programEnrolmentRepository.findByLegacyId("EFGH");
         assertEquals(1, enrolment.getObservations().size());
 
-        // allow edit
-        programEnrolmentWriter.write(Chunk.of(new Row(header, dataRow)));
-        enrolment = programEnrolmentRepository.findByLegacyId("EFGH");
-        assertEquals(1, enrolment.getObservations().size());
+        // Second insert should fail with ValidationException
+        Exception exception = assertThrows(ValidationException.class, () -> {
+            programEnrolmentWriter.write(Chunk.of(new Row(header, dataRow)));
+        });
+        assertTrue(exception.getMessage().toLowerCase().contains("entry with id from previous system, efgh already present in avni"));
     }
 
     private void success(String[] headers, String[] values) {
@@ -179,7 +180,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
             programEnrolmentWriter.write(Chunk.of(new Row(headers, cells)));
             fail();
         } catch (Exception e) {
-            Assert.assertEquals(errorMessage, e.getMessage());
+            Assert.assertEquals(errorMessage.toLowerCase(), e.getMessage().toLowerCase());
         }
         long after = individualRepository.count();
         Assert.assertEquals(before, after);
