@@ -34,6 +34,12 @@ public class Concept extends OrganisationAwareEntity {
     @Type(value = KeyValuesUserType.class)
     private KeyValues keyValues;
 
+    @Column
+    private String mediaUrl;
+
+    @Column
+    private String mediaType;
+
     private Boolean active;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept")
@@ -158,10 +164,6 @@ public class Concept extends OrganisationAwareEntity {
         nonRepeatingNewOnes.forEach(conceptAnswer -> conceptAnswer.setConcept(this));
     }
 
-    public void voidOrphanedConceptAnswers(List<String> answerConceptUUIDs) {
-        this.getConceptAnswers().forEach(conceptAnswer -> conceptAnswer.setVoided(!answerConceptUUIDs.contains(conceptAnswer.getAnswerConcept().getUuid())));
-    }
-
     public String getUnit() {
         return unit;
     }
@@ -235,5 +237,21 @@ public class Concept extends OrganisationAwareEntity {
         ConceptAnswer conceptAnswer = this.conceptAnswers.stream().filter(x -> x.getAnswerConcept().getName().equals(answerConceptName)).findAny().orElse(null);
         if (conceptAnswer == null) return null;
         return conceptAnswer.getAnswerConcept();
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
     }
 }

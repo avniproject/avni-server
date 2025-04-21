@@ -1,0 +1,27 @@
+# Tech Stack
+- my project is a Spring Boot application
+- it uses JPA, Spring Security, Spring Batch, and Spring Rest
+- it connects to a Postgres database
+- flyway is used for database migrations
+
+# Language usage
+- Do not add comments and null checks unless asked
+- Check Java version from .java_version
+- always add new methods at the end of the file
+
+# Code organization
+- Repository and domain code goes in avni-serer-data module.
+- Service, controller, mapper, and dto code goes in avni-server-api module. Flyway migrations are in this module.
+
+# Building blocks (or where to put which type of code)
+- There are following building blocks for request processing - Controller, Service, Mapper, Repository, and DTO.
+- Batch jobs use Tasklet/Job - which inturn should use Writer or Service
+- DTOs are of three types - Request, Response, and Contract.
+- Repository should have only basic database operations directly using JPA for single entity type usually. Repository should be responsible for calling external services like Metabase, S3, etc.
+- Service should have all the business logic. It can have mapper, repository, or other services
+- Mapper should map between domain objects and DTO objects and vice versa
+- take request in a typed dto and return response in a typed dto
+- use BaseRepository always and getPrisma method from it
+- the web response contract classes are called Response
+- Mapper should use Repository and not Service
+- Controller can use Service or Repository depending on the complexity of the operation
