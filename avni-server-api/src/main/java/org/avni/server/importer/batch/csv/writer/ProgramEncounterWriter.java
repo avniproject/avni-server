@@ -2,12 +2,13 @@ package org.avni.server.importer.batch.csv.writer;
 
 import org.avni.server.application.FormMapping;
 import org.avni.server.application.FormType;
-import org.avni.server.dao.IndividualRepository;
 import org.avni.server.dao.ProgramEncounterRepository;
 import org.avni.server.dao.ProgramEnrolmentRepository;
-import org.avni.server.dao.ProgramRepository;
 import org.avni.server.dao.application.FormMappingRepository;
-import org.avni.server.domain.*;
+import org.avni.server.domain.EntityApprovalStatus;
+import org.avni.server.domain.ProgramEncounter;
+import org.avni.server.domain.ProgramEnrolment;
+import org.avni.server.domain.SubjectType;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
@@ -141,7 +142,7 @@ public class ProgramEncounterWriter extends EntityWriter implements ItemWriter<R
                     allErrorMsgs.add("Visit date needs to be after program enrolment date");
                 }
             }
-            programEncounter.setEncounterDateTime(encounterDate.toDateTimeAtStartOfDay() , userService.getCurrentUser());
+            programEncounter.setEncounterDateTime(encounterDate.toDateTimeAtStartOfDay(), userService.getCurrentUser());
         }
 
         ValidationUtil.handleErrors(allErrorMsgs);

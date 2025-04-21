@@ -19,7 +19,7 @@ public class TxnDataHeaderValidator {
         List<String> allErrorMsgs = new ArrayList<>();
         List<String> providedIntendedHeaders = new ArrayList<>(headerList);
 
-        String[] expectedHeaders = headerCreator.getAllHeaders(formMapping,null);
+        String[] expectedHeaders = headerCreator.getAllHeaders(formMapping, null);
         String[] expectedIntendedHeaders = Arrays.stream(expectedHeaders)
                 .map(String::trim)
                 .map(String::toLowerCase)

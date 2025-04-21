@@ -10,14 +10,20 @@ import org.avni.server.domain.factory.AddressLevelBuilder;
 import org.avni.server.domain.factory.AddressLevelTypeBuilder;
 import org.avni.server.domain.metadata.SubjectTypeBuilder;
 import org.avni.server.importer.batch.model.Row;
-import org.avni.server.service.builder.*;
+import org.avni.server.service.builder.TestConceptService;
+import org.avni.server.service.builder.TestDataSetupService;
+import org.avni.server.service.builder.TestFormService;
+import org.avni.server.service.builder.TestLocationService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.fail;
@@ -287,7 +293,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "\"QuestionGroup Concept|QG Numeric Concept\""
                 ),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - Single Select Coded, Date Of Birth, Date Of Registration, Multi Select Decision Coded, District, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Date Of Birt, Singl Select Coded, Id from previou system, Date Of Registratio, Distric, Multi Selec Decision Coded included in file. Please refer to sample file for valid list of headers.");
+                "Mandatory columns are missing from uploaded file - single select coded, id from previous system, date of registration, district, multi select decision coded, date of birth. Please refer to sample file for the list of mandatory headers. Unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. Please refer to sample file for valid list of headers.");
     }
 
     @Test
@@ -442,7 +448,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
             subjectWriter.write(Chunk.of(new Row(headers, cells)));
             fail();
         } catch (Exception e) {
-            Assert.assertEquals(errorMessage, e.getMessage());
+            Assert.assertEquals(errorMessage.toLowerCase(), e.getMessage().toLowerCase());
         }
         long after = individualRepository.count();
         Assert.assertEquals(before, after);

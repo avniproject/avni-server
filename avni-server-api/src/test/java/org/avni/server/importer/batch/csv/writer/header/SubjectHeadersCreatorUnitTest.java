@@ -244,7 +244,7 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         when(addressLevelTypeRepository.getAllParentNames(districtUuid)).thenReturn(List.of("District"));
         when(addressLevelTypeRepository.getAllParentNames(gaonUuid)).thenReturn(List.of("Gaon", "Zilla", "Shahar"));
 
-        String[] headers = subjectHeadersCreator.getAllHeaders(formMapping, null);
+        String[] headers = subjectHeadersCreator.generateAddressFields(formMapping).stream().map(HeaderField::getHeader).toArray(String[]::new);
         // Should only include the largest list, i.e., both Village and District, but not a duplicate District
         assertTrue(containsHeader(headers, "Village"), "Should include Village from the larger parent name list");
         assertTrue(containsHeader(headers, "District"), "Should include District");
@@ -254,7 +254,7 @@ public class SubjectHeadersCreatorUnitTest extends AbstractControllerIntegration
         Set<String> expectedHeaders = new HashSet<>(Arrays.asList("Village", "District", "Gaon", "Zilla", "Shahar"));
         int uniqueHeaderCount = (int) Arrays.stream(headers).distinct().count();
         assertEquals(uniqueHeaderCount, headers.length, "All header values should be unique");
-        assertTrue(headers.length >= 5, "There should be at least 5 headers for the address fields");
+        assertEquals(headers.length, expectedHeaders.size(), "There should be 5 headers for the address fields");
         // check that all expected address fields are present (if the logic should include them)
         expectedHeaders.forEach(h -> assertTrue(containsHeader(headers, h), "Should include " + h));
     }
