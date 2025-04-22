@@ -7,10 +7,13 @@ import org.avni.server.dao.application.FormMappingRepository;
 import org.avni.server.domain.Encounter;
 import org.avni.server.domain.EntityApprovalStatus;
 import org.avni.server.domain.Individual;
+import org.avni.server.domain.ObservationCollection;
 import org.avni.server.importer.batch.csv.contract.UploadRuleServerResponseContract;
 import org.avni.server.importer.batch.csv.creator.*;
+import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategy;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeaderStrategyFactory;
 import org.avni.server.importer.batch.csv.writer.header.EncounterHeadersCreator;
+import org.avni.server.importer.batch.csv.writer.header.EncounterUploadMode;
 import org.avni.server.importer.batch.model.Row;
 import org.avni.server.service.EncounterService;
 import org.avni.server.service.ObservationService;
@@ -143,19 +146,33 @@ public class EncounterWriter extends EntityWriter implements ItemWriter<Row>, Se
         }
 
         Encounter savedEncounter;
+        EncounterUploadMode mode = isScheduledVisit ? EncounterUploadMode.SCHEDULE_VISIT : EncounterUploadMode.UPLOAD_VISIT_DETAILS;
+        EncounterHeaderStrategy strategy = strategyFactory.getStrategy(mode);
 
         if (skipRuleExecution()) {
             EncounterHeadersCreator encounterHeadersCreator = new EncounterHeadersCreator(strategyFactory);
-            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator);
-            encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
+            TxnDataHeaderValidator.validateHeaders(row.getHeaders(), formMapping, encounterHeadersCreator, mode);
+            if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
+                // For scheduled visits, skip observation validation
+                encounter.setObservations(new ObservationCollection());
+            } else {
+                encounter.setObservations(observationCreator.getObservations(row, encounterHeadersCreator, allErrorMsgs, FormType.Encounter, encounter.getObservations(), formMapping));
+            }
             savedEncounter = encounterService.save(encounter);
         } else {
-            UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), encounter, allErrorMsgs);
-            encounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
-            decisionCreator.addEncounterDecisions(encounter.getObservations(), ruleResponse.getDecisions());
-            decisionCreator.addRegistrationDecisions(subject.getObservations(), ruleResponse.getDecisions());
-            savedEncounter = encounterService.save(encounter);
-            visitCreator.saveScheduledVisits(formMapping.getType(), subject.getUuid(), null, ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
+            if (mode == EncounterUploadMode.SCHEDULE_VISIT) {
+                // For scheduled visits, set empty observations
+                encounter.setObservations(new ObservationCollection());
+                savedEncounter = encounterService.save(encounter);
+            } else {
+                // Process rules and observations for completed encounters
+                UploadRuleServerResponseContract ruleResponse = ruleServerInvoker.getRuleServerResult(row, formMapping.getForm(), encounter, allErrorMsgs);
+                encounter.setObservations(observationService.createObservations(ruleResponse.getObservations()));
+                decisionCreator.addEncounterDecisions(encounter.getObservations(), ruleResponse.getDecisions());
+                decisionCreator.addRegistrationDecisions(subject.getObservations(), ruleResponse.getDecisions());
+                savedEncounter = encounterService.save(encounter);
+                visitCreator.saveScheduledVisits(formMapping.getType(), subject.getUuid(), null, ruleResponse.getVisitSchedules(), savedEncounter.getUuid());
+            }
         }
         entityApprovalStatusWriter.saveStatus(formMapping, savedEncounter.getId(), EntityApprovalStatus.EntityType.Encounter, savedEncounter.getEncounterType().getUuid());
     }
