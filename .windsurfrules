@@ -19,6 +19,10 @@ structure.packagePrefix = org.avni
 # Modules
 modules = avni-server-api, avni-server-data, avni-rule-server
 
+# Module Organization
+organization.data = repository and domain code in avni-server-data module
+organization.api = service, controller, mapper, dto code and flyway migrations in avni-server-api module
+
 #----------------------------------------------
 # BUILD CONFIGURATION
 #----------------------------------------------
@@ -30,8 +34,14 @@ build.command.test = ./gradlew test
 build.command.run = java -jar avni-server-api/build/libs/avni-server-0.0.1-SNAPSHOT.jar
 
 #----------------------------------------------
-# DEPENDENCIES
+# TECH STACK AND DEPENDENCIES
 #----------------------------------------------
+# Core Technologies
+tech.frameworks = JPA, Spring Security, Spring Batch, Spring Rest
+tech.database = postgresql
+tech.migrations = flyway
+
+# Basic Dependencies
 dependencies.database = postgresql
 dependencies.cache = ehcache
 dependencies.security = spring-security
@@ -48,8 +58,11 @@ api.dependencies.aws-s3 = com.amazonaws:aws-java-sdk-s3
 api.dependencies.aws-cognito = com.amazonaws:aws-java-sdk-cognitoidp
 api.dependencies.jackson = com.fasterxml.jackson.core:jackson-databind:2.15.4
 
+# Library Usage
+library.datetime = Use Joda Time (org.joda.time) instead of java.time for all date and time handling, Maintain consistent date formatting patterns across the codebase
+
 #----------------------------------------------
-# CODE STYLE AND FORMATTING
+# CODE STYLE AND CONVENTIONS
 #----------------------------------------------
 # General Code Style
 codeStyle.indentation = spaces
@@ -65,9 +78,32 @@ codestyle.java.wildcard_imports = false
 codestyle.java.final_parameters = false
 codestyle.java.final_locals = when_needed
 
+# Coding Conventions
+coding.comments = add only when explicitly requested
+coding.nullchecks = add only when explicitly requested
+coding.javaversion.check = .java_version
+coding.methodplacement = add new methods at end of file
+
+# Documentation Guidelines
+documentation.principles = Avoid JavaDocs in favor of self-documenting code, Use clear method and variable names that explain their purpose, Only add inline comments for complex logic that cannot be made clear through refactoring, Do not document what the code does (it should be obvious), Document why certain decisions were made when not obvious
+
+# Refactoring Guidelines
+refactoring.documentation = Avoid JavaDocs, coding style preferred is single-line format, rely on self-documenting code and clear naming instead
+
 #----------------------------------------------
 # ARCHITECTURE AND DESIGN PATTERNS
 #----------------------------------------------
+# Component Structure
+components.request = Controller, Service, Mapper, Repository, DTO
+components.batch = Tasklet/Job using Writer or Service
+components.dto.types = Request, Response, Contract
+components.repository = basic database operations using JPA, external service calls (Metabase, S3)
+components.service = business logic, can use mapper, repository, or other services
+components.mapper = map between domain objects and DTO objects
+components.api = typed request dto and typed response dto
+components.repository.base = BaseRepository, use getPrisma method
+components.response = web response contract classes named Response
+
 # Code Patterns
 patterns.controllers = **/*Controller.java
 patterns.services = **/*Service.java
@@ -118,9 +154,6 @@ controller.principles = Keep controllers thin, Delegate business logic to servic
 
 # Domain Model Guidelines
 domain.principles = Use rich domain models, Encapsulate business rules within domain objects, Validate domain invariants, Use value objects for immutable concepts, Consider using domain events for cross-aggregate communication
-
-# Refactoring Guidelines
-modularity.principles = Create small, focused methods with a single responsibility, Limit method size to improve readability and testability, Extract complex logic into separate utility classes, Use immutable objects wherever possible, Avoid deep nesting of methods and control structures, Prefer self-documenting code over comments
 
 #----------------------------------------------
 # TESTING
@@ -194,12 +227,3 @@ deployment.port = 8080
 deployment.healthCheckPath = /actuator/health
 deployment.memory = 2Gi
 deployment.cpu = 1
-
-# Documentation Guidelines
-documentation.principles = Avoid JavaDocs in favor of self-documenting code, Use clear method and variable names that explain their purpose, Only add inline comments for complex logic that cannot be made clear through refactoring, Do not document what the code does (it should be obvious), Document why certain decisions were made when not obvious
-
-# Refactoring Guidelines
-refactoring.documentation = Avoid JavaDocs, coding style preferred is single-line format, rely on self-documenting code and clear naming instead
-
-# Library Usage Guidelines
-library.datetime = Use Joda Time (org.joda.time) instead of java.time for all date and time handling, Maintain consistent date formatting patterns across the codebase
