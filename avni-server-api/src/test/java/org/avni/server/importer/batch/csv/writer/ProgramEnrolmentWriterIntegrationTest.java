@@ -94,7 +94,7 @@ public class ProgramEnrolmentWriterIntegrationTest extends BaseCSVImportTest {
                         "Enrolment Location",
                         "\"Single SSSelect Coded\""),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - Enrolment Date, Single Select Coded, Id from previous system. Please refer to sample file for the list of mandatory headers. Unknown headers - Enrolent Date, Single SSSelect Coded, Id from previus system included in file. Please refer to sample file for valid list of headers.");
+                "Mandatory columns are missing from uploaded file - Single Select Coded. Please refer to sample file for the list of mandatory headers. Unknown headers - Enrolent Date, Single SSSelect Coded, Id from previus system included in file. Please refer to sample file for valid list of headers.");
     }
 
     @Override

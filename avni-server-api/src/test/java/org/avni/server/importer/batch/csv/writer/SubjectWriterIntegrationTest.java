@@ -293,7 +293,7 @@ public class SubjectWriterIntegrationTest extends BaseCSVImportTest {
                         "\"QuestionGroup Concept|QG Numeric Concept\""
                 ),
                 validDataRow(),
-                "Mandatory columns are missing from uploaded file - single select coded, id from previous system, date of registration, district, multi select decision coded, date of birth. Please refer to sample file for the list of mandatory headers. Unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. Please refer to sample file for valid list of headers.");
+                "Mandatory columns are missing from uploaded file - single select coded, date of registration, district. Please refer to sample file for the list of mandatory headers. Unknown headers - distric, date of birt, id from previou system, date of registratio, singl select coded, multi selec decision coded included in file. Please refer to sample file for valid list of headers.");
     }
 
     @Test
