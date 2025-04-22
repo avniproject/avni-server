@@ -61,6 +61,15 @@ public class ConceptController implements RestControllerResourceProcessor<Concep
 
     @RequestMapping(value = "/concepts", method = RequestMethod.POST)
     @Transactional
+    ConceptProjection save(@RequestBody ConceptContract conceptRequest) {
+        accessControlService.checkPrivilege(PrivilegeType.EditConcept);
+        List<String> conceptUuids = conceptService.saveOrUpdateConcepts(Collections.singletonList(conceptRequest));
+        return this.getOneForWeb(conceptUuids.get(0));
+    }
+
+    // uses only in tests (simulates bundle upload I guess)
+    @RequestMapping(value = "/concepts/bulk", method = RequestMethod.POST)
+    @Transactional
     void save(@RequestBody List<ConceptContract> conceptRequests) {
         accessControlService.checkPrivilege(PrivilegeType.EditConcept);
         conceptService.saveOrUpdateConcepts(conceptRequests);

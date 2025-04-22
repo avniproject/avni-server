@@ -34,9 +34,15 @@ public class Concept extends OrganisationAwareEntity {
     @Type(value = KeyValuesUserType.class)
     private KeyValues keyValues;
 
+    @Column
+    private String mediaUrl;
+
+    @Column
+    private String mediaType;
+
     private Boolean active;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "concept", orphanRemoval = true)
     @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Set<ConceptAnswer> conceptAnswers = new HashSet<>();
 
@@ -144,6 +150,14 @@ public class Concept extends OrganisationAwareEntity {
                 .orElse(null);
     }
 
+    public ConceptAnswer findConceptAnswerByConceptUUIDOrName(String answerConceptUUID, String name) {
+        return this.getConceptAnswers().stream()
+                .filter(x -> x.getAnswerConcept().getUuid().equals(answerConceptUUID) ||
+                        x.getAnswerConcept().getName().equalsIgnoreCase(name))
+                .findAny()
+                .orElse(null);
+    }
+
     public void addAnswer(ConceptAnswer conceptAnswer) {
         conceptAnswer.setConcept(this);
         this.getConceptAnswers().add(conceptAnswer);
@@ -235,5 +249,21 @@ public class Concept extends OrganisationAwareEntity {
         ConceptAnswer conceptAnswer = this.conceptAnswers.stream().filter(x -> x.getAnswerConcept().getName().equals(answerConceptName)).findAny().orElse(null);
         if (conceptAnswer == null) return null;
         return conceptAnswer.getAnswerConcept();
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
     }
 }

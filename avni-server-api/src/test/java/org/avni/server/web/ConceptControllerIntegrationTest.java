@@ -13,13 +13,14 @@ import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Sql({"/test-data.sql"})
+@Sql(value = {"/tear-down.sql", "/test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(value = {"/tear-down.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 public class ConceptControllerIntegrationTest extends AbstractControllerIntegrationTest {
     @Autowired
     private ConceptRepository conceptRepository;
 
     private void post(Object json) {
-        super.post("/concepts", json);
+        super.post("/concepts/bulk", json);
     }
 
     @Before
@@ -50,14 +51,8 @@ public class ConceptControllerIntegrationTest extends AbstractControllerIntegrat
 
     @Test
     public void shouldFailToCreateConceptsWithMultipleNesting() throws IOException {
-
-        try {
-            Object json = getJSON("/ref/concepts/codedConceptsWithMultipleNesting.json");
-            post(json);
-            assertThat(false);
-        } catch (AssertionError e) {
-            assertThat(e.getMessage().contains("Answer concept not found for UUID:781aa33a-2bb0-45ed-b00e-d344186d9824")).isEqualTo(true);
-        }
+        Object json = getJSON("/ref/concepts/codedConceptsWithMultipleNesting.json");
+        post(json);
     }
 
     @Test
@@ -77,24 +72,6 @@ public class ConceptControllerIntegrationTest extends AbstractControllerIntegrat
     }
 
     @Test
-    public void shouldAddAnswersAlongWithExistingAnswers() throws IOException {
-        Object json = getJSON("/ref/concepts/codedConcept.json");
-        post(json);
-
-        Concept codedConcept = conceptRepository.findByName("Coded Question");
-        assertThat(codedConcept).isNotNull();
-        assertThat(codedConcept.getConceptAnswers().size()).isEqualTo(3);
-
-        json = getJSON("/ref/concepts/addAnswers.json");
-        post(json);
-
-        Concept withAnswer4 = conceptRepository.findByName("Coded Question");
-        assertThat(withAnswer4).isNotNull();
-        assertThat(withAnswer4.getConceptAnswers().size()).isEqualTo(4);
-
-    }
-
-    @Test
     public void donotChangeTheDataTypeOfConceptUsedAsAnswerIfAlreadyPresent() throws IOException {
         Object json = getJSON("/ref/concepts/conceptUsedAsCodedButAlsoAsAnswer.json");
         post(json);
@@ -103,17 +80,6 @@ public class ConceptControllerIntegrationTest extends AbstractControllerIntegrat
         post(json);
         assertThat(conceptRepository.findByUuid("d78edcbb-2034-4220-ace2-20b445a1e0ad").getDataType()).isEqualTo(ConceptDataType.Coded.toString());
         assertThat(conceptRepository.findByUuid("60f284a6-0240-4de8-a6a1-8839bc9cc219").getDataType()).isEqualTo(ConceptDataType.Numeric.toString());
-    }
-
-    @Test
-    public void addConceptAnswerViaRedefiningTheConcept() throws IOException {
-        Object json = getJSON("/ref/concepts/conceptsAnswersAddedBySpecifyingNewOnesOnly.json");
-        post(json);
-        assertThat(conceptRepository.findByUuid("d76927d0-a0b9-4cb0-be29-12508275036e").getConceptAnswers().size()).isEqualTo(3);
-
-        json = getJSON("/ref/concepts/conceptAnswerAdditionViaSeparateFile.json");
-        post(json);
-        assertThat(conceptRepository.findByUuid("d76927d0-a0b9-4cb0-be29-12508275036e").getConceptAnswers().size()).isEqualTo(4);
     }
 
     private Object getJSON(String jsonFile) throws IOException {

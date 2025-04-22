@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public interface ReferenceDataRepository<T extends CHSEntity> extends CHSReposit
     }
 
     default T findByUuidOrName(String uuid, String name) {
-        return uuid != null ? findByUuid(uuid) : findByName(name);
+        return StringUtils.hasText(uuid) ? findByUuid(uuid) : findByName(name);
     }
 
     List<T> findAllByUuidIn(List<String> uuids);

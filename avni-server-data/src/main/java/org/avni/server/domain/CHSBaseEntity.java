@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import org.avni.server.domain.framework.IdHolder;
 import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.proxy.LazyInitializer;
+import org.springframework.util.StringUtils;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -53,6 +54,14 @@ public class CHSBaseEntity implements IdHolder {
 
     public void assignUUID() {
         this.uuid = UUID.randomUUID().toString();
+    }
+
+    public void assignUUID(String uuid) {
+        if (StringUtils.hasText(uuid)) {
+            this.uuid = uuid;
+        } else {
+            this.assignUUID();
+        }
     }
 
     public void assignUUIDIfRequired() {

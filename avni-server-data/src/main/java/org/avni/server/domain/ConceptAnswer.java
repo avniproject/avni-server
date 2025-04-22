@@ -11,8 +11,6 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.springframework.data.rest.core.config.Projection;
 
-import java.util.Objects;
-
 @Entity
 @Table(name = "concept_answer")
 @BatchSize(size = 100)
@@ -103,10 +101,6 @@ public class ConceptAnswer extends OrganisationAwareEntity {
 
     public boolean hasAnswerConcept(Concept answerConcept) {
         return getAnswerConcept().getUuid().equals(answerConcept.getUuid());
-    }
-
-    public boolean editableBy(Long orgId) {
-        return getOrganisationId() == null || Objects.equals(getOrganisationId(), orgId);
     }
 
     @Projection(name = "ConceptAnswerProjection", types = {ConceptAnswer.class})

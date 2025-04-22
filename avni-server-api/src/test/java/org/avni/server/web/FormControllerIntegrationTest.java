@@ -68,7 +68,7 @@ public class FormControllerIntegrationTest extends AbstractControllerIntegration
         super.setUp();
         setUser("demo-admin");
         post("/programs", getJson("/ref/program.json"));
-        post("/concepts", getJson("/ref/concepts.json"));
+        post("/concepts/bulk", getJson("/ref/concepts.json"));
         post("/forms", getJson("/ref/forms/originalForm.json"));
     }
 
