@@ -38,7 +38,8 @@ public class Concept extends OrganisationAwareEntity {
     private String mediaUrl;
 
     @Column
-    private String mediaType;
+    @Enumerated(EnumType.STRING)
+    private MediaType mediaType;
 
     private Boolean active;
 
@@ -259,11 +260,19 @@ public class Concept extends OrganisationAwareEntity {
         this.mediaUrl = mediaUrl;
     }
 
-    public String getMediaType() {
+    public MediaType getMediaType() {
         return mediaType;
     }
 
-    public void setMediaType(String mediaType) {
+    public void setMediaType(MediaType mediaType) {
         this.mediaType = mediaType;
+    }
+
+    public void removeAnswer(ConceptAnswer conceptAnswer) {
+        this.conceptAnswers.remove(conceptAnswer);
+    }
+
+    public static enum MediaType {
+        Image
     }
 }

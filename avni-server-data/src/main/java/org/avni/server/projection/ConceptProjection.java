@@ -8,15 +8,14 @@ import org.avni.server.application.KeyValues;
 import org.avni.server.application.projections.BaseProjection;
 import org.avni.server.domain.Concept;
 import org.avni.server.domain.ConceptAnswer;
-import org.springframework.data.rest.core.config.Projection;
 import org.joda.time.DateTime;
+import org.springframework.data.rest.core.config.Projection;
 
 import java.util.Set;
 
 @Projection(name = "ConceptProjection", types = {Concept.class})
 @JsonPropertyOrder({"id", "uuid", "name", "dataType", "lowAbsolute", "highAbsolute", "lowNormal", "highNormal", "conceptAnswers", "KeyValues"})
 public interface ConceptProjection extends BaseProjection {
-
     String getName();
 
     String getDataType();
@@ -50,4 +49,6 @@ public interface ConceptProjection extends BaseProjection {
     @JsonInclude(Include.NON_EMPTY)
     Set<ConceptAnswer.ConceptAnswerProjection> getConceptAnswers();
 
+    @JsonProperty("mediaUrl")
+    String getMediaUrl();
 }
