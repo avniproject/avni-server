@@ -27,6 +27,8 @@ public class ConceptContract extends ReferenceDataContract {
     private boolean unique = false;
     private Double order;
     private KeyValues keyValues;
+    private String mediaUrl;
+    private Concept.MediaType mediaType;
 
     public static ConceptContract create(Concept concept) {
         ConceptContract conceptContract = new ConceptContract();
@@ -178,5 +180,21 @@ public class ConceptContract extends ReferenceDataContract {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public Concept.MediaType getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(Concept.MediaType mediaType) {
+        this.mediaType = mediaType;
     }
 }

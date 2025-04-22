@@ -44,20 +44,18 @@ public class ConceptService implements NonScopeAwareService {
     private final Logger logger;
     private final ConceptRepository conceptRepository;
     private final ConceptAnswerRepository conceptAnswerRepository;
-    private final OrganisationRepository organisationRepository;
     private final FormElementRepository formElementRepository;
     private final AnswerConceptMigrationRepository answerConceptMigrationRepository;
     private final LocationRepository locationRepository;
 
     @Autowired
-    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, OrganisationRepository organisationRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
+    public ConceptService(ConceptRepository conceptRepository, ConceptAnswerRepository conceptAnswerRepository, FormElementRepository formElementRepository, AnswerConceptMigrationRepository answerConceptMigrationRepository, LocationRepository locationRepository) {
         this.formElementRepository = formElementRepository;
         this.answerConceptMigrationRepository = answerConceptMigrationRepository;
         this.locationRepository = locationRepository;
         logger = LoggerFactory.getLogger(this.getClass());
         this.conceptRepository = conceptRepository;
         this.conceptAnswerRepository = conceptAnswerRepository;
-        this.organisationRepository = organisationRepository;
     }
 
     private static Map<String, String> readMap(String concepts) throws IOException {
@@ -150,6 +148,14 @@ public class ConceptService implements NonScopeAwareService {
         concept.setVoided(conceptRequest.isVoided());
         concept.setActive(conceptRequest.getActive());
         concept.setKeyValues(conceptRequest.getKeyValues());
+        if (StringUtils.hasText(conceptRequest.getMediaUrl())) {
+            concept.setMediaType(Concept.MediaType.Image);
+            concept.setMediaUrl(conceptRequest.getMediaUrl());
+        } else {
+            concept.setMediaType(null);
+            concept.setMediaUrl(null);
+        }
+
         concept.updateAudit();
         switch (ConceptDataType.valueOf(impliedDataType)) {
             case Coded:
